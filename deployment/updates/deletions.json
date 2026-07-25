@@ -1,0 +1,74 @@
+{
+    "0.32.1": [
+        "core/deployment/windows/apply-0.32.0.ps1"
+    ],
+    "0.32.2": [
+        "core/deployment/windows/apply-0.32.1.ps1"
+    ],
+    "0.32.3": [
+        "core/deployment/windows/apply-0.32.2.ps1"
+    ],
+    "0.32.4": [
+        "core/deployment/windows/apply-0.32.3.ps1"
+    ],
+    "0.32.5": [
+        "core/deployment/windows/apply-0.32.4.ps1"
+    ],
+    "0.32.6": [
+        "core/deployment/windows/apply-0.32.5.ps1"
+    ],
+    "0.32.7": [
+        "core/deployment/windows/apply-0.32.6.ps1"
+    ],
+    "0.32.8": [
+        "core/deployment/windows/apply-0.32.7.ps1"
+    ],
+    "0.32.9": [
+        "core/deployment/windows/apply-0.32.8.ps1"
+    ],
+    "0.32.10": [
+        "core/deployment/windows/apply-0.32.9.ps1"
+    ],
+    "0.32.11": [
+        "core/deployment/windows/apply-0.32.10.ps1"
+    ],
+    "0.32.12": [
+        "core/deployment/windows/apply-0.32.11.ps1"
+    ],
+    "0.32.13": [
+        "core/deployment/windows/apply-0.32.12.ps1"
+    ],
+    "0.32.14": [
+        "core/deployment/windows/apply-0.32.13.ps1"
+    ],
+    "0.32.15": [
+        "core/deployment/windows/apply-0.32.14.ps1"
+    ],
+    "0.32.16": [
+        "core/deployment/windows/apply-0.32.15.ps1"
+    ],
+    "0.32.17": [
+        "core/deployment/windows/apply-0.32.16.ps1"
+    ],
+    "0.32.18": [
+        "core/deployment/windows/apply-0.32.17.ps1"
+    ],
+    "0.32.19": [
+        "core/deployment/windows/apply-0.32.18.ps1"
+    ],
+    "0.32.20": [
+        "core/deployment/windows/apply-0.32.19.ps1"
+    ],
+    "0.33.0": [
+        "core/deployment/windows/apply-0.32.20.ps1"
+    ],
+    "0.33.1": [
+        "core/deployment/windows/apply-0.33.0.ps1"
+    ],
+    "0.33.2": [
+        "core/deployment/windows/apply-0.33.1.ps1"
+    ],
+    "0.33.3": [
+        "core/deployment/windows/apply-0.33.2.ps1"
+    ]
+}

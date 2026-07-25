@@ -1,0 +1,105 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://kaevcms.local/schemas/module.schema.json",
+    "title": "KaevCMS module manifest",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "schema",
+        "id",
+        "name",
+        "version",
+        "author"
+    ],
+    "$defs": {
+        "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+        },
+        "relativePath": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$"
+        }
+    },
+    "properties": {
+        "schema": {
+            "const": 1
+        },
+        "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[a-z0-9][a-z0-9-]{0,99}$"
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+        },
+        "version": {
+            "$ref": "#/$defs/version",
+            "maxLength": 50
+        },
+        "author": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+        },
+        "description": {
+            "type": "string",
+            "maxLength": 1000
+        },
+        "cms_min": {
+            "oneOf": [
+                {
+                    "$ref": "#/$defs/version"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "cms_max": {
+            "oneOf": [
+                {
+                    "$ref": "#/$defs/version"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "namespace": {
+            "type": "string",
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*\\\\)+$"
+        },
+        "autoload": {
+            "$ref": "#/$defs/relativePath"
+        },
+        "bootstrap": {
+            "$ref": "#/$defs/relativePath"
+        },
+        "views": {
+            "$ref": "#/$defs/relativePath"
+        },
+        "lang": {
+            "$ref": "#/$defs/relativePath"
+        },
+        "routes": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "web": {
+                    "$ref": "#/$defs/relativePath"
+                },
+                "admin": {
+                    "$ref": "#/$defs/relativePath"
+                }
+            }
+        },
+        "migrations": {
+            "$ref": "#/$defs/relativePath"
+        }
+    }
+}

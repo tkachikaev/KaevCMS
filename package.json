@@ -1,0 +1,11 @@
+{
+  "name": "kaevcms-browser-tests",
+  "private": true,
+  "scripts": {
+    "browser:install": "playwright install chromium",
+    "test:browser": "node tests/browser/run.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
+  }
+}

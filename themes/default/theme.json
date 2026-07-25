@@ -1,0 +1,9 @@
+{
+  "name": "L2 Dark Classic",
+  "slug": "default",
+  "version": "0.8.1",
+  "author": "KaevCMS",
+  "cms_min": "0.15.0",
+  "description": "Стандартная тёмная тема KaevCMS с публичной игровой статистикой, многоязычными страницами, личным кабинетом и несколькими игровыми серверами.",
+  "preview": "assets/images/hero.webp"
+}

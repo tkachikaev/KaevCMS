@@ -1,0 +1,13 @@
+@extends('admin.layouts.panel')
+@section('title', __('Audit record #:id', ['id'=>$auditLog->id]))
+@section('description', $auditLog->actionLabel())
+@section('content')
+<div class="admin-page-toolbar audit-detail-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.logs.index', array_filter(['category'=>request()->query('category')])) }}">← {{ __('Back to audit log') }}</a><span @class(['status-badge','status-badge-success'=>$auditLog->result==='success','status-badge-danger'=>$auditLog->result==='failed'])>{{ $auditLog->resultLabel() }}</span></div>
+<div class="audit-detail-grid">
+    <section class="form-card audit-detail-card"><h2>{{ __('Event') }}</h2><dl class="audit-definition-list"><div><dt>{{ __('Date and time') }}</dt><dd>{{ $auditLog->created_at?->format('d.m.Y H:i:s') }}</dd></div><div><dt>{{ __('Category') }}</dt><dd>{{ $auditLog->categoryLabel() }} <code>{{ $auditLog->category }}</code></dd></div><div><dt>{{ __('Action') }}</dt><dd>{{ $auditLog->actionLabel() }} <code>{{ $auditLog->action }}</code></dd></div><div><dt>{{ __('Result') }}</dt><dd>{{ $auditLog->resultLabel() }}</dd></div></dl></section>
+    <section class="form-card audit-detail-card"><h2>{{ __('Actor') }}</h2><dl class="audit-definition-list"><div><dt>{{ __('Name') }}</dt><dd>{{ $auditLog->actorLabel() }}</dd></div><div><dt>{{ __('Type') }}</dt><dd>{{ $auditLog->actor_type ?: '—' }}</dd></div><div><dt>{{ __('Identifier') }}</dt><dd>{{ $auditLog->actor_id ?: '—' }}</dd></div><div><dt>{{ __('IP address') }}</dt><dd class="audit-monospace">{{ $auditLog->ip_address ?: '—' }}</dd></div></dl></section>
+    <section class="form-card audit-detail-card"><h2>{{ __('Action target') }}</h2><dl class="audit-definition-list"><div><dt>{{ __('Name') }}</dt><dd>{{ $auditLog->targetLabel() }}</dd></div><div><dt>{{ __('Type') }}</dt><dd>{{ $auditLog->target_type ?: '—' }}</dd></div><div><dt>{{ __('Identifier') }}</dt><dd>{{ $auditLog->target_id ?: '—' }}</dd></div></dl></section>
+    <section class="form-card audit-detail-card"><h2>{{ __('Client') }}</h2><dl class="audit-definition-list"><div class="audit-definition-full"><dt>User-Agent</dt><dd>{{ $auditLog->user_agent ?: '—' }}</dd></div></dl></section>
+</div>
+<section class="form-card audit-details-json"><div class="admin-card-heading audit-details-heading"><h2>{{ __('Audit details') }}</h2><span>{{ __('Secret fields are automatically redacted') }}</span></div>@if(empty($auditLog->details))<p class="audit-empty-details">{{ __('No additional data was recorded for this event.') }}</p>@else<pre>{{ json_encode($auditLog->details, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) }}</pre>@endif</section>
+@endsection

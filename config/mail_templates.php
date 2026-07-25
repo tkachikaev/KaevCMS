@@ -1,0 +1,106 @@
+<?php
+
+return [
+    'templates' => [
+        'email_verification' => [
+            'requires_action' => true,
+            'variables' => [
+                'site_name',
+                'site_url',
+                'username',
+                'user_email',
+                'verification_url',
+                'expires_in',
+                'support_email',
+            ],
+            'locales' => [
+                'ru' => [
+                    'title' => 'Подтверждение email',
+                    'description' => 'Письмо отправляется после регистрации и при повторном запросе подтверждения.',
+                    'subject' => 'Подтвердите регистрацию на {{site_name}}',
+                    'header' => '{{site_name}}',
+                    'heading' => 'Подтверждение email',
+                    'body' => "Здравствуйте, {{username}}!\n\nДля завершения регистрации на {{site_name}} подтвердите адрес электронной почты.",
+                    'action_text' => 'Подтвердить email',
+                    'footer' => 'Ссылка действительна {{expires_in}}. Если вы не создавали эту учётную запись, просто проигнорируйте письмо.',
+                ],
+                'en' => [
+                    'title' => 'Email verification',
+                    'description' => 'Sent after registration and when the user requests another verification link.',
+                    'subject' => 'Confirm your registration on {{site_name}}',
+                    'header' => '{{site_name}}',
+                    'heading' => 'Verify your email address',
+                    'body' => "Hello, {{username}}!\n\nTo finish creating your account on {{site_name}}, verify your email address.",
+                    'action_text' => 'Verify email',
+                    'footer' => 'This link is valid for {{expires_in}}. If you did not create this account, you can ignore this email.',
+                ],
+            ],
+        ],
+        'password_reset' => [
+            'requires_action' => true,
+            'variables' => [
+                'site_name',
+                'site_url',
+                'username',
+                'user_email',
+                'reset_url',
+                'expires_in',
+                'support_email',
+            ],
+            'locales' => [
+                'ru' => [
+                    'title' => 'Восстановление пароля',
+                    'description' => 'Письмо со ссылкой для установки нового пароля.',
+                    'subject' => 'Восстановление пароля — {{site_name}}',
+                    'header' => '{{site_name}}',
+                    'heading' => 'Восстановление пароля',
+                    'body' => "Здравствуйте, {{username}}!\n\nМы получили запрос на изменение пароля вашей учётной записи на {{site_name}}.",
+                    'action_text' => 'Изменить пароль',
+                    'footer' => 'Ссылка действительна {{expires_in}}. Если вы не запрашивали восстановление, просто проигнорируйте письмо.',
+                ],
+                'en' => [
+                    'title' => 'Password reset',
+                    'description' => 'Contains a secure link for setting a new password.',
+                    'subject' => 'Reset your password — {{site_name}}',
+                    'header' => '{{site_name}}',
+                    'heading' => 'Reset your password',
+                    'body' => "Hello, {{username}}!\n\nWe received a request to reset the password for your account on {{site_name}}.",
+                    'action_text' => 'Reset password',
+                    'footer' => 'This link is valid for {{expires_in}}. If you did not request a reset, you can ignore this email.',
+                ],
+            ],
+        ],
+        'password_changed' => [
+            'requires_action' => false,
+            'variables' => [
+                'site_name',
+                'site_url',
+                'username',
+                'user_email',
+                'support_email',
+            ],
+            'locales' => [
+                'ru' => [
+                    'title' => 'Пароль изменён',
+                    'description' => 'Уведомление после успешной установки нового пароля.',
+                    'subject' => 'Пароль изменён — {{site_name}}',
+                    'header' => '{{site_name}}',
+                    'heading' => 'Пароль успешно изменён',
+                    'body' => "Здравствуйте, {{username}}!\n\nПароль вашей учётной записи на {{site_name}} был успешно изменён.",
+                    'action_text' => '',
+                    'footer' => 'Если это были не вы, немедленно обратитесь в поддержку: {{support_email}}.',
+                ],
+                'en' => [
+                    'title' => 'Password changed',
+                    'description' => 'Notification sent after a password has been changed successfully.',
+                    'subject' => 'Your password was changed — {{site_name}}',
+                    'header' => '{{site_name}}',
+                    'heading' => 'Password changed successfully',
+                    'body' => "Hello, {{username}}!\n\nThe password for your account on {{site_name}} was changed successfully.",
+                    'action_text' => '',
+                    'footer' => 'If this was not you, contact support immediately: {{support_email}}.',
+                ],
+            ],
+        ],
+    ],
+];

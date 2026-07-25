@@ -1,0 +1,20 @@
+{
+    "schema": 1,
+    "id": "promo-codes",
+    "name": "Promo Codes",
+    "version": "1.0.3",
+    "author": "KaevCMS",
+    "description": "Server-bound promo codes that grant rewards to the KaevCMS web inventory.",
+    "cms_min": "0.26.0",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\PromoCodes\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "web": "routes/web.php",
+        "admin": "routes/admin.php"
+    }
+}
