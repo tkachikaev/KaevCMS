@@ -203,6 +203,15 @@ SESSION_SECURE_COOKIE=true
     assertInstaller($securityChecks[2]['status'] === 'ok', 'APP_DEBUG=false must pass the post-install debug check.');
     assertInstaller($securityChecks[3]['status'] === 'ok', 'HTTPS and secure cookies must pass the post-install transport check.');
     assertInstaller(str_contains(securityReviewBody($text, $securityChecks), 'Installation security review'), 'The final page must render the security review.');
+    assertInstaller(str_contains(completeBody($text, [
+        'complete' => [
+            'email' => 'owner@example.test',
+            'admin_url' => 'https://example.test/admin',
+            'site_url' => 'https://example.test/',
+            'security_checks' => $securityChecks,
+        ],
+    ]), '/install'), 'The completed installer must instruct the owner to remove the public install directory.');
+    assertInstaller(str_contains(installedBody($text, $securityChecks), '/install'), 'The locked installer page must repeat the install-directory cleanup instruction.');
 
     $legacyCompatibleEntries = [
         dirname(__DIR__, 4).'/public/index.php',

@@ -50,6 +50,24 @@ try {
     assertPackageBuilder(! packagePathExcluded('app/Test.php', ['tests']), 'Unrelated application paths must not be excluded.');
     assertPackageBuilder(validateDirectoryName('domain.example.test', 'public-dir') === 'domain.example.test', 'Safe domain directory names must be accepted.');
 
+    $productionExclusions = sharedHostingCoreExclusions();
+    foreach ([
+        'deployment/hosting/web-installer/tests/installer-regression.php',
+        'deployment/hosting/shared-hosting/tests/layout-regression.php',
+        'deployment/hosting/shared-hosting/tests/package-builder-regression.php',
+        'deployment/hosting/shared-hosting/tests/update-entrypoint-regression.php',
+        'deployment/updates/tests-package-builder.php',
+    ] as $developmentScript) {
+        assertPackageBuilder(
+            packagePathExcluded($developmentScript, $productionExclusions),
+            "Deployment-only test script must be excluded from production hosting packages: {$developmentScript}",
+        );
+    }
+    assertPackageBuilder(
+        ! packagePathExcluded('deployment/hosting/web-installer/installer.php', $productionExclusions),
+        'The runtime Web Installer must remain in the production hosting package.',
+    );
+
     createCleanRuntimeSkeleton($target);
     assertPackageBuilder(is_file($target.'/storage/framework/sessions/.gitignore'), 'The clean package must recreate writable runtime directories.');
     assertPackageBuilder(is_file($target.'/bootstrap/cache/.gitignore'), 'The clean package must recreate bootstrap/cache.');

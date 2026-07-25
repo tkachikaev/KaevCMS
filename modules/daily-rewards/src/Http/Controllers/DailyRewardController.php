@@ -29,19 +29,14 @@ final class DailyRewardController extends Controller
             abort(401);
         }
 
+        $now = CarbonImmutable::now((string) config('app.timezone', 'UTC'));
         $calendars = DailyRewardCalendar::query()
             ->with(['gameServer.translations', 'days.items'])
             ->where('enabled', true)
+            ->where('year', $now->year)
+            ->where('month', $now->month)
             ->orderBy('game_server_id')
-            ->orderByDesc('year')
-            ->orderByDesc('month')
-            ->get()
-            ->filter(static function (DailyRewardCalendar $calendar): bool {
-                $now = CarbonImmutable::now($calendar->runtimeTimezone());
-
-                return $calendar->year === $now->year && $calendar->month === $now->month;
-            })
-            ->values();
+            ->get();
 
         $requestedCalendarId = (int) $request->query('calendar', 0);
         $calendar = $calendars->firstWhere('id', $requestedCalendarId) ?? $calendars->first();

@@ -88,6 +88,10 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString('$application->usePublicPath($configuredPublicPath)', $bootstrap);
         $this->assertStringContainsString('vendor/autoload.php is missing', $builder);
         $this->assertStringContainsString('\'public\', \'storage\', \'tests\'', $builder);
+        $this->assertStringContainsString("'deployment/hosting/web-installer/tests'", $builder);
+        $this->assertStringContainsString("'deployment/hosting/shared-hosting/tests'", $builder);
+        $this->assertStringContainsString("'deployment/updates/tests-package-builder.php'", $builder);
+        $this->assertStringContainsString('remove the public /install directory', $installer);
         $this->assertStringContainsString('Symbolic links are not allowed', $builder);
         $this->assertStringContainsString('$application->usePublicPath(__DIR__)', $splitEntry);
     }

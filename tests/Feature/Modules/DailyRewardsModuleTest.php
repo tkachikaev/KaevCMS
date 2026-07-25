@@ -13,7 +13,9 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -56,7 +58,7 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_daily_reward_claims'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'daily-rewards',
-            'version' => '1.0.2',
+            'version' => '1.0.3',
             'enabled' => true,
         ]);
 
@@ -195,6 +197,44 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertDatabaseEmpty('module_daily_reward_items');
     }
 
+    public function test_account_page_filters_current_period_in_sql_before_eager_loading(): void
+    {
+        config()->set('app.timezone', 'Europe/Moscow');
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $currentServer = GameServer::factory()->create(['name' => 'Current Rewards World']);
+        $historicalServer = GameServer::factory()->create(['name' => 'Historical Rewards World']);
+        $current = $this->createCalendar($currentServer, 2026, 8, true);
+        $historical = $this->createCalendar($historicalServer, 2025, 8, true);
+        $this->configureDay($current, 12, [['item_id' => 57, 'amount' => 1]]);
+        $this->configureDay($historical, 12, [['item_id' => 57, 'amount' => 999]]);
+        $user = User::factory()->create();
+        UserGameAccount::factory()->for($user)->registeredOn($currentServer)->create();
+
+        /** @var list<mixed>|null $periodQueryBindings */
+        $periodQueryBindings = null;
+        DB::listen(static function (QueryExecuted $query) use (&$periodQueryBindings): void {
+            $sql = strtolower($query->sql);
+            if (
+                str_contains($sql, 'module_daily_reward_calendars')
+                && str_contains($sql, 'year')
+                && str_contains($sql, 'month')
+            ) {
+                $periodQueryBindings = $query->bindings;
+            }
+        });
+
+        $this->actingAs($user)
+            ->get('/modules/daily-rewards')
+            ->assertOk()
+            ->assertSee('Current Rewards World')
+            ->assertDontSee('Historical Rewards World');
+
+        $this->assertNotNull($periodQueryBindings, 'The account calendar query must filter year and month in SQL.');
+        $this->assertContains(2026, $periodQueryBindings);
+        $this->assertContains(8, $periodQueryBindings);
+    }
+
     public function test_current_day_claim_is_idempotent_and_grants_all_items_to_server_inventory(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
@@ -242,6 +282,21 @@ class DailyRewardsModuleTest extends TestCase
             'amount' => 1000000,
             'status' => 'available',
         ]);
+
+        $claim = DailyRewardClaim::query()->with('rewardGrant.items')->firstOrFail();
+        $snapshot = collect($claim->items_snapshot)
+            ->mapWithKeys(static fn (array $item): array => [(int) $item['item_id'] => [
+                'amount' => (int) $item['amount'],
+                'name' => $item['name'],
+            ]])
+            ->all();
+        $granted = $claim->rewardGrant->items
+            ->mapWithKeys(static fn (RewardInventoryItem $item): array => [$item->item_id => [
+                'amount' => $item->amount,
+                'name' => $item->item_name,
+            ]])
+            ->all();
+        $this->assertSame($snapshot, $granted);
     }
 
     public function test_same_account_cannot_claim_twice_but_another_account_can(): void

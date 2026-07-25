@@ -9,6 +9,7 @@ use App\Models\LoginServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
 use App\Support\Modules\ModuleManager;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -118,6 +119,56 @@ class BrowserTestSeeder extends Seeder
                 'promo_code_id' => $promoCodeId,
                 'item_id' => 4037,
                 'amount' => 10,
+                'sort_order' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        app(ModuleManager::class)->enable('daily-rewards');
+
+        $today = CarbonImmutable::now((string) config('app.timezone', 'UTC'));
+        $calendarId = DB::table('module_daily_reward_calendars')->insertGetId([
+            'game_server_id' => $gameServer->id,
+            'year' => $today->year,
+            'month' => $today->month,
+            'timezone' => (string) config('app.timezone', 'UTC'),
+            'enabled' => true,
+            'created_by_admin_id' => $admin->id,
+            'updated_by_admin_id' => $admin->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $dayRows = [];
+        for ($dayNumber = 1; $dayNumber <= $today->daysInMonth; $dayNumber++) {
+            $dayRows[] = [
+                'calendar_id' => $calendarId,
+                'day_number' => $dayNumber,
+                'enabled' => $dayNumber === $today->day,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+        DB::table('module_daily_reward_days')->insert($dayRows);
+
+        $todayDayId = DB::table('module_daily_reward_days')
+            ->where('calendar_id', $calendarId)
+            ->where('day_number', $today->day)
+            ->value('id');
+        DB::table('module_daily_reward_items')->insert([
+            [
+                'day_id' => $todayDayId,
+                'item_id' => 57,
+                'amount' => 250000,
+                'sort_order' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'day_id' => $todayDayId,
+                'item_id' => 4037,
+                'amount' => 2,
                 'sort_order' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -131,6 +131,26 @@ test('player activates a promo code into the server-bound web inventory', async 
     await expect(page.getByText('1 000 000')).toBeVisible();
 });
 
+test('player claims the current daily reward into web inventory', async ({ page }) => {
+    await signIn(page);
+
+    await page.locator('.account-nav').getByRole('link', { name: 'Ежедневные награды' }).click();
+    await expect(page).toHaveURL(/\/modules\/daily-rewards$/);
+    await expect(page.getByText('Доступно сегодня', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Получить награду', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/modules\/daily-rewards/);
+    await expect(page.getByText('Награда добавлена в веб-инвентарь.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Получено', { exact: true })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Открыть веб-инвентарь', exact: true }).first().click();
+    await expect(page).toHaveURL(/\/account\/web-inventory$/);
+    const dailyRewardRow = page.locator('.reward-item-row').filter({ hasText: '250 000' });
+    await expect(dailyRewardRow).toHaveCount(1);
+    await expect(dailyRewardRow.getByText('Адена', { exact: true })).toBeVisible();
+    await expect(dailyRewardRow.getByText('× 250 000', { exact: true })).toBeVisible();
+});
+
 test('aurelia player theme keeps rounded surfaces and active module navigation after SPA changes', async ({ page, context }) => {
     const adminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
     const adminPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'BrowserPassword123!';

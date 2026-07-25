@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.33.5 - 2026-07-25
+
+- Fixed the Daily Rewards Playwright check to validate the exact Web Inventory row containing Adena × 250 000. The previous assertion searched the entire page and failed correctly when Promo Codes and Daily Rewards produced two separate Adena rows.
+- Removed the extra blank lines introduced in `BrowserTestSeeder.php` and `build-shared-hosting-package.php`, restoring Laravel Pint compliance without changing runtime behavior.
+- Added safe Windows recovery for an interrupted 0.33.4 update from the still-committed 0.33.3 installation. Composer/npm dependencies, database migrations, module versions, Promo Codes, and runtime Daily Rewards logic were not changed.
+
+## 0.33.4 - 2026-07-25
+
+- Optimized Daily Rewards account loading by selecting only enabled calendars for the current year and month directly in SQL, so historical calendars, days, and items are no longer loaded and filtered in PHP.
+- Refactored Daily Rewards claim preparation so one normalized `RewardGrantItem` list is used both for the immutable claim snapshot and the Web Inventory grant, preventing the two representations from drifting apart. Daily Rewards is now 1.0.3.
+- Added a Playwright browser scenario for claiming the current daily reward and verifying the resulting Web Inventory items.
+- Added a clear post-install instruction to remove the public `/install` directory. HTTP installation remains allowed; installer secrets and signed update packages were deliberately not added.
+- Removed deployment-only regression scripts from newly built shared-hosting production packages while keeping all runtime installer and updater files. Composer/npm dependencies and database migrations were not changed.
+
 ## 0.33.3 - 2026-07-25
 
 - Fixed the Daily Rewards claimed-day validation path by importing Laravel's `ValidationException`; attempts to edit a claimed day now return the intended form error instead of a class-not-found exception.

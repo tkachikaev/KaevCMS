@@ -13,6 +13,10 @@ The release filename states the complete supported source range, for example `Ka
 
 The cumulative archive is validated against the oldest Web Updater included in its declared source range, not only against the newest updater. Clean-install templates and runtime-owned upload control files are excluded when an older updater would reject those targets. Missing upload protection is recreated idempotently by the updated application after installation.
 
+## Package source
+
+Download updates only from the official KaevCMS repository and compare SHA-256 with the published checksum file. The CMS validates the archive and every payload file, while the administrator remains responsible for choosing a trusted download source.
+
 ## Before updating
 
 1. Back up `.env`, the CMS database, public uploads, and owner-maintained assets.

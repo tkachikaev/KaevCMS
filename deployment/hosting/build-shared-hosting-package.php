@@ -51,13 +51,7 @@ $publicTarget = $packageDirectory.'/'.$publicDirectory;
 mkdir($coreTarget, 0775, true);
 mkdir($publicTarget, 0775, true);
 
-$excluded = [
-    '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
-    'public', 'storage', 'tests', 'bootstrap/cache', 'database/database.sqlite',
-    'phpunit.xml', 'phpstan.neon', 'package.json', 'package-lock.json',
-    'playwright.config.mjs', '.phpunit.cache', '.phpunit.result.cache', 'npm-debug.log',
-    'deployment/windows', 'deployment/vds',
-];
+$excluded = sharedHostingCoreExclusions();
 copyPackageTree($projectRoot, $coreTarget, $excluded);
 createCleanRuntimeSkeleton($coreTarget);
 copyPackageTree($projectRoot.'/public', $publicTarget, ['uploads', 'storage', 'hot']);
@@ -90,7 +84,7 @@ KaevCMS {$version} — shared-hosting package
 3. Домен должен быть направлен только на {$publicDirectory}/.
 4. Включите PHP 8.3+, необходимые расширения и HTTPS.
 5. Откройте домен и завершите установку через /install/.
-6. После установки проверьте итоговый отчёт безопасности. Не назначайте 0777 всему проекту.
+6. После успешной установки удалите публичную папку /install и проверьте итоговый отчёт безопасности. Не назначайте 0777 всему проекту.
 
 Примеры сборки в PowerShell:
 - Beget/cPanel с public_html:
@@ -108,7 +102,7 @@ ENGLISH
 3. The domain must point only to {$publicDirectory}/.
 4. Enable PHP 8.3+, required extensions, and HTTPS.
 5. Open the domain and complete /install/.
-6. Review the final security report. Do not assign 0777 to the whole project.
+6. After a successful installation, remove the public /install directory and review the final security report. Do not assign 0777 to the whole project.
 
 PowerShell build examples:
 - Beget/cPanel with public_html:
@@ -139,6 +133,21 @@ if (! isset($options['no-zip'])) {
 
 fwrite(STDOUT, "Package directory: {$packageDirectory}\n");
 fwrite(STDOUT, "Core directory: {$coreDirectory}\nPublic directory: {$publicDirectory}\n");
+
+/** @return list<string> */
+function sharedHostingCoreExclusions(): array
+{
+    return [
+        '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
+        'public', 'storage', 'tests', 'bootstrap/cache', 'database/database.sqlite',
+        'phpunit.xml', 'phpstan.neon', 'package.json', 'package-lock.json',
+        'playwright.config.mjs', '.phpunit.cache', '.phpunit.result.cache', 'npm-debug.log',
+        'deployment/windows', 'deployment/vds',
+        'deployment/hosting/web-installer/tests',
+        'deployment/hosting/shared-hosting/tests',
+        'deployment/updates/tests-package-builder.php',
+    ];
+}
 
 /** @return array<string, string|bool> */
 function parsePackageOptions(array $arguments): array

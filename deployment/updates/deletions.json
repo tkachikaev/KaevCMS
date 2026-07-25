@@ -70,5 +70,11 @@
     ],
     "0.33.3": [
         "core/deployment/windows/apply-0.33.2.ps1"
+    ],
+    "0.33.4": [
+        "core/deployment/windows/apply-0.33.3.ps1"
+    ],
+    "0.33.5": [
+        "core/deployment/windows/apply-0.33.4.ps1"
     ]
 }

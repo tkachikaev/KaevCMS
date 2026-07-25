@@ -104,14 +104,22 @@ final class DailyRewardClaimService
                     throw new DailyRewardClaimException('already_claimed');
                 }
 
-                $snapshot = $day->items
-                    ->map(fn (DailyRewardItem $item): array => [
-                        'item_id' => (int) $item->item_id,
-                        'amount' => (int) $item->amount,
-                        'name' => $this->items->knownName($calendar->gameServer, $item->item_id),
-                    ])
+                $grantItems = $day->items
+                    ->map(fn (DailyRewardItem $item): RewardGrantItem => new RewardGrantItem(
+                        itemId: (int) $item->item_id,
+                        amount: (int) $item->amount,
+                        name: $this->items->knownName($calendar->gameServer, $item->item_id),
+                    ))
                     ->values()
                     ->all();
+                $snapshot = array_map(
+                    static fn (RewardGrantItem $item): array => [
+                        'item_id' => $item->itemId,
+                        'amount' => $item->amount,
+                        'name' => $item->name,
+                    ],
+                    $grantItems,
+                );
 
                 $claim = DailyRewardClaim::query()->create([
                     'request_token' => $requestToken,
@@ -127,14 +135,6 @@ final class DailyRewardClaimService
                     'items_snapshot' => $snapshot,
                     'claimed_at' => now(),
                 ]);
-
-                $grantItems = $day->items
-                    ->map(fn (DailyRewardItem $item): RewardGrantItem => new RewardGrantItem(
-                        itemId: (int) $item->item_id,
-                        amount: (int) $item->amount,
-                        name: $this->items->knownName($calendar->gameServer, $item->item_id),
-                    ))
-                    ->all();
 
                 $grant = $this->inventory->grant(
                     user: $user,

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserGameAccount;
 use Database\Seeders\BrowserTestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -36,6 +37,9 @@ class BrowserTestSeederTest extends TestCase
 
         $player = User::query()->where('email', 'configured-browser-player@example.test')->firstOrFail();
         $this->assertSame('browser-player', $player->name);
+        $this->assertDatabaseHas('cms_modules', ['id' => 'daily-rewards', 'enabled' => true]);
+        $this->assertSame(1, DB::table('module_daily_reward_calendars')->where('enabled', true)->count());
+        $this->assertSame(2, DB::table('module_daily_reward_items')->count());
         $this->assertTrue($player->is_active);
         $this->assertNotNull($player->email_verified_at);
         $this->assertTrue(Hash::check('ConfiguredBrowserPlayerPassword123!', $player->password));

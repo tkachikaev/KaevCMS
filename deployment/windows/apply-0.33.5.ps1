@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$fromVersion = '0.33.2'
-$toVersion = '0.33.3'
+$fromVersion = '0.33.4'
+$toVersion = '0.33.5'
 
 if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'artisan') -PathType Leaf)) {
     throw 'The KaevCMS project root could not be found.'
@@ -60,6 +60,7 @@ $requiredFiles = @(
     'deployment\windows\browser-quality.ps1'
     'database\migrations\2026_07_23_000000_create_system_updates_table.php'
     'database\migrations\2026_07_23_010000_add_execution_state_to_system_updates_table.php'
+    'database\seeders\BrowserTestSeeder.php'
     'docs\WEB_INSTALLER.md'
     'docs\en\INSTALLATION.md'
     'docs\en\SHARED_HOSTING.md'
@@ -113,6 +114,8 @@ $requiredFiles = @(
     'resources\views\admin\account-themes\index.blade.php'
     'resources\views\admin\modules\index.blade.php'
     'tests\Feature\Modules\DailyRewardsModuleTest.php'
+    'tests\Feature\BrowserTestSeederTest.php'
+    'tests\browser\specs\player-character-directory.spec.mjs'
     'tests\Feature\Admin\AdminPanelTest.php'
     'tests\Feature\Updates\SystemUpdateAdminTest.php'
     'tests\Unit\TranslationJsonTest.php'
@@ -130,7 +133,7 @@ foreach ($requiredFile in $requiredFiles) {
 }
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix corrects claimed-day validation in Daily Rewards and resumes an interrupted 0.33.2 update safely.'
+Write-Host 'This hotfix corrects the Daily Rewards browser assertion and restores Pint compliance for the new release files.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -143,4 +146,4 @@ Write-Host 'Web installer: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'VDS updater: php artisan kaevcms:update C:\path\to\KaevCMS-cumulative-update.zip'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'
-Write-Host 'Composer/npm dependencies and database migrations were not changed. Approve the Daily Rewards 1.0.2 module update in the Modules section.'
+Write-Host 'Composer/npm dependencies, database migrations, module versions, Promo Codes, and runtime reward logic were not changed.'

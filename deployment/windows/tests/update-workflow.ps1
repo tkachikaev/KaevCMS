@@ -128,8 +128,8 @@ try {
     Assert-True ($updateScript.Contains('php artisan kaevcms:maintenance-status --no-ansi')) 'Updater does not query Laravel for the current maintenance state.'
     Assert-True ($updateScript.Contains('Move-KaevCmsArtifactsToBackup')) 'Updater does not stage obsolete artifacts before tests.'
     Assert-True ($updateScript.Contains('if ($supersededPendingTargets.Count -gt 0)')) 'Updater does not guard an empty superseded candidate list.'
-    Assert-True ($updateScript.Contains("$recoverableFromVersions = @('0.33.1')")) 'Updater does not recover an interrupted 0.33.2 update from 0.33.1.'
-    Assert-True ($updateScript.Contains("$supersededPendingTargets = @('0.33.2')")) 'Updater does not adopt the interrupted 0.33.2 pending target.'
+    Assert-True ($updateScript.Contains("$recoverableFromVersions = @('0.33.3')")) 'Updater does not recover an interrupted 0.33.4 update from 0.33.3.'
+    Assert-True ($updateScript.Contains("$supersededPendingTargets = @('0.33.4')")) 'Updater does not adopt the interrupted 0.33.4 pending target.'
     Assert-True ($updateScript.Contains('$installed.Version -notin $supportedFromVersions')) 'Updater does not validate all supported hotfix source versions.'
     Assert-True ($updateScript.Contains('-FromVersion $installed.Version')) 'Updater does not preserve the actual committed source version in the new pending marker.'
     Assert-True ($updateScript.Contains("'resources\views\account'")) 'Updater does not remove legacy account views.'
@@ -149,7 +149,7 @@ try {
     Assert-True ($phpunitConfig.Contains('<env name="APP_MAINTENANCE_DRIVER" value="cache" force="true"/>')) 'PHPUnit still shares the live file maintenance state.'
     Assert-True ($phpunitConfig.Contains('<env name="APP_MAINTENANCE_STORE" value="array" force="true"/>')) 'PHPUnit maintenance cache is not isolated in memory.'
 
-    $applyScript = Get-Content -LiteralPath "$PSScriptRoot\..\apply-0.33.3.ps1" -Raw
+    $applyScript = Get-Content -LiteralPath "$PSScriptRoot\..\apply-0.33.5.ps1" -Raw
     Assert-True (-not $applyScript.Contains('update.ps1 failed with exit code $LASTEXITCODE')) 'Apply script still relies on a stale LASTEXITCODE after invoking PowerShell.'
 
     Write-Host 'PowerShell update workflow tests completed successfully.' -ForegroundColor Green

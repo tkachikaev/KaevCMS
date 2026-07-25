@@ -276,7 +276,8 @@ function installerTranslations(string $language): array
         'complete_text' => 'База подготовлена, владелец создан, повторный запуск установщика заблокирован.',
         'admin_panel' => 'Административная панель',
         'owner' => 'Владелец',
-        'finish_note' => 'Следующий шаг — войти в админку, подключить LoginServer/GameServer и настроить почту.',
+        'finish_note' => 'Следующий шаг — удалить публичную папку /install, войти в админку, подключить LoginServer/GameServer и настроить почту.',
+        'remove_install_directory' => 'После успешной установки удалите публичную папку /install через файловый менеджер или SSH.',
         'security_review_title' => 'Проверка безопасности установки',
         'security_review_text' => 'Критические ошибки необходимо исправить сразу. Предупреждения не блокируют сайт, но показывают рекомендуемые настройки хостинга.',
         'security_review_ok' => 'Защищено',
@@ -381,7 +382,8 @@ function installerTranslations(string $language): array
         'complete_text' => 'The database is ready, the owner was created, and the installer is now locked.',
         'admin_panel' => 'Administration panel',
         'owner' => 'Owner',
-        'finish_note' => 'Next, sign in to the administration panel, connect LoginServer/GameServer, and configure email.',
+        'finish_note' => 'Next, remove the public /install directory, sign in to the administration panel, connect LoginServer/GameServer, and configure email.',
+        'remove_install_directory' => 'After a successful installation, remove the public /install directory through the file manager or SSH.',
         'security_review_title' => 'Installation security review',
         'security_review_text' => 'Fix critical errors immediately. Warnings do not block the website, but identify recommended hosting settings.',
         'security_review_ok' => 'Protected',
@@ -1529,6 +1531,7 @@ function completeBody(array $text, array $state): string
     return '<section class="hero"><span class="success-mark">✓</span><h1>'.e($text['complete_title']).'</h1><p>'.e($text['complete_text']).'</p></section>'
         .'<dl class="summary"><div><dt>'.e($text['admin_panel']).'</dt><dd><a href="'.e($complete['admin_url']).'">'.e($complete['admin_url']).'</a></dd></div><div><dt>'.e($text['owner']).'</dt><dd>'.e($complete['email']).'</dd></div></dl>'
         .securityReviewBody($text, $securityChecks)
+        .'<div class="alert alert-warning">'.e($text['remove_install_directory']).'</div>'
         .'<p class="muted">'.e($text['finish_note']).'</p><div class="actions"><a class="button primary" href="'.e($complete['admin_url']).'">'.e($text['admin_panel']).'</a><a class="button" href="'.e($complete['site_url']).'">'.e($text['open_site']).'</a></div>';
 }
 
@@ -1539,6 +1542,7 @@ function installedBody(array $text, array $securityChecks = []): string
 
     return '<section class="hero"><span class="success-mark">✓</span><h1>'.e($text['installed_title']).'</h1><p>'.e($text['installed_text']).'</p></section>'
         .securityReviewBody($text, $securityChecks)
+        .'<div class="alert alert-warning">'.e($text['remove_install_directory']).'</div>'
         .'<div class="actions"><a class="button primary" href="'.e($url.'/').'">'.e($text['open_site']).'</a></div>';
 }
 

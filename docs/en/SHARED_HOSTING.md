@@ -81,7 +81,7 @@ The domain must never point to `kaevcms-core`.
 
 ## HTTPS during installation
 
-Web Installer allows installation over both HTTPS and HTTP. On an unencrypted connection it shows one visible warning but does not block the MySQL check, owner creation, or final installation.
+Web Installer allows installation over both HTTPS and HTTP. On an unencrypted connection it shows one visible warning but does not block the MySQL check, owner creation, or final installation. After a successful installation, remove the `/install` directory from the domain public directory.
 
 For a test environment, local IP, or private network, continue at `http://.../install/`. Before opening a public website to users, configure an SSL certificate and switch to `https://`.
 

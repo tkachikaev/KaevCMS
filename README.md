@@ -1,4 +1,4 @@
-# KaevCMS 0.33.3
+# KaevCMS 0.33.5
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.33.3 fixes validation when an administrator tries to modify a Daily Rewards day that has already been claimed.
+Version 0.33.5 fixes the Daily Rewards browser assertion and formats the new browser seeder and shared-hosting builder code for the project quality gate.
 
 ### Requirements
 
@@ -20,7 +20,7 @@ Public entry points show a readable Russian/English PHP-version page on unsuppor
 
 ### Installation
 
-For a VDS or hosting with a configurable Document Root, point the domain to `public/` and open `/install/`.
+For a VDS or hosting with a configurable Document Root, point the domain to `public/` and open `/install/`. After the installation succeeds, remove the public `/install` directory.
 
 For shared hosting, build a production package on Windows:
 
@@ -92,7 +92,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.33.3 исправляет проверку при попытке администратора изменить уже полученный день ежедневных наград.
+Версия 0.33.5 исправляет браузерную проверку Daily Rewards и форматирует новый код browser seeder и сборщика shared-hosting по правилам quality gate проекта.
 
 ### Требования
 
@@ -106,7 +106,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 ### Установка
 
-На VDS или хостинге с настраиваемым Document Root направьте домен на `public/` и откройте `/install/`.
+На VDS или хостинге с настраиваемым Document Root направьте домен на `public/` и откройте `/install/`. После успешной установки удалите публичную папку `/install`.
 
 Для обычного хостинга соберите production-пакет в Windows:
 
