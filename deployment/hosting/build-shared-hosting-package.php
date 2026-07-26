@@ -287,11 +287,6 @@ function copyPackageTree(string $source, string $destination, array $excluded, s
 /** @param list<string> $excluded */
 function packagePathExcluded(string $path, array $excluded): bool
 {
-    if (str_starts_with(strtolower($path), 'game-assets/')
-        && preg_match('/\.(?:webp|png|jpe?g|gif|svg)\z/iD', $path) === 1) {
-        return true;
-    }
-
     if ($path !== '.env.example' && ($path === '.env' || str_starts_with($path, '.env.'))) {
         return true;
     }

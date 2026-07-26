@@ -16,8 +16,6 @@ class CreateAdminCommand extends Command
 {
     protected $signature = 'kaevcms:admin-create {--name=} {--email=}';
 
-    protected $aliases = ['l2forge:admin-create', 'l2cms:admin-create'];
-
     protected $description = 'Create an administrator for the KaevCMS control panel';
 
     public function handle(LanguageManager $languages): int

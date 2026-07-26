@@ -1,58 +1,83 @@
 # Character avatar image pack / Пакет аватаров персонажей
 
-KaevCMS does not include character artwork. Keep your external images under:
+KaevCMS does not include character artwork. Shared owner-provided images live under:
 
 ```text
-public/game-assets/characters/{profile}/
+public/uploads/game-assets/characters/common
 ```
 
-Supported item/asset profiles currently include:
+Character avatars are shared by every chronicle. Use this hierarchy:
 
 ```text
-interlude
-classic
-high-five
-shine-maker
+characters/common/human/male/warrior.webp
+characters/common/human/male/mage.webp
+characters/common/human/female/warrior.webp
+characters/common/human/female/mage.webp
+characters/common/elf/male/warrior.webp
+characters/common/elf/male/mage.webp
+characters/common/elf/female/warrior.webp
+characters/common/elf/female/mage.webp
+characters/common/dark_elf/male/warrior.webp
+characters/common/dark_elf/male/mage.webp
+characters/common/dark_elf/female/warrior.webp
+characters/common/dark_elf/female/mage.webp
+characters/common/orc/male/warrior.webp
+characters/common/orc/male/mage.webp
+characters/common/orc/female/warrior.webp
+characters/common/orc/female/mage.webp
+characters/common/dwarf/male/default.webp
+characters/common/dwarf/female/default.webp
+characters/common/kamael/male/default.webp
+characters/common/kamael/female/default.webp
+characters/common/ertheia/male/warrior.webp
+characters/common/ertheia/male/mage.webp
+characters/common/ertheia/female/warrior.webp
+characters/common/ertheia/female/mage.webp
+characters/common/sylph/male/default.webp
+characters/common/sylph/female/default.webp
+characters/common/fallback/male/default.webp
+characters/common/fallback/female/default.webp
+characters/common/fallback/neutral/default.webp
 ```
 
-Use the same hierarchy inside every profile:
+Example full path:
 
 ```text
-characters/{profile}/human/male/warrior.webp
-characters/{profile}/human/male/mage.webp
-characters/{profile}/human/female/warrior.webp
-characters/{profile}/human/female/mage.webp
-characters/{profile}/elf/male/warrior.webp
-characters/{profile}/elf/male/mage.webp
-characters/{profile}/elf/female/warrior.webp
-characters/{profile}/elf/female/mage.webp
-characters/{profile}/dark_elf/male/warrior.webp
-characters/{profile}/dark_elf/male/mage.webp
-characters/{profile}/dark_elf/female/warrior.webp
-characters/{profile}/dark_elf/female/mage.webp
-characters/{profile}/orc/male/warrior.webp
-characters/{profile}/orc/male/mage.webp
-characters/{profile}/orc/female/warrior.webp
-characters/{profile}/orc/female/mage.webp
-characters/{profile}/dwarf/male/default.webp
-characters/{profile}/dwarf/female/default.webp
-characters/{profile}/kamael/male/default.webp
-characters/{profile}/kamael/female/default.webp
-characters/{profile}/ertheia/male/warrior.webp
-characters/{profile}/ertheia/male/mage.webp
-characters/{profile}/ertheia/female/warrior.webp
-characters/{profile}/ertheia/female/mage.webp
-characters/{profile}/sylph/male/default.webp
-characters/{profile}/sylph/female/default.webp
-characters/{profile}/fallback/male/default.webp
-characters/{profile}/fallback/female/default.webp
-characters/{profile}/fallback/neutral/default.webp
+public/uploads/game-assets/characters/common/human/female/mage.webp
 ```
 
-WebP is recommended; PNG, JPG, and JPEG are also supported. Use square images of the same dimensions.
+Server-specific overrides have priority and use:
 
-Owner overrides under `public/uploads/game-assets/characters` have priority: `servers/{server_id}` first, then `common`, then the external profile pack.
+```text
+public/uploads/game-assets/characters/servers/{server_id}/human/female/mage.webp
+```
+
+Resolution order:
+
+1. Server-specific image.
+2. Shared image from `characters/common`.
+3. Built-in text fallback.
+
+WebP is recommended; PNG, JPG, and JPEG are also supported. Use square images with consistent dimensions.
 
 ---
 
-Изображения не входят в релизные архивы KaevCMS. Положите их в `public/game-assets/characters/{profile}` по указанной выше иерархии. Пустые папки уже созданы для Interlude, Classic, High Five и Shine Maker. Серверные и общие переопределения из `public/uploads/game-assets/characters` имеют приоритет.
+KaevCMS не включает изображения персонажей. Общие изображения владельца сайта хранятся здесь:
+
+```text
+public/uploads/game-assets/characters/common
+```
+
+Аватары общие для всех хроник. Внутри `common` используется структура `раса/пол/архетип.webp`. Например:
+
+```text
+public/uploads/game-assets/characters/common/human/female/mage.webp
+```
+
+Индивидуальное изображение для конкретного игрового сервера имеет приоритет:
+
+```text
+public/uploads/game-assets/characters/servers/{server_id}/human/female/mage.webp
+```
+
+Папки `interlude`, `classic`, `high-five` и `shine-maker` для аватаров не используются. Изображения не входят в релизные архивы и не перезаписываются обновлениями.

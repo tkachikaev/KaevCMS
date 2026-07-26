@@ -5,6 +5,11 @@
     if ($rows === []) {
         $rows = [['item_id' => '', 'amount' => '']];
     }
+    $previewUrl = route('admin.module-pages.promo-codes.items.preview', [
+        'adminPath' => $adminPath,
+        'server' => '__SERVER__',
+        'item' => '__ITEM__',
+    ]);
 @endphp
 @csrf
 @if($promoCode->exists)
@@ -57,6 +62,9 @@
             data-promo-rewards-editor
             data-max-rows="100"
             data-limit-message="{{ __('module-promo-codes::messages.reward_limit_reached') }}"
+            data-preview-url="{{ $previewUrl }}"
+            data-unknown-item="{{ __('module-promo-codes::messages.unknown_item') }}"
+            data-enter-item="{{ __('module-promo-codes::messages.enter_item_id') }}"
         >
             <div class="settings-card-heading">
                 <div>
@@ -67,8 +75,18 @@
 
             <div class="promo-reward-list" data-promo-reward-list>
                 @foreach($rows as $index => $row)
+                    @php($previewItemId = (int) (is_array($row) ? ($row['item_id'] ?? 0) : 0))
+                    @php($previewServerId = (int) old('game_server_id', $promoCode->game_server_id ?? 0))
+                    @php($previewItem = $previewItemId > 0 ? $gameItemCatalog->findForServer($previewServerId > 0 ? $previewServerId : null, $previewItemId) : null)
                     <div class="promo-reward-row" data-promo-reward-row>
-                        <div class="form-group">
+                        <span class="promo-reward-preview" data-promo-reward-preview aria-hidden="true">
+                            @if(is_array($previewItem) && ($previewItem['icon'] ?? null))
+                                <img src="{{ $previewItem['icon'] }}" alt="" width="48" height="48">
+                            @else
+                                <i>◇</i>
+                            @endif
+                        </span>
+                        <div class="form-group promo-reward-item-field">
                             <label for="reward_item_{{ $index }}">{{ __('module-promo-codes::messages.item_id') }}</label>
                             <input
                                 id="reward_item_{{ $index }}"
@@ -81,13 +99,9 @@
                                 data-promo-reward-item
                                 @disabled(! $canManage)
                             >
-                            @php($previewItemId = (int) (is_array($row) ? ($row['item_id'] ?? 0) : 0))
-                            @php($previewServerId = (int) old('game_server_id', $promoCode->game_server_id ?? 0))
-                            @if($previewItemId > 0 && ($previewItemName = $gameItemCatalog->knownName($previewServerId, $previewItemId)))
-                                <small class="promo-reward-name-preview">{{ $previewItemName }}</small>
-                            @endif
+                            <small class="promo-reward-name-preview" data-promo-reward-name>{{ is_array($previewItem) ? $previewItem['name'] : __('module-promo-codes::messages.enter_item_id') }}</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group promo-reward-amount-field">
                             <label for="reward_amount_{{ $index }}">{{ __('module-promo-codes::messages.amount') }}</label>
                             <input
                                 id="reward_amount_{{ $index }}"
@@ -123,11 +137,13 @@
 
                 <template data-promo-reward-template>
                     <div class="promo-reward-row" data-promo-reward-row>
-                        <div class="form-group">
+                        <span class="promo-reward-preview" data-promo-reward-preview aria-hidden="true"><i>◇</i></span>
+                        <div class="form-group promo-reward-item-field">
                             <label>{{ __('module-promo-codes::messages.item_id') }}</label>
                             <input type="number" min="1" step="1" inputmode="numeric" data-promo-reward-item>
+                            <small class="promo-reward-name-preview" data-promo-reward-name>{{ __('module-promo-codes::messages.enter_item_id') }}</small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group promo-reward-amount-field">
                             <label>{{ __('module-promo-codes::messages.amount') }}</label>
                             <input type="number" min="1" step="1" inputmode="numeric" data-promo-reward-amount>
                         </div>

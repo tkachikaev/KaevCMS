@@ -19,8 +19,6 @@ foreach ([
     "'public/uploads/.htaccess'",
     "'playwright-report/'",
     "'test-results/'",
-    "'public/game-assets/'",
-    'webp|png|jpe?g|gif|svg',
     '\'storage/\'',
     '\'vendor/\'',
     'version_compare($minimum, $maximum',
@@ -92,7 +90,11 @@ if (! is_array($deletionHistory)
     || ($deletionHistory['0.34.7'] ?? null) !== ['core/deployment/windows/apply-0.34.6.ps1']
     || ($deletionHistory['0.34.8'] ?? null) !== ['core/deployment/windows/apply-0.34.7.ps1']
     || ($deletionHistory['0.34.9'] ?? null) !== ['core/deployment/windows/apply-0.34.8.ps1']
-    || ($deletionHistory['0.35.0'] ?? null) !== ['core/deployment/windows/apply-0.34.9.ps1']) {
+    || ($deletionHistory['0.35.0'] ?? null) !== ['core/deployment/windows/apply-0.34.9.ps1']
+    || ($deletionHistory['0.36.0'] ?? null) !== ['core/deployment/windows/apply-0.35.0.ps1', 'public/game-assets']
+    || ($deletionHistory['0.36.1'] ?? null) !== ['core/deployment/windows/apply-0.36.0.ps1']
+    || ($deletionHistory['0.36.2'] ?? null) !== ['core/deployment/windows/apply-0.36.1.ps1']
+    || ($deletionHistory['0.36.3'] ?? null) !== ['core/deployment/windows/apply-0.36.2.ps1']) {
     throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
 }
 

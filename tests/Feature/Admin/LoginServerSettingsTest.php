@@ -298,7 +298,7 @@ class LoginServerSettingsTest extends TestCase
             'database_host' => '127.0.0.1',
             'database_port' => 3306,
             'database_name' => 'l2jmobiusinterlude',
-            'database_username' => 'l2forge',
+            'database_username' => 'kaevcms_db',
             'database_password' => 'SecretDatabasePassword',
             'database_charset' => 'utf8mb4',
         ];

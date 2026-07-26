@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.36.3 - 2026-07-26
+
+- Fixed the Windows updater runtime-directory contract so it recreates the canonical `public/uploads/game-assets/items` parent directory together with `common` and `servers`.
+- Hardened the module catalogue Playwright regression by selecting each module through its exact heading instead of broad descendant text matching, while preserving the required single-column row layout.
+- Runtime module behavior, database schemas, item resolution, Daily Rewards, Promo Codes, themes, and dependencies were not changed.
+
+## 0.36.2 - 2026-07-26
+
+- Fixed shared item icon lookup under `public/uploads/game-assets/items/common` and server overrides under `items/servers/{server_id}`.
+- Stabilized Daily Rewards dialog dismissal so dragging from inside the dialog to the backdrop cannot close it accidentally.
+- Added item previews and aligned reward fields in the Promo Codes administration form; updated Promo Codes to 1.2.0 and Daily Rewards to 1.2.1.
+- Added the documented empty game-asset directory structure and repaired recovery from interrupted 0.35.0, 0.36.0, and 0.36.1 Windows updates.
+
+## 0.36.1 - 2026-07-26
+
+- Fixed `ReleaseMetadataTest` so the shared-hosting builder assertion treats `$path` as literal source text instead of interpolating an undefined PHP variable.
+- Rewrote the new game-asset release assertions as Pint-compatible single-quoted literals. Runtime game assets, Daily Rewards, module dialogs, database schemas, modules, themes, and dependencies were not changed.
+
+## 0.36.0 - 2026-07-26
+
+- Consolidated all owner-managed game images under `public/uploads/game-assets`. Shared item icons may use either numeric item IDs or catalog icon keys; server-specific overrides remain under `items/servers/{server_id}`.
+- Removed the obsolete `public/game-assets` tree, profile-specific item image folders, `common` image folders, and chronicle-specific character avatar directories. Character avatars now use one shared `{race}/{gender}/{archetype}` hierarchy with optional server overrides.
+- Updated the Web Installer, Windows setup/update workflows, release builders, documentation, and regression tests for the canonical protected upload paths. Release archives still exclude all owner uploads.
+- Improved the Daily Rewards day editor: item ID and amount inputs are aligned, the modal action is named **Apply**, unsaved changes remain visible, bulk fill requires confirmation, and navigation warns before discarding edits.
+- Restyled Daily Rewards and Promo Codes result dialogs as theme-specific frosted-glass surfaces while retaining opaque browser fallbacks and accessible contrast.
+- Removed pre-release `l2forge:*`, `l2cms:*`, and `cms:about` runtime aliases plus the old administration-menu localStorage migration. The historical rebrand database migration remains intact.
+- Updated Daily Rewards to 1.2.0 and both player-account themes to 1.4.1. Composer/npm dependencies, database schemas, game drivers, item catalog data, and reward-delivery schemas were not changed.
+
 ## 0.35.0 - 2026-07-26
 
 - Rebuilt the Modules catalogue as a compact single-column list inspired by the News catalogue. Module names and descriptions now lead each row, artwork uses a fixed 124×124 preview, metadata and capabilities stay readable, and status/actions remain aligned on the right.

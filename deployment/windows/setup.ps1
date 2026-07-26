@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$SkipTests
 )
 
@@ -226,6 +226,33 @@ $directories = @(
     'public\uploads\game-assets\items\common',
     'public\uploads\game-assets\items\servers',
     'public\uploads\game-assets\characters\common',
+    'public\uploads\game-assets\characters\common\human\male',
+    'public\uploads\game-assets\characters\common\human\female',
+    'public\uploads\game-assets\characters\common\human\neutral',
+    'public\uploads\game-assets\characters\common\elf\male',
+    'public\uploads\game-assets\characters\common\elf\female',
+    'public\uploads\game-assets\characters\common\elf\neutral',
+    'public\uploads\game-assets\characters\common\dark_elf\male',
+    'public\uploads\game-assets\characters\common\dark_elf\female',
+    'public\uploads\game-assets\characters\common\dark_elf\neutral',
+    'public\uploads\game-assets\characters\common\orc\male',
+    'public\uploads\game-assets\characters\common\orc\female',
+    'public\uploads\game-assets\characters\common\orc\neutral',
+    'public\uploads\game-assets\characters\common\dwarf\male',
+    'public\uploads\game-assets\characters\common\dwarf\female',
+    'public\uploads\game-assets\characters\common\dwarf\neutral',
+    'public\uploads\game-assets\characters\common\kamael\male',
+    'public\uploads\game-assets\characters\common\kamael\female',
+    'public\uploads\game-assets\characters\common\kamael\neutral',
+    'public\uploads\game-assets\characters\common\ertheia\male',
+    'public\uploads\game-assets\characters\common\ertheia\female',
+    'public\uploads\game-assets\characters\common\ertheia\neutral',
+    'public\uploads\game-assets\characters\common\sylph\male',
+    'public\uploads\game-assets\characters\common\sylph\female',
+    'public\uploads\game-assets\characters\common\sylph\neutral',
+    'public\uploads\game-assets\characters\common\fallback\male',
+    'public\uploads\game-assets\characters\common\fallback\female',
+    'public\uploads\game-assets\characters\common\fallback\neutral',
     'public\uploads\game-assets\characters\servers'
 )
 

@@ -40,6 +40,7 @@ foreach ($guides as $language => $path) {
         'public/uploads/news',
         'public/uploads/pages',
         'public/uploads/settings',
+        'public/uploads/game-assets',
     ] as $required) {
         if (! str_contains($contents, $required)) {
             throw new RuntimeException("{$language} VDS guide is missing: {$required}");

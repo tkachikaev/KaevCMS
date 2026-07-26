@@ -7,16 +7,6 @@ Artisan::command('kaevcms:about', function () {
     $this->info('KaevCMS — open-source CMS for Lineage II servers.');
 })->purpose('Show KaevCMS information');
 
-Artisan::command('l2forge:about', function () {
-    $this->warn('The l2forge:about alias is deprecated. Use kaevcms:about.');
-    $this->info('KaevCMS — open-source CMS for Lineage II servers.');
-})->purpose('Legacy alias for kaevcms:about');
-
-Artisan::command('cms:about', function () {
-    $this->warn('The cms:about alias is deprecated. Use kaevcms:about.');
-    $this->info('KaevCMS — open-source CMS for Lineage II servers.');
-})->purpose('Legacy alias for kaevcms:about');
-
 Schedule::command('kaevcms:scheduler-heartbeat')
     ->everyMinute();
 

@@ -37,12 +37,17 @@ KaevCMS использует один GameServer-драйвер с профил�
 
 Ручные названия из `lang/{locale}/items.php`, включая переопределения конкретного сервера, имеют приоритет. При отсутствии русского перевода используется английское название из каталога.
 
-Изображения не входят в релизы KaevCMS. Исходные WebP размещаются в общем пуле без копий:
+Игровые изображения являются runtime-данными владельца и хранятся в одном каноническом каталоге:
 
 ```text
-public/game-assets/items/{icon_key}.webp
+public/uploads/game-assets
 ```
 
-Старый путь `public/game-assets/items/{profile}/{icon_key}.webp` остаётся fallback, поэтому пакет Interlude из 0.33.6 продолжает работать. Числовые серверные и общие переопределения из `public/uploads/game-assets/items` сохраняют приоритет.
+Общие иконки предметов ищутся сначала по числовому ID, затем по ключу иконки из каталога профиля:
 
-Пакеты аватаров находятся в `public/game-assets/characters/{profile}`. Пустая иерархия создана для всех четырёх профилей; серверные и общие переопределения из `public/uploads/game-assets/characters` имеют приоритет.
+```text
+public/uploads/game-assets/items/common/{item_id}.webp
+public/uploads/game-assets/items/common/{icon_key}.webp
+```
+
+Общие иконки предметов размещаются в `items/common`, а переопределения конкретного сервера — в `items/servers/{server_id}`. Аватары персонажей общие для всех хроник и используют `characters/common/{race}/{gender}/{archetype}.webp`; серверные переопределения размещаются в `characters/servers/{server_id}`. Старый `public/game-assets` и разбиение аватаров по хроникам больше не используются.

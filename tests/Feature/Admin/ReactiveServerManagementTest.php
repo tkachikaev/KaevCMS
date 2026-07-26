@@ -45,7 +45,7 @@ class ReactiveServerManagementTest extends TestCase
             ->set('databaseHost', '127.0.0.1')
             ->set('databasePort', '3306')
             ->set('databaseName', 'l2jmobiusinterlude')
-            ->set('databaseUsername', 'l2forge')
+            ->set('databaseUsername', 'kaevcms_db')
             ->set('databasePassword', 'SecretLoginPassword')
             ->set('databaseCharset', 'utf8mb4')
             ->call('testConnection')
@@ -104,7 +104,7 @@ class ReactiveServerManagementTest extends TestCase
             ->set('databaseHost', '127.0.0.1')
             ->set('databasePort', '3306')
             ->set('databaseName', 'l2jmobiusinterlude')
-            ->set('databaseUsername', 'l2forge')
+            ->set('databaseUsername', 'kaevcms_db')
             ->set('databasePassword', 'SecretLoginPassword')
             ->set('databaseCharset', 'utf8mb4')
             ->call('save')
@@ -521,7 +521,7 @@ PHP);
             ->set('databaseHost', '127.0.0.1')
             ->set('databasePort', '3306')
             ->set('databaseName', 'l2jmobiusinterlude')
-            ->set('databaseUsername', 'l2forge')
+            ->set('databaseUsername', 'kaevcms_db')
             ->set('databasePassword', 'SecretLoginPassword')
             ->set('databaseCharset', 'utf8mb4')
             ->set('servicePort', '70000')
@@ -551,7 +551,7 @@ PHP);
             'database_host' => '127.0.0.1',
             'database_port' => 3306,
             'database_name' => 'l2jmobiusinterlude',
-            'database_username' => 'l2forge',
+            'database_username' => 'kaevcms_db',
             'database_password' => 'SecretLoginPassword',
             'database_charset' => 'utf8mb4',
         ];

@@ -63,19 +63,6 @@ class BrandingTest extends TestCase
         $this->assertStringContainsString('KaevCMS', Artisan::output());
     }
 
-    public function test_legacy_about_aliases_remain_available(): void
-    {
-        foreach (['l2forge:about', 'cms:about'] as $legacyCommand) {
-            $this->assertSame(0, Artisan::call($legacyCommand));
-
-            $output = Artisan::output();
-
-            $this->assertStringContainsString('deprecated', $output);
-            $this->assertStringContainsString('kaevcms:about', $output);
-            $this->assertStringContainsString('KaevCMS', $output);
-        }
-    }
-
     public function test_package_metadata_uses_kaevcms_name(): void
     {
         $composer = json_decode((string) file_get_contents(base_path('composer.json')), true);

@@ -972,10 +972,10 @@ html.account-modal-open { overflow: hidden; }
 }
 
 /* KaevCMS 0.34.8 — shared module operation result dialog. */
-/* L2 Obsidian Luxury 1.4.0 — shared module operation result modal. */
+/* L2 Obsidian Luxury 1.4.1 — shared module operation result modal. */
 .account-operation-modal{width:min(620px,calc(100vw - 32px));max-width:620px;padding:0;border:0;border-radius:24px;background:transparent;color:var(--account-text)}
 .account-operation-modal::backdrop{background:rgba(4,7,11,.76);backdrop-filter:blur(6px)}
-.account-operation-modal-card{overflow:hidden;border:1px solid var(--account-line);border-radius:24px;background:var(--account-panel);box-shadow:0 28px 80px rgba(0,0,0,.45)}
+.account-operation-modal-card{overflow:hidden;border:1px solid rgba(202,171,112,.24);border-radius:24px;background:rgba(13,19,29,.78);box-shadow:0 28px 80px rgba(0,0,0,.48);backdrop-filter:blur(22px) saturate(135%);-webkit-backdrop-filter:blur(22px) saturate(135%)}
 .account-operation-modal-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:16px;padding:24px 26px 20px;border-bottom:1px solid var(--account-line-soft)}
 .account-operation-modal-mark{display:grid;width:50px;height:50px;place-items:center;border-radius:16px;background:rgba(34,197,94,.12);color:#4ade80;font-size:26px;font-weight:900}
 .account-operation-modal-error .account-operation-modal-mark{background:rgba(239,68,68,.12);color:#f87171}.account-operation-modal-warning .account-operation-modal-mark{background:rgba(245,158,11,.14);color:#fbbf24}
@@ -988,3 +988,8 @@ html.account-modal-open { overflow: hidden; }
 .account-operation-modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:17px 26px 22px;border-top:1px solid var(--account-line-soft)}
 html.account-operation-modal-open{overflow:hidden}
 @media(max-width:560px){.account-operation-modal{width:calc(100vw - 20px)}.account-operation-modal-head{grid-template-columns:auto minmax(0,1fr);padding:20px 18px 16px}.account-operation-modal-close{position:absolute;top:12px;right:12px}.account-operation-rewards{grid-template-columns:repeat(2,minmax(0,1fr));padding:18px}.account-operation-modal-actions{display:grid;padding:14px 18px 18px}.account-operation-modal-actions .account-button{justify-content:center}}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.account-operation-modal-card{background:var(--account-panel)}}
+/* KaevCMS 0.36.0 — frosted operation result details. */
+.account-operation-reward{border-color:rgba(202,171,112,.16);background:rgba(25,34,48,.56);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.account-operation-modal-actions{background:rgba(8,13,21,.22)}

@@ -12,8 +12,6 @@ class DisableAdminTwoFactorCommand extends Command
 {
     protected $signature = 'kaevcms:admin-2fa:disable {email : Administrator email} {--force : Skip confirmation}';
 
-    protected $aliases = ['l2forge:admin-2fa:disable'];
-
     protected $description = 'Disable two-factor authentication for an administrator';
 
     public function handle(AuditLogger $auditLogger): int

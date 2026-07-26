@@ -38,7 +38,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
             'host' => '127.0.0.1',
             'port' => 3306,
             'database' => 'l2jmobiusinterlude',
-            'username' => 'l2forge',
+            'username' => 'kaevcms_db',
             'password' => 'SecretDatabasePassword',
             'charset' => 'utf8mb4',
         ], [], true);

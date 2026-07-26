@@ -18,7 +18,24 @@
         const noReward = editor.dataset.noReward ?? 'No reward';
         const activeLabel = editor.dataset.activeLabel ?? 'Active';
         const inactiveLabel = editor.dataset.inactiveLabel ?? 'Inactive';
+        const unsavedConfirm = editor.dataset.unsavedConfirm ?? 'Unsaved changes will be lost. Continue?';
+        const copyEmptyConfirm = editor.dataset.copyEmptyConfirm ?? 'Fill every empty day with this reward?';
         const previewTimers = new WeakMap();
+        const unsavedIndicators = Array.from(editor.querySelectorAll('[data-daily-unsaved]'));
+        let dirty = false;
+        let submitting = false;
+
+        const setDirty = (value = true) => {
+            dirty = value;
+            editor.classList.toggle('has-unsaved-changes', dirty);
+            unsavedIndicators.forEach((indicator) => {
+                if (indicator instanceof HTMLElement) {
+                    indicator.hidden = !dirty;
+                }
+            });
+        };
+
+        const confirmDiscard = () => !dirty || submitting || window.confirm(unsavedConfirm);
 
         const dayElements = () => Array.from(editor.querySelectorAll('[data-daily-day]'));
         const rowsFor = (day) => Array.from(day.querySelectorAll('[data-daily-item-row]'));
@@ -254,6 +271,7 @@
                     return;
                 }
                 list.append(template.content.cloneNode(true));
+                setDirty();
                 synchronizeDay(day);
                 rowsFor(day).at(-1)?.querySelector('[data-daily-item-id]')?.focus();
                 return;
@@ -272,6 +290,7 @@
                 } else {
                     row.remove();
                 }
+                setDirty();
                 synchronizeDay(day);
                 return;
             }
@@ -290,6 +309,7 @@
                 if (enabled instanceof HTMLInputElement && previousEnabled instanceof HTMLInputElement) {
                     enabled.checked = previousEnabled.checked;
                 }
+                setDirty();
                 synchronizeDay(day);
                 return;
             }
@@ -301,9 +321,10 @@
                     return;
                 }
                 const values = valuesFrom(sourceDay);
-                if (values.length === 0) {
+                if (values.length === 0 || !window.confirm(copyEmptyConfirm)) {
                     return;
                 }
+                let copied = false;
                 dayElements().forEach((targetDay) => {
                     if (targetDay === sourceDay || targetDay.querySelector('[data-daily-day-enabled]')?.disabled || configuredRows(targetDay).length > 0) {
                         return;
@@ -311,8 +332,10 @@
                     replaceRows(targetDay, values);
                     const enabled = targetDay.querySelector('[data-daily-day-enabled]');
                     if (enabled instanceof HTMLInputElement) enabled.checked = true;
+                    copied = true;
                     synchronizeDay(targetDay);
                 });
+                if (copied) setDirty();
             }
         }, { signal });
 
@@ -324,6 +347,7 @@
             if (!(day instanceof HTMLElement)) {
                 return;
             }
+            setDirty();
             if (event.target.matches('[data-daily-item-id]')) {
                 const previousTimer = previewTimers.get(event.target);
                 if (previousTimer) window.clearTimeout(previousTimer);
@@ -333,13 +357,51 @@
         }, { signal });
 
         editor.addEventListener('change', (event) => {
-            const day = event.target instanceof Element ? event.target.closest('[data-daily-day]') : null;
-            if (day instanceof HTMLElement) updateTile(day);
+            if (!(event.target instanceof Element)) {
+                return;
+            }
+
+            setDirty();
+            const day = event.target.closest('[data-daily-day]');
+            if (day instanceof HTMLElement) {
+                updateTile(day);
+            }
         }, { signal });
 
         editor.addEventListener('submit', () => {
+            submitting = true;
+            setDirty(false);
             dayElements().forEach((day) => closeDay(day));
         }, { signal });
+
+        const beforeUnload = (event) => {
+            if (!dirty || submitting) {
+                return;
+            }
+
+            event.preventDefault();
+            event.returnValue = '';
+        };
+        window.addEventListener('beforeunload', beforeUnload, { signal });
+
+        document.addEventListener('click', (event) => {
+            if (!dirty || submitting || !(event.target instanceof Element)) {
+                return;
+            }
+
+            const link = event.target.closest('a[href]');
+            if (!(link instanceof HTMLAnchorElement) || link.target === '_blank' || link.hasAttribute('download')) {
+                return;
+            }
+
+            const destination = new URL(link.href, window.location.href);
+            if (destination.href === window.location.href || confirmDiscard()) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }, { capture: true, signal });
 
         dayElements().forEach((day) => {
             synchronizeDay(day);
@@ -350,8 +412,12 @@
                     fetchPreview(itemInput);
                 }
             });
-            day.addEventListener('click', (event) => {
-                if (event.target === day) closeDay(day);
+            day.addEventListener('pointerdown', (event) => {
+                if (event.target === day && event.isPrimary && event.button === 0) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeDay(day);
+                }
             }, { signal });
             day.addEventListener('close', () => document.documentElement.classList.remove('admin-modal-open'), { signal });
         });
@@ -363,6 +429,7 @@
 
         return () => {
             abortController.abort();
+            setDirty(false);
             document.documentElement.classList.remove('admin-modal-open');
         };
     };

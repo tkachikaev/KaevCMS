@@ -52,7 +52,7 @@ class CharacterAppearanceResolverTest extends TestCase
         $this->assertSame('unknown/neutral/default', $unknownRace['avatar_key']);
     }
 
-    public function test_server_pack_has_priority_and_common_pack_remains_a_fallback(): void
+    public function test_server_pack_has_priority_and_shared_pack_remains_a_fallback(): void
     {
         $root = storage_path('framework/testing/character-assets-'.Str::uuid());
         config()->set('cms.game_assets.uploads_path', $root);
@@ -83,27 +83,27 @@ class CharacterAppearanceResolverTest extends TestCase
         }
     }
 
-    public function test_external_interlude_avatar_pack_is_used_when_no_upload_override_exists(): void
+    public function test_chronicle_specific_avatar_directories_are_not_used(): void
     {
-        $uploads = storage_path('framework/testing/character-upload-assets-'.Str::uuid());
-        $standard = storage_path('framework/testing/character-standard-assets-'.Str::uuid());
-        config()->set('cms.game_assets.uploads_path', $uploads);
-        config()->set('cms.game_assets.standard_path', $standard);
+        $root = storage_path('framework/testing/character-assets-'.Str::uuid());
+        config()->set('cms.game_assets.uploads_path', $root);
 
         try {
-            File::ensureDirectoryExists($standard.'/characters/interlude/human/female');
-            File::put($standard.'/characters/interlude/human/female/mage.webp', 'standard');
+            File::ensureDirectoryExists($root.'/characters/interlude/human/female');
+            File::put($root.'/characters/interlude/human/female/mage.webp', 'legacy');
 
+            $this->assertNull(app(CharacterAppearanceResolver::class)->resolve(null, 0, 1, 10)['avatar_url']);
+
+            File::ensureDirectoryExists($root.'/characters/common/human/female');
+            File::put($root.'/characters/common/human/female/mage.webp', 'shared');
             $appearance = app(CharacterAppearanceResolver::class)->resolve(null, 0, 1, 10);
 
-            $this->assertNotNull($appearance['avatar_url']);
             $this->assertStringEndsWith(
-                '/game-assets/characters/interlude/human/female/mage.webp',
-                $appearance['avatar_url'],
+                '/uploads/game-assets/characters/common/human/female/mage.webp',
+                (string) $appearance['avatar_url'],
             );
         } finally {
-            File::deleteDirectory($uploads);
-            File::deleteDirectory($standard);
+            File::deleteDirectory($root);
         }
     }
 

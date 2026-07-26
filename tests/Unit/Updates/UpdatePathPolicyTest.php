@@ -66,6 +66,7 @@ class UpdatePathPolicyTest extends TestCase
             'split path configuration' => ['core/bootstrap/kaevcms-public-path.php'],
             'bootstrap cache' => ['core/bootstrap/cache/config.php'],
             'uploads' => ['public/uploads/news/cover.webp'],
+            'game asset uploads' => ['public/uploads/game-assets/items/common/etc_adena_i00.webp'],
             'public storage' => ['public/storage/private.txt'],
             'shared-hosting core locator' => ['public/kaevcms-path.php'],
             'traversal' => ['core/../.env'],

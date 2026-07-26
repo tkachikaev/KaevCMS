@@ -19,8 +19,8 @@ The bundled `daily-rewards` module adds monthly reward calendars for KaevCMS gam
 3. Select **Create calendar**.
 4. Select a game server, year, and month. The time zone is read automatically from the main KaevCMS settings.
 5. Click a day in the visual month grid. A modal editor opens with item names, available icons, IDs, and amounts.
-6. Enable the day, add or remove `Item ID` + `Amount` rows, then close the day dialog.
-7. Use **Copy previous day** and **Fill empty days with this reward** for faster setup, then save and enable the calendar.
+6. Enable the day, add or remove `Item ID` + `Amount` rows, then select **Apply**. The dialog updates the visual calendar but does not save the whole month yet.
+7. Use **Copy previous day** and **Fill empty days with this reward** for faster setup. Bulk filling requires confirmation. An unsaved-changes badge remains visible until **Save calendar** is selected.
 
 Unknown item IDs may be saved for custom server items. When the item catalogue knows an ID, the localized name and available icon are displayed.
 

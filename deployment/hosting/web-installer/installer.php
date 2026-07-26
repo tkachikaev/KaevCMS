@@ -853,7 +853,40 @@ function performInstallation(string $root, string $publicRoot, string $envExampl
                 throw new InstallerOperationException('Required directory is not writable: '.$directory);
             }
         }
-        foreach (['uploads/account-avatars', 'uploads/game-assets/items/common', 'uploads/game-assets/items/servers', 'uploads/game-assets/characters/common', 'uploads/game-assets/characters/servers'] as $directory) {
+        foreach ([
+            'uploads/account-avatars',
+            'uploads/game-assets/items/common',
+            'uploads/game-assets/items/servers',
+            'uploads/game-assets/characters/common',
+            'uploads/game-assets/characters/common/human/male',
+            'uploads/game-assets/characters/common/human/female',
+            'uploads/game-assets/characters/common/human/neutral',
+            'uploads/game-assets/characters/common/elf/male',
+            'uploads/game-assets/characters/common/elf/female',
+            'uploads/game-assets/characters/common/elf/neutral',
+            'uploads/game-assets/characters/common/dark_elf/male',
+            'uploads/game-assets/characters/common/dark_elf/female',
+            'uploads/game-assets/characters/common/dark_elf/neutral',
+            'uploads/game-assets/characters/common/orc/male',
+            'uploads/game-assets/characters/common/orc/female',
+            'uploads/game-assets/characters/common/orc/neutral',
+            'uploads/game-assets/characters/common/dwarf/male',
+            'uploads/game-assets/characters/common/dwarf/female',
+            'uploads/game-assets/characters/common/dwarf/neutral',
+            'uploads/game-assets/characters/common/kamael/male',
+            'uploads/game-assets/characters/common/kamael/female',
+            'uploads/game-assets/characters/common/kamael/neutral',
+            'uploads/game-assets/characters/common/ertheia/male',
+            'uploads/game-assets/characters/common/ertheia/female',
+            'uploads/game-assets/characters/common/ertheia/neutral',
+            'uploads/game-assets/characters/common/sylph/male',
+            'uploads/game-assets/characters/common/sylph/female',
+            'uploads/game-assets/characters/common/sylph/neutral',
+            'uploads/game-assets/characters/common/fallback/male',
+            'uploads/game-assets/characters/common/fallback/female',
+            'uploads/game-assets/characters/common/fallback/neutral',
+            'uploads/game-assets/characters/servers',
+        ] as $directory) {
             if (! ensureWritableDirectory($publicRoot.'/'.$directory)) {
                 throw new InstallerOperationException('Required public directory is not writable: '.$directory);
             }

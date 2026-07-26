@@ -1,4 +1,4 @@
-# KaevCMS 0.35.0
+# KaevCMS 0.36.3
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.35.0 rebuilds the administration catalogues for modules, public themes, and player-account themes as compact single-row lists with fixed-size previews, left-aligned names and descriptions, stable metadata, and consistently aligned status actions.
+Version 0.36.3 fixes the Windows runtime-directory update contract and stabilizes the module catalogue browser regression. The unified `public/uploads/game-assets` structure, Daily Rewards improvements, Promo Codes previews, and frosted module result dialogs remain unchanged.
 
 ### Requirements
 
@@ -72,7 +72,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
 - Trusted modules with strict manifests and immutable migration tracking.
 - Bundled promo-code and monthly Daily Rewards modules.
-- Versioned chronicle item catalogs with localized manual overrides and one external original-name icon pool.
+- Versioned chronicle item catalogs with localized manual overrides and one owner-managed icon pool under `public/uploads/game-assets`.
 - Cumulative Web Updater for shared hosting and a deployment-user CLI updater for VDS, with hashes, backups, recovery, and path policy.
 
 ### Development and quality
@@ -93,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.35.0 перестраивает каталоги модулей, публичных тем и тем личного кабинета в компактные списки по одной строке: название и описание находятся слева, превью имеют фиксированный размер, а статусы и действия всегда выровнены.
+Версия 0.36.3 исправляет создание рабочих каталогов игрового контента при Windows-обновлении и стабилизирует браузерную проверку каталога модулей. Единая структура `public/uploads/game-assets`, улучшения Daily Rewards, превью Promo Codes и матовые окна результатов модулей не изменялись.
 
 ### Требования
 

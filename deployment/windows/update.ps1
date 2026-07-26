@@ -6,14 +6,14 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$expectedFromVersion = '0.34.9'
-$expectedToVersion = '0.35.0'
-$legacyApplyScriptName = 'deployment\windows\apply-0.34.9.ps1'
-$legacyApplySha256 = '97ce47b6198f2a3762813ae312918a88b2c0624f33647519c73681908957783e'
+$expectedFromVersion = '0.36.2'
+$expectedToVersion = '0.36.3'
+$legacyApplyScriptName = 'deployment\windows\apply-0.36.2.ps1'
+$legacyApplySha256 = 'ca11ccf7976825e8d9fdeac238c8abeefb1145b2cc345695364a845137dde011'
 $previousComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
 $currentComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
-$recoverableFromVersions = @('0.34.8')
-$supersededPendingTargets = @('0.34.9')
+$recoverableFromVersions = @('0.34.9', '0.35.0', '0.36.0', '0.36.1')
+$supersededPendingTargets = @('0.35.0', '0.36.0', '0.36.1', '0.36.2')
 
 $supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
 if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
@@ -155,6 +155,7 @@ function Get-ObsoleteReleaseArtifacts {
         'resources\views\account',
         'resources\views\livewire\account',
         'public\assets\account',
+        'public\game-assets',
         'integrations\mobius-interlude\reward-bridge',
         'integrations\reward-queue\remove-legacy-bridge.sql',
         'app\Contracts\GameRewardDeliveryGateway.php',
@@ -264,9 +265,39 @@ $directories = @(
     'public\uploads\settings\logo',
     'public\uploads\settings\favicon',
     'public\uploads\account-avatars',
+    'public\uploads\game-assets',
+    'public\uploads\game-assets\items',
     'public\uploads\game-assets\items\common',
     'public\uploads\game-assets\items\servers',
+    'public\uploads\game-assets\characters',
     'public\uploads\game-assets\characters\common',
+    'public\uploads\game-assets\characters\common\human\male',
+    'public\uploads\game-assets\characters\common\human\female',
+    'public\uploads\game-assets\characters\common\human\neutral',
+    'public\uploads\game-assets\characters\common\elf\male',
+    'public\uploads\game-assets\characters\common\elf\female',
+    'public\uploads\game-assets\characters\common\elf\neutral',
+    'public\uploads\game-assets\characters\common\dark_elf\male',
+    'public\uploads\game-assets\characters\common\dark_elf\female',
+    'public\uploads\game-assets\characters\common\dark_elf\neutral',
+    'public\uploads\game-assets\characters\common\orc\male',
+    'public\uploads\game-assets\characters\common\orc\female',
+    'public\uploads\game-assets\characters\common\orc\neutral',
+    'public\uploads\game-assets\characters\common\dwarf\male',
+    'public\uploads\game-assets\characters\common\dwarf\female',
+    'public\uploads\game-assets\characters\common\dwarf\neutral',
+    'public\uploads\game-assets\characters\common\kamael\male',
+    'public\uploads\game-assets\characters\common\kamael\female',
+    'public\uploads\game-assets\characters\common\kamael\neutral',
+    'public\uploads\game-assets\characters\common\ertheia\male',
+    'public\uploads\game-assets\characters\common\ertheia\female',
+    'public\uploads\game-assets\characters\common\ertheia\neutral',
+    'public\uploads\game-assets\characters\common\sylph\male',
+    'public\uploads\game-assets\characters\common\sylph\female',
+    'public\uploads\game-assets\characters\common\sylph\neutral',
+    'public\uploads\game-assets\characters\common\fallback\male',
+    'public\uploads\game-assets\characters\common\fallback\female',
+    'public\uploads\game-assets\characters\common\fallback\neutral',
     'public\uploads\game-assets\characters\servers'
 )
 foreach ($directory in $directories) {

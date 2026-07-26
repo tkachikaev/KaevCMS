@@ -257,10 +257,6 @@ function logicalTarget(string $relative): string
 
 function excluded(string $path): bool
 {
-    if (isExternalGameAssetImage($path)) {
-        return true;
-    }
-
     $exact = [
         '.env',
         '.env.example',
@@ -293,15 +289,6 @@ function excluded(string $path): bool
     }
 
     return false;
-}
-
-function isExternalGameAssetImage(string $path): bool
-{
-    if (! str_starts_with(strtolower($path), 'public/game-assets/')) {
-        return false;
-    }
-
-    return preg_match('/\.(?:webp|png|jpe?g|gif|svg)\z/iD', $path) === 1;
 }
 
 /** @return array<string, list<string>> */

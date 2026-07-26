@@ -59,7 +59,7 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_daily_reward_claims'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'daily-rewards',
-            'version' => '1.1.0',
+            'version' => '1.2.1',
             'enabled' => true,
         ]);
 
@@ -170,7 +170,9 @@ class DailyRewardsModuleTest extends TestCase
             ->assertSee('daily-reward-admin-dialog', false)
             ->assertSee('data-daily-item-preview', false)
             ->assertSee('Адена')
-            ->assertSee('assets/admin/js/daily-rewards.js', false);
+            ->assertSee('assets/admin/js/daily-rewards.js', false)
+            ->assertSee('data-daily-unsaved', false)
+            ->assertSee(__('module-daily-rewards::messages.apply_day'));
 
         $this->actingAs($owner, 'admin')
             ->get('/admin/extensions/daily-rewards/'.$calendar->id.'/items/57')

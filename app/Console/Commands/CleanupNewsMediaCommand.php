@@ -12,8 +12,6 @@ class CleanupNewsMediaCommand extends Command
         {--hours=24 : Keep unreferenced files newer than this many hours}
         {--dry-run : Show what would be removed without deleting files}';
 
-    protected $aliases = ['l2forge:news-media-clean'];
-
     protected $description = 'Remove old unreferenced cover and content images from news uploads';
 
     public function handle(NewsImageStorage $storage): int

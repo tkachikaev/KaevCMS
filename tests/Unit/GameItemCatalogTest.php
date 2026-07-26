@@ -88,7 +88,7 @@ PHP);
             $this->assertSame('Adena', $adenaEnglish['name']);
             $this->assertSame('Necklace of Anguish', $necklace['name']);
             $this->assertStringEndsWith(
-                '/game-assets/items/accessary_necklace_of_anguish_i00.webp',
+                '/uploads/game-assets/items/common/accessary_necklace_of_anguish_i00.webp',
                 (string) $necklace['icon'],
             );
         } finally {
@@ -103,7 +103,7 @@ PHP);
         $catalogDirectory = storage_path('framework/testing/item-catalog-'.$suffix);
         $assetDirectory = storage_path('framework/testing/item-assets-'.$suffix);
         File::ensureDirectoryExists($catalogDirectory);
-        File::ensureDirectoryExists($assetDirectory.'/items');
+        File::ensureDirectoryExists($assetDirectory.'/items/common');
         File::put($catalogDirectory.'/classic.json', json_encode([
             90010 => ['icon' => 'shared_chronicle_i00', 'name_en' => 'Classic Token'],
         ], JSON_THROW_ON_ERROR));
@@ -113,9 +113,9 @@ PHP);
         File::put($catalogDirectory.'/shine-maker.json', json_encode([
             90010 => ['icon' => 'shared_chronicle_i00', 'name_en' => 'Shine Maker Token'],
         ], JSON_THROW_ON_ERROR));
-        File::put($assetDirectory.'/items/shared_chronicle_i00.webp', 'shared');
+        File::put($assetDirectory.'/items/common/shared_chronicle_i00.webp', 'shared');
         config()->set('cms.game_assets.item_catalog_path', $catalogDirectory);
-        config()->set('cms.game_assets.standard_path', $assetDirectory);
+        config()->set('cms.game_assets.uploads_path', $assetDirectory);
 
         $classic = new GameServer(['chronicle' => 'Classic 3.5 Tales Untold']);
         $classic->setAttribute('id', 10);
@@ -136,7 +136,7 @@ PHP);
             $this->assertSame($classicItem['icon'], $highFiveItem['icon']);
             $this->assertSame($classicItem['icon'], $shineMakerItem['icon']);
             $this->assertStringEndsWith(
-                '/game-assets/items/shared_chronicle_i00.webp',
+                '/uploads/game-assets/items/common/shared_chronicle_i00.webp',
                 (string) $classicItem['icon'],
             );
             $profiles = app(GameItemProfileCatalog::class);
@@ -155,30 +155,30 @@ PHP);
         $catalogDirectory = storage_path('framework/testing/item-catalog-'.$suffix);
         $assetDirectory = storage_path('framework/testing/item-assets-'.$suffix);
         File::ensureDirectoryExists($catalogDirectory);
-        File::ensureDirectoryExists($assetDirectory.'/items');
+        File::ensureDirectoryExists($assetDirectory.'/items/common');
         File::put($catalogDirectory.'/interlude.json', json_encode([
             90011 => ['icon' => 'interlude_token_i00', 'name_en' => 'Interlude Token'],
         ], JSON_THROW_ON_ERROR));
         File::put($catalogDirectory.'/classic.json', json_encode([
             90011 => ['icon' => 'classic_token_i00', 'name_en' => 'Classic Token'],
         ], JSON_THROW_ON_ERROR));
-        File::put($assetDirectory.'/items/classic_token_i00.webp', 'classic');
+        File::put($assetDirectory.'/items/common/classic_token_i00.webp', 'classic');
         config()->set('cms.game_assets.item_catalog_path', $catalogDirectory);
-        config()->set('cms.game_assets.standard_path', $assetDirectory);
+        config()->set('cms.game_assets.uploads_path', $assetDirectory);
         $server = GameServer::factory()->create(['chronicle' => 'Classic']);
 
         try {
             $item = app(GameItemCatalog::class)->findForServer($server->id, 90011, 'en');
 
             $this->assertSame('Classic Token', $item['name']);
-            $this->assertStringEndsWith('/game-assets/items/classic_token_i00.webp', (string) $item['icon']);
+            $this->assertStringEndsWith('/uploads/game-assets/items/common/classic_token_i00.webp', (string) $item['icon']);
         } finally {
             File::deleteDirectory($catalogDirectory);
             File::deleteDirectory($assetDirectory);
         }
     }
 
-    public function test_legacy_profile_item_folder_remains_a_fallback(): void
+    public function test_profile_subdirectories_are_not_used_for_item_icons(): void
     {
         $suffix = (string) Str::uuid();
         $catalogDirectory = storage_path('framework/testing/item-catalog-'.$suffix);
@@ -190,16 +190,13 @@ PHP);
         ], JSON_THROW_ON_ERROR));
         File::put($assetDirectory.'/items/interlude/legacy_token_i00.webp', 'legacy');
         config()->set('cms.game_assets.item_catalog_path', $catalogDirectory);
-        config()->set('cms.game_assets.standard_path', $assetDirectory);
+        config()->set('cms.game_assets.uploads_path', $assetDirectory);
 
         try {
             $item = app(GameItemCatalog::class)->find('interlude', 90012, 'en');
 
             $this->assertSame('Legacy Token', $item['name']);
-            $this->assertStringEndsWith(
-                '/game-assets/items/interlude/legacy_token_i00.webp',
-                (string) $item['icon'],
-            );
+            $this->assertNull($item['icon']);
         } finally {
             File::deleteDirectory($catalogDirectory);
             File::deleteDirectory($assetDirectory);
@@ -263,18 +260,18 @@ PHP);
         $catalogDirectory = storage_path('framework/testing/item-catalog-'.$suffix);
         $assetDirectory = storage_path('framework/testing/item-assets-'.$suffix);
         File::ensureDirectoryExists($catalogDirectory);
-        File::ensureDirectoryExists($assetDirectory.'/items');
+        File::ensureDirectoryExists($assetDirectory.'/items/common');
         File::put(
             $catalogDirectory.'/interlude.json',
             json_encode((object) $items, JSON_THROW_ON_ERROR),
         );
 
         foreach ($icons as $icon) {
-            File::put($assetDirectory.'/items/'.$icon.'.webp', $icon);
+            File::put($assetDirectory.'/items/common/'.$icon.'.webp', $icon);
         }
 
         config()->set('cms.game_assets.item_catalog_path', $catalogDirectory);
-        config()->set('cms.game_assets.standard_path', $assetDirectory);
+        config()->set('cms.game_assets.uploads_path', $assetDirectory);
 
         return [$catalogDirectory, $assetDirectory];
     }

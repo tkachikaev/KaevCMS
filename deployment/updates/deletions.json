@@ -126,5 +126,18 @@
     ],
     "0.35.0": [
         "core/deployment/windows/apply-0.34.9.ps1"
+    ],
+    "0.36.0": [
+        "core/deployment/windows/apply-0.35.0.ps1",
+        "public/game-assets"
+    ],
+    "0.36.1": [
+        "core/deployment/windows/apply-0.36.0.ps1"
+    ],
+    "0.36.2": [
+        "core/deployment/windows/apply-0.36.1.ps1"
+    ],
+    "0.36.3": [
+        "core/deployment/windows/apply-0.36.2.ps1"
     ]
 }

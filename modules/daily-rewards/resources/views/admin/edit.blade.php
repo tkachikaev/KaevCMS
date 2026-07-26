@@ -17,6 +17,8 @@
     data-active-label="{{ __('module-daily-rewards::messages.active') }}"
     data-inactive-label="{{ __('module-daily-rewards::messages.inactive') }}"
     data-limit-message="{{ __('module-daily-rewards::messages.validation_max') }}"
+    data-unsaved-confirm="{{ __('module-daily-rewards::messages.unsaved_confirm') }}"
+    data-copy-empty-confirm="{{ __('module-daily-rewards::messages.copy_to_empty_confirm') }}"
 >
     @csrf
     @method('PUT')
@@ -49,6 +51,7 @@
                 <h2>{{ __('module-daily-rewards::messages.calendar_preview_title') }}</h2>
                 <p>{{ __('module-daily-rewards::messages.calendar_preview_help') }}</p>
             </div>
+            @if($canManage)<span class="daily-reward-unsaved-status" data-daily-unsaved hidden>{{ __('module-daily-rewards::messages.unsaved_changes') }}</span>@endif
         </div>
 
         <div class="daily-reward-admin-weekdays" aria-hidden="true">
@@ -180,7 +183,7 @@
                 </div>
 
                 <footer class="daily-reward-admin-dialog-actions">
-                    <button class="button button-primary" type="button" data-daily-day-close>{{ __('module-daily-rewards::messages.done') }}</button>
+                    <button class="button button-primary" type="button" data-daily-day-close>{{ __('module-daily-rewards::messages.apply_day') }}</button>
                 </footer>
             </div>
         </dialog>
@@ -198,6 +201,7 @@
     @endif
 
     <div class="admin-actions-panel editor-actions">
+        @if($canManage)<span class="daily-reward-unsaved-status daily-reward-unsaved-status-footer" data-daily-unsaved hidden>{{ __('module-daily-rewards::messages.unsaved_changes') }}</span>@endif
         <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.daily-rewards.index', ['adminPath' => $adminPath]) }}">{{ __('module-daily-rewards::messages.cancel') }}</a>
         @if($canManage)<button class="button button-primary" type="submit">{{ __('module-daily-rewards::messages.save') }}</button>@endif
     </div>

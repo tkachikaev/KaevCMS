@@ -37,12 +37,17 @@ The selected profile is derived from the GameServer chronicle. Values such as `C
 
 Manual names from `lang/{locale}/items.php`, including per-server overrides, have priority. Russian falls back to the catalog English name when a manual translation is absent.
 
-Image binaries are external to KaevCMS releases. Put original-name WebP files in the deduplicated shared pool:
+Image binaries are owner-managed runtime data under one canonical root:
 
 ```text
-public/game-assets/items/{icon_key}.webp
+public/uploads/game-assets
 ```
 
-The older profile path `public/game-assets/items/{profile}/{icon_key}.webp` remains a fallback, so the 0.33.6 Interlude pack is preserved. Numeric server/common overrides under `public/uploads/game-assets/items` keep priority.
+Shared item icons are resolved by numeric ID and then by the profile catalog icon key:
 
-Character packs live under `public/game-assets/characters/{profile}`. Empty hierarchies are included for all four profiles; server/common overrides under `public/uploads/game-assets/characters` keep priority.
+```text
+public/uploads/game-assets/items/common/{item_id}.webp
+public/uploads/game-assets/items/common/{icon_key}.webp
+```
+
+Shared item icons use `items/common`, while server-specific overrides use `items/servers/{server_id}`. Character avatars are shared by all chronicles and use `characters/common/{race}/{gender}/{archetype}.webp`; server overrides use `characters/servers/{server_id}`. The old `public/game-assets` and chronicle-specific avatar folders are not used.

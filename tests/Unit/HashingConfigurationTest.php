@@ -19,9 +19,9 @@ class HashingConfigurationTest extends TestCase
         $this->assertTrue(config('hashing.bcrypt.verify'));
         $this->assertTrue(config('hashing.argon.verify'));
 
-        $hash = Hash::make('l2forge-test-password');
+        $hash = Hash::make('kaevcms-test-password');
 
-        $this->assertTrue(Hash::check('l2forge-test-password', $hash));
+        $this->assertTrue(Hash::check('kaevcms-test-password', $hash));
         $this->assertSame($expected, password_get_info($hash)['algoName']);
     }
 

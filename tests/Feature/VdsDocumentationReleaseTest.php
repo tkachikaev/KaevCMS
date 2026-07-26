@@ -38,6 +38,7 @@ class VdsDocumentationReleaseTest extends TestCase
                 'public/uploads/news',
                 'public/uploads/pages',
                 'public/uploads/settings',
+                'public/uploads/game-assets',
                 'chmod -R 777 /var/www/kaevcms',
             ] as $required) {
                 $this->assertStringContainsString($required, $guide);

@@ -8,7 +8,9 @@ use App\Models\Admin;
 use App\Models\GameServer;
 use App\Services\AuditLogger;
 use App\Services\GameAssets\GameAssetUrlResolver;
+use App\Services\GameAssets\GameItemCatalog;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,7 @@ final class AdminPromoCodeController extends Controller
     public function __construct(
         private readonly AuditLogger $auditLogger,
         private readonly GameAssetUrlResolver $assets,
+        private readonly GameItemCatalog $items,
     ) {}
 
     public function index(): View
@@ -120,6 +123,19 @@ final class AdminPromoCodeController extends Controller
             'gameServers' => $this->gameServers(),
             'rewardRows' => $rows !== [] ? $rows : $this->emptyRewardRows(),
             'canManage' => $this->canManage(),
+        ]);
+    }
+
+    public function itemPreview(GameServer $server, int $item): JsonResponse
+    {
+        abort_unless($item > 0, 404);
+        $server->loadMissing('translations');
+
+        return response()->json([
+            'item_id' => $item,
+            'name' => $this->items->knownName($server, $item)
+                ?? __('module-promo-codes::messages.unknown_item'),
+            'icon_url' => $this->assets->itemIcon($server, $item),
         ]);
     }
 

@@ -73,13 +73,9 @@ try {
         'Browser run artifacts must be excluded from production hosting packages.',
     );
     assertPackageBuilder(
-        packagePathExcluded('game-assets/items/etc_adena_i00.webp', $productionExclusions)
-            && packagePathExcluded('game-assets/items/interlude/etc_adena_i00.webp', $productionExclusions)
-            && packagePathExcluded('game-assets/characters/classic/human/female/mage.webp', $productionExclusions)
-            && ! packagePathExcluded('game-assets/items/.gitkeep', $productionExclusions)
-            && ! packagePathExcluded('game-assets/items/interlude/.gitkeep', $productionExclusions)
-            && ! packagePathExcluded('game-assets/README-RU.txt', $productionExclusions),
-        'External game image binaries must be excluded while folder markers and instructions remain.',
+        packagePathExcluded('uploads/game-assets/items/common/57.webp', ['uploads', 'storage', 'hot'])
+            && packagePathExcluded('uploads/game-assets/characters/common/human/female/mage.webp', ['uploads', 'storage', 'hot']),
+        'Owner-managed game image uploads must never enter production hosting packages.',
     );
 
     createCleanRuntimeSkeleton($target);

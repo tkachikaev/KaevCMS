@@ -48,7 +48,7 @@ class PromoCodesModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_promo_codes', 'deleted_at'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
-            'version' => '1.1.0',
+            'version' => '1.2.0',
             'enabled' => true,
         ]);
 
@@ -63,17 +63,39 @@ class PromoCodesModuleTest extends TestCase
     {
         $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
         $reward = new PromoCodeReward(['item_id' => 907, 'amount' => 1]);
-        $root = storage_path('framework/testing/standard-game-assets-'.Str::uuid());
-        File::ensureDirectoryExists($root.'/items/interlude');
-        File::put($root.'/items/interlude/accessary_necklace_of_anguish_i00.webp', 'icon');
-        config()->set('cms.game_assets.standard_path', $root);
+        $root = storage_path('framework/testing/game-assets-'.Str::uuid());
+        File::ensureDirectoryExists($root.'/items/common');
+        File::put($root.'/items/common/accessary_necklace_of_anguish_i00.webp', 'icon');
+        config()->set('cms.game_assets.uploads_path', $root);
 
         try {
             $this->assertSame('Necklace of Anguish', $reward->displayName($server));
             $this->assertStringEndsWith(
-                '/game-assets/items/interlude/accessary_necklace_of_anguish_i00.webp',
+                '/uploads/game-assets/items/common/accessary_necklace_of_anguish_i00.webp',
                 (string) app(GameAssetUrlResolver::class)->itemIcon($server, 907),
             );
+        } finally {
+            File::deleteDirectory($root);
+        }
+    }
+
+    public function test_admin_item_preview_uses_selected_server_catalog_and_common_icon(): void
+    {
+        $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $root = storage_path('framework/testing/game-assets-'.Str::uuid());
+        File::ensureDirectoryExists($root.'/items/common');
+        File::put($root.'/items/common/etc_adena_i00.webp', 'icon');
+        config()->set('cms.game_assets.uploads_path', $root);
+
+        try {
+            $this->actingAs($owner, 'admin')
+                ->get('/admin/extensions/promo-codes/items/'.$server->id.'/57')
+                ->assertOk()
+                ->assertJsonPath('item_id', 57)
+                ->assertJsonPath('name', 'Адена')
+                ->assertJsonPath('icon_url', fn (?string $url): bool => is_string($url)
+                    && str_ends_with($url, '/uploads/game-assets/items/common/etc_adena_i00.webp'));
         } finally {
             File::deleteDirectory($root);
         }
@@ -103,6 +125,8 @@ class PromoCodesModuleTest extends TestCase
             ->assertSee(__('module-promo-codes::messages.select_server'))
             ->assertSee('data-promo-rewards-editor', false)
             ->assertSee('data-promo-reward-add', false)
+            ->assertSee('data-promo-reward-preview', false)
+            ->assertSee('data-preview-url=', false)
             ->assertSee('assets/admin/js/promo-codes.js', false);
 
         $this->assertSame(2, substr_count($response->getContent(), 'name="rewards['));
@@ -526,7 +550,7 @@ class PromoCodesModuleTest extends TestCase
         app(GameServerSettings::class)->delete($server);
     }
 
-    public function test_game_asset_resolver_prefers_server_specific_item_icon_and_falls_back_to_common(): void
+    public function test_game_asset_resolver_prefers_server_specific_item_icon_and_falls_back_to_shared(): void
     {
         $root = storage_path('framework/testing/game-assets-'.Str::uuid());
         config()->set('cms.game_assets.uploads_path', $root);
@@ -535,7 +559,7 @@ class PromoCodesModuleTest extends TestCase
 
         try {
             File::ensureDirectoryExists($root.'/items/common');
-            File::put($root.'/items/common/57.webp', 'common');
+            File::put($root.'/items/common/57.webp', 'shared');
             $this->assertStringEndsWith('/uploads/game-assets/items/common/57.webp', $resolver->itemIcon($server, 57));
 
             File::ensureDirectoryExists($root.'/items/servers/'.$server->id);

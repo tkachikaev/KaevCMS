@@ -66,6 +66,11 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString("'public/uploads/news' => \$publicRoot.'/uploads/news'", $installer);
         $this->assertStringContainsString("'public/uploads/pages' => \$publicRoot.'/uploads/pages'", $installer);
         $this->assertStringContainsString("'public/uploads/settings' => \$publicRoot.'/uploads/settings'", $installer);
+        $this->assertStringContainsString("'public/uploads/game-assets' => \$publicRoot.'/uploads/game-assets'", $installer);
+        $this->assertStringContainsString("'uploads/game-assets/items/common'", $installer);
+        $this->assertStringContainsString("'uploads/game-assets/items/servers'", $installer);
+        $this->assertStringContainsString("'uploads/game-assets/characters/common'", $installer);
+        $this->assertStringContainsString("'uploads/game-assets/characters/servers'", $installer);
         $this->assertStringNotContainsString('requireSecureInstallerSubmission', $installer);
         $this->assertStringNotContainsString('https_required', $installer);
         $this->assertStringContainsString('hash_equals($expected, $provided)', $installer);

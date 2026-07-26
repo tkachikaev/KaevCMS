@@ -3,3 +3,14 @@
 @media(max-width:1120px){.daily-reward-admin-weekdays,.daily-reward-admin-calendar-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.daily-reward-admin-weekdays{display:none}.daily-reward-admin-calendar-blank{display:none}.daily-reward-calendar-grid,.daily-reward-weekdays{grid-template-columns:repeat(4,minmax(0,1fr))}.daily-reward-weekdays{display:none}.daily-reward-calendar-blank{display:none}}
 @media(max-width:760px){.daily-reward-admin-calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.daily-reward-item-row{grid-template-columns:48px minmax(0,1fr) minmax(110px,.45fr)}.daily-reward-item-remove{grid-column:1/-1;width:100%}.daily-reward-account-filters{grid-template-columns:1fr}.daily-reward-account-summary{display:grid}.daily-reward-account-summary p{text-align:left}.daily-reward-calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.daily-reward-admin-dialog{width:calc(100vw - 18px)}.daily-reward-admin-dialog-head{padding:18px 16px 15px}.daily-reward-admin-dialog-body{padding:16px}.daily-reward-admin-dialog-actions{padding:13px 16px 16px}.daily-reward-item-row{grid-template-columns:48px minmax(0,1fr)}.daily-reward-item-row>.form-group:nth-of-type(2){grid-column:1/-1}.daily-reward-admin-calendar-day{min-height:118px}.daily-reward-calendar-grid{grid-template-columns:1fr}.daily-reward-calendar-day{min-height:0}}
+
+/* KaevCMS 0.36.0 — aligned reward rows and unsaved-state feedback. */
+.daily-reward-item-row{align-items:start}
+.daily-reward-item-row .form-group input{min-height:42px}
+.daily-reward-item-preview,.daily-reward-item-remove{margin-top:28px}
+.daily-reward-unsaved-status{display:inline-flex;align-items:center;min-height:30px;padding:5px 10px;border:1px solid var(--admin-warning-border,#fde68a);border-radius:999px;background:var(--admin-warning-soft,#fffbeb);color:var(--admin-warning,#92400e);font-size:10px;font-weight:800;white-space:nowrap}
+.daily-reward-unsaved-status[hidden]{display:none}
+.daily-reward-unsaved-status-footer{margin-right:auto}
+.daily-reward-admin-editor.has-unsaved-changes .editor-actions{border-color:var(--admin-warning-border,#fde68a);box-shadow:0 8px 24px rgba(146,64,14,.08)}
+@media(max-width:760px){.daily-reward-item-row{grid-template-columns:48px minmax(0,1fr) minmax(105px,.42fr) 38px}.daily-reward-item-remove{grid-column:auto;width:38px}.daily-reward-unsaved-status-footer{width:100%;justify-content:center;margin-right:0}.editor-actions:has(.daily-reward-unsaved-status-footer){flex-wrap:wrap}}
+@media(max-width:520px){.daily-reward-item-row{grid-template-columns:48px minmax(0,1fr)}.daily-reward-item-row>.form-group:nth-of-type(2){grid-column:2}.daily-reward-item-remove{grid-column:2;width:100%;margin-top:0}.daily-reward-item-preview{margin-top:28px}}

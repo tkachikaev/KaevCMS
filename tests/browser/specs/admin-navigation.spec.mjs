@@ -154,8 +154,14 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(page.getByRole('heading', { name: 'Модули' }).first()).toBeVisible();
     await expect(page.getByText('Жизненный цикл модулей')).toBeVisible();
     await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toBeVisible();
-    const promoModule = page.locator('.module-card').filter({ hasText: 'Promo Codes' });
-    const dailyModule = page.locator('.module-card').filter({ hasText: 'Daily Rewards' });
+    const promoModule = page.locator('.module-card').filter({
+        has: page.getByRole('heading', { name: 'Promo Codes', exact: true }),
+    });
+    const dailyModule = page.locator('.module-card').filter({
+        has: page.getByRole('heading', { name: 'Daily Rewards', exact: true }),
+    });
+    await expect(promoModule).toHaveCount(1);
+    await expect(dailyModule).toHaveCount(1);
     await expect(promoModule).toBeVisible();
     await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
     await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
@@ -369,7 +375,30 @@ test('daily rewards module edits calendar days in a visual dialog', async ({ pag
 
     await dialog.getByRole('button', { name: /Добавить предмет/ }).click();
     await expect(dialog.locator('[data-daily-item-row]')).toHaveCount(3);
-    await dialog.getByRole('button', { name: 'Готово', exact: true }).click();
+    await expect(page.locator('[data-daily-unsaved]:visible').first()).toContainText('Есть несохранённые изменения');
+    const itemInput = dialog.locator('[data-daily-item-id]').first();
+    const amountInput = dialog.locator('[data-daily-item-amount]').first();
+    const itemBox = await itemInput.boundingBox();
+    const amountBox = await amountInput.boundingBox();
+    expect(itemBox).not.toBeNull();
+    expect(amountBox).not.toBeNull();
+    expect(Math.abs((itemBox?.y ?? 0) - (amountBox?.y ?? 0))).toBeLessThanOrEqual(1);
+    const dialogCard = dialog.locator('.daily-reward-admin-dialog-card');
+    const cardBox = await dialogCard.boundingBox();
+    expect(cardBox).not.toBeNull();
+    await page.mouse.move((cardBox?.x ?? 0) + 30, (cardBox?.y ?? 0) + 30);
+    await page.mouse.down();
+    await page.mouse.move(2, 2);
+    await page.mouse.up();
+    await expect(dialog).toBeVisible();
+    await page.mouse.move(2, 2);
+    await page.mouse.down();
+    await expect(dialog).not.toBeVisible();
+    await page.mouse.up();
+
+    await configuredDay.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Применить', exact: true }).click();
     await expect(dialog).not.toBeVisible();
 });
 
@@ -400,7 +429,14 @@ test('promo code module provides compact dynamic rewards deletion and status con
     await page.locator('#code').fill('browser-new');
     await page.locator('#game_server_id').selectOption({ label: 'Browser World' });
     await page.locator('#reward_item_0').fill('57');
+    await expect(page.locator('[data-promo-reward-name]').first()).toContainText('Адена');
+    await expect(page.locator('[data-promo-reward-preview]').first()).toBeVisible();
     await page.locator('#reward_amount_0').fill('500');
+    const promoItemBox = await page.locator('#reward_item_0').boundingBox();
+    const promoAmountBox = await page.locator('#reward_amount_0').boundingBox();
+    expect(promoItemBox).not.toBeNull();
+    expect(promoAmountBox).not.toBeNull();
+    expect(Math.abs((promoItemBox?.y ?? 0) - (promoAmountBox?.y ?? 0))).toBeLessThanOrEqual(1);
     await page.getByRole('button', { name: 'Создать промокод', exact: true }).click();
 
     await expect(page).toHaveURL(/\/admin\/extensions\/promo-codes$/);

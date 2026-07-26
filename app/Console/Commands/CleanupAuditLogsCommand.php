@@ -14,8 +14,6 @@ class CleanupAuditLogsCommand extends Command
         {--admin-login-days= : Delete administrator login entries older than the specified number of days}
         {--dry-run : Show the number of entries without deleting them}';
 
-    protected $aliases = ['l2forge:logs-clean'];
-
     protected $description = 'Remove expired audit and administrator login log entries';
 
     public function handle(
