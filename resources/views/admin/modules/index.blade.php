@@ -21,47 +21,22 @@
         {!! __('No modules found. Copy a module directory containing <code>module.json</code> into the <code>modules</code> directory.') !!}
     </div>
 @else
-    <div class="admin-card-grid module-grid">
+    <div class="admin-catalog-list module-list" data-module-list>
         @foreach ($modules as $module)
             <article @class([
                 'admin-card-row',
-                'theme-card',
+                'admin-catalog-row',
                 'module-card',
                 'active' => $module['enabled'],
                 'invalid' => in_array($module['status'], ['invalid', 'missing', 'migration_modified'], true),
             ])>
-                <div class="theme-preview module-mark" aria-hidden="true">
-                    @if($module['image_path'])
-                        <img src="{{ route('admin.modules.image', ['adminPath' => request()->route('adminPath'), 'module' => $module['id']]) }}?v={{ rawurlencode((string) $module['version']) }}" alt="" width="512" height="512">
-                    @else
-                        <div class="theme-preview-placeholder"><span>{{ mb_strtoupper(mb_substr($module['name'], 0, 1)) }}</span></div>
-                    @endif
-                </div>
-
-                <div class="theme-card-body">
-                    <div class="admin-card-heading theme-card-heading">
-                        <div>
-                            <h2>{{ $module['name'] }}</h2>
-                            <p>{{ $module['description'] ?: __('No module description.') }}</p>
-                        </div>
-
-                        @switch($module['status'])
-                            @case('enabled')<span class="theme-state active">{{ __('Enabled') }}</span>@break
-                            @case('disabled')<span class="theme-state ready">{{ __('Disabled') }}</span>@break
-                            @case('install_pending')<span class="theme-state ready">{{ __('Ready to install') }}</span>@break
-                            @case('migration_pending')<span class="theme-state ready">{{ __('Database update required') }}</span>@break
-                            @case('migration_error')<span class="theme-state error">{{ __('Database migration error') }}</span>@break
-                            @case('migration_modified')<span class="theme-state error">{{ __('Applied migration modified') }}</span>@break
-                            @case('migration_unavailable')<span class="theme-state error">{{ __('Migration tracking unavailable') }}</span>@break
-                            @case('update_pending')<span class="theme-state ready">{{ __('Update approval required') }}</span>@break
-                            @case('runtime_error')<span class="theme-state error">{{ __('Runtime error') }}</span>@break
-                            @case('incompatible')<span class="theme-state error">{{ __('Incompatible') }}</span>@break
-                            @case('missing')<span class="theme-state error">{{ __('Files missing') }}</span>@break
-                            @default<span class="theme-state error">{{ __('Damaged') }}</span>
-                        @endswitch
+                <div class="admin-catalog-main">
+                    <div class="admin-catalog-heading">
+                        <h2>{{ $module['name'] }}</h2>
+                        <p>{{ $module['description'] ?: __('No module description.') }}</p>
                     </div>
 
-                    <div class="theme-meta module-meta">
+                    <div class="admin-catalog-meta module-meta">
                         <span>{{ __('Version :version', ['version' => $module['version']]) }}</span>
                         <span>{{ __('Author: :author', ['author' => $module['author']]) }}</span>
                         <span>{{ __('Identifier: :id', ['id' => $module['id']]) }}</span>
@@ -116,8 +91,33 @@
                             @foreach ($module['errors'] as $error)<p>{{ $error }}</p>@endforeach
                         </div>
                     @endif
+                </div>
 
-                    <div class="admin-row-actions theme-actions module-actions">
+                <div class="admin-catalog-preview module-catalog-preview" aria-hidden="true">
+                    @if($module['image_path'])
+                        <img src="{{ route('admin.modules.image', ['adminPath' => request()->route('adminPath'), 'module' => $module['id']]) }}?v={{ rawurlencode((string) $module['version']) }}" alt="" width="512" height="512">
+                    @else
+                        <div class="admin-catalog-preview-placeholder"><span>{{ mb_strtoupper(mb_substr($module['name'], 0, 1)) }}</span></div>
+                    @endif
+                </div>
+
+                <div class="admin-catalog-side">
+                    @switch($module['status'])
+                        @case('enabled')<span class="theme-state active">{{ __('Enabled') }}</span>@break
+                        @case('disabled')<span class="theme-state ready">{{ __('Disabled') }}</span>@break
+                        @case('install_pending')<span class="theme-state ready">{{ __('Ready to install') }}</span>@break
+                        @case('migration_pending')<span class="theme-state ready">{{ __('Database update required') }}</span>@break
+                        @case('migration_error')<span class="theme-state error">{{ __('Database migration error') }}</span>@break
+                        @case('migration_modified')<span class="theme-state error">{{ __('Applied migration modified') }}</span>@break
+                        @case('migration_unavailable')<span class="theme-state error">{{ __('Migration tracking unavailable') }}</span>@break
+                        @case('update_pending')<span class="theme-state ready">{{ __('Update approval required') }}</span>@break
+                        @case('runtime_error')<span class="theme-state error">{{ __('Runtime error') }}</span>@break
+                        @case('incompatible')<span class="theme-state error">{{ __('Incompatible') }}</span>@break
+                        @case('missing')<span class="theme-state error">{{ __('Files missing') }}</span>@break
+                        @default<span class="theme-state error">{{ __('Damaged') }}</span>
+                    @endswitch
+
+                    <div class="admin-row-actions admin-catalog-actions module-actions">
                         @if ($module['can_enable'])
                             <form method="POST" action="{{ route('admin.modules.enable', ['module' => $module['id']]) }}">
                                 @csrf

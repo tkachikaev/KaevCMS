@@ -1,4 +1,4 @@
-# KaevCMS 0.34.9
+# KaevCMS 0.35.0
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.34.9 resolves the quality-gate regressions found after the module artwork and reward-dialog release. Module image validation now satisfies PHPStan, and Playwright verifies the current Daily Rewards edit label and server-bound Web Inventory links.
+Version 0.35.0 rebuilds the administration catalogues for modules, public themes, and player-account themes as compact single-row lists with fixed-size previews, left-aligned names and descriptions, stable metadata, and consistently aligned status actions.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.34.9 исправляет регрессии quality gate после добавления обложек модулей и окон наград. Проверка изображений модулей теперь соответствует PHPStan, а Playwright проверяет актуальную кнопку изменения Daily Rewards и переходы в веб-инвентарь выбранного сервера.
+Версия 0.35.0 перестраивает каталоги модулей, публичных тем и тем личного кабинета в компактные списки по одной строке: название и описание находятся слева, превью имеют фиксированный размер, а статусы и действия всегда выровнены.
 
 ### Требования
 

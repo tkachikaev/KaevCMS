@@ -6,14 +6,14 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$expectedFromVersion = '0.34.8'
-$expectedToVersion = '0.34.9'
-$legacyApplyScriptName = 'deployment\windows\apply-0.34.8.ps1'
-$legacyApplySha256 = 'e5f1cc9dd8776e00e76642262f3006246bbbe625c86790f0e3f57ecb3a251276'
+$expectedFromVersion = '0.34.9'
+$expectedToVersion = '0.35.0'
+$legacyApplyScriptName = 'deployment\windows\apply-0.34.9.ps1'
+$legacyApplySha256 = '97ce47b6198f2a3762813ae312918a88b2c0624f33647519c73681908957783e'
 $previousComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
 $currentComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
-$recoverableFromVersions = @('0.34.7')
-$supersededPendingTargets = @('0.34.8')
+$recoverableFromVersions = @('0.34.8')
+$supersededPendingTargets = @('0.34.9')
 
 $supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
 if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {

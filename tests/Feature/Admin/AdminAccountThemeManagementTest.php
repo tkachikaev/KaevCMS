@@ -31,7 +31,7 @@ class AdminAccountThemeManagementTest extends TestCase
             ->assertSee('Kaev Aurelia Account')
             ->assertSee('Дизайн личного кабинета не зависит от публичной темы сайта и административной панели.')
             ->assertSee('data-account-theme-list', false)
-            ->assertSee('class="admin-card-row theme-card theme-row', false)
+            ->assertSee('class="admin-card-row admin-catalog-row theme-card theme-row', false)
             ->assertDontSee('class="theme-grid', false);
     }
 

@@ -542,7 +542,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('.promo-reward-row', $adminStyles);
         $this->assertStringContainsString('.reward-queue-item', $adminStyles);
         $this->assertStringContainsString('.promo-reward-name-preview', $adminStyles);
-        $this->assertStringContainsString('.module-mark > img', $adminStyles);
+        $this->assertStringContainsString('.admin-catalog-row', $adminStyles);
+        $this->assertStringContainsString('.module-catalog-preview', $adminStyles);
+        $this->assertStringContainsString('.theme-catalog-preview', $adminStyles);
 
         $moduleValidator = $this->readReleaseFile('app/Support/Modules/ModuleValidator.php');
         $this->assertStringContainsString('\'assets/module.webp\'', $moduleValidator);

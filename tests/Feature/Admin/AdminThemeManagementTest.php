@@ -29,7 +29,7 @@ class AdminThemeManagementTest extends TestCase
             ->assertSee('Kaev Aurelia')
             ->assertSee('Дизайн административной панели от темы не зависит.')
             ->assertSee('data-theme-list', false)
-            ->assertSee('class="admin-card-row theme-card theme-row', false)
+            ->assertSee('class="admin-card-row admin-catalog-row theme-card theme-row', false)
             ->assertDontSee('class="theme-grid', false);
     }
 

@@ -110,17 +110,17 @@ class AdminPanelTest extends TestCase
             'views/admin/account-themes/index.blade.php',
         ] as $themeCatalogue) {
             $this->assertStringContainsString(
-                "['admin-card-row', 'theme-card'",
+                "['admin-card-row', 'admin-catalog-row', 'theme-card'",
                 File::get(resource_path($themeCatalogue)),
             );
         }
 
         $this->assertStringContainsString(
-            'class="admin-card-grid module-grid"',
+            'class="admin-catalog-list module-list"',
             File::get(resource_path('views/admin/modules/index.blade.php')),
         );
         $this->assertStringContainsString(
-            ".module-grid {\n    grid-template-columns: repeat(2, minmax(0, 1fr));",
+            ".admin-catalog-row {\n    display: grid;",
             $css,
         );
 

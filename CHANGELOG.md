@@ -1,11 +1,18 @@
 # Changelog
 
+## 0.35.0 - 2026-07-26
+
+- Rebuilt the Modules catalogue as a compact single-column list inspired by the News catalogue. Module names and descriptions now lead each row, artwork uses a fixed 124×124 preview, metadata and capabilities stay readable, and status/actions remain aligned on the right.
+- Rebuilt both public-theme and player-account-theme catalogues with the same stable row system. Theme previews use a fixed 230×130 viewport, so different source image dimensions no longer change card height or button placement.
+- Added shared responsive administration catalogue styles and PHPUnit/Playwright regressions for one-item-per-row layout, fixed preview dimensions, and left-to-right copy/preview order.
+- Composer/npm dependencies, database migrations, module versions, account-theme versions, game drivers, item catalog data, external game-image paths, and reward-delivery schemas were not changed.
+
 ## 0.34.9 - 2026-07-26
 
-- Fixed PHPStan `nullCoalesce.offset` errors in module artwork validation by reading the guaranteed `getimagesize()` width, height and MIME offsets only after the `false` result is excluded.
-- Corrected the module-artwork release assertion to match the shipped direct-child CSS selector and updated the Daily Rewards browser scenario to use the current Russian action label `Изменить`.
-- Updated Promo Codes and Daily Rewards browser expectations to preserve the intentional `?server=...` filter when opening the server-bound Web Inventory from a reward-result dialog.
-- Runtime module behavior, database migrations, bundled module versions, account-theme versions, game drivers, item catalogs and reward-delivery schemas were not changed.
+- Fixed PHPStan analysis of validated module artwork metadata by removing redundant null-coalescing operations after `getimagesize()` succeeds.
+- Updated Daily Rewards and reward-result Playwright expectations to follow the current administration action label and server-bound Web Inventory query parameter.
+- Corrected the release metadata CSS selector assertion for module artwork without changing runtime behavior.
+- Composer/npm dependencies, database migrations, module versions, account-theme versions, game drivers, item catalog data, external game-image paths, and reward-delivery schemas were not changed.
 
 ## 0.34.8 - 2026-07-26
 

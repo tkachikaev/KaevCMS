@@ -123,5 +123,8 @@
     ],
     "0.34.9": [
         "core/deployment/windows/apply-0.34.8.ps1"
+    ],
+    "0.35.0": [
+        "core/deployment/windows/apply-0.34.9.ps1"
     ]
 }

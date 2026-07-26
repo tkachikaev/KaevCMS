@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$fromVersion = '0.34.8'
-$toVersion = '0.34.9'
+$fromVersion = '0.34.9'
+$toVersion = '0.35.0'
 
 if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'artisan') -PathType Leaf)) {
     throw 'The KaevCMS project root could not be found.'
@@ -58,6 +58,8 @@ $requiredFiles = @(
     'app\Http\Controllers\Admin\ModuleController.php'
     'routes\admin.php'
     'resources\views\admin\modules\index.blade.php'
+    'resources\views\admin\themes\index.blade.php'
+    'resources\views\admin\account-themes\index.blade.php'
     'resources\views\components\account-operation-modal.blade.php'
     'modules\daily-rewards\assets\module.webp'
     'modules\daily-rewards\module.json'
@@ -91,6 +93,9 @@ $requiredFiles = @(
     'docs\en\DAILY_REWARDS.md'
     'docs\ru\DAILY_REWARDS.md'
     'tests\Feature\Account\AccountNavigationTest.php'
+    'tests\Feature\Admin\AdminPanelTest.php'
+    'tests\Feature\Admin\AdminThemeManagementTest.php'
+    'tests\Feature\Admin\AdminAccountThemeManagementTest.php'
     'tests\Feature\BundledAureliaThemesTest.php'
     'tests\Feature\Modules\ModuleFoundationTest.php'
     'tests\Feature\Modules\DailyRewardsModuleTest.php'
@@ -115,7 +120,7 @@ foreach ($requiredFile in $requiredFiles) {
 }
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release resolves PHPStan and Playwright regressions from the module artwork and reward-dialog update.'
+Write-Host 'This release rebuilds module and theme catalogues as compact single-row administration lists.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

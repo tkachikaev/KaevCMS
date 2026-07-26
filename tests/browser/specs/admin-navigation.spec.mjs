@@ -159,6 +159,52 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(promoModule).toBeVisible();
     await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
     await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
+
+    const promoBox = await promoModule.boundingBox();
+    const dailyBox = await dailyModule.boundingBox();
+    const headingBox = await promoModule.locator('.admin-catalog-heading').boundingBox();
+    const previewBox = await promoModule.locator('.module-catalog-preview').boundingBox();
+    expect(promoBox).not.toBeNull();
+    expect(dailyBox).not.toBeNull();
+    expect(headingBox).not.toBeNull();
+    expect(previewBox).not.toBeNull();
+    expect(Math.abs(promoBox.x - dailyBox.x)).toBeLessThanOrEqual(1);
+    expect(dailyBox.y).toBeGreaterThan(promoBox.y + promoBox.height - 1);
+    expect(headingBox.x).toBeLessThan(previewBox.x);
+    expect(Math.round(previewBox.width)).toBe(124);
+    expect(Math.round(previewBox.height)).toBe(124);
+});
+
+test('theme catalogues use stable single-row cards with copy on the left', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/themes');
+    const publicThemes = page.locator('[data-theme-list] .theme-card');
+    await expect(publicThemes).toHaveCount(2);
+
+    const firstPublicTheme = publicThemes.first();
+    const secondPublicTheme = publicThemes.nth(1);
+    const firstPublicBox = await firstPublicTheme.boundingBox();
+    const secondPublicBox = await secondPublicTheme.boundingBox();
+    const publicHeadingBox = await firstPublicTheme.locator('.admin-catalog-heading').boundingBox();
+    const publicPreviewBox = await firstPublicTheme.locator('.theme-catalog-preview').boundingBox();
+    expect(firstPublicBox).not.toBeNull();
+    expect(secondPublicBox).not.toBeNull();
+    expect(publicHeadingBox).not.toBeNull();
+    expect(publicPreviewBox).not.toBeNull();
+    expect(Math.abs(firstPublicBox.x - secondPublicBox.x)).toBeLessThanOrEqual(1);
+    expect(secondPublicBox.y).toBeGreaterThan(firstPublicBox.y + firstPublicBox.height - 1);
+    expect(publicHeadingBox.x).toBeLessThan(publicPreviewBox.x);
+    expect(Math.round(publicPreviewBox.width)).toBe(230);
+    expect(Math.round(publicPreviewBox.height)).toBe(130);
+
+    await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
+    const accountThemes = page.locator('[data-account-theme-list] .theme-card');
+    await expect(accountThemes).toHaveCount(2);
+    const firstAccountBox = await accountThemes.first().boundingBox();
+    const secondAccountBox = await accountThemes.nth(1).boundingBox();
+    expect(firstAccountBox).not.toBeNull();
+    expect(secondAccountBox).not.toBeNull();
+    expect(Math.abs(firstAccountBox.x - secondAccountBox.x)).toBeLessThanOrEqual(1);
+    expect(secondAccountBox.y).toBeGreaterThan(firstAccountBox.y + firstAccountBox.height - 1);
 });
 
 test('login server settings keep network fields on a separate tab and footer fixed after connection test', async ({ page }) => {
