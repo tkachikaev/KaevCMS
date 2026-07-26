@@ -54,6 +54,12 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('public\index.php', $applyScript);
         $this->assertStringContainsString('public\.htaccess', $applyScript);
         $this->assertStringContainsString('app\Services\Updates\UpdatePathPolicy.php', $applyScript);
+        $this->assertStringContainsString('resources\game-items\interlude.json', $applyScript);
+        $this->assertStringContainsString('resources\game-items\classic.json', $applyScript);
+        $this->assertStringContainsString('resources\game-items\high-five.json', $applyScript);
+        $this->assertStringContainsString('resources\game-items\shine-maker.json', $applyScript);
+        $this->assertStringContainsString('public\game-assets\README-RU.txt', $applyScript);
+        $this->assertStringNotContainsString('.webp', $applyScript);
         $this->assertStringContainsString('deployment\windows\build-shared-hosting-package.ps1', $applyScript);
         $this->assertStringContainsString('app\Services\Updates\SystemUpdateInstaller.php', $applyScript);
         $this->assertStringContainsString('app\Services\Updates\SystemUpdateRecovery.php', $applyScript);
@@ -439,8 +445,24 @@ class ReleaseMetadataTest extends TestCase
     {
         $this->assertFileExists(app_path('Services/GameAssets/GameAssetUrlResolver.php'));
         $this->assertFileExists(app_path('Services/GameAssets/GameItemCatalog.php'));
+        $this->assertFileExists(app_path('Services/GameAssets/GameItemProfileCatalog.php'));
         $this->assertFileExists(lang_path('ru/items.php'));
         $this->assertFileExists(lang_path('en/items.php'));
+        $this->assertFileExists(resource_path('game-items/interlude.json'));
+        $this->assertFileExists(resource_path('game-items/classic.json'));
+        $this->assertFileExists(resource_path('game-items/high-five.json'));
+        $this->assertFileExists(resource_path('game-items/shine-maker.json'));
+        $this->assertFileExists(public_path('game-assets/README-RU.txt'));
+        $this->assertFileExists(public_path('game-assets/items/.gitkeep'));
+        $this->assertFileExists(public_path('game-assets/items/interlude/.gitkeep'));
+        $this->assertFileDoesNotExist(public_path('game-assets/items/etc_adena_i00.webp'));
+        $this->assertFileDoesNotExist(public_path('game-assets/items/interlude/etc_adena_i00.webp'));
+        $assetIterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(public_path('game-assets')));
+        foreach ($assetIterator as $assetFile) {
+            if ($assetFile->isFile()) {
+                $this->assertNotSame('webp', strtolower($assetFile->getExtension()), 'Release source must not embed external game images.');
+            }
+        }
         $this->assertFileExists(base_path('docs/GAME_ITEMS.md'));
         $this->assertFileExists(app_path('Services/GameAssets/CharacterAppearanceResolver.php'));
         $this->assertFileExists(config_path('character-appearances.php'));
@@ -493,6 +515,41 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('$servers[$serverId]', $itemCatalog);
         $this->assertStringContainsString('fallbackCandidates', $itemCatalog);
         $this->assertStringContainsString('Lang::get(\'Game item\'', $itemCatalog);
+        $this->assertStringContainsString('GameItemProfileCatalog', $itemCatalog);
+
+        $interludeCatalog = json_decode(
+            $this->readReleaseFile('resources/game-items/interlude.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $this->assertCount(9208, $interludeCatalog);
+        $this->assertSame('etc_adena_i00', $interludeCatalog[57]['icon']);
+        $this->assertSame('Adena', $interludeCatalog[57]['name_en']);
+        $this->assertSame('accessary_necklace_of_anguish_i00', $interludeCatalog[907]['icon']);
+        $this->assertSame('Necklace of Anguish', $interludeCatalog[907]['name_en']);
+
+        $classicCatalog = json_decode(
+            $this->readReleaseFile('resources/game-items/classic.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $highFiveCatalog = json_decode(
+            $this->readReleaseFile('resources/game-items/high-five.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $shineMakerCatalog = json_decode(
+            $this->readReleaseFile('resources/game-items/shine-maker.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $this->assertCount(19791, $classicCatalog);
+        $this->assertCount(19198, $highFiveCatalog);
+        $this->assertCount(19790, $shineMakerCatalog);
+        $this->assertSame('etc_adena_i00', $classicCatalog[57]['icon']);
+        $this->assertSame('etc_adena_i00', $highFiveCatalog[57]['icon']);
+        $this->assertSame('etc_adena_i00', $shineMakerCatalog[57]['icon']);
+
 
         $rewardJournal = $this->readReleaseFile('resources/views/admin/rewards/index.blade.php');
         $this->assertStringContainsString('@section(\'title\', __(\'Reward queue\'))', $rewardJournal);
@@ -505,6 +562,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('firstCharacterAvatar', $resolver);
         $this->assertStringContainsString('str_starts_with($key', $resolver);
         $this->assertStringContainsString('\'webp\', \'png\', \'jpg\', \'jpeg\'', $resolver);
+        $this->assertStringContainsString("'items/'.$icon.'.webp'", $resolver);
+        $this->assertStringContainsString("'items/'.$profile.'/'.$icon.'.webp'", $resolver);
+        $this->assertStringContainsString('externalCharacterAvatar', $resolver);
 
         $appearanceResolver = $this->readReleaseFile('app/Services/GameAssets/CharacterAppearanceResolver.php');
         $this->assertStringContainsString('\'race_key\'', $appearanceResolver);
@@ -513,8 +573,12 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('fallback/neutral/default', $appearanceResolver);
 
         $avatarGuide = $this->readReleaseFile('docs/CHARACTER_AVATARS.md');
-        $this->assertStringContainsString('common/human/female/mage.webp', $avatarGuide);
-        $this->assertStringContainsString('common/fallback/neutral/default.webp', $avatarGuide);
+        $this->assertStringContainsString('characters/{profile}/human/female/mage.webp', $avatarGuide);
+        $this->assertStringContainsString('characters/{profile}/fallback/neutral/default.webp', $avatarGuide);
+        foreach (['interlude', 'classic', 'high-five', 'shine-maker'] as $profile) {
+            $this->assertFileExists(public_path("game-assets/characters/{$profile}/human/female/.gitkeep"));
+            $this->assertFileExists(public_path("game-assets/characters/{$profile}/fallback/neutral/.gitkeep"));
+        }
     }
 
     public function test_account_avatar_release_artifacts_are_shipped(): void

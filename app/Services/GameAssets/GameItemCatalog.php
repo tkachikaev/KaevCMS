@@ -11,7 +11,47 @@ final class GameItemCatalog
     /** @var array<string, array<string|int, mixed>> */
     private array $catalogs = [];
 
-    public function __construct(private readonly LanguageManager $languages) {}
+    public function __construct(
+        private readonly LanguageManager $languages,
+        private readonly GameItemProfileCatalog $profiles,
+        private readonly GameAssetUrlResolver $assets,
+    ) {}
+
+    /** @return array{id:int,name:string,icon:?string} */
+    public function find(string $profile, int $itemId, ?string $locale = null): array
+    {
+        $localeCandidates = $this->localeCandidates($locale);
+        $profile = $this->profiles->normalizeProfile($profile) ?? $profile;
+
+        return [
+            'id' => $itemId,
+            'name' => $this->manualName(null, $itemId, $localeCandidates)
+                ?? $this->catalogName($profile, $itemId, $localeCandidates)
+                ?? $this->unknownName($itemId, $localeCandidates[0] ?? $locale),
+            'icon' => $this->assets->itemIconForProfile($profile, $itemId),
+        ];
+    }
+
+    /** @return array{id:int,name:string,icon:?string} */
+    public function findForServer(
+        GameServer|int|null $server,
+        int $itemId,
+        ?string $locale = null,
+    ): array {
+        $localeCandidates = $this->localeCandidates($locale);
+        $serverId = $server instanceof GameServer ? (int) $server->getKey() : $server;
+        $profile = $this->profiles->profileForServer($server);
+
+        return [
+            'id' => $itemId,
+            'name' => $this->manualName($serverId, $itemId, $localeCandidates)
+                ?? $this->catalogName($profile, $itemId, $localeCandidates)
+                ?? $this->unknownName($itemId, $localeCandidates[0] ?? $locale),
+            'icon' => $server === null
+                ? $this->assets->itemIconForProfile($profile, $itemId)
+                : $this->assets->itemIcon($server, $itemId),
+        ];
+    }
 
     public function displayName(
         GameServer|int|null $server,
@@ -34,31 +74,14 @@ final class GameItemCatalog
         }
 
         $serverId = $server instanceof GameServer ? (int) $server->getKey() : $server;
+        $localeCandidates = $this->localeCandidates($locale);
 
-        foreach ($this->localeCandidates($locale) as $catalogLocale) {
-            $catalog = $this->catalog($catalogLocale);
-            $servers = $catalog['servers'] ?? [];
-
-            if ($serverId !== null && $serverId > 0 && is_array($servers)) {
-                $serverItems = $servers[$serverId] ?? [];
-                if (is_array($serverItems)) {
-                    $name = $this->normalizeName($serverItems[$itemId] ?? null);
-                    if ($name !== null) {
-                        return $name;
-                    }
-                }
-            }
-
-            $commonItems = $catalog['common'] ?? $catalog;
-            if (is_array($commonItems)) {
-                $name = $this->normalizeName($commonItems[$itemId] ?? null);
-                if ($name !== null) {
-                    return $name;
-                }
-            }
-        }
-
-        return null;
+        return $this->manualName($serverId, $itemId, $localeCandidates)
+            ?? $this->catalogName(
+                $this->profiles->profileForServer($server),
+                $itemId,
+                $localeCandidates,
+            );
     }
 
     /** @return list<string> */
@@ -110,5 +133,67 @@ final class GameItemCatalog
         $name = trim($name);
 
         return $name !== '' ? $name : null;
+    }
+
+    /**
+     * @param  list<string>  $localeCandidates
+     */
+    private function manualName(?int $serverId, int $itemId, array $localeCandidates): ?string
+    {
+        if ($itemId <= 0) {
+            return null;
+        }
+
+        foreach ($localeCandidates as $catalogLocale) {
+            $catalog = $this->catalog($catalogLocale);
+            $servers = $catalog['servers'] ?? [];
+
+            if ($serverId !== null && $serverId > 0 && is_array($servers)) {
+                $serverItems = $servers[$serverId] ?? [];
+                if (is_array($serverItems)) {
+                    $name = $this->normalizeName($serverItems[$itemId] ?? null);
+                    if ($name !== null) {
+                        return $name;
+                    }
+                }
+            }
+
+            $commonItems = $catalog['common'] ?? $catalog;
+            if (is_array($commonItems)) {
+                $name = $this->normalizeName($commonItems[$itemId] ?? null);
+                if ($name !== null) {
+                    return $name;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  list<string>  $localeCandidates
+     */
+    private function catalogName(string $profile, int $itemId, array $localeCandidates): ?string
+    {
+        $entry = $this->profiles->find($profile, $itemId);
+        if ($entry === null) {
+            return null;
+        }
+
+        foreach ($localeCandidates as $catalogLocale) {
+            $name = $this->normalizeName($entry['name_'.$catalogLocale] ?? null);
+            if ($name !== null) {
+                return $name;
+            }
+        }
+
+        return $this->normalizeName($entry['name_en'] ?? null);
+    }
+
+    private function unknownName(int $itemId, ?string $locale): string
+    {
+        return str_starts_with(strtolower((string) $locale), 'ru')
+            ? "Предмет #{$itemId}"
+            : "Item #{$itemId}";
     }
 }

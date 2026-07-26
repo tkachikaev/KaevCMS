@@ -6,14 +6,14 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$expectedFromVersion = '0.33.4'
-$expectedToVersion = '0.33.5'
-$legacyApplyScriptName = 'deployment\windows\apply-0.33.4.ps1'
-$legacyApplySha256 = '87d4c2e20041a19e9c893cdcdbccd7ca7772c42dbb606f33625fc6569644f14e'
+$expectedFromVersion = '0.33.7'
+$expectedToVersion = '0.33.8'
+$legacyApplyScriptName = 'deployment\windows\apply-0.33.7.ps1'
+$legacyApplySha256 = '4025bc22a959f4b3cde0f2d059ad472524f2487fb7d91d878de71e7ece1e844e'
 $previousComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
 $currentComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
-$recoverableFromVersions = @('0.33.3')
-$supersededPendingTargets = @('0.33.4')
+$recoverableFromVersions = @('0.33.6')
+$supersededPendingTargets = @('0.33.7')
 
 $supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
 if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
@@ -170,6 +170,11 @@ function Get-ObsoleteReleaseArtifacts {
         'app\Services\GameWorld\MobiusInterludeGameWorldDriver.php',
         'app\Services\GameWorld\InterludeCharacterLabels.php',
         'app\Services\GameAccounts\InterludeClassNames.php',
+        'app\Console\Commands\ImportInterludeItemsCommand.php',
+        'app\Services\GameAssets\Import\InterludeItemImporter.php',
+        'tests\Unit\InterludeItemImporterTest.php',
+        'app\Console\Commands\ImportGameItemsCommand.php',
+        'app\Services\GameAssets\Import',
         'app\Contracts\GameServerAdapter.php',
         'app\Services\GameServer\MobiusGameServerAdapter.php',
         'app\Services\GameServer\MockGameServerAdapter.php',
@@ -192,6 +197,14 @@ function Get-ObsoleteReleaseArtifacts {
 
     foreach ($obsoleteApplyScript in $obsoleteApplyScripts) {
         $paths += 'deployment\windows\' + $obsoleteApplyScript.Name
+    }
+
+    $unitTestPath = Join-Path $ProjectRoot 'tests\Unit'
+    if (Test-Path -LiteralPath $unitTestPath -PathType Container) {
+        $obsoleteItemImporterTests = Get-ChildItem -LiteralPath $unitTestPath -Filter '*ItemImporterTest.php' -File -ErrorAction Stop
+        foreach ($obsoleteItemImporterTest in $obsoleteItemImporterTests) {
+            $paths += 'tests\Unit\' + $obsoleteItemImporterTest.Name
+        }
     }
 
     return @($paths | Select-Object -Unique)

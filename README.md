@@ -1,4 +1,4 @@
-# KaevCMS 0.33.5
+# KaevCMS 0.33.8
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.33.5 fixes the Daily Rewards browser assertion and formats the new browser seeder and shared-hosting builder code for the project quality gate.
+Version 0.33.8 keeps static Interlude, Classic, High Five, and Shine Maker item catalogs while removing development-only catalog generation utilities from the production CMS. All profiles use one external deduplicated original-name icon pool; image binaries remain outside KaevCMS release archives.
 
 ### Requirements
 
@@ -72,6 +72,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
 - Trusted modules with strict manifests and immutable migration tracking.
 - Bundled promo-code and monthly Daily Rewards modules.
+- Versioned chronicle item catalogs with localized manual overrides and one external original-name icon pool.
 - Cumulative Web Updater for shared hosting and a deployment-user CLI updater for VDS, with hashes, backups, recovery, and path policy.
 
 ### Development and quality
@@ -92,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.33.5 исправляет браузерную проверку Daily Rewards и форматирует новый код browser seeder и сборщика shared-hosting по правилам quality gate проекта.
+Версия 0.33.8 сохраняет статические каталоги предметов Interlude, Classic, High Five и Shine Maker, но удаляет из production-сборки ненужные средства генерации каталогов. Все профили используют единый внешний пул иконок с исходными именами без дублирования; изображения по-прежнему не входят в релизные архивы KaevCMS.
 
 ### Требования
 
@@ -158,6 +159,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Веб-инвентарь с привязкой к GameServer и нейтральной `kaev_reward_queue`.
 - Доверенные модули со строгим manifest и неизменяемой историей миграций.
 - Встроенные модули промокодов и месячных ежедневных наград.
+- Версионируемые каталоги предметов по хроникам с ручными переводами и единым внешним пулом иконок под исходными именами.
 - Кумулятивный Web Updater для shared-hosting и CLI updater от deployment-пользователя для VDS с хешами, резервными копиями, восстановлением и политикой путей.
 
 ### Разработка и проверки

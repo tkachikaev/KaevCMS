@@ -67,6 +67,20 @@ try {
         ! packagePathExcluded('deployment/hosting/web-installer/installer.php', $productionExclusions),
         'The runtime Web Installer must remain in the production hosting package.',
     );
+    assertPackageBuilder(
+        packagePathExcluded('test-results/.last-run.json', $productionExclusions)
+            && packagePathExcluded('playwright-report/index.html', $productionExclusions),
+        'Browser run artifacts must be excluded from production hosting packages.',
+    );
+    assertPackageBuilder(
+        packagePathExcluded('game-assets/items/etc_adena_i00.webp', $productionExclusions)
+            && packagePathExcluded('game-assets/items/interlude/etc_adena_i00.webp', $productionExclusions)
+            && packagePathExcluded('game-assets/characters/classic/human/female/mage.webp', $productionExclusions)
+            && ! packagePathExcluded('game-assets/items/.gitkeep', $productionExclusions)
+            && ! packagePathExcluded('game-assets/items/interlude/.gitkeep', $productionExclusions)
+            && ! packagePathExcluded('game-assets/README-RU.txt', $productionExclusions),
+        'External game image binaries must be excluded while folder markers and instructions remain.',
+    );
 
     createCleanRuntimeSkeleton($target);
     assertPackageBuilder(is_file($target.'/storage/framework/sessions/.gitignore'), 'The clean package must recreate writable runtime directories.');

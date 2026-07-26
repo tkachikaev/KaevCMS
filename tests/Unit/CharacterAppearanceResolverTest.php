@@ -83,6 +83,31 @@ class CharacterAppearanceResolverTest extends TestCase
         }
     }
 
+
+    public function test_external_interlude_avatar_pack_is_used_when_no_upload_override_exists(): void
+    {
+        $uploads = storage_path('framework/testing/character-upload-assets-'.Str::uuid());
+        $standard = storage_path('framework/testing/character-standard-assets-'.Str::uuid());
+        config()->set('cms.game_assets.uploads_path', $uploads);
+        config()->set('cms.game_assets.standard_path', $standard);
+
+        try {
+            File::ensureDirectoryExists($standard.'/characters/interlude/human/female');
+            File::put($standard.'/characters/interlude/human/female/mage.webp', 'standard');
+
+            $appearance = app(CharacterAppearanceResolver::class)->resolve(null, 0, 1, 10);
+
+            $this->assertNotNull($appearance['avatar_url']);
+            $this->assertStringEndsWith(
+                '/game-assets/characters/interlude/human/female/mage.webp',
+                $appearance['avatar_url'],
+            );
+        } finally {
+            File::deleteDirectory($uploads);
+            File::deleteDirectory($standard);
+        }
+    }
+
     public function test_avatar_paths_reject_traversal_and_absolute_keys(): void
     {
         $assets = app(GameAssetUrlResolver::class);

@@ -43,6 +43,33 @@ class WebInventoryTest extends TestCase
         $this->app->instance(GameRewardQueueGateway::class, $this->rewardQueue);
     }
 
+    public function test_inventory_item_integer_server_id_uses_the_servers_actual_chronicle(): void
+    {
+        $server = GameServer::factory()->create(['chronicle' => 'High Five']);
+        $item = new RewardInventoryItem([
+            'game_server_id' => $server->id,
+            'item_id' => 907,
+            'item_name' => 'Stored reward name',
+            'amount' => 1,
+            'status' => RewardInventoryItem::STATUS_AVAILABLE,
+        ]);
+
+        $this->assertSame('Stored reward name', $item->displayName());
+    }
+
+    public function test_inventory_item_uses_the_interlude_catalog_item_name(): void
+    {
+        $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
+        $item = new RewardInventoryItem([
+            'game_server_id' => $server->id,
+            'item_id' => 907,
+            'amount' => 1,
+            'status' => RewardInventoryItem::STATUS_AVAILABLE,
+        ]);
+
+        $this->assertSame('Necklace of Anguish', $item->displayName($server));
+    }
+
     public function test_grants_are_idempotent_and_separated_by_server(): void
     {
         $user = User::factory()->create();

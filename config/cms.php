@@ -42,6 +42,9 @@ return [
 
     'game_assets' => [
         'uploads_path' => public_path('uploads/game-assets'),
+        'standard_path' => public_path('game-assets'),
+        'item_catalog_path' => resource_path('game-items'),
+        'default_item_profile' => 'interlude',
     ],
 
     'account_avatars' => [

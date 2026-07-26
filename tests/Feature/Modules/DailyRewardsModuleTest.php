@@ -22,6 +22,7 @@ use Illuminate\Testing\TestResponse;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardCalendar;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardClaim;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardDay;
+use KaevCMS\Modules\DailyRewards\Models\DailyRewardItem;
 use Tests\TestCase;
 
 class DailyRewardsModuleTest extends TestCase
@@ -70,6 +71,14 @@ class DailyRewardsModuleTest extends TestCase
             'admin.module-pages.daily-rewards.index',
             app(ModuleNavigationRegistry::class)->adminLinks()[0]['route'] ?? null,
         );
+    }
+
+    public function test_daily_reward_uses_the_interlude_catalog_item_name(): void
+    {
+        $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
+        $item = new DailyRewardItem(['item_id' => 907, 'amount' => 1]);
+
+        $this->assertSame('Necklace of Anguish', $item->displayName($server));
     }
 
     public function test_owner_sees_all_game_servers_and_calendar_uses_main_timezone(): void

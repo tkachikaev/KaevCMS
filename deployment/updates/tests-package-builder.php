@@ -14,8 +14,13 @@ foreach ([
     '\'core/\'.$relative',
     '\'public/uploads/\'',
     "'.env.example'",
+    "'.phpunit.result.cache'",
     "'public/uploads/.gitignore'",
     "'public/uploads/.htaccess'",
+    "'playwright-report/'",
+    "'test-results/'",
+    "'public/game-assets/'",
+    'webp|png|jpe?g|gif|svg',
     '\'storage/\'',
     '\'vendor/\'',
     'version_compare($minimum, $maximum',
@@ -63,7 +68,19 @@ if (! is_array($deletionHistory)
     || ($deletionHistory['0.33.2'] ?? null) !== ['core/deployment/windows/apply-0.33.1.ps1']
     || ($deletionHistory['0.33.3'] ?? null) !== ['core/deployment/windows/apply-0.33.2.ps1']
     || ($deletionHistory['0.33.4'] ?? null) !== ['core/deployment/windows/apply-0.33.3.ps1']
-    || ($deletionHistory['0.33.5'] ?? null) !== ['core/deployment/windows/apply-0.33.4.ps1']) {
+    || ($deletionHistory['0.33.5'] ?? null) !== ['core/deployment/windows/apply-0.33.4.ps1']
+    || ($deletionHistory['0.33.6'] ?? null) !== ['core/deployment/windows/apply-0.33.5.ps1']
+    || ($deletionHistory['0.33.7'] ?? null) !== [
+        'core/app/Console/Commands/ImportInterludeItemsCommand.php',
+        'core/app/Services/GameAssets/Import/InterludeItemImporter.php',
+        'core/deployment/windows/apply-0.33.6.ps1',
+        'core/tests/Unit/InterludeItemImporterTest.php',
+    ]
+    || ($deletionHistory['0.33.8'] ?? null) !== [
+        'core/app/Console/Commands/ImportGameItemsCommand.php',
+        'core/app/Services/GameAssets/Import',
+        'core/deployment/windows/apply-0.33.7.ps1',
+    ]) {
     throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
 }
 

@@ -1,41 +1,58 @@
-# Character avatar foundation
+# Character avatar image pack / Пакет аватаров персонажей
 
-KaevCMS 0.31.3 provides the avatar-selection foundation but no character artwork. Add your own legally usable images under:
-
-```text
-public/uploads/game-assets/characters/
-```
-
-## Minimum practical pack
-
-A compact classic-chronicle pack can use these files:
+KaevCMS does not include character artwork. Keep your external images under:
 
 ```text
-common/human/male/warrior.webp
-common/human/male/mage.webp
-common/human/female/warrior.webp
-common/human/female/mage.webp
-common/elf/male/warrior.webp
-common/elf/male/mage.webp
-common/elf/female/warrior.webp
-common/elf/female/mage.webp
-common/dark_elf/male/warrior.webp
-common/dark_elf/male/mage.webp
-common/dark_elf/female/warrior.webp
-common/dark_elf/female/mage.webp
-common/orc/male/warrior.webp
-common/orc/male/mage.webp
-common/orc/female/warrior.webp
-common/orc/female/mage.webp
-common/dwarf/male/default.webp
-common/dwarf/female/default.webp
-common/kamael/male/default.webp
-common/kamael/female/default.webp
-common/fallback/neutral/default.webp
+public/game-assets/characters/{profile}/
 ```
 
-Files for Ertheia and Sylph are optional and follow the same layout. A server-specific pack goes under `servers/{server_id}/` and has priority over common images.
+Supported item/asset profiles currently include:
 
-Recommended format is WebP. Keep all images in a set at the same aspect ratio; square images are the simplest choice. The themes crop images with `object-fit: cover`.
+```text
+interlude
+classic
+high-five
+shine-maker
+```
 
-See `docs/GAME_ASSETS.md` for the complete fallback chain and supported extensions.
+Use the same hierarchy inside every profile:
+
+```text
+characters/{profile}/human/male/warrior.webp
+characters/{profile}/human/male/mage.webp
+characters/{profile}/human/female/warrior.webp
+characters/{profile}/human/female/mage.webp
+characters/{profile}/elf/male/warrior.webp
+characters/{profile}/elf/male/mage.webp
+characters/{profile}/elf/female/warrior.webp
+characters/{profile}/elf/female/mage.webp
+characters/{profile}/dark_elf/male/warrior.webp
+characters/{profile}/dark_elf/male/mage.webp
+characters/{profile}/dark_elf/female/warrior.webp
+characters/{profile}/dark_elf/female/mage.webp
+characters/{profile}/orc/male/warrior.webp
+characters/{profile}/orc/male/mage.webp
+characters/{profile}/orc/female/warrior.webp
+characters/{profile}/orc/female/mage.webp
+characters/{profile}/dwarf/male/default.webp
+characters/{profile}/dwarf/female/default.webp
+characters/{profile}/kamael/male/default.webp
+characters/{profile}/kamael/female/default.webp
+characters/{profile}/ertheia/male/warrior.webp
+characters/{profile}/ertheia/male/mage.webp
+characters/{profile}/ertheia/female/warrior.webp
+characters/{profile}/ertheia/female/mage.webp
+characters/{profile}/sylph/male/default.webp
+characters/{profile}/sylph/female/default.webp
+characters/{profile}/fallback/male/default.webp
+characters/{profile}/fallback/female/default.webp
+characters/{profile}/fallback/neutral/default.webp
+```
+
+WebP is recommended; PNG, JPG, and JPEG are also supported. Use square images of the same dimensions.
+
+Owner overrides under `public/uploads/game-assets/characters` have priority: `servers/{server_id}` first, then `common`, then the external profile pack.
+
+---
+
+Изображения не входят в релизные архивы KaevCMS. Положите их в `public/game-assets/characters/{profile}` по указанной выше иерархии. Пустые папки уже созданы для Interlude, Classic, High Five и Shine Maker. Серверные и общие переопределения из `public/uploads/game-assets/characters` имеют приоритет.

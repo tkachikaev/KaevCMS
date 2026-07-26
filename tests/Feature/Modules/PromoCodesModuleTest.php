@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use KaevCMS\Modules\PromoCodes\Models\PromoCode;
 use KaevCMS\Modules\PromoCodes\Models\PromoCodeActivation;
+use KaevCMS\Modules\PromoCodes\Models\PromoCodeReward;
 use Tests\TestCase;
 
 class PromoCodesModuleTest extends TestCase
@@ -56,6 +57,26 @@ class PromoCodesModuleTest extends TestCase
 
         $this->assertSame('modules.promo-codes.index', $accountLinks[0]['route'] ?? null);
         $this->assertSame('admin.module-pages.promo-codes.index', $adminLinks[0]['route'] ?? null);
+    }
+
+    public function test_promo_reward_uses_the_interlude_catalog_name_and_external_icon(): void
+    {
+        $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
+        $reward = new PromoCodeReward(['item_id' => 907, 'amount' => 1]);
+        $root = storage_path('framework/testing/standard-game-assets-'.Str::uuid());
+        File::ensureDirectoryExists($root.'/items/interlude');
+        File::put($root.'/items/interlude/accessary_necklace_of_anguish_i00.webp', 'icon');
+        config()->set('cms.game_assets.standard_path', $root);
+
+        try {
+            $this->assertSame('Necklace of Anguish', $reward->displayName($server));
+            $this->assertStringEndsWith(
+                '/game-assets/items/interlude/accessary_necklace_of_anguish_i00.webp',
+                (string) app(GameAssetUrlResolver::class)->itemIcon($server, 907),
+            );
+        } finally {
+            File::deleteDirectory($root);
+        }
     }
 
     public function test_authenticated_user_can_open_account_promo_code_page(): void

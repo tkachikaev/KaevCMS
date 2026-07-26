@@ -76,5 +76,19 @@
     ],
     "0.33.5": [
         "core/deployment/windows/apply-0.33.4.ps1"
+    ],
+    "0.33.6": [
+        "core/deployment/windows/apply-0.33.5.ps1"
+    ],
+    "0.33.7": [
+        "core/app/Console/Commands/ImportInterludeItemsCommand.php",
+        "core/app/Services/GameAssets/Import/InterludeItemImporter.php",
+        "core/deployment/windows/apply-0.33.6.ps1",
+        "core/tests/Unit/InterludeItemImporterTest.php"
+    ],
+    "0.33.8": [
+        "core/app/Console/Commands/ImportGameItemsCommand.php",
+        "core/app/Services/GameAssets/Import",
+        "core/deployment/windows/apply-0.33.7.ps1"
     ]
 }

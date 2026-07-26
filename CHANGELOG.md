@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.33.8 - 2026-07-26
+
+- Removed development-only item catalog generation commands, parsers, and their dedicated tests from the production CMS. The four ready runtime JSON catalogs remain unchanged.
+- Updated Windows and Web Updater deletion metadata so upgrading from 0.33.7 removes the obsolete generation files automatically without touching external item icons or character avatars.
+- Reworded public documentation and regression coverage around the final runtime architecture: profile plus item ID resolves a catalog name and icon key, while all image binaries stay external to release archives.
+- Composer/npm dependencies, database migrations, module versions, item catalog data, reward logic, and external image paths were not changed.
+
+## 0.33.7 - 2026-07-26
+
+- Added static item profiles for Classic (19,791 IDs), High Five (19,198 IDs), and Shine Maker (19,790 IDs), alongside the existing Interlude catalog (9,208 IDs).
+- Added robust chronicle normalization for free-text server names such as `Classic 3.5 Tales Untold`, `High Five`, `h5`, `shineMaker`, and `Shine Maker`. Integer GameServer IDs continue to resolve the stored chronicle instead of falling back to the default profile.
+- Added a shared external icon pool at `public/game-assets/items/{icon_key}.webp` so one physical file can serve several profiles. The 0.33.6 path `public/game-assets/items/{profile}/{icon_key}.webp` remains a fallback and is never deleted by updates.
+- Extended the empty external character-avatar hierarchy to Interlude, Classic, High Five, and Shine Maker. Full, patch, cumulative, and shared-hosting archives still exclude all game image binaries.
+- Added profile-isolation, shared-icon, legacy-path, integer-server, release-packaging, and existing-module regression coverage. Composer/npm dependencies, CMS migrations, module versions, and reward-delivery schemas were not changed.
+
+## 0.33.6 - 2026-07-26
+
+- Added a versioned Interlude item catalog that maps 9,208 positive item IDs to catalog English names and original icon keys without adding database tables or an item-management panel.
+- Extended `GameItemCatalog` and `GameAssetUrlResolver` so Promo Codes, Daily Rewards, Web Inventory, and reward journals resolve chronicle-aware names and original icon filenames. Manual RU/EN and per-server numeric overrides keep priority.
+- Standard item icons are loaded from the separate `public/game-assets/items/interlude` pack. Character avatars may be placed under `public/game-assets/characters/interlude`; uploaded server-specific and common overrides under `public/uploads/game-assets` keep priority.
+- KaevCMS full, patch, cumulative, and shared-hosting archives intentionally exclude image binaries under `public/game-assets`, while preserving the folder hierarchy and instructions.
+- Added catalog, module integration, external icon, external avatar, packaging, and fallback regression coverage.
+- Composer/npm dependencies, database migrations, module versions, and reward-delivery schemas were not changed.
+
 ## 0.33.5 - 2026-07-25
 
 - Fixed the Daily Rewards Playwright check to validate the exact Web Inventory row containing Adena × 250 000. The previous assertion searched the entire page and failed correctly when Promo Codes and Daily Rewards produced two separate Adena rows.

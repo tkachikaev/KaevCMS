@@ -139,7 +139,7 @@ function sharedHostingCoreExclusions(): array
 {
     return [
         '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
-        'public', 'storage', 'tests', 'bootstrap/cache', 'database/database.sqlite',
+        'public', 'storage', 'tests', 'test-results', 'playwright-report', 'bootstrap/cache', 'database/database.sqlite',
         'phpunit.xml', 'phpstan.neon', 'package.json', 'package-lock.json',
         'playwright.config.mjs', '.phpunit.cache', '.phpunit.result.cache', 'npm-debug.log',
         'deployment/windows', 'deployment/vds',
@@ -287,6 +287,11 @@ function copyPackageTree(string $source, string $destination, array $excluded, s
 /** @param list<string> $excluded */
 function packagePathExcluded(string $path, array $excluded): bool
 {
+    if (str_starts_with(strtolower($path), 'game-assets/')
+        && preg_match('/\.(?:webp|png|jpe?g|gif|svg)\z/iD', $path) === 1) {
+        return true;
+    }
+
     if ($path !== '.env.example' && ($path === '.env' || str_starts_with($path, '.env.'))) {
         return true;
     }
