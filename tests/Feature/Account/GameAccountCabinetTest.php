@@ -211,7 +211,7 @@ class GameAccountCabinetTest extends TestCase
             'mode' => 'PvP',
             'sort_order' => 2,
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
         $account = UserGameAccount::query()->create([
@@ -793,7 +793,7 @@ class GameAccountCabinetTest extends TestCase
             'mode' => 'PvP',
             'sort_order' => 2,
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
         $account = UserGameAccount::query()->create([
@@ -841,7 +841,7 @@ class GameAccountCabinetTest extends TestCase
             'mode' => 'PvE',
             'sort_order' => 1,
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
 

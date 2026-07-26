@@ -97,7 +97,7 @@ class ServerAdministrationTest extends TestCase
         $gameServer->refresh();
         $this->assertSame('Interlude x25', $gameServer->name);
         $this->assertSame($loginServer->id, $gameServer->login_server_id);
-        $this->assertSame('l2j_mobius_ct0_interlude', $gameServer->driver);
+        $this->assertSame('l2j_mobius', $gameServer->driver);
         $this->assertTrue($gameServer->use_login_server_connection);
     }
 
@@ -113,7 +113,7 @@ class ServerAdministrationTest extends TestCase
 
         app(GameServerAdministration::class)->updateConnection($movingServer, [
             'login_server_id' => $newLoginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
             'database_password' => '',
         ]);

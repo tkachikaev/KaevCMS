@@ -80,7 +80,9 @@ if (! is_array($deletionHistory)
         'core/app/Console/Commands/ImportGameItemsCommand.php',
         'core/app/Services/GameAssets/Import',
         'core/deployment/windows/apply-0.33.7.ps1',
-    ]) {
+    ]
+    || ($deletionHistory['0.33.9'] ?? null) !== ['core/deployment/windows/apply-0.33.8.ps1']
+    || ($deletionHistory['0.34.0'] ?? null) !== ['core/deployment/windows/apply-0.33.9.ps1']) {
     throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
 }
 

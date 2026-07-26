@@ -9,6 +9,7 @@ use App\Models\LoginServer;
 use App\Models\User;
 use App\Services\GameAccounts\GameAccountQuota;
 use App\Services\GameAccountSettings;
+use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -31,7 +32,7 @@ class AccountController extends Controller
         $availableServers = GameServer::query()
             ->with('loginServer')
             ->whereNotNull('login_server_id')
-            ->where('driver', 'l2j_mobius_ct0_interlude')
+            ->where('driver', ServerDriverRegistry::MOBIUS_DRIVER)
             ->get()
             ->filter(static fn (GameServer $server): bool => $server->connectionConfigured()
                 && $server->loginServer instanceof LoginServer

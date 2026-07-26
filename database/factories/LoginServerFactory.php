@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\LoginServer;
+use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<LoginServer> */
@@ -15,7 +16,7 @@ class LoginServerFactory extends Factory
     {
         return [
             'name' => 'Main LoginServer',
-            'driver' => 'l2j_mobius',
+            'driver' => ServerDriverRegistry::MOBIUS_DRIVER,
             'database_host' => '127.0.0.1',
             'database_port' => 3306,
             'database_name' => 'l2j',
@@ -36,7 +37,7 @@ class LoginServerFactory extends Factory
 
     public function legacy(): static
     {
-        return $this->state(fn (): array => ['driver' => 'l2j_mobius_legacy']);
+        return $this->state(fn (): array => ['driver' => ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER]);
     }
 
     public function online(): static

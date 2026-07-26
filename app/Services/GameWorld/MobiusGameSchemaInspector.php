@@ -8,18 +8,71 @@ use RuntimeException;
 
 final class MobiusGameSchemaInspector
 {
+    private const CHARACTER_COLUMNS = [
+        'account_name',
+        'charId',
+        'char_name',
+        'level',
+        'exp',
+        'classid',
+        'race',
+        'sex',
+        'title',
+        'online',
+        'onlinetime',
+        'accesslevel',
+        'deletetime',
+        'pvpkills',
+        'pkkills',
+        'nobless',
+        'clanid',
+        'lastAccess',
+        'createDate',
+    ];
+
+    private const REPUTATION_COLUMNS = ['karma', 'reputation'];
+
+    private const CLAN_COLUMNS = ['clan_id', 'clan_name', 'clan_level', 'reputation_score', 'hasCastle', 'leader_id'];
+
     private const HERO_COLUMNS = ['charId', 'class_id', 'count', 'played', 'claimed'];
 
     private const CASTLE_COLUMNS = ['id', 'name'];
 
-    private const CLAN_CASTLE_COLUMNS = ['clan_id', 'clan_name', 'clan_level', 'reputation_score', 'hasCastle', 'leader_id'];
+    /**
+     * @return list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>
+     */
+    public static function requirements(): array
+    {
+        return [
+            [
+                'table' => 'characters',
+                'columns' => self::CHARACTER_COLUMNS,
+                'any_columns' => self::REPUTATION_COLUMNS,
+                'required' => true,
+            ],
+            [
+                'table' => 'clan_data',
+                'columns' => self::CLAN_COLUMNS,
+                'required' => true,
+            ],
+            [
+                'table' => 'heroes',
+                'columns' => self::HERO_COLUMNS,
+                'required' => false,
+            ],
+            [
+                'table' => 'castle',
+                'columns' => self::CASTLE_COLUMNS,
+                'required' => false,
+            ],
+        ];
+    }
 
     public function inspect(Connection $connection, ?string $chronicle = null): MobiusGameSchemaProfile
     {
         $schema = $connection->getSchemaBuilder();
-        if (! $schema->hasTable('characters')) {
-            throw new RuntimeException('The Mobius game database does not contain the required characters table.');
-        }
+        $this->assertRequiredTable($schema, 'characters', self::CHARACTER_COLUMNS);
+        $this->assertRequiredTable($schema, 'clan_data', self::CLAN_COLUMNS);
 
         $hasKarma = $schema->hasColumn('characters', 'karma');
         $hasReputation = $schema->hasColumn('characters', 'reputation');
@@ -42,8 +95,7 @@ final class MobiusGameSchemaInspector
                 : MobiusGameSchemaProfile::MODERN,
             reputationColumn: $reputationColumn,
             heroesAvailable: $this->tableHasColumns($schema, 'heroes', self::HERO_COLUMNS),
-            castlesAvailable: $this->tableHasColumns($schema, 'castle', self::CASTLE_COLUMNS)
-                && $this->tableHasColumns($schema, 'clan_data', self::CLAN_CASTLE_COLUMNS),
+            castlesAvailable: $this->tableHasColumns($schema, 'castle', self::CASTLE_COLUMNS),
         );
     }
 
@@ -70,6 +122,29 @@ final class MobiusGameSchemaInspector
         }
 
         return MobiusGameSchemaProfile::MODERN;
+    }
+
+    /** @param list<string> $columns */
+    private function assertRequiredTable(Builder $schema, string $table, array $columns): void
+    {
+        if (! $schema->hasTable($table)) {
+            throw new RuntimeException("The Mobius game database does not contain the required {$table} table.");
+        }
+
+        $missingColumns = [];
+        foreach ($columns as $column) {
+            if (! $schema->hasColumn($table, $column)) {
+                $missingColumns[] = $column;
+            }
+        }
+
+        if ($missingColumns !== []) {
+            throw new RuntimeException(sprintf(
+                'The Mobius %s table is missing required columns: %s.',
+                $table,
+                implode(', ', $missingColumns),
+            ));
+        }
     }
 
     /** @param list<string> $columns */

@@ -14,6 +14,7 @@ use App\Services\GameAccounts\GameAccountQuota;
 use App\Services\GameAccountSettings;
 use App\Services\GameAssets\CharacterAppearanceResolver;
 use App\Services\GameWorld\MobiusCharacterLabels;
+use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -316,7 +317,7 @@ class GameAccountController extends Controller
         return GameServer::query()
             ->with(['loginServer', 'translations'])
             ->whereNotNull('login_server_id')
-            ->where('driver', 'l2j_mobius_ct0_interlude')
+            ->where('driver', ServerDriverRegistry::MOBIUS_DRIVER)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()

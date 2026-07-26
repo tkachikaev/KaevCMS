@@ -2,8 +2,14 @@
 
 namespace App\Services\Servers;
 
+use App\Services\GameWorld\MobiusGameSchemaInspector;
+
 final class ServerDriverRegistry
 {
+    public const MOBIUS_DRIVER = 'l2j_mobius';
+
+    public const MOBIUS_LEGACY_LOGIN_DRIVER = 'l2j_mobius_legacy';
+
     /**
      * @return array<string, array{
      *     label:string,
@@ -16,7 +22,7 @@ final class ServerDriverRegistry
     public function loginDrivers(): array
     {
         return [
-            'l2j_mobius' => [
+            self::MOBIUS_DRIVER => [
                 'label' => __('L2J Mobius — Interlude and newer'),
                 'description' => __('L2J Mobius LoginServer for Interlude and newer builds.'),
                 'ready' => true,
@@ -39,7 +45,7 @@ final class ServerDriverRegistry
                     ],
                 ],
             ],
-            'l2j_mobius_legacy' => [
+            self::MOBIUS_LEGACY_LOGIN_DRIVER => [
                 'label' => __('L2J Mobius Legacy — C1/C4'),
                 'description' => __('L2J Mobius legacy LoginServer for C1 and C4 builds.'),
                 'ready' => true,
@@ -77,9 +83,9 @@ final class ServerDriverRegistry
     public function gameDrivers(): array
     {
         return [
-            'l2j_mobius_ct0_interlude' => [
-                'label' => __('L2J Mobius — all chronicles'),
-                'description' => __('One L2J Mobius GameServer driver for legacy, mainline, Classic and Essence schemas.'),
+            self::MOBIUS_DRIVER => [
+                'label' => 'L2J Mobius',
+                'description' => __('One L2J Mobius GameServer driver with automatic legacy and modern schema detection.'),
                 'ready' => true,
                 'service_port' => 7777,
                 'character_created_at_column' => 'createDate',
@@ -89,49 +95,7 @@ final class ServerDriverRegistry
                     'value' => 1,
                 ],
                 'statistics' => ['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'],
-                'requirements' => [
-                    [
-                        'table' => 'characters',
-                        'columns' => [
-                            'account_name',
-                            'charId',
-                            'char_name',
-                            'level',
-                            'exp',
-                            'classid',
-                            'race',
-                            'sex',
-                            'title',
-                            'online',
-                            'onlinetime',
-                            'accesslevel',
-                            'deletetime',
-                            'pvpkills',
-                            'pkkills',
-                            'nobless',
-                            'clanid',
-                            'lastAccess',
-                            'createDate',
-                        ],
-                        'any_columns' => ['karma', 'reputation'],
-                        'required' => true,
-                    ],
-                    [
-                        'table' => 'clan_data',
-                        'columns' => ['clan_id', 'clan_name', 'clan_level', 'reputation_score', 'hasCastle', 'leader_id'],
-                        'required' => true,
-                    ],
-                    [
-                        'table' => 'heroes',
-                        'columns' => ['charId', 'class_id', 'count', 'played', 'claimed'],
-                        'required' => false,
-                    ],
-                    [
-                        'table' => 'castle',
-                        'columns' => ['id', 'name'],
-                        'required' => false,
-                    ],
-                ],
+                'requirements' => MobiusGameSchemaInspector::requirements(),
             ],
             'rusacis' => [
                 'label' => 'RUSaCis',

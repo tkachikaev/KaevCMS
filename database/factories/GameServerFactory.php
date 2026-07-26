@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<GameServer> */
@@ -21,7 +22,7 @@ class GameServerFactory extends Factory
             'mode' => 'PvP',
             'sort_order' => 1,
             'login_server_id' => LoginServer::factory(),
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => ServerDriverRegistry::MOBIUS_DRIVER,
             'use_login_server_connection' => true,
             'database_host' => null,
             'database_port' => null,

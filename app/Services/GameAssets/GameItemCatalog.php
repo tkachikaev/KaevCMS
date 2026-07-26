@@ -56,11 +56,11 @@ final class GameItemCatalog
     public function displayName(
         GameServer|int|null $server,
         int $itemId,
-        ?string $fallbackName = null,
+        ?string $storedName = null,
         ?string $locale = null,
     ): string {
-        return $this->knownName($server, $itemId, $locale)
-            ?? $this->normalizeName($fallbackName)
+        return $this->normalizeName($storedName)
+            ?? $this->knownName($server, $itemId, $locale)
             ?? (string) Lang::get('Game item', [], $locale);
     }
 

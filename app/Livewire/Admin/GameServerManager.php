@@ -90,7 +90,7 @@ class GameServerManager extends Component
 
     public string $loginServerId = '';
 
-    public string $driver = 'l2j_mobius_ct0_interlude';
+    public string $driver = ServerDriverRegistry::MOBIUS_DRIVER;
 
     public bool $useLoginServerConnection = true;
 
@@ -181,7 +181,7 @@ class GameServerManager extends Component
         $this->serverMode = trim((string) $server->mode);
         $this->connectionEnabled = $server->connectionConfigured();
         $this->loginServerId = $server->login_server_id !== null ? (string) $server->login_server_id : '';
-        $this->driver = $server->driver ?? 'l2j_mobius_ct0_interlude';
+        $this->driver = $server->driver ?? ServerDriverRegistry::MOBIUS_DRIVER;
         $this->useLoginServerConnection = $server->connectionConfigured()
             ? (bool) $server->use_login_server_connection
             : true;
@@ -667,7 +667,7 @@ class GameServerManager extends Component
         $this->serverMode = '';
         $this->connectionEnabled = false;
         $this->loginServerId = '';
-        $this->driver = 'l2j_mobius_ct0_interlude';
+        $this->driver = ServerDriverRegistry::MOBIUS_DRIVER;
         $this->useLoginServerConnection = true;
         $this->databaseHost = '127.0.0.1';
         $this->databasePort = '3306';

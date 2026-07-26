@@ -39,7 +39,7 @@ class FakeGameAccountGateway implements GameAccountGateway
 
     public function supportsGameServer(GameServer $gameServer): bool
     {
-        return $gameServer->driver === 'l2j_mobius_ct0_interlude';
+        return $gameServer->driver === 'l2j_mobius';
     }
 
     public function accountExists(LoginServer $loginServer, string $login): bool

@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$fromVersion = '0.33.7'
-$toVersion = '0.33.8'
+$fromVersion = '0.33.9'
+$toVersion = '0.34.0'
 
 if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'artisan') -PathType Leaf)) {
     throw 'The KaevCMS project root could not be found.'
@@ -31,8 +31,19 @@ $requiredFiles = @(
     'CHANGELOG.md'
     'README.md'
     'VERSION'
+    'app\Http\Controllers\Account\GameAccountController.php'
+    'app\Http\Controllers\Auth\AccountController.php'
+    'app\Livewire\Admin\GameServerManager.php'
+    'app\Livewire\Admin\LoginServerManager.php'
     'app\Providers\AppServiceProvider.php'
+    'app\Services\GameAccounts\ExternalGameAccountGateway.php'
     'app\Services\GameAssets\GameAssetUrlResolver.php'
+    'app\Services\GameWorld\GameWorldDriverResolver.php'
+    'app\Services\GameWorld\MobiusGameSchemaInspector.php'
+    'app\Services\Servers\ServerDriverRegistry.php'
+    'database\factories\GameServerFactory.php'
+    'database\factories\LoginServerFactory.php'
+    'database\migrations\2026_07_26_000000_rename_mobius_game_driver_identifier.php'
     'app\Services\GameAssets\GameItemCatalog.php'
     'app\Services\GameAssets\GameItemProfileCatalog.php'
     'config\cms.php'
@@ -99,10 +110,16 @@ $requiredFiles = @(
     'resources\game-items\classic.json'
     'resources\game-items\high-five.json'
     'resources\game-items\shine-maker.json'
+    'lang\en.json'
+    'lang\ru.json'
     'tests\Feature\Admin\SystemSettingsTest.php'
     'tests\Feature\WebUpdaterReleaseTest.php'
     'tests\Unit\PublicUploadProtectionTest.php'
     'tests\Unit\GameItemCatalogTest.php'
+    'tests\Unit\ExternalGameAccountGatewayTest.php'
+    'tests\Unit\MobiusGameSchemaInspectorTest.php'
+    'tests\Unit\ServerDriverRegistryTest.php'
+    'tests\Feature\UpgradeGameServerMigrationTest.php'
     'tests\Unit\Updates\UpdatePathPolicyTest.php'
     'tests\Feature\VdsDocumentationReleaseTest.php'
     'tests\Feature\WebInstallerReleaseTest.php'
@@ -154,7 +171,7 @@ foreach ($requiredFile in $requiredFiles) {
 }
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release removes obsolete catalog generation utilities. Runtime catalogs and external game images remain unchanged.'
+Write-Host 'This release renames and audits the L2J Mobius GameServer driver, centralizes its identifier, and aligns runtime schema validation with the administration connection test.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -167,4 +184,4 @@ Write-Host 'Web installer: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'VDS updater: php artisan kaevcms:update C:\path\to\KaevCMS-cumulative-update.zip'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'
-Write-Host 'Composer/npm dependencies, database migrations, module versions, and reward-delivery schemas were not changed.'
+Write-Host 'Composer/npm dependencies, module versions, item catalogs, external image paths, and reward-delivery schemas were not changed. One CMS migration renames the previous GameServer driver identifier.'

@@ -4,9 +4,11 @@ KaevCMS separates CMS data from external LoginServer and GameServer databases.
 
 ## Drivers
 
-The current Mobius integration uses one driver with schema profiles instead of one duplicate driver per chronicle. Required game tables are `characters`, `clan_data`, and `heroes`; optional capabilities may use `castle`, `account_gsdata`, and `account_premium` when present.
+The L2J Mobius GameServer driver uses the canonical identifier `l2j_mobius`. LoginServer and GameServer drivers intentionally use the same identifier in their separate registries. The legacy C1/C4 LoginServer variant remains `l2j_mobius_legacy`.
 
-Connection tests inspect required tables and compatible columns without displaying credentials. Server statistics are enabled per GameServer and use independent limits for level, PvP, PK, and play-time rankings.
+KaevCMS uses one GameServer driver with schema profiles instead of duplicating a driver per chronicle. The inspector selects the legacy profile when `characters.karma` is used and the modern profile when `characters.reputation` is used. Required game tables are `characters` and `clan_data`. Complete `heroes` and `castle` tables enable the corresponding optional statistics sections; missing or incomplete optional tables do not disable character rankings.
+
+Connection tests and runtime queries use the same required-table and column contract without displaying credentials. Server statistics are enabled per GameServer and use independent limits for level, PvP, PK, and play-time rankings.
 
 ## Accounts and characters
 

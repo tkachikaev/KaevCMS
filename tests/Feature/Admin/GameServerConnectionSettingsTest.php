@@ -45,7 +45,7 @@ class GameServerConnectionSettingsTest extends TestCase
             ->call('edit', $gameServer->id)
             ->set('connectionEnabled', true)
             ->assertSee('Подключение к базе данных')
-            ->assertSee('L2J Mobius — все хроники')
+            ->assertSee('L2J Mobius')
             ->assertSee('RUSaCis')
             ->assertSee('Использовать параметры базы выбранного LoginServer');
     }
@@ -59,7 +59,7 @@ class GameServerConnectionSettingsTest extends TestCase
             ->post(route('admin.settings.game-server.connection', $gameServer), [
                 'connection_action' => 'save',
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => '1',
             ])
             ->assertRedirect(route('admin.settings.game-server'))
@@ -67,7 +67,7 @@ class GameServerConnectionSettingsTest extends TestCase
 
         $gameServer->refresh();
         $this->assertSame($loginServer->id, $gameServer->login_server_id);
-        $this->assertSame('l2j_mobius_ct0_interlude', $gameServer->driver);
+        $this->assertSame('l2j_mobius', $gameServer->driver);
         $this->assertTrue($gameServer->use_login_server_connection);
         $this->assertNull($gameServer->database_host);
         $this->assertTrue($gameServer->connectionConfigured());
@@ -82,7 +82,7 @@ class GameServerConnectionSettingsTest extends TestCase
             ->post(route('admin.settings.game-server.connection', $gameServer), [
                 'connection_action' => 'save',
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => '0',
                 'database_host' => '10.10.10.20',
                 'database_port' => 3307,
@@ -110,7 +110,7 @@ class GameServerConnectionSettingsTest extends TestCase
             ->post(route('admin.settings.game-server.connection', $gameServer), [
                 'connection_action' => 'save',
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => '0',
             ])
             ->assertRedirect('/admin/settings/game-server')
@@ -128,7 +128,7 @@ class GameServerConnectionSettingsTest extends TestCase
         $gameServer = GameServer::query()->firstOrFail();
         $gameServer->update([
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => false,
             'database_host' => '10.10.10.20',
             'database_port' => 3306,
@@ -143,7 +143,7 @@ class GameServerConnectionSettingsTest extends TestCase
             ->post(route('admin.settings.game-server.connection', $gameServer), [
                 'connection_action' => 'save',
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => '0',
                 'database_host' => '10.10.10.21',
                 'database_port' => 3306,
@@ -169,7 +169,7 @@ class GameServerConnectionSettingsTest extends TestCase
             ->post(route('admin.settings.game-server.connection', $gameServer), [
                 'connection_action' => 'save',
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => '0',
                 'database_host' => '10.10.10.20',
                 'database_port' => 3306,
@@ -241,13 +241,13 @@ class GameServerConnectionSettingsTest extends TestCase
             ->post(route('admin.settings.game-server.connection', $gameServer), [
                 'connection_action' => 'test',
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => '1',
             ])
             ->assertRedirect(route('admin.settings.game-server').'#game-server-'.$gameServer->id.'-connection')
             ->assertSessionHas('database_connection_report', fn (array $report): bool => $report['context'] === 'game-'.$gameServer->id
                 && $report['connected'] === true
-                && $report['driver'] === 'l2j_mobius_ct0_interlude'
+                && $report['driver'] === 'l2j_mobius'
             );
 
         $this->assertNull($gameServer->fresh()->driver);

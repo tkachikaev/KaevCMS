@@ -29,12 +29,15 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function supportsLoginServer(LoginServer $loginServer): bool
     {
-        return in_array($loginServer->driver, ['l2j_mobius', 'l2j_mobius_legacy'], true);
+        return in_array($loginServer->driver, [
+            ServerDriverRegistry::MOBIUS_DRIVER,
+            ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
+        ], true);
     }
 
     public function supportsGameServer(GameServer $gameServer): bool
     {
-        return $gameServer->driver === 'l2j_mobius_ct0_interlude'
+        return $gameServer->driver === ServerDriverRegistry::MOBIUS_DRIVER
             && $gameServer->loginServer instanceof LoginServer
             && $this->supportsLoginServer($gameServer->loginServer);
     }
@@ -109,12 +112,8 @@ final class ExternalGameAccountGateway implements GameAccountGateway
                     ->orderByDesc('characters.level')
                     ->orderBy('characters.char_name');
 
-                if ($schema->hasTable('clan_data')) {
-                    $query->leftJoin('clan_data', 'clan_data.clan_id', '=', 'characters.clanid')
-                        ->addSelect('clan_data.clan_name as clan_name');
-                } else {
-                    $query->selectRaw('NULL as clan_name');
-                }
+                $query->leftJoin('clan_data', 'clan_data.clan_id', '=', 'characters.clanid')
+                    ->addSelect('clan_data.clan_name as clan_name');
 
                 if ($profile->heroesAvailable) {
                     $query->leftJoin('heroes', 'heroes.charId', '=', 'characters.charId')

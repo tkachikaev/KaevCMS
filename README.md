@@ -1,4 +1,4 @@
-# KaevCMS 0.33.8
+# KaevCMS 0.34.0
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.33.8 keeps static Interlude, Classic, High Five, and Shine Maker item catalogs while removing development-only catalog generation utilities from the production CMS. All profiles use one external deduplicated original-name icon pool; image binaries remain outside KaevCMS release archives.
+Version 0.34.0 completes the L2J Mobius GameServer driver audit. The canonical GameServer driver identifier is now `l2j_mobius`, the interface no longer presents it as an Interlude-specific or unverified “all chronicles” driver, and runtime schema inspection uses the same required-table contract as the administration connection test.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.33.8 сохраняет статические каталоги предметов Interlude, Classic, High Five и Shine Maker, но удаляет из production-сборки ненужные средства генерации каталогов. Все профили используют единый внешний пул иконок с исходными именами без дублирования; изображения по-прежнему не входят в релизные архивы KaevCMS.
+Версия 0.34.0 завершает аудит GameServer-драйвера L2J Mobius. Канонический идентификатор GameServer теперь `l2j_mobius`, интерфейс больше не называет драйвер Interlude-специфичным или неподтверждённым вариантом «для всех хроник», а runtime-проверка схемы использует тот же контракт обязательных таблиц, что и проверка подключения в админке.
 
 ### Требования
 

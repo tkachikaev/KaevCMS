@@ -399,10 +399,19 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('enqueue', $queueContract);
 
         $mobiusDriver = $this->readReleaseFile('app/Services/GameWorld/MobiusGameWorldDriver.php');
+        $mobiusRegistry = $this->readReleaseFile('app/Services/Servers/ServerDriverRegistry.php');
+        $mobiusResolver = $this->readReleaseFile('app/Services/GameWorld/GameWorldDriverResolver.php');
+        $mobiusAccounts = $this->readReleaseFile('app/Services/GameAccounts/ExternalGameAccountGateway.php');
         $this->assertStringNotContainsString('table(\'items\')', $mobiusDriver);
         $this->assertStringNotContainsString('reward', strtolower($mobiusDriver));
         $this->assertStringContainsString('$profile->reputationColumn', $mobiusDriver);
         $this->assertFileExists(app_path('Services/GameWorld/MobiusGameSchemaInspector.php'));
+        $this->assertStringContainsString("public const MOBIUS_DRIVER = 'l2j_mobius';", $mobiusRegistry);
+        $this->assertStringContainsString('MobiusGameSchemaInspector::requirements()', $mobiusRegistry);
+        $this->assertStringNotContainsString('l2j_mobius_ct0_interlude', $mobiusRegistry);
+        $this->assertStringNotContainsString('l2j_mobius_ct0_interlude', $mobiusResolver);
+        $this->assertStringNotContainsString('l2j_mobius_ct0_interlude', $mobiusAccounts);
+        $this->assertFileExists(database_path('migrations/2026_07_26_000000_rename_mobius_game_driver_identifier.php'));
 
         $homeController = $this->readReleaseFile('app/Http/Controllers/HomeController.php');
         $serverMonitor = $this->readReleaseFile('app/Services/Servers/ServerMonitor.php');
@@ -550,7 +559,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertSame('etc_adena_i00', $highFiveCatalog[57]['icon']);
         $this->assertSame('etc_adena_i00', $shineMakerCatalog[57]['icon']);
 
-
         $rewardJournal = $this->readReleaseFile('resources/views/admin/rewards/index.blade.php');
         $this->assertStringContainsString('@section(\'title\', __(\'Reward queue\'))', $rewardJournal);
         $this->assertStringContainsString('audit-table reward-queue-table', $rewardJournal);
@@ -562,8 +570,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('firstCharacterAvatar', $resolver);
         $this->assertStringContainsString('str_starts_with($key', $resolver);
         $this->assertStringContainsString('\'webp\', \'png\', \'jpg\', \'jpeg\'', $resolver);
-        $this->assertStringContainsString("'items/'.$icon.'.webp'", $resolver);
-        $this->assertStringContainsString("'items/'.$profile.'/'.$icon.'.webp'", $resolver);
+        $this->assertStringContainsString("'items/'.\$icon.'.webp'", $resolver);
+        $this->assertStringContainsString("'items/'.\$profile.'/'.\$icon.'.webp'", $resolver);
         $this->assertStringContainsString('externalCharacterAvatar', $resolver);
 
         $appearanceResolver = $this->readReleaseFile('app/Services/GameAssets/CharacterAppearanceResolver.php');

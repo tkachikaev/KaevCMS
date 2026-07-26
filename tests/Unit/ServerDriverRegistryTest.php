@@ -12,7 +12,7 @@ class ServerDriverRegistryTest extends TestCase
 {
     public function test_modern_mobius_login_driver_keeps_its_identifier_and_schema_contract(): void
     {
-        $driver = app(ServerDriverRegistry::class)->loginDriver('l2j_mobius');
+        $driver = app(ServerDriverRegistry::class)->loginDriver(ServerDriverRegistry::MOBIUS_DRIVER);
 
         $this->assertNotNull($driver);
         $this->assertSame(__('L2J Mobius — Interlude and newer'), $driver['label']);
@@ -39,7 +39,7 @@ class ServerDriverRegistryTest extends TestCase
 
     public function test_legacy_mobius_login_driver_requires_only_the_accounts_table(): void
     {
-        $driver = app(ServerDriverRegistry::class)->loginDriver('l2j_mobius_legacy');
+        $driver = app(ServerDriverRegistry::class)->loginDriver(ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER);
 
         $this->assertNotNull($driver);
         $this->assertSame(__('L2J Mobius Legacy — C1/C4'), $driver['label']);
@@ -58,16 +58,16 @@ class ServerDriverRegistryTest extends TestCase
     {
         $keys = app(ServerDriverRegistry::class)->loginDriverKeys();
 
-        $this->assertContains('l2j_mobius', $keys);
-        $this->assertContains('l2j_mobius_legacy', $keys);
+        $this->assertContains(ServerDriverRegistry::MOBIUS_DRIVER, $keys);
+        $this->assertContains(ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, $keys);
     }
 
     public function test_mobius_game_driver_matches_shared_schema_contract(): void
     {
-        $driver = app(ServerDriverRegistry::class)->gameDriver('l2j_mobius_ct0_interlude');
+        $driver = app(ServerDriverRegistry::class)->gameDriver(ServerDriverRegistry::MOBIUS_DRIVER);
 
         $this->assertNotNull($driver);
-        $this->assertSame(__('L2J Mobius — all chronicles'), $driver['label']);
+        $this->assertSame('L2J Mobius', $driver['label']);
         $this->assertTrue($driver['ready']);
         $this->assertSame(7777, $driver['service_port']);
         $this->assertSame('createDate', $driver['character_created_at_column']);
@@ -122,9 +122,9 @@ class ServerDriverRegistryTest extends TestCase
         ], $driver['requirements']);
     }
 
-    public function test_existing_interlude_identifier_resolves_to_the_shared_mobius_driver(): void
+    public function test_mobius_identifier_resolves_to_the_shared_game_driver(): void
     {
-        $server = new GameServer(['driver' => 'l2j_mobius_ct0_interlude']);
+        $server = new GameServer(['driver' => ServerDriverRegistry::MOBIUS_DRIVER]);
 
         $this->assertInstanceOf(
             MobiusGameWorldDriver::class,

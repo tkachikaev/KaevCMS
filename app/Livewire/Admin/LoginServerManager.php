@@ -27,7 +27,7 @@ class LoginServerManager extends Component
 
     public string $name = '';
 
-    public string $driver = 'l2j_mobius';
+    public string $driver = ServerDriverRegistry::MOBIUS_DRIVER;
 
     public string $databaseHost = '127.0.0.1';
 
@@ -313,7 +313,7 @@ class LoginServerManager extends Component
         $this->editingId = null;
         $this->confirmingDeleteId = null;
         $this->name = '';
-        $this->driver = 'l2j_mobius';
+        $this->driver = ServerDriverRegistry::MOBIUS_DRIVER;
         $this->databaseHost = '127.0.0.1';
         $this->databasePort = '3306';
         $this->databaseName = '';

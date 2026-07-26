@@ -187,7 +187,7 @@ class ReactiveServerManagementTest extends TestCase
             ->call('edit', $gameServer->id)
             ->set('connectionEnabled', true)
             ->set('loginServerId', (string) $loginServer->id)
-            ->set('driver', 'l2j_mobius_ct0_interlude')
+            ->set('driver', 'l2j_mobius')
             ->set('useLoginServerConnection', true)
             ->call('testConnection')
             ->assertSet('drawerOpen', true)
@@ -210,7 +210,7 @@ class ReactiveServerManagementTest extends TestCase
         $gameServer = GameServer::query()->firstOrFail();
         $gameServer->update([
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
         $this->actingAs($this->createAdmin(), 'admin');
@@ -239,7 +239,7 @@ class ReactiveServerManagementTest extends TestCase
             ->set('serverMode', 'PvP')
             ->set('connectionEnabled', true)
             ->set('loginServerId', (string) $loginServer->id)
-            ->set('driver', 'l2j_mobius_ct0_interlude')
+            ->set('driver', 'l2j_mobius')
             ->set('useLoginServerConnection', true)
             ->call('save')
             ->assertSet('drawerOpen', true)
@@ -250,7 +250,7 @@ class ReactiveServerManagementTest extends TestCase
         $this->assertSame('Interlude x5', $gameServer->name);
         $this->assertSame('x5', $gameServer->rates);
         $this->assertSame($loginServer->id, $gameServer->login_server_id);
-        $this->assertSame('l2j_mobius_ct0_interlude', $gameServer->driver);
+        $this->assertSame('l2j_mobius', $gameServer->driver);
         $this->assertTrue($gameServer->use_login_server_connection);
         $this->assertSame('configured', $gameServer->database_status);
         $this->assertNotNull($gameServer->database_checked_at);
@@ -364,7 +364,7 @@ PHP);
         $gameServer = GameServer::query()->firstOrFail();
         $gameServer->update([
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
         $user = User::query()->create([
@@ -391,7 +391,7 @@ PHP);
         $gameServer = GameServer::query()->firstOrFail();
         $gameServer->update([
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
         $user = User::query()->create([
@@ -434,7 +434,7 @@ PHP);
         $gameServer = GameServer::query()->firstOrFail();
         $gameServer->update([
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
         $user = User::query()->create([

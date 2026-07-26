@@ -6,6 +6,7 @@ use App\Models\GameServer;
 use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\GameAssets\GameItemCatalog;
 use App\Services\GameAssets\GameItemProfileCatalog;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -13,6 +14,8 @@ use Tests\TestCase;
 
 class GameItemCatalogTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_item_catalog_services_are_reused_within_the_application_lifetime(): void
     {
         $this->assertSame(app(GameItemProfileCatalog::class), app(GameItemProfileCatalog::class));

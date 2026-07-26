@@ -14,6 +14,34 @@ class UpgradeGameServerMigrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_mobius_game_driver_identifier_is_renamed_without_changing_the_login_driver(): void
+    {
+        $loginServer = LoginServer::factory()->create(['driver' => 'l2j_mobius']);
+        $gameServer = GameServer::factory()->create([
+            'login_server_id' => $loginServer->id,
+            'driver' => 'l2j_mobius_ct0_interlude',
+        ]);
+
+        $migration = require database_path('migrations/2026_07_26_000000_rename_mobius_game_driver_identifier.php');
+        $migration->up();
+
+        $this->assertDatabaseHas('login_servers', [
+            'id' => $loginServer->id,
+            'driver' => 'l2j_mobius',
+        ]);
+        $this->assertDatabaseHas('game_servers', [
+            'id' => $gameServer->id,
+            'driver' => 'l2j_mobius',
+        ]);
+
+        $migration->down();
+
+        $this->assertDatabaseHas('game_servers', [
+            'id' => $gameServer->id,
+            'driver' => 'l2j_mobius_ct0_interlude',
+        ]);
+    }
+
     public function test_database_status_migration_preserves_existing_servers(): void
     {
         $migration = require database_path('migrations/2026_07_17_000200_add_database_status_to_servers.php');
@@ -33,7 +61,7 @@ class UpgradeGameServerMigrationTest extends TestCase
             'name' => 'Existing GameServer',
             'sort_order' => 0,
             'login_server_id' => $loginServer->id,
-            'driver' => 'l2j_mobius_ct0_interlude',
+            'driver' => 'l2j_mobius',
             'use_login_server_connection' => true,
         ]);
 

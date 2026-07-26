@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.34.0 - 2026-07-26
+
+- Renamed the canonical L2J Mobius GameServer driver identifier from `l2j_mobius_ct0_interlude` to `l2j_mobius`; the LoginServer and GameServer registries now intentionally use the same Mobius key in their separate contexts.
+- Replaced the misleading “all chronicles” GameServer label with `L2J Mobius` and documented automatic legacy (`karma`) and modern (`reputation`) schema detection without claiming untested chronicle coverage.
+- Centralized Mobius driver identifiers in `ServerDriverRegistry` and removed scattered runtime string comparisons from the driver resolver, player-account queries, Livewire defaults, and external account gateway.
+- Unified administration and runtime schema validation through `MobiusGameSchemaInspector::requirements()`. Missing required `characters` or `clan_data` columns are now rejected before statistics or character queries run; incomplete `heroes` and `castle` tables remain optional capabilities.
+- Added a database migration for the previous GameServer identifier plus regression tests for migration safety, legacy/modern profile detection, dual-column chronicle selection, missing required columns, and optional capabilities.
+- Composer/npm dependencies, module versions, item catalogs, external image paths, and reward-delivery schemas were not changed.
+
+## 0.33.9 - 2026-07-26
+
+- Fixed `ReleaseMetadataTest` so literal `$icon` and `$profile` fragments are asserted without PHP variable interpolation.
+- Restored immutable reward-name snapshots: a stored `item_name` now keeps priority over a later catalog name, while rewards without a stored name still resolve through the chronicle catalog.
+- Added `RefreshDatabase` to the integer-GameServer catalog test so the real `login_servers` and `game_servers` schema is available instead of failing before the assertion.
+- Removed the extra blank lines reported by Laravel Pint in the release metadata and character appearance tests.
+- Composer/npm dependencies, database migrations, module versions, JSON catalogs, external image paths, and reward issuance logic were not changed.
+
 ## 0.33.8 - 2026-07-26
 
 - Removed development-only item catalog generation commands, parsers, and their dedicated tests from the production CMS. The four ready runtime JSON catalogs remain unchanged.

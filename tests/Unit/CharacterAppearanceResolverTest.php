@@ -83,7 +83,6 @@ class CharacterAppearanceResolverTest extends TestCase
         }
     }
 
-
     public function test_external_interlude_avatar_pack_is_used_when_no_upload_override_exists(): void
     {
         $uploads = storage_path('framework/testing/character-upload-assets-'.Str::uuid());

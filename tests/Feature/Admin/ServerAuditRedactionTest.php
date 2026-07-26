@@ -65,7 +65,7 @@ class ServerAuditRedactionTest extends TestCase
             GameServerAdministration::CONNECTION_CONNECT,
             [
                 'login_server_id' => $loginServer->id,
-                'driver' => 'l2j_mobius_ct0_interlude',
+                'driver' => 'l2j_mobius',
                 'use_login_server_connection' => false,
                 'database_host' => 'private-game-db.internal',
                 'database_port' => 3308,
