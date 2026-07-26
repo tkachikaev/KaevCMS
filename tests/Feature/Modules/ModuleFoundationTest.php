@@ -212,6 +212,7 @@ class ModuleFoundationTest extends TestCase
             ->get('/admin/modules')
             ->assertOk()
             ->assertSee('Lifecycle Fixture')
+            ->assertSee('data-module-id="lifecycle-fixture"', false)
             ->assertSee(__('Read-only mode'));
 
         $this->actingAs($administrator, 'admin')

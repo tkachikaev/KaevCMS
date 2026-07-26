@@ -6,20 +6,27 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$expectedFromVersion = '0.36.2'
-$expectedToVersion = '0.36.3'
-$legacyApplyScriptName = 'deployment\windows\apply-0.36.2.ps1'
-$legacyApplySha256 = 'ca11ccf7976825e8d9fdeac238c8abeefb1145b2cc345695364a845137dde011'
+$expectedFromVersion = '0.36.6'
+$expectedToVersion = '0.36.7'
+$legacyApplyScriptName = 'deployment\windows\apply-0.36.6.ps1'
+$legacyApplySha256 = '6ffbfcb7174b8a32974f421b69cd0ddb0a512527a1d14ea5adcdb497ed0740e1'
 $previousComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
 $currentComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
-$recoverableFromVersions = @('0.34.9', '0.35.0', '0.36.0', '0.36.1')
-$supersededPendingTargets = @('0.35.0', '0.36.0', '0.36.1', '0.36.2')
+$recoveryFloorVersion = '0.34.9'
 
 $supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
 if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
     throw 'Release update support script is missing. Re-extract the complete release or patch.'
 }
 . $supportScript
+
+$recoveryLineage = Get-KaevCmsRecoveryLineage `
+    -ProjectRoot $ProjectRoot `
+    -RecoveryFloorVersion $recoveryFloorVersion `
+    -ExpectedFromVersion $expectedFromVersion `
+    -ExpectedToVersion $expectedToVersion
+$recoverableFromVersions = @($recoveryLineage.RecoverableFromVersions)
+$supersededPendingTargets = @($recoveryLineage.SupersededPendingTargets)
 
 function Write-UpdateStage {
     param(

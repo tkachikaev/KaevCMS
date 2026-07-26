@@ -1,4 +1,4 @@
-# KaevCMS 0.36.3
+# KaevCMS 0.36.7
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.36.3 fixes the Windows runtime-directory update contract and stabilizes the module catalogue browser regression. The unified `public/uploads/game-assets` structure, Daily Rewards improvements, Promo Codes previews, and frosted module result dialogs remain unchanged.
+Version 0.36.7 fixes a PowerShell parser error in the Windows update workflow regression. The source-text assertion for the obsolete hard-coded recovery list now escapes the literal variable safely, so the quality gate can parse and execute the complete test script. Runtime functionality remains unchanged.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.36.3 исправляет создание рабочих каталогов игрового контента при Windows-обновлении и стабилизирует браузерную проверку каталога модулей. Единая структура `public/uploads/game-assets`, улучшения Daily Rewards, превью Promo Codes и матовые окна результатов модулей не изменялись.
+Версия 0.36.7 исправляет ошибку синтаксического разбора PowerShell в регрессионном тесте Windows-обновления. Проверка исходного текста устаревшего жёстко заданного списка восстановления теперь безопасно экранирует литеральную переменную, поэтому quality-проверка может разобрать и выполнить весь сценарий. Рабочая функциональность не менялась.
 
 ### Требования
 

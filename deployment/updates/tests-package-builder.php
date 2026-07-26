@@ -94,7 +94,11 @@ if (! is_array($deletionHistory)
     || ($deletionHistory['0.36.0'] ?? null) !== ['core/deployment/windows/apply-0.35.0.ps1', 'public/game-assets']
     || ($deletionHistory['0.36.1'] ?? null) !== ['core/deployment/windows/apply-0.36.0.ps1']
     || ($deletionHistory['0.36.2'] ?? null) !== ['core/deployment/windows/apply-0.36.1.ps1']
-    || ($deletionHistory['0.36.3'] ?? null) !== ['core/deployment/windows/apply-0.36.2.ps1']) {
+    || ($deletionHistory['0.36.3'] ?? null) !== ['core/deployment/windows/apply-0.36.2.ps1']
+    || ($deletionHistory['0.36.4'] ?? null) !== ['core/deployment/windows/apply-0.36.3.ps1']
+    || ($deletionHistory['0.36.5'] ?? null) !== ['core/deployment/windows/apply-0.36.4.ps1']
+    || ($deletionHistory['0.36.6'] ?? null) !== ['core/deployment/windows/apply-0.36.5.ps1']
+    || ($deletionHistory['0.36.7'] ?? null) !== ['core/deployment/windows/apply-0.36.6.ps1']) {
     throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
 }
 

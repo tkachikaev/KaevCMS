@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.36.7 - 2026-07-26
+
+- Fixed a PowerShell parser error in `deployment/windows/tests/update-workflow.ps1` caused by an incorrectly quoted literal `@('0.34.9')` source fragment.
+- Replaced the fragile nested single-quote expression with a safely escaped literal variable assertion, allowing `quality.ps1` to parse and execute the update workflow regression again.
+- Runtime functionality, modules, themes, dependencies, database schemas, game drivers, item catalogs, and asset paths were not changed.
+
+## 0.36.6 - 2026-07-26
+
+- Replaced manually maintained interrupted-update version arrays with recovery lineage derived from the versioned `deployment/updates/deletions.json` history.
+- Added PowerShell regression coverage proving that the original `0.34.9 -> 0.35.0` pending marker remains recoverable by a future hotfix without editing an exact expected array.
+- Updated release metadata checks to validate the data-driven recovery contract instead of brittle source-text snapshots. Runtime functionality remains unchanged.
+
+## 0.36.5 - 2026-07-26
+
+- Replaced the order-dependent module catalogue browser assertion with direct one-column grid and full-row width checks.
+- Kept stable `data-module-id` selectors and fixed 124×124 module artwork assertions. Runtime functionality remained unchanged.
+
+## 0.36.4 - 2026-07-26
+
+- Fixed the Windows update workflow regression test so it resolves the current apply script from `VERSION` instead of referencing a deleted previous-release script.
+- Added stable `data-module-id` attributes to module catalogue rows and updated Playwright selectors to prevent both module locators from resolving to the same card.
+- No runtime, database, module schema, game driver, or asset-path behavior changed.
+
 ## 0.36.3 - 2026-07-26
 
 - Fixed the Windows updater runtime-directory contract so it recreates the canonical `public/uploads/game-assets/items` parent directory together with `common` and `servers`.

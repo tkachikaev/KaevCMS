@@ -139,5 +139,17 @@
     ],
     "0.36.3": [
         "core/deployment/windows/apply-0.36.2.ps1"
+    ],
+    "0.36.4": [
+        "core/deployment/windows/apply-0.36.3.ps1"
+    ],
+    "0.36.5": [
+        "core/deployment/windows/apply-0.36.4.ps1"
+    ],
+    "0.36.6": [
+        "core/deployment/windows/apply-0.36.5.ps1"
+    ],
+    "0.36.7": [
+        "core/deployment/windows/apply-0.36.6.ps1"
     ]
 }

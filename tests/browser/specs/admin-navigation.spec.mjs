@@ -154,28 +154,29 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(page.getByRole('heading', { name: 'Модули' }).first()).toBeVisible();
     await expect(page.getByText('Жизненный цикл модулей')).toBeVisible();
     await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toBeVisible();
-    const promoModule = page.locator('.module-card').filter({
-        has: page.getByRole('heading', { name: 'Promo Codes', exact: true }),
-    });
-    const dailyModule = page.locator('.module-card').filter({
-        has: page.getByRole('heading', { name: 'Daily Rewards', exact: true }),
-    });
+    const promoModule = page.locator('[data-module-id="promo-codes"]');
+    const dailyModule = page.locator('[data-module-id="daily-rewards"]');
     await expect(promoModule).toHaveCount(1);
     await expect(dailyModule).toHaveCount(1);
     await expect(promoModule).toBeVisible();
     await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
     await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
 
+    const moduleList = page.locator('[data-module-list]');
     const promoBox = await promoModule.boundingBox();
     const dailyBox = await dailyModule.boundingBox();
+    const listBox = await moduleList.boundingBox();
     const headingBox = await promoModule.locator('.admin-catalog-heading').boundingBox();
     const previewBox = await promoModule.locator('.module-catalog-preview').boundingBox();
+    const gridTemplateColumns = await moduleList.evaluate((element) => getComputedStyle(element).gridTemplateColumns);
     expect(promoBox).not.toBeNull();
     expect(dailyBox).not.toBeNull();
+    expect(listBox).not.toBeNull();
     expect(headingBox).not.toBeNull();
     expect(previewBox).not.toBeNull();
-    expect(Math.abs(promoBox.x - dailyBox.x)).toBeLessThanOrEqual(1);
-    expect(dailyBox.y).toBeGreaterThan(promoBox.y + promoBox.height - 1);
+    expect(gridTemplateColumns.trim().split(/\s+/)).toHaveLength(1);
+    expect(Math.abs(promoBox.width - listBox.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(dailyBox.width - listBox.width)).toBeLessThanOrEqual(1);
     expect(headingBox.x).toBeLessThan(previewBox.x);
     expect(Math.round(previewBox.width)).toBe(124);
     expect(Math.round(previewBox.height)).toBe(124);

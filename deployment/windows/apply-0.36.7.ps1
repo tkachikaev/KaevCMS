@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$fromVersion = '0.36.2'
-$toVersion = '0.36.3'
+$fromVersion = '0.36.6'
+$toVersion = '0.36.7'
 
 if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'artisan') -PathType Leaf)) {
     throw 'The KaevCMS project root could not be found.'
@@ -146,7 +146,7 @@ foreach ($requiredFile in $requiredFiles) {
 }
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release repairs canonical game-asset directory recreation and stabilizes the module catalogue browser regression.'
+Write-Host 'This hotfix repairs the PowerShell update-workflow regression parser error.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -159,4 +159,4 @@ Write-Host 'Web installer: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'VDS updater: php artisan kaevcms:update C:\path\to\KaevCMS-cumulative-update.zip'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'
-Write-Host 'Composer/npm dependencies, database migrations, game drivers, item catalog data, account themes, and reward-delivery schemas were not changed. Promo Codes and Daily Rewards were versioned for this release.'
+Write-Host 'Runtime functionality, modules, themes, dependencies, database schemas, game drivers, item catalogs, and reward-delivery schemas were not changed.'

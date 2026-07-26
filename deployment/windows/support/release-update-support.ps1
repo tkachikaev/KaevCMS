@@ -4,6 +4,67 @@
     return $Version -match '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$'
 }
 
+
+function Get-KaevCmsRecoveryLineage {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$RecoveryFloorVersion,
+        [Parameter(Mandatory = $true)][string]$ExpectedFromVersion,
+        [Parameter(Mandatory = $true)][string]$ExpectedToVersion
+    )
+
+    foreach ($version in @($RecoveryFloorVersion, $ExpectedFromVersion, $ExpectedToVersion)) {
+        if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Recovery lineage requires a stable semantic version: $version"
+        }
+    }
+
+    $floor = [version]$RecoveryFloorVersion
+    $expectedFrom = [version]$ExpectedFromVersion
+    $expectedTo = [version]$ExpectedToVersion
+    if ($floor -gt $expectedFrom -or $expectedFrom -ge $expectedTo) {
+        throw 'Recovery lineage version boundaries are invalid.'
+    }
+
+    $historyPath = Join-Path $ProjectRoot 'deployment\updates\deletions.json'
+    if (-not (Test-Path -LiteralPath $historyPath -PathType Leaf)) {
+        throw "Update deletion history is missing: $historyPath"
+    }
+
+    try {
+        $history = Get-Content -LiteralPath $historyPath -Raw | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        throw "Update deletion history is invalid: $historyPath"
+    }
+
+    $historyVersions = @(
+        $history.PSObject.Properties.Name |
+            Where-Object { $_ -match '^\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_ }
+    )
+
+    if ($historyVersions -notcontains $ExpectedFromVersion) {
+        throw "Update deletion history does not contain the expected source release: $ExpectedFromVersion"
+    }
+
+    $supersededPendingTargets = @(
+        $historyVersions |
+            Where-Object {
+                $candidate = [version]$_
+                $candidate -gt $floor -and $candidate -le $expectedFrom
+            }
+    )
+    $recoverableFromVersions = @(
+        (@($RecoveryFloorVersion) + @($supersededPendingTargets | Where-Object { $_ -ne $ExpectedFromVersion })) |
+            Select-Object -Unique
+    )
+
+    return [pscustomobject]@{
+        RecoverableFromVersions = $recoverableFromVersions
+        SupersededPendingTargets = $supersededPendingTargets
+    }
+}
+
 function Get-KaevCmsPendingUpdateMarkerPath {
     param([Parameter(Mandatory = $true)][string]$ProjectRoot)
 

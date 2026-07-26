@@ -173,14 +173,17 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('legacyApplySha256', $updateScript);
         $this->assertStringContainsString('Write-KaevCmsPendingUpdateMarker', $updateScript);
         $this->assertStringContainsString('Convert-KaevCmsSupersededPendingUpdateMarker', $updateScript);
-        $this->assertMatchesRegularExpression(
-            '/^\$recoverableFromVersions = @\([^)]*\)\r?$/m',
+        $this->assertStringContainsString('$recoveryFloorVersion = \'0.34.9\'', $updateScript);
+        $this->assertStringContainsString('Get-KaevCmsRecoveryLineage', $updateScript);
+        $this->assertStringContainsString(
+            '$recoverableFromVersions = @($recoveryLineage.RecoverableFromVersions)',
             $updateScript,
         );
-        $this->assertMatchesRegularExpression(
-            '/^\$supersededPendingTargets = @\([^)]*\)\r?$/m',
+        $this->assertStringContainsString(
+            '$supersededPendingTargets = @($recoveryLineage.SupersededPendingTargets)',
             $updateScript,
         );
+        $this->assertStringNotContainsString('$recoverableFromVersions = @(\'0.34.9\'', $updateScript);
         $this->assertStringContainsString('if ($supersededPendingTargets.Count -gt 0)', $updateScript);
         $this->assertStringContainsString('$installed.Version -notin $supportedFromVersions', $updateScript);
         $this->assertStringContainsString('-FromVersion $installed.Version', $updateScript);
@@ -319,6 +322,11 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('ERR_NO_BUFFER_SPACE', $browserNavigationTest);
         $this->assertStringContainsString('does not retry application or unrelated browser failures', $browserNavigationTest);
 
+        $updateWorkflowTest = $this->readReleaseFile('deployment/windows/tests/update-workflow.ps1');
+        $this->assertStringContainsString('(Join-Path $ProjectRoot \'VERSION\')', $updateWorkflowTest);
+        $this->assertStringContainsString('"..\apply-$releaseVersion.ps1"', $updateWorkflowTest);
+        $this->assertStringNotContainsString('Get-Content -LiteralPath "$PSScriptRoot\..\apply-', $updateWorkflowTest);
+
         $workflow = $this->readReleaseFile('.github/workflows/quality.yml');
         $this->assertStringContainsString('composer audit --locked --no-interaction', $workflow);
         $this->assertStringContainsString('npm audit --audit-level=high', $workflow);
@@ -337,6 +345,13 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(database_path('migrations/2026_07_21_000000_add_module_migration_lifecycle.php'));
         $this->assertFileExists(resource_path('schemas/module.schema.json'));
         $this->assertFileExists(resource_path('views/admin/modules/index.blade.php'));
+        $moduleCatalogue = $this->readReleaseFile('resources/views/admin/modules/index.blade.php');
+        $this->assertStringContainsString('data-module-id="{{ $module[\'id\'] }}"', $moduleCatalogue);
+
+        $moduleBrowserTest = $this->readReleaseFile('tests/browser/specs/admin-navigation.spec.mjs');
+        $this->assertStringContainsString('page.locator(\'[data-module-list]\')', $moduleBrowserTest);
+        $this->assertStringContainsString('getComputedStyle(element).gridTemplateColumns', $moduleBrowserTest);
+        $this->assertStringNotContainsString('dailyBox.y).toBeGreaterThan', $moduleBrowserTest);
         $this->assertFileExists(base_path('modules/README.md'));
         $this->assertFileExists(base_path('docs/MODULES.md'));
 

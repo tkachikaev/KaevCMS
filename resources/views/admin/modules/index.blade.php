@@ -23,13 +23,16 @@
 @else
     <div class="admin-catalog-list module-list" data-module-list>
         @foreach ($modules as $module)
-            <article @class([
-                'admin-card-row',
-                'admin-catalog-row',
-                'module-card',
-                'active' => $module['enabled'],
-                'invalid' => in_array($module['status'], ['invalid', 'missing', 'migration_modified'], true),
-            ])>
+            <article
+                data-module-id="{{ $module['id'] }}"
+                @class([
+                    'admin-card-row',
+                    'admin-catalog-row',
+                    'module-card',
+                    'active' => $module['enabled'],
+                    'invalid' => in_array($module['status'], ['invalid', 'missing', 'migration_modified'], true),
+                ])
+            >
                 <div class="admin-catalog-main">
                     <div class="admin-catalog-heading">
                         <h2>{{ $module['name'] }}</h2>
