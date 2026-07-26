@@ -45,6 +45,8 @@ $application = Application::configure(basePath: dirname(__DIR__))
             'game_password',
             'game_password_confirmation',
             'current_password',
+            'password',
+            'password_confirmation',
         ]);
     })->create();
 

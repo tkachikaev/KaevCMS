@@ -42,7 +42,7 @@ class AccountAvatarProfileTest extends TestCase
         $this->actingAs($user)
             ->get('/ru/account/profile')
             ->assertOk()
-            ->assertSee('Аватар профиля')
+            ->assertSee('Настройки аккаунта')
             ->assertSee('Изменить аватар')
             ->assertSee('Стандартный аватар');
     }

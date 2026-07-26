@@ -26,7 +26,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertSame('Kaev Aurelia Account', $accountTheme['name']);
-        $this->assertSame('1.3.1', $accountTheme['version']);
+        $this->assertSame('1.4.0', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
         foreach ($this->publicThemeFiles() as $file) {
@@ -60,6 +60,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertStringContainsString('.reward-history-card {', $accountCss);
         $this->assertStringContainsString('.account-avatar-grid {', $accountCss);
         $this->assertStringContainsString('.account-avatar-modal {', $accountCss);
+        $this->assertStringContainsString('.account-operation-modal{', $accountCss);
         $this->assertStringContainsString('.account-tool-grid {', $accountCss);
         $this->assertStringContainsString('.account-detail-hero { padding: 28px 30px; }', $accountCss);
         $this->assertStringContainsString('border-radius: var(--account-radius-sm);', $accountCss);
@@ -117,6 +118,12 @@ class BundledAureliaThemesTest extends TestCase
             ->assertOk()
             ->assertSee('Выбор аватара')
             ->assertSee('account-avatar-picker', false);
+
+        $this->actingAs($user)
+            ->get('/account/security')
+            ->assertOk()
+            ->assertSee('Безопасность аккаунта KaevCMS')
+            ->assertSee('/account/security/password', false);
 
         $this->actingAs($user)
             ->get('/account/web-inventory')
@@ -195,7 +202,10 @@ class BundledAureliaThemesTest extends TestCase
             'livewire/character-directory.blade.php',
             'livewire/game-account-password-form.blade.php',
             'partials/navigation.blade.php',
+            'partials/account-menu.blade.php',
+            'partials/settings-tabs.blade.php',
             'profile/edit.blade.php',
+            'security/edit.blade.php',
             'web-inventory/index.blade.php',
         ];
     }

@@ -82,7 +82,16 @@ if (! is_array($deletionHistory)
         'core/deployment/windows/apply-0.33.7.ps1',
     ]
     || ($deletionHistory['0.33.9'] ?? null) !== ['core/deployment/windows/apply-0.33.8.ps1']
-    || ($deletionHistory['0.34.0'] ?? null) !== ['core/deployment/windows/apply-0.33.9.ps1']) {
+    || ($deletionHistory['0.34.0'] ?? null) !== ['core/deployment/windows/apply-0.33.9.ps1']
+    || ($deletionHistory['0.34.1'] ?? null) !== ['core/deployment/windows/apply-0.34.0.ps1']
+    || ($deletionHistory['0.34.2'] ?? null) !== ['core/deployment/windows/apply-0.34.1.ps1']
+    || ($deletionHistory['0.34.3'] ?? null) !== ['core/deployment/windows/apply-0.34.2.ps1']
+    || ($deletionHistory['0.34.4'] ?? null) !== ['core/deployment/windows/apply-0.34.3.ps1']
+    || ($deletionHistory['0.34.5'] ?? null) !== ['core/deployment/windows/apply-0.34.4.ps1']
+    || ($deletionHistory['0.34.6'] ?? null) !== ['core/deployment/windows/apply-0.34.5.ps1']
+    || ($deletionHistory['0.34.7'] ?? null) !== ['core/deployment/windows/apply-0.34.6.ps1']
+    || ($deletionHistory['0.34.8'] ?? null) !== ['core/deployment/windows/apply-0.34.7.ps1']
+    || ($deletionHistory['0.34.9'] ?? null) !== ['core/deployment/windows/apply-0.34.8.ps1']) {
     throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
 }
 

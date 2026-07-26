@@ -31,7 +31,11 @@
                 'invalid' => in_array($module['status'], ['invalid', 'missing', 'migration_modified'], true),
             ])>
                 <div class="theme-preview module-mark" aria-hidden="true">
-                    <div class="theme-preview-placeholder"><span>{{ mb_strtoupper(mb_substr($module['name'], 0, 1)) }}</span></div>
+                    @if($module['image_path'])
+                        <img src="{{ route('admin.modules.image', ['adminPath' => request()->route('adminPath'), 'module' => $module['id']]) }}?v={{ rawurlencode((string) $module['version']) }}" alt="" width="512" height="512">
+                    @else
+                        <div class="theme-preview-placeholder"><span>{{ mb_strtoupper(mb_substr($module['name'], 0, 1)) }}</span></div>
+                    @endif
                 </div>
 
                 <div class="theme-card-body">

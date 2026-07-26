@@ -265,6 +265,7 @@ final class ModuleManager
             'views_path' => null,
             'lang_path' => null,
             'migrations_path' => null,
+            'image_path' => null,
             'migration_files' => [],
             'route_paths' => [],
             'capabilities' => [],

@@ -59,7 +59,7 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_daily_reward_claims'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'daily-rewards',
-            'version' => '1.0.3',
+            'version' => '1.1.0',
             'enabled' => true,
         ]);
 
@@ -71,6 +71,21 @@ class DailyRewardsModuleTest extends TestCase
             'admin.module-pages.daily-rewards.index',
             app(ModuleNavigationRegistry::class)->adminLinks()[0]['route'] ?? null,
         );
+    }
+
+    public function test_language_switch_from_selected_calendar_returns_to_localized_account_overview(): void
+    {
+        $user = User::factory()->create(['locale' => 'en']);
+
+        $this->actingAs($user)
+            ->get(route('language.switch', [
+                'locale' => 'ru',
+                'return' => '/modules/daily-rewards?calendar=1&account=2',
+            ]))
+            ->assertRedirect(url('/ru/account'))
+            ->assertSessionHas('locale', 'ru');
+
+        $this->assertSame('ru', $user->fresh()->locale);
     }
 
     public function test_daily_reward_uses_the_interlude_catalog_item_name(): void
@@ -138,6 +153,30 @@ class DailyRewardsModuleTest extends TestCase
             ->assertSessionHasErrors('game_server_id');
 
         $this->assertSame(1, DailyRewardCalendar::query()->count());
+    }
+
+    public function test_admin_editor_uses_a_visual_calendar_day_dialog_and_item_preview_endpoint(): void
+    {
+        $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
+        $calendar = $this->createCalendar($server, 2026, 8);
+        $this->configureDay($calendar, 1, [['item_id' => 57, 'amount' => 1000000]]);
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/daily-rewards/'.$calendar->id.'/edit')
+            ->assertOk()
+            ->assertSee('daily-reward-admin-calendar-grid', false)
+            ->assertSee('data-daily-day-open=', false)
+            ->assertSee('daily-reward-admin-dialog', false)
+            ->assertSee('data-daily-item-preview', false)
+            ->assertSee('Адена')
+            ->assertSee('assets/admin/js/daily-rewards.js', false);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/daily-rewards/'.$calendar->id.'/items/57')
+            ->assertOk()
+            ->assertJsonPath('item_id', 57)
+            ->assertJsonPath('name', 'Адена');
     }
 
     public function test_owner_configures_multiple_items_and_administrator_is_read_only(): void
@@ -306,6 +345,41 @@ class DailyRewardsModuleTest extends TestCase
             ]])
             ->all();
         $this->assertSame($snapshot, $granted);
+    }
+
+    public function test_successful_and_failed_claims_render_the_shared_operation_modal(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create(['name' => 'Interlude x5']);
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 250000]]);
+        $user = User::factory()->create();
+        $account = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+
+        $success = $this->claim($user, $calendar, $account, (string) Str::uuid())
+            ->assertSessionHas(
+                'account_operation',
+                static fn (array $operation): bool => $operation['type'] === 'success'
+                    && $operation['title'] === __('module-daily-rewards::messages.claim_success_title')
+                    && ($operation['items'][0]['item_id'] ?? null) === 57
+                    && ($operation['items'][0]['amount'] ?? null) === 250000,
+            );
+
+        $this->actingAs($user)
+            ->get((string) $success->headers->get('Location'))
+            ->assertOk()
+            ->assertSee('data-account-operation-modal', false)
+            ->assertSee(__('module-daily-rewards::messages.claim_success_title'))
+            ->assertSee('× 250 000');
+
+        $this->claim($user, $calendar, $account, (string) Str::uuid())
+            ->assertSessionHasErrors('reward')
+            ->assertSessionHas(
+                'account_operation',
+                static fn (array $operation): bool => $operation['type'] === 'error'
+                    && $operation['title'] === __('module-daily-rewards::messages.claim_failed_title'),
+            );
     }
 
     public function test_same_account_cannot_claim_twice_but_another_account_can(): void

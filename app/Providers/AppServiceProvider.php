@@ -247,5 +247,11 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perHour(5)->by('game-account-password:'.$userId);
         });
+
+        RateLimiter::for('account-password', static function (Request $request): Limit {
+            $userId = (string) ($request->user()?->getAuthIdentifier() ?? 'guest');
+
+            return Limit::perHour(5)->by('account-password:'.$userId);
+        });
     }
 }

@@ -1,4 +1,4 @@
-# KaevCMS 0.34.0
+# KaevCMS 0.34.9
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.34.0 completes the L2J Mobius GameServer driver audit. The canonical GameServer driver identifier is now `l2j_mobius`, the interface no longer presents it as an Interlude-specific or unverified “all chronicles” driver, and runtime schema inspection uses the same required-table contract as the administration connection test.
+Version 0.34.9 resolves the quality-gate regressions found after the module artwork and reward-dialog release. Module image validation now satisfies PHPStan, and Playwright verifies the current Daily Rewards edit label and server-bound Web Inventory links.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.34.0 завершает аудит GameServer-драйвера L2J Mobius. Канонический идентификатор GameServer теперь `l2j_mobius`, интерфейс больше не называет драйвер Interlude-специфичным или неподтверждённым вариантом «для всех хроник», а runtime-проверка схемы использует тот же контракт обязательных таблиц, что и проверка подключения в админке.
+Версия 0.34.9 исправляет регрессии quality gate после добавления обложек модулей и окон наград. Проверка изображений модулей теперь соответствует PHPStan, а Playwright проверяет актуальную кнопку изменения Daily Rewards и переходы в веб-инвентарь выбранного сервера.
 
 ### Требования
 

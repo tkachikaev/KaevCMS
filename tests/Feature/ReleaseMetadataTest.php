@@ -59,7 +59,10 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('resources\game-items\high-five.json', $applyScript);
         $this->assertStringContainsString('resources\game-items\shine-maker.json', $applyScript);
         $this->assertStringContainsString('public\game-assets\README-RU.txt', $applyScript);
-        $this->assertStringNotContainsString('.webp', $applyScript);
+        $this->assertStringNotContainsString('public\game-assets\items', $applyScript);
+        $this->assertStringNotContainsString('public\game-assets\characters', $applyScript);
+        $this->assertStringContainsString('modules\daily-rewards\assets\module.webp', $applyScript);
+        $this->assertStringContainsString('modules\promo-codes\assets\module.webp', $applyScript);
         $this->assertStringContainsString('deployment\windows\build-shared-hosting-package.ps1', $applyScript);
         $this->assertStringContainsString('app\Services\Updates\SystemUpdateInstaller.php', $applyScript);
         $this->assertStringContainsString('app\Services\Updates\SystemUpdateRecovery.php', $applyScript);
@@ -89,6 +92,22 @@ class ReleaseMetadataTest extends TestCase
         $browserQuality = $this->readReleaseFile('deployment/windows/browser-quality.ps1');
         $this->assertStringContainsString('node_modules\@playwright\test\package.json', $browserQuality);
         $this->assertStringNotContainsString('require.resolve(\'@playwright/test\')', $browserQuality);
+    }
+
+    public function test_account_navigation_test_uses_pint_compatible_single_quoted_literals(): void
+    {
+        $accountNavigationTest = $this->readReleaseFile('tests/Feature/Account/AccountNavigationTest.php');
+
+        foreach (token_get_all($accountNavigationTest) as $token) {
+            if (! is_array($token) || $token[0] !== T_CONSTANT_ENCAPSED_STRING) {
+                continue;
+            }
+
+            $this->assertFalse(
+                str_starts_with($token[1], '"'),
+                sprintf('Simple double-quoted literal remains on line %d: %s', $token[2], $token[1]),
+            );
+        }
     }
 
     public function test_documentation_is_bilingual_and_current(): void
@@ -354,6 +373,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('.promo-activation-surface {', $aureliaCss);
         $this->assertStringContainsString('.reward-history-main p img {', $aureliaCss);
         $this->assertStringContainsString('Kaev Aurelia Account 1.3.1', $aureliaCss);
+        $this->assertStringContainsString('Kaev Aurelia Account 1.4.0', $aureliaCss);
         $this->assertStringContainsString('.account-dashboard-tools {', $aureliaCss);
         $this->assertStringContainsString('border-radius: 24px;', $aureliaCss);
 
@@ -464,14 +484,13 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(public_path('game-assets/README-RU.txt'));
         $this->assertFileExists(public_path('game-assets/items/.gitkeep'));
         $this->assertFileExists(public_path('game-assets/items/interlude/.gitkeep'));
-        $this->assertFileDoesNotExist(public_path('game-assets/items/etc_adena_i00.webp'));
-        $this->assertFileDoesNotExist(public_path('game-assets/items/interlude/etc_adena_i00.webp'));
-        $assetIterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(public_path('game-assets')));
-        foreach ($assetIterator as $assetFile) {
-            if ($assetFile->isFile()) {
-                $this->assertNotSame('webp', strtolower($assetFile->getExtension()), 'Release source must not embed external game images.');
-            }
-        }
+        $webUpdateBuilder = $this->readReleaseFile('deployment/updates/build-package.php');
+        $this->assertStringContainsString('str_starts_with(strtolower($path), \'public/game-assets/\')', $webUpdateBuilder);
+        $this->assertStringContainsString('(?:webp|png|jpe?g|gif|svg)', $webUpdateBuilder);
+
+        $sharedHostingBuilder = $this->readReleaseFile('deployment/hosting/build-shared-hosting-package.php');
+        $this->assertStringContainsString('str_starts_with(strtolower($path), \'game-assets/\')', $sharedHostingBuilder);
+        $this->assertStringContainsString('(?:webp|png|jpe?g|gif|svg)', $sharedHostingBuilder);
         $this->assertFileExists(base_path('docs/GAME_ITEMS.md'));
         $this->assertFileExists(app_path('Services/GameAssets/CharacterAppearanceResolver.php'));
         $this->assertFileExists(config_path('character-appearances.php'));
@@ -490,6 +509,11 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('docs/GAME_ASSETS.md'));
         $this->assertFileExists(public_path('assets/admin/js/promo-codes.js'));
         $this->assertFileExists(public_path('assets/admin/css/app.css'));
+        $this->assertFileExists(base_path('modules/promo-codes/assets/module.webp'));
+        $this->assertFileExists(base_path('modules/daily-rewards/assets/module.webp'));
+        $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/promo-codes/assets/module.webp')), 0, 2));
+        $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/daily-rewards/assets/module.webp')), 0, 2));
+        $this->assertFileExists(resource_path('views/components/account-operation-modal.blade.php'));
 
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),
@@ -497,8 +521,8 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.0.3', $manifest['version']);
-        $this->assertSame('0.26.0', $manifest['cms_min']);
+        $this->assertSame('1.1.0', $manifest['version']);
+        $this->assertSame('0.34.8', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 
         $activationService = $this->readReleaseFile('modules/promo-codes/src/Services/PromoCodeActivationService.php');
@@ -518,6 +542,13 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('.promo-reward-row', $adminStyles);
         $this->assertStringContainsString('.reward-queue-item', $adminStyles);
         $this->assertStringContainsString('.promo-reward-name-preview', $adminStyles);
+        $this->assertStringContainsString('.module-mark > img', $adminStyles);
+
+        $moduleValidator = $this->readReleaseFile('app/Support/Modules/ModuleValidator.php');
+        $this->assertStringContainsString('\'assets/module.webp\'', $moduleValidator);
+        $this->assertStringContainsString('$image[\'mime\'] !== \'image/webp\'', $moduleValidator);
+        $moduleController = $this->readReleaseFile('app/Http/Controllers/Admin/ModuleController.php');
+        $this->assertStringContainsString('\'X-Content-Type-Options\' => \'nosniff\'', $moduleController);
 
         $itemCatalog = $this->readReleaseFile('app/Services/GameAssets/GameItemCatalog.php');
         $this->assertStringContainsString('lang_path($locale.\'/items.php\')', $itemCatalog);
@@ -593,10 +624,12 @@ class ReleaseMetadataTest extends TestCase
     {
         $this->assertFileExists(app_path('Services/Account/AccountAvatarCatalog.php'));
         $this->assertFileExists(app_path('Http/Controllers/Account/ProfileController.php'));
+        $this->assertFileExists(app_path('Http/Controllers/Account/SecurityController.php'));
         $this->assertFileExists(app_path('Http/Requests/Account/UpdateAccountAvatarRequest.php'));
         $this->assertFileExists(database_path('migrations/2026_07_22_000100_add_account_avatar_to_users_table.php'));
         $this->assertFileExists(resource_path('views/components/account-avatar.blade.php'));
         $this->assertFileExists(resource_path('views/components/account-avatar-modal.blade.php'));
+        $this->assertFileExists(resource_path('views/components/account-operation-modal.blade.php'));
         $this->assertFileExists(resource_path('views/components/game-account-icon.blade.php'));
         $this->assertFileExists(app_path('Http/Controllers/Account/CharacterController.php'));
         $this->assertFileExists(database_path('migrations/2026_07_22_000200_upgrade_character_directory_preferences.php'));
@@ -604,10 +637,16 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('account-themes/luxury/views/characters/index.blade.php'));
         $this->assertFileExists(base_path('account-themes/kaev-aurelia/views/profile/edit.blade.php'));
         $this->assertFileExists(base_path('account-themes/luxury/views/profile/edit.blade.php'));
+        $this->assertFileExists(base_path('account-themes/kaev-aurelia/views/security/edit.blade.php'));
+        $this->assertFileExists(base_path('account-themes/luxury/views/security/edit.blade.php'));
+        $this->assertFileExists(base_path('account-themes/kaev-aurelia/views/partials/settings-tabs.blade.php'));
+        $this->assertFileExists(base_path('account-themes/luxury/views/partials/settings-tabs.blade.php'));
         $this->assertFileExists(base_path('docs/ACCOUNT_AVATARS.md'));
 
         $routes = $this->readReleaseFile('routes/account.php');
         $this->assertStringContainsString('/account/profile', $routes);
+        $this->assertStringContainsString('/account/security', $routes);
+        $this->assertStringContainsString('security.password.update', $routes);
         $this->assertStringContainsString('/account/characters', $routes);
         $this->assertStringContainsString('characters.index', $routes);
         $this->assertStringContainsString('profile.avatar.update', $routes);

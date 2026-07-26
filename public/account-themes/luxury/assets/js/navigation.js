@@ -8,6 +8,7 @@
 
     const profileMenus = () => document.querySelectorAll('.account-profile-menu[open]');
     const avatarModal = () => document.querySelector('[data-avatar-modal]');
+    const operationModal = () => document.querySelector('[data-account-operation-modal]');
 
     const closeProfileMenus = () => {
         profileMenus().forEach((menu) => menu.removeAttribute('open'));
@@ -27,6 +28,42 @@
         }
 
         document.documentElement.classList.add('account-modal-open');
+    };
+
+    const closeOperationModal = () => {
+        const modal = operationModal();
+        if (modal instanceof HTMLDialogElement && modal.open) {
+            modal.close();
+        }
+        document.documentElement.classList.remove('account-operation-modal-open');
+    };
+
+    const initializeOperationModal = () => {
+        const modal = operationModal();
+        if (!(modal instanceof HTMLDialogElement)) {
+            document.documentElement.classList.remove('account-operation-modal-open');
+            return;
+        }
+
+        if (!modal.hasAttribute(readyAttribute)) {
+            modal.setAttribute(readyAttribute, '');
+            modal.addEventListener('close', () => {
+                document.documentElement.classList.remove('account-operation-modal-open');
+            });
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeOperationModal();
+                }
+            });
+        }
+
+        if (modal.hasAttribute('data-account-operation-modal-auto-open') && !modal.open) {
+            modal.removeAttribute('data-account-operation-modal-auto-open');
+            closeProfileMenus();
+            closeMobileSidebar();
+            modal.showModal();
+            document.documentElement.classList.add('account-operation-modal-open');
+        }
     };
 
     const closeAvatarModal = () => {
@@ -86,11 +123,13 @@
 
         closeProfileMenus();
         initializeAvatarModal();
+        initializeOperationModal();
     };
 
     const beginNavigation = () => {
         document.documentElement.classList.add('account-is-navigating');
         closeAvatarModal();
+        closeOperationModal();
         closeMobileSidebar();
     };
 
@@ -107,10 +146,31 @@
             return;
         }
 
+        const passwordToggle = event.target.closest('[data-password-toggle]');
+        if (passwordToggle instanceof HTMLButtonElement) {
+            const inputId = passwordToggle.getAttribute('data-password-toggle');
+            const input = inputId ? document.getElementById(inputId) : null;
+            if (input instanceof HTMLInputElement) {
+                const willShow = input.type === 'password';
+                input.type = willShow ? 'text' : 'password';
+                passwordToggle.setAttribute('aria-pressed', willShow ? 'true' : 'false');
+                passwordToggle.setAttribute('aria-label', passwordToggle.getAttribute(willShow ? 'data-hide-label' : 'data-show-label') || '');
+                passwordToggle.textContent = passwordToggle.getAttribute(willShow ? 'data-hide-text' : 'data-show-text') || '';
+                input.focus({ preventScroll: true });
+            }
+            return;
+        }
+
         const openTrigger = event.target.closest('[data-avatar-modal-open]');
         if (openTrigger) {
             event.preventDefault();
             openAvatarModal();
+            return;
+        }
+
+        if (event.target.closest('[data-account-operation-modal-close]')) {
+            event.preventDefault();
+            closeOperationModal();
             return;
         }
 

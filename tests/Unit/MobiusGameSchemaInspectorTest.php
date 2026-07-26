@@ -67,13 +67,24 @@ class MobiusGameSchemaInspectorTest extends TestCase
 
     public function test_inspector_rejects_missing_required_character_column(): void
     {
-        $this->createCharactersTable('karma', ['createDate']);
+        $this->createCharactersTable('karma', ['char_name']);
         $this->createClanTable();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('characters table is missing required columns: createDate');
+        $this->expectExceptionMessage('characters table is missing required columns: char_name');
 
         app(MobiusGameSchemaInspector::class)->inspect(DB::connection(), 'Interlude');
+    }
+
+    public function test_inspector_accepts_missing_optional_character_creation_column(): void
+    {
+        $this->createCharactersTable('karma', ['createDate']);
+        $this->createClanTable();
+
+        $profile = app(MobiusGameSchemaInspector::class)->inspect(DB::connection(), 'Interlude');
+
+        $this->assertSame(MobiusGameSchemaProfile::LEGACY, $profile->name);
+        $this->assertSame('karma', $profile->reputationColumn);
     }
 
     public function test_inspector_rejects_missing_required_clan_table(): void

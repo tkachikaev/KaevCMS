@@ -8,7 +8,9 @@ use App\Models\Admin;
 use App\Models\GameServer;
 use App\Services\AuditLogger;
 use App\Services\GameAssets\GameAssetUrlResolver;
+use App\Services\GameAssets\GameItemCatalog;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,7 @@ final class AdminDailyRewardController extends Controller
     public function __construct(
         private readonly AuditLogger $auditLogger,
         private readonly GameAssetUrlResolver $assets,
+        private readonly GameItemCatalog $items,
     ) {}
 
     public function index(): View
@@ -119,6 +122,23 @@ final class AdminDailyRewardController extends Controller
             'calendar' => $calendar,
             'iconUrls' => $iconUrls,
             'canManage' => $this->canManage(),
+            'weekdayOffset' => now($calendar->runtimeTimezone())
+                ->setDate($calendar->year, $calendar->month, 1)
+                ->startOfDay()
+                ->isoWeekday() - 1,
+        ]);
+    }
+
+    public function itemPreview(DailyRewardCalendar $calendar, int $item): JsonResponse
+    {
+        abort_unless($item > 0, 404);
+        $calendar->loadMissing('gameServer.translations');
+
+        return response()->json([
+            'item_id' => $item,
+            'name' => $this->items->knownName($calendar->gameServer, $item)
+                ?? __('module-daily-rewards::messages.unknown_item'),
+            'icon_url' => $this->assets->itemIcon($calendar->gameServer, $item),
         ]);
     }
 

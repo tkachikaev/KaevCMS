@@ -10,7 +10,7 @@ The bundled `daily-rewards` module adds monthly reward calendars for KaevCMS gam
 - A new calendar is always created disabled. Configure rewards before enabling it.
 - A reward may be claimed only on its actual calendar day using the time zone from the main KaevCMS settings. Missed days expire.
 - Every eligible game account may claim one day only once.
-- Items are added to the selected game server Web Inventory. The player then transfers them to a character through the standard KaevCMS delivery flow.
+- Items are added to the selected game server Web Inventory. After a claim, a result dialog shows the exact item names, icons, and amounts and links directly to the Web Inventory.
 
 ## Administrator setup
 
@@ -18,9 +18,9 @@ The bundled `daily-rewards` module adds monthly reward calendars for KaevCMS gam
 2. Open the new **Daily rewards** administration section.
 3. Select **Create calendar**.
 4. Select a game server, year, and month. The time zone is read automatically from the main KaevCMS settings.
-5. Open the required days, enable the reward, and add `Item ID` + `Amount` rows.
-6. Use **Copy previous day** and **Fill empty days with this reward** for faster setup.
-7. Save and enable the calendar.
+5. Click a day in the visual month grid. A modal editor opens with item names, available icons, IDs, and amounts.
+6. Enable the day, add or remove `Item ID` + `Amount` rows, then close the day dialog.
+7. Use **Copy previous day** and **Fill empty days with this reward** for faster setup, then save and enable the calendar.
 
 Unknown item IDs may be saved for custom server items. When the item catalogue knows an ID, the localized name and available icon are displayed.
 

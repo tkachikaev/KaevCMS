@@ -3,6 +3,7 @@
 namespace Tests\Feature\Account;
 
 use App\Models\User;
+use App\Models\UserGameAccount;
 use App\Support\Themes\AccountThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,7 +23,9 @@ class AccountNavigationTest extends TestCase
             ->assertSee('data-account-sidebar', false)
             ->assertSee('data-account-topbar', false)
             ->assertSee('data-avatar-modal', false)
-            ->assertSee('data-avatar-modal-open', false)
+            ->assertSee('account-profile-menu-topbar', false)
+            ->assertDontSee('account-sidebar-profile-menu', false)
+            ->assertDontSee('account-profile-menu-mobile', false)
             ->assertSee('wire:navigate', false)
             ->assertSee('data-navigate-track', false)
             ->assertSee('data-navigate-once="true"', false)
@@ -32,41 +35,57 @@ class AccountNavigationTest extends TestCase
         $themePath = app(AccountThemeManager::class)->themePath();
         $layout = file_get_contents($themePath.'/views/layouts/app.blade.php');
         $navigation = file_get_contents($themePath.'/views/partials/navigation.blade.php');
+        $accountMenu = file_get_contents($themePath.'/views/partials/account-menu.blade.php');
         $script = file_get_contents(public_path('account-themes/luxury/assets/js/navigation.js'));
         $styles = file_get_contents(public_path('account-themes/luxury/assets/css/app.css'));
 
         $this->assertIsString($layout);
         $this->assertIsString($navigation);
+        $this->assertIsString($accountMenu);
         $this->assertIsString($script);
         $this->assertIsString($styles);
-        $this->assertStringContainsString("@persist('account-sidebar')", $layout);
-        $this->assertStringContainsString("@persist('account-topbar')", $layout);
+        $this->assertStringContainsString('@persist(\'account-sidebar\')', $layout);
+        $this->assertStringContainsString('@persist(\'account-topbar\')', $layout);
         $this->assertStringContainsString('wire:navigate:scroll', $layout);
         $this->assertStringContainsString('account_theme_asset', $layout);
         $this->assertStringContainsString('<x-account-avatar-modal', $layout);
-        $this->assertStringContainsString("public_route('profile.edit')", $layout);
-        $this->assertStringNotContainsString("public_route('characters.index')", $layout);
-        $this->assertStringNotContainsString("public_route('game-accounts.index')", $layout);
-        $this->assertStringNotContainsString("public_route('web-inventory.index')", $layout);
-        $this->assertStringContainsString("public_route('characters.index')", $navigation);
-        $this->assertStringNotContainsString("public_route('profile.edit')", $navigation);
+        $this->assertStringContainsString('<x-account-operation-modal', $layout);
+        $this->assertStringContainsString('account-theme::partials.account-menu', $layout);
+        $this->assertStringContainsString('public_route(\'profile.edit\')', $accountMenu);
+        $this->assertStringContainsString('public_route(\'security.edit\')', $accountMenu);
+        $this->assertStringContainsString('account-profile-balance', $accountMenu);
+        $this->assertStringNotContainsString('public_route(\'characters.index\')', $layout);
+        $this->assertStringNotContainsString('public_route(\'game-accounts.index\')', $layout);
+        $this->assertStringNotContainsString('public_route(\'web-inventory.index\')', $layout);
+        $this->assertStringContainsString('public_route(\'characters.index\')', $navigation);
+        $this->assertStringNotContainsString('public_route(\'profile.edit\')', $navigation);
         $this->assertStringContainsString('wire:navigate.hover', $navigation);
         $this->assertStringContainsString('wire:current.exact="active"', $navigation);
         $this->assertStringContainsString('livewire:navigate', $script);
         $this->assertStringContainsString('livewire:navigated', $script);
         $this->assertStringContainsString('showModal()', $script);
         $this->assertStringContainsString('data-avatar-modal-open', $script);
+        $this->assertStringContainsString('data-account-operation-modal', $script);
+        $this->assertStringContainsString('data-password-toggle', $script);
         $this->assertStringContainsString('account-is-navigating', $script);
         $this->assertStringContainsString('html.account-is-navigating .account-content', $styles);
         $this->assertStringContainsString('.account-avatar-modal', $styles);
+        $this->assertStringContainsString('.account-operation-modal', $styles);
+        $this->assertStringContainsString('.account-operation-reward', $styles);
+        $this->assertStringContainsString('.account-profile-menu-topbar', $styles);
+        $this->assertStringContainsString('.account-profile-balance', $styles);
+        $this->assertStringNotContainsString('.account-sidebar-profile-menu', $styles);
+        $this->assertStringContainsString('.account-overview-header', $styles);
+        $this->assertStringContainsString('.account-password-toggle', $styles);
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
     }
 
-    public function test_characters_accounts_and_profile_are_available_on_default_and_localized_routes(): void
+    public function test_characters_accounts_profile_and_security_are_available_on_default_and_localized_routes(): void
     {
         $this->get('/account/characters')->assertRedirect(route('login'));
         $this->get('/account/game-accounts')->assertRedirect(route('login'));
         $this->get('/account/profile')->assertRedirect(route('login'));
+        $this->get('/account/security')->assertRedirect(route('login'));
 
         $user = $this->user();
 
@@ -95,8 +114,43 @@ class AccountNavigationTest extends TestCase
         $this->actingAs($user)
             ->get('/account/profile')
             ->assertOk()
-            ->assertSee('Аватар профиля')
-            ->assertSee('data-avatar-modal-open', false);
+            ->assertSee('Настройки аккаунта')
+            ->assertSee('Безопасность и пароль')
+            ->assertSee('data-avatar-modal-open', false)
+            ->assertDontSee('/account/security/password', false);
+
+        $this->actingAs($user)
+            ->get('/account/security')
+            ->assertOk()
+            ->assertSee('Безопасность аккаунта KaevCMS')
+            ->assertSee('/account/security/password', false)
+            ->assertDontSee('data-avatar-modal-open', false);
+
+        $this->actingAs($user)
+            ->get('/ru/account/security')
+            ->assertOk()
+            ->assertSee('Безопасность и пароль');
+    }
+
+    public function test_overview_is_compact_and_onboarding_only_appears_without_game_accounts(): void
+    {
+        $user = $this->user();
+
+        $this->actingAs($user)
+            ->get('/account')
+            ->assertOk()
+            ->assertSee('Обзор')
+            ->assertSee('Создайте первый игровой аккаунт')
+            ->assertDontSee('Добро пожаловать');
+
+        UserGameAccount::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->get('/account')
+            ->assertOk()
+            ->assertSee('Обзор')
+            ->assertDontSee('Создайте первый игровой аккаунт')
+            ->assertDontSee('Добро пожаловать');
     }
 
     public function test_account_theme_views_use_livewire_navigation_links(): void
@@ -106,6 +160,8 @@ class AccountNavigationTest extends TestCase
             $themePath.'/dashboard.blade.php',
             $themePath.'/characters/index.blade.php',
             $themePath.'/profile/edit.blade.php',
+            $themePath.'/security/edit.blade.php',
+            $themePath.'/partials/settings-tabs.blade.php',
             $themePath.'/game-accounts/index.blade.php',
             $themePath.'/game-accounts/create.blade.php',
             $themePath.'/game-accounts/show.blade.php',

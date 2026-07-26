@@ -141,20 +141,49 @@ final class DailyRewardController extends Controller
                 requestToken: (string) $request->validated('request_token'),
             );
         } catch (DailyRewardClaimException $exception) {
+            $message = $this->errorMessage($exception->reasonCode);
+
             return redirect()
                 ->route('modules.daily-rewards.index', [
                     'calendar' => $calendarId,
                     'account' => $accountId,
                 ])
-                ->withErrors(['reward' => $this->errorMessage($exception->reasonCode)]);
+                ->withErrors(['reward' => $message])
+                ->with('account_operation', [
+                    'type' => 'error',
+                    'eyebrow' => __('module-daily-rewards::messages.account_title'),
+                    'title' => __('module-daily-rewards::messages.claim_failed_title'),
+                    'message' => $message,
+                ]);
         }
+
+        $items = [];
+        foreach ($claim->rewardGrant?->items ?? [] as $reward) {
+            $items[] = [
+                'item_id' => $reward->item_id,
+                'name' => $reward->displayName($claim->game_server_id),
+                'amount' => $reward->amount,
+                'icon_url' => $this->assets->itemIcon($claim->calendar->gameServer, $reward->item_id),
+            ];
+        }
+
+        $message = __('module-daily-rewards::messages.claim_success');
 
         return redirect()
             ->route('modules.daily-rewards.index', [
                 'calendar' => $claim->calendar_id,
                 'account' => $claim->user_game_account_id,
             ])
-            ->with('status', __('module-daily-rewards::messages.claim_success'));
+            ->with('status', $message)
+            ->with('account_operation', [
+                'type' => 'success',
+                'eyebrow' => __('module-daily-rewards::messages.account_title'),
+                'title' => __('module-daily-rewards::messages.claim_success_title'),
+                'message' => $message,
+                'items' => $items,
+                'action_url' => public_route('web-inventory.index', ['server' => $claim->game_server_id]),
+                'action_label' => __('module-daily-rewards::messages.open_inventory'),
+            ]);
     }
 
     /** @return Collection<int, UserGameAccount> */

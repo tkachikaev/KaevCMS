@@ -66,8 +66,11 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
     await signIn(page);
 
     await expect(page.locator('link[href*="account-themes/luxury/assets/css/app.css"]')).toHaveCount(1);
-    await expect(page.locator('.account-hero')).toBeVisible();
-    await expect(page.locator('.account-future-balance')).toContainText(/Монеты|Coins/);
+    await expect(page.locator('.account-overview-header')).toBeVisible();
+
+    const accountMenu = page.locator('.account-profile-menu-topbar');
+    await accountMenu.locator('summary').click();
+    await expect(accountMenu.locator('.account-profile-balance')).toContainText(/Монеты|Coins/);
 
     await page.locator('.account-nav').getByRole('link', { name: 'Игровые аккаунты' }).click();
     await expect(page).toHaveURL(/\/account\/game-accounts$/);
@@ -87,7 +90,10 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
 test('player can choose an administrator-provided account avatar in a modal', async ({ page }) => {
     await signIn(page);
 
-    await page.locator('.account-user-avatar-button').click();
+    await page.locator('.account-profile-menu-topbar > summary').click();
+    await page.getByRole('link', { name: 'Настройки аккаунта', exact: true }).click();
+    await expect(page).toHaveURL(/\/account\/profile$/);
+    await page.getByRole('button', { name: 'Изменить аватар', exact: true }).first().click();
     const dialog = page.locator('[data-avatar-modal]');
     await expect(dialog).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Выбор аватара', exact: true })).toBeVisible();
@@ -95,9 +101,30 @@ test('player can choose an administrator-provided account avatar in a modal', as
     await page.locator('label:has(input[name="avatar_filename"][value="browser-avatar.png"])').click();
     await page.getByRole('button', { name: 'Сохранить аватар', exact: true }).click();
 
-    await expect(page).toHaveURL(/\/account$/);
+    await expect(page).toHaveURL(/\/account\/profile$/);
     await expect(page.getByText('Аватар сохранён.', { exact: true })).toBeVisible();
-    await expect(page.locator('.account-profile-avatar img[src*="/uploads/account-avatars/browser-avatar.png"]')).toBeVisible();
+    await expect(page.locator('.account-profile-preview img[src*="/uploads/account-avatars/browser-avatar.png"]')).toBeVisible();
+});
+
+test('player can change the KaevCMS password from the separate security page', async ({ page }) => {
+    const temporaryPassword = 'BrowserTemporary456!';
+
+    await signIn(page);
+    await page.locator('.account-profile-menu-topbar > summary').click();
+    await page.getByRole('link', { name: 'Безопасность и пароль', exact: true }).click();
+    await expect(page).toHaveURL(/\/account\/security$/);
+
+    await page.locator('#current_password').fill(password);
+    await page.locator('#password').fill(temporaryPassword);
+    await page.locator('#password_confirmation').fill(temporaryPassword);
+    await page.getByRole('button', { name: 'Сменить пароль', exact: true }).click();
+    await expect(page.getByText('Пароль аккаунта изменён.', { exact: true })).toBeVisible();
+
+    await page.locator('#current_password').fill(temporaryPassword);
+    await page.locator('#password').fill(password);
+    await page.locator('#password_confirmation').fill(password);
+    await page.getByRole('button', { name: 'Сменить пароль', exact: true }).click();
+    await expect(page.getByText('Пароль аккаунта изменён.', { exact: true })).toBeVisible();
 });
 
 test('player web inventory is available from the persistent account shell', async ({ page }) => {
@@ -121,12 +148,15 @@ test('player activates a promo code into the server-bound web inventory', async 
     await page.getByRole('button', { name: 'Активировать код', exact: true }).click();
 
     await expect(page).toHaveURL(/\/modules\/promo-codes$/);
-    await expect(page.getByText('Награды добавлены в веб-инвентарь сервера Browser World.')).toBeVisible();
+    const promoResult = page.locator('[data-account-operation-modal]');
+    await expect(promoResult).toBeVisible();
+    await expect(promoResult.getByRole('heading', { name: 'Промокод активирован', exact: true })).toBeVisible();
+    await expect(promoResult.getByText('Награды добавлены в веб-инвентарь сервера Browser World.')).toBeVisible();
+    await expect(promoResult.locator('.account-operation-reward').filter({ hasText: 'Адена' })).toContainText('× 1 000 000');
     await expect(page.getByText('BROWSER2026', { exact: true })).toBeVisible();
-    await expect(page.getByText(/Адена × 1 000 000/)).toBeVisible();
 
-    await page.getByRole('link', { name: 'Открыть веб-инвентарь', exact: true }).click();
-    await expect(page).toHaveURL(/\/account\/web-inventory$/);
+    await promoResult.getByRole('link', { name: 'Открыть веб-инвентарь', exact: true }).click();
+    await expect(page).toHaveURL(/\/account\/web-inventory\?server=\d+$/);
     await expect(page.getByText('Адена', { exact: true })).toBeVisible();
     await expect(page.getByText('1 000 000')).toBeVisible();
 });
@@ -140,11 +170,15 @@ test('player claims the current daily reward into web inventory', async ({ page 
     await page.getByRole('button', { name: 'Получить награду', exact: true }).click();
 
     await expect(page).toHaveURL(/\/modules\/daily-rewards/);
-    await expect(page.getByText('Награда добавлена в веб-инвентарь.', { exact: true })).toBeVisible();
+    const dailyResult = page.locator('[data-account-operation-modal]');
+    await expect(dailyResult).toBeVisible();
+    await expect(dailyResult.getByRole('heading', { name: 'Награда получена', exact: true })).toBeVisible();
+    await expect(dailyResult.getByText('Награда ждёт вас в веб-инвентаре.', { exact: true })).toBeVisible();
+    await expect(dailyResult.locator('.account-operation-reward').filter({ hasText: 'Адена' })).toContainText('× 250 000');
     await expect(page.getByText('Получено', { exact: true })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Открыть веб-инвентарь', exact: true }).first().click();
-    await expect(page).toHaveURL(/\/account\/web-inventory$/);
+    await dailyResult.getByRole('link', { name: 'Открыть веб-инвентарь', exact: true }).click();
+    await expect(page).toHaveURL(/\/account\/web-inventory\?server=\d+$/);
     const dailyRewardRow = page.locator('.reward-item-row').filter({ hasText: '250 000' });
     await expect(dailyRewardRow).toHaveCount(1);
     await expect(dailyRewardRow.getByText('Адена', { exact: true })).toBeVisible();
@@ -172,6 +206,13 @@ test('aurelia player theme keeps rounded surfaces and active module navigation a
     await context.clearCookies();
     await signIn(page);
     await expect(page.locator('link[href*="account-themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(1);
+
+    await gotoWithLocalNetworkRetry(page, '/modules/daily-rewards?calendar=1&account=2');
+    await expect(page).toHaveURL(/\/modules\/daily-rewards\?calendar=1&account=2$/);
+    await page.locator('.account-language-switcher').getByRole('link', { name: 'EN', exact: true }).click();
+    await expect(page).toHaveURL(/\/en\/account$/);
+    await page.locator('.account-language-switcher').getByRole('link', { name: 'RU', exact: true }).click();
+    await expect(page).toHaveURL(/\/ru\/account$/);
 
     const promoLink = page.locator('.account-nav').getByRole('link', { name: 'Промокоды' });
     await promoLink.click();

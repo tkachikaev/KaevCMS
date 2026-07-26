@@ -96,5 +96,32 @@
     ],
     "0.34.0": [
         "core/deployment/windows/apply-0.33.9.ps1"
+    ],
+    "0.34.1": [
+        "core/deployment/windows/apply-0.34.0.ps1"
+    ],
+    "0.34.2": [
+        "core/deployment/windows/apply-0.34.1.ps1"
+    ],
+    "0.34.3": [
+        "core/deployment/windows/apply-0.34.2.ps1"
+    ],
+    "0.34.4": [
+        "core/deployment/windows/apply-0.34.3.ps1"
+    ],
+    "0.34.5": [
+        "core/deployment/windows/apply-0.34.4.ps1"
+    ],
+    "0.34.6": [
+        "core/deployment/windows/apply-0.34.5.ps1"
+    ],
+    "0.34.7": [
+        "core/deployment/windows/apply-0.34.6.ps1"
+    ],
+    "0.34.8": [
+        "core/deployment/windows/apply-0.34.7.ps1"
+    ],
+    "0.34.9": [
+        "core/deployment/windows/apply-0.34.8.ps1"
     ]
 }

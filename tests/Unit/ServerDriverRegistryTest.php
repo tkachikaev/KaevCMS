@@ -99,7 +99,6 @@ class ServerDriverRegistryTest extends TestCase
                     'nobless',
                     'clanid',
                     'lastAccess',
-                    'createDate',
                 ],
                 'any_columns' => ['karma', 'reputation'],
                 'required' => true,

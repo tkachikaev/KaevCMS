@@ -66,17 +66,44 @@ final class PromoCodeController extends Controller
                 requestToken: (string) $request->validated('request_token'),
             );
         } catch (PromoCodeActivationException $exception) {
+            $message = $this->errorMessage($exception->reasonCode);
+
             return back()
                 ->withInput($request->safe()->only(['code', 'request_token']))
-                ->withErrors(['code' => $this->errorMessage($exception->reasonCode)]);
+                ->withErrors(['code' => $message])
+                ->with('account_operation', [
+                    'type' => 'error',
+                    'eyebrow' => __('module-promo-codes::messages.account_title'),
+                    'title' => __('module-promo-codes::messages.activation_failed_title'),
+                    'message' => $message,
+                ]);
         }
 
-        return redirect()->route('modules.promo-codes.index')->with(
-            'status',
-            __('module-promo-codes::messages.activation_success', [
-                'server' => $activation->gameServer->nameFor(),
-            ]),
-        );
+        $items = [];
+        foreach ($activation->rewardGrant?->items ?? [] as $reward) {
+            $items[] = [
+                'item_id' => $reward->item_id,
+                'name' => $reward->displayName($activation->game_server_id),
+                'amount' => $reward->amount,
+                'icon_url' => $this->assets->itemIcon($activation->gameServer, $reward->item_id),
+            ];
+        }
+
+        $message = __('module-promo-codes::messages.activation_success', [
+            'server' => $activation->gameServer->nameFor(),
+        ]);
+
+        return redirect()->route('modules.promo-codes.index')
+            ->with('status', $message)
+            ->with('account_operation', [
+                'type' => 'success',
+                'eyebrow' => __('module-promo-codes::messages.account_title'),
+                'title' => __('module-promo-codes::messages.activation_success_title'),
+                'message' => $message,
+                'items' => $items,
+                'action_url' => public_route('web-inventory.index', ['server' => $activation->game_server_id]),
+                'action_label' => __('module-promo-codes::messages.open_inventory'),
+            ]);
     }
 
     private function errorMessage(string $reasonCode): string

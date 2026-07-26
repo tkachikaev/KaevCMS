@@ -182,7 +182,10 @@ if (! function_exists('localized_current_url')) {
         }
 
         $firstSegment = strtolower((string) ($segments[0] ?? ''));
-        if ($firstSegment === 'language' || $firstSegment === 'admin' || str_starts_with($firstSegment, 'admin-')) {
+        if ($firstSegment === 'modules') {
+            $segments = ['account'];
+            $query = '';
+        } elseif ($firstSegment === 'language' || $firstSegment === 'admin' || str_starts_with($firstSegment, 'admin-')) {
             $segments = [];
             $query = '';
         }

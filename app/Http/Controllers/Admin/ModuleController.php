@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ModuleController extends Controller
 {
@@ -36,6 +37,20 @@ class ModuleController extends Controller
                     'migration_unavailable',
                 ])
                 ->count(),
+        ]);
+    }
+
+    public function image(string $module, ModuleManager $modules): BinaryFileResponse
+    {
+        $resolved = $modules->inspect($module);
+        $path = $resolved['image_path'] ?? null;
+
+        abort_unless(is_string($path) && is_file($path), 404);
+
+        return response()->file($path, [
+            'Cache-Control' => 'private, max-age=3600',
+            'Content-Type' => 'image/webp',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

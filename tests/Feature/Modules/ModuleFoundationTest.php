@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
 class ModuleFoundationTest extends TestCase
@@ -160,6 +161,41 @@ class ModuleFoundationTest extends TestCase
         $reserved = app(ModuleManager::class)->inspect('admin');
         $this->assertFalse($reserved['valid']);
         $this->assertContains(__('This module identifier is reserved by KaevCMS.'), $reserved['errors']);
+    }
+
+    public function test_module_artwork_is_auto_discovered_and_served_from_the_admin_catalog(): void
+    {
+        $module = app(ModuleManager::class)->inspect('daily-rewards');
+
+        $this->assertIsString($module['image_path']);
+        $this->assertStringEndsWith(
+            'modules'.DIRECTORY_SEPARATOR.'daily-rewards'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'module.webp',
+            $module['image_path'],
+        );
+        $this->assertSame([512, 512], array_slice((array) getimagesize($module['image_path']), 0, 2));
+
+        $owner = $this->createAdmin(AdminRole::Owner, 'artwork-owner@example.test');
+        $response = $this->actingAs($owner, 'admin')
+            ->get('/admin/modules/daily-rewards/image')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/webp')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+        $this->assertSame(
+            realpath((string) $module['image_path']),
+            $response->baseResponse->getFile()->getRealPath(),
+        );
+
+        $root = $this->createModule('invalid-artwork-fixture');
+        $files = new Filesystem;
+        $files->ensureDirectoryExists($root.'/assets');
+        $files->put($root.'/assets/module.webp', 'not-a-webp-image');
+        app(ModuleManager::class)->refresh();
+
+        $invalidArtwork = app(ModuleManager::class)->inspect('invalid-artwork-fixture');
+        $this->assertTrue($invalidArtwork['valid'], implode(PHP_EOL, $invalidArtwork['errors']));
+        $this->assertNull($invalidArtwork['image_path']);
     }
 
     public function test_owner_manages_modules_administrator_is_read_only_and_editor_is_denied(): void

@@ -15,3 +15,7 @@ See `docs/en/MODULES.md`.
 Встроенный `promo-codes` выдаёт привязанные к GameServer награды через основной веб-инвентарь. Встроенный `daily-rewards` добавляет месячные календари с одной выдачей на подходящий игровой аккаунт и неизменяемой историей получений.
 
 См. `docs/ru/MODULES.md`.
+
+## Module artwork
+
+A module may provide an administrator catalog image at `assets/module.webp` inside its own directory. KaevCMS discovers it automatically; no manifest field is required. The file must be a square 512×512 WebP image and no larger than 2 MB. If the file is missing or invalid, the module catalog uses the standard letter placeholder.

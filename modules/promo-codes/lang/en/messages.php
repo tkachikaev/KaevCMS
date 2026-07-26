@@ -12,6 +12,8 @@ return [
     'activation_no_rewards' => 'This promo code has no rewards and cannot be activated.',
     'activation_not_started' => 'This promo code is not active yet.',
     'activation_success' => 'Rewards were added to your web inventory for :server.',
+    'activation_success_title' => 'Promo code activated',
+    'activation_failed_title' => 'Promo code activation failed',
     'activation_total_limit' => 'The total activation limit for this promo code has been reached.',
     'activation_user_limit' => 'Your CMS account has already used this promo code the maximum number of times.',
     'activations' => 'Activations',

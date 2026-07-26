@@ -155,7 +155,10 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(page.getByText('Жизненный цикл модулей')).toBeVisible();
     await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toBeVisible();
     const promoModule = page.locator('.module-card').filter({ hasText: 'Promo Codes' });
+    const dailyModule = page.locator('.module-card').filter({ hasText: 'Daily Rewards' });
     await expect(promoModule).toBeVisible();
+    await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
+    await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
 });
 
 test('login server settings keep network fields on a separate tab and footer fixed after connection test', async ({ page }) => {
@@ -299,6 +302,29 @@ test('reward queue journal is available from the administrator sidebar', async (
     await expect(page).toHaveURL(/\/admin\/reward-deliveries$/);
     await expect(page.getByRole('heading', { name: 'Очередь наград', exact: true }).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Передач в очередь пока нет', exact: true })).toBeVisible();
+});
+
+test('daily rewards module edits calendar days in a visual dialog', async ({ page }) => {
+    await openMenuGroup(page, 'modules');
+    const modulesGroup = page.locator('[data-admin-menu-group="modules"]');
+    await modulesGroup.getByRole('link', { name: 'Ежедневные награды', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/admin\/extensions\/daily-rewards$/);
+    await page.locator('.content-row').first().getByRole('link', { name: 'Изменить', exact: true }).click();
+    await expect(page.locator('.daily-reward-admin-calendar-grid')).toBeVisible();
+
+    const configuredDay = page.locator('[data-daily-day-tile].is-enabled').first();
+    await configuredDay.click();
+    const dialog = page.locator('[data-daily-day][open]');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('[data-daily-item-row]')).toHaveCount(2);
+    await expect(dialog.getByText('Адена', { exact: true })).toBeVisible();
+    await expect(dialog.locator('[data-daily-item-preview]').first()).toBeVisible();
+
+    await dialog.getByRole('button', { name: /Добавить предмет/ }).click();
+    await expect(dialog.locator('[data-daily-item-row]')).toHaveCount(3);
+    await dialog.getByRole('button', { name: 'Готово', exact: true }).click();
+    await expect(dialog).not.toBeVisible();
 });
 
 test('promo code module provides compact dynamic rewards deletion and status controls', async ({ page }) => {

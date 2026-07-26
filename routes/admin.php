@@ -122,6 +122,9 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('rewards.reconcile');
 
         Route::get('/modules', [AdminModuleController::class, 'index'])->name('modules.index');
+        Route::get('/modules/{module}/image', [AdminModuleController::class, 'image'])
+            ->where('module', '[a-z0-9][a-z0-9-]{0,99}')
+            ->name('modules.image');
         Route::post('/modules/{module}/enable', [AdminModuleController::class, 'enable'])
             ->where('module', '[a-z0-9][a-z0-9-]{0,99}')
             ->middleware('throttle:10,1')

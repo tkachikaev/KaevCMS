@@ -177,6 +177,7 @@ final class ModuleValidator
         $this->inspectOptionalDirectory($manifest, 'lang', $path, $result);
         $this->inspectMigrations($manifest, $path, $result);
         $this->inspectRoutes($manifest, $path, $result);
+        $this->inspectModuleImage($path, $result);
 
         $result['valid'] = $result['errors'] === [];
         $result['compatible'] = $result['valid'] && $this->isCompatible($result['cms_min'], $result['cms_max']);
@@ -207,6 +208,7 @@ final class ModuleValidator
             'views_path' => null,
             'lang_path' => null,
             'migrations_path' => null,
+            'image_path' => null,
             'migration_files' => [],
             'route_paths' => [],
             'capabilities' => [],
@@ -215,6 +217,27 @@ final class ModuleValidator
             'errors' => [],
             'manifest' => [],
         ];
+    }
+
+    /** @param array<string, mixed> $result */
+    private function inspectModuleImage(string $root, array &$result): void
+    {
+        $path = $this->safeFile($root, 'assets/module.webp');
+        if ($path === null || $this->files->size($path) > 2 * 1024 * 1024) {
+            return;
+        }
+
+        $image = @getimagesize($path);
+        if (
+            $image === false
+            || $image[0] !== 512
+            || $image[1] !== 512
+            || $image['mime'] !== 'image/webp'
+        ) {
+            return;
+        }
+
+        $result['image_path'] = $path;
     }
 
     /**

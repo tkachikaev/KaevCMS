@@ -174,7 +174,7 @@ class GameAccountCabinetTest extends TestCase
         $this->actingAs($user)
             ->get('/account')
             ->assertOk()
-            ->assertSee('Открыть персонажей')
+            ->assertSee('Выберите раздел')
             ->assertDontSee('SeparateLogin01')
             ->assertDontSee('SeparateHero')
             ->assertDontSee('account-character-directory', false);

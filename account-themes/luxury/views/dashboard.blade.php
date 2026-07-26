@@ -1,22 +1,33 @@
 @extends('account-theme::layouts.app')
 @section('title', __('Personal account'))
 @section('content')
-<section class="account-hero account-hero-simple">
-    <div class="account-hero-copy">
+@php
+    $canCreateGameAccount = $settings['enabled'] && $quotaAccountCount < $settings['max_accounts'] && $availableServers > 0;
+@endphp
+
+<section class="account-overview-header">
+    <div>
         <span class="account-eyebrow">{{ __('Player account') }}</span>
-        <h1>{{ __('Welcome, :name', ['name' => $user->name]) }}</h1>
-        <p>{{ __('Use the sections below to open characters, game accounts and rewards without browsing through nested server blocks.') }}</p>
-        <div class="account-hero-actions">
-            <a wire:navigate.hover class="account-button primary" href="{{ public_route('characters.index') }}">{{ __('Open characters') }}</a>
-            @if ($settings['enabled'] && $quotaAccountCount < $settings['max_accounts'] && $availableServers > 0)
-                <a wire:navigate.hover class="account-button secondary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a>
-            @endif
-        </div>
+        <h1>{{ __('Overview') }}</h1>
+        <p>{{ __('Account summary and quick access to game services.') }}</p>
     </div>
-    <div class="account-hero-profile" aria-hidden="true">
-        <x-account-avatar :user="$user" class="account-dashboard-avatar" />
-    </div>
+    @if ($canCreateGameAccount && $quotaAccountCount > 0)
+        <a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a>
+    @endif
 </section>
+
+@if ($quotaAccountCount === 0)
+    <section class="account-empty account-onboarding">
+        <span class="account-empty-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="4"></rect><path d="M8 12h4M10 10v4M16.5 10.5h.01M18 13h.01"></path></svg></span>
+        <h2>{{ __('Create your first game account') }}</h2>
+        <p>{{ __('A game account is required to see characters and use game services.') }}</p>
+        @if ($canCreateGameAccount)
+            <a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a>
+        @else
+            <small>{{ __('Game account creation is currently unavailable.') }}</small>
+        @endif
+    </section>
+@endif
 
 <section class="account-metrics" aria-label="{{ __('Account summary') }}">
     <article>
@@ -38,7 +49,7 @@
         <div>
             <span class="account-eyebrow">{{ __('Quick access') }}</span>
             <h2>{{ __('Choose a section') }}</h2>
-            <p>{{ __('The overview stays compact. Detailed characters, accounts and rewards are kept on separate pages.') }}</p>
+            <p>{{ __('Characters, game accounts and rewards are kept on separate pages.') }}</p>
         </div>
     </div>
 

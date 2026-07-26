@@ -16,6 +16,7 @@
     @stack('head')
 </head>
 <body class="account-body">
+@php($accountOperation = session('account_operation'))
 <div class="account-shell">
     @persist('account-sidebar')
         <aside class="account-sidebar" data-account-sidebar wire:navigate:scroll>
@@ -31,15 +32,6 @@
                     <small>{{ __('Player account') }}</small>
                 </span>
             </a>
-
-            <div class="account-user-compact">
-                <button type="button" class="account-user-avatar-button" data-avatar-modal-open aria-label="{{ __('Change avatar') }}">
-                    <x-account-avatar :user="$user" class="account-user-compact-avatar" aria-hidden="true" />
-                    <span class="account-avatar-edit-mark" aria-hidden="true">✎</span>
-                </button>
-                <span><strong>{{ $user->name }}</strong><small>{{ __('Player profile') }}</small></span>
-                <i title="{{ __('Active session') }}"></i>
-            </div>
 
             @include('account-theme::partials.navigation')
 
@@ -65,32 +57,14 @@
                 </div>
 
                 <div class="account-topbar-actions">
-                    <div class="account-future-balance" aria-label="{{ __('Future coin balance') }}">
-                        <span class="account-future-balance-icon" aria-hidden="true">◆</span>
-                        <span><small>{{ __('Coins') }}</small><strong>{{ __('Not connected') }}</strong></span>
-                    </div>
-
-                    <details class="account-profile-menu">
-                        <summary>
+                    <details class="account-profile-menu account-profile-menu-topbar">
+                        <summary aria-label="{{ __('Open account menu') }}">
                             <x-account-avatar :user="$user" class="account-profile-avatar" aria-hidden="true" />
-                            <span class="account-profile-copy">
-                                <strong>{{ $user->name }}</strong>
-                                <small>{{ $user->email }}</small>
-                            </span>
+                            <span class="account-profile-copy"><strong>{{ $user->name }}</strong><small>{{ __('Account settings') }}</small></span>
                             <span class="account-profile-chevron" aria-hidden="true">⌄</span>
                         </summary>
                         <div class="account-profile-dropdown">
-                            <div class="account-profile-dropdown-head">
-                                <strong>{{ $user->name }}</strong>
-                                <small>{{ $user->email }}</small>
-                            </div>
-                            <button type="button" data-avatar-modal-open>{{ __('Change avatar') }}</button>
-                            <a wire:navigate href="{{ public_route('profile.edit') }}">{{ __('Profile') }}</a>
-                            <a href="{{ public_route('home') }}">{{ __('Back to website') }}</a>
-                            <form method="POST" action="{{ public_route('logout') }}">
-                                @csrf
-                                <button type="submit">{{ __('Sign out') }}</button>
-                            </form>
+                            @include('account-theme::partials.account-menu')
                         </div>
                     </details>
                 </div>
@@ -98,13 +72,13 @@
         @endpersist
 
         <div class="account-content" data-account-content>
-            @if (session('status'))
+            @if (session('status') && ! $accountOperation)
                 <div class="account-notice success" role="status"><span aria-hidden="true">✓</span><div>{{ session('status') }}</div></div>
             @endif
             @if (session('warning'))
                 <div class="account-notice warning" role="alert"><span aria-hidden="true">!</span><div>{{ session('warning') }}</div></div>
             @endif
-            @if ($errors->any() && ! trim($__env->yieldContent('inline-validation-errors')))
+            @if ($errors->any() && ! $accountOperation && ! trim($__env->yieldContent('inline-validation-errors')))
                 <div class="account-notice error" role="alert">
                     <span aria-hidden="true">!</span>
                     <div>@foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>
@@ -115,6 +89,7 @@
     </main>
 </div>
 <x-account-avatar-modal :user="$user" />
+<x-account-operation-modal :payload="$accountOperation" />
 @livewireScripts
 @stack('scripts')
 </body>

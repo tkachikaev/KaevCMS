@@ -1,5 +1,69 @@
 # Changelog
 
+## 0.34.9 - 2026-07-26
+
+- Fixed PHPStan `nullCoalesce.offset` errors in module artwork validation by reading the guaranteed `getimagesize()` width, height and MIME offsets only after the `false` result is excluded.
+- Corrected the module-artwork release assertion to match the shipped direct-child CSS selector and updated the Daily Rewards browser scenario to use the current Russian action label `Изменить`.
+- Updated Promo Codes and Daily Rewards browser expectations to preserve the intentional `?server=...` filter when opening the server-bound Web Inventory from a reward-result dialog.
+- Runtime module behavior, database migrations, bundled module versions, account-theme versions, game drivers, item catalogs and reward-delivery schemas were not changed.
+
+## 0.34.8 - 2026-07-26
+
+- Added optional auto-discovered `assets/module.webp` artwork for trusted modules. The administration catalogue now serves validated 512×512 WebP images through an authenticated route and keeps the existing letter placeholder when artwork is absent or invalid.
+- Rebuilt the Daily Rewards administration editor as a visual month calendar. Each day opens in a modal dialog, shows item names, icons and amounts, supports adding/removing rewards and copy actions, and preserves claimed-day immutability.
+- Added one shared player-account operation dialog for module results. Daily Rewards claims and Promo Codes activations now show success or failure in the same accessible modal, including immutable reward names, item icons, amounts and a Web Inventory action.
+- Updated bundled Promo Codes and Daily Rewards modules to 1.1.0 and both account themes to 1.4.0. No application or module database migrations were added; game drivers, item catalog data and reward-delivery schemas were not changed.
+
+## 0.34.7 - 2026-07-26
+
+- Fixed the release metadata regression that incorrectly rejected owner-provided game item images stored in `public/game-assets`.
+- Local development and installed sites may now keep external WebP, PNG, JPG, JPEG, GIF, or SVG game assets without causing PHPUnit to fail.
+- Release safety remains unchanged: cumulative and shared-hosting builders still exclude binary game images while preserving README and `.gitkeep` files.
+- Runtime code, database migrations, module versions, game drivers, item catalogs, and reward-delivery schemas were not changed.
+
+## 0.34.6 - 2026-07-26
+
+- Fixed language switching from account module pages such as Daily Rewards: `/modules/...` is no longer transformed into the nonexistent `/{locale}/modules/...` route.
+- Module-page language changes now return to the localized player-account overview and intentionally discard module-specific query parameters such as `calendar` and `account`.
+- Added PHPUnit and Playwright regressions for switching language from `/modules/daily-rewards?calendar=1&account=2`.
+- Database migrations, module versions, game drivers, item catalogs, external image paths, and reward-delivery schemas were not changed.
+
+## 0.34.5 - 2026-07-26
+
+- Converted all remaining non-interpolated double-quoted literals in `AccountNavigationTest` to Pint-compatible single-quoted strings; the previous hotfix changed only the final assertion while ten earlier literals still violated `single_quote`.
+- Replaced the narrow literal regression with a token-based release-tree check that rejects any simple double-quoted string in the affected test file.
+- Runtime code, database migrations, modules, game drivers, item catalogs, external image paths, and reward-delivery schemas were not changed.
+
+## 0.34.4 - 2026-07-26
+
+- Corrected the remaining Pint `single_quote` violation in `AccountNavigationTest`; the 0.34.3 release notes described this fix, but its final archive still contained the old double-quoted literal.
+- Added release metadata and package history for the corrected hotfix without changing runtime code, database migrations, modules, game drivers, item catalogs, external image paths, or reward-delivery schemas.
+
+## 0.34.3 - 2026-07-26
+
+- Fixed the Pint `single_quote` violation in the account-navigation regression without weakening its literal Blade assertion.
+- Updated stale account overview and Playwright expectations to follow the approved top-right account menu and its `.account-profile-balance` coin block.
+- Removed the unused `characters.createDate` requirement from `MobiusGameSchemaInspector`; the driver never selects or filters by this column, so compatible Mobius schemas and existing statistics fixtures are no longer rejected before runtime queries.
+- Restored the complete Windows apply-script release contract required by installer, updater, shared-hosting, game-item catalog, and recovery regression checks.
+- Composer/npm dependencies, database migrations, module versions, item catalogs, external image paths, and reward-delivery schemas were not changed.
+
+## 0.34.2 - 2026-07-26
+
+- Removed the account-settings block from the left sidebar so the sidebar contains only game-facing navigation and module-provided sections.
+- Restored one consistent top-right avatar menu on desktop and mobile, moved the future coin balance into that dropdown, and kept donation navigation reserved for a future module-provided sidebar entry.
+- Split account information/avatar management and KaevCMS password security into dedicated `/account/profile` and `/account/security` pages with shared tabs and clearer scope messaging.
+- Added default/localized route, menu-placement, page-separation, release-artifact, and Playwright regression coverage.
+- Composer/npm dependencies, database migrations, module versions, game drivers, item catalogs, external image paths, and reward-delivery schemas were not changed.
+
+## 0.34.1 - 2026-07-26
+
+- Replaced the oversized player-account welcome hero with a compact overview heading and a contextual first-game-account onboarding state shown only when the player has no game accounts.
+- Consolidated account navigation: the desktop sidebar user block now opens the account menu, the top-right avatar menu is mobile-only, and the obsolete “Player profile” wording was replaced with clear account settings and security actions.
+- Rebuilt the profile page as “Account settings” with account information, avatar management, and an in-session KaevCMS password-change form that is explicitly separated from game-account passwords.
+- Added current-password verification, shared registration-strength rules, same-password rejection, remember-token rotation, session regeneration, audit logging, optional password-change email notification, throttling, and sensitive-input protection.
+- Added regression coverage for compact onboarding, account-menu placement, default/localized password changes, incorrect and reused passwords, audit records, and password-field non-flashing.
+- Composer/npm dependencies, database migrations, module versions, game drivers, item catalogs, external image paths, and reward-delivery schemas were not changed.
+
 ## 0.34.0 - 2026-07-26
 
 - Renamed the canonical L2J Mobius GameServer driver identifier from `l2j_mobius_ct0_interlude` to `l2j_mobius`; the LoginServer and GameServer registries now intentionally use the same Mobius key in their separate contexts.

@@ -5,6 +5,7 @@ use App\Http\Controllers\Account\GameAccountController;
 use App\Http\Controllers\Account\GameAccountPasswordController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Account\RewardTransferController;
+use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Account\WebInventoryController;
 use App\Http\Controllers\Auth\AccountController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -29,11 +30,16 @@ $registerAccountRoutes = static function (bool $localized = false): void {
             Route::get('/account', AccountController::class)->name($namePrefix.'account');
             Route::get('/account/profile', [ProfileController::class, 'edit'])
                 ->name($namePrefix.'profile.edit');
+            Route::get('/account/security', [SecurityController::class, 'edit'])
+                ->name($namePrefix.'security.edit');
             Route::get('/account/characters', CharacterController::class)
                 ->name($namePrefix.'characters.index');
             Route::put('/account/profile/avatar', [ProfileController::class, 'updateAvatar'])
                 ->middleware('throttle:20,1')
                 ->name($namePrefix.'profile.avatar.update');
+            Route::put('/account/security/password', [SecurityController::class, 'updatePassword'])
+                ->middleware('throttle:account-password')
+                ->name($namePrefix.'security.password.update');
             Route::get('/account/game-accounts', [GameAccountController::class, 'index'])
                 ->name($namePrefix.'game-accounts.index');
             Route::get('/account/game-accounts/create', [GameAccountController::class, 'create'])

@@ -48,7 +48,7 @@ class PromoCodesModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_promo_codes', 'deleted_at'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
-            'version' => '1.0.3',
+            'version' => '1.1.0',
             'enabled' => true,
         ]);
 
@@ -285,6 +285,40 @@ class PromoCodesModuleTest extends TestCase
             'source_label' => $promoCode->code,
         ]);
         $this->assertSame(1, $promoCode->fresh()->activations_count);
+    }
+
+    public function test_activation_result_uses_the_shared_operation_modal_for_success_and_failure(): void
+    {
+        $server = GameServer::factory()->create(['name' => 'Interlude x5']);
+        $user = User::factory()->create();
+        $promoCode = $this->createPromoCode($server, [['item_id' => 57, 'amount' => 1000000]], [
+            'code' => 'MODAL-RESULT',
+            'per_user_limit' => 1,
+        ]);
+
+        $success = $this->activate($user, $promoCode, (string) Str::uuid())
+            ->assertSessionHas(
+                'account_operation',
+                static fn (array $operation): bool => $operation['type'] === 'success'
+                    && $operation['title'] === __('module-promo-codes::messages.activation_success_title')
+                    && ($operation['items'][0]['item_id'] ?? null) === 57
+                    && ($operation['items'][0]['amount'] ?? null) === 1000000,
+            );
+
+        $this->actingAs($user)
+            ->get((string) $success->headers->get('Location'))
+            ->assertOk()
+            ->assertSee('data-account-operation-modal', false)
+            ->assertSee(__('module-promo-codes::messages.activation_success_title'))
+            ->assertSee('× 1 000 000');
+
+        $this->activate($user, $promoCode, (string) Str::uuid())
+            ->assertSessionHasErrors('code')
+            ->assertSessionHas(
+                'account_operation',
+                static fn (array $operation): bool => $operation['type'] === 'error'
+                    && $operation['title'] === __('module-promo-codes::messages.activation_failed_title'),
+            );
     }
 
     public function test_per_account_and_total_limits_are_enforced_and_zero_total_limit_is_unlimited(): void

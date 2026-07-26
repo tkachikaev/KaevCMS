@@ -27,7 +27,6 @@ final class MobiusGameSchemaInspector
         'nobless',
         'clanid',
         'lastAccess',
-        'createDate',
     ];
 
     private const REPUTATION_COLUMNS = ['karma', 'reputation'];
