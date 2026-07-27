@@ -141,7 +141,7 @@ final class DailyRewardController extends Controller
                 requestToken: (string) $request->validated('request_token'),
             );
         } catch (DailyRewardClaimException $exception) {
-            $message = $this->errorMessage($exception->reasonCode);
+            $message = __($exception->translationKey());
 
             return redirect()
                 ->route('modules.daily-rewards.index', [
@@ -200,17 +200,5 @@ final class DailyRewardController extends Controller
             ->orderBy('game_login')
             ->orderBy('id')
             ->get();
-    }
-
-    private function errorMessage(string $reasonCode): string
-    {
-        return match ($reasonCode) {
-            'calendar_unavailable' => __('module-daily-rewards::messages.claim_calendar_unavailable'),
-            'day_unavailable' => __('module-daily-rewards::messages.claim_day_unavailable'),
-            'account_unavailable' => __('module-daily-rewards::messages.claim_account_unavailable'),
-            'already_claimed' => __('module-daily-rewards::messages.claim_already_claimed'),
-            'no_rewards' => __('module-daily-rewards::messages.claim_no_rewards'),
-            default => __('module-daily-rewards::messages.claim_invalid'),
-        };
     }
 }

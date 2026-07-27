@@ -48,7 +48,7 @@ class PromoCodesModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_promo_codes', 'deleted_at'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
-            'version' => '1.2.0',
+            'version' => '1.2.2',
             'enabled' => true,
         ]);
 
@@ -110,6 +110,7 @@ class PromoCodesModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Promo Player')
             ->assertSee(__('module-promo-codes::messages.account_title'))
+            ->assertSee('data-testid="promo-code-input"', false)
             ->assertSee('account-section account-surface promo-activation-surface', false)
             ->assertSee('wire:current="active"', false);
     }

@@ -11,6 +11,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use KaevCMS\Modules\DailyRewards\Exceptions\DailyRewardClaimException;
+use KaevCMS\Modules\DailyRewards\Exceptions\DailyRewardClaimFailure;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardCalendar;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardClaim;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardDay;
@@ -51,12 +52,12 @@ final class DailyRewardClaimService
                     ->find($calendarId);
 
                 if (! $calendar instanceof DailyRewardCalendar || ! $calendar->enabled) {
-                    throw new DailyRewardClaimException('calendar_unavailable');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::CalendarUnavailable);
                 }
 
                 $localNow = CarbonImmutable::now($calendar->runtimeTimezone());
                 if ($calendar->year !== $localNow->year || $calendar->month !== $localNow->month) {
-                    throw new DailyRewardClaimException('calendar_unavailable');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::CalendarUnavailable);
                 }
 
                 $day = DailyRewardDay::query()
@@ -67,11 +68,11 @@ final class DailyRewardClaimService
                     ->first();
 
                 if (! $day instanceof DailyRewardDay || ! $day->enabled) {
-                    throw new DailyRewardClaimException('day_unavailable');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::DayUnavailable);
                 }
 
                 if ($day->items->isEmpty()) {
-                    throw new DailyRewardClaimException('no_rewards');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::NoRewards);
                 }
 
                 $account = UserGameAccount::query()
@@ -83,14 +84,14 @@ final class DailyRewardClaimService
                     ->find($gameAccountId);
 
                 if (! $account instanceof UserGameAccount) {
-                    throw new DailyRewardClaimException('account_unavailable');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::AccountUnavailable);
                 }
 
                 if (
                     $calendar->gameServer->login_server_id === null
                     || $account->login_server_id !== $calendar->gameServer->login_server_id
                 ) {
-                    throw new DailyRewardClaimException('account_unavailable');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::AccountUnavailable);
                 }
 
                 $alreadyClaimed = DailyRewardClaim::query()
@@ -101,7 +102,7 @@ final class DailyRewardClaimService
                     ->first();
 
                 if ($alreadyClaimed instanceof DailyRewardClaim) {
-                    throw new DailyRewardClaimException('already_claimed');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::AlreadyClaimed);
                 }
 
                 $grantItems = $day->items
@@ -183,7 +184,7 @@ final class DailyRewardClaimService
                     ->where('day_id', $dayId)
                     ->where('user_game_account_id', $gameAccountId)
                     ->exists()) {
-                    throw new DailyRewardClaimException('already_claimed');
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::AlreadyClaimed);
                 }
             }
 
@@ -209,7 +210,7 @@ final class DailyRewardClaimService
             || $claim->calendar_id !== $calendarId
             || $claim->user_game_account_id !== $gameAccountId
         ) {
-            throw new DailyRewardClaimException('invalid');
+            throw new DailyRewardClaimException(DailyRewardClaimFailure::Invalid);
         }
 
         return $claim->loadMissing([

@@ -40,9 +40,12 @@ if ($output === '' || ! validVersion($minimum) || ! validVersion($maximum) || ve
     exit(1);
 }
 
+$releaseVersion = requiredReleaseVersionFromRoot($root);
 if ($target === '') {
-    $versionPath = $root.DIRECTORY_SEPARATOR.'VERSION';
-    $target = is_file($versionPath) ? trim((string) file_get_contents($versionPath)) : '';
+    $target = $releaseVersion;
+} elseif ($target !== $releaseVersion) {
+    fwrite(STDERR, "The --target version does not match release.json.\n");
+    exit(1);
 }
 
 if (! validVersion($target) || version_compare($target, $maximum, '<=')) {
@@ -69,8 +72,7 @@ if ($previousRootOption !== '') {
         throw new RuntimeException('--previous-root must point to an extracted KaevCMS release.');
     }
 
-    $previousVersionPath = $previousRoot.DIRECTORY_SEPARATOR.'VERSION';
-    $previousVersion = is_file($previousVersionPath) ? trim((string) file_get_contents($previousVersionPath)) : '';
+    $previousVersion = legacyCompatibleReleaseVersionFromRoot($previousRoot);
     if (! validVersion($previousVersion) || version_compare($previousVersion, $target, '>=')) {
         throw new RuntimeException('The previous release version is invalid or not older than the target release.');
     }
@@ -534,6 +536,56 @@ function samePath(string $left, string $right): bool
     return PHP_OS_FAMILY === 'Windows'
         ? strtolower($left) === strtolower($right)
         : $left === $right;
+}
+
+function requiredReleaseVersionFromRoot(string $root): string
+{
+    $version = releaseVersionFromRoot($root);
+    if ($version === null) {
+        throw new RuntimeException('The target release is missing release.json.');
+    }
+
+    return $version;
+}
+
+function legacyCompatibleReleaseVersionFromRoot(string $root): string
+{
+    $version = releaseVersionFromRoot($root);
+    if ($version !== null) {
+        return $version;
+    }
+
+    $version = trim((string) @file_get_contents($root.DIRECTORY_SEPARATOR.'VERSION'));
+    if (! validVersion($version)) {
+        throw new RuntimeException('The previous release version metadata is invalid.');
+    }
+
+    return $version;
+}
+
+function releaseVersionFromRoot(string $root): ?string
+{
+    $releasePath = $root.DIRECTORY_SEPARATOR.'release.json';
+    if (! is_file($releasePath)) {
+        return null;
+    }
+
+    $contents = file_get_contents($releasePath);
+    if (! is_string($contents)) {
+        throw new RuntimeException('Unable to read release.json.');
+    }
+
+    $release = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+    $version = is_array($release) ? trim((string) ($release['version'] ?? '')) : '';
+    $versionMirror = trim((string) @file_get_contents($root.DIRECTORY_SEPARATOR.'VERSION'));
+    if (! is_array($release)
+        || ($release['schema'] ?? null) !== 1
+        || ! validVersion($version)
+        || $versionMirror !== $version) {
+        throw new RuntimeException('Release version metadata is invalid or inconsistent.');
+    }
+
+    return $version;
 }
 
 function validVersion(string $version): bool

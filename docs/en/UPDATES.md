@@ -13,6 +13,10 @@ The release filename states the complete supported source range, for example `Ka
 
 The cumulative archive is validated against the oldest Web Updater included in its declared source range, not only against the newest updater. Clean-install templates and runtime-owned upload control files are excluded when an older updater would reject those targets. Missing upload protection is recreated idempotently by the updated application after installation.
 
+## Release contracts
+
+Release numbering and package lineage come from `release.json`; `VERSION` is validated as its compatibility mirror. Windows setup, apply, update, shared-hosting packaging, and Web Update packaging reject inconsistent metadata. Runtime directories and protected environment values are data-driven through `deployment/windows/update-contract.json`, and deletion/recovery lineage is read from `deployment/updates/deletions.json`.
+
 ## Package source
 
 Download updates only from the official KaevCMS repository and compare SHA-256 with the published checksum file. The CMS validates the archive and every payload file, while the administrator remains responsible for choosing a trusted download source.
@@ -68,6 +72,4 @@ After extracting a patch, run the versioned apply script and then:
 .\deployment\windows\browser-quality.ps1
 ```
 
-### Interrupted 0.33.0 Windows update
-
-KaevCMS 0.33.1 recognizes both a completed 0.33.0 installation and the preserved 0.32.20 marker/pending state left when the 0.33.0 automated tests failed. Extract the complete 0.33.0-to-0.33.1 patch and run `deployment\windows\apply-0.33.1.ps1`; do not delete the pending marker or update backups.
+For interrupted updates, pending markers, backup handling, and safe recovery steps, see [Operations runbook](OPERATIONS.md).

@@ -4,7 +4,7 @@
 @section('content')
 @include('admin.settings._system_tabs')
 
-<form class="settings-form" method="POST" action="{{ route('admin.settings.game-accounts.update') }}">
+<form class="settings-form" data-testid="game-account-settings" method="POST" action="{{ route('admin.settings.game-accounts.update') }}">
     @csrf
     @method('PUT')
     <section class="form-card settings-narrow-card">

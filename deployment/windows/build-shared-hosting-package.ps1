@@ -9,6 +9,16 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
+$supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
+if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
+    throw 'Release update support script is missing.'
+}
+. $supportScript
+
+$releaseContract = Get-KaevCmsReleaseContract -ProjectRoot $ProjectRoot
+Assert-KaevCmsRequiredReleaseFiles -ProjectRoot $ProjectRoot
+$version = [string]$releaseContract.version
+
 $builder = Join-Path $ProjectRoot 'deployment\hosting\build-shared-hosting-package.php'
 $archiver = Join-Path $ProjectRoot 'deployment\hosting\archive-shared-hosting-package.php'
 foreach ($requiredScript in @($builder, $archiver)) {
@@ -26,7 +36,6 @@ if (-not $IncludeDevelopmentDependencies -and -not (Get-Command composer -ErrorA
     throw 'Composer was not found in PATH. It is required to remove development dependencies from the production package. Use -IncludeDevelopmentDependencies only for a temporary test archive.'
 }
 
-$version = (Get-Content -LiteralPath (Join-Path $ProjectRoot 'VERSION') -Raw).Trim()
 $outputRoot = if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
     [System.IO.Path]::GetFullPath($OutputDirectory)
 } else {

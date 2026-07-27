@@ -6,19 +6,24 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$expectedFromVersion = '0.37.3'
-$expectedToVersion = '0.37.4'
-$legacyApplyScriptName = 'deployment\windows\apply-0.37.3.ps1'
-$legacyApplySha256 = '21dbc55789c076bb8c424e3389345d5309611975c0658ee3c1a3deb8b1e40b6f'
-$previousComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
-$currentComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
-$recoveryFloorVersion = '0.34.9'
-
 $supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
 if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
     throw 'Release update support script is missing. Re-extract the complete release or patch.'
 }
 . $supportScript
+
+$releaseContract = Get-KaevCmsReleaseContract -ProjectRoot $ProjectRoot
+$updateContract = Get-KaevCmsUpdateContract -ProjectRoot $ProjectRoot
+Assert-KaevCmsRequiredReleaseFiles `
+    -ProjectRoot $ProjectRoot `
+    -Remediation 'Re-extract the complete KaevCMS release or patch before resuming the update.'
+$expectedFromVersion = [string]$releaseContract.previous_version
+$expectedToVersion = [string]$releaseContract.version
+$legacyApplyScriptName = ConvertTo-KaevCmsPlatformPath -Path ([string]$releaseContract.previous_apply_script)
+$legacyApplySha256 = [string]$releaseContract.previous_apply_sha256
+$previousComposerLockSha256 = [string]$releaseContract.composer_lock.previous_sha256
+$currentComposerLockSha256 = [string]$releaseContract.composer_lock.current_sha256
+$recoveryFloorVersion = [string]$releaseContract.recovery_floor_version
 
 $recoveryLineage = Get-KaevCmsRecoveryLineage `
     -ProjectRoot $ProjectRoot `
@@ -151,79 +156,10 @@ function Resolve-PasswordHashDriver {
     return $null
 }
 
-function Get-ObsoleteReleaseArtifacts {
-    param([Parameter(Mandatory = $true)][string]$CurrentVersion)
-
-    $currentApplyScript = "apply-$CurrentVersion.ps1"
-    $paths = @(
-        'preview',
-        'resources\views\admin\settings\placeholder.blade.php',
-        'app\Http\Controllers\Admin\SettingsController.php',
-        'resources\views\account',
-        'resources\views\livewire\account',
-        'public\assets\admin\css\app.css',
-        'public\account-themes\luxury\assets\js\navigation.js',
-        'public\account-themes\kaev-aurelia\assets\js\navigation.js',
-        'public\game-assets',
-        'integrations\mobius-interlude\reward-bridge',
-        'integrations\reward-queue\remove-legacy-bridge.sql',
-        'app\Contracts\GameRewardDeliveryGateway.php',
-        'app\Jobs\ConfirmRewardDelivery.php',
-        'app\Jobs\ProcessRewardDelivery.php',
-        'app\Services\Rewards\DriverGameRewardDeliveryGateway.php',
-        'app\Services\Rewards\RewardDeliveryProcessor.php',
-        'app\Support\Rewards\RewardDeliveryCapabilities.php',
-        'app\Support\Rewards\RewardDeliveryPayload.php',
-        'app\Support\Rewards\RewardDeliveryResult.php',
-        'tests\Fakes\FakeGameRewardDeliveryGateway.php',
-        'tests\Feature\Rewards\MobiusRewardBridgeDriverTest.php',
-        'app\Services\GameWorld\MobiusInterludeGameWorldDriver.php',
-        'app\Services\GameWorld\InterludeCharacterLabels.php',
-        'app\Services\GameAccounts\InterludeClassNames.php',
-        'app\Console\Commands\ImportInterludeItemsCommand.php',
-        'app\Services\GameAssets\Import\InterludeItemImporter.php',
-        'tests\Unit\InterludeItemImporterTest.php',
-        'app\Console\Commands\ImportGameItemsCommand.php',
-        'app\Services\GameAssets\Import',
-        'app\Contracts\GameServerAdapter.php',
-        'app\Services\GameServer\MobiusGameServerAdapter.php',
-        'app\Services\GameServer\MockGameServerAdapter.php',
-        'config\game.php',
-        'apply-0.31.7.ps1',
-        'browser-quality.ps1',
-        'browser-setup.ps1',
-        'doctor.ps1',
-        'quality.ps1',
-        'security-audit.ps1',
-        'serve.ps1',
-        'setup.ps1',
-        'update.ps1',
-        'scripts',
-        'tests\powershell'
-    )
-
-    $obsoleteApplyScripts = Get-ChildItem -LiteralPath $PSScriptRoot -Filter 'apply-*.ps1' -File -ErrorAction Stop |
-        Where-Object { $_.Name -ne $currentApplyScript }
-
-    foreach ($obsoleteApplyScript in $obsoleteApplyScripts) {
-        $paths += 'deployment\windows\' + $obsoleteApplyScript.Name
-    }
-
-    $unitTestPath = Join-Path $ProjectRoot 'tests\Unit'
-    if (Test-Path -LiteralPath $unitTestPath -PathType Container) {
-        $obsoleteItemImporterTests = Get-ChildItem -LiteralPath $unitTestPath -Filter '*ItemImporterTest.php' -File -ErrorAction Stop
-        foreach ($obsoleteItemImporterTest in $obsoleteItemImporterTests) {
-            $paths += 'tests\Unit\' + $obsoleteItemImporterTest.Name
-        }
-    }
-
-    return @($paths | Select-Object -Unique)
-}
-
 function Remove-ObsoleteReleaseArtifacts {
     param([Parameter(Mandatory = $true)][string]$CurrentVersion)
 
-    foreach ($obsoletePath in (Get-ObsoleteReleaseArtifacts -CurrentVersion $CurrentVersion)) {
+    foreach ($obsoletePath in (Get-KaevCmsObsoleteReleaseArtifacts -ProjectRoot $ProjectRoot -CurrentVersion $CurrentVersion)) {
         $fullPath = Join-Path $ProjectRoot $obsoletePath
         if (Test-Path -LiteralPath $fullPath) {
             Remove-Item -LiteralPath $fullPath -Recurse -Force -ErrorAction Stop
@@ -232,17 +168,7 @@ function Remove-ObsoleteReleaseArtifacts {
     }
 }
 
-if (-not (Test-Path 'VERSION' -PathType Leaf)) {
-    throw 'VERSION is missing. Re-extract the complete KaevCMS release or patch.'
-}
-
-$cmsVersion = (Get-Content 'VERSION' -Raw).Trim()
-if (-not (Test-KaevCmsVersion -Version $cmsVersion)) {
-    throw "VERSION contains an invalid release number: $cmsVersion"
-}
-if ($cmsVersion -ne $expectedToVersion) {
-    throw "This updater expects KaevCMS $expectedToVersion, but VERSION contains $cmsVersion."
-}
+$cmsVersion = $expectedToVersion
 
 if (-not (Test-Path '.env' -PathType Leaf)) {
     throw '.env is missing. Run .\deployment\windows\setup.ps1 or use /install/ for a new installation.'
@@ -261,61 +187,12 @@ if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
 if (-not (Get-Command composer -ErrorAction SilentlyContinue)) {
     throw 'Composer was not found in PATH.'
 }
-$directories = @(
-    'bootstrap\cache',
-    'storage\app\kaevcms',
-    'storage\framework\cache\data',
-    'storage\framework\sessions',
-    'storage\framework\views',
-    'storage\logs',
-    'public\uploads\news\covers',
-    'public\uploads\news\content',
-    'public\uploads\pages\content',
-    'public\uploads\settings\logo',
-    'public\uploads\settings\favicon',
-    'public\uploads\account-avatars',
-    'public\uploads\game-assets',
-    'public\uploads\game-assets\items',
-    'public\uploads\game-assets\items\common',
-    'public\uploads\game-assets\items\servers',
-    'public\uploads\game-assets\characters',
-    'public\uploads\game-assets\characters\common',
-    'public\uploads\game-assets\characters\common\human\male',
-    'public\uploads\game-assets\characters\common\human\female',
-    'public\uploads\game-assets\characters\common\human\neutral',
-    'public\uploads\game-assets\characters\common\elf\male',
-    'public\uploads\game-assets\characters\common\elf\female',
-    'public\uploads\game-assets\characters\common\elf\neutral',
-    'public\uploads\game-assets\characters\common\dark_elf\male',
-    'public\uploads\game-assets\characters\common\dark_elf\female',
-    'public\uploads\game-assets\characters\common\dark_elf\neutral',
-    'public\uploads\game-assets\characters\common\orc\male',
-    'public\uploads\game-assets\characters\common\orc\female',
-    'public\uploads\game-assets\characters\common\orc\neutral',
-    'public\uploads\game-assets\characters\common\dwarf\male',
-    'public\uploads\game-assets\characters\common\dwarf\female',
-    'public\uploads\game-assets\characters\common\dwarf\neutral',
-    'public\uploads\game-assets\characters\common\kamael\male',
-    'public\uploads\game-assets\characters\common\kamael\female',
-    'public\uploads\game-assets\characters\common\kamael\neutral',
-    'public\uploads\game-assets\characters\common\ertheia\male',
-    'public\uploads\game-assets\characters\common\ertheia\female',
-    'public\uploads\game-assets\characters\common\ertheia\neutral',
-    'public\uploads\game-assets\characters\common\sylph\male',
-    'public\uploads\game-assets\characters\common\sylph\female',
-    'public\uploads\game-assets\characters\common\sylph\neutral',
-    'public\uploads\game-assets\characters\common\fallback\male',
-    'public\uploads\game-assets\characters\common\fallback\female',
-    'public\uploads\game-assets\characters\common\fallback\neutral',
-    'public\uploads\game-assets\characters\servers'
-)
-foreach ($directory in $directories) {
-    New-Item -Path $directory -ItemType Directory -Force | Out-Null
-}
+Initialize-KaevCmsRuntimeDirectories -ProjectRoot $ProjectRoot
 
 $script:updateLogPath = Join-Path $ProjectRoot ('storage\logs\update-{0}-{1}.log' -f $cmsVersion, (Get-Date -Format 'yyyyMMdd-HHmmss'))
 Write-UpdateStage -Message "KaevCMS update target: $cmsVersion"
 Write-UpdateStage -Message "Project: $ProjectRoot"
+Write-UpdateStage -Message ("Update stages: " + (@($updateContract.stage_order) -join " -> "))
 
 $pendingMarkerConverted = $false
 if ($supersededPendingTargets.Count -gt 0) {
@@ -377,7 +254,7 @@ Write-KaevCmsPendingUpdateMarker `
     -FromVersion $installed.Version `
     -ToVersion $cmsVersion
 
-$obsoleteArtifacts = Get-ObsoleteReleaseArtifacts -CurrentVersion $cmsVersion
+$obsoleteArtifacts = Get-KaevCmsObsoleteReleaseArtifacts -ProjectRoot $ProjectRoot -CurrentVersion $cmsVersion
 $backup = Move-KaevCmsArtifactsToBackup `
     -ProjectRoot $ProjectRoot `
     -TargetVersion $cmsVersion `

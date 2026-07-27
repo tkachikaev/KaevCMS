@@ -12,11 +12,20 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
+$supportScript = Join-Path $PSScriptRoot 'support\release-update-support.ps1'
+if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
+    throw 'Release update support script is missing.'
+}
+. $supportScript
+
 if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
     throw 'PHP was not found in PATH.'
 }
 
-$targetVersion = (Get-Content -LiteralPath (Join-Path $TargetReleaseRoot 'VERSION') -Raw).Trim()
+$targetReleaseRootFullPath = [System.IO.Path]::GetFullPath($TargetReleaseRoot)
+$targetRelease = Get-KaevCmsReleaseContract -ProjectRoot $targetReleaseRootFullPath
+Assert-KaevCmsRequiredReleaseFiles -ProjectRoot $targetReleaseRootFullPath
+$targetVersion = [string]$targetRelease.version
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $ProjectRoot "dist\KaevCMS-cumulative-update-$MinimumVersion-$MaximumVersion-to-$targetVersion.zip"
 }

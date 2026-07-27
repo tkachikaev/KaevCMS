@@ -8,6 +8,7 @@ use App\Support\Rewards\RewardGrantItem;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use KaevCMS\Modules\PromoCodes\Exceptions\PromoCodeActivationException;
+use KaevCMS\Modules\PromoCodes\Exceptions\PromoCodeActivationFailure;
 use KaevCMS\Modules\PromoCodes\Models\PromoCode;
 use KaevCMS\Modules\PromoCodes\Models\PromoCodeActivation;
 use KaevCMS\Modules\PromoCodes\Models\PromoCodeReward;
@@ -42,14 +43,14 @@ final class PromoCodeActivationService
                     ->first();
 
                 if (! $promoCode instanceof PromoCode) {
-                    throw new PromoCodeActivationException('invalid');
+                    throw new PromoCodeActivationException(PromoCodeActivationFailure::Invalid);
                 }
 
                 $promoCode->load(['rewards', 'gameServer.translations']);
                 $this->assertAvailable($promoCode, $user);
 
                 if ($promoCode->rewards->isEmpty()) {
-                    throw new PromoCodeActivationException('no_rewards');
+                    throw new PromoCodeActivationException(PromoCodeActivationFailure::NoRewards);
                 }
 
                 $activation = PromoCodeActivation::query()->create([
@@ -106,19 +107,19 @@ final class PromoCodeActivationService
         $now = now();
 
         if (! $promoCode->enabled) {
-            throw new PromoCodeActivationException('disabled');
+            throw new PromoCodeActivationException(PromoCodeActivationFailure::Disabled);
         }
 
         if ($promoCode->starts_at !== null && $promoCode->starts_at->isAfter($now)) {
-            throw new PromoCodeActivationException('not_started');
+            throw new PromoCodeActivationException(PromoCodeActivationFailure::NotStarted);
         }
 
         if ($promoCode->ends_at !== null && $promoCode->ends_at->isBefore($now)) {
-            throw new PromoCodeActivationException('expired');
+            throw new PromoCodeActivationException(PromoCodeActivationFailure::Expired);
         }
 
         if ($promoCode->total_limit > 0 && $promoCode->activations_count >= $promoCode->total_limit) {
-            throw new PromoCodeActivationException('total_limit');
+            throw new PromoCodeActivationException(PromoCodeActivationFailure::TotalLimit);
         }
 
         $userActivations = PromoCodeActivation::query()
@@ -127,7 +128,7 @@ final class PromoCodeActivationService
             ->count();
 
         if ($userActivations >= $promoCode->per_user_limit) {
-            throw new PromoCodeActivationException('user_limit');
+            throw new PromoCodeActivationException(PromoCodeActivationFailure::UserLimit);
         }
     }
 
@@ -145,7 +146,7 @@ final class PromoCodeActivationService
     private function assertActivationOwner(PromoCodeActivation $activation, User $user): PromoCodeActivation
     {
         if ($activation->user_id !== $user->id) {
-            throw new PromoCodeActivationException('invalid');
+            throw new PromoCodeActivationException(PromoCodeActivationFailure::Invalid);
         }
 
         return $activation->loadMissing(['promoCode.rewards', 'gameServer.translations', 'rewardGrant.items']);

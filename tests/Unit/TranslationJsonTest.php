@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use JsonException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -114,12 +115,34 @@ class TranslationJsonTest extends TestCase
 
         foreach (array_keys($keys) as $key) {
             foreach ($catalogs as $locale => $translations) {
-                $this->assertArrayHasKey(
-                    $key,
-                    $translations,
+                $this->assertTrue(
+                    $this->literalTranslationExists($locale, $translations, $key),
                     "Missing {$locale} translation for literal key: {$key}",
                 );
             }
         }
+    }
+
+    /** @param array<string,string> $jsonTranslations */
+    private function literalTranslationExists(string $locale, array $jsonTranslations, string $key): bool
+    {
+        if (array_key_exists($key, $jsonTranslations)) {
+            return true;
+        }
+
+        $segments = explode('.', $key, 2);
+        if (count($segments) !== 2) {
+            return false;
+        }
+
+        [$group, $nestedKey] = $segments;
+        $groupPath = lang_path($locale.'/'.$group.'.php');
+        if (! is_file($groupPath)) {
+            return false;
+        }
+
+        $groupTranslations = require $groupPath;
+
+        return is_array($groupTranslations) && Arr::has($groupTranslations, $nestedKey);
     }
 }

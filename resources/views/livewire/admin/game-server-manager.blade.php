@@ -126,7 +126,7 @@
     @endif
 
     <div @class(['server-drawer-backdrop', 'open' => $drawerOpen]) @if(!$drawerOpen) hidden @endif wire:cloak wire:pointerdown.self="closeDrawer">
-        <section class="server-drawer server-drawer-wide" role="dialog" aria-modal="true" aria-labelledby="game-server-drawer-title">
+        <section class="server-drawer server-drawer-wide" data-testid="game-server-dialog" role="dialog" aria-modal="true" aria-labelledby="game-server-drawer-title">
             <header class="server-drawer-header">
                 <div>
                     <span>{{ $editingId === null ? __('New game server') : __('Game server settings') }}</span>
@@ -477,7 +477,7 @@
                 @endif
             </div>
 
-            <footer class="server-drawer-footer">
+            <footer class="server-drawer-footer" data-testid="game-server-dialog-footer">
                 @if($connectionEnabled && !$loginServers->isEmpty())
                     <button class="button button-secondary" type="button" wire:click="testConnection" wire:loading.attr="disabled" wire:target="testConnection">
                         <span wire:loading.remove wire:target="testConnection">{{ __('Test connection') }}</span>

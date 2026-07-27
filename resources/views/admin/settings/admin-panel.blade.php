@@ -11,7 +11,7 @@
     <div class="notice notice-info admin-critical-setting-notice"><p>{{ __('Only an owner can change the administrator panel address.') }}</p></div>
 @endif
 
-<section class="form-card admin-path-settings-card">
+<section class="form-card admin-path-settings-card" data-testid="admin-path-settings">
     <form
         method="POST"
         action="{{ route('admin.settings.admin-panel.admin-path.update') }}"
@@ -90,7 +90,7 @@
 </dialog>
 @endif
 
-<section class="form-card system-monitor-settings-card">
+<section class="form-card system-monitor-settings-card" data-testid="server-monitor-settings">
     <form method="POST" action="{{ route('admin.settings.admin-panel.monitoring.update') }}">
         @csrf
         @method('PUT')

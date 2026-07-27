@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\Rewards\RewardCharacterDirectory;
 use App\Support\Rewards\RewardQueueCapabilities;
+use App\Support\Rewards\RewardTransferFailure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -106,10 +107,6 @@ class WebInventoryController extends Controller
 
     private function deliveryUnavailableMessage(RewardQueueCapabilities $capabilities): string
     {
-        return match ($capabilities->reasonCode) {
-            'reward_queue_not_installed' => __('The kaev_reward_queue table is not installed in this GameServer database.'),
-            'reward_queue_schema_invalid' => __('The kaev_reward_queue table has an unsupported structure.'),
-            default => __('The GameServer reward queue is unavailable. Check the database connection.'),
-        };
+        return __(RewardTransferFailure::fromQueueReason($capabilities->reasonCode)->translationKey());
     }
 }

@@ -66,7 +66,7 @@ final class PromoCodeController extends Controller
                 requestToken: (string) $request->validated('request_token'),
             );
         } catch (PromoCodeActivationException $exception) {
-            $message = $this->errorMessage($exception->reasonCode);
+            $message = __($exception->translationKey());
 
             return back()
                 ->withInput($request->safe()->only(['code', 'request_token']))
@@ -104,18 +104,5 @@ final class PromoCodeController extends Controller
                 'action_url' => public_route('web-inventory.index', ['server' => $activation->game_server_id]),
                 'action_label' => __('module-promo-codes::messages.open_inventory'),
             ]);
-    }
-
-    private function errorMessage(string $reasonCode): string
-    {
-        return match ($reasonCode) {
-            'disabled' => __('module-promo-codes::messages.activation_disabled'),
-            'not_started' => __('module-promo-codes::messages.activation_not_started'),
-            'expired' => __('module-promo-codes::messages.activation_expired'),
-            'total_limit' => __('module-promo-codes::messages.activation_total_limit'),
-            'user_limit' => __('module-promo-codes::messages.activation_user_limit'),
-            'no_rewards' => __('module-promo-codes::messages.activation_no_rewards'),
-            default => __('module-promo-codes::messages.activation_invalid'),
-        };
     }
 }

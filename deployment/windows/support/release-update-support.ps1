@@ -5,6 +5,261 @@
 }
 
 
+
+function Test-KaevCmsRelativePath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or [System.IO.Path]::IsPathRooted($Path)) {
+        return $false
+    }
+
+    $segments = $Path.Replace('\', '/').Split('/')
+
+    return $segments -notcontains '..' -and $segments -notcontains ''
+}
+
+function ConvertTo-KaevCmsPlatformPath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    return $Path.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+}
+
+function Read-KaevCmsJsonFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "$Label is missing: $Path"
+    }
+
+    try {
+        return Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        throw "$Label is invalid: $Path"
+    }
+}
+
+function Get-KaevCmsReleaseContract {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+
+    $contractPath = Join-Path $ProjectRoot 'release.json'
+    $contract = Read-KaevCmsJsonFile -Path $contractPath -Label 'Release contract'
+
+    if ([int]$contract.schema -ne 1) {
+        throw 'Release contract schema is unsupported.'
+    }
+
+    $parsedReleaseDate = [datetime]::MinValue
+    if (-not [datetime]::TryParseExact(
+        [string]$contract.released_at,
+        'yyyy-MM-dd',
+        [System.Globalization.CultureInfo]::InvariantCulture,
+        [System.Globalization.DateTimeStyles]::None,
+        [ref]$parsedReleaseDate
+    )) {
+        throw 'Release contract contains an invalid released_at date.'
+    }
+
+    foreach ($property in @('version', 'previous_version', 'recovery_floor_version', 'cumulative_base_version')) {
+        $value = [string]$contract.$property
+        if (-not (Test-KaevCmsVersion -Version $value)) {
+            throw "Release contract contains an invalid $property value: $value"
+        }
+    }
+
+    if ([version]$contract.previous_version -ge [version]$contract.version) {
+        throw 'Release contract previous_version must be lower than version.'
+    }
+    if ([version]$contract.recovery_floor_version -gt [version]$contract.previous_version) {
+        throw 'Release contract recovery_floor_version must not exceed previous_version.'
+    }
+    if ([version]$contract.cumulative_base_version -gt [version]$contract.recovery_floor_version) {
+        throw 'Release contract cumulative_base_version must not exceed recovery_floor_version.'
+    }
+
+    foreach ($property in @('apply_script', 'update_script', 'previous_apply_script')) {
+        $value = [string]$contract.$property
+        if (-not (Test-KaevCmsRelativePath -Path $value)) {
+            throw "Release contract contains an invalid $property path: $value"
+        }
+    }
+
+    if ([string]$contract.apply_script -ne "deployment/windows/apply-$($contract.version).ps1") {
+        throw 'Release contract apply_script does not match version.'
+    }
+    if ([string]$contract.update_script -ne 'deployment/windows/update.ps1') {
+        throw 'Release contract update_script must reference deployment/windows/update.ps1.'
+    }
+    if ([string]$contract.previous_apply_script -ne "deployment/windows/apply-$($contract.previous_version).ps1") {
+        throw 'Release contract previous_apply_script does not match previous_version.'
+    }
+
+    foreach ($hash in @(
+        [string]$contract.previous_apply_sha256,
+        [string]$contract.composer_lock.previous_sha256,
+        [string]$contract.composer_lock.current_sha256
+    )) {
+        if ($hash -notmatch '^[a-f0-9]{64}$') {
+            throw 'Release contract contains an invalid SHA256 fingerprint.'
+        }
+    }
+
+    $versionPath = Join-Path $ProjectRoot 'VERSION'
+    if (-not (Test-Path -LiteralPath $versionPath -PathType Leaf)) {
+        throw 'VERSION is missing.'
+    }
+    $versionFile = (Get-Content -LiteralPath $versionPath -Raw).Trim()
+    if ($versionFile -ne [string]$contract.version) {
+        throw "VERSION contains $versionFile, but release.json contains $($contract.version)."
+    }
+
+    return $contract
+}
+
+function Get-KaevCmsRequiredReleaseFiles {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+
+    $manifest = Read-KaevCmsJsonFile `
+        -Path (Join-Path $ProjectRoot 'deployment/release-files.json') `
+        -Label 'Release file manifest'
+    if ([int]$manifest.schema -ne 1) {
+        throw 'Release file manifest schema is unsupported.'
+    }
+
+    $files = @($manifest.required_files | ForEach-Object { [string]$_ })
+    if ($files.Count -eq 0) {
+        throw 'Release file manifest is empty.'
+    }
+
+    foreach ($file in $files) {
+        if (-not (Test-KaevCmsRelativePath -Path $file)) {
+            throw "Release file manifest contains an invalid path: $file"
+        }
+    }
+
+    if (($files | Select-Object -Unique).Count -ne $files.Count) {
+        throw 'Release file manifest contains duplicate paths.'
+    }
+
+    return @($files)
+}
+
+function Assert-KaevCmsRequiredReleaseFiles {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [string]$Remediation = 'Re-extract the complete KaevCMS release or patch.'
+    )
+
+    foreach ($requiredFile in (Get-KaevCmsRequiredReleaseFiles -ProjectRoot $ProjectRoot)) {
+        $requiredPath = Join-Path $ProjectRoot (ConvertTo-KaevCmsPlatformPath -Path $requiredFile)
+        if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
+            throw "Release file is missing: $requiredFile. $Remediation"
+        }
+    }
+}
+
+function Get-KaevCmsUpdateContract {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+
+    $contract = Read-KaevCmsJsonFile `
+        -Path (Join-Path $ProjectRoot 'deployment/windows/update-contract.json') `
+        -Label 'Windows update contract'
+    if ([int]$contract.schema -ne 1) {
+        throw 'Windows update contract schema is unsupported.'
+    }
+
+    $runtimeDirectories = @($contract.runtime_directories | ForEach-Object { [string]$_ })
+    $protectedEnvironmentFiles = @($contract.protected_environment_files | ForEach-Object { [string]$_ })
+    $protectedEnvironmentKeys = @($contract.protected_environment_keys | ForEach-Object { [string]$_ })
+    $stageOrder = @($contract.stage_order | ForEach-Object { [string]$_ })
+    if ($runtimeDirectories.Count -eq 0 -or $protectedEnvironmentFiles.Count -eq 0 -or $protectedEnvironmentKeys.Count -eq 0 -or $stageOrder.Count -eq 0) {
+        throw 'Windows update contract is incomplete.'
+    }
+
+    foreach ($relativePath in @($runtimeDirectories + $protectedEnvironmentFiles)) {
+        if (-not (Test-KaevCmsRelativePath -Path $relativePath)) {
+            throw "Windows update contract contains an invalid protected or runtime path: $relativePath"
+        }
+    }
+
+    foreach ($environmentKey in $protectedEnvironmentKeys) {
+        if ($environmentKey -notmatch '^[A-Z][A-Z0-9_]*$') {
+            throw "Windows update contract contains an invalid environment key: $environmentKey"
+        }
+    }
+
+    if ((@($runtimeDirectories | Select-Object -Unique)).Count -ne $runtimeDirectories.Count) {
+        throw 'Windows update contract contains duplicate runtime directories.'
+    }
+
+    if ((@($protectedEnvironmentFiles | Select-Object -Unique)).Count -ne $protectedEnvironmentFiles.Count) {
+        throw 'Windows update contract contains duplicate protected environment files.'
+    }
+
+    if ((@($protectedEnvironmentKeys | Select-Object -Unique)).Count -ne $protectedEnvironmentKeys.Count) {
+        throw 'Windows update contract contains duplicate protected environment keys.'
+    }
+
+    if ((@($stageOrder | Select-Object -Unique)).Count -ne $stageOrder.Count) {
+        throw 'Windows update contract contains duplicate update stages.'
+    }
+
+    return $contract
+}
+
+function Get-KaevCmsObsoleteReleaseArtifacts {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$CurrentVersion
+    )
+
+    if (-not (Test-KaevCmsVersion -Version $CurrentVersion)) {
+        throw "Invalid release version: $CurrentVersion"
+    }
+
+    $history = Read-KaevCmsJsonFile `
+        -Path (Join-Path $ProjectRoot 'deployment/updates/deletions.json') `
+        -Label 'Update deletion history'
+    $paths = @()
+    foreach ($property in $history.PSObject.Properties) {
+        if ($property.Name -notmatch '^\d+\.\d+\.\d+$' -or [version]$property.Name -gt [version]$CurrentVersion) {
+            continue
+        }
+
+        foreach ($rawPath in @($property.Value)) {
+            $relativePath = ([string]$rawPath).Replace('\', '/')
+            if ($relativePath.StartsWith('core/')) {
+                $relativePath = $relativePath.Substring(5)
+            }
+            if (-not (Test-KaevCmsRelativePath -Path $relativePath)) {
+                throw "Update deletion history contains an invalid path: $rawPath"
+            }
+            $paths += ConvertTo-KaevCmsPlatformPath -Path $relativePath
+        }
+    }
+
+    $currentApplyScript = "apply-$CurrentVersion.ps1"
+    $windowsPath = Join-Path $ProjectRoot 'deployment\windows'
+    if (Test-Path -LiteralPath $windowsPath -PathType Container) {
+        foreach ($obsoleteApplyScript in Get-ChildItem -LiteralPath $windowsPath -Filter 'apply-*.ps1' -File -ErrorAction Stop) {
+            if ($obsoleteApplyScript.Name -ne $currentApplyScript) {
+                $paths += 'deployment\windows\' + $obsoleteApplyScript.Name
+            }
+        }
+    }
+
+    $unitTestPath = Join-Path $ProjectRoot 'tests\Unit'
+    if (Test-Path -LiteralPath $unitTestPath -PathType Container) {
+        foreach ($obsoleteItemImporterTest in Get-ChildItem -LiteralPath $unitTestPath -Filter '*ItemImporterTest.php' -File -ErrorAction Stop) {
+            $paths += 'tests\Unit\' + $obsoleteItemImporterTest.Name
+        }
+    }
+
+    return @($paths | Select-Object -Unique)
+}
+
 function Get-KaevCmsRecoveryLineage {
     param(
         [Parameter(Mandatory = $true)][string]$ProjectRoot,
@@ -257,50 +512,9 @@ function Remove-KaevCmsUpdateBackups {
 function Initialize-KaevCmsRuntimeDirectories {
     param([Parameter(Mandatory = $true)][string]$ProjectRoot)
 
-    foreach ($relativePath in @(
-        'bootstrap\cache',
-        'storage\app\private',
-        'storage\app\public',
-        'storage\framework\cache\data',
-        'storage\framework\sessions',
-        'storage\framework\views',
-        'storage\logs',
-        'public\uploads\game-assets',
-        'public\uploads\game-assets\items',
-        'public\uploads\game-assets\items\common',
-        'public\uploads\game-assets\items\servers',
-        'public\uploads\game-assets\characters',
-        'public\uploads\game-assets\characters\common',
-        'public\uploads\game-assets\characters\common\human\male',
-        'public\uploads\game-assets\characters\common\human\female',
-        'public\uploads\game-assets\characters\common\human\neutral',
-        'public\uploads\game-assets\characters\common\elf\male',
-        'public\uploads\game-assets\characters\common\elf\female',
-        'public\uploads\game-assets\characters\common\elf\neutral',
-        'public\uploads\game-assets\characters\common\dark_elf\male',
-        'public\uploads\game-assets\characters\common\dark_elf\female',
-        'public\uploads\game-assets\characters\common\dark_elf\neutral',
-        'public\uploads\game-assets\characters\common\orc\male',
-        'public\uploads\game-assets\characters\common\orc\female',
-        'public\uploads\game-assets\characters\common\orc\neutral',
-        'public\uploads\game-assets\characters\common\dwarf\male',
-        'public\uploads\game-assets\characters\common\dwarf\female',
-        'public\uploads\game-assets\characters\common\dwarf\neutral',
-        'public\uploads\game-assets\characters\common\kamael\male',
-        'public\uploads\game-assets\characters\common\kamael\female',
-        'public\uploads\game-assets\characters\common\kamael\neutral',
-        'public\uploads\game-assets\characters\common\ertheia\male',
-        'public\uploads\game-assets\characters\common\ertheia\female',
-        'public\uploads\game-assets\characters\common\ertheia\neutral',
-        'public\uploads\game-assets\characters\common\sylph\male',
-        'public\uploads\game-assets\characters\common\sylph\female',
-        'public\uploads\game-assets\characters\common\sylph\neutral',
-        'public\uploads\game-assets\characters\common\fallback\male',
-        'public\uploads\game-assets\characters\common\fallback\female',
-        'public\uploads\game-assets\characters\common\fallback\neutral',
-        'public\uploads\game-assets\characters\servers'
-    )) {
-        $directoryPath = Join-Path $ProjectRoot $relativePath
+    $contract = Get-KaevCmsUpdateContract -ProjectRoot $ProjectRoot
+    foreach ($relativePath in @($contract.runtime_directories)) {
+        $directoryPath = Join-Path $ProjectRoot (ConvertTo-KaevCmsPlatformPath -Path ([string]$relativePath))
         if (-not (Test-Path -LiteralPath $directoryPath -PathType Container)) {
             New-Item -Path $directoryPath -ItemType Directory -Force | Out-Null
         }

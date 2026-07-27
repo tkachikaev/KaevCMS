@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.38.2 - 2026-07-27
+
+- Corrected the release metadata regression to validate legacy removals across the accumulated `deletions.json` history instead of requiring every historical path to be duplicated in the current release delta.
+- Preserved the stricter current-release check that the immediately previous apply script is removed. Runtime code, database schemas, dependencies, modules, themes, game drivers, item catalogs, and reward delivery were not changed.
+
+## 0.38.1 - 2026-07-27
+
+- Fixed Windows PowerShell 5.1 parsing of update-contract duplicate checks by validating each contract list separately with explicit array semantics.
+- Removed the hidden carriage-return character from the `deployment/release-files.json` regression fixture path, restoring `update-workflow.ps1` execution on Windows.
+- Corrected the literal translation regression so grouped PHP keys such as `rewards.transfer.review` are resolved from `lang/{locale}/rewards.php` instead of being incorrectly required in the JSON catalogue.
+- Added a stable `data-testid` for the Promo Codes activation input and updated PHPUnit/Playwright coverage; Promo Codes is now 1.2.2. Runtime database schemas, dependencies, game drivers, item catalogs, themes, and reward delivery were not changed.
+
+## 0.38.0 - 2026-07-27
+
+- Added validated `release.json`, release-file, and Windows-update contracts as the authoritative source for release lineage, apply-script names, dependency fingerprints, runtime directories, cleanup history, and recovery behavior.
+- Reworked Windows update and package-builder regressions around executable, data-driven contracts instead of brittle source-text snippets and nested PowerShell quoting.
+- Added an explicit administrative route access registry with complete route classification coverage while preserving the existing `ModulesView` read-only and `ModulesManage` write model.
+- Replaced layout-coordinate browser assertions with semantic test IDs, accessibility state, editable controls, and real user interactions.
+- Added Russian/English key parity tests for bundled Daily Rewards and Promo Codes, introduced stable failure enums and translation keys for module claims, promo activation, and reward transfers, and moved reward-transfer messages into dedicated language files.
+- Added Russian and English operator runbooks for interrupted Windows updates, unavailable external LoginServer/GameServer databases, uncertain reward-queue results, and safe support diagnostics. Daily Rewards is now 1.2.2 and Promo Codes is now 1.2.1. Database schemas, dependencies, game drivers, item catalogs, themes, and user-facing capabilities were not changed.
+
 ## 0.37.4 - 2026-07-27
 
 - Fixed the remaining Laravel Pint `single_line_empty_body` violation in the standalone account-theme contract.

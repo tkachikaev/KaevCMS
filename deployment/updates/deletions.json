@@ -169,5 +169,58 @@
     ],
     "0.37.4": [
         "core/deployment/windows/apply-0.37.3.ps1"
+    ],
+    "0.38.0": [
+        "core/deployment/windows/apply-0.37.4.ps1",
+        "core/preview",
+        "core/resources/views/admin/settings/placeholder.blade.php",
+        "core/app/Http/Controllers/Admin/SettingsController.php",
+        "core/resources/views/account",
+        "core/resources/views/livewire/account",
+        "public/assets/admin/css/app.css",
+        "public/account-themes/luxury/assets/js/navigation.js",
+        "public/account-themes/kaev-aurelia/assets/js/navigation.js",
+        "public/game-assets",
+        "core/integrations/mobius-interlude/reward-bridge",
+        "core/integrations/reward-queue/remove-legacy-bridge.sql",
+        "core/app/Contracts/GameRewardDeliveryGateway.php",
+        "core/app/Jobs/ConfirmRewardDelivery.php",
+        "core/app/Jobs/ProcessRewardDelivery.php",
+        "core/app/Services/Rewards/DriverGameRewardDeliveryGateway.php",
+        "core/app/Services/Rewards/RewardDeliveryProcessor.php",
+        "core/app/Support/Rewards/RewardDeliveryCapabilities.php",
+        "core/app/Support/Rewards/RewardDeliveryPayload.php",
+        "core/app/Support/Rewards/RewardDeliveryResult.php",
+        "core/tests/Fakes/FakeGameRewardDeliveryGateway.php",
+        "core/tests/Feature/Rewards/MobiusRewardBridgeDriverTest.php",
+        "core/app/Services/GameWorld/MobiusInterludeGameWorldDriver.php",
+        "core/app/Services/GameWorld/InterludeCharacterLabels.php",
+        "core/app/Services/GameAccounts/InterludeClassNames.php",
+        "core/app/Console/Commands/ImportInterludeItemsCommand.php",
+        "core/app/Services/GameAssets/Import/InterludeItemImporter.php",
+        "core/tests/Unit/InterludeItemImporterTest.php",
+        "core/app/Console/Commands/ImportGameItemsCommand.php",
+        "core/app/Services/GameAssets/Import",
+        "core/app/Contracts/GameServerAdapter.php",
+        "core/app/Services/GameServer/MobiusGameServerAdapter.php",
+        "core/app/Services/GameServer/MockGameServerAdapter.php",
+        "core/config/game.php",
+        "core/apply-0.31.7.ps1",
+        "core/browser-quality.ps1",
+        "core/browser-setup.ps1",
+        "core/doctor.ps1",
+        "core/quality.ps1",
+        "core/security-audit.ps1",
+        "core/serve.ps1",
+        "core/setup.ps1",
+        "core/update.ps1",
+        "core/scripts",
+        "core/tests/powershell"
+    ],
+    "0.38.1": [
+        "core/deployment/windows/apply-0.38.0.ps1"
+    ],
+    "0.38.2": [
+        "core/deployment/windows/apply-0.38.1.ps1"
     ]
 }

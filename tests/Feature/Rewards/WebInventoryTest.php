@@ -186,7 +186,7 @@ class WebInventoryTest extends TestCase
         $this->actingAs($user)
             ->get('/account/web-inventory')
             ->assertOk()
-            ->assertSee(__('The kaev_reward_queue table is not installed in this GameServer database.'));
+            ->assertSee(__('rewards.transfer.reward_queue_not_installed'));
     }
 
     public function test_transfer_writes_one_idempotent_queue_payload_and_allows_online_character(): void

@@ -24,7 +24,7 @@
             <label>
                 <span>{{ __('module-promo-codes::messages.code') }}</span>
                 <div class="account-field-control">
-                    <input name="code" type="text" minlength="4" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9_-]{3,63}" value="{{ old('code') }}" autocomplete="off" required @class(['account-field-invalid' => $errors->has('code')])>
+                    <input data-testid="promo-code-input" name="code" type="text" minlength="4" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9_-]{3,63}" value="{{ old('code') }}" autocomplete="off" required @class(['account-field-invalid' => $errors->has('code')])>
                     @error('code')<small class="account-field-error" role="alert">{{ $message }}</small>@enderror
                 </div>
             </label>

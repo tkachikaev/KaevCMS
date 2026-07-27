@@ -2,24 +2,25 @@
 
 namespace App\Exceptions;
 
+use App\Support\Rewards\RewardTransferFailure;
 use RuntimeException;
 
 final class RewardTransferException extends RuntimeException
 {
     public function __construct(
-        private readonly string $messageKey,
-        private readonly string $failureCode,
+        public readonly RewardTransferFailure $failure,
+        private readonly ?string $diagnosticCode = null,
     ) {
-        parent::__construct($failureCode);
+        parent::__construct($diagnosticCode ?? $failure->value);
     }
 
-    public function messageKey(): string
+    public function translationKey(): string
     {
-        return $this->messageKey;
+        return $this->failure->translationKey();
     }
 
     public function failureCode(): string
     {
-        return $this->failureCode;
+        return $this->diagnosticCode ?? $this->failure->value;
     }
 }

@@ -22,9 +22,9 @@
 @if ($themes === [])
     <div class="admin-empty-state empty-box">{!! __('No account themes found. Check the <code>account-themes</code> directory.') !!}</div>
 @else
-    <div class="admin-catalog-list themes-list" data-account-theme-list>
+    <div class="admin-catalog-list themes-list" data-account-theme-list data-testid="account-theme-catalog" data-layout="single-column">
         @foreach ($themes as $theme)
-            <article @class(['admin-card-row', 'admin-catalog-row', 'theme-card', 'theme-row', 'active' => $theme['active'], 'invalid' => ! $theme['valid'] || ! $theme['compatible']])>
+            <article data-testid="account-theme-card" @class(['admin-card-row', 'admin-catalog-row', 'theme-card', 'theme-row', 'active' => $theme['active'], 'invalid' => ! $theme['valid'] || ! $theme['compatible']])>
                 <div class="admin-catalog-main theme-info">
                     <div class="admin-catalog-heading theme-heading">
                         <h2>{{ $theme['name'] }}</h2>

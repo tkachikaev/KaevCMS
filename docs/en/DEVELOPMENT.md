@@ -13,8 +13,10 @@ Do not weaken a regression to obtain a green result. Add tests for every bug fix
 
 ## Release discipline
 
-- Increment `VERSION` for every delivered change.
-- Update `README.md` and `CHANGELOG.md`.
+`release.json` is the authoritative release contract. `VERSION` is a compatibility mirror and must match it. The contract defines the target and previous versions, apply-script paths, dependency fingerprints, recovery floor, and cumulative-package base. `deployment/release-files.json` lists files that must exist after extraction, while `deployment/windows/update-contract.json` defines runtime directories, protected environment values, and the update-stage order.
+
+- Change release lineage only in the validated contracts, then update the `VERSION` mirror, `README.md`, and `CHANGELOG.md`.
+- Never hard-code current or previous versions into regression source snippets.
 - Ship full, patch, Web Update, and SHA256 artifacts.
 - Verify ZIP integrity and portable path separators.
 - Confirm previous release plus patch equals the full target release.

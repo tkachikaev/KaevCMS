@@ -35,12 +35,12 @@ class RewardTransferController extends Controller
         } catch (RewardTransferException $exception) {
             return back()
                 ->withInput($request->except(['request_token']))
-                ->withErrors(['inventory' => __($exception->messageKey())]);
+                ->withErrors(['inventory' => __($exception->translationKey())]);
         }
 
         $message = $delivery->status === RewardDelivery::STATUS_REVIEW
-            ? __('The queue write result is uncertain. The rewards are locked for administrator review.')
-            : __('Rewards were transferred to the GameServer queue.');
+            ? __('rewards.transfer.review')
+            : __('rewards.transfer.queued');
 
         return redirect()
             ->to(public_route('web-inventory.index', [

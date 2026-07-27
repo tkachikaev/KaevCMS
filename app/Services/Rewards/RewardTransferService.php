@@ -8,6 +8,7 @@ use App\Models\GameServer;
 use App\Models\RewardDelivery;
 use App\Models\RewardInventoryItem;
 use App\Models\User;
+use App\Support\Rewards\RewardTransferFailure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -32,25 +33,19 @@ final class RewardTransferService
         $capabilities = $this->rewardQueue->capabilities($server);
         if (! $capabilities->supported) {
             throw new RewardTransferException(
-                $this->unavailableMessageKey($capabilities->reasonCode),
-                $capabilities->reasonCode ?? 'reward_queue_unavailable',
+                RewardTransferFailure::fromQueueReason($capabilities->reasonCode),
+                $capabilities->reasonCode,
             );
         }
 
         $character = $this->characters->find($user, $server, $characterId);
         if ($character === null) {
-            throw new RewardTransferException(
-                'The selected character does not belong to your account on this server.',
-                'character_not_owned',
-            );
+            throw new RewardTransferException(RewardTransferFailure::CharacterNotOwned);
         }
 
         $inventoryItemIds = array_values(array_unique(array_map('intval', $inventoryItemIds)));
         if ($inventoryItemIds === [] || count($inventoryItemIds) > 50) {
-            throw new RewardTransferException(
-                'Select between 1 and 50 rewards for one transfer.',
-                'invalid_selection',
-            );
+            throw new RewardTransferException(RewardTransferFailure::InvalidSelection);
         }
 
         $delivery = DB::transaction(function () use (
@@ -79,10 +74,7 @@ final class RewardTransferService
 
             if ($items->count() !== count($inventoryItemIds)
                 || $items->contains(static fn (RewardInventoryItem $item): bool => $item->status !== RewardInventoryItem::STATUS_AVAILABLE)) {
-                throw new RewardTransferException(
-                    'One or more selected rewards are unavailable. Refresh the page and try again.',
-                    'items_unavailable',
-                );
+                throw new RewardTransferException(RewardTransferFailure::ItemsUnavailable);
             }
 
             $delivery = RewardDelivery::query()->create([
@@ -116,8 +108,8 @@ final class RewardTransferService
 
         if ($delivery->status === RewardDelivery::STATUS_FAILED) {
             throw new RewardTransferException(
-                'The reward could not be written to the GameServer queue. It remains available in your web inventory.',
-                $delivery->failure_code ?? 'reward_queue_write_failed',
+                RewardTransferFailure::RewardQueueWriteFailed,
+                $delivery->failure_code,
             );
         }
 
@@ -129,20 +121,11 @@ final class RewardTransferService
 
         if ($delivery->status === RewardDelivery::STATUS_FAILED) {
             throw new RewardTransferException(
-                'The reward could not be written to the GameServer queue. It remains available in your web inventory.',
-                $delivery->failure_code ?? 'reward_queue_write_failed',
+                RewardTransferFailure::RewardQueueWriteFailed,
+                $delivery->failure_code,
             );
         }
 
         return $delivery;
-    }
-
-    private function unavailableMessageKey(?string $reasonCode): string
-    {
-        return match ($reasonCode) {
-            'reward_queue_not_installed' => 'The kaev_reward_queue table is not installed in this GameServer database.',
-            'reward_queue_schema_invalid' => 'The kaev_reward_queue table has an unsupported structure.',
-            default => 'The GameServer reward queue is unavailable. Check the database connection.',
-        };
     }
 }

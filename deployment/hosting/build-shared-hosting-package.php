@@ -13,11 +13,7 @@ if (defined('KAEVCMS_PACKAGE_BUILDER_FUNCTIONS_ONLY')) {
 
 $projectRoot = dirname(__DIR__, 2);
 $options = parsePackageOptions(array_slice($argv, 1));
-$version = trim((string) @file_get_contents($projectRoot.'/VERSION'));
-
-if ($version === '' || preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version) !== 1) {
-    failPackage('VERSION is missing or invalid.');
-}
+$version = releaseVersion($projectRoot);
 if (! is_file($projectRoot.'/vendor/autoload.php')) {
     failPackage('vendor/autoload.php is missing. Run Composer before building a hosting package.');
 }
@@ -133,6 +129,33 @@ if (! isset($options['no-zip'])) {
 
 fwrite(STDOUT, "Package directory: {$packageDirectory}\n");
 fwrite(STDOUT, "Core directory: {$coreDirectory}\nPublic directory: {$publicDirectory}\n");
+
+function releaseVersion(string $projectRoot): string
+{
+    $releasePath = $projectRoot.'/release.json';
+    $versionPath = $projectRoot.'/VERSION';
+    $releaseContents = @file_get_contents($releasePath);
+    if (! is_string($releaseContents)) {
+        failPackage('release.json is missing.');
+    }
+
+    try {
+        $release = json_decode($releaseContents, true, flags: JSON_THROW_ON_ERROR);
+    } catch (JsonException) {
+        failPackage('release.json is invalid.');
+    }
+
+    $version = is_array($release) ? trim((string) ($release['version'] ?? '')) : '';
+    $versionMirror = trim((string) @file_get_contents($versionPath));
+    if (! is_array($release)
+        || ($release['schema'] ?? null) !== 1
+        || preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version) !== 1
+        || $versionMirror !== $version) {
+        failPackage('Release version metadata is missing, invalid, or inconsistent.');
+    }
+
+    return $version;
+}
 
 /** @return list<string> */
 function sharedHostingCoreExclusions(): array

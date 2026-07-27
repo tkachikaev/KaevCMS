@@ -21,10 +21,11 @@
         {!! __('No modules found. Copy a module directory containing <code>module.json</code> into the <code>modules</code> directory.') !!}
     </div>
 @else
-    <div class="admin-catalog-list module-list" data-module-list>
+    <div class="admin-catalog-list module-list" data-module-list data-testid="module-catalog" data-layout="single-column">
         @foreach ($modules as $module)
             <article
                 data-module-id="{{ $module['id'] }}"
+                data-testid="module-card"
                 @class([
                     'admin-card-row',
                     'admin-catalog-row',

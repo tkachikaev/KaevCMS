@@ -59,7 +59,7 @@
 
         <section
             class="form-card"
-            data-promo-rewards-editor
+            data-promo-rewards-editor data-testid="promo-rewards-editor"
             data-max-rows="100"
             data-limit-message="{{ __('module-promo-codes::messages.reward_limit_reached') }}"
             data-preview-url="{{ $previewUrl }}"

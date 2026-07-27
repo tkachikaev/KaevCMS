@@ -119,7 +119,7 @@
             @if($errors->has('days.'.$day->day_number.'.*')) data-daily-day-auto-open @endif
             aria-labelledby="daily-reward-day-title-{{ $day->id }}"
         >
-            <div class="daily-reward-admin-dialog-card">
+            <div class="daily-reward-admin-dialog-card" data-testid="daily-reward-dialog-card">
                 <header class="daily-reward-admin-dialog-head">
                     <div>
                         <span class="admin-eyebrow">{{ $calendar->periodLabel() }}</span>

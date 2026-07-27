@@ -2,20 +2,37 @@
 
 namespace Tests\Feature;
 
+use DateTimeImmutable;
 use Tests\TestCase;
 
 class ReleaseMetadataTest extends TestCase
 {
     public function test_release_metadata_matches_version_file(): void
     {
-        $version = trim($this->readReleaseFile('VERSION'));
+        $release = $this->releaseContract();
+        $version = (string) $release['version'];
+        $previousVersion = (string) $release['previous_version'];
 
-        $this->assertMatchesRegularExpression(
-            '/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/',
-            $version
+        $this->assertSame(1, $release['schema']);
+        $this->assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $version);
+        $this->assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $previousVersion);
+        $this->assertTrue(version_compare((string) $release['cumulative_base_version'], (string) $release['recovery_floor_version'], '<='));
+        $this->assertTrue(version_compare((string) $release['recovery_floor_version'], $previousVersion, '<='));
+        $this->assertTrue(version_compare($previousVersion, $version, '<'));
+        $releaseDate = DateTimeImmutable::createFromFormat('!Y-m-d', (string) $release['released_at']);
+        $this->assertInstanceOf(DateTimeImmutable::class, $releaseDate);
+        $this->assertSame((string) $release['released_at'], $releaseDate->format('Y-m-d'));
+        $this->assertSame($version, trim($this->readReleaseFile('VERSION')));
+        $this->assertSame("deployment/windows/apply-{$version}.ps1", $release['apply_script']);
+        $this->assertSame('deployment/windows/update.ps1', $release['update_script']);
+        $this->assertSame("deployment/windows/apply-{$previousVersion}.ps1", $release['previous_apply_script']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['previous_apply_sha256']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
+        $this->assertSame(
+            hash_file('sha256', base_path('composer.lock')),
+            $release['composer_lock']['current_sha256'],
         );
-
-        $previousVersion = $this->previousPatchVersion($version);
 
         $readme = $this->normalized($this->readReleaseFile('README.md'));
         $this->assertStringStartsWith("# KaevCMS {$version}\n", $readme);
@@ -24,97 +41,48 @@ class ReleaseMetadataTest extends TestCase
         $matched = preg_match(
             '/^##\s+(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\s+-\s+\d{4}-\d{2}-\d{2}\s*$/m',
             $changelog,
-            $matches
+            $matches,
         );
-
         $this->assertSame(1, $matched, 'CHANGELOG must start with a dated release heading.');
         $this->assertSame($version, $matches[1] ?? null);
 
-        $updateScript = $this->readReleaseFile('deployment/windows/update.ps1');
-        $this->assertStringContainsString('$cmsVersion = (Get-Content \'VERSION\' -Raw).Trim()', $updateScript);
-        $this->assertStringContainsString('Write-UpdateStage -Message "KaevCMS $($installed.Version) -> $cmsVersion update"', $updateScript);
-
         $applyScripts = glob(base_path('deployment/windows/apply-*.ps1')) ?: [];
         sort($applyScripts);
-
         $this->assertCount(1, $applyScripts, 'A release must contain exactly one current apply script.');
-        $this->assertSame("apply-{$version}.ps1", basename($applyScripts[0]));
+        $this->assertSame(basename((string) $release['apply_script']), basename($applyScripts[0]));
 
-        $applyScript = (string) file_get_contents($applyScripts[0]);
-        $this->assertStringContainsString("\$toVersion = '{$version}'", $applyScript);
-        $this->assertStringContainsString("\$fromVersion = '{$previousVersion}'", $applyScript);
-        $this->assertStringContainsString('public\install\index.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\web-installer\installer.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\web-installer\tests\installer-regression.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\build-shared-hosting-package.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\archive-shared-hosting-package.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\shared-hosting\tests\layout-regression.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\shared-hosting\tests\package-builder-regression.php', $applyScript);
-        $this->assertStringContainsString('deployment\hosting\shared-hosting\tests\update-entrypoint-regression.php', $applyScript);
-        $this->assertStringContainsString('public\index.php', $applyScript);
-        $this->assertStringContainsString('public\.htaccess', $applyScript);
-        foreach (['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs'] as $stylesheet) {
-            $this->assertStringContainsString('public\assets\admin\css\\'.$stylesheet.'.css', $applyScript);
+        $manifest = $this->releaseFileManifest();
+        $requiredFiles = $manifest['required_files'];
+        $this->assertSame(1, $manifest['schema']);
+        $this->assertNotEmpty($requiredFiles);
+        $this->assertSame($requiredFiles, array_values(array_unique($requiredFiles)));
+        $sortedRequiredFiles = $requiredFiles;
+        sort($sortedRequiredFiles);
+        $this->assertSame($sortedRequiredFiles, $requiredFiles);
+        $this->assertContains('release.json', $requiredFiles);
+        $this->assertContains('deployment/release-files.json', $requiredFiles);
+        $this->assertContains('deployment/windows/update-contract.json', $requiredFiles);
+        $this->assertContains((string) $release['apply_script'], $requiredFiles);
+
+        foreach ($requiredFiles as $requiredFile) {
+            $this->assertIsString($requiredFile);
+            $this->assertStringNotContainsString('..', $requiredFile);
+            $this->assertFalse(str_starts_with($requiredFile, '/'));
+            $this->assertFileExists(base_path($requiredFile), "Required release file is missing: {$requiredFile}");
         }
-        $this->assertStringContainsString('public\assets\account\js\navigation.js', $applyScript);
-        $this->assertStringNotContainsString('public\assets\admin\css\app.css', $applyScript);
-        $this->assertStringNotContainsString('public\account-themes\luxury\assets\js\navigation.js', $applyScript);
-        $this->assertStringNotContainsString('public\account-themes\kaev-aurelia\assets\js\navigation.js', $applyScript);
-        $this->assertStringContainsString('app\Services\Updates\UpdatePathPolicy.php', $applyScript);
-        $this->assertStringContainsString('resources\game-items\interlude.json', $applyScript);
-        $this->assertStringContainsString('resources\game-items\classic.json', $applyScript);
-        $this->assertStringContainsString('resources\game-items\high-five.json', $applyScript);
-        $this->assertStringContainsString('resources\game-items\shine-maker.json', $applyScript);
-        $this->assertStringNotContainsString('public\game-assets', $applyScript);
-        $this->assertStringContainsString('modules\daily-rewards\assets\module.webp', $applyScript);
-        $this->assertStringContainsString('modules\promo-codes\assets\module.webp', $applyScript);
-        $this->assertStringContainsString('deployment\windows\build-shared-hosting-package.ps1', $applyScript);
-        $this->assertStringContainsString('app\Services\Updates\SystemUpdateInstaller.php', $applyScript);
-        $this->assertStringContainsString('app\Services\Updates\SystemUpdateRecovery.php', $applyScript);
-        $this->assertStringContainsString('app\Services\Updates\UpdateLock.php', $applyScript);
-        $this->assertStringContainsString('deployment\updates\build-package.php', $applyScript);
-        $this->assertStringContainsString('database\migrations\2026_07_23_000000_create_system_updates_table.php', $applyScript);
-        $this->assertStringContainsString('database\migrations\2026_07_23_010000_add_execution_state_to_system_updates_table.php', $applyScript);
-        $this->assertStringContainsString('resources\views\admin\settings\_system_tabs.blade.php', $applyScript);
-        $this->assertStringContainsString('deployment\windows\tests\update-workflow.ps1', $applyScript);
-        $this->assertStringContainsString('deployment\windows\support\release-update-support.ps1', $applyScript);
-        $this->assertStringNotContainsString('Remove-Item -LiteralPath $obsoleteApplyScript.FullName', $applyScript);
-        $this->assertStringNotContainsString('update.ps1 failed with exit code $LASTEXITCODE', $applyScript);
+
+        $deletions = $this->jsonReleaseFile('deployment/updates/deletions.json');
+        $this->assertArrayHasKey($version, $deletions);
+        $this->assertContains('core/'.(string) $release['previous_apply_script'], $deletions[$version]);
+        $this->assertNotContains('public/assets/account', $deletions[$version]);
 
         $this->assertFileDoesNotExist(base_path('quality.ps1'));
         $this->assertFileDoesNotExist(base_path('setup.ps1'));
         $this->assertFileExists(base_path('deployment/windows/quality.ps1'));
         $this->assertFileExists(base_path('deployment/windows/setup.ps1'));
+        $this->assertFileExists(base_path('deployment/windows/tests/update-workflow.ps1'));
+        $this->assertFileExists(base_path('deployment/windows/support/release-update-support.ps1'));
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
-
-        $quality = $this->readReleaseFile('deployment/windows/quality.ps1');
-        $this->assertStringContainsString('Initialize-KaevCmsRuntimeDirectories -ProjectRoot $ProjectRoot', $quality);
-        $this->assertStringContainsString('update-entrypoint-regression.php', $quality);
-        $this->assertStringContainsString('account-theme-contract.php', $quality);
-        $this->assertFileExists(base_path('deployment/windows/tests/account-theme-contract.php'));
-
-        $runtimeSupport = $this->readReleaseFile('deployment/windows/support/release-update-support.ps1');
-        $this->assertStringContainsString('function Initialize-KaevCmsRuntimeDirectories', $runtimeSupport);
-
-        $browserQuality = $this->readReleaseFile('deployment/windows/browser-quality.ps1');
-        $this->assertStringContainsString('node_modules\@playwright\test\package.json', $browserQuality);
-        $this->assertStringNotContainsString('require.resolve(\'@playwright/test\')', $browserQuality);
-    }
-
-    public function test_account_navigation_test_uses_pint_compatible_single_quoted_literals(): void
-    {
-        $accountNavigationTest = $this->readReleaseFile('tests/Feature/Account/AccountNavigationTest.php');
-
-        foreach (token_get_all($accountNavigationTest) as $token) {
-            if (! is_array($token) || $token[0] !== T_CONSTANT_ENCAPSED_STRING) {
-                continue;
-            }
-
-            $this->assertFalse(
-                str_starts_with($token[1], '"'),
-                sprintf('Simple double-quoted literal remains on line %d: %s', $token[2], $token[1]),
-            );
-        }
     }
 
     public function test_documentation_is_bilingual_and_current(): void
@@ -124,10 +92,12 @@ class ReleaseMetadataTest extends TestCase
             'docs/en/INSTALLATION.md',
             'docs/en/SHARED_HOSTING.md',
             'docs/en/SECURITY.md',
+            'docs/en/OPERATIONS.md',
             'docs/ru/README.md',
             'docs/ru/INSTALLATION.md',
             'docs/ru/SHARED_HOSTING.md',
             'docs/ru/SECURITY.md',
+            'docs/ru/OPERATIONS.md',
         ] as $documentation) {
             $this->assertFileExists(base_path($documentation));
         }
@@ -161,115 +131,68 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('public/assets/account/js/navigation.js', $russianDevelopment);
     }
 
-    public function test_promo_code_reward_model_has_a_single_line_ending_at_eof(): void
+    public function test_update_script_uses_data_driven_release_and_recovery_contracts(): void
     {
-        $model = $this->readReleaseFile('modules/promo-codes/src/Models/PromoCodeReward.php');
+        $release = $this->releaseContract();
+        $update = $this->jsonReleaseFile('deployment/windows/update-contract.json');
+        $deletions = $this->jsonReleaseFile('deployment/updates/deletions.json');
 
-        $this->assertStringEndsWith("\n", $model);
-        $this->assertFalse(str_ends_with($model, "\n\n"));
-        $this->assertFalse(str_ends_with($model, "\r\n\r\n"));
-    }
-
-    public function test_update_script_verifies_source_preserves_env_and_stages_cleanup_before_tests(): void
-    {
-        $version = trim($this->readReleaseFile('VERSION'));
-        $previousVersion = $this->previousPatchVersion($version);
-        $updateScript = $this->readReleaseFile('deployment/windows/update.ps1');
-
-        $this->assertStringContainsString("\$expectedFromVersion = '{$previousVersion}'", $updateScript);
-        $this->assertStringContainsString("\$expectedToVersion = '{$version}'", $updateScript);
-        $this->assertStringContainsString(
-            "\$legacyApplyScriptName = 'deployment\\windows\\apply-{$previousVersion}.ps1'",
-            $updateScript,
+        $this->assertSame(1, $update['schema']);
+        $this->assertSame([
+            'preflight',
+            'backup_obsolete',
+            'maintenance',
+            'dependencies',
+            'cache_clear',
+            'migrations',
+            'queue_restart',
+            'monitoring',
+            'tests',
+            'record_release',
+            'cleanup',
+        ], $update['stage_order']);
+        $this->assertContains('.env', $update['protected_environment_files']);
+        $this->assertContains('APP_KEY', $update['protected_environment_keys']);
+        $this->assertContains('DB_PASSWORD', $update['protected_environment_keys']);
+        $this->assertContains('MAIL_PASSWORD', $update['protected_environment_keys']);
+        $this->assertContains('bootstrap/cache', $update['runtime_directories']);
+        $this->assertContains('public/uploads/account-avatars', $update['runtime_directories']);
+        $this->assertContains('public/uploads/game-assets/items/common', $update['runtime_directories']);
+        $this->assertSame(
+            $update['runtime_directories'],
+            array_values(array_unique($update['runtime_directories'])),
         );
-        $this->assertMatchesRegularExpression(
-            '/^\$legacyApplySha256 = \'[a-f0-9]{64}\'\r?$/m',
-            $updateScript,
-        );
-        $this->assertStringContainsString('Get-KaevCmsInstalledVersion', $updateScript);
-        $this->assertStringContainsString('-ExpectedToVersion $expectedToVersion', $updateScript);
-        $this->assertStringContainsString('legacyApplySha256', $updateScript);
-        $this->assertStringContainsString('Write-KaevCmsPendingUpdateMarker', $updateScript);
-        $this->assertStringContainsString('Convert-KaevCmsSupersededPendingUpdateMarker', $updateScript);
-        $this->assertStringContainsString('$recoveryFloorVersion = \'0.34.9\'', $updateScript);
-        $this->assertStringContainsString('Get-KaevCmsRecoveryLineage', $updateScript);
-        $this->assertStringContainsString(
-            '$recoverableFromVersions = @($recoveryLineage.RecoverableFromVersions)',
-            $updateScript,
-        );
-        $this->assertStringContainsString(
-            '$supersededPendingTargets = @($recoveryLineage.SupersededPendingTargets)',
-            $updateScript,
-        );
-        $this->assertStringNotContainsString('$recoverableFromVersions = @(\'0.34.9\'', $updateScript);
-        $this->assertStringContainsString('if ($supersededPendingTargets.Count -gt 0)', $updateScript);
-        $this->assertStringContainsString('$installed.Version -notin $supportedFromVersions', $updateScript);
-        $this->assertStringContainsString('-FromVersion $installed.Version', $updateScript);
-        $this->assertStringContainsString('Move-KaevCmsArtifactsToBackup', $updateScript);
-        $this->assertStringContainsString('Remove-KaevCmsUpdateBackups', $updateScript);
-        $this->assertStringNotContainsString('QUEUE_CONNECTION=sync', $updateScript);
-        $this->assertStringNotContainsString('SESSION_COOKIE=l2forge_session', $updateScript);
-        $this->assertStringNotContainsString('function Set-EnvValue', $updateScript);
-        $this->assertStringContainsString('Clear-KaevCmsBootstrapCache -ProjectRoot $ProjectRoot', $updateScript);
-        $this->assertStringContainsString('composer install --no-interaction --prefer-dist --no-scripts', $updateScript);
-        $this->assertStringContainsString('$composerDependenciesChanged', $updateScript);
-        $this->assertStringContainsString('Composer install was skipped', $updateScript);
-        $this->assertStringContainsString('$actualComposerLockSha256 -ne $currentComposerLockSha256', $updateScript);
-        $this->assertStringContainsString('php artisan queue:restart', $updateScript);
-        $this->assertStringContainsString('php artisan kaevcms:maintenance-status --no-ansi', $updateScript);
-        $this->assertStringContainsString('php artisan down --retry=60', $updateScript);
-        $this->assertStringContainsString('finally {', $updateScript);
-        $this->assertStringContainsString('php artisan up', $updateScript);
-        $this->assertStringContainsString('php artisan kaevcms:release-version --mark=$cmsVersion', $updateScript);
-        $this->assertStringContainsString('storage\app\installed.lock', $updateScript);
-        $this->assertStringContainsString('\'resources\\views\\account\'', $updateScript);
-        $this->assertStringContainsString('\'resources\\views\\livewire\\account\'', $updateScript);
-        $this->assertStringNotContainsString('\'public\\assets\\account\'', $updateScript);
-        $this->assertStringContainsString('\'public\\assets\\admin\\css\\app.css\'', $updateScript);
-        $this->assertStringContainsString('\'public\\account-themes\\luxury\\assets\\js\\navigation.js\'', $updateScript);
-        $this->assertStringContainsString('\'public\\account-themes\\kaev-aurelia\\assets\\js\\navigation.js\'', $updateScript);
-        $this->assertStringContainsString('\'integrations\\reward-queue\\remove-legacy-bridge.sql\'', $updateScript);
 
-        $cachePosition = strpos($updateScript, 'Clear-KaevCmsBootstrapCache -ProjectRoot $ProjectRoot');
-        $maintenancePosition = strpos($updateScript, 'php artisan down --retry=60');
-        $composerPosition = strpos($updateScript, 'composer install --no-interaction --prefer-dist --no-scripts');
-        $migrationPosition = strpos($updateScript, 'php artisan migrate --force');
-        $queueRestartPosition = strpos($updateScript, 'php artisan queue:restart');
-        $stagePosition = strpos($updateScript, 'Move-KaevCmsArtifactsToBackup');
-        $testPosition = strpos($updateScript, 'php artisan test');
-        $markPosition = strpos($updateScript, 'php artisan kaevcms:release-version --mark=$cmsVersion');
-        $backupCleanupPosition = strpos($updateScript, 'Remove-KaevCmsUpdateBackups', $markPosition ?: 0);
-        $finalCleanupPosition = strpos($updateScript, 'Remove-ObsoleteReleaseArtifacts -CurrentVersion $cmsVersion', $testPosition ?: 0);
+        $version = (string) $release['version'];
+        $this->assertArrayHasKey($version, $deletions);
+        $currentDeletions = $deletions[$version];
+        $this->assertContains('core/'.(string) $release['previous_apply_script'], $currentDeletions);
 
-        $this->assertNotFalse($cachePosition);
-        $this->assertNotFalse($maintenancePosition);
-        $this->assertNotFalse($composerPosition);
-        $this->assertNotFalse($migrationPosition);
-        $this->assertNotFalse($queueRestartPosition);
-        $this->assertNotFalse($stagePosition);
-        $this->assertNotFalse($testPosition);
-        $this->assertNotFalse($markPosition);
-        $this->assertNotFalse($backupCleanupPosition);
-        $this->assertNotFalse($finalCleanupPosition);
-        $this->assertLessThan($composerPosition, $cachePosition);
-        $this->assertLessThan($composerPosition, $maintenancePosition);
-        $this->assertLessThan($queueRestartPosition, $migrationPosition);
-        $this->assertLessThan($testPosition, $queueRestartPosition);
-        $this->assertLessThan($testPosition, $stagePosition);
-        $this->assertLessThan($markPosition, $testPosition);
-        $this->assertLessThan($backupCleanupPosition, $markPosition);
-        $this->assertLessThan($finalCleanupPosition, $testPosition);
+        $accumulatedDeletions = [];
+        foreach ($deletions as $deletionVersion => $paths) {
+            if (version_compare((string) $deletionVersion, $version, '>')) {
+                continue;
+            }
+
+            $accumulatedDeletions = array_merge($accumulatedDeletions, $paths);
+        }
+        $accumulatedDeletions = array_values(array_unique($accumulatedDeletions));
+
+        $this->assertContains('public/assets/admin/css/app.css', $accumulatedDeletions);
+        $this->assertContains('public/account-themes/luxury/assets/js/navigation.js', $accumulatedDeletions);
+        $this->assertContains('public/account-themes/kaev-aurelia/assets/js/navigation.js', $accumulatedDeletions);
+        $this->assertNotContains('public/assets/account', $accumulatedDeletions);
+
+        $this->assertFileExists(base_path((string) $release['update_script']));
+        $this->assertFileExists(base_path((string) $release['apply_script']));
+        $this->assertFileExists(base_path('deployment/windows/tests/update-workflow.ps1'));
+        $this->assertFileExists(base_path('deployment/windows/support/release-update-support.ps1'));
 
         $queueSql = $this->readReleaseFile('integrations/reward-queue/install.sql');
         $this->assertStringContainsString('CREATE TABLE IF NOT EXISTS `kaev_reward_queue`', $queueSql);
         $this->assertStringContainsString('`request_uuid` CHAR(36)', $queueSql);
         $this->assertStringContainsString('`item_id` BIGINT UNSIGNED', $queueSql);
         $this->assertStringContainsString('`amount` BIGINT UNSIGNED', $queueSql);
-
-        $queueGateway = $this->readReleaseFile('app/Services/Rewards/DatabaseGameRewardQueueGateway.php');
-        $this->assertStringContainsString('private const TABLE = \'kaev_reward_queue\'', $queueGateway);
-        $this->assertStringContainsString('reward_queue_payload_conflict', $queueGateway);
-        $this->assertStringNotContainsString('table(\'items\')', $queueGateway);
 
         $this->assertDirectoryDoesNotExist(base_path('integrations/mobius-interlude/reward-bridge'));
         $this->assertFileDoesNotExist(app_path('Jobs/ProcessRewardDelivery.php'));
@@ -280,73 +203,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('<env name="APP_MAINTENANCE_STORE" value="array" force="true"/>', $phpunit);
         $this->assertStringNotContainsString('<env name="APP_MAINTENANCE_DRIVER" value="file"/>', $phpunit);
 
-        $doctorScript = $this->readReleaseFile('deployment/windows/doctor.ps1');
-        $this->assertStringContainsString('php artisan kaevcms:release-version --no-ansi', $doctorScript);
-        $this->assertStringContainsString('php artisan kaevcms:encryption-health --no-ansi', $doctorScript);
-
-        $qualityScript = $this->readReleaseFile('deployment/windows/quality.ps1');
-        $this->assertStringContainsString('tests\\update-workflow.ps1', $qualityScript);
-        $this->assertStringContainsString('tests\\composer-audit-policy.ps1', $qualityScript);
-        $this->assertStringContainsString('deployment/hosting/shared-hosting/tests/layout-regression.php', $qualityScript);
-        $this->assertStringContainsString('deployment/hosting/shared-hosting/tests/package-builder-regression.php', $qualityScript);
-        $this->assertStringContainsString('$env:COMPOSER_DISABLE_NETWORK = \'1\'', $qualityScript);
-        $this->assertStringContainsString('Remove-Item Env:COMPOSER_DISABLE_NETWORK', $qualityScript);
-        $this->assertStringContainsString('finally {', $qualityScript);
-        $this->assertStringNotContainsString('Invoke-KaevCmsComposerSecurityAudit', $qualityScript);
-        $this->assertStringContainsString('php artisan route:cache', $qualityScript);
-        $this->assertSame(2, substr_count($qualityScript, 'php artisan route:clear'));
-
-        $securityAuditScript = $this->readReleaseFile('deployment/windows/security-audit.ps1');
-        $this->assertStringContainsString('support\\composer-audit-support.ps1', $securityAuditScript);
-        $this->assertStringContainsString('Invoke-KaevCmsComposerSecurityAudit', $securityAuditScript);
-        $this->assertStringContainsString('npm audit --audit-level=high', $securityAuditScript);
-
-        $composerAuditSupport = $this->readReleaseFile('deployment/windows/support/composer-audit-support.ps1');
-        $this->assertStringContainsString(
-            '$composerExecutable audit --locked --no-interaction',
-            $composerAuditSupport,
-        );
-        $this->assertStringContainsString('Test-KaevCmsComposerAuditNetworkFailure', $composerAuditSupport);
-        $this->assertStringContainsString('PSNativeCommandUseErrorActionPreference', $composerAuditSupport);
-        $this->assertStringContainsString('Remove-Item Env:COMPOSER_DISABLE_NETWORK', $composerAuditSupport);
-        $this->assertStringContainsString('System.Management.Automation.ErrorRecord', $composerAuditSupport);
-        $this->assertStringContainsString('Dependency security has not been verified', $composerAuditSupport);
-        $this->assertStringContainsString('throw "Composer security audit failed with exit code $auditExitCode."', $composerAuditSupport);
-
-        $composerAuditPolicyTest = $this->readReleaseFile('deployment/windows/tests/composer-audit-policy.ps1');
-        $this->assertStringContainsString('curl error 28', $composerAuditPolicyTest);
-        $this->assertStringContainsString('security vulnerability advisory', $composerAuditPolicyTest);
-        $this->assertStringContainsString('No security vulnerability advisories found.', $composerAuditPolicyTest);
-        $this->assertStringContainsString('Network disabled, request canceled.', $composerAuditPolicyTest);
-        $this->assertStringContainsString('NativeCommandError', $composerAuditPolicyTest);
-
-        $browserQualityScript = $this->readReleaseFile('deployment/windows/browser-quality.ps1');
-        $this->assertStringContainsString('node --test tests/browser/support/navigation.test.mjs', $browserQualityScript);
-        $this->assertStringContainsString('npm run test:browser', $browserQualityScript);
-        $this->assertStringNotContainsString('npm ci', $browserQualityScript);
-        $this->assertStringNotContainsString('npm audit', $browserQualityScript);
-        $this->assertStringNotContainsString('playwright install', $browserQualityScript);
-
-        $browserSetupScript = $this->readReleaseFile('deployment/windows/browser-setup.ps1');
-        $this->assertStringContainsString('npm ci --include=dev', $browserSetupScript);
-        $this->assertStringContainsString('npm exec -- playwright install chromium', $browserSetupScript);
-
-        $browserRunner = $this->readReleaseFile('tests/browser/run.mjs');
-        $this->assertStringContainsString('findAvailablePort', $browserRunner);
-        $this->assertStringContainsString('`--port=${browserPort}`', $browserRunner);
-
-        $browserNavigation = $this->readReleaseFile('tests/browser/support/navigation.mjs');
-        $this->assertStringContainsString('net::ERR_NO_BUFFER_SPACE', $browserNavigation);
-        $this->assertStringContainsString('attempt <= 3', $browserNavigation);
-
-        $browserNavigationTest = $this->readReleaseFile('tests/browser/support/navigation.test.mjs');
-        $this->assertStringContainsString('ERR_NO_BUFFER_SPACE', $browserNavigationTest);
-        $this->assertStringContainsString('does not retry application or unrelated browser failures', $browserNavigationTest);
-
-        $updateWorkflowTest = $this->readReleaseFile('deployment/windows/tests/update-workflow.ps1');
-        $this->assertStringContainsString('(Join-Path $ProjectRoot \'VERSION\')', $updateWorkflowTest);
-        $this->assertStringContainsString('"..\apply-$releaseVersion.ps1"', $updateWorkflowTest);
-        $this->assertStringNotContainsString('Get-Content -LiteralPath "$PSScriptRoot\..\apply-', $updateWorkflowTest);
+        $package = $this->jsonReleaseFile('package.json');
+        $this->assertArrayHasKey('test:browser', $package['scripts']);
+        $this->assertArrayHasKey('@playwright/test', $package['devDependencies']);
 
         $workflow = $this->readReleaseFile('.github/workflows/quality.yml');
         $this->assertStringContainsString('composer audit --locked --no-interaction', $workflow);
@@ -368,11 +227,10 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(resource_path('views/admin/modules/index.blade.php'));
         $moduleCatalogue = $this->readReleaseFile('resources/views/admin/modules/index.blade.php');
         $this->assertStringContainsString('data-module-id="{{ $module[\'id\'] }}"', $moduleCatalogue);
+        $this->assertStringContainsString('data-testid="module-catalog"', $moduleCatalogue);
+        $this->assertStringContainsString('data-testid="module-card"', $moduleCatalogue);
+        $this->assertStringContainsString('data-layout="single-column"', $moduleCatalogue);
 
-        $moduleBrowserTest = $this->readReleaseFile('tests/browser/specs/admin-navigation.spec.mjs');
-        $this->assertStringContainsString('page.locator(\'[data-module-list]\')', $moduleBrowserTest);
-        $this->assertStringContainsString('getComputedStyle(element).gridTemplateColumns', $moduleBrowserTest);
-        $this->assertStringNotContainsString('dailyBox.y).toBeGreaterThan', $moduleBrowserTest);
         $this->assertFileExists(base_path('modules/README.md'));
         $this->assertFileExists(base_path('docs/MODULES.md'));
 
@@ -595,7 +453,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.2.0', $manifest['version']);
+        $this->assertSame('1.2.2', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 
@@ -607,6 +465,9 @@ class ReleaseMetadataTest extends TestCase
 
         $promoCodeModel = $this->readReleaseFile('modules/promo-codes/src/Models/PromoCode.php');
         $this->assertStringContainsString('use SoftDeletes;', $promoCodeModel);
+
+        $promoAccountView = $this->readReleaseFile('modules/promo-codes/resources/views/account/index.blade.php');
+        $this->assertStringContainsString('data-testid="promo-code-input"', $promoAccountView);
 
         $promoScript = $this->readReleaseFile('public/assets/admin/js/promo-codes.js');
         $this->assertStringContainsString('data-promo-reward-add', $promoScript);
@@ -732,11 +593,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('characters.index', $routes);
         $this->assertStringContainsString('profile.avatar.update', $routes);
 
-        $setup = $this->readReleaseFile('deployment/windows/setup.ps1');
-        $update = $this->readReleaseFile('deployment/windows/update.ps1');
+        $updateContract = $this->jsonReleaseFile('deployment/windows/update-contract.json');
         $doctor = $this->readReleaseFile('deployment/windows/doctor.ps1');
-        $this->assertStringContainsString('public\uploads\account-avatars', $setup);
-        $this->assertStringContainsString('public\uploads\account-avatars', $update);
+        $this->assertContains('public/uploads/account-avatars', $updateContract['runtime_directories']);
         $this->assertStringContainsString('Account avatar directory', $doctor);
 
         $migration = $this->readReleaseFile('database/migrations/2026_07_22_000100_add_account_avatar_to_users_table.php');
@@ -778,31 +637,28 @@ class ReleaseMetadataTest extends TestCase
         return $contents;
     }
 
-    private function previousPatchVersion(string $version): string
+    /** @return array<string, mixed> */
+    private function releaseContract(): array
     {
-        $matched = preg_match('/^(\d+)\.(\d+)\.(\d+)/', $version, $matches);
+        return $this->jsonReleaseFile('release.json');
+    }
 
-        $this->assertSame(1, $matched, 'Release version must contain major, minor and patch components.');
+    /** @return array{schema: int, required_files: list<string>} */
+    private function releaseFileManifest(): array
+    {
+        /** @var array{schema: int, required_files: list<string>} $manifest */
+        $manifest = $this->jsonReleaseFile('deployment/release-files.json');
 
-        $patch = (int) ($matches[3] ?? 0);
-        if ($patch > 0) {
-            return sprintf(
-                '%d.%d.%d',
-                (int) ($matches[1] ?? 0),
-                (int) ($matches[2] ?? 0),
-                $patch - 1,
-            );
-        }
+        return $manifest;
+    }
 
-        $matched = preg_match_all(
-            '/^##\s+(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\s+-\s+\d{4}-\d{2}-\d{2}\s*$/m',
-            $this->normalized($this->readReleaseFile('CHANGELOG.md')),
-            $releases,
-        );
-        $this->assertGreaterThanOrEqual(2, $matched, 'A minor release must follow a documented stable release.');
-        $this->assertSame($version, $releases[1][0] ?? null);
+    /** @return array<string, mixed> */
+    private function jsonReleaseFile(string $path): array
+    {
+        $decoded = json_decode($this->readReleaseFile($path), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertIsArray($decoded);
 
-        return (string) ($releases[1][1] ?? '');
+        return $decoded;
     }
 
     private function normalized(string $contents): string

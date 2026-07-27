@@ -89,7 +89,7 @@
     @endif
 
     <div @class(['server-drawer-backdrop', 'open' => $drawerOpen]) @if(!$drawerOpen) hidden @endif wire:cloak wire:pointerdown.self="closeDrawer">
-        <section class="server-drawer" role="dialog" aria-modal="true" aria-labelledby="login-server-drawer-title">
+        <section class="server-drawer" data-testid="login-server-dialog" role="dialog" aria-modal="true" aria-labelledby="login-server-drawer-title">
             <header class="server-drawer-header">
                 <div>
                     <span>{{ $editingId === null ? __('New connection') : __('Connection settings') }}</span>
@@ -217,7 +217,7 @@
                 @include('livewire.admin._database-report', ['report' => $connectionReport])
             </div>
 
-            <footer class="server-drawer-footer">
+            <footer class="server-drawer-footer" data-testid="login-server-dialog-footer">
                 <button class="button button-secondary" type="button" wire:click="testConnection" wire:loading.attr="disabled" wire:target="testConnection">
                     <span wire:loading.remove wire:target="testConnection">{{ __('Test connection') }}</span>
                     <span wire:loading wire:target="testConnection">{{ __('Checking…') }}</span>

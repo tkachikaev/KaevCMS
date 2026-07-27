@@ -13,9 +13,9 @@
 @if ($themes === [])
     <div class="admin-empty-state empty-box">{!! __('No themes found. Check the <code>themes</code> directory.') !!}</div>
 @else
-    <div class="admin-catalog-list themes-list" data-theme-list>
+    <div class="admin-catalog-list themes-list" data-theme-list data-testid="public-theme-catalog" data-layout="single-column">
         @foreach ($themes as $theme)
-            <article @class(['admin-card-row', 'admin-catalog-row', 'theme-card', 'theme-row', 'active' => $theme['active'], 'invalid' => ! $theme['valid']])>
+            <article data-testid="public-theme-card" @class(['admin-card-row', 'admin-catalog-row', 'theme-card', 'theme-row', 'active' => $theme['active'], 'invalid' => ! $theme['valid']])>
                 <div class="admin-catalog-main theme-info">
                     <div class="admin-catalog-heading theme-heading">
                         <h2>{{ $theme['name'] }}</h2>

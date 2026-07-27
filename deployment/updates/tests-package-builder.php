@@ -2,120 +2,266 @@
 
 declare(strict_types=1);
 
-$builder = file_get_contents(__DIR__.'/build-package.php');
-if (! is_string($builder)) {
-    throw new RuntimeException('Unable to read the web update package builder.');
+if (! class_exists(ZipArchive::class)) {
+    throw new RuntimeException('The PHP zip extension is required for Web Updater package regression tests.');
 }
 
-foreach ([
-    'kaevcms-update.json',
-    '\'payload/\'.$logicalTarget',
-    '\'public/\'.substr($relative, 7)',
-    '\'core/\'.$relative',
-    '\'public/uploads/\'',
-    "'.env.example'",
-    "'.phpunit.result.cache'",
-    "'public/uploads/.gitignore'",
-    "'public/uploads/.htaccess'",
-    "'playwright-report/'",
-    "'test-results/'",
-    '\'storage/\'',
-    '\'vendor/\'',
-    'version_compare($minimum, $maximum',
-    '\'bootstrap/kaevcms-public-path.php\'',
-    '\'public/kaevcms-path.php\'',
-    '\'sha256\' => $hash',
-    'previous-root',
-    'cumulativeDeletions',
-    'readDeletionHistory',
-    'filterActiveDeletions',
-    'legacyWebUpdaterAcceptsTarget',
-    'oldest supported Web Updater',
-    'New deletions detected',
-] as $required) {
-    if (! str_contains($builder, $required)) {
-        throw new RuntimeException("Web update package builder is missing: {$required}");
+$projectRoot = dirname(__DIR__, 2);
+$release = readJson($projectRoot.'/release.json');
+$deletionHistory = readJson(__DIR__.'/deletions.json');
+
+$currentVersion = requireVersion($release['version'] ?? null, 'release version');
+$previousVersion = requireVersion($release['previous_version'] ?? null, 'previous release version');
+$minimumVersion = requireVersion($release['cumulative_base_version'] ?? null, 'cumulative base version');
+
+if (version_compare($previousVersion, $currentVersion, '>=')) {
+    throw new RuntimeException('The release contract previous version must be older than the target version.');
+}
+
+$versions = array_keys($deletionHistory);
+usort($versions, 'version_compare');
+$previousHistoryVersion = null;
+foreach ($versions as $version) {
+    requireVersion($version, 'deletion history version');
+    $paths = $deletionHistory[$version] ?? null;
+    if (! is_array($paths) || array_is_list($paths) === false) {
+        throw new RuntimeException("Deletion history entry {$version} must be a path list.");
     }
+
+    $normalized = [];
+    foreach ($paths as $path) {
+        if (! is_string($path) || ! validLogicalPath($path)) {
+            throw new RuntimeException("Deletion history contains an unsafe path for {$version}.");
+        }
+        $normalized[] = $path;
+    }
+    if (count(array_unique($normalized)) !== count($normalized)) {
+        throw new RuntimeException("Deletion history entry {$version} contains duplicate paths.");
+    }
+
+    if ($previousHistoryVersion !== null) {
+        $expectedApply = "core/deployment/windows/apply-{$previousHistoryVersion}.ps1";
+        if (! in_array($expectedApply, $normalized, true)) {
+            throw new RuntimeException("Deletion history entry {$version} does not remove {$expectedApply}.");
+        }
+    }
+
+    $previousHistoryVersion = $version;
 }
 
-$deletionHistoryPath = __DIR__.'/deletions.json';
-$deletionHistory = json_decode((string) file_get_contents($deletionHistoryPath), true);
-if (! is_array($deletionHistory)
-    || ($deletionHistory['0.32.1'] ?? null) !== ['core/deployment/windows/apply-0.32.0.ps1']
-    || ($deletionHistory['0.32.2'] ?? null) !== ['core/deployment/windows/apply-0.32.1.ps1']
-    || ($deletionHistory['0.32.3'] ?? null) !== ['core/deployment/windows/apply-0.32.2.ps1']
-    || ($deletionHistory['0.32.4'] ?? null) !== ['core/deployment/windows/apply-0.32.3.ps1']
-    || ($deletionHistory['0.32.5'] ?? null) !== ['core/deployment/windows/apply-0.32.4.ps1']
-    || ($deletionHistory['0.32.6'] ?? null) !== ['core/deployment/windows/apply-0.32.5.ps1']
-    || ($deletionHistory['0.32.7'] ?? null) !== ['core/deployment/windows/apply-0.32.6.ps1']
-    || ($deletionHistory['0.32.8'] ?? null) !== ['core/deployment/windows/apply-0.32.7.ps1']
-    || ($deletionHistory['0.32.9'] ?? null) !== ['core/deployment/windows/apply-0.32.8.ps1']
-    || ($deletionHistory['0.32.10'] ?? null) !== ['core/deployment/windows/apply-0.32.9.ps1']
-    || ($deletionHistory['0.32.11'] ?? null) !== ['core/deployment/windows/apply-0.32.10.ps1']
-    || ($deletionHistory['0.32.12'] ?? null) !== ['core/deployment/windows/apply-0.32.11.ps1']
-    || ($deletionHistory['0.32.13'] ?? null) !== ['core/deployment/windows/apply-0.32.12.ps1']
-    || ($deletionHistory['0.32.14'] ?? null) !== ['core/deployment/windows/apply-0.32.13.ps1']
-    || ($deletionHistory['0.32.15'] ?? null) !== ['core/deployment/windows/apply-0.32.14.ps1']
-    || ($deletionHistory['0.32.16'] ?? null) !== ['core/deployment/windows/apply-0.32.15.ps1']
-    || ($deletionHistory['0.32.17'] ?? null) !== ['core/deployment/windows/apply-0.32.16.ps1']
-    || ($deletionHistory['0.32.18'] ?? null) !== ['core/deployment/windows/apply-0.32.17.ps1']
-    || ($deletionHistory['0.32.19'] ?? null) !== ['core/deployment/windows/apply-0.32.18.ps1']
-    || ($deletionHistory['0.32.20'] ?? null) !== ['core/deployment/windows/apply-0.32.19.ps1']
-    || ($deletionHistory['0.33.0'] ?? null) !== ['core/deployment/windows/apply-0.32.20.ps1']
-    || ($deletionHistory['0.33.1'] ?? null) !== ['core/deployment/windows/apply-0.33.0.ps1']
-    || ($deletionHistory['0.33.2'] ?? null) !== ['core/deployment/windows/apply-0.33.1.ps1']
-    || ($deletionHistory['0.33.3'] ?? null) !== ['core/deployment/windows/apply-0.33.2.ps1']
-    || ($deletionHistory['0.33.4'] ?? null) !== ['core/deployment/windows/apply-0.33.3.ps1']
-    || ($deletionHistory['0.33.5'] ?? null) !== ['core/deployment/windows/apply-0.33.4.ps1']
-    || ($deletionHistory['0.33.6'] ?? null) !== ['core/deployment/windows/apply-0.33.5.ps1']
-    || ($deletionHistory['0.33.7'] ?? null) !== [
-        'core/app/Console/Commands/ImportInterludeItemsCommand.php',
-        'core/app/Services/GameAssets/Import/InterludeItemImporter.php',
-        'core/deployment/windows/apply-0.33.6.ps1',
-        'core/tests/Unit/InterludeItemImporterTest.php',
-    ]
-    || ($deletionHistory['0.33.8'] ?? null) !== [
-        'core/app/Console/Commands/ImportGameItemsCommand.php',
-        'core/app/Services/GameAssets/Import',
-        'core/deployment/windows/apply-0.33.7.ps1',
-    ]
-    || ($deletionHistory['0.33.9'] ?? null) !== ['core/deployment/windows/apply-0.33.8.ps1']
-    || ($deletionHistory['0.34.0'] ?? null) !== ['core/deployment/windows/apply-0.33.9.ps1']
-    || ($deletionHistory['0.34.1'] ?? null) !== ['core/deployment/windows/apply-0.34.0.ps1']
-    || ($deletionHistory['0.34.2'] ?? null) !== ['core/deployment/windows/apply-0.34.1.ps1']
-    || ($deletionHistory['0.34.3'] ?? null) !== ['core/deployment/windows/apply-0.34.2.ps1']
-    || ($deletionHistory['0.34.4'] ?? null) !== ['core/deployment/windows/apply-0.34.3.ps1']
-    || ($deletionHistory['0.34.5'] ?? null) !== ['core/deployment/windows/apply-0.34.4.ps1']
-    || ($deletionHistory['0.34.6'] ?? null) !== ['core/deployment/windows/apply-0.34.5.ps1']
-    || ($deletionHistory['0.34.7'] ?? null) !== ['core/deployment/windows/apply-0.34.6.ps1']
-    || ($deletionHistory['0.34.8'] ?? null) !== ['core/deployment/windows/apply-0.34.7.ps1']
-    || ($deletionHistory['0.34.9'] ?? null) !== ['core/deployment/windows/apply-0.34.8.ps1']
-    || ($deletionHistory['0.35.0'] ?? null) !== ['core/deployment/windows/apply-0.34.9.ps1']
-    || ($deletionHistory['0.36.0'] ?? null) !== ['core/deployment/windows/apply-0.35.0.ps1', 'public/game-assets']
-    || ($deletionHistory['0.36.1'] ?? null) !== ['core/deployment/windows/apply-0.36.0.ps1']
-    || ($deletionHistory['0.36.2'] ?? null) !== ['core/deployment/windows/apply-0.36.1.ps1']
-    || ($deletionHistory['0.36.3'] ?? null) !== ['core/deployment/windows/apply-0.36.2.ps1']
-    || ($deletionHistory['0.36.4'] ?? null) !== ['core/deployment/windows/apply-0.36.3.ps1']
-    || ($deletionHistory['0.36.5'] ?? null) !== ['core/deployment/windows/apply-0.36.4.ps1']
-    || ($deletionHistory['0.36.6'] ?? null) !== ['core/deployment/windows/apply-0.36.5.ps1']
-    || ($deletionHistory['0.36.7'] ?? null) !== ['core/deployment/windows/apply-0.36.6.ps1']
-    || ($deletionHistory['0.37.0'] ?? null) !== [
-        'core/deployment/windows/apply-0.36.7.ps1',
-        'public/account-themes/kaev-aurelia/assets/js/navigation.js',
-        'public/account-themes/luxury/assets/js/navigation.js',
-        'public/assets/admin/css/app.css',
-    ]
-    || ($deletionHistory['0.37.1'] ?? null) !== ['core/deployment/windows/apply-0.37.0.ps1']
-    || ($deletionHistory['0.37.2'] ?? null) !== ['core/deployment/windows/apply-0.37.1.ps1']
-    || ($deletionHistory['0.37.3'] ?? null) !== ['core/deployment/windows/apply-0.37.2.ps1']
-    || ($deletionHistory['0.37.4'] ?? null) !== ['core/deployment/windows/apply-0.37.3.ps1']) {
-    throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
+$currentDeletions = $deletionHistory[$currentVersion] ?? null;
+if (! is_array($currentDeletions)) {
+    throw new RuntimeException("Deletion history does not contain the target release {$currentVersion}.");
+}
+if (! in_array("core/deployment/windows/apply-{$previousVersion}.ps1", $currentDeletions, true)) {
+    throw new RuntimeException('Current deletion history does not remove the previous apply script.');
+}
+if (in_array('public/assets/account', $currentDeletions, true)) {
+    throw new RuntimeException('Current deletion history must preserve the shared account runtime.');
 }
 
-$windowsBuilder = file_get_contents(dirname(__DIR__).'/windows/build-web-update-package.ps1');
-if (! is_string($windowsBuilder)
-    || ! str_contains($windowsBuilder, 'KaevCMS-cumulative-update-$MinimumVersion-$MaximumVersion-to-$targetVersion.zip')) {
-    throw new RuntimeException('Windows update builder does not expose the supported range in the default filename.');
+$tempRoot = sys_get_temp_dir().DIRECTORY_SEPARATOR.'kaevcms-update-builder-'.bin2hex(random_bytes(8));
+$currentRoot = $tempRoot.DIRECTORY_SEPARATOR.'current';
+$previousRoot = $tempRoot.DIRECTORY_SEPARATOR.'previous';
+$output = $tempRoot.DIRECTORY_SEPARATOR.'update.zip';
+$deleteFile = $tempRoot.DIRECTORY_SEPARATOR.'deletions.json';
+
+try {
+    writeFixture($currentRoot, [
+        'VERSION' => '9.9.9',
+        'release.json' => json_encode(['schema' => 1, 'version' => '9.9.9'], JSON_THROW_ON_ERROR)."\n",
+        'app/example.php' => "<?php\n",
+        'public/index.php' => "<?php\n",
+        '.env' => "APP_KEY=secret\n",
+        'storage/logs/private.log' => "secret\n",
+        'public/uploads/account-avatars/avatar.webp' => "owner-data\n",
+    ]);
+    writeFixture($previousRoot, [
+        'VERSION' => '9.9.8',
+        'app/example.php' => "<?php\n",
+        'app/obsolete.php' => "<?php\n",
+        'public/index.php' => "<?php\n",
+    ]);
+    file_put_contents($deleteFile, "{}\n");
+
+    $command = [
+        PHP_BINARY,
+        __DIR__.'/build-package.php',
+        '--root='.$currentRoot,
+        '--output='.$output,
+        '--minimum=9.9.7',
+        '--maximum=9.9.8',
+        '--target=9.9.9',
+        '--previous-root='.$previousRoot,
+        '--delete-file='.$deleteFile,
+        '--update-history',
+    ];
+    runCommand($command);
+
+    $mismatchCommand = $command;
+    $targetArgument = array_search('--target=9.9.9', $mismatchCommand, true);
+    if (! is_int($targetArgument)) {
+        throw new RuntimeException('Target argument was not found in the package-builder fixture.');
+    }
+    $mismatchCommand[$targetArgument] = '--target=9.9.10';
+    runCommandExpectFailure($mismatchCommand, 'does not match release.json');
+
+    $missingContractRoot = $tempRoot.DIRECTORY_SEPARATOR.'missing-contract';
+    writeFixture($missingContractRoot, [
+        'VERSION' => '9.9.9',
+        'app/example.php' => "<?php\n",
+        'public/index.php' => "<?php\n",
+    ]);
+    $missingContractCommand = $command;
+    $rootArgument = array_search('--root='.$currentRoot, $missingContractCommand, true);
+    if (! is_int($rootArgument)) {
+        throw new RuntimeException('Root argument was not found in the package-builder fixture.');
+    }
+    $missingContractCommand[$rootArgument] = '--root='.$missingContractRoot;
+    runCommandExpectFailure($missingContractCommand, 'missing release.json');
+
+    $zip = new ZipArchive;
+    if ($zip->open($output) !== true) {
+        throw new RuntimeException('Unable to open the generated Web Updater package.');
+    }
+    try {
+        $manifestContents = $zip->getFromName('kaevcms-update.json');
+        if (! is_string($manifestContents)) {
+            throw new RuntimeException('Generated package manifest is missing.');
+        }
+        $manifest = json_decode($manifestContents, true, flags: JSON_THROW_ON_ERROR);
+        if (($manifest['target_version'] ?? null) !== '9.9.9'
+            || ($manifest['minimum_version'] ?? null) !== '9.9.7'
+            || ($manifest['maximum_version'] ?? null) !== '9.9.8') {
+            throw new RuntimeException('Generated package version range is incorrect.');
+        }
+
+        $targets = array_column($manifest['files'] ?? [], 'target');
+        sort($targets);
+        if ($targets !== ['core/VERSION', 'core/app/example.php', 'core/release.json', 'public/index.php']) {
+            throw new RuntimeException('Generated package included protected runtime or owner-data files.');
+        }
+        if (($manifest['delete'] ?? []) !== ['core/app/obsolete.php']) {
+            throw new RuntimeException('Automatic deletion detection did not preserve the expected obsolete path.');
+        }
+
+        foreach ($manifest['files'] as $file) {
+            if (! isset($file['source'], $file['target'], $file['sha256'], $file['size'])
+                || ! preg_match('/^[a-f0-9]{64}$/', (string) $file['sha256'])) {
+                throw new RuntimeException('Generated package file metadata is incomplete.');
+            }
+        }
+    } finally {
+        $zip->close();
+    }
+
+    $fixtureHistory = readJson($deleteFile);
+    if (($fixtureHistory['9.9.9'] ?? null) !== ['core/app/obsolete.php']) {
+        throw new RuntimeException('Automatic deletion history update is incorrect.');
+    }
+} finally {
+    removeTree($tempRoot);
+}
+
+$defaultFilename = sprintf(
+    'KaevCMS-cumulative-update-%s-%s-to-%s.zip',
+    $minimumVersion,
+    $previousVersion,
+    $currentVersion,
+);
+if (! str_starts_with($defaultFilename, 'KaevCMS-cumulative-update-')) {
+    throw new RuntimeException('Cumulative package filename contract is invalid.');
 }
 
 echo "Web update package builder regression checks completed successfully.\n";
+
+/** @return array<string, mixed> */
+function readJson(string $path): array
+{
+    $contents = file_get_contents($path);
+    if (! is_string($contents)) {
+        throw new RuntimeException("Unable to read JSON file: {$path}");
+    }
+
+    $decoded = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+    if (! is_array($decoded)) {
+        throw new RuntimeException("JSON root must be an object: {$path}");
+    }
+
+    return $decoded;
+}
+
+function requireVersion(mixed $value, string $label): string
+{
+    if (! is_string($value) || preg_match('/^\d+\.\d+\.\d+$/', $value) !== 1) {
+        throw new RuntimeException("Invalid {$label}.");
+    }
+
+    return $value;
+}
+
+function validLogicalPath(string $path): bool
+{
+    return $path !== ''
+        && ! str_contains($path, '\\')
+        && ! str_contains($path, "\0")
+        && ! str_starts_with($path, '/')
+        && (str_starts_with($path, 'core/') || str_starts_with($path, 'public/'))
+        && ! in_array('..', explode('/', $path), true);
+}
+
+/** @param  array<string, string>  $files */
+function writeFixture(string $root, array $files): void
+{
+    foreach ($files as $relative => $contents) {
+        $path = $root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative);
+        $directory = dirname($path);
+        if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
+            throw new RuntimeException("Unable to create fixture directory: {$directory}");
+        }
+        if (file_put_contents($path, $contents) === false) {
+            throw new RuntimeException("Unable to create fixture file: {$path}");
+        }
+    }
+}
+
+/** @param  list<string>  $command */
+function runCommand(array $command): void
+{
+    $escaped = implode(' ', array_map(escapeshellarg(...), $command));
+    exec($escaped.' 2>&1', $output, $exitCode);
+    if ($exitCode !== 0) {
+        throw new RuntimeException("Command failed:\n".implode("\n", $output));
+    }
+}
+
+/** @param  list<string>  $command */
+function runCommandExpectFailure(array $command, string $expectedOutput): void
+{
+    $escaped = implode(' ', array_map(escapeshellarg(...), $command));
+    exec($escaped.' 2>&1', $output, $exitCode);
+    $combinedOutput = implode("\n", $output);
+    if ($exitCode === 0 || ! str_contains($combinedOutput, $expectedOutput)) {
+        throw new RuntimeException("Command did not fail as expected:\n{$combinedOutput}");
+    }
+}
+
+function removeTree(string $path): void
+{
+    if (! is_dir($path)) {
+        return;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST,
+    );
+    foreach ($iterator as $item) {
+        if ($item->isDir()) {
+            rmdir($item->getPathname());
+        } else {
+            unlink($item->getPathname());
+        }
+    }
+    rmdir($path);
+}
