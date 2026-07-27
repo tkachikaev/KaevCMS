@@ -29,14 +29,14 @@ class AccountNavigationTest extends TestCase
             ->assertSee('wire:navigate', false)
             ->assertSee('data-navigate-track', false)
             ->assertSee('data-navigate-once="true"', false)
-            ->assertSee('account-themes/luxury/assets/js/navigation.js', false)
+            ->assertSee('assets/account/js/navigation.js', false)
             ->assertSee('data-update-uri=', false);
 
         $themePath = app(AccountThemeManager::class)->themePath();
         $layout = file_get_contents($themePath.'/views/layouts/app.blade.php');
         $navigation = file_get_contents($themePath.'/views/partials/navigation.blade.php');
         $accountMenu = file_get_contents($themePath.'/views/partials/account-menu.blade.php');
-        $script = file_get_contents(public_path('account-themes/luxury/assets/js/navigation.js'));
+        $script = file_get_contents(public_path('assets/account/js/navigation.js'));
         $styles = file_get_contents(public_path('account-themes/luxury/assets/css/app.css'));
 
         $this->assertIsString($layout);
@@ -48,6 +48,8 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString('@persist(\'account-topbar\')', $layout);
         $this->assertStringContainsString('wire:navigate:scroll', $layout);
         $this->assertStringContainsString('account_theme_asset', $layout);
+        $this->assertStringContainsString('assets/account/js/navigation.js', $layout);
+        $this->assertStringNotContainsString('account_theme_asset(\'assets/js/navigation.js\')', $layout);
         $this->assertStringContainsString('<x-account-avatar-modal', $layout);
         $this->assertStringContainsString('<x-account-operation-modal', $layout);
         $this->assertStringContainsString('account-theme::partials.account-menu', $layout);
@@ -198,11 +200,12 @@ class AccountNavigationTest extends TestCase
         }
     }
 
-    public function test_legacy_core_account_views_and_assets_are_not_used(): void
+    public function test_legacy_core_account_views_are_not_used_and_shared_runtime_is_present(): void
     {
         $this->assertDirectoryDoesNotExist(resource_path('views/account'));
         $this->assertDirectoryDoesNotExist(resource_path('views/livewire/account'));
-        $this->assertDirectoryDoesNotExist(public_path('assets/account'));
+        $this->assertDirectoryExists(public_path('assets/account'));
+        $this->assertFileExists(public_path('assets/account/js/navigation.js'));
     }
 
     private function user(): User

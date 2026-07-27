@@ -23,6 +23,27 @@ test.beforeEach(async ({ page }) => {
     await signIn(page);
 });
 
+test('administration loads the split stylesheet stack once and in order', async ({ page }) => {
+    const expected = [
+        'base.css',
+        'layout.css',
+        'content.css',
+        'infrastructure.css',
+        'components.css',
+        'extensions.css',
+        'catalogs.css',
+    ];
+    const stylesheetNames = async () => page.locator('link[data-navigate-track][href*="/assets/admin/css/"]').evaluateAll(
+        (links) => links.map((link) => new URL(link.href).pathname.split('/').pop()),
+    );
+
+    expect(await stylesheetNames()).toEqual(expected);
+    await expect(page.locator('link[href*="/assets/admin/css/app.css"]')).toHaveCount(0);
+
+    await gotoWithLocalNetworkRetry(page, '/admin/news');
+    expect(await stylesheetNames()).toEqual(expected);
+});
+
 test('news editor initializes again after SPA navigation', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/news/create');
 

@@ -151,5 +151,23 @@
     ],
     "0.36.7": [
         "core/deployment/windows/apply-0.36.6.ps1"
+    ],
+    "0.37.0": [
+        "core/deployment/windows/apply-0.36.7.ps1",
+        "public/account-themes/kaev-aurelia/assets/js/navigation.js",
+        "public/account-themes/luxury/assets/js/navigation.js",
+        "public/assets/admin/css/app.css"
+    ],
+    "0.37.1": [
+        "core/deployment/windows/apply-0.37.0.ps1"
+    ],
+    "0.37.2": [
+        "core/deployment/windows/apply-0.37.1.ps1"
+    ],
+    "0.37.3": [
+        "core/deployment/windows/apply-0.37.2.ps1"
+    ],
+    "0.37.4": [
+        "core/deployment/windows/apply-0.37.3.ps1"
     ]
 }

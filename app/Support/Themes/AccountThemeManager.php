@@ -76,7 +76,7 @@ final class AccountThemeManager
             assetUrlPrefix: 'account-themes',
             activeTheme: $this->activeTheme,
             requiredFiles: ['views/layouts/app.blade.php', 'views/dashboard.blade.php'],
-            requiredPublicFiles: ['assets/css/app.css', 'assets/js/navigation.js'],
+            requiredPublicFiles: ['assets/css/app.css'],
             missingPublicAssetsMessage: __('Account theme public assets were not found.'),
         );
     }

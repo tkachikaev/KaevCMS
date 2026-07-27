@@ -32,9 +32,10 @@ class AdminPanelTest extends TestCase
             ->assertSee('Страницы')
             ->assertSee('Журнал действий')
             ->assertSee('class="admin-account-avatar" aria-hidden="true"><span>M</span>', false)
-            ->assertSee('assets/admin/css/app.css');
+            ->assertSee('assets/admin/css/base.css')
+            ->assertSee('assets/admin/css/catalogs.css');
 
-        $adminCss = file_get_contents(public_path('assets/admin/css/app.css'));
+        $adminCss = $this->adminStyles();
         $this->assertIsString($adminCss);
         $this->assertStringContainsString(
             '.admin-account-avatar > span { display: grid; place-items: center; width: 100%; height: 100%; line-height: 1; transform: translateY(1px); }',
@@ -44,7 +45,7 @@ class AdminPanelTest extends TestCase
 
     public function test_administrative_visual_system_uses_shared_light_theme_tokens_and_tabs(): void
     {
-        $css = File::get(public_path('assets/admin/css/app.css'));
+        $css = $this->adminStyles();
 
         $this->assertStringContainsString('--admin-page-bg:', $css);
         $this->assertStringContainsString('--admin-surface-muted:', $css);
@@ -76,7 +77,7 @@ class AdminPanelTest extends TestCase
 
     public function test_admin_catalogues_use_shared_enterprise_components(): void
     {
-        $css = File::get(public_path('assets/admin/css/app.css'));
+        $css = $this->adminStyles();
 
         foreach ([
             '.admin-overview {',
@@ -151,7 +152,7 @@ class AdminPanelTest extends TestCase
 
     public function test_settings_actions_and_help_text_use_separate_rows(): void
     {
-        $css = File::get(public_path('assets/admin/css/app.css'));
+        $css = $this->adminStyles();
 
         $this->assertStringContainsString(
             ".admin-path-settings-controls,\n.system-monitor-settings-controls {\n    display: grid;",
@@ -344,6 +345,9 @@ class AdminPanelTest extends TestCase
         $this->assertIsString($navigation);
         $this->assertStringContainsString('assets/admin/js/page-lifecycle.js', $layout);
         $this->assertStringContainsString('assets/admin/js/navigation.js', $layout);
+        $this->assertStringContainsString("'base',", $layout);
+        $this->assertStringContainsString("'catalogs',", $layout);
+        $this->assertStringNotContainsString('assets/admin/css/app.css', $layout);
         $this->assertStringContainsString('defer data-navigate-track data-navigate-once', $layout);
         $this->assertStringContainsString("@persist('admin-sidebar')", $panel);
         $this->assertStringContainsString('wire:navigate:scroll', $panel);
@@ -365,7 +369,7 @@ class AdminPanelTest extends TestCase
     public function test_admin_navigation_stabilizes_the_shell_during_page_swaps(): void
     {
         $navigation = file_get_contents(public_path('assets/admin/js/navigation.js'));
-        $styles = file_get_contents(public_path('assets/admin/css/app.css'));
+        $styles = $this->adminStyles();
 
         $this->assertIsString($navigation);
         $this->assertIsString($styles);
@@ -441,5 +445,20 @@ class AdminPanelTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get('/admin/dashboard')
             ->assertNotFound();
+    }
+
+    private function adminStyles(): string
+    {
+        return collect([
+            'base',
+            'layout',
+            'content',
+            'infrastructure',
+            'components',
+            'extensions',
+            'catalogs',
+        ])->map(
+            static fn (string $name): string => File::get(public_path('assets/admin/css/'.$name.'.css')),
+        )->implode("\n");
     }
 }

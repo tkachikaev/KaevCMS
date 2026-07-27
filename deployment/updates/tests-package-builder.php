@@ -98,7 +98,17 @@ if (! is_array($deletionHistory)
     || ($deletionHistory['0.36.4'] ?? null) !== ['core/deployment/windows/apply-0.36.3.ps1']
     || ($deletionHistory['0.36.5'] ?? null) !== ['core/deployment/windows/apply-0.36.4.ps1']
     || ($deletionHistory['0.36.6'] ?? null) !== ['core/deployment/windows/apply-0.36.5.ps1']
-    || ($deletionHistory['0.36.7'] ?? null) !== ['core/deployment/windows/apply-0.36.6.ps1']) {
+    || ($deletionHistory['0.36.7'] ?? null) !== ['core/deployment/windows/apply-0.36.6.ps1']
+    || ($deletionHistory['0.37.0'] ?? null) !== [
+        'core/deployment/windows/apply-0.36.7.ps1',
+        'public/account-themes/kaev-aurelia/assets/js/navigation.js',
+        'public/account-themes/luxury/assets/js/navigation.js',
+        'public/assets/admin/css/app.css',
+    ]
+    || ($deletionHistory['0.37.1'] ?? null) !== ['core/deployment/windows/apply-0.37.0.ps1']
+    || ($deletionHistory['0.37.2'] ?? null) !== ['core/deployment/windows/apply-0.37.1.ps1']
+    || ($deletionHistory['0.37.3'] ?? null) !== ['core/deployment/windows/apply-0.37.2.ps1']
+    || ($deletionHistory['0.37.4'] ?? null) !== ['core/deployment/windows/apply-0.37.3.ps1']) {
     throw new RuntimeException('Web update deletion history does not include the obsolete apply scripts.');
 }
 

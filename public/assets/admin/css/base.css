@@ -1,0 +1,96 @@
+/* KaevCMS administration stylesheet: Design tokens, reset, buttons and notices. */
+
+:root {
+    color-scheme: light;
+
+    /* Administrative design tokens. A future dark theme can override this layer. */
+    --admin-page-bg: #f3f6fa;
+    --admin-surface: #ffffff;
+    --admin-surface-muted: #edf2f8;
+    --admin-surface-subtle: #f8fafc;
+    --admin-surface-strong: #e5ecf5;
+    --admin-border: #dce3ec;
+    --admin-border-strong: #cbd5e1;
+    --admin-text: #0f172a;
+    --admin-text-muted: #64748b;
+    --admin-primary: #2563eb;
+    --admin-primary-hover: #1d4ed8;
+    --admin-primary-soft: #eaf2ff;
+    --admin-row-hover: #f8fbff;
+    --admin-table-head: #f4f7fb;
+    --admin-success: #15803d;
+    --admin-success-soft: #f0fdf4;
+    --admin-success-border: #bbf7d0;
+    --admin-warning: #92400e;
+    --admin-warning-soft: #fffbeb;
+    --admin-warning-border: #fde68a;
+    --admin-danger: #b91c1c;
+    --admin-danger-soft: #fef2f2;
+    --admin-danger-border: #fecaca;
+    --admin-info: #1d4ed8;
+    --admin-info-soft: #eff6ff;
+    --admin-info-border: #bfdbfe;
+    --admin-focus-ring: rgba(37, 99, 235, .16);
+    --admin-shadow-card: 0 1px 2px rgba(15, 23, 42, .025), 0 8px 24px rgba(15, 23, 42, .035);
+    --admin-shadow-raised: 0 14px 34px rgba(15, 23, 42, .1);
+    --admin-radius-card: 12px;
+    --admin-radius-control: 8px;
+    --admin-sidebar-bg: #101827;
+    --admin-sidebar-hover: #1d2939;
+    --admin-sidebar-text: #d5dbe5;
+    --admin-sidebar-muted: #7d8ba1;
+
+    /* Backwards-compatible aliases used by existing components. */
+    --sidebar: var(--admin-sidebar-bg);
+    --sidebar-hover: var(--admin-sidebar-hover);
+    --sidebar-text: var(--admin-sidebar-text);
+    --sidebar-muted: var(--admin-sidebar-muted);
+    --accent: var(--admin-primary);
+    --accent-hover: var(--admin-primary-hover);
+    --bg: var(--admin-page-bg);
+    --surface: var(--admin-surface);
+    --surface-soft: var(--admin-surface-subtle);
+    --border: var(--admin-border);
+    --text: var(--admin-text);
+    --muted: var(--admin-text-muted);
+    --success: #15803d;
+    --success-bg: #f0fdf4;
+    --danger: #b91c1c;
+    --danger-bg: #fef2f2;
+    --sidebar-width: 248px;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--bg); scrollbar-gutter: stable; }
+body { margin: 0; color: var(--text); background: var(--bg); font: 14px/1.5 Inter, "Segoe UI", Arial, sans-serif; }
+a { color: inherit; text-decoration: none; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-weight: 600;
+}
+.button-primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.button-primary:hover { background: var(--accent-hover); }
+.button-secondary { border-color: var(--border); background: var(--surface); color: #374151; }
+.button-secondary:hover:not(:disabled) { background: #f9fafb; }
+
+
+.alert { margin: 0 0 14px; padding: 11px 12px; border: 1px solid; border-radius: 7px; }
+.alert-success { border-color: #bbf7d0; background: var(--success-bg); color: var(--success); }
+.alert-danger { border-color: #fecaca; background: var(--danger-bg); color: var(--danger); }
+
+.notice { margin: 20px 0 0; padding: 12px 14px; border: 1px solid; border-radius: 8px; }
+.notice p { margin: 0; }
+.notice p + p { margin-top: 4px; }
+.notice-success { border-color: #bbf7d0; background: var(--success-bg); color: var(--success); }
+.notice-error { border-color: #fecaca; background: var(--danger-bg); color: var(--danger); }
+

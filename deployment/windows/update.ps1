@@ -6,10 +6,10 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$expectedFromVersion = '0.36.6'
-$expectedToVersion = '0.36.7'
-$legacyApplyScriptName = 'deployment\windows\apply-0.36.6.ps1'
-$legacyApplySha256 = '6ffbfcb7174b8a32974f421b69cd0ddb0a512527a1d14ea5adcdb497ed0740e1'
+$expectedFromVersion = '0.37.3'
+$expectedToVersion = '0.37.4'
+$legacyApplyScriptName = 'deployment\windows\apply-0.37.3.ps1'
+$legacyApplySha256 = '21dbc55789c076bb8c424e3389345d5309611975c0658ee3c1a3deb8b1e40b6f'
 $previousComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
 $currentComposerLockSha256 = '53bb4fc6ea6a488af1bdbf428afcd1086dcabca9613b54f11c06700abe100ab4'
 $recoveryFloorVersion = '0.34.9'
@@ -161,7 +161,9 @@ function Get-ObsoleteReleaseArtifacts {
         'app\Http\Controllers\Admin\SettingsController.php',
         'resources\views\account',
         'resources\views\livewire\account',
-        'public\assets\account',
+        'public\assets\admin\css\app.css',
+        'public\account-themes\luxury\assets\js\navigation.js',
+        'public\account-themes\kaev-aurelia\assets\js\navigation.js',
         'public\game-assets',
         'integrations\mobius-interlude\reward-bridge',
         'integrations\reward-queue\remove-legacy-bridge.sql',

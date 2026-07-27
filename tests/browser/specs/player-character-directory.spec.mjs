@@ -66,6 +66,8 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
     await signIn(page);
 
     await expect(page.locator('link[href*="account-themes/luxury/assets/css/app.css"]')).toHaveCount(1);
+    await expect(page.locator('script[src*="/assets/account/js/navigation.js"]')).toHaveCount(1);
+    await expect(page.locator('script[src*="account-themes/luxury/assets/js/navigation.js"]')).toHaveCount(0);
     await expect(page.locator('.account-overview-header')).toBeVisible();
 
     const accountMenu = page.locator('.account-profile-menu-topbar');
@@ -206,6 +208,8 @@ test('aurelia player theme keeps rounded surfaces and active module navigation a
     await context.clearCookies();
     await signIn(page);
     await expect(page.locator('link[href*="account-themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(1);
+    await expect(page.locator('script[src*="/assets/account/js/navigation.js"]')).toHaveCount(1);
+    await expect(page.locator('script[src*="account-themes/kaev-aurelia/assets/js/navigation.js"]')).toHaveCount(0);
 
     await gotoWithLocalNetworkRetry(page, '/modules/daily-rewards?calendar=1&account=2');
     await expect(page).toHaveURL(/\/modules\/daily-rewards\?calendar=1&account=2$/);

@@ -53,6 +53,13 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('deployment\hosting\shared-hosting\tests\update-entrypoint-regression.php', $applyScript);
         $this->assertStringContainsString('public\index.php', $applyScript);
         $this->assertStringContainsString('public\.htaccess', $applyScript);
+        foreach (['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs'] as $stylesheet) {
+            $this->assertStringContainsString('public\assets\admin\css\\'.$stylesheet.'.css', $applyScript);
+        }
+        $this->assertStringContainsString('public\assets\account\js\navigation.js', $applyScript);
+        $this->assertStringNotContainsString('public\assets\admin\css\app.css', $applyScript);
+        $this->assertStringNotContainsString('public\account-themes\luxury\assets\js\navigation.js', $applyScript);
+        $this->assertStringNotContainsString('public\account-themes\kaev-aurelia\assets\js\navigation.js', $applyScript);
         $this->assertStringContainsString('app\Services\Updates\UpdatePathPolicy.php', $applyScript);
         $this->assertStringContainsString('resources\game-items\interlude.json', $applyScript);
         $this->assertStringContainsString('resources\game-items\classic.json', $applyScript);
@@ -83,6 +90,8 @@ class ReleaseMetadataTest extends TestCase
         $quality = $this->readReleaseFile('deployment/windows/quality.ps1');
         $this->assertStringContainsString('Initialize-KaevCmsRuntimeDirectories -ProjectRoot $ProjectRoot', $quality);
         $this->assertStringContainsString('update-entrypoint-regression.php', $quality);
+        $this->assertStringContainsString('account-theme-contract.php', $quality);
+        $this->assertFileExists(base_path('deployment/windows/tests/account-theme-contract.php'));
 
         $runtimeSupport = $this->readReleaseFile('deployment/windows/support/release-update-support.ps1');
         $this->assertStringContainsString('function Initialize-KaevCmsRuntimeDirectories', $runtimeSupport);
@@ -141,6 +150,15 @@ class ReleaseMetadataTest extends TestCase
         $documentationIndex = $this->readReleaseFile('docs/README.md');
         $this->assertStringContainsString('English documentation', $documentationIndex);
         $this->assertStringContainsString('Русская документация', $documentationIndex);
+
+        $englishDevelopment = $this->readReleaseFile('docs/en/DEVELOPMENT.md');
+        $russianDevelopment = $this->readReleaseFile('docs/ru/DEVELOPMENT.md');
+        foreach (['base.css', 'layout.css', 'content.css', 'infrastructure.css', 'components.css', 'extensions.css', 'catalogs.css'] as $stylesheet) {
+            $this->assertStringContainsString($stylesheet, $englishDevelopment);
+            $this->assertStringContainsString($stylesheet, $russianDevelopment);
+        }
+        $this->assertStringContainsString('public/assets/account/js/navigation.js', $englishDevelopment);
+        $this->assertStringContainsString('public/assets/account/js/navigation.js', $russianDevelopment);
     }
 
     public function test_promo_code_reward_model_has_a_single_line_ending_at_eof(): void
@@ -206,7 +224,10 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('storage\app\installed.lock', $updateScript);
         $this->assertStringContainsString('\'resources\\views\\account\'', $updateScript);
         $this->assertStringContainsString('\'resources\\views\\livewire\\account\'', $updateScript);
-        $this->assertStringContainsString('\'public\\assets\\account\'', $updateScript);
+        $this->assertStringNotContainsString('\'public\\assets\\account\'', $updateScript);
+        $this->assertStringContainsString('\'public\\assets\\admin\\css\\app.css\'', $updateScript);
+        $this->assertStringContainsString('\'public\\account-themes\\luxury\\assets\\js\\navigation.js\'', $updateScript);
+        $this->assertStringContainsString('\'public\\account-themes\\kaev-aurelia\\assets\\js\\navigation.js\'', $updateScript);
         $this->assertStringContainsString('\'integrations\\reward-queue\\remove-legacy-bridge.sql\'', $updateScript);
 
         $cachePosition = strpos($updateScript, 'Clear-KaevCmsBootstrapCache -ProjectRoot $ProjectRoot');
@@ -524,19 +545,47 @@ class ReleaseMetadataTest extends TestCase
         $uploadsIgnore = $this->readReleaseFile('public/uploads/.gitignore');
         $this->assertStringContainsString('!game-assets/**/.gitkeep', $uploadsIgnore);
         $this->assertFileExists(public_path('assets/admin/js/promo-codes.js'));
-        $this->assertFileExists(public_path('assets/admin/css/app.css'));
+        foreach (['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs'] as $stylesheet) {
+            $this->assertFileExists(public_path('assets/admin/css/'.$stylesheet.'.css'));
+        }
+        $this->assertFileDoesNotExist(public_path('assets/admin/css/app.css'));
+        $this->assertFileExists(public_path('assets/account/js/navigation.js'));
+        $this->assertFileDoesNotExist(public_path('account-themes/luxury/assets/js/navigation.js'));
+        $this->assertFileDoesNotExist(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
         $this->assertFileExists(base_path('modules/promo-codes/assets/module.webp'));
         $this->assertFileExists(base_path('modules/daily-rewards/assets/module.webp'));
         $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/promo-codes/assets/module.webp')), 0, 2));
         $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/daily-rewards/assets/module.webp')), 0, 2));
         $this->assertFileExists(resource_path('views/components/account-operation-modal.blade.php'));
+        $adminLayout = $this->readReleaseFile('resources/views/admin/layouts/app.blade.php');
+        $this->assertStringContainsString('assets/admin/css/', $adminLayout);
+        $this->assertStringContainsString('$adminStylesheet', $adminLayout);
+        $this->assertStringNotContainsString('assets/admin/css/app.css', $adminLayout);
+        foreach ([
+            'account-themes/luxury/views/layouts/app.blade.php',
+            'account-themes/kaev-aurelia/views/layouts/app.blade.php',
+        ] as $accountLayoutPath) {
+            $accountLayout = $this->readReleaseFile($accountLayoutPath);
+            $this->assertStringContainsString('assets/account/js/navigation.js', $accountLayout);
+            $this->assertStringNotContainsString("account_theme_asset('assets/js/navigation.js')", $accountLayout);
+        }
+        foreach (['luxury', 'kaev-aurelia'] as $accountTheme) {
+            $accountThemeManifest = json_decode(
+                $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
+                true,
+                flags: JSON_THROW_ON_ERROR,
+            );
+            $this->assertSame('1.5.0', $accountThemeManifest['version']);
+            $this->assertSame('0.37.0', $accountThemeManifest['cms_min']);
+        }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');
         $dailyRewardsCss = $this->readReleaseFile('public/assets/modules/daily-rewards.css');
         $this->assertStringContainsString('data-daily-unsaved', $this->readReleaseFile('modules/daily-rewards/resources/views/admin/edit.blade.php'));
         $this->assertStringContainsString('beforeunload', $dailyRewardsScript);
         $this->assertStringContainsString('copyEmptyConfirm', $dailyRewardsScript);
         $this->assertStringContainsString('addEventListener(\'pointerdown\'', $dailyRewardsScript);
-        $this->assertStringContainsString('.daily-reward-item-preview,.daily-reward-item-remove{margin-top:28px}', $dailyRewardsCss);
+        $this->assertStringContainsString('.daily-reward-item-preview,.daily-reward-item-remove {', $dailyRewardsCss);
+        $this->assertStringContainsString('margin-top: 28px;', $dailyRewardsCss);
         $this->assertStringContainsString('backdrop-filter:blur(22px)', $this->readReleaseFile('public/account-themes/luxury/assets/css/app.css'));
         $this->assertStringContainsString('backdrop-filter:blur(22px)', $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css'));
 
@@ -565,7 +614,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('previewUrlTemplate', $promoScript);
         $this->assertStringContainsString('data-promo-delete-form', $promoScript);
 
-        $adminStyles = $this->readReleaseFile('public/assets/admin/css/app.css');
+        $adminStyles = collect(['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs'])
+            ->map(fn (string $stylesheet): string => $this->readReleaseFile('public/assets/admin/css/'.$stylesheet.'.css'))
+            ->implode("\n");
         $this->assertStringContainsString('.promo-reward-row', $adminStyles);
         $this->assertStringContainsString('.reward-queue-item', $adminStyles);
         $this->assertStringContainsString('.promo-reward-name-preview', $adminStyles);

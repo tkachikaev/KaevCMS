@@ -31,23 +31,28 @@ try {
         '0.36.4' = @('core/deployment/windows/apply-0.36.3.ps1')
         '0.36.5' = @('core/deployment/windows/apply-0.36.4.ps1')
         '0.36.6' = @('core/deployment/windows/apply-0.36.5.ps1')
+        '0.36.7' = @('core/deployment/windows/apply-0.36.6.ps1')
+        '0.37.0' = @('core/deployment/windows/apply-0.36.7.ps1')
+        '0.37.1' = @('core/deployment/windows/apply-0.37.0.ps1')
+        '0.37.2' = @('core/deployment/windows/apply-0.37.1.ps1')
+        '0.37.3' = @('core/deployment/windows/apply-0.37.2.ps1')
     } | ConvertTo-Json | Set-Content -LiteralPath $historyPath -Encoding UTF8
 
     $recoveryLineage = Get-KaevCmsRecoveryLineage `
         -ProjectRoot $tempRoot `
         -RecoveryFloorVersion '0.34.9' `
-        -ExpectedFromVersion '0.36.6' `
-        -ExpectedToVersion '0.36.7'
-    Assert-True (($recoveryLineage.RecoverableFromVersions -join ',') -eq '0.34.9,0.35.0,0.36.0,0.36.1,0.36.2,0.36.3,0.36.4,0.36.5') 'Recovery source versions were not derived from release history.'
-    Assert-True (($recoveryLineage.SupersededPendingTargets -join ',') -eq '0.35.0,0.36.0,0.36.1,0.36.2,0.36.3,0.36.4,0.36.5,0.36.6') 'Superseded pending targets were not derived from release history.'
+        -ExpectedFromVersion '0.37.3' `
+        -ExpectedToVersion '0.37.4'
+    Assert-True (($recoveryLineage.RecoverableFromVersions -join ',') -eq '0.34.9,0.35.0,0.36.0,0.36.1,0.36.2,0.36.3,0.36.4,0.36.5,0.36.6,0.36.7,0.37.0,0.37.1,0.37.2') 'Recovery source versions were not derived from release history.'
+    Assert-True (($recoveryLineage.SupersededPendingTargets -join ',') -eq '0.35.0,0.36.0,0.36.1,0.36.2,0.36.3,0.36.4,0.36.5,0.36.6,0.36.7,0.37.0,0.37.1,0.37.2,0.37.3') 'Superseded pending targets were not derived from release history.'
 
     Write-KaevCmsPendingUpdateMarker -ProjectRoot $tempRoot -FromVersion '0.34.9' -ToVersion '0.35.0'
     $historicalPendingConverted = $false
-    foreach ($pendingFromVersion in (@('0.36.6') + $recoveryLineage.RecoverableFromVersions | Select-Object -Unique)) {
+    foreach ($pendingFromVersion in (@('0.37.3') + $recoveryLineage.RecoverableFromVersions | Select-Object -Unique)) {
         if (Convert-KaevCmsSupersededPendingUpdateMarker `
             -ProjectRoot $tempRoot `
             -ExpectedFromVersion $pendingFromVersion `
-            -ExpectedToVersion '0.36.7' `
+            -ExpectedToVersion '0.37.4' `
             -SupersededToVersions $recoveryLineage.SupersededPendingTargets) {
             $historicalPendingConverted = $true
             break
@@ -57,7 +62,7 @@ try {
     $historicalPending = Get-KaevCmsInstalledVersion `
         -ProjectRoot $tempRoot `
         -ExpectedFromVersion '0.34.9' `
-        -ExpectedToVersion '0.36.7' `
+        -ExpectedToVersion '0.37.4' `
         -LegacyApplyScriptName 'deployment\windows\apply-0.34.9.ps1' `
         -LegacyApplySha256 '0000000000000000000000000000000000000000000000000000000000000000'
     Assert-True ($historicalPending.Version -eq '0.34.9') 'Historical pending recovery did not preserve the committed source version.'
@@ -188,7 +193,10 @@ try {
     Assert-True ($updateScript.Contains('-FromVersion $installed.Version')) 'Updater does not preserve the actual committed source version in the new pending marker.'
     Assert-True ($updateScript.Contains("'resources\views\account'")) 'Updater does not remove legacy account views.'
     Assert-True ($updateScript.Contains("'resources\views\livewire\account'")) 'Updater does not remove legacy Livewire account views.'
-    Assert-True ($updateScript.Contains("'public\assets\account'")) 'Updater does not remove legacy account assets.'
+    Assert-True (-not $updateScript.Contains("'public\assets\account',")) 'Updater still removes the shared account runtime directory.'
+    Assert-True ($updateScript.Contains("'public\assets\admin\css\app.css'")) 'Updater does not remove the obsolete administration stylesheet.'
+    Assert-True ($updateScript.Contains("'public\account-themes\luxury\assets\js\navigation.js'")) 'Updater does not remove the duplicated Luxury navigation runtime.'
+    Assert-True ($updateScript.Contains("'public\account-themes\kaev-aurelia\assets\js\navigation.js'")) 'Updater does not remove the duplicated Aurelia navigation runtime.'
 
     $clearPosition = $updateScript.IndexOf('Clear-KaevCmsBootstrapCache -ProjectRoot $ProjectRoot')
     $maintenancePosition = $updateScript.IndexOf('php artisan down --retry=60')
@@ -208,6 +216,10 @@ try {
     Assert-True (Test-Path -LiteralPath $applyScriptPath -PathType Leaf) "Current apply script is missing: apply-$releaseVersion.ps1"
     $applyScript = Get-Content -LiteralPath $applyScriptPath -Raw
     Assert-True (-not $applyScript.Contains('update.ps1 failed with exit code $LASTEXITCODE')) 'Apply script still relies on a stale LASTEXITCODE after invoking PowerShell.'
+    Assert-True ($applyScript.Contains('public\assets\admin\css\base.css')) 'Current apply script does not require the split administration stylesheets.'
+    Assert-True ($applyScript.Contains('public\assets\admin\css\catalogs.css')) 'Current apply script does not require the final administration stylesheet.'
+    Assert-True ($applyScript.Contains('public\assets\account\js\navigation.js')) 'Current apply script does not require the shared account navigation runtime.'
+    Assert-True (-not $applyScript.Contains('public\assets\admin\css\app.css')) 'Current apply script still requires the removed administration stylesheet.'
 
     Write-Host 'PowerShell update workflow tests completed successfully.' -ForegroundColor Green
 } finally {

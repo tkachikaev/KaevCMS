@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
-$fromVersion = '0.36.6'
-$toVersion = '0.36.7'
+$fromVersion = '0.37.3'
+$toVersion = '0.37.4'
 
 if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'artisan') -PathType Leaf)) {
     throw 'The KaevCMS project root could not be found.'
@@ -46,6 +46,7 @@ $requiredFiles = @(
     'deployment\windows\update.ps1'
     'deployment\windows\support\release-update-support.ps1'
     'deployment\windows\tests\update-workflow.ps1'
+    'deployment\windows\tests\account-theme-contract.php'
     'deployment\updates\build-package.php'
     'deployment\updates\deletions.json'
     'deployment\updates\tests-package-builder.php'
@@ -53,10 +54,12 @@ $requiredFiles = @(
     'app\Services\Updates\SystemUpdateInstaller.php'
     'app\Services\Updates\SystemUpdateRecovery.php'
     'app\Services\Updates\UpdateLock.php'
+    'app\Support\Themes\AccountThemeManager.php'
     'app\Support\Modules\ModuleValidator.php'
     'app\Support\Modules\ModuleManager.php'
     'app\Http\Controllers\Admin\ModuleController.php'
     'routes\admin.php'
+    'resources\views\admin\layouts\app.blade.php'
     'resources\views\admin\modules\index.blade.php'
     'resources\views\admin\themes\index.blade.php'
     'resources\views\admin\account-themes\index.blade.php'
@@ -82,16 +85,23 @@ $requiredFiles = @(
     'account-themes\kaev-aurelia\theme.json'
     'account-themes\kaev-aurelia\views\layouts\app.blade.php'
     'public\account-themes\luxury\assets\css\app.css'
-    'public\account-themes\luxury\assets\js\navigation.js'
     'public\account-themes\kaev-aurelia\assets\css\app.css'
-    'public\account-themes\kaev-aurelia\assets\js\navigation.js'
-    'public\assets\admin\css\app.css'
+    'public\assets\admin\css\base.css'
+    'public\assets\admin\css\layout.css'
+    'public\assets\admin\css\content.css'
+    'public\assets\admin\css\infrastructure.css'
+    'public\assets\admin\css\components.css'
+    'public\assets\admin\css\extensions.css'
+    'public\assets\admin\css\catalogs.css'
+    'public\assets\account\js\navigation.js'
     'public\assets\admin\js\daily-rewards.js'
     'public\assets\admin\js\promo-codes.js'
     'public\assets\modules\daily-rewards.css'
     'lang\en.json'
     'lang\ru.json'
     'modules\README.md'
+    'docs\en\DEVELOPMENT.md'
+    'docs\ru\DEVELOPMENT.md'
     'docs\en\MODULES.md'
     'docs\ru\MODULES.md'
     'docs\en\DAILY_REWARDS.md'
@@ -146,7 +156,7 @@ foreach ($requiredFile in $requiredFiles) {
 }
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix repairs the PowerShell update-workflow regression parser error.'
+Write-Host 'This hotfix completes the account-theme Pint and shared-runtime release contracts.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -159,4 +169,4 @@ Write-Host 'Web installer: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'VDS updater: php artisan kaevcms:update C:\path\to\KaevCMS-cumulative-update.zip'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'
-Write-Host 'Runtime functionality, modules, themes, dependencies, database schemas, game drivers, item catalogs, and reward-delivery schemas were not changed.'
+Write-Host 'Database schemas, module versions, theme versions, dependencies, game drivers, item catalogs, and reward-delivery schemas were not changed.'

@@ -45,7 +45,7 @@ class UpdatePathPolicyTest extends TestCase
             'application file' => ['core/app/Services/Example.php'],
             'environment template' => ['core/.env.example'],
             'migration' => ['core/database/migrations/2026_07_23_000000_example.php'],
-            'public asset' => ['public/assets/admin/css/app.css'],
+            'public asset' => ['public/assets/admin/css/base.css'],
             'uploads Apache protection' => ['public/uploads/.htaccess'],
             'uploads release placeholder' => ['public/uploads/.gitignore'],
         ];

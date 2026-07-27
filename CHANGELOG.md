@@ -1,10 +1,41 @@
 # Changelog
 
+## 0.37.4 - 2026-07-27
+
+- Fixed the remaining Laravel Pint `single_line_empty_body` violation in the standalone account-theme contract.
+- Replaced the stale release assertion that required the shared `public/assets/account` runtime to be deleted with an explicit preservation assertion.
+- Updated Windows and cumulative update metadata for the 0.37.3 to 0.37.4 hotfix. Runtime features, database schemas, modules, themes, dependencies, game drivers, item catalogs, and reward delivery were not changed.
+
+## 0.37.3 - 2026-07-27
+
+- Fixed the standalone account-theme contract formatting required by Laravel Pint.
+- Prevented the Windows updater from deleting the intentional shared account navigation runtime under `public/assets/account`.
+- Corrected the updater regression so the shared runtime is preserved while obsolete per-theme navigation copies remain removable. Runtime features, database schemas, modules, themes, dependencies, game drivers, item catalogs, and reward delivery were not changed.
+
+## 0.37.2 - 2026-07-27
+
+- Fixed the account navigation regression test so the intentional shared core runtime under `public/assets/account` is no longer classified as a legacy asset.
+- Replaced the remaining simple double-quoted test literal with a Pint-compatible single-quoted literal.
+- Reformatted the standalone account-theme contract to satisfy Pint while preserving clean-install bootstrap coverage.
+
+## 0.37.1 - 2026-07-27
+
+- Fixed clean installation, Composer package discovery, PHPStan bootstrap, and browser-test bootstrap after the account-theme navigation runtime was moved to the shared core asset.
+- Account themes now validate only theme-owned public CSS instead of requiring the removed per-theme `assets/js/navigation.js` file.
+- Added release regression coverage for the shared account runtime contract. Database schemas, module versions, theme versions, dependencies, game drivers, item catalogs, and reward delivery were not changed.
+
+## 0.37.0 - 2026-07-26
+
+- Split the 4,000-line administration stylesheet into seven ordered assets for base tokens, layout, content, infrastructure, shared components, extensions, and catalogues while preserving the previous rule order and declarations exactly.
+- Replaced two identical account-theme navigation scripts with one versioned shared runtime under `public/assets/account/js/navigation.js`; updated Luxury and Kaev Aurelia Account to 1.5.0 with a `cms_min` of 0.37.0.
+- Reformatted the Daily Rewards stylesheet into maintainable source form without changing selectors or declarations.
+- Added PHPUnit, Playwright, release-package, and Windows updater regressions for the split asset stack, shared account runtime, and removal of obsolete duplicated files.
+- Corrected the README and changelog baseline so the user-verified 0.36.7 parser hotfix is represented. Composer/npm locks, database schemas, module versions, game drivers, item catalogs, and reward-delivery schemas were not changed.
+
 ## 0.36.7 - 2026-07-26
 
-- Fixed a PowerShell parser error in `deployment/windows/tests/update-workflow.ps1` caused by an incorrectly quoted literal `@('0.34.9')` source fragment.
-- Replaced the fragile nested single-quote expression with a safely escaped literal variable assertion, allowing `quality.ps1` to parse and execute the update workflow regression again.
-- Runtime functionality, modules, themes, dependencies, database schemas, game drivers, item catalogs, and asset paths were not changed.
+- Fixed the PowerShell parser error in `deployment/windows/tests/update-workflow.ps1` by constructing the historical hard-coded recovery-list probe without invalid nested quote escaping.
+- Restored `quality.ps1` execution without changing runtime code, database schemas, modules, themes, game drivers, item catalogs, or reward delivery.
 
 ## 0.36.6 - 2026-07-26
 

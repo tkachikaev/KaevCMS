@@ -12,6 +12,16 @@ class BundledAureliaThemesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_fallback_account_theme_uses_the_shared_core_navigation_runtime(): void
+    {
+        $fallbackTheme = app(AccountThemeManager::class)->inspect('luxury');
+
+        $this->assertTrue($fallbackTheme['valid'], implode(PHP_EOL, $fallbackTheme['errors']));
+        $this->assertTrue($fallbackTheme['compatible'], implode(PHP_EOL, $fallbackTheme['errors']));
+        $this->assertFileExists(public_path('assets/account/js/navigation.js'));
+        $this->assertFileDoesNotExist(public_path('account-themes/luxury/assets/js/navigation.js'));
+    }
+
     public function test_bundled_aurelia_manifests_and_assets_are_valid(): void
     {
         $publicTheme = app(ThemeManager::class)->inspect('kaev-aurelia');
@@ -26,7 +36,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertSame('Kaev Aurelia Account', $accountTheme['name']);
-        $this->assertSame('1.4.1', $accountTheme['version']);
+        $this->assertSame('1.5.0', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
         foreach ($this->publicThemeFiles() as $file) {
@@ -41,7 +51,9 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertFileExists(public_path('themes/kaev-aurelia/assets/js/app.js'));
         $this->assertFileExists(public_path('themes/kaev-aurelia/assets/images/hero.webp'));
         $this->assertFileExists(public_path('account-themes/kaev-aurelia/assets/css/app.css'));
-        $this->assertFileExists(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
+        $this->assertFileExists(public_path('assets/account/js/navigation.js'));
+        $this->assertFileDoesNotExist(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
+        $this->assertFileDoesNotExist(public_path('account-themes/luxury/assets/js/navigation.js'));
         $this->assertFileExists(public_path('account-themes/kaev-aurelia/assets/images/hero.webp'));
 
         $accountCss = $this->readFile(public_path('account-themes/kaev-aurelia/assets/css/app.css'));
@@ -102,7 +114,7 @@ class BundledAureliaThemesTest extends TestCase
             ->get('/account')
             ->assertOk()
             ->assertSee('account-themes/kaev-aurelia/assets/css/app.css', false)
-            ->assertSee('account-themes/kaev-aurelia/assets/js/navigation.js', false)
+            ->assertSee('assets/account/js/navigation.js', false)
             ->assertSee('data-account-sidebar', false)
             ->assertSee('data-account-topbar', false)
             ->assertSee('Kaev Aurelia Account');

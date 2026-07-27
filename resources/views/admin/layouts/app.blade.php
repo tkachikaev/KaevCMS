@@ -7,7 +7,17 @@
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#090c10">
     <title>@yield('title', __('Control panel')) — {{ config('app.name') }}</title>
-    <link rel="stylesheet" href="{{ asset('assets/admin/css/app.css') }}?v={{ cms_version() }}" data-navigate-track>
+    @foreach ([
+        'base',
+        'layout',
+        'content',
+        'infrastructure',
+        'components',
+        'extensions',
+        'catalogs',
+    ] as $adminStylesheet)
+        <link rel="stylesheet" href="{{ asset('assets/admin/css/'.$adminStylesheet.'.css') }}?v={{ cms_version() }}" data-navigate-track>
+    @endforeach
     <script src="{{ asset('assets/admin/js/page-lifecycle.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     <script src="{{ asset('assets/admin/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     @livewireStyles

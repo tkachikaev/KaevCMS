@@ -11,7 +11,7 @@
     @endif
     <title>@yield('title', __('Personal account')) — {{ site_name() }}</title>
     <link rel="stylesheet" href="{{ account_theme_asset('assets/css/app.css') }}" data-navigate-track>
-    <script src="{{ account_theme_asset('assets/js/navigation.js') }}" defer data-navigate-track data-navigate-once></script>
+    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
 </head>

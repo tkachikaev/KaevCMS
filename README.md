@@ -1,4 +1,4 @@
-# KaevCMS 0.36.7
+# KaevCMS 0.37.4
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.36.7 fixes a PowerShell parser error in the Windows update workflow regression. The source-text assertion for the obsolete hard-coded recovery list now escapes the literal variable safely, so the quality gate can parse and execute the complete test script. Runtime functionality remains unchanged.
+Version 0.37.4 completes the release-contract hotfix. The standalone account-theme contract now uses Pint-compatible single-line empty bodies, and release metadata explicitly verifies that the shared `public/assets/account` runtime is preserved by Windows updates.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.36.7 исправляет ошибку синтаксического разбора PowerShell в регрессионном тесте Windows-обновления. Проверка исходного текста устаревшего жёстко заданного списка восстановления теперь безопасно экранирует литеральную переменную, поэтому quality-проверка может разобрать и выполнить весь сценарий. Рабочая функциональность не менялась.
+Версия 0.37.4 завершает исправление релизных контрактов. Автономный контракт тем теперь использует совместимые с Pint однострочные пустые тела, а release metadata явно проверяет сохранение общего runtime `public/assets/account` при Windows-обновлении.
 
 ### Требования
 
