@@ -2227,5 +2227,7 @@
     "Manage the password used to sign in to your KaevCMS account.": "Manage the password used to sign in to your KaevCMS account.",
     "KaevCMS account security": "KaevCMS account security",
     "Only the password used to sign in to the website changes. Game account passwords remain unchanged.": "Only the password used to sign in to the website changes. Game account passwords remain unchanged.",
-    "Enter your current password before setting a new one.": "Enter your current password before setting a new one."
+    "Enter your current password before setting a new one.": "Enter your current password before setting a new one.",
+    "This game login already exists and cannot be linked automatically.": "This game login already exists and cannot be linked automatically.",
+    "Game account creation is awaiting safe verification. An administrator can recover it by operation UUID.": "Game account creation is awaiting safe verification. An administrator can recover it by operation UUID."
 }

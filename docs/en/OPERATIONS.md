@@ -54,3 +54,34 @@ A failed queue write keeps or restores the reward in the web inventory. An uncer
 - operation UUID and GameServer/LoginServer ID where available;
 - exact command or administrator action that failed;
 - confirmation that `.env`, uploads, pending marker, and update backups were not removed.
+
+## Game-account creation is stuck in `pending` or ended as `failed`
+
+KaevCMS does not delete a local operation after an uncertain LoginServer result. The UUID, state, attempt count, and safe failure code are stored in `user_game_accounts`; the plaintext password is never retained. Do not insert an `accounts` row manually and do not change the state with SQL.
+
+List `pending` operations that have not changed for at least five minutes:
+
+```bash
+php artisan kaevcms:game-accounts-recover --older-than=300
+```
+
+Verify one operation without repeating INSERT:
+
+```bash
+php artisan kaevcms:game-accounts-recover OPERATION_UUID
+```
+
+The command reads LoginServer and applies these safe rules:
+
+- a matching row after a recorded write attempt becomes `active`;
+- a missing row becomes `failed` and is not recreated without explicit permission;
+- a password-hash or email mismatch remains `failed` with a conflict code and is never linked;
+- an unavailable LoginServer remains `pending`.
+
+Repeat INSERT only after the row is confirmed missing:
+
+```bash
+php artisan kaevcms:game-accounts-recover OPERATION_UUID --retry
+```
+
+Restore connectivity and verify the selected LoginServer before using `--retry`. Do not rotate `APP_KEY`: the encrypted proof of existing `pending/failed` operations would become unreadable. The command is not scheduled; an operator runs it only for a specific incident.

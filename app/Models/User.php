@@ -45,13 +45,15 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @return HasMany<UserGameAccount, $this> */
     public function gameAccountsCountingTowardLimit(): HasMany
     {
-        return $this->gameAccounts();
+        return $this->gameAccounts()
+            ->where('creation_status', '!=', UserGameAccount::STATUS_FAILED);
     }
 
     /** @return HasMany<UserGameAccount, $this> */
     public function availableGameAccounts(): HasMany
     {
         return $this->gameAccounts()
+            ->where('creation_status', UserGameAccount::STATUS_ACTIVE)
             ->whereNotNull('registration_game_server_id')
             ->whereHas('registrationGameServer');
     }

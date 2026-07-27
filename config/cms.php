@@ -113,6 +113,10 @@ return [
         'character_limit' => (int) env('EXTERNAL_DB_CHARACTER_LIMIT', 50),
     ],
 
+    'game_account_creation' => [
+        'processing_timeout_seconds' => 300,
+    ],
+
     'server' => [
         'name' => env('GAME_SERVER_NAME', 'L2Server x1'),
         'chronicle' => env('GAME_CHRONICLE', 'High Five'),

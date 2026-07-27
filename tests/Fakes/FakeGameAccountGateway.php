@@ -5,6 +5,9 @@ namespace Tests\Fakes;
 use App\Contracts\GameAccountGateway;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Support\GameAccounts\ExternalGameAccountState;
+use App\Support\GameAccounts\ExternalGameAccountWriteResult;
+use App\Support\GameAccounts\PreparedGameAccount;
 use RuntimeException;
 
 class FakeGameAccountGateway implements GameAccountGateway
@@ -12,7 +15,18 @@ class FakeGameAccountGateway implements GameAccountGateway
     /** @var array<string,bool> */
     public array $existing = [];
 
+    /** @var array<string,array{credential:string,email:string}> */
+    public array $externalAccounts = [];
+
     public bool $failCreate = false;
+
+    public bool $failCreateAfterWrite = false;
+
+    public bool $failInspect = false;
+
+    public bool $failInspectAfterCreate = false;
+
+    public bool $duplicateOnCreate = false;
 
     public bool $passwordChangeResult = true;
 
@@ -42,24 +56,67 @@ class FakeGameAccountGateway implements GameAccountGateway
         return $gameServer->driver === 'l2j_mobius';
     }
 
-    public function accountExists(LoginServer $loginServer, string $login): bool
+    public function prepareAccount(string $login, string $password, string $email): PreparedGameAccount
     {
-        return $this->existing[$loginServer->id.':'.strtolower($login)] ?? false;
+        return new PreparedGameAccount(trim($login), $password, strtolower(trim($email)));
     }
 
-    public function createAccount(LoginServer $loginServer, string $login, string $password, string $email): void
-    {
+    public function inspectPreparedAccount(
+        LoginServer $loginServer,
+        PreparedGameAccount $account,
+    ): ExternalGameAccountState {
+        if ($this->failInspect || ($this->failInspectAfterCreate && $this->created !== [])) {
+            throw new RuntimeException('external_inspection_failed');
+        }
+
+        $key = $this->key($loginServer, $account->login);
+        if (isset($this->externalAccounts[$key])) {
+            $stored = $this->externalAccounts[$key];
+
+            return hash_equals($stored['credential'], $account->credential)
+                && hash_equals($stored['email'], $account->email)
+                ? ExternalGameAccountState::Matching
+                : ExternalGameAccountState::Conflict;
+        }
+
+        return ($this->existing[$key] ?? false)
+            ? ExternalGameAccountState::Conflict
+            : ExternalGameAccountState::Missing;
+    }
+
+    public function createPreparedAccount(
+        LoginServer $loginServer,
+        PreparedGameAccount $account,
+    ): ExternalGameAccountWriteResult {
         if ($this->failCreate) {
             throw new RuntimeException('external_creation_failed');
         }
 
+        if ($this->duplicateOnCreate) {
+            $this->externalAccounts[$this->key($loginServer, $account->login)] = [
+                'credential' => $account->credential,
+                'email' => $account->email,
+            ];
+
+            return ExternalGameAccountWriteResult::AlreadyExists;
+        }
+
         $this->created[] = [
             'login_server_id' => $loginServer->id,
-            'login' => $login,
-            'password' => $password,
-            'email' => $email,
+            'login' => $account->login,
+            'password' => $account->credential,
+            'email' => $account->email,
         ];
-        $this->existing[$loginServer->id.':'.strtolower($login)] = true;
+        $this->externalAccounts[$this->key($loginServer, $account->login)] = [
+            'credential' => $account->credential,
+            'email' => $account->email,
+        ];
+
+        if ($this->failCreateAfterWrite) {
+            throw new RuntimeException('external_creation_timeout');
+        }
+
+        return ExternalGameAccountWriteResult::Created;
     }
 
     public function changePassword(LoginServer $loginServer, string $login, string $password): bool
@@ -96,5 +153,10 @@ class FakeGameAccountGateway implements GameAccountGateway
             'race' => (int) ($character['race'] ?? -1),
             'gender' => (int) ($character['gender'] ?? -1),
         ]), $this->charactersByServer[$gameServer->id] ?? []);
+    }
+
+    private function key(LoginServer $loginServer, string $login): string
+    {
+        return $loginServer->id.':'.strtolower($login);
     }
 }

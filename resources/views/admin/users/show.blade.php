@@ -54,12 +54,12 @@
             </div>
         </section>
         <section class="form-card user-action-card user-game-accounts-card">
-            <div class="user-game-accounts-heading"><h2>{{ __('Game data') }}</h2><span class="status-badge status-badge-muted">{{ $user->gameAccounts->count() }}</span></div>
-            @if($user->gameAccounts->isEmpty())
+            <div class="user-game-accounts-heading"><h2>{{ __('Game data') }}</h2><span class="status-badge status-badge-muted">{{ $user->availableGameAccounts->count() }}</span></div>
+            @if($user->availableGameAccounts->isEmpty())
                 <p>{{ __('The user has no linked game accounts yet.') }}</p>
             @else
                 <div class="user-game-accounts-list">
-                    @foreach($user->gameAccounts as $gameAccount)
+                    @foreach($user->availableGameAccounts as $gameAccount)
                         <div><strong>{{ $gameAccount->game_login }}</strong><span>{{ $gameAccount->registrationGameServer?->nameFor() ?? $gameAccount->loginServer->name }}</span></div>
                     @endforeach
                 </div>

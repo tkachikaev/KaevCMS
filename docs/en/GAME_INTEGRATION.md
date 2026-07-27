@@ -12,7 +12,11 @@ Connection tests and runtime queries use the same required-table and column cont
 
 ## Accounts and characters
 
-Players create linked game accounts through the configured LoginServer driver. Character pages query GameServer data with caching and short failure cooldowns. Account-profile avatars are separate from character avatars.
+Game-account creation is a durable operation with a unique UUID and `pending → active | failed` states. Before writing, KaevCMS verifies that the login is absent from LoginServer. After INSERT it reads `accounts` again and compares the login, driver-specific password hash, and normalized email. An already existing foreign account is therefore never linked automatically, even when the submitted values happen to match.
+
+If LoginServer commits the INSERT but the connection ends with a timeout, KaevCMS keeps the local operation. A repeated request or manual recovery verifies the external row first and activates the link without a second INSERT. Only an encrypted driver proof is retained for safe retry; plaintext passwords are never stored, and the proof is removed after activation. `pending` counts toward the quota, while `failed` does not. No permanent background reconcile is scheduled.
+
+Character pages use active links only and query GameServer data with caching and short failure cooldowns. Account-profile avatars are separate from character avatars. Recovery is documented in the [operations runbook](OPERATIONS.md#game-account-creation-is-stuck-in-pending-or-ended-as-failed).
 
 ## Reward queue
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.39.1 - 2026-07-27
+
+- Fixed the remaining Laravel Pint `class_attributes_separation` violation in `UserManagementTest` by removing the extra blank line between test methods. Runtime behavior, database schemas, dependencies, modules, themes, game drivers, and the 0.39.0 game-account reliability implementation were not changed.
+
+## 0.39.0 - 2026-07-27
+
+- Replaced the delete-on-error game-account flow with durable `pending`, `active`, and `failed` operations identified by a unique UUID.
+- Added idempotent retry and post-write LoginServer verification so a committed INSERT followed by a network timeout is activated without a second INSERT, while known duplicate-key races and pre-existing accounts are never linked automatically.
+- Added encrypted driver proof storage without plaintext passwords, operation leases, attempt/error diagnostics, quota-safe state handling, and active-only player/admin account visibility.
+- Added the `kaevcms:game-accounts-recover` command for stale-pending diagnostics, verification-only recovery, and explicit safe retry; no permanent background reconcile was scheduled.
+- Added Russian and English operator runbooks, a database migration for operation state, and PHPUnit regression coverage for timeout, duplicate, foreign-account, retry, quota-race, and stale-operation scenarios. Dependencies, bundled module/theme versions, item catalogs, and reward delivery were not changed.
+
 ## 0.38.2 - 2026-07-27
 
 - Corrected the release metadata regression to validate legacy removals across the accumulated `deletions.json` history instead of requiring every historical path to be duplicated in the current release delta.

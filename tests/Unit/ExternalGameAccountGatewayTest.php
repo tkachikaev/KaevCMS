@@ -38,4 +38,15 @@ class ExternalGameAccountGatewayTest extends TestCase
         $this->assertTrue($gateway->supportsGameServer($supported));
         $this->assertFalse($gateway->supportsGameServer($legacyIdentifier));
     }
+
+    public function test_it_prepares_a_normalized_driver_proof_without_plaintext_password(): void
+    {
+        $gateway = app(ExternalGameAccountGateway::class);
+        $prepared = $gateway->prepareAccount(' Player01 ', 'StrongPass1', 'PLAYER@EXAMPLE.COM ');
+
+        $this->assertSame('Player01', $prepared->login);
+        $this->assertSame('player@example.com', $prepared->email);
+        $this->assertNotSame('StrongPass1', $prepared->credential);
+        $this->assertNotSame('', $prepared->credential);
+    }
 }

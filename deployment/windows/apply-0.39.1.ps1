@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix corrects the release metadata regression for delta-based deletion history.'
+Write-Host 'This hotfix corrects the remaining Pint formatting violation in the 0.39.0 test suite.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -41,4 +41,4 @@ Write-Host 'Windows quality: .\deployment\windows\quality.ps1'
 Write-Host 'Web installer: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'
-Write-Host 'Runtime code, database schemas, dependencies, modules, themes, game drivers, item catalogs, and reward-delivery schemas were not changed.'
+Write-Host 'Runtime behavior, database schemas, dependencies, modules, themes, game drivers, item catalogs, and reward delivery were not changed.'

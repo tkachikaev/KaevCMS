@@ -5,6 +5,8 @@ namespace Tests\Fakes;
 use App\Models\LoginServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Support\GameAccounts\ExternalGameAccountState;
+use App\Support\GameAccounts\PreparedGameAccount;
 
 class RaceInjectingGameAccountGateway extends FakeGameAccountGateway
 {
@@ -15,8 +17,10 @@ class RaceInjectingGameAccountGateway extends FakeGameAccountGateway
         private readonly LoginServer $loginServer,
     ) {}
 
-    public function accountExists(LoginServer $loginServer, string $login): bool
-    {
+    public function inspectPreparedAccount(
+        LoginServer $loginServer,
+        PreparedGameAccount $account,
+    ): ExternalGameAccountState {
         if (! $this->injected && $loginServer->is($this->loginServer)) {
             $this->injected = true;
 
@@ -29,6 +33,6 @@ class RaceInjectingGameAccountGateway extends FakeGameAccountGateway
                 ]);
         }
 
-        return parent::accountExists($loginServer, $login);
+        return parent::inspectPreparedAccount($loginServer, $account);
     }
 }

@@ -8,10 +8,14 @@ use App\Models\LoginServer;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\Servers\MySqlSessionQueryTimeout;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Support\GameAccounts\ExternalGameAccountState;
+use App\Support\GameAccounts\ExternalGameAccountWriteResult;
+use App\Support\GameAccounts\PreparedGameAccount;
 use Carbon\CarbonImmutable;
 use Closure;
 use DateTimeInterface;
 use Illuminate\Database\Connection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PDO;
@@ -42,25 +46,66 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             && $this->supportsLoginServer($gameServer->loginServer);
     }
 
-    public function accountExists(LoginServer $loginServer, string $login): bool
+    public function prepareAccount(string $login, string $password, string $email): PreparedGameAccount
     {
-        return $this->withLoginConnection(
-            $loginServer,
-            static fn (Connection $database): bool => $database->table('accounts')
-                ->where('login', $login)
-                ->exists(),
+        return new PreparedGameAccount(
+            login: trim($login),
+            credential: $this->passwordEncoder->encode($password),
+            email: Str::lower(trim($email)),
         );
     }
 
-    public function createAccount(LoginServer $loginServer, string $login, string $password, string $email): void
-    {
-        $this->withLoginConnection($loginServer, function (Connection $database) use ($login, $password, $email): void {
-            $database->table('accounts')->insert([
-                'login' => $login,
-                'password' => $this->passwordEncoder->encode($password),
-                'email' => Str::lower(trim($email)),
-            ]);
-        });
+    public function inspectPreparedAccount(
+        LoginServer $loginServer,
+        PreparedGameAccount $account,
+    ): ExternalGameAccountState {
+        return $this->withLoginConnection(
+            $loginServer,
+            static function (Connection $database) use ($account): ExternalGameAccountState {
+                $stored = $database->table('accounts')
+                    ->where('login', $account->login)
+                    ->first(['password', 'email']);
+
+                if ($stored === null) {
+                    return ExternalGameAccountState::Missing;
+                }
+
+                $password = is_scalar($stored->password ?? null) ? (string) $stored->password : '';
+                $email = is_scalar($stored->email ?? null)
+                    ? Str::lower(trim((string) $stored->email))
+                    : '';
+
+                return hash_equals($account->credential, $password) && hash_equals($account->email, $email)
+                    ? ExternalGameAccountState::Matching
+                    : ExternalGameAccountState::Conflict;
+            },
+        );
+    }
+
+    public function createPreparedAccount(
+        LoginServer $loginServer,
+        PreparedGameAccount $account,
+    ): ExternalGameAccountWriteResult {
+        return $this->withLoginConnection(
+            $loginServer,
+            function (Connection $database) use ($account): ExternalGameAccountWriteResult {
+                try {
+                    $database->table('accounts')->insert([
+                        'login' => $account->login,
+                        'password' => $account->credential,
+                        'email' => $account->email,
+                    ]);
+                } catch (QueryException $exception) {
+                    if ($this->isDuplicateKey($exception)) {
+                        return ExternalGameAccountWriteResult::AlreadyExists;
+                    }
+
+                    throw $exception;
+                }
+
+                return ExternalGameAccountWriteResult::Created;
+            },
+        );
     }
 
     public function changePassword(LoginServer $loginServer, string $login, string $password): bool
@@ -273,6 +318,13 @@ final class ExternalGameAccountGateway implements GameAccountGateway
                 // A cleanup failure must not replace the database operation result.
             }
         }
+    }
+
+    private function isDuplicateKey(QueryException $exception): bool
+    {
+        $driverCode = $exception->errorInfo[1] ?? null;
+
+        return (string) $exception->getCode() === '23000' && (int) $driverCode === 1062;
     }
 
     private function characterCreatedAtColumn(GameServer $gameServer): ?string

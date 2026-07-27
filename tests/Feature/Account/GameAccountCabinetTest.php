@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UserCharacterPreference;
 use App\Models\UserGameAccount;
 use App\Services\GameAccounts\AccountCharacterDirectory;
+use App\Services\GameAccounts\GameAccountQuota;
 use App\Services\GameAccountSettings;
 use App\Services\GameServerDeletionImpact;
 use App\Services\GameServerSettings;
@@ -320,6 +321,10 @@ class GameAccountCabinetTest extends TestCase
         $this->assertSame('Player01', $link->game_login);
         $this->assertSame('player01', $link->normalized_login);
         $this->assertSame($gameServer->id, $link->registration_game_server_id);
+        $this->assertSame(UserGameAccount::STATUS_ACTIVE, $link->creation_status);
+        $this->assertNotNull($link->creation_uuid);
+        $this->assertSame(1, $link->creation_attempts);
+        $this->assertNull($link->creation_credential);
         $this->assertSame('StrongPass1', $this->gateway->created[0]['password']);
     }
 
@@ -386,10 +391,16 @@ class GameAccountCabinetTest extends TestCase
             'game_password_confirmation' => 'StrongPass1',
         ])->assertSessionHasErrors('game_login');
 
-        $this->assertDatabaseCount('user_game_accounts', 0);
+        $this->assertDatabaseCount('user_game_accounts', 1);
+        $this->assertDatabaseHas('user_game_accounts', [
+            'normalized_login' => 'player01',
+            'creation_status' => UserGameAccount::STATUS_FAILED,
+            'creation_last_error' => 'external_account_exists',
+        ]);
+        $this->assertSame(0, app(GameAccountQuota::class)->count($user));
     }
 
-    public function test_external_creation_failure_rolls_back_the_local_link(): void
+    public function test_external_creation_failure_keeps_a_recoverable_failed_operation(): void
     {
         $user = $this->user();
         [, $gameServer] = $this->servers();
@@ -403,7 +414,13 @@ class GameAccountCabinetTest extends TestCase
         ])->assertSessionHasErrors('game_login')
             ->assertSessionMissingInput(['game_password', 'game_password_confirmation']);
 
-        $this->assertDatabaseCount('user_game_accounts', 0);
+        $this->assertDatabaseCount('user_game_accounts', 1);
+        $this->assertDatabaseHas('user_game_accounts', [
+            'normalized_login' => 'failed01',
+            'creation_status' => UserGameAccount::STATUS_FAILED,
+            'creation_attempts' => 1,
+            'creation_last_error' => 'external_create_failed',
+        ]);
         $audit = AuditLog::query()->where('action', 'user.game_account_creation_failed')->firstOrFail();
         $this->assertStringNotContainsString('StrongPass1', json_encode($audit->details, JSON_THROW_ON_ERROR));
     }
@@ -541,12 +558,20 @@ class GameAccountCabinetTest extends TestCase
             'game_password_confirmation' => 'StrongPass1',
         ])->assertSessionHasErrors('game_login');
 
-        $this->assertDatabaseCount('user_game_accounts', 1);
+        $this->assertDatabaseCount('user_game_accounts', 2);
         $this->assertDatabaseHas('user_game_accounts', [
             'user_id' => $user->id,
             'login_server_id' => $loginServer->id,
             'registration_game_server_id' => null,
             'normalized_login' => 'concurrent01',
+            'creation_status' => UserGameAccount::STATUS_ACTIVE,
+        ]);
+        $this->assertDatabaseHas('user_game_accounts', [
+            'user_id' => $user->id,
+            'login_server_id' => $loginServer->id,
+            'normalized_login' => 'second01',
+            'creation_status' => UserGameAccount::STATUS_FAILED,
+            'creation_last_error' => 'game_account_limit_reached',
         ]);
         $this->assertSame([], $gateway->created);
     }

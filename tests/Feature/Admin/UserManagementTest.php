@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Admin;
 use App\Models\User;
+use App\Models\UserGameAccount;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
 use App\Services\AuditLogger;
@@ -11,11 +12,12 @@ use App\Services\MailSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Tests\Concerns\InteractsWithServerFixtures;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
 {
-    use RefreshDatabase;
+    use InteractsWithServerFixtures, RefreshDatabase;
 
     public function test_user_management_requires_administrator_authentication(): void
     {
@@ -83,6 +85,37 @@ class UserManagementTest extends TestCase
             ->assertSee('Email подтверждён')
             ->assertSee('Подтверждён email')
             ->assertSee('Игровые данные');
+    }
+
+    public function test_user_detail_does_not_present_pending_creation_as_a_linked_game_account(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        [$loginServer, $gameServer] = $this->freshMobiusServerPair();
+        $uuid = (string) str()->uuid();
+
+        $account = new UserGameAccount;
+        $account->forceFill([
+            'user_id' => $user->id,
+            'login_server_id' => $loginServer->id,
+            'registration_game_server_id' => $gameServer->id,
+            'game_login' => 'PendingAdmin01',
+            'normalized_login' => 'pendingadmin01',
+            'created_via_cms' => true,
+            'creation_uuid' => $uuid,
+            'creation_status' => UserGameAccount::STATUS_PENDING,
+            'creation_credential' => 'prepared-proof',
+            'creation_email' => $user->email,
+            'creation_attempts' => 1,
+            'creation_last_error' => 'external_verification_unavailable',
+        ])->save();
+
+        $this->actingAs($admin, 'admin')
+            ->get('/admin/users/'.$user->id)
+            ->assertOk()
+            ->assertSee('Игровые данные')
+            ->assertDontSee('PendingAdmin01')
+            ->assertDontSee($uuid);
     }
 
     public function test_administrator_can_disable_and_enable_user_without_deleting_account(): void

@@ -212,6 +212,32 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('npm audit --audit-level=high', $workflow);
     }
 
+    public function test_reliable_game_account_creation_artifacts_are_shipped(): void
+    {
+        $this->assertFileExists(app_path('Console/Commands/RecoverGameAccountCreationCommand.php'));
+        $this->assertFileExists(app_path('Services/GameAccounts/GameAccountProvisioner.php'));
+        $this->assertFileExists(app_path('Support/GameAccounts/ExternalGameAccountState.php'));
+        $this->assertFileExists(app_path('Support/GameAccounts/ExternalGameAccountWriteResult.php'));
+        $this->assertFileExists(app_path('Support/GameAccounts/GameAccountCreationFailure.php'));
+        $this->assertFileExists(database_path('migrations/2026_07_27_000000_add_creation_state_to_user_game_accounts.php'));
+        $this->assertFileExists(base_path('tests/Feature/Account/GameAccountCreationReliabilityTest.php'));
+
+        $command = $this->readReleaseFile('app/Console/Commands/RecoverGameAccountCreationCommand.php');
+        $this->assertStringContainsString('kaevcms:game-accounts-recover', $command);
+        $this->assertStringContainsString('{--retry', $command);
+        $this->assertStringContainsString('{--older-than=300', $command);
+
+        $russianRunbook = $this->readReleaseFile('docs/ru/OPERATIONS.md');
+        $englishRunbook = $this->readReleaseFile('docs/en/OPERATIONS.md');
+        foreach ([$russianRunbook, $englishRunbook] as $runbook) {
+            $this->assertStringContainsString('kaevcms:game-accounts-recover', $runbook);
+            $this->assertStringContainsString('--retry', $runbook);
+        }
+
+        $consoleRoutes = $this->readReleaseFile('routes/console.php');
+        $this->assertStringNotContainsString('game-accounts-recover', $consoleRoutes);
+    }
+
     public function test_module_foundation_release_artifacts_are_shipped(): void
     {
         $this->assertFileExists(app_path('Providers/ModuleServiceProvider.php'));
