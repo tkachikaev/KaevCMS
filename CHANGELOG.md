@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.2 - 2026-07-27
+
+- Fixed PHPStan `nullCoalesce.expr` errors in `RecoverGameAccountCreationCommand` by using the non-null `UserGameAccount` relations declared by the model contract directly. Game-account recovery behavior, database schemas, dependencies, modules, themes, game drivers, item catalogs, and reward delivery were not changed.
+
 ## 0.39.1 - 2026-07-27
 
 - Fixed the remaining Laravel Pint `class_attributes_separation` violation in `UserManagementTest` by removing the extra blank line between test methods. Runtime behavior, database schemas, dependencies, modules, themes, game drivers, and the 0.39.0 game-account reliability implementation were not changed.

@@ -76,8 +76,8 @@ final class RecoverGameAccountCreationCommand extends Command
             $operations->map(static fn (UserGameAccount $account): array => [
                 $account->creation_uuid ?? '-',
                 $account->game_login,
-                $account->user?->email ?? '#'.$account->user_id,
-                $account->loginServer?->name ?? '#'.$account->login_server_id,
+                $account->user->email,
+                $account->loginServer->name,
                 $account->creation_attempts,
                 $account->updated_at?->toDateTimeString() ?? '-',
                 $account->creation_last_error ?? '-',

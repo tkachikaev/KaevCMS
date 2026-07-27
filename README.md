@@ -1,4 +1,4 @@
-# KaevCMS 0.39.1
+# KaevCMS 0.39.2
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.38.2 is a Foundation Hardening test-contract hotfix. It validates accumulated release deletions without forcing historical paths to be duplicated in every new version entry.
+Version 0.39.2 is a quality-gate hotfix for reliable game-account creation. It corrects PHPStan relation handling in the recovery command without changing its behavior.
 
 ### Requirements
 
