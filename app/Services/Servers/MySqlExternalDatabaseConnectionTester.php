@@ -13,6 +13,8 @@ use Throwable;
 
 final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseConnectionTester
 {
+    public function __construct(private readonly MySqlSessionQueryTimeout $queryTimeout) {}
+
     /**
      * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $connection
      * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>  $requirements
@@ -21,7 +23,9 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
      *     compatible:bool|null,
      *     server_version:string|null,
      *     error:string|null,
-     *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>}>
+     *     error_class:string|null,
+     *     latency_ms:int|null,
+     *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>}>
      * }
      */
     public function test(array $connection, array $requirements, bool $driverReady): array
@@ -51,7 +55,12 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 throw new RuntimeException('Unsupported external database connection type.');
             }
 
-            $serverVersion = $database->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION);
+            $serverVersionValue = $database->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION);
+            $serverVersion = is_scalar($serverVersionValue) ? (string) $serverVersionValue : null;
+            $this->queryTimeout->apply($database, $serverVersion);
+            $queryStartedAt = hrtime(true);
+            $database->selectOne('select 1 as kaevcms_health');
+            $latencyMs = $this->millisecondsSince($queryStartedAt);
             $schema = $database->getSchemaBuilder();
             $checks = [];
             $compatible = $driverReady;
@@ -69,11 +78,12 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                             $missingColumns[] = $column;
                         }
                     }
+                }
 
-                    $anyColumns = $requirement['any_columns'] ?? [];
-                    if ($anyColumns !== [] && ! $this->containsAnyColumn($tableColumns, $anyColumns)) {
-                        $missingColumns[] = implode(' / ', $anyColumns);
-                    }
+                $anyColumns = $requirement['any_columns'] ?? [];
+                $matchedAnyColumns = $this->matchedColumns($tableColumns, $anyColumns);
+                if ($tableExists && $anyColumns !== [] && $matchedAnyColumns === []) {
+                    $missingColumns[] = implode(' / ', $anyColumns);
                 }
 
                 if ($requirement['required'] && (! $tableExists || $missingColumns !== [])) {
@@ -85,18 +95,21 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                     'required' => $requirement['required'],
                     'table_exists' => $tableExists,
                     'missing_columns' => $missingColumns,
+                    'matched_any_columns' => $matchedAnyColumns,
                 ];
             }
 
             return [
                 'connected' => true,
                 'compatible' => $driverReady ? $compatible : null,
-                'server_version' => is_scalar($serverVersion) ? (string) $serverVersion : null,
+                'server_version' => $serverVersion,
                 'error' => null,
+                'error_class' => null,
+                'latency_ms' => $latencyMs,
                 'checks' => $checks,
             ];
         } catch (Throwable $exception) {
-            Log::warning('External game database connection test failed.', [
+            Log::warning('External database connection test failed.', [
                 'exception' => $exception::class,
                 'code' => (string) $exception->getCode(),
             ]);
@@ -106,6 +119,8 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 'compatible' => false,
                 'server_version' => null,
                 'error' => 'connection_failed',
+                'error_class' => $exception::class,
+                'latency_ms' => null,
                 'checks' => [],
             ];
         } finally {
@@ -120,16 +135,24 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
     /**
      * @param  list<string>  $tableColumns
      * @param  list<string>  $alternatives
+     * @return list<string>
      */
-    private function containsAnyColumn(array $tableColumns, array $alternatives): bool
+    private function matchedColumns(array $tableColumns, array $alternatives): array
     {
+        $matched = [];
+
         foreach ($alternatives as $column) {
             if (in_array(strtolower($column), $tableColumns, true)) {
-                return true;
+                $matched[] = $column;
             }
         }
 
-        return false;
+        return $matched;
+    }
+
+    private function millisecondsSince(int $startedAt): int
+    {
+        return max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000));
     }
 
     private function collationFor(string $charset): string

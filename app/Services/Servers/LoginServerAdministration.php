@@ -158,6 +158,13 @@ final class LoginServerAdministration
             'monitor_failures' => 0,
             'monitor_checked_at' => null,
             'monitor_last_online_at' => null,
+            'database_last_success_at' => null,
+            'database_last_error_class' => null,
+            'database_last_error_at' => null,
+            'database_latency_ms' => null,
+            'database_schema_profile' => null,
+            'database_capabilities' => null,
+            'database_table_checks' => null,
         ];
 
         if (array_key_exists('service_host', $values)) {
@@ -175,8 +182,8 @@ final class LoginServerAdministration
     {
         try {
             $this->databaseState->apply($server, $this->tester->testLoginServer($server));
-        } catch (Throwable) {
-            $this->databaseState->markUnknown($server, 'check_failed');
+        } catch (Throwable $exception) {
+            $this->databaseState->markUnknown($server, 'check_failed', $exception::class);
         }
     }
 

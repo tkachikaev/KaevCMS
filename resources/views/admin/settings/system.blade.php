@@ -4,6 +4,7 @@
 @section('description', __('Versions, environment and KaevCMS component status.'))
 
 @section('content')
+<div class="system-page">
 @include('admin.settings._system_tabs')
 
 <section class="system-overview">
@@ -131,6 +132,8 @@
     </section>
 </div>
 
+@include('admin.settings._external_database_diagnostics')
+
 <section class="form-card system-components-card">
     <div class="system-section-heading">
         <div>
@@ -244,6 +247,7 @@
     <pre data-system-report-preview>{{ $system['report'] }}</pre>
     <textarea class="system-report-source" data-system-report readonly aria-hidden="true" tabindex="-1">{{ $system['report'] }}</textarea>
 </section>
+</div>
 @endsection
 
 @push('scripts')

@@ -79,7 +79,35 @@ class ServerAdministrationTest extends TestCase
         $this->assertInstanceOf(LoginServer::class, $server);
         $this->assertSame('unknown', $server->database_status);
         $this->assertSame('check_failed', $server->database_error);
-        $this->assertNull($server->database_checked_at);
+        $this->assertNotNull($server->database_checked_at);
+        $this->assertSame(RuntimeException::class, $server->database_last_error_class);
+        $this->assertNotNull($server->database_last_error_at);
+    }
+
+    public function test_internal_database_check_failure_records_safe_game_server_error_class(): void
+    {
+        [$loginServer, $gameServer] = $this->freshMobiusServerPair();
+        $this->app->instance(ExternalDatabaseConnectionTester::class, new class implements ExternalDatabaseConnectionTester
+        {
+            public function test(array $connection, array $requirements, bool $driverReady): array
+            {
+                throw new RuntimeException('Temporary game tester failure');
+            }
+        });
+
+        app(GameServerAdministration::class)->updateConnection($gameServer, [
+            'login_server_id' => $loginServer->id,
+            'driver' => 'l2j_mobius',
+            'use_login_server_connection' => true,
+            'database_password' => '',
+        ]);
+
+        $gameServer->refresh();
+        $this->assertSame('unknown', $gameServer->database_status);
+        $this->assertSame('check_failed', $gameServer->database_error);
+        $this->assertNotNull($gameServer->database_checked_at);
+        $this->assertSame(RuntimeException::class, $gameServer->database_last_error_class);
+        $this->assertNotNull($gameServer->database_last_error_at);
     }
 
     public function test_game_server_profile_update_preserves_existing_connection(): void

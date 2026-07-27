@@ -105,7 +105,7 @@ final class ServerMonitor
                 'code' => (string) $exception->getCode(),
             ]);
 
-            $this->databaseState->markUnknown($server, 'check_failed');
+            $this->databaseState->markUnknown($server, 'check_failed', $exception::class);
 
             return false;
         }
@@ -122,7 +122,7 @@ final class ServerMonitor
                 'code' => (string) $exception->getCode(),
             ]);
 
-            $this->databaseState->markUnknown($server, 'check_failed');
+            $this->databaseState->markUnknown($server, 'check_failed', $exception::class);
 
             return false;
         }

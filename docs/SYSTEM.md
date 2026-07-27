@@ -2,13 +2,13 @@
 
 ## English
 
-The system page reports version, scheduler, queues, encryption health, database safety, and proxy configuration.
+The system page reports version, scheduler, queues, encryption health, database safety, proxy configuration, and redacted LoginServer/GameServer diagnostics. External diagnostics include availability, last success, safe error class, SELECT 1 latency, schema profile, capabilities, and required/optional table state.
 
 Read the current guide: [ADMINISTRATION.md](en/ADMINISTRATION.md).
 
 ## Русский
 
-Системная страница показывает версию, планировщик, очереди, шифрование, безопасность базы и proxy.
+Системная страница показывает версию, планировщик, очереди, шифрование, безопасность базы, proxy и обезличенную диагностику LoginServer/GameServer: доступность, последнее успешное подключение, безопасный класс ошибки, задержку SELECT 1, профиль схемы, возможности драйвера и состояние обязательных/необязательных таблиц.
 
 Актуальная инструкция: [ADMINISTRATION.md](ru/ADMINISTRATION.md).
 

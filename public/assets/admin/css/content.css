@@ -844,6 +844,34 @@
 .system-report-source { position: fixed; left: -10000px; width: 1px; height: 1px; opacity: 0; }
 .system-copy-state { color: var(--success); font-size: 12px; font-weight: 700; }
 .system-copy-state[data-type="error"] { color: var(--danger); }
+.system-external-databases-card { min-width: 0; max-width: 100%; margin-top: 16px; }
+.system-external-databases-hint,
+.system-external-databases-boundary { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.system-external-databases-hint { margin-bottom: 16px; }
+.system-external-databases-boundary { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.system-external-database-group + .system-external-database-group { margin-top: 20px; }
+.system-external-database-group > h3 { margin: 0 0 10px; font-size: 13px; }
+.system-external-database-list { display: grid; gap: 12px; min-width: 0; }
+.system-external-database { min-width: 0; max-width: 100%; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: #f9fafb; }
+.system-external-database-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.system-external-database-header > div { min-width: 0; }
+.system-external-database-header strong,
+.system-external-database-header small { display: block; overflow-wrap: anywhere; }
+.system-external-database-header small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.system-external-database-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+.system-external-database-section { display: grid; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.system-external-database-section > strong { font-size: 12px; }
+.system-external-database-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.system-external-database-tags .status-badge { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+.system-external-database-empty { color: var(--muted); font-size: 11px; }
+.system-external-database-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.system-external-database-table { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.system-external-database-table > div { min-width: 0; }
+.system-external-database-table code,
+.system-external-database-table small { display: block; overflow-wrap: anywhere; }
+.system-external-database-table code { font-weight: 700; }
+.system-external-database-table small { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+.system-external-database-table .status-badge { flex: 0 0 auto; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 
 @media (max-width: 1180px) {
     .system-information-grid { grid-template-columns: 1fr 1fr; }
@@ -865,6 +893,11 @@
     .system-component-row { grid-template-columns: 10px minmax(0, 1fr); }
     .system-component-row .status-badge { grid-column: 2; justify-self: start; }
     .system-section-heading { flex-direction: column; }
+    .system-external-database-header { align-items: stretch; flex-direction: column; }
+    .system-external-database-header .status-badge { align-self: flex-start; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+    .system-external-database-details,
+    .system-external-database-tables { grid-template-columns: 1fr; }
+    .system-external-database-table { align-items: flex-start; flex-direction: column; }
 }
 
 /* Administrators 0.9.0 */
@@ -1441,4 +1474,134 @@
 .input-prefix-row input { border: 0; box-shadow: none !important; }
 .seo-fields { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
 .seo-fields h3 { margin: 0 0 16px; font-size: 14px; }
+
+
+/* External database diagnostics mobile containment 0.41.1 */
+.system-overview,
+.system-information-grid,
+.system-components-card,
+.system-extensions-card,
+.system-report-card,
+.system-external-databases-card,
+.system-external-database-group,
+.system-external-database-list,
+.system-external-database,
+.system-external-database-details,
+.system-external-database-section,
+.system-external-database-tags,
+.system-external-database-tables,
+.system-external-database-table {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.system-external-database-table > div,
+.system-external-database-table code,
+.system-external-database-table small,
+.system-report-card pre {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.system-report-card pre {
+    width: 100%;
+}
+
+@media (max-width: 760px) {
+    .system-section-heading,
+    .system-section-heading > div,
+    .system-section-heading > form,
+    .system-overview-actions,
+    .system-runtime-statuses,
+    .system-runtime-metrics,
+    .system-component-list,
+    .system-extension-grid {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .system-section-heading > form .button,
+    .system-overview-actions .button {
+        width: 100%;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .dashboard-runtime-status,
+    .dashboard-runtime-metrics > div,
+    .system-component-row,
+    .system-extension {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
+/* System information intrinsic-width containment 0.41.2 */
+.system-extension > div {
+    min-width: 0;
+}
+
+.system-extension code,
+.system-extension small {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.system-extension .status-badge {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+@media (max-width: 760px) {
+    .system-extension {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+/* System information mobile width boundary 0.41.3 */
+.system-page {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 760px) {
+    .system-page > *,
+    .system-page .form-card,
+    .system-page .system-definition-list,
+    .system-page .system-definition-list > div,
+    .system-page .system-definition-list dd,
+    .system-page .system-section-heading,
+    .system-page .system-section-heading > div,
+    .system-page .dashboard-runtime-status,
+    .system-page .dashboard-runtime-status > div,
+    .system-page .dashboard-runtime-metrics > div,
+    .system-page .system-component-row,
+    .system-page .system-component-row > div,
+    .system-page .system-extension,
+    .system-page .system-extension > div {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .system-page code,
+    .system-page pre,
+    .system-page small,
+    .system-page .status-badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .system-page .status-badge {
+        white-space: normal;
+    }
+}
 

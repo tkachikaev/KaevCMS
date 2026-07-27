@@ -23,6 +23,13 @@ use Illuminate\Support\Carbon;
  * @property string $database_status
  * @property string|null $database_error
  * @property Carbon|null $database_checked_at
+ * @property Carbon|null $database_last_success_at
+ * @property string|null $database_last_error_class
+ * @property Carbon|null $database_last_error_at
+ * @property int|null $database_latency_ms
+ * @property string|null $database_schema_profile
+ * @property list<string>|null $database_capabilities
+ * @property list<array<string,mixed>>|null $database_table_checks
  * @property string $monitor_status
  * @property int $monitor_failures
  * @property Carbon|null $monitor_checked_at
@@ -46,6 +53,13 @@ class LoginServer extends Model
         'database_status',
         'database_error',
         'database_checked_at',
+        'database_last_success_at',
+        'database_last_error_class',
+        'database_last_error_at',
+        'database_latency_ms',
+        'database_schema_profile',
+        'database_capabilities',
+        'database_table_checks',
         'monitor_status',
         'monitor_failures',
         'monitor_checked_at',
@@ -63,6 +77,11 @@ class LoginServer extends Model
             'database_password' => 'encrypted',
             'service_port' => 'integer',
             'database_checked_at' => 'datetime',
+            'database_last_success_at' => 'datetime',
+            'database_last_error_at' => 'datetime',
+            'database_latency_ms' => 'integer',
+            'database_capabilities' => 'array',
+            'database_table_checks' => 'array',
             'monitor_failures' => 'integer',
             'monitor_checked_at' => 'datetime',
             'monitor_last_online_at' => 'datetime',

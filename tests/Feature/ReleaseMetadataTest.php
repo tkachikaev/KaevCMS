@@ -596,6 +596,26 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('/common/', $avatarGuide);
     }
 
+    public function test_external_database_diagnostics_artifacts_are_shipped(): void
+    {
+        $this->assertFileExists(app_path('Services/Servers/ExternalDatabaseDiagnostics.php'));
+        $this->assertFileExists(app_path('Services/Servers/ExternalDatabaseInformation.php'));
+        $this->assertFileExists(app_path('Exceptions/ExternalDatabaseDriverUnavailable.php'));
+        $this->assertFileExists(app_path('Exceptions/ExternalDatabaseSchemaMismatch.php'));
+        $this->assertFileExists(database_path('migrations/2026_07_27_200000_add_external_database_diagnostics_to_servers.php'));
+        $this->assertFileExists(resource_path('views/admin/settings/_external_database_diagnostics.blade.php'));
+        $this->assertFileExists(lang_path('en/external_databases.php'));
+        $this->assertFileExists(lang_path('ru/external_databases.php'));
+
+        $migration = $this->readReleaseFile('database/migrations/2026_07_27_200000_add_external_database_diagnostics_to_servers.php');
+        $this->assertStringContainsString("'database_last_success_at'", $migration);
+        $this->assertStringContainsString("'database_last_error_class'", $migration);
+        $this->assertStringContainsString("'database_latency_ms'", $migration);
+        $this->assertStringContainsString("'database_schema_profile'", $migration);
+        $this->assertStringContainsString("'database_capabilities'", $migration);
+        $this->assertStringContainsString("'database_table_checks'", $migration);
+    }
+
     public function test_account_avatar_release_artifacts_are_shipped(): void
     {
         $this->assertFileExists(app_path('Services/Account/AccountAvatarCatalog.php'));

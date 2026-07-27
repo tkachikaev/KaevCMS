@@ -18,6 +18,12 @@ class ServerDriverRegistryTest extends TestCase
         $this->assertSame(__('L2J Mobius — Interlude and newer'), $driver['label']);
         $this->assertTrue($driver['ready']);
         $this->assertSame(2106, $driver['service_port']);
+        $this->assertSame('mobius_interlude_plus', $driver['schema_profile']);
+        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $driver['capabilities']);
+        $this->assertSame([
+            'account_data' => 'account_data',
+            'accounts_ipauth' => 'ip_authorization',
+        ], $driver['optional_capabilities']);
         $this->assertSame([
             [
                 'table' => 'accounts',
@@ -45,6 +51,9 @@ class ServerDriverRegistryTest extends TestCase
         $this->assertSame(__('L2J Mobius Legacy — C1/C4'), $driver['label']);
         $this->assertTrue($driver['ready']);
         $this->assertSame(2106, $driver['service_port']);
+        $this->assertSame('mobius_legacy', $driver['schema_profile']);
+        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $driver['capabilities']);
+        $this->assertSame([], $driver['optional_capabilities']);
         $this->assertSame([
             [
                 'table' => 'accounts',
@@ -77,6 +86,11 @@ class ServerDriverRegistryTest extends TestCase
             'value' => 1,
         ], $driver['online_count']);
         $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'], $driver['statistics']);
+        $this->assertSame(['level', 'pvp', 'pk', 'play_time'], $driver['capabilities']);
+        $this->assertSame([
+            'heroes' => 'heroes',
+            'castle' => 'castles',
+        ], $driver['optional_capabilities']);
         $this->assertSame([
             [
                 'table' => 'characters',
@@ -139,10 +153,13 @@ class ServerDriverRegistryTest extends TestCase
 
         $this->assertNotNull($loginDriver);
         $this->assertFalse($loginDriver['ready']);
+        $this->assertSame('unknown', $loginDriver['schema_profile']);
+        $this->assertSame([], $loginDriver['capabilities']);
         $this->assertSame([], $loginDriver['requirements']);
 
         $this->assertNotNull($gameDriver);
         $this->assertFalse($gameDriver['ready']);
+        $this->assertSame([], $gameDriver['capabilities']);
         $this->assertSame([], $gameDriver['requirements']);
     }
 }

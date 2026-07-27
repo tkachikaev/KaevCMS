@@ -318,6 +318,30 @@ test('system information reports APP_KEY encryption health without exposing secr
     await expect(page.getByText('APP_KEY encryption')).toHaveCount(0);
 });
 
+test('system information shows safe external database diagnostics on mobile', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/system');
+
+    const diagnostics = page.getByTestId('external-database-diagnostics');
+    await expect(diagnostics).toBeVisible();
+    await expect(diagnostics.getByRole('heading', { name: 'Диагностика внешних баз', exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('Browser LoginServer', { exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('Browser World', { exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('17 мс', { exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('Mobius legacy', { exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('Создание аккаунтов', { exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('characters', { exact: true })).toBeVisible();
+    await expect(diagnostics.getByRole('button', { name: 'Проверить внешние базы', exact: true })).toBeVisible();
+    await expect(page.getByText('browser_test', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('browser_test_unsupported', { exact: true })).toHaveCount(0);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(diagnostics).toBeVisible();
+    await expect(page.locator('.admin-account-copy')).toBeHidden();
+    await expect(page.locator('.admin-account-chevron')).toBeHidden();
+    const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    expect(hasHorizontalOverflow).toBe(false);
+});
+
 test('removed legacy dashboard endpoint returns not found', async ({ page }) => {
     const response = await gotoWithLocalNetworkRetry(page, '/admin/dashboard');
 

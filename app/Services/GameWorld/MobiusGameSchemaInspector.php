@@ -80,6 +80,32 @@ final class MobiusGameSchemaInspector
             throw new RuntimeException('The Mobius characters table must contain either karma or reputation.');
         }
 
+        $profile = $this->profileForColumns(
+            hasKarma: $hasKarma,
+            hasReputation: $hasReputation,
+            heroesAvailable: $this->tableHasColumns($schema, 'heroes', self::HERO_COLUMNS),
+            castlesAvailable: $this->tableHasColumns($schema, 'castle', self::CASTLE_COLUMNS),
+            chronicle: $chronicle,
+        );
+
+        if (! $profile instanceof MobiusGameSchemaProfile) {
+            throw new RuntimeException('The Mobius characters table must contain either karma or reputation.');
+        }
+
+        return $profile;
+    }
+
+    public function profileForColumns(
+        bool $hasKarma,
+        bool $hasReputation,
+        bool $heroesAvailable,
+        bool $castlesAvailable,
+        ?string $chronicle = null,
+    ): ?MobiusGameSchemaProfile {
+        if (! $hasKarma && ! $hasReputation) {
+            return null;
+        }
+
         if ($hasKarma && $hasReputation) {
             $reputationColumn = $this->preferredProfile($chronicle) === MobiusGameSchemaProfile::LEGACY
                 ? 'karma'
@@ -93,8 +119,8 @@ final class MobiusGameSchemaInspector
                 ? MobiusGameSchemaProfile::LEGACY
                 : MobiusGameSchemaProfile::MODERN,
             reputationColumn: $reputationColumn,
-            heroesAvailable: $this->tableHasColumns($schema, 'heroes', self::HERO_COLUMNS),
-            castlesAvailable: $this->tableHasColumns($schema, 'castle', self::CASTLE_COLUMNS),
+            heroesAvailable: $heroesAvailable,
+            castlesAvailable: $castlesAvailable,
         );
     }
 

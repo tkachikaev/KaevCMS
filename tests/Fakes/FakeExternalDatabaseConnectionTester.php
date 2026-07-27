@@ -9,17 +9,22 @@ class FakeExternalDatabaseConnectionTester implements ExternalDatabaseConnection
     /** @var array{host:string,port:int,database:string,username:string,password:string,charset:string}|null */
     public ?array $connection = null;
 
-    /** @var list<array{table:string,columns:list<string>,required:bool}> */
+    /** @var list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}> */
     public array $requirements = [];
 
     public ?bool $driverReady = null;
 
-    /** @var array{connected:bool,compatible:bool|null,server_version:string|null,error:string|null,checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>}>} */
+    /** @var list<array<string,mixed>> */
+    public array $reports = [];
+
+    /** @var array<string,mixed> */
     public array $report = [
         'connected' => true,
         'compatible' => true,
         'server_version' => '10.4.32-MariaDB',
         'error' => null,
+        'error_class' => null,
+        'latency_ms' => 12,
         'checks' => [],
     ];
 
@@ -28,6 +33,12 @@ class FakeExternalDatabaseConnectionTester implements ExternalDatabaseConnection
         $this->connection = $connection;
         $this->requirements = $requirements;
         $this->driverReady = $driverReady;
+
+        if ($this->reports !== []) {
+            $report = array_shift($this->reports);
+
+            return is_array($report) ? $report : $this->report;
+        }
 
         return $this->report;
     }

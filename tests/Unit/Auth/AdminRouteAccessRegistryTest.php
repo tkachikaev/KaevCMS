@@ -100,6 +100,18 @@ class AdminRouteAccessRegistryTest extends TestCase
                 AdminPermission::SecurityManage,
                 null,
             ],
+            'external database diagnostics view' => [
+                'admin.settings.system',
+                'GET',
+                AdminPermission::SystemView,
+                AdminPermission::SettingsManage,
+            ],
+            'external database diagnostics refresh' => [
+                'admin.settings.system.external-databases.refresh',
+                'POST',
+                AdminPermission::SettingsManage,
+                null,
+            ],
             'system updates view preserves existing non-read-only decision' => [
                 'admin.settings.system.updates.index',
                 'GET',

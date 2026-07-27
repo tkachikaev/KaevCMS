@@ -1,9 +1,43 @@
 # Changelog
 
+## 0.41.5 - 2026-07-27
+
+- Fixed the real mobile System information overflow in the administrator header. The generic `.admin-user span` rule had higher specificity than the mobile account-copy hiding rule, leaving the administrator name, email, role, and chevron visible at 390 px.
+- Increased the mobile selector specificity to `.admin-user .admin-account-copy` and `.admin-user .admin-account-chevron`; restored the browser regression to the original `documentElement` width check and added direct assertions that both header elements are hidden.
+- Reverted the incorrect 0.41.4 scrollbar-gutter workaround. External database diagnostics, migrations, driver profiles, stored snapshots, modules, and game-database schemas were not changed.
+
+## 0.41.4 - 2026-07-27
+
+- Corrected the mobile System information browser regression on Windows: the assertion now measures the body content box, avoiding a false horizontal-overflow result caused by the classic vertical scrollbar gutter in `documentElement` metrics.
+- Removed the temporary `overflow-x: clip` containment so genuine horizontal content overflow remains visible to the browser regression instead of being hidden.
+- Synchronized the release header and documentation version that were missed in the 0.41.3 packaging metadata. Diagnostics behavior, migrations, driver profiles, stored snapshots, modules, and game databases were not changed.
+
+## 0.41.3 - 2026-07-27
+
+- Isolated the external-database diagnostics feature fixture from the GameServer created by the clean-install migration.
+- Added the final System information mobile width containment pass for long diagnostic values. Diagnostics behavior, migrations, driver profiles, stored snapshots, modules, and game databases were not changed.
+
+## 0.41.2 - 2026-07-27
+
+- Fixed the remaining external-database diagnostics regressions: the feature fixture now creates one explicit Mobius LoginServer/GameServer pair, and MySQL tester mocks match the intentional single PDO server-version read.
+- Removed redundant scalar checks from `MySqlSessionQueryTimeout`, resolving the remaining PHPStan errors without changing timeout selection or connection behavior.
+- Fixed mobile System information overflow at the PHP-extension cards by allowing long extension names and status labels to wrap inside the card instead of expanding the document. The diagnostics migration, driver profiles, stored snapshot format, modules, and game-database schemas were not changed.
+
+## 0.41.1 - 2026-07-27
+
+- Corrected the diagnostics route permission contract, translation keys, MySQL server-version reuse, test fixtures, Pint formatting, and the first mobile containment pass discovered while validating 0.41.0. The diagnostics schema and stored snapshot format were not changed.
+
+## 0.41.0 - 2026-07-27
+
+- Extended the existing LoginServer/GameServer monitor and connection tester with a persisted, redacted diagnostic snapshot: database availability, last successful connection, safe error class/time, last successful `SELECT 1` latency, active schema profile, driver capabilities, and required/optional table state.
+- Added data-driven LoginServer and GameServer capability metadata, automatic Mobius legacy/modern game-schema detection, and explicit safe domain error classes for unavailable drivers and incompatible schemas.
+- Added a manual diagnostics action and mobile-safe cards to System information. The page and copied support report exclude hosts, database names, usernames, passwords, DSNs, absolute paths, raw SQL, and exception messages.
+- Preserved the last successful schema/capability snapshot across temporary network failures, reset stale diagnostics when connection settings change, and reused the existing monitor instead of introducing another scheduled reconciliation mechanism.
+- Added Russian/English operator guidance plus PHPUnit and Playwright regressions for schema profiles, optional capabilities, safe failure persistence, secret redaction, route permissions, and the mobile diagnostics interface. Bundled modules, themes, reward states, and game-database schemas were not changed.
+
 ## 0.40.3 - 2026-07-27
 
-- Fixed the actual mobile overflow source in the administration shell: the persisted sidebar wrapper and its horizontally scrollable menu now have a zero minimum width and remain constrained to the single-column mobile grid track. The menu still scrolls internally, while the document width stays within the viewport. Reward states, database schemas, module versions, migrations, and delivery behavior were not changed.
-
+- Fixed the remaining mobile administrator overflow at its real source: the persisted sidebar wrapper no longer passes the full horizontal menu width into the mobile grid track. The menu remains internally scrollable while the document width stays within the viewport. Reward behavior, database schemas, module versions, and migrations were not changed.
 ## 0.40.2 - 2026-07-27
 
 - Fixed the remaining Laravel Pint `not_operator_with_successor_space` violation in `BrowserTestSeeder`.

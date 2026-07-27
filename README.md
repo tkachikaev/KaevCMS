@@ -1,4 +1,4 @@
-# KaevCMS 0.40.3
+# KaevCMS 0.41.5
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.40.3 fixes the real source of the mobile reward-journal overflow: the persisted administration navigation wrapper could inherit the full minimum width of its horizontally scrollable menu and widen the page. Reward states, module versions, migrations, and delivery behavior remain unchanged.
+Version 0.41.5 includes the safe persisted diagnostics for LoginServer and GameServer databases introduced in 0.41.0 and fixes the mobile administrator-header overflow caused by CSS selector specificity. System information now shows database availability, last successful connection, safe error class, last successful SELECT 1 latency, active schema profile, driver capabilities, and required/optional table state without exposing credentials, DSNs, database names, or raw exception messages.
 
 ### Requirements
 
@@ -94,7 +94,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.40.3 исправляет настоящий источник горизонтального overflow мобильного журнала наград: persist-обёртка административной навигации могла наследовать полную минимальную ширину прокручиваемого меню и расширять всю страницу. Статусы очереди, версии модулей, миграции и логика выдачи не менялись.
+Версия 0.41.5 включает безопасную сохраняемую диагностику баз LoginServer и GameServer, добавленную в 0.41.0, и исправляет мобильное переполнение шапки администратора, вызванное специфичностью CSS-селекторов. В системной информации отображаются доступность базы, последнее успешное подключение, безопасный класс ошибки, задержка последнего успешного SELECT 1, активный профиль схемы, возможности драйвера и состояние обязательных/необязательных таблиц без раскрытия реквизитов, DSN, названий баз и сырых сообщений исключений.
 
 ### Требования
 

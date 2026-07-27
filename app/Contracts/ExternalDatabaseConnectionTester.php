@@ -12,7 +12,9 @@ interface ExternalDatabaseConnectionTester
      *     compatible:bool|null,
      *     server_version:string|null,
      *     error:string|null,
-     *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>}>
+     *     error_class:string|null,
+     *     latency_ms:int|null,
+     *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>}>
      * }
      */
     public function test(array $connection, array $requirements, bool $driverReady): array;

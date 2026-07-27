@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$SkipTests
 )
 
@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release contains the persisted mobile administration menu inside its grid track so the reward journal cannot widen the page.'
+Write-Host 'This release fixes the mobile administrator-header overflow caused by CSS selector specificity.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

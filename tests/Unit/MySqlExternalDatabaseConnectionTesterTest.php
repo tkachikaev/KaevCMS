@@ -46,6 +46,8 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
         $this->assertFalse($report['connected']);
         $this->assertFalse($report['compatible']);
         $this->assertSame('connection_failed', $report['error']);
+        $this->assertSame(RuntimeException::class, $report['error_class']);
+        $this->assertNull($report['latency_ms']);
         $this->assertSame([], $report['checks']);
     }
 
@@ -57,6 +59,8 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
 
         $pdo->shouldReceive('getAttribute')->once()->with(PDO::ATTR_SERVER_VERSION)->andReturn('8.4.0');
         $database->shouldReceive('getPdo')->once()->andReturn($pdo);
+        $database->shouldReceive('unprepared')->once()->with('SET SESSION max_execution_time = 3000')->andReturnTrue();
+        $database->shouldReceive('selectOne')->once()->with('select 1 as kaevcms_health')->andReturn((object) ['kaevcms_health' => 1]);
         $database->shouldReceive('getSchemaBuilder')->once()->andReturn($schema);
         $schema->shouldReceive('hasTable')->once()->with('characters')->andReturnTrue();
         $schema->shouldReceive('getColumnListing')->once()->with('characters')->andReturn(['charId', 'reputation']);
@@ -74,6 +78,8 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
         $this->assertTrue($report['connected']);
         $this->assertTrue($report['compatible']);
         $this->assertSame([], $report['checks'][0]['missing_columns']);
+        $this->assertSame(['reputation'], $report['checks'][0]['matched_any_columns']);
+        $this->assertIsInt($report['latency_ms']);
     }
 
     public function test_any_column_requirement_rejects_schema_without_karma_or_reputation(): void
@@ -84,6 +90,8 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
 
         $pdo->shouldReceive('getAttribute')->once()->with(PDO::ATTR_SERVER_VERSION)->andReturn('8.4.0');
         $database->shouldReceive('getPdo')->once()->andReturn($pdo);
+        $database->shouldReceive('unprepared')->once()->with('SET SESSION max_execution_time = 3000')->andReturnTrue();
+        $database->shouldReceive('selectOne')->once()->with('select 1 as kaevcms_health')->andReturn((object) ['kaevcms_health' => 1]);
         $database->shouldReceive('getSchemaBuilder')->once()->andReturn($schema);
         $schema->shouldReceive('hasTable')->once()->with('characters')->andReturnTrue();
         $schema->shouldReceive('getColumnListing')->once()->with('characters')->andReturn(['charId']);
@@ -101,6 +109,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
         $this->assertTrue($report['connected']);
         $this->assertFalse($report['compatible']);
         $this->assertSame(['karma / reputation'], $report['checks'][0]['missing_columns']);
+        $this->assertSame([], $report['checks'][0]['matched_any_columns']);
     }
 
     /** @return array{host:string,port:int,database:string,username:string,password:string,charset:string} */

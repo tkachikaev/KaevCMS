@@ -195,8 +195,8 @@
 
 @media (max-width: 900px) {
     .admin-account-menu > summary { min-width: 0; padding: 5px; }
-    .admin-account-copy,
-    .admin-account-chevron { display: none; }
+    .admin-user .admin-account-copy,
+    .admin-user .admin-account-chevron { display: none; }
     .admin-account-dropdown { min-width: 240px; }
     .administrator-row { grid-template-columns: minmax(0, 1fr) auto; }
     .administrator-row > div:nth-child(4) { grid-column: 2; grid-row: 2; }

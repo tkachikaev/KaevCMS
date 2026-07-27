@@ -9,18 +9,15 @@ use Throwable;
 
 final class MySqlSessionQueryTimeout
 {
-    public function apply(Connection $database): bool
+    public function apply(Connection $database, ?string $serverVersion = null): bool
     {
         $timeoutMilliseconds = $this->timeoutMilliseconds();
-        $serverVersion = $database->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION);
-        $statement = $this->statementFor(
-            is_scalar($serverVersion) ? (string) $serverVersion : '',
-            $timeoutMilliseconds,
-        );
+        $serverVersion ??= $this->serverVersion($database);
+        $statement = $this->statementFor($serverVersion, $timeoutMilliseconds);
 
         if ($statement === null) {
             Log::warning('External database query timeout is unsupported by the server.', [
-                'server_version' => is_scalar($serverVersion) ? (string) $serverVersion : null,
+                'server_version' => $serverVersion !== '' ? $serverVersion : null,
                 'timeout_ms' => $timeoutMilliseconds,
             ]);
 
@@ -32,12 +29,17 @@ final class MySqlSessionQueryTimeout
         } catch (Throwable $exception) {
             Log::warning('External database query timeout could not be configured.', [
                 'exception' => $exception::class,
-                'server_version' => is_scalar($serverVersion) ? (string) $serverVersion : null,
+                'server_version' => $serverVersion !== '' ? $serverVersion : null,
                 'timeout_ms' => $timeoutMilliseconds,
             ]);
 
             return false;
         }
+    }
+
+    private function serverVersion(Connection $database): string
+    {
+        return (string) $database->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION);
     }
 
     public function statementFor(string $serverVersion, int $timeoutMilliseconds): ?string

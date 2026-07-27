@@ -22,7 +22,15 @@ final class AdminRouteAccessRegistry
             $this->exact('admin.logout', AdminPermission::ProfileManage),
             $this->exact('admin.settings.admin-panel.admin-path.update', AdminPermission::AdminPathManage),
             $this->exact('admin.settings.admin-panel.monitoring.update', AdminPermission::SettingsManage),
-            $this->exact('admin.settings.system', AdminPermission::SystemView),
+            $this->exact(
+                'admin.settings.system',
+                AdminPermission::SystemView,
+                AdminPermission::SettingsManage,
+            ),
+            $this->exact(
+                'admin.settings.system.external-databases.refresh',
+                AdminPermission::SettingsManage,
+            ),
             $this->prefix('admin.account.', AdminPermission::ProfileManage),
             $this->prefix('admin.news.', AdminPermission::ContentManage),
             $this->prefix('admin.pages.', AdminPermission::ContentManage),

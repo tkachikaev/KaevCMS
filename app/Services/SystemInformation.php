@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Services\Infrastructure\RuntimeDiagnostics;
 use App\Services\Security\EncryptionHealth;
+use App\Services\Servers\ExternalDatabaseInformation;
 use App\Support\KaevCMS;
 use App\Support\PasswordHashing;
 use App\Support\TrustedProxyConfiguration;
@@ -21,6 +22,7 @@ final class SystemInformation
         private readonly MailSettings $mailSettings,
         private readonly RuntimeDiagnostics $runtimeDiagnostics,
         private readonly EncryptionHealth $encryptionHealth,
+        private readonly ExternalDatabaseInformation $externalDatabaseInformation,
     ) {}
 
     /**
@@ -34,6 +36,7 @@ final class SystemInformation
         $runtime = $this->runtimeDiagnostics->overview();
         $encryption = $this->encryptionHealth->inspect();
         $components = $this->componentInformation($database, $proxy, $runtime, $encryption);
+        $externalDatabases = $this->externalDatabaseInformation->collect();
 
         $information = [
             'cms' => [
@@ -67,6 +70,7 @@ final class SystemInformation
             'runtime' => $runtime,
             'components' => $components,
             'extensions' => $extensions,
+            'external_databases' => $externalDatabases,
         ];
 
         $information['report'] = $this->buildReport($information);
@@ -569,6 +573,8 @@ final class SystemInformation
             )) ?: 'NONE']),
             __('Mail: :value', ['value' => $environment['mail']]),
             __('Logging: :value', ['value' => $environment['logging']]),
+            '',
+            ...$this->externalDatabaseInformation->reportLines($information['external_databases']),
         ]);
     }
 }

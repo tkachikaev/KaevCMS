@@ -30,11 +30,13 @@ Players receive a safe availability error; credentials, DSNs, SQL text, and stac
 
 Check in this order:
 
-1. Open **Administration → System information** and the relevant LoginServer or GameServer connection screen.
-2. Run the built-in connection test.
-3. Verify host, port, database name, username, firewall rules, routing, and TLS settings.
-4. Verify that the selected driver/schema profile matches the external database.
-5. Restore connectivity, then repeat the original operation. Do not create or edit account links or reward rows directly merely because the external database was temporarily unavailable.
+1. Open **Administration → System information → External database diagnostics** and use **Check external databases**.
+2. Compare database availability, last successful connection, and `SELECT 1` latency. An available game-service port does not prove database availability, and vice versa.
+3. When the database is available, verify the active profile, driver capabilities, and required-table state. A missing optional table disables only its related capability.
+4. For an unavailable database, use the safe error class and failure time, then verify host, port, database name, username, firewall, routing, and TLS in the server connection settings.
+5. Run diagnostics again after the fix, then repeat the original operation. Do not create or edit account links or reward rows directly merely because the external database was temporarily unavailable.
+
+The snapshot preserves the last successful schema state after a later network failure, helping distinguish schema changes from temporary outages. The diagnostic action does not modify the game database: it runs `SELECT 1` and reads table metadata only.
 
 Never publish `.env`, database passwords, full DSNs, or raw Laravel stack traces when requesting support. Share the release number, operation time, safe error class/code, server ID, and the redacted diagnostic log.
 
