@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Rewards\RewardQueueDiagnostic;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +37,28 @@ class RewardDelivery extends Model
     public const STATUS_FAILED = 'failed';
 
     public const STATUS_REVIEW = 'review';
+
+    /** @var list<string> */
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_QUEUED,
+        self::STATUS_FAILED,
+        self::STATUS_REVIEW,
+    ];
+
+    /** @var list<string> */
+    public const RECONCILABLE_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_REVIEW,
+    ];
+
+    /** @var array<string,list<string>> */
+    public const ALLOWED_TRANSITIONS = [
+        self::STATUS_PENDING => [self::STATUS_QUEUED, self::STATUS_FAILED, self::STATUS_REVIEW],
+        self::STATUS_REVIEW => [self::STATUS_QUEUED, self::STATUS_FAILED, self::STATUS_REVIEW],
+        self::STATUS_QUEUED => [],
+        self::STATUS_FAILED => [],
+    ];
 
     protected $fillable = [
         'operation_uuid',
@@ -88,6 +111,26 @@ class RewardDelivery extends Model
         return $this->hasMany(RewardDeliveryItem::class);
     }
 
+    public function canReconcile(): bool
+    {
+        return in_array($this->status, self::RECONCILABLE_STATUSES, true);
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, self::ALLOWED_TRANSITIONS[$this->status] ?? [], true);
+    }
+
+    public function failureMessage(): string
+    {
+        return RewardQueueDiagnostic::messageFor($this->failure_code);
+    }
+
+    public function failureAction(): string
+    {
+        return RewardQueueDiagnostic::actionFor($this->failure_code);
+    }
+
     public function statusLabel(): string
     {
         return self::statusLabelFor($this->status);
@@ -96,11 +139,11 @@ class RewardDelivery extends Model
     public static function statusLabelFor(string $status): string
     {
         return match ($status) {
-            self::STATUS_PENDING => __('Preparing transfer'),
-            self::STATUS_QUEUED => __('Transferred to GameServer queue'),
-            self::STATUS_FAILED => __('Failed'),
-            self::STATUS_REVIEW => __('Needs review'),
-            default => __('Unknown'),
+            self::STATUS_PENDING => __('rewards.status.pending.label'),
+            self::STATUS_QUEUED => __('rewards.status.queued.label'),
+            self::STATUS_FAILED => __('rewards.status.failed.label'),
+            self::STATUS_REVIEW => __('rewards.status.review.label'),
+            default => __('rewards.status.unknown.label'),
         };
     }
 }

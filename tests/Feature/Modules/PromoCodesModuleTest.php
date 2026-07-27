@@ -48,7 +48,7 @@ class PromoCodesModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_promo_codes', 'deleted_at'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
-            'version' => '1.2.2',
+            'version' => '1.3.0',
             'enabled' => true,
         ]);
 
@@ -470,9 +470,40 @@ class PromoCodesModuleTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->get('/admin/extensions/promo-codes/activations')
             ->assertOk()
-            ->assertSee('Адена × 100')
-            ->assertSee('ID 57')
+            ->assertSee('Адена')
+            ->assertSee('ID 57 · × 100')
             ->assertDontSee('ID 4037');
+    }
+
+    public function test_activation_journal_shows_operation_uuid_item_icon_name_and_server(): void
+    {
+        $server = GameServer::factory()->create(['name' => 'Journal World']);
+        $user = User::factory()->create();
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $promoCode = $this->createPromoCode($server, [['item_id' => 57, 'amount' => 100]]);
+        $root = storage_path('framework/testing/game-assets-'.Str::uuid());
+        File::ensureDirectoryExists($root.'/items/common');
+        File::put($root.'/items/common/57.webp', 'icon');
+        config()->set('cms.game_assets.uploads_path', $root);
+
+        try {
+            $this->activate($user, $promoCode, (string) Str::uuid())->assertSessionHas('status');
+            $activation = PromoCodeActivation::query()->with('rewardGrant')->firstOrFail();
+            $operationUuid = $activation->rewardGrant?->operation_uuid;
+            $this->assertNotNull($operationUuid);
+
+            $this->actingAs($owner, 'admin')
+                ->get('/admin/extensions/promo-codes/activations')
+                ->assertOk()
+                ->assertSee('data-testid="promo-activation-row"', false)
+                ->assertSee((string) $operationUuid)
+                ->assertSee('Journal World')
+                ->assertSee(__('module-promo-codes::messages.server_id', ['id' => $server->id]))
+                ->assertSee('Адена')
+                ->assertSee('/uploads/game-assets/items/common/57.webp', false);
+        } finally {
+            File::deleteDirectory($root);
+        }
     }
 
     public function test_owner_can_delete_promo_code_without_losing_activation_history_or_granted_rewards(): void
@@ -519,8 +550,8 @@ class PromoCodesModuleTest extends TestCase
             ->get('/admin/extensions/promo-codes/activations')
             ->assertOk()
             ->assertSee('DELETE-ME')
-            ->assertSee('Адена × 100')
-            ->assertSee('ID 57');
+            ->assertSee('Адена')
+            ->assertSee('ID 57 · × 100');
 
         $this->activate($user, $promoCode, (string) Str::uuid())
             ->assertSessionHasErrors('code');

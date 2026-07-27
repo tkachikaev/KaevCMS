@@ -38,14 +38,25 @@ Check in this order:
 
 Never publish `.env`, database passwords, full DSNs, or raw Laravel stack traces when requesting support. Share the release number, operation time, safe error class/code, server ID, and the redacted diagnostic log.
 
-## Reward queue unavailable or uncertain
+## Reward queue `review` or `failed`
 
-A failed queue write keeps or restores the reward in the web inventory. An uncertain write is placed in `review` and must not be reissued manually before reconciliation.
+KaevCMS and the external consumer have separate states. In the CMS, `queued` only confirms that the immutable rows exist in `kaev_reward_queue`; it does not confirm character delivery. Consumer states are documented in `integrations/reward-queue/README.md`.
 
-1. Restore the GameServer database connection and verify `kaev_reward_queue` using the supplied installation SQL.
-2. Open **Administration → Reward queue** and run reconciliation for the affected operation.
-3. Use the operation UUID, GameServer ID, user, character, and status to correlate the CMS audit log with the external queue.
-4. Do not delete a `review` delivery or grant the items manually until the queue result is known.
+For `review`:
+
+1. Do not release the reserved web-inventory items and do not deliver them manually.
+2. Open **Administration → Reward queue**, filter by the affected GameServer, and read the localized diagnostic and recommended action.
+3. Restore GameServer database connectivity. The live queue check distinguishes a missing table, an unsupported schema, and an unavailable database.
+4. Search the external table by the exact `operation_uuid`/`request_uuid` and compare every `line_number`, target account, character, item ID, and amount.
+5. Use **Check again** only after connectivity is restored. A complete match changes the CMS operation to `queued`; confirmed absence changes it to `failed` and returns the items.
+
+For `failed`:
+
+- `reward_queue_write_failed` means KaevCMS confirmed that no matching rows exist and returned the items to the web inventory. A new transfer is safe after the queue problem is fixed.
+- `reward_queue_payload_conflict` remains `review`, not `failed`, because rows exist with a different immutable payload. Do not delete, alter, or deliver either side blindly.
+- consumer-side rows with status `failed` still prove that the CMS write reached the external queue. They are investigated with `integrations/reward-queue/problematic.sql`; the CMS must not create a second operation with the same UUID.
+
+Use the CMS operation UUID, reward-grant operation UUID, GameServer ID, inventory grant ID, and item composition to correlate the reward journals with the audit log. Preserve application logs and the external consumer log. Never include database passwords or raw connection strings in a support report.
 
 ## Information to preserve for support
 

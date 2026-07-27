@@ -473,13 +473,21 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('backdrop-filter:blur(22px)', $this->readReleaseFile('public/account-themes/luxury/assets/css/app.css'));
         $this->assertStringContainsString('backdrop-filter:blur(22px)', $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css'));
 
+        $dailyRewardsManifest = json_decode(
+            $this->readReleaseFile('modules/daily-rewards/module.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
+        $this->assertSame('1.3.0', $dailyRewardsManifest['version']);
+
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),
             true,
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.2.2', $manifest['version']);
+        $this->assertSame('1.3.0', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 
@@ -558,7 +566,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertSame('etc_adena_i00', $shineMakerCatalog[57]['icon']);
 
         $rewardJournal = $this->readReleaseFile('resources/views/admin/rewards/index.blade.php');
-        $this->assertStringContainsString('@section(\'title\', __(\'Reward queue\'))', $rewardJournal);
+        $this->assertStringContainsString("@section('title', __('rewards.queue.journal.title'))", $rewardJournal);
         $this->assertStringContainsString('audit-table reward-queue-table', $rewardJournal);
         $this->assertStringContainsString('ID {{ $item->item_id }}', $rewardJournal);
 

@@ -13,18 +13,30 @@
 @else
     <div class="admin-card-list content-list">
         @foreach($claims as $claim)
-            <article class="admin-card-row content-row">
+            <article class="admin-card-row content-row" data-testid="daily-reward-claim-row">
                 <div class="content-row-main">
                     <strong class="content-row-title">{{ $claim->user_email }}</strong>
-                    <p>{{ $claim->game_account_login }} · {{ $claim->gameServer->nameFor() }}</p>
+                    <p>{{ $claim->game_account_login }} · {{ $claim->gameServer->nameFor() }} · {{ __('module-daily-rewards::messages.server_id', ['id' => $claim->game_server_id]) }}</p>
                     <div class="content-row-meta">
                         <span>{{ $claim->calendar->periodLabel() }} · {{ __('module-daily-rewards::messages.day_number', ['day' => $claim->day->day_number]) }}</span>
                         <span>{{ $claim->reward_date?->format('d.m.Y') }}</span>
                         <span>{{ $claim->claimed_at?->format('d.m.Y H:i') }}</span>
                     </div>
-                    <div class="content-row-meta">
-                        @foreach((array) $claim->items_snapshot as $item)
-                            <span>{{ $item['name'] ?? __('module-daily-rewards::messages.unknown_item') }} × {{ number_format((int) ($item['amount'] ?? 0), 0, '.', ' ') }} <small>ID {{ (int) ($item['item_id'] ?? 0) }}</small></span>
+                    @if($claim->rewardGrant?->operation_uuid)
+                        <div class="content-row-meta"><span>{{ __('module-daily-rewards::messages.operation_uuid') }}: <code>{{ $claim->rewardGrant->operation_uuid }}</code></span></div>
+                    @endif
+                    <div class="reward-journal-items">
+                        @foreach($claimItems[$claim->id] ?? [] as $item)
+                            <div class="reward-journal-item">
+                                <span class="reward-journal-item-icon" aria-hidden="true">
+                                    @if($item['icon_url'])<img src="{{ $item['icon_url'] }}" alt="" width="36" height="36">@else{{ mb_strtoupper(mb_substr($item['name'] ?: __('module-daily-rewards::messages.unknown_item'), 0, 1)) }}@endif
+                                </span>
+                                <span class="reward-journal-item-copy">
+                                    <strong>{{ $item['name'] ?: __('module-daily-rewards::messages.unknown_item') }}</strong>
+                                    <small>ID {{ $item['item_id'] }} · × {{ number_format($item['amount'], 0, '.', ' ') }}</small>
+                                    @if($item['status'])<small>{{ __('module-daily-rewards::messages.inventory_status_'.$item['status']) }}</small>@endif
+                                </span>
+                            </div>
                         @endforeach
                     </div>
                 </div>

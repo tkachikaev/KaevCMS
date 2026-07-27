@@ -355,3 +355,39 @@
 .update-emergency-access a, .update-recovery-card .notice a { min-width: 0; overflow-wrap: anywhere; }
 .update-emergency-access code, .update-recovery-card .notice code { white-space: normal; word-break: break-all; }
 
+
+/* Reward hardening 0.40.0 */
+.reward-queue-summary{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:1px;overflow:hidden}
+.reward-queue-summary .admin-overview-copy{grid-column:1/-1}
+.reward-queue-capability{display:grid;gap:8px;margin:16px 0;padding:16px;border:1px solid var(--admin-border);border-radius:var(--admin-radius-control);background:var(--admin-surface)}
+.reward-queue-capability p,.reward-queue-capability small{margin:0;color:var(--admin-text-muted)}
+.reward-operation-uuid{max-width:190px;overflow-wrap:anywhere;white-space:normal}
+.reward-queue-diagnostic{display:grid;gap:5px;min-width:260px;margin-top:9px;padding:10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-surface-muted,#f8fafc)}
+.reward-queue-diagnostic strong{font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+.reward-queue-diagnostic p{margin:0;color:var(--admin-text-muted);font-size:11px;line-height:1.45}
+.reward-journal-items{display:grid;gap:8px;margin-top:12px}
+.reward-journal-item{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:9px;min-width:0}
+.reward-journal-item-icon{display:grid;width:36px;height:36px;place-items:center;overflow:hidden;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-surface-muted,#f8fafc);font-size:11px;font-weight:800}
+.reward-journal-item-icon img{width:100%;height:100%;object-fit:cover}
+.reward-journal-item-copy{display:grid;gap:2px;min-width:0}
+.reward-journal-item-copy strong{overflow-wrap:anywhere}
+.reward-journal-item-copy small{color:var(--admin-text-muted)}
+
+@media(max-width:980px){.reward-queue-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-queue-summary .admin-overview-copy{grid-column:1/-1}}
+@media(max-width:760px){
+    .reward-queue-summary{grid-template-columns:1fr}
+    .reward-queue-summary .admin-overview-copy{grid-column:1}
+    .reward-queue-table-wrap{width:100%;max-width:100%;overflow:visible;border:0;background:transparent}
+    .reward-queue-table{display:block;width:100%;max-width:100%;min-width:0}
+    .reward-queue-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%)}
+    .reward-queue-table tbody{display:grid;width:100%;max-width:100%;gap:14px}
+    .reward-queue-table tr{display:grid;width:100%;max-width:100%;min-width:0;gap:0;overflow:hidden;border:1px solid var(--admin-border);border-radius:var(--admin-radius-control);background:var(--admin-surface)}
+    .reward-queue-table td{display:grid;width:100%;max-width:100%;min-width:0;grid-template-columns:minmax(108px,.45fr) minmax(0,1fr);gap:12px;box-sizing:border-box;padding:11px 13px;border-bottom:1px solid var(--admin-border);background:transparent;overflow-wrap:anywhere}
+    .reward-queue-table td::before{content:attr(data-label);color:var(--admin-text-muted);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+    .reward-queue-table td:last-child{border-bottom:0}
+    .reward-queue-table td>*{min-width:0}
+    .reward-queue-table .reward-queue-items,.reward-queue-table .reward-queue-diagnostic{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+    .reward-queue-table .reward-queue-diagnostic code{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+    .reward-queue-table .audit-details-link form,.reward-queue-table .audit-details-link button{width:100%}
+}
+@media(max-width:480px){.reward-queue-table td{grid-template-columns:1fr;gap:6px}.reward-queue-capability{padding:13px}}

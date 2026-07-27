@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix corrects PHPStan relation handling in the game-account recovery command.'
+Write-Host 'This release contains the persisted mobile administration menu inside its grid track so the reward journal cannot widen the page.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -41,4 +41,3 @@ Write-Host 'Windows quality: .\deployment\windows\quality.ps1'
 Write-Host 'Web installer: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'
-Write-Host 'Game-account recovery behavior, database schemas, dependencies, modules, themes, game drivers, item catalogs, and reward delivery were not changed.'

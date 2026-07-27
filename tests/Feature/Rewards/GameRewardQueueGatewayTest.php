@@ -124,6 +124,56 @@ class GameRewardQueueGatewayTest extends TestCase
         $this->assertSame(2, DB::connection('reward_queue_test')->table('kaev_reward_queue')->count());
     }
 
+    public function test_existing_consumer_status_does_not_change_idempotent_payload_verification(): void
+    {
+        $this->createQueueSchema();
+        $payload = $this->payload();
+        $this->gateway->enqueue($this->server, $payload);
+
+        DB::connection('reward_queue_test')
+            ->table('kaev_reward_queue')
+            ->where('request_uuid', $payload->requestUuid)
+            ->update([
+                'status' => 'failed',
+                'attempts' => 3,
+                'error_message' => 'Consumer delivery failed.',
+                'processed_at' => now(),
+            ]);
+
+        $replayed = $this->gateway->enqueue($this->server, $payload);
+
+        $this->assertTrue($replayed->isQueued());
+        $this->assertSame(2, DB::connection('reward_queue_test')->table('kaev_reward_queue')->count());
+        $this->assertSame(
+            2,
+            DB::connection('reward_queue_test')
+                ->table('kaev_reward_queue')
+                ->where('status', 'failed')
+                ->count(),
+        );
+    }
+
+    public function test_invalid_operation_uuid_is_rejected_before_queue_write(): void
+    {
+        $this->createQueueSchema();
+        $payload = $this->payload();
+        $payload = new RewardQueuePayload(
+            requestUuid: 'not-a-uuid',
+            gameServerId: $payload->gameServerId,
+            cmsUserId: $payload->cmsUserId,
+            accountName: $payload->accountName,
+            characterId: $payload->characterId,
+            characterName: $payload->characterName,
+            items: $payload->items,
+        );
+
+        $result = $this->gateway->enqueue($this->server, $payload);
+
+        $this->assertTrue($result->isFailed());
+        $this->assertSame('empty_reward_queue_payload', $result->failureCode);
+        $this->assertSame(0, DB::connection('reward_queue_test')->table('kaev_reward_queue')->count());
+    }
+
     private function createQueueSchema(): void
     {
         Schema::connection('reward_queue_test')->create('kaev_reward_queue', function (Blueprint $table): void {

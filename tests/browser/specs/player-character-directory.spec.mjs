@@ -136,7 +136,7 @@ test('player web inventory is available from the persistent account shell', asyn
 
     await expect(page).toHaveURL(/\/account\/web-inventory$/);
     await expect(page.getByRole('heading', { name: 'Веб-инвентарь', exact: true })).toBeVisible();
-    await expect(page.getByText('Ваш веб-инвентарь пуст')).toBeVisible();
+    await expect(page.getByText('На этом сервере нет доступных наград', { exact: true })).toBeVisible();
     await expect(page.locator('[data-account-sidebar]')).toBeVisible();
     await expect(page.locator('[data-account-topbar]')).toBeVisible();
 });
@@ -144,7 +144,7 @@ test('player web inventory is available from the persistent account shell', asyn
 test('player activates a promo code into the server-bound web inventory', async ({ page }) => {
     await signIn(page);
 
-    await page.locator('.account-nav').getByRole('link', { name: 'Промокоды' }).click();
+    await gotoWithLocalNetworkRetry(page, '/modules/promo-codes');
     await expect(page).toHaveURL(/\/modules\/promo-codes$/);
     await page.locator('input[name="code"]').fill('browser2026');
     await page.getByRole('button', { name: 'Активировать код', exact: true }).click();
@@ -185,6 +185,25 @@ test('player claims the current daily reward into web inventory', async ({ page 
     await expect(dailyRewardRow).toHaveCount(1);
     await expect(dailyRewardRow.getByText('Адена', { exact: true })).toBeVisible();
     await expect(dailyRewardRow.getByText('× 250 000', { exact: true })).toBeVisible();
+});
+
+test('promo codes and daily rewards remain usable on a mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page);
+
+    await gotoWithLocalNetworkRetry(page, '/modules/promo-codes');
+    await expect(page).toHaveURL(/\/modules\/promo-codes$/);
+    await expect(page.getByTestId('promo-code-input')).toBeEditable();
+    await expect(page.locator('.promo-activation-surface')).toBeVisible();
+    let hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    expect(hasHorizontalOverflow).toBe(false);
+
+    await gotoWithLocalNetworkRetry(page, '/modules/daily-rewards');
+    await expect(page).toHaveURL(/\/modules\/daily-rewards/);
+    await expect(page.locator('.daily-reward-calendar-grid')).toBeVisible();
+    await expect(page.locator('.daily-reward-calendar-day').first()).toBeVisible();
+    hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    expect(hasHorizontalOverflow).toBe(false);
 });
 
 test('aurelia player theme keeps shared runtime and active module navigation after SPA changes', async ({ page, context }) => {

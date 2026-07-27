@@ -20,7 +20,11 @@ Character pages use active links only and query GameServer data with caching and
 
 ## Reward queue
 
-KaevCMS stores rewards in its own web inventory first. A transfer writes an idempotent neutral payload to `kaev_reward_queue` in the selected GameServer database. The server owner chooses the consumer: Java plugin, script, SQL job, custom GameServer module, or another integration. KaevCMS does not modify game `items` tables or generate game object IDs.
+KaevCMS stores rewards in its own web inventory first. Every grant receives a server-generated operation UUID and keeps its GameServer ID and immutable item composition in the CMS audit trail. A character transfer creates another unique operation UUID and writes one neutral `kaev_reward_queue` row per item. `(request_uuid, line_number)` and the CMS request token prevent duplicate transfers and reject replay with a different target or item selection.
+
+CMS states are `pending → queued | review | failed` and `review → queued | review | failed`. `queued` confirms only that the complete payload reached the external queue. The consumer-owned rows use `pending → processing → delivered | failed`, with direct `pending → delivered | failed` allowed for simple/manual consumers. KaevCMS does not poll or overwrite those consumer states. The full contract and safe SQL templates are in `integrations/reward-queue/README.md`; incident handling is in the [operations runbook](OPERATIONS.md#reward-queue-review-or-failed).
+
+The server owner chooses the consumer: Java plugin, script, SQL job, custom GameServer module, or another integration. KaevCMS does not modify game `items` tables or generate game object IDs.
 
 ## Item catalog and assets
 

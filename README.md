@@ -1,4 +1,4 @@
-# KaevCMS 0.39.2
+# KaevCMS 0.40.3
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.39.2 is a quality-gate hotfix for reliable game-account creation. It corrects PHPStan relation handling in the recovery command without changing its behavior.
+Version 0.40.3 fixes the real source of the mobile reward-journal overflow: the persisted administration navigation wrapper could inherit the full minimum width of its horizontally scrollable menu and widen the page. Reward states, module versions, migrations, and delivery behavior remain unchanged.
 
 ### Requirements
 
@@ -94,7 +94,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.38.2 — исправляющее обновление тестового контракта Foundation Hardening. Оно проверяет накопленные удаления релизов, не требуя повторять исторические пути в записи каждой новой версии.
+Версия 0.40.3 исправляет настоящий источник горизонтального overflow мобильного журнала наград: persist-обёртка административной навигации могла наследовать полную минимальную ширину прокручиваемого меню и расширять всю страницу. Статусы очереди, версии модулей, миграции и логика выдачи не менялись.
 
 ### Требования
 

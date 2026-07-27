@@ -325,12 +325,23 @@ test('removed legacy dashboard endpoint returns not found', async ({ page }) => 
     expect(response.status()).toBe(404);
 });
 
-test('reward queue journal is available from the administrator sidebar', async ({ page }) => {
+test('reward queue journal explains review operations and remains usable on mobile', async ({ page }) => {
     await page.getByRole('link', { name: 'Очередь наград', exact: true }).click();
 
     await expect(page).toHaveURL(/\/admin\/reward-deliveries$/);
     await expect(page.getByRole('heading', { name: 'Очередь наград', exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Передач в очередь пока нет', exact: true })).toBeVisible();
+    const row = page.locator('[data-testid="reward-delivery-row"][data-status="review"]').first();
+    await expect(row).toContainText('Требует проверки');
+    await expect(row).toContainText('Ответ базы был потерян');
+    await expect(row.getByRole('button', { name: 'Проверить ещё раз', exact: true })).toBeVisible();
+    await expect(row.locator('.reward-operation-uuid')).toHaveText(/[0-9a-f-]{36}/i);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(row).toBeVisible();
+    await expect(row.getByText('Адена', { exact: true })).toBeVisible();
+    await expect(row.getByRole('button', { name: 'Проверить ещё раз', exact: true })).toBeVisible();
+    const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    expect(hasHorizontalOverflow).toBe(false);
 });
 
 test('daily rewards module edits calendar days through dialog actions', async ({ page }) => {

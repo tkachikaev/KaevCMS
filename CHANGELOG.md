@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.40.3 - 2026-07-27
+
+- Fixed the actual mobile overflow source in the administration shell: the persisted sidebar wrapper and its horizontally scrollable menu now have a zero minimum width and remain constrained to the single-column mobile grid track. The menu still scrolls internally, while the document width stays within the viewport. Reward states, database schemas, module versions, migrations, and delivery behavior were not changed.
+
+## 0.40.2 - 2026-07-27
+
+- Fixed the remaining Laravel Pint `not_operator_with_successor_space` violation in `BrowserTestSeeder`.
+- Constrained the mobile reward-queue card hierarchy to the viewport and made long diagnostic codes wrap inside their card, preventing document-level horizontal overflow without hiding overflowing content globally. Reward states, database schemas, module versions, migrations, and delivery behavior were not changed.
+
+## 0.40.1 - 2026-07-27
+
+- Fixed Laravel Pint formatting in the browser-test seeder and reward-delivery journal test imports.
+- Updated reward journal feature regressions to validate the localized server label and the actual split item-name/amount markup instead of obsolete concatenated text.
+- Replaced the stale release source assertion with the current stable `rewards.queue.journal.title` translation key.
+- Made the reward queue Playwright scenario select the intended `review` row through an explicit `data-status` contract, removed the hard-coded English Adena snapshot from the browser fixture, and aligned the web-inventory shell scenario with the reserved-review fixture state. Runtime reward states, database schemas, dependencies, module versions, and delivery behavior were not changed.
+
+## 0.40.0 - 2026-07-27
+
+- Audited the existing reward pipeline and documented the actual boundary between KaevCMS delivery states (`pending`, `review`, `queued`, `failed`) and external GameServer consumer states (`pending`, `processing`, `delivered`, `failed`). `queued` now explicitly means that the immutable payload exists in `kaev_reward_queue`, not that the character already received the items.
+- Added a unique `operation_uuid` to every web-inventory grant, backfilled existing grants, and enriched reward audit records with the operation UUID, GameServer ID, status transition, and normalized item composition.
+- Hardened idempotency: a repeated grant key or transfer request token is accepted only when its user, server, source, target character, and item payload match the original operation. Conflicting or cross-user replays are rejected without creating another queue payload.
+- Centralized queue diagnostics and RU/EN messages for missing or invalid schemas, unavailable GameServer databases, uncertain writes, confirmed failures, empty payloads, and immutable payload conflicts.
+- Improved the administrator reward queue journal with status totals, live per-GameServer capability diagnostics, operation UUIDs, localized reasons and recommended actions, item icons/names, and a mobile card layout.
+- Improved Promo Codes and Daily Rewards journals with operation UUIDs, GameServer IDs, item icons, localized names, amounts, and web-inventory states. Both bundled modules are now 1.3.0.
+- Added SQL examples and Russian/English operator runbooks for safely handling `review`, CMS `failed`, and external consumer `failed` rows without blind delivery or deletion, plus PHPUnit and Playwright regressions for status transitions, replay conflicts, audit correlation, journal details, and mobile layouts.
+
 ## 0.39.2 - 2026-07-27
 
 - Fixed PHPStan `nullCoalesce.expr` errors in `RecoverGameAccountCreationCommand` by using the non-null `UserGameAccount` relations declared by the model contract directly. Game-account recovery behavior, database schemas, dependencies, modules, themes, game drivers, item catalogs, and reward delivery were not changed.

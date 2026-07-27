@@ -16,19 +16,31 @@
 @else
     <div class="admin-card-list content-list">
         @foreach($activations as $activation)
-            <article class="admin-card-row content-row">
+            <article class="admin-card-row content-row" data-testid="promo-activation-row">
                 <div class="content-row-preview page-row-preview"><span>✓</span></div>
                 <div class="content-row-main">
                     <strong class="content-row-title">{{ $activation->code_snapshot }}</strong>
                     <p>{{ $activation->user?->name ?? $activation->user_email }} · {{ $activation->user_email }}</p>
                     <div class="content-row-meta">
-                        <span>{{ $activation->gameServer->nameFor() }}</span>
+                        <span>{{ $activation->gameServer->nameFor() }} · {{ __('module-promo-codes::messages.server_id', ['id' => $activation->game_server_id]) }}</span>
                         <span>{{ $activation->activated_at?->format('d.m.Y H:i:s') }}</span>
                         <span>{{ __('module-promo-codes::messages.grant_number', ['id' => $activation->reward_inventory_grant_id ?? '—']) }}</span>
                     </div>
-                    <div class="content-row-meta">
-                        @foreach($activation->rewardGrant?->items ?? [] as $reward)
-                            <span>{{ $reward->displayName($activation->game_server_id) }} × {{ number_format($reward->amount, 0, '.', ' ') }} <small>ID {{ $reward->item_id }}</small></span>
+                    @if($activation->rewardGrant?->operation_uuid)
+                        <div class="content-row-meta"><span>{{ __('module-promo-codes::messages.operation_uuid') }}: <code>{{ $activation->rewardGrant->operation_uuid }}</code></span></div>
+                    @endif
+                    <div class="reward-journal-items">
+                        @foreach($activationItems[$activation->id] ?? [] as $reward)
+                            <div class="reward-journal-item">
+                                <span class="reward-journal-item-icon" aria-hidden="true">
+                                    @if($reward['icon_url'])<img src="{{ $reward['icon_url'] }}" alt="" width="36" height="36">@else{{ mb_strtoupper(mb_substr($reward['name'], 0, 1)) }}@endif
+                                </span>
+                                <span class="reward-journal-item-copy">
+                                    <strong>{{ $reward['name'] }}</strong>
+                                    <small>ID {{ $reward['item_id'] }} · × {{ number_format($reward['amount'], 0, '.', ' ') }}</small>
+                                    <small>{{ __('module-promo-codes::messages.inventory_status_'.$reward['status']) }}</small>
+                                </span>
+                            </div>
                         @endforeach
                     </div>
                 </div>

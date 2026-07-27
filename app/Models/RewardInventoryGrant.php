@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property string $operation_uuid
  * @property string $grant_key
  * @property int $user_id
  * @property int $game_server_id
@@ -23,6 +24,7 @@ use Illuminate\Support\Carbon;
 class RewardInventoryGrant extends Model
 {
     protected $fillable = [
+        'operation_uuid',
         'grant_key',
         'user_id',
         'game_server_id',

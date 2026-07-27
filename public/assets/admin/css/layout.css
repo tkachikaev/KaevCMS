@@ -120,8 +120,11 @@ a.admin-section-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(
 
 @media (max-width: 760px) {
     .admin-shell { grid-template-columns: 1fr; }
+    .admin-shell > [x-persist="admin-sidebar"],
+    .admin-sidebar,
+    .admin-menu { min-width: 0; max-width: 100%; }
     .admin-sidebar { position: static; width: 100%; height: auto; overflow: visible; contain: none; }
-    .admin-menu { display: flex; gap: 6px; overflow-x: auto; }
+    .admin-menu { display: flex; width: 100%; gap: 6px; overflow-x: auto; }
     .admin-menu-group, .admin-menu-group-items, details.admin-menu-group:not([open]) > .admin-menu-group-items { display: contents; }
     .admin-menu-group-summary, .admin-menu-item.disabled, .admin-sidebar-footer { display: none; }
     .admin-menu-item { flex: 0 0 auto; padding: 0 14px; }

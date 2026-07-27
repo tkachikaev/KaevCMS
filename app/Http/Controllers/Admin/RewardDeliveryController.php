@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Contracts\GameRewardQueueGateway;
 use App\Http\Controllers\Controller;
 use App\Models\GameServer;
 use App\Models\RewardDelivery;
@@ -13,19 +14,27 @@ use Illuminate\View\View;
 
 final class RewardDeliveryController extends Controller
 {
-    public function index(Request $request, GameAssetUrlResolver $assets): View
-    {
+    public function index(
+        Request $request,
+        GameAssetUrlResolver $assets,
+        GameRewardQueueGateway $rewardQueue,
+    ): View {
         $status = strtolower(trim((string) $request->query('status')));
-        if (! in_array($status, [
-            RewardDelivery::STATUS_PENDING,
-            RewardDelivery::STATUS_QUEUED,
-            RewardDelivery::STATUS_FAILED,
-            RewardDelivery::STATUS_REVIEW,
-        ], true)) {
+        if (! in_array($status, RewardDelivery::STATUSES, true)) {
             $status = null;
         }
 
         $serverId = max(0, (int) $request->query('server'));
+        $servers = GameServer::query()
+            ->with('translations')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+        $selectedServer = $serverId > 0 ? $servers->firstWhere('id', $serverId) : null;
+        $queueCapability = $selectedServer instanceof GameServer
+            ? $rewardQueue->capabilities($selectedServer)
+            : null;
+
         $query = RewardDelivery::query()
             ->with(['user', 'gameServer.translations', 'items'])
             ->latest('id');
@@ -46,13 +55,23 @@ final class RewardDeliveryController extends Controller
             }
         }
 
+        $statusCounts = RewardDelivery::query()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status')
+            ->map(static fn (mixed $count): int => (int) $count)
+            ->all();
+
         return view('admin.rewards.index', [
             'deliveries' => $deliveries,
             'itemIconUrls' => $itemIconUrls,
             'activeStatus' => $status,
             'activeServerId' => $serverId,
-            'servers' => GameServer::query()->with('translations')->orderBy('sort_order')->orderBy('id')->get(),
-            'totalCount' => RewardDelivery::query()->count(),
+            'servers' => $servers,
+            'selectedServer' => $selectedServer,
+            'queueCapability' => $queueCapability,
+            'statusCounts' => $statusCounts,
+            'totalCount' => array_sum($statusCounts),
         ]);
     }
 
@@ -63,9 +82,9 @@ final class RewardDeliveryController extends Controller
         $delivery = $reconciler->reconcile($delivery);
 
         $message = match ($delivery->status) {
-            RewardDelivery::STATUS_QUEUED => __('The reward transfer was confirmed in the GameServer queue.'),
-            RewardDelivery::STATUS_FAILED => __('The queue contains no matching operation. Reserved rewards were returned to the web inventory.'),
-            default => __('The transfer result is still uncertain. The rewards remain reserved to prevent duplicate delivery.'),
+            RewardDelivery::STATUS_QUEUED => __('rewards.queue.reconcile.queued'),
+            RewardDelivery::STATUS_FAILED => __('rewards.queue.reconcile.failed'),
+            default => __('rewards.queue.reconcile.review'),
         };
 
         return redirect()

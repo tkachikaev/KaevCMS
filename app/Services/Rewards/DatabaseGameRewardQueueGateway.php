@@ -6,10 +6,14 @@ use App\Contracts\GameRewardQueueGateway;
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Support\Rewards\RewardQueueCapabilities;
+use App\Support\Rewards\RewardQueueDiagnostic;
 use App\Support\Rewards\RewardQueuePayload;
+use App\Support\Rewards\RewardQueueRowStatus;
 use App\Support\Rewards\RewardQueueWriteResult;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
@@ -45,17 +49,22 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
                 $schema = $connection->getSchemaBuilder();
 
                 if (! $schema->hasTable(self::TABLE)) {
-                    return RewardQueueCapabilities::unsupported('reward_queue_not_installed');
+                    return RewardQueueCapabilities::unsupported(RewardQueueDiagnostic::NotInstalled->value);
                 }
 
                 if (! $schema->hasColumns(self::TABLE, self::REQUIRED_COLUMNS)) {
-                    return RewardQueueCapabilities::unsupported('reward_queue_schema_invalid');
+                    return RewardQueueCapabilities::unsupported(RewardQueueDiagnostic::SchemaInvalid->value);
                 }
 
                 return RewardQueueCapabilities::supported();
             });
-        } catch (Throwable) {
-            return RewardQueueCapabilities::unsupported('reward_queue_unavailable');
+        } catch (Throwable $exception) {
+            Log::warning('GameServer reward queue capability check failed.', [
+                'game_server_id' => $server->id,
+                'exception' => $exception::class,
+            ]);
+
+            return RewardQueueCapabilities::unsupported(RewardQueueDiagnostic::Unavailable->value);
         }
     }
 
@@ -63,7 +72,7 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
     {
         $rows = $this->rows($payload);
         if ($rows === []) {
-            return RewardQueueWriteResult::failed('empty_reward_queue_payload');
+            return RewardQueueWriteResult::failed(RewardQueueDiagnostic::EmptyPayload->value);
         }
 
         try {
@@ -90,6 +99,10 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
     /** @return list<array<string,mixed>> */
     private function rows(RewardQueuePayload $payload): array
     {
+        if (! Str::isUuid($payload->requestUuid)) {
+            return [];
+        }
+
         $timestamp = now('UTC')->format('Y-m-d H:i:s');
         $rows = [];
 
@@ -111,7 +124,7 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
                 'character_name' => $payload->characterName,
                 'item_id' => $itemId,
                 'amount' => $amount,
-                'status' => 'pending',
+                'status' => RewardQueueRowStatus::Pending->value,
                 'attempts' => 0,
                 'error_message' => null,
                 'created_at' => $timestamp,
@@ -157,13 +170,13 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
     private function verifyRows(Collection $existing, array $expected): RewardQueueWriteResult
     {
         if ($existing->count() !== count($expected)) {
-            return RewardQueueWriteResult::failed('reward_queue_payload_conflict');
+            return RewardQueueWriteResult::failed(RewardQueueDiagnostic::PayloadConflict->value);
         }
 
         foreach ($expected as $index => $row) {
             $actual = $existing->get($index);
             if (! is_array($actual) || ! $this->rowMatches($actual, $row)) {
-                return RewardQueueWriteResult::failed('reward_queue_payload_conflict');
+                return RewardQueueWriteResult::failed(RewardQueueDiagnostic::PayloadConflict->value);
             }
         }
 
@@ -195,13 +208,13 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
             return $this->database->run($server, function (Connection $connection) use ($requestUuid, $expected): RewardQueueWriteResult {
                 $rows = $this->existingRows($connection, $requestUuid);
                 if ($rows->isEmpty()) {
-                    return RewardQueueWriteResult::failed('reward_queue_write_failed');
+                    return RewardQueueWriteResult::failed(RewardQueueDiagnostic::WriteFailed->value);
                 }
 
                 return $this->verifyRows($rows, $expected);
             });
         } catch (Throwable) {
-            return RewardQueueWriteResult::unknown();
+            return RewardQueueWriteResult::unknown(RewardQueueDiagnostic::WriteUnknown->value);
         }
     }
 }

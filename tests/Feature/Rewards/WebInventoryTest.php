@@ -5,6 +5,7 @@ namespace Tests\Feature\Rewards;
 use App\Contracts\GameAccountGateway;
 use App\Contracts\GameRewardQueueGateway;
 use App\Exceptions\GameServerHasRewardData;
+use App\Models\AuditLog;
 use App\Models\GameServer;
 use App\Models\RewardDelivery;
 use App\Models\RewardInventoryItem;
@@ -18,6 +19,7 @@ use App\Support\Rewards\RewardQueueWriteResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Tests\Concerns\InteractsWithServerFixtures;
 use Tests\Fakes\FakeGameAccountGateway;
 use Tests\Fakes\FakeGameRewardQueueGateway;
@@ -109,6 +111,45 @@ class WebInventoryTest extends TestCase
             'item_id' => 57,
             'amount' => 1000000,
             'status' => RewardInventoryItem::STATUS_AVAILABLE,
+        ]);
+    }
+
+    public function test_reusing_grant_key_with_different_reward_data_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        [, $server] = $this->freshMobiusServerPair();
+        $inventory = app(RewardInventoryService::class);
+
+        $inventory->grant(
+            user: $user,
+            server: $server,
+            grantKey: 'promo:activation:conflict',
+            sourceType: 'promo_code',
+            items: [new RewardGrantItem(57, 100, 'Adena')],
+            sourceReference: 'ACT-100',
+        );
+
+        try {
+            $inventory->grant(
+                user: $user,
+                server: $server,
+                grantKey: 'promo:activation:conflict',
+                sourceType: 'promo_code',
+                items: [new RewardGrantItem(57, 101, 'Adena')],
+                sourceReference: 'ACT-100',
+            );
+            $this->fail('A grant key must not be reused with a different immutable payload.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertSame(
+                'Reward grant key is already used by a different reward operation.',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertDatabaseCount('reward_inventory_grants', 1);
+        $this->assertDatabaseHas('reward_inventory_items', [
+            'item_id' => 57,
+            'amount' => 100,
         ]);
     }
 
@@ -227,6 +268,118 @@ class WebInventoryTest extends TestCase
             ['item_id' => 57, 'amount' => 1000000],
             ['item_id' => 4037, 'amount' => 10],
         ], $this->rewardQueue->payloads[0]->items);
+
+        $grantAudit = AuditLog::query()->where('action', 'reward.inventory_granted')->firstOrFail();
+        $queueAudit = AuditLog::query()->where('action', 'reward.queue_written')->firstOrFail();
+        $this->assertSame($grant->operation_uuid, data_get($grantAudit->details, 'operation_uuid'));
+        $this->assertSame($server->id, data_get($grantAudit->details, 'game_server_id'));
+        $this->assertSame($delivery->operation_uuid, data_get($queueAudit->details, 'operation_uuid'));
+        $this->assertSame($server->id, data_get($queueAudit->details, 'game_server_id'));
+        $this->assertSame(2, data_get($queueAudit->details, 'item_count'));
+    }
+
+    public function test_completed_transfer_replay_does_not_require_a_live_queue_connection(): void
+    {
+        [$user, $server] = $this->userWithCharacter();
+        $grant = app(RewardInventoryService::class)->grant(
+            user: $user,
+            server: $server,
+            grantKey: 'queue-replay:completed',
+            sourceType: 'admin_gift',
+            items: [new RewardGrantItem(57, 1000, 'Adena')],
+        );
+        $payload = [
+            'game_server_id' => $server->id,
+            'character_id' => 9001,
+            'inventory_item_ids' => $grant->items->modelKeys(),
+            'request_token' => '6c840af0-f73b-4c16-b356-dd01bf0d111e',
+        ];
+
+        $this->actingAs($user)->post('/account/web-inventory/transfers', $payload)->assertRedirect();
+        $this->rewardQueue->supported = false;
+        $this->rewardQueue->unsupportedReason = 'reward_queue_unavailable';
+
+        $this->actingAs($user)
+            ->post('/account/web-inventory/transfers', $payload)
+            ->assertRedirect()
+            ->assertSessionDoesntHaveErrors();
+
+        $this->assertDatabaseCount('reward_deliveries', 1);
+        $this->assertCount(1, $this->rewardQueue->payloads);
+    }
+
+    public function test_reusing_request_token_with_different_items_is_rejected(): void
+    {
+        [$user, $server] = $this->userWithCharacter();
+        $grant = app(RewardInventoryService::class)->grant(
+            user: $user,
+            server: $server,
+            grantKey: 'queue-token-conflict:items',
+            sourceType: 'admin_gift',
+            items: [
+                new RewardGrantItem(57, 1000, 'Adena'),
+                new RewardGrantItem(4037, 1, 'Coin of Luck'),
+            ],
+        );
+        $items = $grant->items->sortBy('id')->values();
+        $token = 'f135e811-9227-4ff5-a127-577a6c6d1ad2';
+
+        $this->actingAs($user)->post('/account/web-inventory/transfers', [
+            'game_server_id' => $server->id,
+            'character_id' => 9001,
+            'inventory_item_ids' => [$items[0]->id],
+            'request_token' => $token,
+        ])->assertRedirect();
+
+        $this->actingAs($user)->post('/account/web-inventory/transfers', [
+            'game_server_id' => $server->id,
+            'character_id' => 9001,
+            'inventory_item_ids' => [$items[1]->id],
+            'request_token' => $token,
+        ])->assertSessionHasErrors('inventory');
+
+        $this->assertDatabaseCount('reward_deliveries', 1);
+        $this->assertCount(1, $this->rewardQueue->payloads);
+        $this->assertSame(RewardInventoryItem::STATUS_AVAILABLE, $items[1]->fresh()->status);
+    }
+
+    public function test_reusing_another_users_request_token_is_rejected(): void
+    {
+        [$owner, $server] = $this->userWithCharacter();
+        $ownerGrant = app(RewardInventoryService::class)->grant(
+            user: $owner,
+            server: $server,
+            grantKey: 'queue-token-conflict:owner',
+            sourceType: 'admin_gift',
+            items: [new RewardGrantItem(57, 1000, 'Adena')],
+        );
+        $token = 'a00ab9d7-f8db-46ad-a845-9bb2c9ac9b6f';
+        $this->actingAs($owner)->post('/account/web-inventory/transfers', [
+            'game_server_id' => $server->id,
+            'character_id' => 9001,
+            'inventory_item_ids' => $ownerGrant->items->modelKeys(),
+            'request_token' => $token,
+        ])->assertRedirect();
+
+        [$otherUser] = $this->userWithCharacter(server: $server, gameLogin: 'RewardPlayerOther');
+        $otherGrant = app(RewardInventoryService::class)->grant(
+            user: $otherUser,
+            server: $server,
+            grantKey: 'queue-token-conflict:other',
+            sourceType: 'admin_gift',
+            items: [new RewardGrantItem(4037, 1, 'Coin of Luck')],
+        );
+
+        $this->actingAs($otherUser)->post('/account/web-inventory/transfers', [
+            'game_server_id' => $server->id,
+            'character_id' => 9001,
+            'inventory_item_ids' => $otherGrant->items->modelKeys(),
+            'request_token' => $token,
+        ])->assertSessionHasErrors('inventory');
+
+        $this->assertDatabaseCount('reward_deliveries', 1);
+        $this->assertCount(1, $this->rewardQueue->payloads);
+        $this->assertSame(RewardInventoryItem::STATUS_AVAILABLE, $otherGrant->items->firstOrFail()->fresh()->status);
     }
 
     public function test_confirmed_queue_failure_returns_rewards_to_inventory(): void

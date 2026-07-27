@@ -16,6 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -59,7 +60,7 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_daily_reward_claims'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'daily-rewards',
-            'version' => '1.2.2',
+            'version' => '1.3.0',
             'enabled' => true,
         ]);
 
@@ -347,6 +348,41 @@ class DailyRewardsModuleTest extends TestCase
             ]])
             ->all();
         $this->assertSame($snapshot, $granted);
+    }
+
+    public function test_claim_journal_shows_operation_uuid_item_icon_name_and_server(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create(['name' => 'Daily Journal World']);
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 250000]]);
+        $user = User::factory()->create();
+        $account = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $root = storage_path('framework/testing/game-assets-'.Str::uuid());
+        File::ensureDirectoryExists($root.'/items/common');
+        File::put($root.'/items/common/57.webp', 'icon');
+        config()->set('cms.game_assets.uploads_path', $root);
+
+        try {
+            $this->claim($user, $calendar, $account, (string) Str::uuid())->assertSessionHas('status');
+            $claim = DailyRewardClaim::query()->with('rewardGrant')->firstOrFail();
+            $operationUuid = $claim->rewardGrant?->operation_uuid;
+            $this->assertNotNull($operationUuid);
+
+            $this->actingAs($owner, 'admin')
+                ->get('/admin/extensions/daily-rewards/claims')
+                ->assertOk()
+                ->assertSee('data-testid="daily-reward-claim-row"', false)
+                ->assertSee((string) $operationUuid)
+                ->assertSee('Daily Journal World')
+                ->assertSee(__('module-daily-rewards::messages.server_id', ['id' => $server->id]))
+                ->assertSee('Адена')
+                ->assertSee('/uploads/game-assets/items/common/57.webp', false);
+        } finally {
+            File::deleteDirectory($root);
+        }
     }
 
     public function test_successful_and_failed_claims_render_the_shared_operation_modal(): void

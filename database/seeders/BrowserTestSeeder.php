@@ -6,13 +6,19 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Models\RewardDelivery;
+use App\Models\RewardInventoryItem;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Services\Rewards\RewardInventoryService;
 use App\Support\Modules\ModuleManager;
+use App\Support\Rewards\RewardGrantItem;
+use App\Support\Rewards\RewardQueueDiagnostic;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class BrowserTestSeeder extends Seeder
@@ -174,5 +180,40 @@ class BrowserTestSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ]);
+
+        $queueGrant = app(RewardInventoryService::class)->grant(
+            user: $player,
+            server: $gameServer,
+            grantKey: 'browser.reward-queue.review',
+            sourceType: 'browser-test',
+            items: [new RewardGrantItem(57, 5000)],
+            sourceReference: 'browser-review',
+            sourceLabel: 'Browser reward queue review',
+            actor: $admin,
+        );
+        $queueItem = $queueGrant->items->firstOrFail();
+        $delivery = RewardDelivery::query()->create([
+            'operation_uuid' => (string) Str::uuid(),
+            'request_token' => (string) Str::uuid(),
+            'user_id' => $player->id,
+            'game_server_id' => $gameServer->id,
+            'user_game_account_id' => UserGameAccount::query()
+                ->where('user_id', $player->id)
+                ->where('registration_game_server_id', $gameServer->id)
+                ->value('id'),
+            'character_id' => 9001,
+            'character_name' => 'Browser Hero',
+            'account_login' => 'BrowserGame',
+            'status' => RewardDelivery::STATUS_REVIEW,
+            'failure_code' => RewardQueueDiagnostic::WriteUnknown->value,
+            'requested_at' => now(),
+        ]);
+        $delivery->items()->create([
+            'reward_inventory_item_id' => $queueItem->id,
+            'item_id' => $queueItem->item_id,
+            'item_name' => $queueItem->item_name,
+            'amount' => $queueItem->amount,
+        ]);
+        $queueItem->update(['status' => RewardInventoryItem::STATUS_RESERVED]);
     }
 }

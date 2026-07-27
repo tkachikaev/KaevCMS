@@ -9,6 +9,7 @@ enum RewardTransferFailure: string
     case RewardQueueUnavailable = 'reward_queue_unavailable';
     case CharacterNotOwned = 'character_not_owned';
     case InvalidSelection = 'invalid_selection';
+    case RequestTokenConflict = 'request_token_conflict';
     case ItemsUnavailable = 'items_unavailable';
     case RewardQueueWriteFailed = 'reward_queue_write_failed';
 

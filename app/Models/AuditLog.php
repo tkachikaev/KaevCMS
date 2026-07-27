@@ -101,6 +101,7 @@ class AuditLog extends Model
             'module.enable_failed' => __('Module enable failed'),
             'module.disable_failed' => __('Module disable failed'),
             'reward.inventory_granted' => __('Reward granted to web inventory'),
+            'reward.transfer_requested' => __('Reward transfer requested'),
             'reward.queue_written' => __('Reward written to GameServer queue'),
             'reward.queue_failed' => __('Reward queue write failed'),
             'reward.queue_review_required' => __('Reward queue write requires review'),
