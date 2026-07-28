@@ -69,7 +69,7 @@ $deleteFile = $tempRoot.DIRECTORY_SEPARATOR.'deletions.json';
 try {
     writeFixture($currentRoot, [
         'VERSION' => '9.9.9',
-        'release.json' => json_encode(['schema' => 1, 'version' => '9.9.9'], JSON_THROW_ON_ERROR)."\n",
+        'release.json' => json_encode(['schema' => 1, 'version' => '9.9.9', 'released_at' => '2026-07-28'], JSON_THROW_ON_ERROR)."\n",
         'app/example.php' => "<?php\n",
         'public/index.php' => "<?php\n",
         '.env' => "APP_KEY=secret\n",
@@ -105,6 +105,25 @@ try {
     }
     $mismatchCommand[$targetArgument] = '--target=9.9.10';
     runCommandExpectFailure($mismatchCommand, 'does not match release.json');
+
+    $invalidDateRoot = $tempRoot.DIRECTORY_SEPARATOR.'invalid-date';
+    writeFixture($invalidDateRoot, [
+        'VERSION' => '9.9.9',
+        'release.json' => json_encode([
+            'schema' => 1,
+            'version' => '9.9.9',
+            'released_at' => 'not-a-date',
+        ], JSON_THROW_ON_ERROR)."\n",
+        'app/example.php' => "<?php\n",
+        'public/index.php' => "<?php\n",
+    ]);
+    $invalidDateCommand = $command;
+    $rootArgument = array_search('--root='.$currentRoot, $invalidDateCommand, true);
+    if (! is_int($rootArgument)) {
+        throw new RuntimeException('Root argument was not found in the package-builder invalid-date fixture.');
+    }
+    $invalidDateCommand[$rootArgument] = '--root='.$invalidDateRoot;
+    runCommandExpectFailure($invalidDateCommand, 'Release date metadata is invalid');
 
     $missingContractRoot = $tempRoot.DIRECTORY_SEPARATOR.'missing-contract';
     writeFixture($missingContractRoot, [

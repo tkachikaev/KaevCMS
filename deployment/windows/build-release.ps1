@@ -15,6 +15,15 @@ if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
     throw 'PHP was not found in PATH.'
 }
 
+if (-not (Get-Command composer -ErrorAction SilentlyContinue)) {
+    throw 'Composer was not found in PATH.'
+}
+
+composer lint
+if ($LASTEXITCODE -ne 0) {
+    throw "Release lint preflight failed with exit code $LASTEXITCODE."
+}
+
 $builder = Join-Path $ProjectRoot 'deployment\release\build-release.php'
 if (-not (Test-Path -LiteralPath $builder -PathType Leaf)) {
     throw 'The unified release builder is missing.'

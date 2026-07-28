@@ -1,4 +1,4 @@
-# KaevCMS 0.42.0
+# KaevCMS 0.42.4
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.42.0 begins Public Release Hardening. It fixes Windows environment-variable handling without the PowerShell Env provider, expands diagnostics layout coverage across five viewport widths, reserves the standard exception log key for real Throwable objects, adds official Windows and browser CI gates, and introduces one reproducible builder for full, patch, cumulative, and SHA256 artifacts. The cumulative baseline remains 0.41.6.
+Version 0.42.4 completes the Laravel Pint formatting of the unified release builder and makes `composer lint` a mandatory preflight of the official release command. Runtime CMS behavior and archive contracts are unchanged. The cumulative baseline remains 0.41.6.
 
 ### Requirements
 
@@ -94,7 +94,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.42.0 начинает этап Public Release Hardening. Исправлена работа с переменными окружения Windows без PowerShell Env provider, диагностика проверяется на пяти ширинах viewport, стандартный ключ exception оставлен только для объектов Throwable, добавлены официальные Windows и browser CI-gates, а full, patch, cumulative и SHA256 теперь собираются одной воспроизводимой командой. Кумулятивная база остаётся 0.41.6.
+Версия 0.42.4 завершает форматирование Laravel Pint для единого сборщика релизов и делает `composer lint` обязательной предварительной проверкой официальной команды сборки. Поведение CMS и контракты архивов не изменены. Кумулятивная база остаётся 0.41.6.
 
 ### Требования
 

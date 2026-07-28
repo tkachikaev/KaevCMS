@@ -36,7 +36,7 @@ if (! is_string($root) || ! is_dir($root)) {
 }
 
 if ($output === '' || ! validVersion($minimum) || ! validVersion($maximum) || version_compare($minimum, $maximum, '>')) {
-    fwrite(STDERR, "Usage: php deployment/updates/build-package.php --root=PATH --output=FILE.zip --minimum=0.41.6 --maximum=0.41.8 [--target=0.42.0] [--previous-root=PATH]\n");
+    fwrite(STDERR, "Usage: php deployment/updates/build-package.php --root=PATH --output=FILE.zip --minimum=0.41.6 --maximum=0.42.0 [--target=0.42.1] [--previous-root=PATH]\n");
     exit(1);
 }
 
@@ -592,7 +592,6 @@ function releaseVersionFromRoot(string $root): ?string
 
     return $version;
 }
-
 
 function releaseTimestampFromRoot(string $root): int
 {

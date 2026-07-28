@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release hardens Windows quality, browser coverage, logging, CI, and reproducible release packaging.'
+Write-Host 'This release completes Laravel Pint formatting for the unified release builder and adds a mandatory lint preflight before release packaging.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

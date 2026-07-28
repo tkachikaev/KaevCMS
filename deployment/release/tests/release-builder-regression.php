@@ -128,9 +128,26 @@ function buildFixtureRelease(string $root, string $previousArchive, string $outp
         'cumulative' => $outputDirectory.'/KaevCMS-cumulative-update-'.$range.'-to-'.$version.'.zip',
         'checksums' => $outputDirectory.'/KaevCMS-'.$version.'-SHA256SUMS.txt',
     ];
-    assertFixture($artifacts === $expected, 'Unified release builder returned unexpected artifact paths.');
+    assertFixture(
+        array_keys($artifacts) === array_keys($expected),
+        'Unified release builder returned unexpected artifact labels.',
+    );
+    foreach ($expected as $artifact => $expectedPath) {
+        assertFixture(
+            fixtureCanonicalPath($artifacts[$artifact]) === fixtureCanonicalPath($expectedPath),
+            'Unified release builder returned an unexpected path for '.$artifact.'.',
+        );
+    }
 
     return $artifacts;
+}
+
+function fixtureCanonicalPath(string $path): string
+{
+    $resolved = realpath($path);
+    $canonical = str_replace('\\', '/', is_string($resolved) ? $resolved : $path);
+
+    return rtrim($canonical, '/');
 }
 
 /** @return list<string> */

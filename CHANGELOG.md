@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.42.4 - 2026-07-28
+
+- Completed the Laravel Pint formatting of `deployment/release/build-release.php` by adding the required blank line before the non-initial `continue` statement in the ZIP extraction loop.
+- Added a mandatory `composer lint` preflight to the official Windows release command so release archives are not created from a Pint-invalid source tree.
+- Runtime CMS behavior, database schema, modules, themes, game drivers, updater contracts, and archive format are unchanged.
+
+## 0.42.3 - 2026-07-28
+
+- Applied the final Laravel Pint formatting pass to the unified release builder, its regression test, and the cumulative Web Update package builder.
+- Removed only redundant blank lines and added the required blank line before a return statement; runtime behavior and release contracts are unchanged.
+- No application logic, database schema, module version, theme, game driver, updater behavior, or archive format changed.
+
+## 0.42.2 - 2026-07-28
+
+- Fixed the unified release-builder regression on Windows by comparing canonical artifact paths instead of raw strings containing mixed `\` and `/` separators after `realpath()` normalization.
+- Kept the release-builder contract strict: artifact labels, filenames, existence, deterministic hashes, archive safety, declared deletions, and patch-overlay equality remain fully verified.
+- No runtime application behavior, database schema, module version, theme, game driver, updater behavior, or release archive format changed.
+
+## 0.42.1 - 2026-07-28
+
+- Fixed the Web Update package-builder regression fixture by including the required `released_at` metadata and added an explicit negative regression for invalid release dates.
+- Stabilized the external-database diagnostics viewport test by switching interface language while the desktop language control is visible, then validating the complete 390/768/800/1024/1440 px matrix. The mobile layout and overflow assertions remain unchanged.
+- No runtime application behavior, database schema, module version, theme, game driver, reward flow, or external-database diagnostics contract changed.
+
 ## 0.42.0 - 2026-07-28
 
 - Began Public Release Hardening from the confirmed 0.41.8 stable baseline; the cumulative update baseline remains 0.41.6.

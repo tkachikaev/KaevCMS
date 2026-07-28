@@ -27,7 +27,7 @@
 ```powershell
 .\deployment\windows\build-release.ps1 `
     -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.42.0"
+    -OutputDirectory "C:\Releases\0.42.1"
 ```
 
 Сборщик проверяет, что предыдущий full плюс patch точно совпадает с новым деревом, cumulative начинается с baseline `0.41.6`, runtime-файлы не попадают в архивы, а SHA256 соответствует результату. GitHub Actions отдельно запускает PHP, официальный Windows quality, официальный Windows browser quality и release-contract jobs.

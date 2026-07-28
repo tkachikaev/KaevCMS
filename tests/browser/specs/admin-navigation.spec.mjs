@@ -368,8 +368,8 @@ test('system information shows safe external database diagnostics on mobile', as
     await expect(page.getByText('browser_test', { exact: true })).toHaveCount(0);
     await expect(page.getByText('browser_test_unsupported', { exact: true })).toHaveCount(0);
 
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'EN', exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
     await expect(page.getByText('optional_character_services_with_extended_identifier', { exact: true })).toBeVisible();
 
@@ -394,7 +394,9 @@ test('system information shows safe external database diagnostics on mobile', as
     await expect(page.locator('.admin-account-copy')).toBeHidden();
     await expect(page.locator('.admin-account-chevron')).toBeHidden();
 
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.getByRole('button', { name: 'RU', exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
     await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
 });
 

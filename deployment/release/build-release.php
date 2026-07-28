@@ -359,6 +359,7 @@ function kaevReleaseExtractZip(string $archive, string $destination): void
                 if ($trimmed !== '' && ! is_dir($target) && ! mkdir($target, 0775, true) && ! is_dir($target)) {
                     throw new RuntimeException('Unable to create extracted directory: '.$trimmed);
                 }
+
                 continue;
             }
 
@@ -421,8 +422,8 @@ function kaevReleaseSafeRelativePath(string $path): bool
 }
 
 /**
- * @param list<string> $currentFiles
- * @param list<string> $previousFiles
+ * @param  list<string>  $currentFiles
+ * @param  list<string>  $previousFiles
  * @return list<string>
  */
 function kaevReleaseChangedFiles(string $root, array $currentFiles, string $previousRoot, array $previousFiles): array
@@ -639,6 +640,7 @@ function kaevReleaseRemoveTree(string $path): void
     }
     if (is_file($path) || is_link($path)) {
         @unlink($path);
+
         return;
     }
 
