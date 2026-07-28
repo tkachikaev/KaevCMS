@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release removes obsolete pre-public documentation snapshots, resets the cumulative baseline to 0.42.4, and prepares the 0.43.0 public release line.'
+Write-Host 'This hotfix aligns character rescue tests, translations, and Laravel Pint formatting with the shipped runtime contract.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

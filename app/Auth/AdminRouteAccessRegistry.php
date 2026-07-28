@@ -63,6 +63,11 @@ final class AdminRouteAccessRegistry
                 AdminPermission::RewardsManage,
             ),
             $this->prefix(
+                'admin.settings.game-server-features',
+                AdminPermission::ServersView,
+                AdminPermission::ServersManage,
+            ),
+            $this->prefix(
                 'admin.settings.game-server',
                 AdminPermission::ServersView,
                 AdminPermission::ServersManage,

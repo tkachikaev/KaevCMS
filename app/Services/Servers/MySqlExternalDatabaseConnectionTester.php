@@ -17,7 +17,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
 
     /**
      * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $connection
-     * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>  $requirements
+     * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>  $requirements
      * @return array{
      *     connected:bool,
      *     compatible:bool|null,
@@ -25,7 +25,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
      *     error:string|null,
      *     error_class:string|null,
      *     latency_ms:int|null,
-     *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>}>
+     *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>,matched_optional_columns:list<string>}>
      * }
      */
     public function test(array $connection, array $requirements, bool $driverReady): array
@@ -82,6 +82,8 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
 
                 $anyColumns = $requirement['any_columns'] ?? [];
                 $matchedAnyColumns = $this->matchedColumns($tableColumns, $anyColumns);
+                $optionalColumns = $requirement['optional_columns'] ?? [];
+                $matchedOptionalColumns = $this->matchedColumns($tableColumns, $optionalColumns);
                 if ($tableExists && $anyColumns !== [] && $matchedAnyColumns === []) {
                     $missingColumns[] = implode(' / ', $anyColumns);
                 }
@@ -96,6 +98,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                     'table_exists' => $tableExists,
                     'missing_columns' => $missingColumns,
                     'matched_any_columns' => $matchedAnyColumns,
+                    'matched_optional_columns' => $matchedOptionalColumns,
                 ];
             }
 

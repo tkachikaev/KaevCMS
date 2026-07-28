@@ -8,13 +8,13 @@ class FakeExternalDatabaseConnectionTester implements ExternalDatabaseConnection
 {
     public int $calls = 0;
 
-    /** @var list<array{connection:array<string,mixed>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>,driver_ready:bool}> */
+    /** @var list<array{connection:array<string,mixed>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>,driver_ready:bool}> */
     public array $callLog = [];
 
     /** @var array{host:string,port:int,database:string,username:string,password:string,charset:string}|null */
     public ?array $connection = null;
 
-    /** @var list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}> */
+    /** @var list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}> */
     public array $requirements = [];
 
     public ?bool $driverReady = null;

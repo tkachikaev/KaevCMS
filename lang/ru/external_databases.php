@@ -68,6 +68,7 @@ return [
         'pk' => 'PK-рейтинг',
         'play_time' => 'Рейтинг по времени в игре',
         'heroes' => 'Герои',
+        'character_rescue' => 'Возврат персонажа',
         'castles' => 'Замки',
     ],
     'table' => [

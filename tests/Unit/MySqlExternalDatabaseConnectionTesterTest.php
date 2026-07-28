@@ -63,7 +63,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
         $database->shouldReceive('selectOne')->once()->with('select 1 as kaevcms_health')->andReturn((object) ['kaevcms_health' => 1]);
         $database->shouldReceive('getSchemaBuilder')->once()->andReturn($schema);
         $schema->shouldReceive('hasTable')->once()->with('characters')->andReturnTrue();
-        $schema->shouldReceive('getColumnListing')->once()->with('characters')->andReturn(['charId', 'reputation']);
+        $schema->shouldReceive('getColumnListing')->once()->with('characters')->andReturn(['charId', 'reputation', 'x', 'y']);
 
         DB::shouldReceive('connectUsing')->once()->andReturn($database);
         DB::shouldReceive('purge')->once();
@@ -72,6 +72,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
             'table' => 'characters',
             'columns' => ['charId'],
             'any_columns' => ['karma', 'reputation'],
+            'optional_columns' => ['x', 'y', 'z'],
             'required' => true,
         ]], true);
 
@@ -79,6 +80,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
         $this->assertTrue($report['compatible']);
         $this->assertSame([], $report['checks'][0]['missing_columns']);
         $this->assertSame(['reputation'], $report['checks'][0]['matched_any_columns']);
+        $this->assertSame(['x', 'y'], $report['checks'][0]['matched_optional_columns']);
         $this->assertIsInt($report['latency_ms']);
     }
 
@@ -110,6 +112,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
         $this->assertFalse($report['compatible']);
         $this->assertSame(['karma / reputation'], $report['checks'][0]['missing_columns']);
         $this->assertSame([], $report['checks'][0]['matched_any_columns']);
+        $this->assertSame([], $report['checks'][0]['matched_optional_columns']);
     }
 
     /** @return array{host:string,port:int,database:string,username:string,password:string,charset:string} */

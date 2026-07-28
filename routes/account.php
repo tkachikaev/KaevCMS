@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Account\CharacterController;
+use App\Http\Controllers\Account\CharacterRescueController;
 use App\Http\Controllers\Account\GameAccountController;
 use App\Http\Controllers\Account\GameAccountPasswordController;
 use App\Http\Controllers\Account\ProfileController;
@@ -34,6 +35,10 @@ $registerAccountRoutes = static function (bool $localized = false): void {
                 ->name($namePrefix.'security.edit');
             Route::get('/account/characters', CharacterController::class)
                 ->name($namePrefix.'characters.index');
+            Route::post('/account/characters/{gameServer}/{gameAccount}/{character}/rescue', [CharacterRescueController::class, 'store'])
+                ->whereNumber(['gameServer', 'gameAccount', 'character'])
+                ->middleware('throttle:3,1')
+                ->name($namePrefix.'characters.rescue');
             Route::put('/account/profile/avatar', [ProfileController::class, 'updateAvatar'])
                 ->middleware('throttle:20,1')
                 ->name($namePrefix.'profile.avatar.update');

@@ -115,6 +115,7 @@ class ServerDriverRegistryTest extends TestCase
                     'lastAccess',
                 ],
                 'any_columns' => ['karma', 'reputation'],
+                'optional_columns' => ['x', 'y', 'z'],
                 'required' => true,
             ],
             [

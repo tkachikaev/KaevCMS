@@ -116,3 +116,4 @@
         </div>
     @endif
 </div>
+<x-account-character-rescue-modal />

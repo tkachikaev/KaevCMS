@@ -2,11 +2,13 @@
 
 namespace App\Services\GameAccounts;
 
+use App\Contracts\CharacterRescueGateway;
 use App\Contracts\GameAccountGateway;
 use App\Models\GameServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
 use App\Services\GameAssets\CharacterAppearanceResolver;
+use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\GameWorld\MobiusCharacterLabels;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
@@ -44,7 +46,9 @@ use Throwable;
  *     server_id:int,
  *     server_name:string,
  *     account_id:int,
- *     account_login:string
+ *     account_login:string,
+ *     rescue_available:bool,
+ *     rescue_location_name:?string
  * }
  * @phpstan-type AccountRow array{id:int,login:string,available:bool,characters:list<CharacterRow>}
  * @phpstan-type ServerRow array{id:int,name:string,chronicle:string,rates:string,sort_order:int,accounts:list<AccountRow>}
@@ -59,6 +63,8 @@ final class AccountCharacterDirectory
         private readonly GameAccountGateway $gateway,
         private readonly MobiusCharacterLabels $labels,
         private readonly CharacterAppearanceResolver $appearances,
+        private readonly GameServerFeatureSettings $features,
+        private readonly CharacterRescueGateway $rescueGateway,
     ) {}
 
     /**
@@ -71,7 +77,7 @@ final class AccountCharacterDirectory
     public function for(User $user): array
     {
         $accounts = $user->availableGameAccounts()
-            ->with(['loginServer.gameServers.translations', 'registrationGameServer.translations'])
+            ->with(['loginServer.gameServers.translations', 'loginServer.gameServers.features', 'registrationGameServer.translations'])
             ->orderBy('game_login')
             ->orderBy('id')
             ->get();
@@ -99,10 +105,18 @@ final class AccountCharacterDirectory
         }
         unset($server);
 
-        usort($allCharacters, static function (array $left, array $right): int {
-            return [! $left['online'], -$left['level'], mb_strtolower($left['name'])]
-                <=> [! $right['online'], -$right['level'], mb_strtolower($right['name'])];
-        });
+        usort(
+            $allCharacters,
+            static fn (array $left, array $right): int => [
+                $left['online'] ? 0 : 1,
+                0 - $left['level'],
+                mb_strtolower($left['name']),
+            ] <=> [
+                $right['online'] ? 0 : 1,
+                0 - $right['level'],
+                mb_strtolower($right['name']),
+            ],
+        );
 
         return [
             'servers' => $serverRows,
@@ -140,7 +154,8 @@ final class AccountCharacterDirectory
                 'accounts' => [],
             ];
 
-            $characterResult = $this->characters($gameServer, $account);
+            $rescue = $this->features->characterRescue($gameServer);
+            $characterResult = $this->characters($gameServer, $account, $rescue);
             $characters = $characterResult['characters'];
 
             $servers[$serverId]['accounts'][] = [
@@ -156,8 +171,11 @@ final class AccountCharacterDirectory
         }
     }
 
-    /** @return array{available:bool,characters:list<CharacterRow>} */
-    private function characters(GameServer $gameServer, UserGameAccount $account): array
+    /**
+     * @param array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int} $rescue
+     * @return array{available:bool,characters:list<CharacterRow>}
+     */
+    private function characters(GameServer $gameServer, UserGameAccount $account, array $rescue): array
     {
         $cacheKey = implode(':', [
             'account-character-directory-v2',
@@ -182,7 +200,7 @@ final class AccountCharacterDirectory
 
             /** @var list<CharacterRow> $characters */
             $characters = array_map(
-                fn (array $character): array => $this->normalizeCharacter($character, $gameServer, $account),
+                fn (array $character): array => $this->normalizeCharacter($character, $gameServer, $account, $rescue),
                 $rows,
             );
 
@@ -199,8 +217,17 @@ final class AccountCharacterDirectory
         }
     }
 
-    /** @param array<string,mixed> $character @return CharacterRow */
-    private function normalizeCharacter(array $character, GameServer $server, UserGameAccount $account): array
+    /**
+     * @param array<string,mixed> $character
+     * @param array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int} $rescue
+     * @return CharacterRow
+     */
+    private function normalizeCharacter(
+        array $character,
+        GameServer $server,
+        UserGameAccount $account,
+        array $rescue,
+    ): array
     {
         $playTimeSeconds = max(0, (int) ($character['play_time_seconds'] ?? 0));
         $lastAccess = max(0, (int) ($character['last_access'] ?? 0));
@@ -246,7 +273,25 @@ final class AccountCharacterDirectory
             'server_name' => $server->nameFor(),
             'account_id' => (int) $account->id,
             'account_login' => $account->game_login,
+            'rescue_available' => $rescue['enabled']
+                && $this->rescueGateway->supports($server)
+                && (bool) ($character['online'] ?? false) === false,
+            'rescue_location_name' => $rescue['enabled'] ? $rescue['location_name'] : null,
         ];
+    }
+
+    public function forget(GameServer $gameServer, UserGameAccount $account): void
+    {
+        $cacheKey = implode(':', [
+            'account-character-directory-v2',
+            $gameServer->id,
+            $gameServer->updated_at?->getTimestamp() ?? 0,
+            $account->id,
+            $account->updated_at?->getTimestamp() ?? 0,
+        ]);
+
+        Cache::forget($cacheKey);
+        Cache::forget($cacheKey.':unavailable');
     }
 
     private function playTimeLabel(int $seconds): string

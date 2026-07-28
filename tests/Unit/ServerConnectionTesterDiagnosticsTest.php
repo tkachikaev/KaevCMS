@@ -37,7 +37,7 @@ class ServerConnectionTesterDiagnosticsTest extends TestCase
     {
         $fake = new FakeExternalDatabaseConnectionTester;
         $fake->report['checks'] = [
-            $this->check('characters', matched: ['reputation']),
+            $this->check('characters', matched: ['reputation'], optional: ['x', 'y', 'z']),
             $this->check('clan_data'),
             $this->check('heroes'),
             $this->check('castle', exists: false),
@@ -58,7 +58,7 @@ class ServerConnectionTesterDiagnosticsTest extends TestCase
         ], $loginServer);
 
         $this->assertSame('mobius_modern', $report['schema_profile']);
-        $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes'], $report['capabilities']);
+        $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes', 'character_rescue'], $report['capabilities']);
     }
 
     public function test_incompatible_schema_uses_safe_domain_error_class(): void
@@ -99,12 +99,13 @@ class ServerConnectionTesterDiagnosticsTest extends TestCase
         ];
     }
 
-    /** @return array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>} */
+    /** @return array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>,matched_optional_columns:list<string>} */
     private function check(
         string $table,
         bool $exists = true,
         array $missing = [],
         array $matched = [],
+        array $optional = [],
     ): array {
         return [
             'table' => $table,
@@ -112,6 +113,7 @@ class ServerConnectionTesterDiagnosticsTest extends TestCase
             'table_exists' => $exists,
             'missing_columns' => $missing,
             'matched_any_columns' => $matched,
+            'matched_optional_columns' => $optional,
         ];
     }
 }

@@ -287,13 +287,14 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
         $this->assertSame('accounts', $server->database_table_checks[0]['table'] ?? null);
     }
 
-    /** @return array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>} */
+    /** @return array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>,matched_optional_columns:list<string>} */
     private function check(
         string $table,
         bool $required = true,
         bool $exists = true,
         array $missing = [],
         array $matched = [],
+        array $optional = [],
     ): array {
         return [
             'table' => $table,
@@ -301,6 +302,7 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
             'table_exists' => $exists,
             'missing_columns' => $missing,
             'matched_any_columns' => $matched,
+            'matched_optional_columns' => $optional,
         ];
     }
 }

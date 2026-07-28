@@ -391,3 +391,18 @@
     .reward-queue-table .audit-details-link form,.reward-queue-table .audit-details-link button{width:100%}
 }
 @media(max-width:480px){.reward-queue-table td{grid-template-columns:1fr;gap:6px}.reward-queue-capability{padding:13px}}
+
+/* KaevCMS 0.44.0 — optional GameServer features. */
+.game-feature-intro{margin-bottom:16px}
+.game-feature-list{margin-top:0}
+.game-feature-row{grid-template-columns:minmax(220px,1.4fr) minmax(150px,.8fr) minmax(150px,.7fr) minmax(130px,auto);align-items:center}
+.game-feature-server{display:flex;min-width:0;flex-direction:column;gap:3px}
+.game-feature-server strong,.game-feature-server span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.game-feature-server span{color:var(--muted);font-size:11px}
+.game-feature-capability-card{margin-bottom:18px}
+.game-feature-capability-card .settings-card-heading{align-items:flex-start}
+.game-feature-missing-columns{display:block;overflow:auto;margin-top:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-muted);font-size:11px;white-space:nowrap}
+.game-feature-coordinate-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.admin-page-back{margin-bottom:14px}
+.admin-page-back a{color:var(--accent);font-size:12px;font-weight:800}
+@media(max-width:850px){.game-feature-row{grid-template-columns:minmax(0,1fr) auto}.game-feature-row-header>*:nth-child(2),.game-feature-row-header>*:nth-child(3),.game-feature-row>span:nth-child(2){display:none}.game-feature-row>span:nth-child(3){grid-column:2;grid-row:1}.game-feature-row .admin-row-actions{grid-column:1/-1}.game-feature-coordinate-grid{grid-template-columns:1fr}}

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.44.1 - 2026-07-28
+
+- Updated `ServerDriverRegistryTest` to include the optional Mobius `characters.x`, `characters.y`, and `characters.z` schema columns introduced for character rescue.
+- Reused the existing literal translation key for the unavailable character-rescue state, restoring complete RU/EN translation coverage.
+- Fixed Laravel Pint violations in the character directory, rescue service, and feature settings, including removal of an unused import.
+- Character rescue runtime behavior, database migrations, driver capabilities, themes, modules, and user-owned runtime data are unchanged.
+- The cumulative update line remains based on `0.42.4`; the 0.44.1 package supports direct updates from 0.42.4 through 0.44.0.
+
+## 0.44.0 - 2026-07-28
+
+- Added a separate **Game servers → Features** administration section so optional player services can be configured per GameServer without overloading connection cards.
+- Added safe direct offline character rescue with owner-defined destination coordinates, minimum offline delay, per-character cooldown, confirmation modal, atomic ownership/state checks, cache invalidation, UUID operation journal, and redacted audit events.
+- Added the optional Mobius `character_rescue` capability. Support is detected from the existing unified schema-profile diagnostics and requires the `characters` coordinate, ownership, offline-state, deletion, and access-level columns.
+- Added reusable `game_server_features` storage and a dedicated `CharacterRescueGateway` contract so future character services and non-Mobius schemas can be added without changing the player interface.
+- Updated both bundled account themes to 1.6.0 with responsive character rescue actions and the shared account navigation runtime.
+- Added Russian/English documentation plus feature, authorization, validation, cooldown, ownership, online-state, idempotency, schema-diagnostics, and direct database-write regressions.
+- The cumulative update line remains based on `0.42.4`; the 0.44.0 package supports direct updates from 0.42.4 through 0.43.0.
+
 ## 0.43.0 - 2026-07-28
 
 - Prepared the first public release line and reset both the cumulative update baseline and recovery floor to `0.42.4`; the first cumulative package is `KaevCMS-cumulative-update-0.42.4-to-0.43.0.zip`.

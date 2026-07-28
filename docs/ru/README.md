@@ -10,6 +10,7 @@ KaevCMS — CMS на Laravel для серверов Lineage II. Здесь оп
 - [Безопасность и права](SECURITY.md)
 - [Администрирование](ADMINISTRATION.md)
 - [Интеграция с игровыми серверами](GAME_INTEGRATION.md)
+- [Возврат персонажа в город](CHARACTER_RESCUE.md)
 - [Контент и шаблоны](CONTENT_THEMES.md)
 - [Почта и очереди](MAIL_AND_QUEUES.md)
 - [Модули](MODULES.md)
@@ -21,4 +22,4 @@ KaevCMS — CMS на Laravel для серверов Lineage II. Здесь оп
 
 ## Актуальная версия
 
-Эти инструкции описывают KaevCMS 0.43.0. Требуется PHP 8.3 или новее.
+Эти инструкции описывают KaevCMS 0.44.1. Требуется PHP 8.3 или новее.

@@ -200,6 +200,27 @@ class AccountNavigationTest extends TestCase
         }
     }
 
+    public function test_bundled_account_themes_use_the_shared_character_rescue_modal_runtime(): void
+    {
+        $runtime = file_get_contents(public_path('assets/account/js/navigation.js'));
+        $modal = file_get_contents(resource_path('views/components/account-character-rescue-modal.blade.php'));
+
+        $this->assertIsString($runtime);
+        $this->assertIsString($modal);
+        $this->assertStringContainsString('data-character-rescue-open', $runtime);
+        $this->assertStringContainsString('data-character-rescue-modal', $modal);
+
+        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+            $row = file_get_contents(base_path("account-themes/{$theme}/views/components/character-row.blade.php"));
+            $directory = file_get_contents(base_path("account-themes/{$theme}/views/livewire/character-directory.blade.php"));
+
+            $this->assertIsString($row);
+            $this->assertIsString($directory);
+            $this->assertStringContainsString('data-character-rescue-open', $row);
+            $this->assertStringContainsString('<x-account-character-rescue-modal', $directory);
+        }
+    }
+
     public function test_legacy_core_account_views_are_not_used_and_shared_runtime_is_present(): void
     {
         $this->assertDirectoryDoesNotExist(resource_path('views/account'));

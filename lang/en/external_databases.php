@@ -68,6 +68,7 @@ return [
         'pk' => 'PK ranking',
         'play_time' => 'Play-time ranking',
         'heroes' => 'Heroes',
+        'character_rescue' => 'Character rescue',
         'castles' => 'Castles',
     ],
     'table' => [

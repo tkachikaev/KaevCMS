@@ -22,6 +22,18 @@
         <span><small>PvP</small><strong>{{ $character['pvp_kills'] }}</strong></span>
         <span><small>PK</small><strong>{{ $character['pk_kills'] }}</strong></span>
     </div>
+    @if($character['rescue_available'])
+        <div class="account-character-actions">
+            <button
+                type="button"
+                class="account-button secondary account-character-rescue-button"
+                data-character-rescue-open
+                data-character-rescue-action="{{ public_route('characters.rescue', ['gameServer' => $character['server_id'], 'gameAccount' => $character['account_id'], 'character' => $character['id']]) }}"
+                data-character-rescue-name="{{ $character['name'] }}"
+                data-character-rescue-location="{{ $character['rescue_location_name'] }}"
+            >{{ __('Return to city') }}</button>
+        </div>
+    @endif
     <details class="account-character-details">
         <summary>{{ __('Details') }} <span aria-hidden="true">⌄</span></summary>
         <dl>

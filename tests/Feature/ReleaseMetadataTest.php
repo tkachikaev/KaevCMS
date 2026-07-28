@@ -482,7 +482,7 @@ class ReleaseMetadataTest extends TestCase
                 true,
                 flags: JSON_THROW_ON_ERROR,
             );
-            $this->assertSame('1.5.0', $accountThemeManifest['version']);
+            $this->assertSame('1.6.0', $accountThemeManifest['version']);
             $this->assertSame('0.37.0', $accountThemeManifest['cms_min']);
         }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');

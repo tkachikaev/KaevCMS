@@ -31,6 +31,8 @@ final class MobiusGameSchemaInspector
 
     private const REPUTATION_COLUMNS = ['karma', 'reputation'];
 
+    private const CHARACTER_RESCUE_COLUMNS = ['x', 'y', 'z'];
+
     private const CLAN_COLUMNS = ['clan_id', 'clan_name', 'clan_level', 'reputation_score', 'hasCastle', 'leader_id'];
 
     private const HERO_COLUMNS = ['charId', 'class_id', 'count', 'played', 'claimed'];
@@ -38,7 +40,7 @@ final class MobiusGameSchemaInspector
     private const CASTLE_COLUMNS = ['id', 'name'];
 
     /**
-     * @return list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>
+     * @return list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>
      */
     public static function requirements(): array
     {
@@ -47,6 +49,7 @@ final class MobiusGameSchemaInspector
                 'table' => 'characters',
                 'columns' => self::CHARACTER_COLUMNS,
                 'any_columns' => self::REPUTATION_COLUMNS,
+                'optional_columns' => self::CHARACTER_RESCUE_COLUMNS,
                 'required' => true,
             ],
             [
@@ -85,6 +88,10 @@ final class MobiusGameSchemaInspector
             hasReputation: $hasReputation,
             heroesAvailable: $this->tableHasColumns($schema, 'heroes', self::HERO_COLUMNS),
             castlesAvailable: $this->tableHasColumns($schema, 'castle', self::CASTLE_COLUMNS),
+            characterRescueAvailable: $this->tableHasColumns($schema, 'characters', [
+                ...self::CHARACTER_COLUMNS,
+                ...self::CHARACTER_RESCUE_COLUMNS,
+            ]),
             chronicle: $chronicle,
         );
 
@@ -100,6 +107,7 @@ final class MobiusGameSchemaInspector
         bool $hasReputation,
         bool $heroesAvailable,
         bool $castlesAvailable,
+        bool $characterRescueAvailable = false,
         ?string $chronicle = null,
     ): ?MobiusGameSchemaProfile {
         if (! $hasKarma && ! $hasReputation) {
@@ -121,6 +129,7 @@ final class MobiusGameSchemaInspector
             reputationColumn: $reputationColumn,
             heroesAvailable: $heroesAvailable,
             castlesAvailable: $castlesAvailable,
+            characterRescueAvailable: $characterRescueAvailable,
         );
     }
 

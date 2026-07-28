@@ -61,6 +61,7 @@ use Throwable;
  * @property int $statistics_play_time_limit
  * @property-read LoginServer|null $loginServer
  * @property-read Collection<int, GameServerTranslation> $translations
+ * @property-read Collection<int, GameServerFeature> $features
  */
 class GameServer extends Model
 {
@@ -156,6 +157,12 @@ class GameServer extends Model
     public function loginServer(): BelongsTo
     {
         return $this->belongsTo(LoginServer::class);
+    }
+
+    /** @return HasMany<GameServerFeature, $this> */
+    public function features(): HasMany
+    {
+        return $this->hasMany(GameServerFeature::class);
     }
 
     /** @return HasMany<RewardInventoryGrant, $this> */

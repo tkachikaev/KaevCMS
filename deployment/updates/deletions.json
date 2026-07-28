@@ -291,5 +291,11 @@
         "core/docs/AUDIT-0.30.0.md",
         "core/docs/AUDIT_0.29.0.md",
         "core/docs/history"
+    ],
+    "0.44.0": [
+        "core/deployment/windows/apply-0.43.0.ps1"
+    ],
+    "0.44.1": [
+        "core/deployment/windows/apply-0.44.0.ps1"
     ]
 }

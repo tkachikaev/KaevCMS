@@ -9,6 +9,7 @@
     const profileMenus = () => document.querySelectorAll('.account-profile-menu[open]');
     const avatarModal = () => document.querySelector('[data-avatar-modal]');
     const operationModal = () => document.querySelector('[data-account-operation-modal]');
+    const characterRescueModal = () => document.querySelector('[data-character-rescue-modal]');
 
     const closeProfileMenus = () => {
         profileMenus().forEach((menu) => menu.removeAttribute('open'));
@@ -36,6 +37,64 @@
             modal.close();
         }
         document.documentElement.classList.remove('account-operation-modal-open');
+    };
+
+    const closeCharacterRescueModal = () => {
+        const modal = characterRescueModal();
+        if (modal instanceof HTMLDialogElement && modal.open) {
+            modal.close();
+        }
+        document.documentElement.classList.remove('account-operation-modal-open');
+    };
+
+    const openCharacterRescueModal = (trigger) => {
+        const modal = characterRescueModal();
+        if (!(modal instanceof HTMLDialogElement) || !(trigger instanceof Element)) {
+            return;
+        }
+
+        const form = modal.querySelector('[data-character-rescue-form]');
+        const name = modal.querySelector('[data-character-rescue-name]');
+        const location = modal.querySelector('[data-character-rescue-location]');
+        const action = trigger.getAttribute('data-character-rescue-action') || '';
+
+        if (!(form instanceof HTMLFormElement) || action === '') {
+            return;
+        }
+
+        form.action = action;
+        if (name) {
+            name.textContent = trigger.getAttribute('data-character-rescue-name') || '—';
+        }
+        if (location) {
+            location.textContent = trigger.getAttribute('data-character-rescue-location') || '—';
+        }
+
+        closeProfileMenus();
+        closeMobileSidebar();
+        if (!modal.open) {
+            modal.showModal();
+        }
+        document.documentElement.classList.add('account-operation-modal-open');
+    };
+
+    const initializeCharacterRescueModal = () => {
+        const modal = characterRescueModal();
+        if (!(modal instanceof HTMLDialogElement)) {
+            return;
+        }
+
+        if (!modal.hasAttribute(readyAttribute)) {
+            modal.setAttribute(readyAttribute, '');
+            modal.addEventListener('close', () => {
+                document.documentElement.classList.remove('account-operation-modal-open');
+            });
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeCharacterRescueModal();
+                }
+            });
+        }
     };
 
     const initializeOperationModal = () => {
@@ -124,12 +183,14 @@
         closeProfileMenus();
         initializeAvatarModal();
         initializeOperationModal();
+        initializeCharacterRescueModal();
     };
 
     const beginNavigation = () => {
         document.documentElement.classList.add('account-is-navigating');
         closeAvatarModal();
         closeOperationModal();
+        closeCharacterRescueModal();
         closeMobileSidebar();
     };
 
@@ -171,6 +232,19 @@
         if (event.target.closest('[data-account-operation-modal-close]')) {
             event.preventDefault();
             closeOperationModal();
+            return;
+        }
+
+        const rescueTrigger = event.target.closest('[data-character-rescue-open]');
+        if (rescueTrigger) {
+            event.preventDefault();
+            openCharacterRescueModal(rescueTrigger);
+            return;
+        }
+
+        if (event.target.closest('[data-character-rescue-close]')) {
+            event.preventDefault();
+            closeCharacterRescueModal();
             return;
         }
 

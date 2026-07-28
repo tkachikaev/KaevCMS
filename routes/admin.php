@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GameAccountSettingsController as AdminGameAccountSettingsController;
 use App\Http\Controllers\Admin\GameServerConnectionController as AdminGameServerConnectionController;
 use App\Http\Controllers\Admin\GameServerController as AdminGameServerController;
+use App\Http\Controllers\Admin\GameServerFeatureController as AdminGameServerFeatureController;
 use App\Http\Controllers\Admin\GeneralSettingsController as AdminGeneralSettingsController;
 use App\Http\Controllers\Admin\LanguageSettingsController as AdminLanguageSettingsController;
 use App\Http\Controllers\Admin\LoginServerController as AdminLoginServerController;
@@ -166,6 +167,13 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::post('/settings/game-server/{gameServer}/connection', [AdminGameServerConnectionController::class, 'update'])
             ->middleware('throttle:10,1')
             ->name('settings.game-server.connection');
+        Route::get('/settings/game-server-features', [AdminGameServerFeatureController::class, 'index'])
+            ->name('settings.game-server-features.index');
+        Route::get('/settings/game-server-features/{gameServer}', [AdminGameServerFeatureController::class, 'edit'])
+            ->name('settings.game-server-features.edit');
+        Route::put('/settings/game-server-features/{gameServer}', [AdminGameServerFeatureController::class, 'update'])
+            ->middleware('throttle:10,1')
+            ->name('settings.game-server-features.update');
         Route::get('/settings/login-server', [AdminLoginServerController::class, 'index'])->name('settings.login-server');
         Route::post('/settings/login-server', [AdminLoginServerController::class, 'store'])
             ->middleware('throttle:10,1')

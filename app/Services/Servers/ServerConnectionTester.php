@@ -134,7 +134,7 @@ final class ServerConnectionTester
 
     /**
      * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string}  $connection
-     * @param  list<array{table: string, columns: list<string>, any_columns?: list<string>, required: bool}>  $requirements
+     * @param  list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>  $requirements
      * @return array<string, mixed>
      */
     private function testExternalDatabase(array $connection, array $requirements, bool $driverReady): array
@@ -174,7 +174,7 @@ final class ServerConnectionTester
 
     /**
      * @param  array<string, mixed>  $report
-     * @param  array{label: string, description: string, ready: bool, service_port: int, schema_profile: string, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, required: bool}>}  $driver
+     * @param  array{label: string, description: string, ready: bool, service_port: int, schema_profile: string, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>}  $driver
      * @return array<string, mixed>
      */
     private function withLoginDriver(array $report, string $driverKey, array $driver): array
@@ -192,7 +192,7 @@ final class ServerConnectionTester
 
     /**
      * @param  array<string, mixed>  $report
-     * @param  array{label: string, description: string, ready: bool, service_port: int, character_created_at_column?: string|null, online_count?: array{table: string, column: string, value: int|string}, statistics?: list<string>, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, required: bool}>}  $driver
+     * @param  array{label: string, description: string, ready: bool, service_port: int, character_created_at_column?: string|null, online_count?: array{table: string, column: string, value: int|string}, statistics?: list<string>, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>}  $driver
      * @return array<string, mixed>
      */
     private function withGameDriver(array $report, string $driverKey, array $driver, string $chronicle): array
@@ -267,12 +267,16 @@ final class ServerConnectionTester
         $matched = is_array($characters['matched_any_columns'] ?? null)
             ? $characters['matched_any_columns']
             : [];
+        $matchedOptional = is_array($characters['matched_optional_columns'] ?? null)
+            ? $characters['matched_optional_columns']
+            : [];
 
         return $this->mobiusSchemas->profileForColumns(
             hasKarma: in_array('karma', $matched, true),
             hasReputation: in_array('reputation', $matched, true),
             heroesAvailable: $this->tableIsAvailable($report, 'heroes'),
             castlesAvailable: $this->tableIsAvailable($report, 'castle'),
+            characterRescueAvailable: count(array_intersect(['x', 'y', 'z'], $matchedOptional)) === 3,
             chronicle: $chronicle,
         );
     }

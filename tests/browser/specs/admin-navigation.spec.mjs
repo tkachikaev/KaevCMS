@@ -145,6 +145,19 @@ test('persisted sidebar keeps group state during navigation and history changes'
     await expect(appearanceGroup).toHaveAttribute('open', '');
 });
 
+test('game server features are configured on a separate compact page', async ({ page }) => {
+    await openMenuGroup(page, 'servers');
+    await page.locator('[data-admin-menu-group="servers"]').getByRole('link', { name: 'Возможности', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/admin\/settings\/game-server-features$/);
+    await expect(page.getByRole('heading', { name: 'Возможности игровых серверов' }).first()).toBeVisible();
+    await expect(page.locator('.game-feature-row').first()).toBeVisible();
+    await expectNoDocumentHorizontalOverflow(page, 'game server features desktop');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoDocumentHorizontalOverflow(page, 'game server features mobile');
+});
+
 test('settings use one sidebar entry and local tabs', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings');
 

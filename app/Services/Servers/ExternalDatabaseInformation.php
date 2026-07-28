@@ -239,6 +239,7 @@ final class ExternalDatabaseInformation
             'play_time' => (string) __('external_databases.capability.play_time'),
             'heroes' => (string) __('external_databases.capability.heroes'),
             'castles' => (string) __('external_databases.capability.castles'),
+            'character_rescue' => (string) __('external_databases.capability.character_rescue'),
             default => Str::headline($capability),
         };
     }

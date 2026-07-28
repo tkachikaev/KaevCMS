@@ -174,7 +174,7 @@ final class MobiusGameWorldDriver implements GameWorldDriver
             $server->updated_at?->getTimestamp() ?? 0,
         ]);
 
-        /** @var array{name:string,reputation_column:string,heroes_available:bool,castles_available:bool} $profile */
+        /** @var array{name:string,reputation_column:string,heroes_available:bool,castles_available:bool,character_rescue_available:bool} $profile */
         $profile = Cache::remember(
             $cacheKey,
             now()->addMinutes(self::SCHEMA_CACHE_MINUTES),
