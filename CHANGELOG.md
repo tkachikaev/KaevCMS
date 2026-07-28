@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.0 - 2026-07-28
+
+- Prepared the first public release line and reset both the cumulative update baseline and recovery floor to `0.42.4`; the first cumulative package is `KaevCMS-cumulative-update-0.42.4-to-0.43.0.zip`.
+- Removed the frozen `docs/history/0.32.10-reference` tree and obsolete `AUDIT-0.30.0.md` / `AUDIT_0.29.0.md` compatibility stubs from release payloads.
+- Added versioned deletion coverage and regressions proving the obsolete documentation is removed by patch and cumulative updates without touching `.env`, storage, databases, uploads, modules, themes, or game-server integrations.
+- Database schemas, Composer/npm dependencies, bundled module/theme versions, runtime behavior, and user-owned files are unchanged.
+
 ## 0.42.4 - 2026-07-28
 
 - Completed the Laravel Pint formatting of `deployment/release/build-release.php` by adding the required blank line before the non-initial `continue` statement in the ZIP extraction loop.

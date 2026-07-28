@@ -148,8 +148,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('public/assets/account/js/navigation.js', $russianDevelopment);
         $this->assertStringContainsString('build-release.ps1', $englishDevelopment);
         $this->assertStringContainsString('build-release.ps1', $russianDevelopment);
-        $this->assertStringContainsString('0.41.6', $englishDevelopment);
-        $this->assertStringContainsString('0.41.6', $russianDevelopment);
+        $this->assertStringContainsString('0.42.4', $englishDevelopment);
+        $this->assertStringContainsString('0.42.4', $russianDevelopment);
     }
 
     public function test_update_script_uses_data_driven_release_and_recovery_contracts(): void
@@ -346,7 +346,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(app_path('Services/Rewards/RewardDeliveryReconciler.php'));
         $this->assertFileExists(app_path('Console/Commands/ReconcileRewardDeliveriesCommand.php'));
         $this->assertFileExists(app_path('Http/Middleware/SecurityHeaders.php'));
-        $this->assertFileExists(base_path('docs/AUDIT-0.30.0.md'));
+        $this->assertFileDoesNotExist(base_path('docs/AUDIT-0.30.0.md'));
+        $this->assertFileDoesNotExist(base_path('docs/AUDIT_0.29.0.md'));
+        $this->assertDirectoryDoesNotExist(base_path('docs/history'));
 
         $contract = $this->readReleaseFile('app/Contracts/GameWorldDriver.php');
         $this->assertStringNotContainsString('rewardDeliveryCapabilities', $contract);

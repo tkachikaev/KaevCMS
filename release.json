@@ -1,14 +1,14 @@
 {
     "schema": 1,
-    "version": "0.42.4",
-    "previous_version": "0.42.3",
+    "version": "0.43.0",
+    "previous_version": "0.42.4",
     "released_at": "2026-07-28",
-    "recovery_floor_version": "0.41.6",
-    "cumulative_base_version": "0.41.6",
-    "apply_script": "deployment/windows/apply-0.42.4.ps1",
+    "recovery_floor_version": "0.42.4",
+    "cumulative_base_version": "0.42.4",
+    "apply_script": "deployment/windows/apply-0.43.0.ps1",
     "update_script": "deployment/windows/update.ps1",
-    "previous_apply_script": "deployment/windows/apply-0.42.3.ps1",
-    "previous_apply_sha256": "4d810f3c7e740c517df4666e94d59c450bfc971ce3b31c04a17f9a345185477c",
+    "previous_apply_script": "deployment/windows/apply-0.42.4.ps1",
+    "previous_apply_sha256": "289a35bbd734e379c0b76e58b78e3b6e034ee617989b5b35e643d6543ecfeeb9",
     "composer_lock": {
         "previous_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7",
         "current_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7"

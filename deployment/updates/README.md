@@ -9,14 +9,14 @@ A cumulative Web Update ZIP contains `kaevcms-update.json` at the archive root a
 - `.env`, storage, SQLite runtime files, user uploads, split-path runtime configuration, caches, and development dependencies are excluded.
 - Every payload file has a SHA256 hash.
 - Composer lock changes are rejected by Web Update and require a full deployment.
-- The current cumulative baseline is `0.41.6`.
+- The current cumulative baseline is `0.42.4`.
 
 Use the unified release builder for official releases:
 
 ```powershell
 .\deployment\windows\build-release.ps1 `
-    -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.42.1"
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.42.4-full.zip" `
+    -OutputDirectory "C:\Releases\0.43.0"
 ```
 
 `deployment/updates/build-package.php` remains the lower-level cumulative-package component used by that command. `deletions.json` stores versioned deletion history; removed paths must be declared before a release can be built.
@@ -30,14 +30,14 @@ Cumulative Web Update ZIP содержит `kaevcms-update.json` в корне �
 - `.env`, storage, runtime SQLite, пользовательские uploads, runtime-конфигурация split-пути, кэши и dev-зависимости исключаются.
 - Для каждого payload-файла записывается SHA256.
 - Изменение `composer.lock` блокирует Web Update и требует полного развёртывания.
-- Текущая cumulative-база — `0.41.6`.
+- Текущая cumulative-база — `0.42.4`.
 
 Для официального релиза используйте единый сборщик:
 
 ```powershell
 .\deployment\windows\build-release.ps1 `
-    -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.42.1"
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.42.4-full.zip" `
+    -OutputDirectory "C:\Releases\0.43.0"
 ```
 
 `deployment/updates/build-package.php` остаётся низкоуровневой частью сборки cumulative-пакета. `deletions.json` хранит историю удалений по версиям; незаявленное удаление блокирует выпуск.

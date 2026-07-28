@@ -1,4 +1,4 @@
-# KaevCMS 0.42.4
+# KaevCMS 0.43.0
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.42.4 completes the Laravel Pint formatting of the unified release builder and makes `composer lint` a mandatory preflight of the official release command. Runtime CMS behavior and archive contracts are unchanged. The cumulative baseline remains 0.41.6.
+Version 0.43.0 prepares the first public release line: obsolete pre-public documentation snapshots were removed, release metadata was cleaned, and the cumulative update baseline was reset to 0.42.4. Runtime data, database schemas, modules, themes, game drivers, and user uploads are unchanged.
 
 ### Requirements
 
@@ -94,7 +94,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.42.4 завершает форматирование Laravel Pint для единого сборщика релизов и делает `composer lint` обязательной предварительной проверкой официальной команды сборки. Поведение CMS и контракты архивов не изменены. Кумулятивная база остаётся 0.41.6.
+Версия 0.43.0 подготавливает первую публичную релизную линию: удалены устаревшие дорелизные снимки документации, очищены релизные метаданные, а новая cumulative-база установлена на 0.42.4. Runtime-данные, схема БД, модули, темы, игровые драйверы и пользовательские uploads не изменены.
 
 ### Требования
 
