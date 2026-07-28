@@ -160,6 +160,12 @@ class BrowserTestSeeder extends Seeder
                         'table_exists' => false,
                         'missing_columns' => [],
                     ],
+                    [
+                        'table' => 'optional_character_services_with_extended_identifier',
+                        'required' => false,
+                        'table_exists' => false,
+                        'missing_columns' => [],
+                    ],
                 ],
                 'monitor_status' => 'online',
                 'monitor_checked_at' => now(),

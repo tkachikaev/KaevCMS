@@ -261,5 +261,8 @@
     ],
     "0.41.5": [
         "core/deployment/windows/apply-0.41.4.ps1"
+    ],
+    "0.41.6": [
+        "core/deployment/windows/apply-0.41.5.ps1"
     ]
 }

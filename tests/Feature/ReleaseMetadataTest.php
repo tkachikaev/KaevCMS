@@ -85,6 +85,20 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
     }
 
+    public function test_security_fixed_http_client_versions_are_locked(): void
+    {
+        $lock = $this->jsonReleaseFile('composer.lock');
+        $packages = collect($lock['packages'] ?? [])->keyBy('name');
+        $guzzle = $packages->get('guzzlehttp/guzzle');
+        $psr7 = $packages->get('guzzlehttp/psr7');
+
+        $this->assertIsArray($guzzle);
+        $this->assertIsArray($psr7);
+        $this->assertTrue(version_compare((string) ($guzzle['version'] ?? '0.0.0'), '7.15.1', '>='));
+        $this->assertTrue(version_compare((string) ($psr7['version'] ?? '0.0.0'), '2.13.0', '>='));
+        $this->assertSame('^2.13', $guzzle['require']['guzzlehttp/psr7'] ?? null);
+    }
+
     public function test_documentation_is_bilingual_and_current(): void
     {
         foreach ([

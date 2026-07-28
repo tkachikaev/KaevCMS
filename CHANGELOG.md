@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.6 - 2026-07-28
+
+- Updated `guzzlehttp/guzzle` to 7.15.1 and `guzzlehttp/psr7` to 2.13.0, moving the production dependency lock to the security-fixed HTTP client line.
+- Deduplicated identical physical external-database probes within one diagnostics refresh while keeping driver-specific schema-profile and capability evaluation separate for every configured server. The in-memory fingerprint is never logged or persisted and the cache is reset after each refresh.
+- Removed the System information N+1 schema checks by trusting the already eager-loaded GameServer translations relation; added regressions for a constant translation-query count and shared-connection probe deduplication.
+- Fixed the remaining 768 px external-database diagnostics overflow with zero-minimum grid tracks, shrinkable status badges, and a diagnostics-specific responsive breakpoint. No global overflow hiding was introduced.
+
 ## 0.41.5 - 2026-07-27
 
 - Fixed the real mobile System information overflow in the administrator header. The generic `.admin-user span` rule had higher specificity than the mobile account-copy hiding rule, leaving the administrator name, email, role, and chevron visible at 390 px.

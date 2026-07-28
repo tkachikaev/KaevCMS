@@ -21,4 +21,4 @@ KaevCMS is a Laravel CMS for Lineage II servers. The public website, player acco
 
 ## Supported release
 
-These guides describe KaevCMS 0.41.5. PHP 8.3 or newer is required.
+These guides describe KaevCMS 0.41.6. PHP 8.3 or newer is required.

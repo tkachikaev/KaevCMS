@@ -13,11 +13,38 @@ use InvalidArgumentException;
 
 final class ServerConnectionTester
 {
+    private bool $probeCacheEnabled = false;
+
+    /** @var array<string,array<string,mixed>> */
+    private array $probeCache = [];
+
     public function __construct(
         private readonly ExternalDatabaseConnectionTester $tester,
         private readonly ServerDriverRegistry $drivers,
         private readonly MobiusGameSchemaInspector $mobiusSchemas,
     ) {}
+
+    /**
+     * Cache identical physical probes only for the duration of one diagnostics refresh.
+     *
+     * @template T
+     * @param  callable():T  $callback
+     * @return T
+     */
+    public function withProbeCache(callable $callback): mixed
+    {
+        $previousEnabled = $this->probeCacheEnabled;
+        $previousCache = $this->probeCache;
+        $this->probeCacheEnabled = true;
+        $this->probeCache = [];
+
+        try {
+            return $callback();
+        } finally {
+            $this->probeCacheEnabled = $previousEnabled;
+            $this->probeCache = $previousCache;
+        }
+    }
 
     /** @param array<string,mixed> $values */
     public function testLoginValues(array $values): array
@@ -29,7 +56,11 @@ final class ServerConnectionTester
         }
 
         return $this->withLoginDriver(
-            $this->tester->test($this->credentials($values), $driver['requirements'], $driver['ready']),
+            $this->testExternalDatabase(
+                $this->credentials($values),
+                $driver['requirements'],
+                $driver['ready'],
+            ),
             $driverKey,
             $driver,
         );
@@ -69,7 +100,11 @@ final class ServerConnectionTester
             : $values;
 
         return $this->withGameDriver(
-            $this->tester->test($this->credentials($connectionValues), $driver['requirements'], $driver['ready']),
+            $this->testExternalDatabase(
+                $this->credentials($connectionValues),
+                $driver['requirements'],
+                $driver['ready'],
+            ),
             $driverKey,
             $driver,
             (string) ($values['chronicle'] ?? ''),
@@ -94,6 +129,30 @@ final class ServerConnectionTester
             'database_password' => $server->databasePassword() ?? '',
             'database_charset' => $server->database_charset,
         ], $loginServer);
+    }
+
+    /**
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $connection
+     * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>  $requirements
+     * @return array<string,mixed>
+     */
+    private function testExternalDatabase(array $connection, array $requirements, bool $driverReady): array
+    {
+        if (! $this->probeCacheEnabled) {
+            return $this->tester->test($connection, $requirements, $driverReady);
+        }
+
+        $payload = json_encode(
+            [$connection, $requirements, $driverReady],
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES,
+        );
+        $fingerprint = hash('sha256', $payload);
+
+        if (! array_key_exists($fingerprint, $this->probeCache)) {
+            $this->probeCache[$fingerprint] = $this->tester->test($connection, $requirements, $driverReady);
+        }
+
+        return $this->probeCache[$fingerprint];
     }
 
     /** @param array<string,mixed> $values @return array{host:string,port:int,database:string,username:string,password:string,charset:string} */

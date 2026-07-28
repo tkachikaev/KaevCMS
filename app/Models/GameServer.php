@@ -225,18 +225,19 @@ class GameServer extends Model
         $locale ??= app()->getLocale();
         $languages = app(LanguageManager::class);
         $locale = $languages->normalizeCode($locale) ?? $languages->default();
-
-        if (! $this->translationsTableExists()) {
-            return trim((string) $this->name);
-        }
-
         $candidates = $withFallback
             ? $languages->fallbackCandidates($locale)
             : [$locale];
 
-        $translations = $this->relationLoaded('translations')
-            ? $this->getRelation('translations')
-            : $this->translations()->whereIn('locale', $candidates)->get();
+        if ($this->relationLoaded('translations')) {
+            $translations = $this->getRelation('translations');
+        } else {
+            if (! $this->translationsTableExists()) {
+                return trim((string) $this->name);
+            }
+
+            $translations = $this->translations()->whereIn('locale', $candidates)->get();
+        }
 
         if ($translations instanceof Collection) {
             foreach ($candidates as $candidate) {
@@ -255,18 +256,19 @@ class GameServer extends Model
         $locale ??= app()->getLocale();
         $languages = app(LanguageManager::class);
         $locale = $languages->normalizeCode($locale) ?? $languages->default();
-
-        if (! $this->translationsTableExists()) {
-            return '';
-        }
-
         $candidates = $withFallback
             ? $languages->fallbackCandidates($locale)
             : [$locale];
 
-        $translations = $this->relationLoaded('translations')
-            ? $this->getRelation('translations')
-            : $this->translations()->whereIn('locale', $candidates)->get();
+        if ($this->relationLoaded('translations')) {
+            $translations = $this->getRelation('translations');
+        } else {
+            if (! $this->translationsTableExists()) {
+                return '';
+            }
+
+            $translations = $this->translations()->whereIn('locale', $candidates)->get();
+        }
 
         if ($translations instanceof Collection) {
             foreach ($candidates as $candidate) {

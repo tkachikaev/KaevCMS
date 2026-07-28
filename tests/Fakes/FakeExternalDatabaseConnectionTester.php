@@ -6,6 +6,11 @@ use App\Contracts\ExternalDatabaseConnectionTester;
 
 class FakeExternalDatabaseConnectionTester implements ExternalDatabaseConnectionTester
 {
+    public int $calls = 0;
+
+    /** @var list<array{connection:array<string,mixed>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>,driver_ready:bool}> */
+    public array $callLog = [];
+
     /** @var array{host:string,port:int,database:string,username:string,password:string,charset:string}|null */
     public ?array $connection = null;
 
@@ -30,6 +35,12 @@ class FakeExternalDatabaseConnectionTester implements ExternalDatabaseConnection
 
     public function test(array $connection, array $requirements, bool $driverReady): array
     {
+        $this->calls++;
+        $this->callLog[] = [
+            'connection' => $connection,
+            'requirements' => $requirements,
+            'driver_ready' => $driverReady,
+        ];
         $this->connection = $connection;
         $this->requirements = $requirements;
         $this->driverReady = $driverReady;

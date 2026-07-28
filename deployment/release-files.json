@@ -73,7 +73,7 @@
         "deployment/updates/build-package.php",
         "deployment/updates/deletions.json",
         "deployment/updates/tests-package-builder.php",
-        "deployment/windows/apply-0.41.5.ps1",
+        "deployment/windows/apply-0.41.6.ps1",
         "deployment/windows/build-shared-hosting-package.ps1",
         "deployment/windows/build-web-update-package.ps1",
         "deployment/windows/setup.ps1",

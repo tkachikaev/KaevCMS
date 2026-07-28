@@ -338,8 +338,18 @@ test('system information shows safe external database diagnostics on mobile', as
     await expect(diagnostics).toBeVisible();
     await expect(page.locator('.admin-account-copy')).toBeHidden();
     await expect(page.locator('.admin-account-chevron')).toBeHidden();
-    const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    let hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     expect(hasHorizontalOverflow).toBe(false);
+
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.getByRole('button', { name: 'EN', exact: true }).click();
+    await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
+    await expect(page.getByText('optional_character_services_with_extended_identifier', { exact: true })).toBeVisible();
+    hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    expect(hasHorizontalOverflow).toBe(false);
+
+    await page.getByRole('button', { name: 'RU', exact: true }).click();
+    await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
 });
 
 test('removed legacy dashboard endpoint returns not found', async ({ page }) => {

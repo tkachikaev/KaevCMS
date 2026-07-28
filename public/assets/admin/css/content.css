@@ -858,25 +858,31 @@
 .system-external-database-header strong,
 .system-external-database-header small { display: block; overflow-wrap: anywhere; }
 .system-external-database-header small { margin-top: 3px; color: var(--muted); font-size: 11px; }
-.system-external-database-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+.system-external-database-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 22px; }
 .system-external-database-section { display: grid; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
 .system-external-database-section > strong { font-size: 12px; }
 .system-external-database-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .system-external-database-tags .status-badge { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 .system-external-database-empty { color: var(--muted); font-size: 11px; }
-.system-external-database-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.system-external-database-tables { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .system-external-database-table { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
 .system-external-database-table > div { min-width: 0; }
 .system-external-database-table code,
 .system-external-database-table small { display: block; overflow-wrap: anywhere; }
 .system-external-database-table code { font-weight: 700; }
 .system-external-database-table small { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.35; }
-.system-external-database-table .status-badge { flex: 0 0 auto; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+.system-external-database-table .status-badge { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 
 @media (max-width: 1180px) {
     .system-information-grid { grid-template-columns: 1fr 1fr; }
     .system-information-grid .system-card:last-child { grid-column: 1 / -1; }
     .system-extension-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+    .system-external-database-details,
+    .system-external-database-tables { grid-template-columns: minmax(0, 1fr); }
+    .system-external-database-table { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 760px) {

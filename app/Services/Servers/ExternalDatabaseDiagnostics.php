@@ -17,6 +17,12 @@ final class ExternalDatabaseDiagnostics
     /** @return array{login_servers:int,game_servers:int,successful:int,failed:int} */
     public function refresh(): array
     {
+        return $this->connections->withProbeCache(fn (): array => $this->refreshServers());
+    }
+
+    /** @return array{login_servers:int,game_servers:int,successful:int,failed:int} */
+    private function refreshServers(): array
+    {
         $successful = 0;
         $failed = 0;
         $loginServers = LoginServer::query()->orderBy('id')->get();

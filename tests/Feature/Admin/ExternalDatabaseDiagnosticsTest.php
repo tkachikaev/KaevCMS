@@ -6,9 +6,12 @@ use App\Contracts\ExternalDatabaseConnectionTester;
 use App\Models\Admin;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Services\Servers\ExternalDatabaseDiagnostics;
+use App\Services\Servers\ExternalDatabaseInformation;
 use App\Services\Servers\ServerDatabaseState;
 use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Fakes\FakeExternalDatabaseConnectionTester;
 use Tests\TestCase;
 
@@ -114,6 +117,106 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
             'action' => 'external_databases.diagnostics_refreshed',
             'result' => 'success',
         ]);
+    }
+
+    public function test_diagnostics_deduplicate_identical_physical_probes_only_within_one_refresh(): void
+    {
+        GameServer::query()->delete();
+        LoginServer::query()->delete();
+
+        $loginServer = LoginServer::factory()->create([
+            'driver' => ServerDriverRegistry::MOBIUS_DRIVER,
+            'database_host' => '127.0.0.1',
+            'database_port' => 3306,
+            'database_name' => 'shared_world',
+            'database_username' => 'diagnostics',
+            'database_password' => 'secret',
+            'database_charset' => 'utf8mb4',
+        ]);
+
+        GameServer::factory()
+            ->count(3)
+            ->for($loginServer, 'loginServer')
+            ->create([
+                'driver' => ServerDriverRegistry::MOBIUS_DRIVER,
+                'chronicle' => 'Interlude',
+                'use_login_server_connection' => true,
+            ]);
+
+        $fake = new FakeExternalDatabaseConnectionTester;
+        $fake->reports = [
+            [
+                'connected' => true,
+                'compatible' => true,
+                'server_version' => '10.11.8-MariaDB',
+                'error' => null,
+                'error_class' => null,
+                'latency_ms' => 11,
+                'checks' => [
+                    $this->check('accounts'),
+                    $this->check('account_data', required: false),
+                    $this->check('accounts_ipauth', required: false, exists: false),
+                ],
+            ],
+            [
+                'connected' => true,
+                'compatible' => true,
+                'server_version' => '10.11.8-MariaDB',
+                'error' => null,
+                'error_class' => null,
+                'latency_ms' => 13,
+                'checks' => [
+                    $this->check('characters', matched: ['karma']),
+                    $this->check('clan_data'),
+                    $this->check('heroes', required: false),
+                    $this->check('castle', required: false, exists: false),
+                ],
+            ],
+        ];
+        $this->app->instance(ExternalDatabaseConnectionTester::class, $fake);
+
+        $diagnostics = app(ExternalDatabaseDiagnostics::class);
+        $result = $diagnostics->refresh();
+
+        $this->assertSame(1, $result['login_servers']);
+        $this->assertSame(3, $result['game_servers']);
+        $this->assertSame(2, $fake->calls);
+        $this->assertCount(2, $fake->callLog);
+        $this->assertNotSame(
+            $fake->callLog[0]['requirements'],
+            $fake->callLog[1]['requirements'],
+        );
+
+        $diagnostics->refresh();
+        $this->assertSame(4, $fake->calls, 'The probe cache must be reset for every diagnostics refresh.');
+    }
+
+    public function test_information_uses_eager_loaded_translations_without_schema_query_per_server(): void
+    {
+        GameServer::query()->delete();
+        LoginServer::query()->delete();
+
+        $loginServer = LoginServer::factory()->create();
+        GameServer::factory()
+            ->count(18)
+            ->for($loginServer, 'loginServer')
+            ->create();
+
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+
+        app(ExternalDatabaseInformation::class)->collect();
+
+        $translationQueries = array_values(array_filter(
+            DB::getQueryLog(),
+            static fn (array $query): bool => str_contains(
+                strtolower((string) ($query['query'] ?? '')),
+                'game_server_translations',
+            ),
+        ));
+        DB::disableQueryLog();
+
+        $this->assertCount(1, $translationQueries);
     }
 
     public function test_failed_check_keeps_last_successful_schema_snapshot_and_records_only_error_class(): void
