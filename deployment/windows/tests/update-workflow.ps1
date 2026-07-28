@@ -111,14 +111,22 @@ try {
     }
 
     $sourceVersion = [string]$release.recovery_floor_version
-    $supersededTarget = [string]$recoveryLineage.SupersededPendingTargets[0]
-    Write-KaevCmsPendingUpdateMarker -ProjectRoot $tempRoot -FromVersion $sourceVersion -ToVersion $supersededTarget
-    $converted = Convert-KaevCmsSupersededPendingUpdateMarker `
-        -ProjectRoot $tempRoot `
-        -ExpectedFromVersion $sourceVersion `
-        -ExpectedToVersion ([string]$release.version) `
-        -SupersededToVersions @($recoveryLineage.SupersededPendingTargets)
-    Assert-True $converted 'A superseded pending update marker was not adopted.'
+    $supersededTargets = @($recoveryLineage.SupersededPendingTargets)
+    if ($supersededTargets.Count -gt 0) {
+        $supersededTarget = [string]$supersededTargets[0]
+        Write-KaevCmsPendingUpdateMarker -ProjectRoot $tempRoot -FromVersion $sourceVersion -ToVersion $supersededTarget
+        $converted = Convert-KaevCmsSupersededPendingUpdateMarker `
+            -ProjectRoot $tempRoot `
+            -ExpectedFromVersion $sourceVersion `
+            -ExpectedToVersion ([string]$release.version) `
+            -SupersededToVersions $supersededTargets
+        Assert-True $converted 'A superseded pending update marker was not adopted.'
+    } else {
+        Write-KaevCmsPendingUpdateMarker `
+            -ProjectRoot $tempRoot `
+            -FromVersion $sourceVersion `
+            -ToVersion ([string]$release.version)
+    }
 
     $pendingResult = Get-KaevCmsInstalledVersion `
         -ProjectRoot $tempRoot `

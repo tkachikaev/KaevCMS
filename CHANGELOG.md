@@ -5,6 +5,7 @@
 - Prepared the first public release line and reset both the cumulative update baseline and recovery floor to `0.42.4`; the first cumulative package is `KaevCMS-cumulative-update-0.42.4-to-0.43.0.zip`.
 - Removed the frozen `docs/history/0.32.10-reference` tree and obsolete `AUDIT-0.30.0.md` / `AUDIT_0.29.0.md` compatibility stubs from release payloads.
 - Added versioned deletion coverage and regressions proving the obsolete documentation is removed by patch and cumulative updates without touching `.env`, storage, databases, uploads, modules, themes, or game-server integrations.
+- Fixed the Windows update-workflow regression for a freshly reset cumulative baseline: when no superseded pending targets exist, the test now creates a normal current pending marker instead of passing an empty `ToVersion`.
 - Database schemas, Composer/npm dependencies, bundled module/theme versions, runtime behavior, and user-owned files are unchanged.
 
 ## 0.42.4 - 2026-07-28
