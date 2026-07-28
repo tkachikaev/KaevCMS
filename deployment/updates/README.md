@@ -2,40 +2,42 @@
 
 ## English
 
-A Web Update ZIP contains `kaevcms-update.json` at the archive root and payload files under `payload/core/` and `payload/public/`.
+A cumulative Web Update ZIP contains `kaevcms-update.json` at the archive root and payload files under `payload/core/` and `payload/public/`.
 
 - `core/` targets the private application root.
-- `public/` targets the active public path in standard and split layouts. Public entrypoints are layout-neutral and discover a split core through the generated `kaevcms-path.php`.
-- `.env`, `.env.example`, `storage`, SQLite runtime files, user uploads, split-path configuration (`public/kaevcms-path.php` and `bootstrap/kaevcms-public-path.php`), and upload control files are excluded from cumulative payloads while the 0.32.x compatibility range is maintained. The updated application recreates missing upload protection idempotently.
+- `public/` targets the active public path in standard and split layouts.
+- `.env`, storage, SQLite runtime files, user uploads, split-path runtime configuration, caches, and development dependencies are excluded.
 - Every payload file has a SHA256 hash.
-- Packages with changed Composer dependencies are rejected and require a full deployment.
-- Every target is checked against the oldest Web Updater policy in the declared range.
-- The filename must expose the supported source range, for example `KaevCMS-cumulative-update-0.32.0-0.32.20-to-0.33.0.zip`.
+- Composer lock changes are rejected by Web Update and require a full deployment.
+- The current cumulative baseline is `0.41.6`.
 
-Example builder command:
+Use the unified release builder for official releases:
 
 ```powershell
-php deployment/updates/build-package.php `
-    --root="C:\Releases\KaevCMS-0.33.0" `
-    --output="C:\Releases\KaevCMS-cumulative-update-0.32.0-0.32.20-to-0.33.0.zip" `
-    --minimum=0.32.0 `
-    --maximum=0.32.20 `
-    --target=0.33.0 `
-    --delete-file=deployment/updates/deletions.json `
-    --previous-root="C:\Releases\KaevCMS-0.32.20" `
-    --update-history
+.\deployment\windows\build-release.ps1 `
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
+    -OutputDirectory "C:\Releases\0.42.0"
 ```
+
+`deployment/updates/build-package.php` remains the lower-level cumulative-package component used by that command. `deletions.json` stores versioned deletion history; removed paths must be declared before a release can be built.
 
 ## Русский
 
-Web Update ZIP содержит `kaevcms-update.json` в корне и файлы в `payload/core/` и `payload/public/`.
+Cumulative Web Update ZIP содержит `kaevcms-update.json` в корне и файлы в `payload/core/` и `payload/public/`.
 
 - `core/` применяется к закрытому корню приложения.
-- `public/` применяется к активному публичному каталогу в стандартной и split-схеме. Публичные точки входа не зависят от раскладки и находят split-ядро через сгенерированный `kaevcms-path.php`.
-- `.env`, `.env.example`, `storage`, runtime SQLite, пользовательские uploads, конфигурация split-пути (`public/kaevcms-path.php` и `bootstrap/kaevcms-public-path.php`) и служебные файлы uploads исключаются из кумулятивного payload, пока поддерживается совместимость с веткой 0.32.x. После обновления приложение безопасно создаёт недостающую защиту uploads.
-- Для каждого файла проверяется SHA256.
-- Изменение Composer-зависимостей требует полного развёртывания и блокируется Web Updater.
-- Каждый target проверяется правилами самого старого Web Updater из заявленного диапазона.
-- В имени файла указывайте диапазон исходных версий, например `KaevCMS-cumulative-update-0.32.0-0.32.20-to-0.33.0.zip`.
+- `public/` применяется к активному публичному каталогу standard- или split-схемы.
+- `.env`, storage, runtime SQLite, пользовательские uploads, runtime-конфигурация split-пути, кэши и dev-зависимости исключаются.
+- Для каждого payload-файла записывается SHA256.
+- Изменение `composer.lock` блокирует Web Update и требует полного развёртывания.
+- Текущая cumulative-база — `0.41.6`.
 
-`deletions.json` хранит историю удалений по версиям. `--previous-root` добавляет пути, которые существовали в предыдущем релизе и отсутствуют в новом. При прерванном обновлении владелец использует сохранённое состояние и резервные копии для восстановления.
+Для официального релиза используйте единый сборщик:
+
+```powershell
+.\deployment\windows\build-release.ps1 `
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
+    -OutputDirectory "C:\Releases\0.42.0"
+```
+
+`deployment/updates/build-package.php` остаётся низкоуровневой частью сборки cumulative-пакета. `deletions.json` хранит историю удалений по версиям; незаявленное удаление блокирует выпуск.

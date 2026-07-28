@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
@@ -18,6 +18,12 @@ function Assert-Condition {
     }
 }
 
+
+Set-KaevCmsProcessEnvironmentVariable -Name 'KAEVCMS_ENVIRONMENT_HELPER_TEST' -Value 'present'
+Assert-Condition -Condition ((Get-KaevCmsProcessEnvironmentVariable -Name 'KAEVCMS_ENVIRONMENT_HELPER_TEST') -eq 'present') -Message 'Process environment helper must read values without the PowerShell Env provider.'
+Set-KaevCmsProcessEnvironmentVariable -Name 'KAEVCMS_ENVIRONMENT_HELPER_TEST' -Value $null
+Assert-Condition -Condition ($null -eq (Get-KaevCmsProcessEnvironmentVariable -Name 'KAEVCMS_ENVIRONMENT_HELPER_TEST')) -Message 'Process environment helper must remove values without the PowerShell Env provider.'
+
 $dnsTimeout = @'
 curl error 28 while downloading https://packagist.org/api/security-advisories/: Resolving timed out after 10003 milliseconds
 '@
@@ -33,13 +39,8 @@ $genericFailure = 'The lock file does not contain a compatible set of packages.'
 Assert-Condition -Condition (-not (Test-KaevCmsComposerAuditNetworkFailure -OutputText $genericFailure)) -Message 'A generic Composer failure must remain fatal.'
 
 $successCommand = Join-Path ([System.IO.Path]::GetTempPath()) ('kaevcms-composer-audit-success-' + [guid]::NewGuid().ToString('N') + '.cmd')
-$previousComposerNetworkVariable = Get-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
-$hadPreviousComposerNetworkSetting = $null -ne $previousComposerNetworkVariable
-$previousComposerNetworkSetting = if ($hadPreviousComposerNetworkSetting) {
-    [string] $previousComposerNetworkVariable.Value
-} else {
-    $null
-}
+$previousComposerNetworkSetting = Get-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK'
+$hadPreviousComposerNetworkSetting = $null -ne $previousComposerNetworkSetting
 
 try {
     @'
@@ -52,17 +53,17 @@ if defined COMPOSER_DISABLE_NETWORK (
 exit /b 0
 '@ | Set-Content -Path $successCommand -Encoding Ascii
 
-    $env:COMPOSER_DISABLE_NETWORK = '1'
+    Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value '1'
     $successResult = Invoke-KaevCmsComposerSecurityAudit -ComposerCommand $successCommand 6>$null
     Assert-Condition -Condition $successResult -Message 'Successful Composer audit output written to stderr must not become a NativeCommandError failure.'
-    Assert-Condition -Condition ($env:COMPOSER_DISABLE_NETWORK -eq '1') -Message 'Composer network policy must be restored after the manual audit.'
+    Assert-Condition -Condition ((Get-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK') -eq '1') -Message 'Composer network policy must be restored after the manual audit.'
 } finally {
     Remove-Item -LiteralPath $successCommand -Force -ErrorAction SilentlyContinue
 
     if ($hadPreviousComposerNetworkSetting) {
-        $env:COMPOSER_DISABLE_NETWORK = $previousComposerNetworkSetting
+        Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $previousComposerNetworkSetting
     } else {
-        Remove-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
+        Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $null
     }
 }
 

@@ -7,7 +7,7 @@
 .\deployment\windows\browser-quality.ps1
 ```
 
-The offline quality gate runs update-workflow regressions, Composer policy tests, Web Installer and shared-hosting regressions, Web Update package checks, Composer validation, Pint, PHPStan, PHPUnit, and route-cache verification. Browser quality installs the locked npm dependencies and runs Playwright tests.
+The offline quality gate runs Windows Update, Composer policy, Web Installer, shared-hosting, Web Update, unified release-builder, Composer validation, Pint, PHPStan, PHPUnit, and route-cache checks. Browser quality uses dependencies prepared by `browser-setup.ps1` and runs Playwright.
 
 Do not weaken a regression to obtain a green result. Add tests for every bug fix, especially installation, updates, authentication, database boundaries, and external game-server failures.
 
@@ -21,6 +21,16 @@ Do not weaken a regression to obtain a green result. Add tests for every bug fix
 - Verify ZIP integrity and portable path separators.
 - Confirm previous release plus patch equals the full target release.
 - Record changed migrations and Composer/npm locks explicitly.
+
+Build every official artifact with one command:
+
+```powershell
+.\deployment\windows\build-release.ps1 `
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
+    -OutputDirectory "C:\Releases\0.42.0"
+```
+
+The builder proves that previous full plus patch exactly matches the target tree, keeps the cumulative baseline at `0.41.6`, excludes runtime-owned files, and writes verified SHA256 values. GitHub Actions separately runs PHP, official Windows quality, official Windows browser quality, and release-contract jobs.
 
 ## Front-end asset architecture
 

@@ -195,7 +195,7 @@ final class ModuleMigrationManager
                 'module_id' => $moduleId,
                 'module_version' => (string) $module['version'],
                 'migration' => $currentName,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'rollback_succeeded' => $rollbackSucceeded,
             ]);
 
@@ -256,7 +256,7 @@ final class ModuleMigrationManager
         Log::error('KaevCMS module migration rollback failed.', [
             'module_id' => $moduleId,
             'migration' => $migration,
-            'exception' => $exception::class,
+            'exception_class' => $exception::class,
         ]);
     }
 

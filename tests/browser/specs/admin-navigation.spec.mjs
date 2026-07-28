@@ -19,6 +19,40 @@ const signIn = async (page) => {
     await expect(page).toHaveURL(/\/admin$/);
 };
 
+const expectNoDocumentHorizontalOverflow = async (page, viewportLabel) => {
+    const result = await page.evaluate(() => {
+        const root = document.documentElement;
+        const overflow = root.scrollWidth > root.clientWidth + 1;
+        const offenders = overflow
+            ? Array.from(document.body.querySelectorAll('*'))
+                .map((element) => {
+                    const rectangle = element.getBoundingClientRect();
+                    return {
+                        selector: element.id
+                            ? `#${element.id}`
+                            : `${element.tagName.toLowerCase()}${element.classList.length > 0 ? `.${Array.from(element.classList).join('.')}` : ''}`,
+                        left: Math.round(rectangle.left),
+                        right: Math.round(rectangle.right),
+                        width: Math.round(rectangle.width),
+                    };
+                })
+                .filter((element) => element.right > root.clientWidth + 1 || element.left < -1)
+                .slice(0, 12)
+            : [];
+
+        return {
+            clientWidth: root.clientWidth,
+            scrollWidth: root.scrollWidth,
+            offenders,
+        };
+    });
+
+    expect(
+        result.scrollWidth,
+        `${viewportLabel}: document width ${result.scrollWidth}px exceeds ${result.clientWidth}px. Offenders: ${JSON.stringify(result.offenders)}`,
+    ).toBeLessThanOrEqual(result.clientWidth + 1);
+};
+
 test.beforeEach(async ({ page }) => {
     await signIn(page);
 });
@@ -335,18 +369,30 @@ test('system information shows safe external database diagnostics on mobile', as
     await expect(page.getByText('browser_test_unsupported', { exact: true })).toHaveCount(0);
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(diagnostics).toBeVisible();
-    await expect(page.locator('.admin-account-copy')).toBeHidden();
-    await expect(page.locator('.admin-account-chevron')).toBeHidden();
-    let hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
-    expect(hasHorizontalOverflow).toBe(false);
-
-    await page.setViewportSize({ width: 768, height: 900 });
     await page.getByRole('button', { name: 'EN', exact: true }).click();
     await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
     await expect(page.getByText('optional_character_services_with_extended_identifier', { exact: true })).toBeVisible();
-    hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
-    expect(hasHorizontalOverflow).toBe(false);
+
+    const viewportMatrix = [
+        { width: 390, height: 844 },
+        { width: 768, height: 900 },
+        { width: 800, height: 900 },
+        { width: 1024, height: 900 },
+        { width: 1440, height: 1000 },
+    ];
+
+    for (const viewport of viewportMatrix) {
+        await test.step(`system diagnostics fit ${viewport.width}px viewport`, async () => {
+            await page.setViewportSize(viewport);
+            await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
+            await expect(page.getByText('optional_character_services_with_extended_identifier', { exact: true })).toBeVisible();
+            await expectNoDocumentHorizontalOverflow(page, `${viewport.width}px system diagnostics`);
+        });
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.admin-account-copy')).toBeHidden();
+    await expect(page.locator('.admin-account-chevron')).toBeHidden();
 
     await page.getByRole('button', { name: 'RU', exact: true }).click();
     await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();

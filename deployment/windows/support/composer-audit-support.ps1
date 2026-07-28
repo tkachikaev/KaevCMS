@@ -1,3 +1,33 @@
+﻿function Get-KaevCmsProcessEnvironmentVariable {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name
+    )
+
+    return [Environment]::GetEnvironmentVariable(
+        $Name,
+        [EnvironmentVariableTarget]::Process
+    )
+}
+
+function Set-KaevCmsProcessEnvironmentVariable {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name,
+
+        [AllowNull()]
+        [string] $Value
+    )
+
+    [Environment]::SetEnvironmentVariable(
+        $Name,
+        $Value,
+        [EnvironmentVariableTarget]::Process
+    )
+}
+
 function Test-KaevCmsComposerAuditNetworkFailure {
     [CmdletBinding()]
     param(
@@ -39,18 +69,13 @@ function Invoke-KaevCmsComposerSecurityAudit {
     } else {
         $null
     }
-    $composerNetworkVariable = Get-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
-    $hadComposerNetworkSetting = $null -ne $composerNetworkVariable
-    $previousComposerNetworkSetting = if ($hadComposerNetworkSetting) {
-        [string] $composerNetworkVariable.Value
-    } else {
-        $null
-    }
+    $previousComposerNetworkSetting = Get-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK'
+    $hadComposerNetworkSetting = $null -ne $previousComposerNetworkSetting
 
     try {
         # quality.ps1 temporarily disables Composer networking. A manual security
         # audit must explicitly allow network access, even in the same shell.
-        Remove-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
+        Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $null
 
         # Windows PowerShell may wrap text written by composer.bat to stderr in a
         # NativeCommandError even when Composer exits successfully. The process
@@ -69,9 +94,9 @@ function Invoke-KaevCmsComposerSecurityAudit {
         }
 
         if ($hadComposerNetworkSetting) {
-            $env:COMPOSER_DISABLE_NETWORK = $previousComposerNetworkSetting
+            Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $previousComposerNetworkSetting
         } else {
-            Remove-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
+            Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $null
         }
     }
 

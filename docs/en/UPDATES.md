@@ -6,12 +6,10 @@ KaevCMS is distributed as:
 - a Windows patch from the previous version;
 - a cumulative Update ZIP covering a supported installed-version range.
 
-A single cumulative package may update, for example, `0.32.5` directly to `0.33.0`. Intermediate releases do not need to be installed when the current version is inside the package range.
-
-The release filename states the complete supported source range, for example `KaevCMS-cumulative-update-0.32.0-0.32.20-to-0.33.0.zip`. Every installed version from `0.32.0` through `0.32.20` may update directly to `0.33.0`.
+The current cumulative line starts at `0.41.6`. For example, `KaevCMS-cumulative-update-0.41.6-0.41.8-to-0.42.0.zip` updates any installed version from `0.41.6` through `0.41.8` directly to `0.42.0`; intermediate releases are not required.
 
 
-The cumulative archive is validated against the oldest Web Updater included in its declared source range, not only against the newest updater. Clean-install templates and runtime-owned upload control files are excluded when an older updater would reject those targets. Missing upload protection is recreated idempotently by the updated application after installation.
+The cumulative archive is validated against the oldest Web Updater included in its declared source range, not only against the newest updater. Releases older than `0.41.6` are outside the current required update line. Clean-install templates and runtime-owned upload files are excluded from the payload. Missing upload protection is recreated idempotently by the updated application after installation.
 
 ## Release contracts
 

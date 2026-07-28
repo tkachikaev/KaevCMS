@@ -9,9 +9,10 @@ permissions:
   contents: read
 
 jobs:
-  quality:
+  php-quality:
+    name: PHP quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -21,7 +22,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: dom, fileinfo, mbstring, pdo_mysql, pdo_sqlite, xml
+          extensions: dom, fileinfo, mbstring, pdo_mysql, pdo_sqlite, xml, zip
           coverage: none
           tools: composer:v2
 
@@ -33,26 +34,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
 
-      - name: Validate Composer files
-        run: composer validate --strict --no-check-publish
+      - name: Validate and audit Composer dependencies
+        run: |
+          composer validate --strict --no-check-publish
+          composer audit --locked --no-interaction
 
-      - name: Audit Composer dependencies
-        run: composer audit --locked --no-interaction
-
-      - name: Install dependencies
+      - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Audit npm dependencies
-        run: npm audit --audit-level=high
 
       - name: Prepare application
         run: |
@@ -60,5 +48,112 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run quality gate
+      - name: Run Composer quality gate
         run: composer quality
+
+  windows-quality:
+    name: Windows quality entrypoint
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, fileinfo, mbstring, pdo_mysql, pdo_sqlite, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare application
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path storage/framework/cache/data, storage/framework/cache/phpstan, storage/framework/sessions, storage/framework/views, storage/logs, bootstrap/cache | Out-Null
+          Copy-Item .env.example .env -Force
+          php artisan key:generate
+
+      - name: Run official Windows quality gate
+        shell: powershell
+        run: .\deployment\windows\quality.ps1
+
+      - name: Upload Windows diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-quality-diagnostics
+          if-no-files-found: ignore
+          path: |
+            storage/logs
+            test-results
+
+  browser-quality:
+    name: Windows browser entrypoint
+    runs-on: windows-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, fileinfo, mbstring, pdo_mysql, pdo_sqlite, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --ignore-scripts
+          npx playwright install chromium
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
+
+      - name: Run official Windows browser gate
+        shell: powershell
+        run: .\deployment\windows\browser-quality.ps1
+
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          if-no-files-found: ignore
+          path: |
+            test-results
+            playwright-report
+            storage/logs
+
+  release-contract:
+    name: Reproducible release contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: zip
+          coverage: none
+
+      - name: Run release builder regression
+        run: php deployment/release/tests/release-builder-regression.php

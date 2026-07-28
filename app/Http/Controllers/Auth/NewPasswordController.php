@@ -105,7 +105,7 @@ class NewPasswordController extends Controller
             } catch (Throwable $exception) {
                 Log::warning('Unable to send password changed notification.', [
                     'user_id' => $changedUser->id,
-                    'exception' => $exception::class,
+                    'exception_class' => $exception::class,
                 ]);
                 $auditLogger->failed(
                     category: 'mail',

@@ -7,7 +7,7 @@
 .\deployment\windows\browser-quality.ps1
 ```
 
-Офлайн-проверка запускает регрессии Windows Update, тесты сетевой политики Composer, Web Installer, shared-hosting, Web Update, Composer validation, Pint, PHPStan, PHPUnit и проверку route cache. Browser quality устанавливает зафиксированные npm-зависимости и запускает Playwright.
+Офлайн-проверка запускает регрессии Windows Update, сетевой политики Composer, Web Installer, shared-hosting, Web Update, единого release builder, Composer validation, Pint, PHPStan, PHPUnit и route cache. Browser quality использует зависимости, установленные через `browser-setup.ps1`, и запускает Playwright.
 
 Нельзя ослаблять регрессионный тест ради зелёного результата. Для каждого исправления добавляйте тест, особенно для установки, обновлений, аутентификации, границ баз данных и сбоев внешнего GameServer.
 
@@ -21,6 +21,16 @@
 - Проверяйте целостность ZIP и переносимые разделители путей.
 - Подтверждайте, что предыдущий релиз плюс патч совпадает с полным новым релизом.
 - Явно фиксируйте изменения миграций и Composer/npm lock-файлов.
+
+Собирайте все официальные артефакты одной командой:
+
+```powershell
+.\deployment\windows\build-release.ps1 `
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.41.8-full.zip" `
+    -OutputDirectory "C:\Releases\0.42.0"
+```
+
+Сборщик проверяет, что предыдущий full плюс patch точно совпадает с новым деревом, cumulative начинается с baseline `0.41.6`, runtime-файлы не попадают в архивы, а SHA256 соответствует результату. GitHub Actions отдельно запускает PHP, официальный Windows quality, официальный Windows browser quality и release-contract jobs.
 
 ## Структура фронтенд-ассетов
 

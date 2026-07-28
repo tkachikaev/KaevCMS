@@ -62,7 +62,7 @@ class AccountPasswordChanger
         } catch (Throwable $exception) {
             Log::warning('Unable to send password changed notification.', [
                 'user_id' => $user->id,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $this->auditLogger->failed(
                 category: 'mail',

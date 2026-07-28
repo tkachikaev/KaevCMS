@@ -12,6 +12,8 @@ use App\Services\Servers\ServerDatabaseState;
 use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Tests\Fakes\FakeExternalDatabaseConnectionTester;
 use Tests\TestCase;
 
@@ -217,6 +219,35 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
         DB::disableQueryLog();
 
         $this->assertCount(1, $translationQueries);
+    }
+
+    public function test_failed_refresh_logs_exception_class_without_using_reserved_exception_context(): void
+    {
+        GameServer::query()->delete();
+        LoginServer::query()->delete();
+        LoginServer::factory()->create();
+
+        $this->app->instance(ExternalDatabaseConnectionTester::class, new class implements ExternalDatabaseConnectionTester
+        {
+            public function test(array $connection, array $requirements, bool $driverReady): array
+            {
+                throw new RuntimeException('Sensitive database failure.');
+            }
+        });
+
+        Log::spy();
+
+        $result = app(ExternalDatabaseDiagnostics::class)->refresh();
+
+        $this->assertSame(1, $result['failed']);
+        Log::shouldHaveReceived('warning')
+            ->withArgs(static function (string $message, array $context): bool {
+                return $message === 'LoginServer database diagnostics failed.'
+                    && ($context['exception_class'] ?? null) === RuntimeException::class
+                    && ! array_key_exists('exception', $context)
+                    && ! array_key_exists('message', $context);
+            })
+            ->once();
     }
 
     public function test_failed_check_keeps_last_successful_schema_snapshot_and_records_only_error_class(): void

@@ -170,7 +170,7 @@ final class ModuleRuntime
             'module_id' => $id,
             'module_version' => (string) ($module['version'] ?? 'unknown'),
             'stage' => $stage,
-            'exception' => $exception::class,
+            'exception_class' => $exception::class,
         ]);
 
         try {

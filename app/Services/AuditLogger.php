@@ -115,7 +115,7 @@ class AuditLogger
             Log::warning('Unable to write CMS audit log.', [
                 'category' => $category,
                 'action' => $action,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             return null;

@@ -190,7 +190,7 @@ final class AccountCharacterDirectory
         } catch (Throwable $exception) {
             Cache::put($failureKey, true, now()->addSeconds(self::FAILURE_COOLDOWN_SECONDS));
             Log::warning('Player character directory loading failed.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'game_server_id' => $gameServer->id,
                 'game_account_id' => $account->id,
             ]);

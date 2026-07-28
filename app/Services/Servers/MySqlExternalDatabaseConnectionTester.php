@@ -110,7 +110,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
             ];
         } catch (Throwable $exception) {
             Log::warning('External database connection test failed.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'code' => (string) $exception->getCode(),
             ]);
 

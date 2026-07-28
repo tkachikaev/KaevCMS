@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.42.0 - 2026-07-28
+
+- Began Public Release Hardening from the confirmed 0.41.8 stable baseline; the cumulative update baseline remains 0.41.6.
+- Replaced PowerShell `Env:` provider access for `COMPOSER_DISABLE_NETWORK` with process-scoped `System.Environment` helpers in the official quality and security-audit paths, with regression coverage for set/read/remove/restore behavior.
+- Replaced string values stored under the reserved structured-log `exception` key with `exception_class`; diagnostics now have a functional regression proving no exception message or reserved key is emitted.
+- Expanded external-database diagnostics browser coverage to 390, 768, 800, 1024, and 1440 px, with actionable overflow diagnostics instead of global overflow hiding.
+- Added official GitHub Actions jobs for PHP quality, Windows `quality.ps1`, Windows `browser-quality.ps1`, and release-builder contracts, including failure artifacts for Playwright and Windows diagnostics.
+- Added one deterministic release entrypoint that builds full, direct patch, cumulative Web Update, and SHA256 artifacts, rejects unsafe/runtime files and symlinks, applies declared deletions, and proves previous full plus patch matches the target tree.
+- Made cumulative package ZIP timestamps and compression deterministic and documented the new release command and 0.41.6 baseline.
+
 ## 0.41.8 - 2026-07-28
 
 - Fixed recovery lineage generation when `recovery_floor_version` equals the direct previous version of a newly established cumulative baseline.

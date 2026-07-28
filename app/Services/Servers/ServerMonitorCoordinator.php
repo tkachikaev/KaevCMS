@@ -59,7 +59,7 @@ final class ServerMonitorCoordinator
                 $lock->release();
             } catch (Throwable $exception) {
                 Log::warning('Server monitor lock release failed.', [
-                    'exception' => $exception::class,
+                    'exception_class' => $exception::class,
                 ]);
             }
         }
@@ -71,7 +71,7 @@ final class ServerMonitorCoordinator
             return Cache::lock('kaevcms:server-monitor:refresh', $this->lockSeconds());
         } catch (Throwable $exception) {
             Log::warning('Server monitor lock could not be created.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             return null;

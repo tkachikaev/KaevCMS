@@ -82,6 +82,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('deployment/windows/setup.ps1'));
         $this->assertFileExists(base_path('deployment/windows/tests/update-workflow.ps1'));
         $this->assertFileExists(base_path('deployment/windows/support/release-update-support.ps1'));
+        $this->assertFileExists(base_path('deployment/windows/build-release.ps1'));
+        $this->assertFileExists(base_path('deployment/release/build-release.php'));
+        $this->assertFileExists(base_path('deployment/release/tests/release-builder-regression.php'));
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
     }
 
@@ -143,6 +146,10 @@ class ReleaseMetadataTest extends TestCase
         }
         $this->assertStringContainsString('public/assets/account/js/navigation.js', $englishDevelopment);
         $this->assertStringContainsString('public/assets/account/js/navigation.js', $russianDevelopment);
+        $this->assertStringContainsString('build-release.ps1', $englishDevelopment);
+        $this->assertStringContainsString('build-release.ps1', $russianDevelopment);
+        $this->assertStringContainsString('0.41.6', $englishDevelopment);
+        $this->assertStringContainsString('0.41.6', $russianDevelopment);
     }
 
     public function test_update_script_uses_data_driven_release_and_recovery_contracts(): void

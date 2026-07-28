@@ -88,7 +88,7 @@ final class ServerMonitor
             Log::warning('GameServer online count failed.', [
                 'game_server_id' => $gameServer->id,
                 'driver' => $gameServer->driver,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'code' => (string) $exception->getCode(),
             ]);
         }
@@ -101,7 +101,7 @@ final class ServerMonitor
         } catch (Throwable $exception) {
             Log::warning('LoginServer database monitoring failed.', [
                 'login_server_id' => $server->id,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'code' => (string) $exception->getCode(),
             ]);
 
@@ -118,7 +118,7 @@ final class ServerMonitor
         } catch (Throwable $exception) {
             Log::warning('GameServer database monitoring failed.', [
                 'game_server_id' => $server->id,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'code' => (string) $exception->getCode(),
             ]);
 

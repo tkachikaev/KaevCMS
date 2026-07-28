@@ -58,7 +58,7 @@ final class GameAccountPasswordChanger
             throw $exception;
         } catch (Throwable $exception) {
             Log::warning('Game account password change failed.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'login_server_id' => $account->login_server_id,
             ]);
             $this->auditLogger->failed(

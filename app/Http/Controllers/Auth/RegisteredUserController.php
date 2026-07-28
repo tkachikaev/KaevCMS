@@ -83,7 +83,7 @@ class RegisteredUserController extends Controller
         } catch (Throwable $exception) {
             Log::warning('Unable to send registration email.', [
                 'user_id' => $user->id,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $auditLogger->failed(
                 category: 'mail',

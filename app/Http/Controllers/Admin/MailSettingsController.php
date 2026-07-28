@@ -78,7 +78,7 @@ class MailSettingsController extends Controller
             Mail::to($address)->send(new CustomHtmlMail($subject, $safeHtml));
         } catch (Throwable $exception) {
             Log::warning('Custom email sending failed.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $this->auditLogger->failed(
                 category: 'mail',
@@ -175,7 +175,7 @@ class MailSettingsController extends Controller
             $mailSettings->markTested();
         } catch (Throwable $exception) {
             Log::warning('SMTP test failed.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $this->auditLogger->failed(
                 category: 'mail',
@@ -332,7 +332,7 @@ class MailSettingsController extends Controller
         } catch (Throwable $exception) {
             Log::warning('Mail template test failed.', [
                 'template' => $template,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $this->auditLogger->failed(
                 category: 'mail',

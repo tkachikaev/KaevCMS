@@ -499,7 +499,7 @@ final class GameAccountProvisioner
         } catch (Throwable $exception) {
             Log::warning('Unable to release game account creation claim.', [
                 'game_account_id' => $accountId,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
         }
     }

@@ -39,7 +39,7 @@ final class ExternalDatabaseDiagnostics
                 $this->databaseState->markUnknown($server, 'check_failed', $exception::class);
                 Log::warning('LoginServer database diagnostics failed.', [
                     'login_server_id' => $server->id,
-                    'exception' => $exception::class,
+                    'exception_class' => $exception::class,
                     'code' => (string) $exception->getCode(),
                 ]);
             }
@@ -58,7 +58,7 @@ final class ExternalDatabaseDiagnostics
                 $this->databaseState->markUnknown($server, 'check_failed', $exception::class);
                 Log::warning('GameServer database diagnostics failed.', [
                     'game_server_id' => $server->id,
-                    'exception' => $exception::class,
+                    'exception_class' => $exception::class,
                     'code' => (string) $exception->getCode(),
                 ]);
             }

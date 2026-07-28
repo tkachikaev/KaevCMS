@@ -61,7 +61,7 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
         } catch (Throwable $exception) {
             Log::warning('GameServer reward queue capability check failed.', [
                 'game_server_id' => $server->id,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             return RewardQueueCapabilities::unsupported(RewardQueueDiagnostic::Unavailable->value);

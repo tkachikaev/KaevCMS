@@ -28,7 +28,7 @@ final class MySqlSessionQueryTimeout
             return $database->unprepared($statement);
         } catch (Throwable $exception) {
             Log::warning('External database query timeout could not be configured.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'server_version' => $serverVersion !== '' ? $serverVersion : null,
                 'timeout_ms' => $timeoutMilliseconds,
             ]);

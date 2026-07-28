@@ -157,7 +157,7 @@ class UserController extends Controller
         } catch (Throwable $exception) {
             Log::warning('Unable to resend user verification email from administration panel.', [
                 'user_id' => $user->getKey(),
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             $auditLogger->failed(
@@ -199,7 +199,7 @@ class UserController extends Controller
         } catch (Throwable $exception) {
             Log::warning('Unable to send user password reset email from administration panel.', [
                 'user_id' => $user->getKey(),
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             $auditLogger->failed(

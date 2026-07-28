@@ -36,11 +36,12 @@ if (! is_string($root) || ! is_dir($root)) {
 }
 
 if ($output === '' || ! validVersion($minimum) || ! validVersion($maximum) || version_compare($minimum, $maximum, '>')) {
-    fwrite(STDERR, "Usage: php deployment/updates/build-package.php --root=PATH --output=FILE.zip --minimum=0.32.0 --maximum=0.32.18 [--target=0.33.0] [--previous-root=PATH]\n");
+    fwrite(STDERR, "Usage: php deployment/updates/build-package.php --root=PATH --output=FILE.zip --minimum=0.41.6 --maximum=0.41.8 [--target=0.42.0] [--previous-root=PATH]\n");
     exit(1);
 }
 
 $releaseVersion = requiredReleaseVersionFromRoot($root);
+$releaseTimestamp = releaseTimestampFromRoot($root);
 if ($target === '') {
     $target = $releaseVersion;
 } elseif ($target !== $releaseVersion) {
@@ -126,6 +127,8 @@ try {
         if (! $zip->addFile($absolute, $source)) {
             throw new RuntimeException("Unable to add release file to update package: {$relative}");
         }
+        $zip->setMtimeName($source, $releaseTimestamp);
+        $zip->setCompressionName($source, ZipArchive::CM_DEFLATE, 9);
 
         $hash = hash_file('sha256', $absolute);
         $size = filesize($absolute);
@@ -187,6 +190,8 @@ try {
     if (! is_string($encoded) || ! $zip->addFromString('kaevcms-update.json', $encoded."\n")) {
         throw new RuntimeException('Unable to write the update package manifest.');
     }
+    $zip->setMtimeName('kaevcms-update.json', $releaseTimestamp);
+    $zip->setCompressionName('kaevcms-update.json', ZipArchive::CM_DEFLATE, 9);
 } finally {
     $zip->close();
 }
@@ -586,6 +591,25 @@ function releaseVersionFromRoot(string $root): ?string
     }
 
     return $version;
+}
+
+
+function releaseTimestampFromRoot(string $root): int
+{
+    $releasePath = $root.DIRECTORY_SEPARATOR.'release.json';
+    $contents = file_get_contents($releasePath);
+    if (! is_string($contents)) {
+        throw new RuntimeException('Unable to read release.json timestamp.');
+    }
+
+    $release = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+    $releasedAt = is_array($release) ? trim((string) ($release['released_at'] ?? '')) : '';
+    $timestamp = $releasedAt !== '' ? strtotime($releasedAt.' 12:00:00 UTC') : false;
+    if ($timestamp === false) {
+        throw new RuntimeException('Release date metadata is invalid.');
+    }
+
+    return $timestamp;
 }
 
 function validVersion(string $version): bool

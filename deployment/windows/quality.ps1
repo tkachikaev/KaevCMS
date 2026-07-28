@@ -19,20 +19,22 @@ if (-not (Test-Path -LiteralPath $supportScript -PathType Leaf)) {
     throw 'Release update support script is missing.'
 }
 . $supportScript
+
+$composerAuditSupportScript = Join-Path $PSScriptRoot 'support\composer-audit-support.ps1'
+if (-not (Test-Path -LiteralPath $composerAuditSupportScript -PathType Leaf)) {
+    throw 'Composer audit support script is missing.'
+}
+. $composerAuditSupportScript
+
 Initialize-KaevCmsRuntimeDirectories -ProjectRoot $ProjectRoot
 
 # The regular quality gate is intentionally deterministic and offline.
 # Dependency advisories are checked separately by .\deployment\windows\security-audit.ps1.
-$composerNetworkVariable = Get-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
-$hadComposerNetworkSetting = $null -ne $composerNetworkVariable
-$previousComposerNetworkSetting = if ($hadComposerNetworkSetting) {
-    [string] $composerNetworkVariable.Value
-} else {
-    $null
-}
+$previousComposerNetworkSetting = Get-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK'
+$hadComposerNetworkSetting = $null -ne $previousComposerNetworkSetting
 
 try {
-    $env:COMPOSER_DISABLE_NETWORK = '1'
+    Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value '1'
 
     & "$PSScriptRoot\tests\update-workflow.ps1"
     & "$PSScriptRoot\tests\composer-audit-policy.ps1"
@@ -55,6 +57,9 @@ try {
     php deployment/updates/tests-package-builder.php
     if ($LASTEXITCODE -ne 0) { throw "Web update package builder regression checks failed with exit code $LASTEXITCODE." }
 
+    php deployment/release/tests/release-builder-regression.php
+    if ($LASTEXITCODE -ne 0) { throw "Unified release builder regression checks failed with exit code $LASTEXITCODE." }
+
     php deployment/vds/tests/documentation-regression.php
     if ($LASTEXITCODE -ne 0) { throw "Ubuntu VDS documentation regression checks failed with exit code $LASTEXITCODE." }
 
@@ -73,12 +78,12 @@ try {
     php artisan route:clear
     if ($LASTEXITCODE -ne 0) { throw "Route cache cleanup failed with exit code $LASTEXITCODE." }
 
-    Write-Host 'Offline quality checks completed successfully: PowerShell updater, audit policy, Web Installer, shared-hosting, Web Updater and Ubuntu VDS documentation regressions, Composer validation, Pint, PHPStan, PHPUnit and route cache.' -ForegroundColor Green
+    Write-Host 'Offline quality checks completed successfully: PowerShell updater, audit policy, Web Installer, shared-hosting, Web Updater, unified release builder and Ubuntu VDS documentation regressions, Composer validation, Pint, PHPStan, PHPUnit and route cache.' -ForegroundColor Green
     Write-Host 'Run .\deployment\windows\security-audit.ps1 separately when internet access is available.' -ForegroundColor DarkGray
 } finally {
     if ($hadComposerNetworkSetting) {
-        $env:COMPOSER_DISABLE_NETWORK = $previousComposerNetworkSetting
+        Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $previousComposerNetworkSetting
     } else {
-        Remove-Item Env:COMPOSER_DISABLE_NETWORK -ErrorAction SilentlyContinue
+        Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $null
     }
 }

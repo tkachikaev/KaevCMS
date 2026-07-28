@@ -144,7 +144,7 @@ class GameAccountController extends Controller
         } catch (Throwable $exception) {
             $summaryUnavailable = true;
             Log::warning('Game account summary loading failed.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
                 'login_server_id' => $account->login_server_id,
             ]);
         }
@@ -170,7 +170,7 @@ class GameAccountController extends Controller
                 $worlds[] = ['server' => $gameServer, 'characters' => $characters, 'available' => true];
             } catch (Throwable $exception) {
                 Log::warning('Game characters loading failed.', [
-                    'exception' => $exception::class,
+                    'exception_class' => $exception::class,
                     'game_server_id' => $gameServer->id,
                 ]);
                 $worlds[] = ['server' => $gameServer, 'characters' => [], 'available' => false];

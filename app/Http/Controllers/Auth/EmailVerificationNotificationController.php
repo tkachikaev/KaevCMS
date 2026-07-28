@@ -45,7 +45,7 @@ class EmailVerificationNotificationController extends Controller
         } catch (Throwable $exception) {
             Log::warning('Unable to resend email verification notification.', [
                 'user_id' => $user->id,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $auditLogger->failed(
                 category: 'mail',

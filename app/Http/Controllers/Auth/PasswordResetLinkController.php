@@ -60,7 +60,7 @@ class PasswordResetLinkController extends Controller
             $status = Password::sendResetLink($request->only('email'));
         } catch (Throwable $exception) {
             Log::warning('Unable to send password reset link.', [
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
             $auditLogger->failed(
                 category: 'mail',

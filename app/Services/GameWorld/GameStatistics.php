@@ -80,7 +80,7 @@ final class GameStatistics
             Log::warning('Public game statistics capabilities could not be read.', [
                 'game_server_id' => $server->id,
                 'driver' => $server->driver,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             return ['available' => false, 'sections' => []];
@@ -142,7 +142,7 @@ final class GameStatistics
                 'game_server_id' => $server->id,
                 'driver' => $server->driver,
                 'section' => $section,
-                'exception' => $exception::class,
+                'exception_class' => $exception::class,
             ]);
 
             return ['available' => false, 'rows' => []];
