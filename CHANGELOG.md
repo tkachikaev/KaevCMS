@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.41.8 - 2026-07-28
+
+- Fixed recovery lineage generation when `recovery_floor_version` equals the direct previous version of a newly established cumulative baseline.
+- Added a Windows update workflow regression proving the direct previous version is handled separately and is never duplicated in historical recoverable versions.
+- Kept the cumulative update baseline at `0.41.6`.
+
+## 0.41.7 - 2026-07-28
+
+- Fixed Pint formatting in `ServerConnectionTester.php`.
+- Fixed the System information diagnostics layout at 768 px by switching system cards to one column before long English statuses can widen the document.
+- Established `0.41.6` as the new cumulative update baseline.
+
 ## 0.41.6 - 2026-07-28
 
 - Updated `guzzlehttp/guzzle` to 7.15.1 and `guzzlehttp/psr7` to 2.13.0, moving the production dependency lock to the security-fixed HTTP client line.

@@ -880,8 +880,18 @@
 }
 
 @media (max-width: 900px) {
+    .system-page .system-information-grid,
+    .system-page .system-extension-grid,
     .system-external-database-details,
     .system-external-database-tables { grid-template-columns: minmax(0, 1fr); }
+    .system-page .system-information-grid .system-card:last-child { grid-column: auto; }
+    .system-page .system-definition-list > div { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+    .system-page .system-definition-list dd { text-align: left; }
+    .system-page .system-definition-list .status-badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
     .system-external-database-table { align-items: flex-start; flex-direction: column; }
 }
 

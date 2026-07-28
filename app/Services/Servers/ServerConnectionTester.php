@@ -15,7 +15,7 @@ final class ServerConnectionTester
 {
     private bool $probeCacheEnabled = false;
 
-    /** @var array<string,array<string,mixed>> */
+    /** @var array<string, array<string, mixed>> */
     private array $probeCache = [];
 
     public function __construct(
@@ -28,6 +28,7 @@ final class ServerConnectionTester
      * Cache identical physical probes only for the duration of one diagnostics refresh.
      *
      * @template T
+     *
      * @param  callable():T  $callback
      * @return T
      */
@@ -46,7 +47,7 @@ final class ServerConnectionTester
         }
     }
 
-    /** @param array<string,mixed> $values */
+    /** @param array<string, mixed> $values */
     public function testLoginValues(array $values): array
     {
         $driverKey = (string) ($values['driver'] ?? '');
@@ -79,7 +80,7 @@ final class ServerConnectionTester
         ]);
     }
 
-    /** @param array<string,mixed> $values */
+    /** @param array<string, mixed> $values */
     public function testGameValues(array $values, LoginServer $loginServer): array
     {
         $driverKey = (string) ($values['driver'] ?? '');
@@ -114,7 +115,7 @@ final class ServerConnectionTester
     public function testGameServer(GameServer $server): array
     {
         $loginServer = $server->loginServer;
-        if (! $loginServer instanceof LoginServer) {
+        if (! ($loginServer instanceof LoginServer)) {
             throw new InvalidArgumentException('GameServer has no LoginServer selected.');
         }
 
@@ -132,9 +133,9 @@ final class ServerConnectionTester
     }
 
     /**
-     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $connection
-     * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>  $requirements
-     * @return array<string,mixed>
+     * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string}  $connection
+     * @param  list<array{table: string, columns: list<string>, any_columns?: list<string>, required: bool}>  $requirements
+     * @return array<string, mixed>
      */
     private function testExternalDatabase(array $connection, array $requirements, bool $driverReady): array
     {
@@ -155,7 +156,10 @@ final class ServerConnectionTester
         return $this->probeCache[$fingerprint];
     }
 
-    /** @param array<string,mixed> $values @return array{host:string,port:int,database:string,username:string,password:string,charset:string} */
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array{host: string, port: int, database: string, username: string, password: string, charset: string}
+     */
     private function credentials(array $values): array
     {
         return [
@@ -169,9 +173,9 @@ final class ServerConnectionTester
     }
 
     /**
-     * @param  array<string,mixed>  $report
-     * @param  array{label:string,description:string,ready:bool,service_port:int,schema_profile:string,capabilities:list<string>,optional_capabilities:array<string,string>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>}  $driver
-     * @return array<string,mixed>
+     * @param  array<string, mixed>  $report
+     * @param  array{label: string, description: string, ready: bool, service_port: int, schema_profile: string, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, required: bool}>}  $driver
+     * @return array<string, mixed>
      */
     private function withLoginDriver(array $report, string $driverKey, array $driver): array
     {
@@ -187,9 +191,9 @@ final class ServerConnectionTester
     }
 
     /**
-     * @param  array<string,mixed>  $report
-     * @param  array{label:string,description:string,ready:bool,service_port:int,character_created_at_column?:string|null,online_count?:array{table:string,column:string,value:int|string},statistics?:list<string>,capabilities:list<string>,optional_capabilities:array<string,string>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,required:bool}>}  $driver
-     * @return array<string,mixed>
+     * @param  array<string, mixed>  $report
+     * @param  array{label: string, description: string, ready: bool, service_port: int, character_created_at_column?: string|null, online_count?: array{table: string, column: string, value: int|string}, statistics?: list<string>, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, required: bool}>}  $driver
+     * @return array<string, mixed>
      */
     private function withGameDriver(array $report, string $driverKey, array $driver, string $chronicle): array
     {
@@ -209,7 +213,10 @@ final class ServerConnectionTester
         return $report;
     }
 
-    /** @param array<string,mixed> $report @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $report
+     * @return array<string, mixed>
+     */
     private function withDriver(array $report, string $driverKey, string $driverLabel, bool $driverReady): array
     {
         if (! $driverReady) {
@@ -231,9 +238,9 @@ final class ServerConnectionTester
     }
 
     /**
-     * @param  array<string,mixed>  $report
+     * @param  array<string, mixed>  $report
      * @param  list<string>  $base
-     * @param  array<string,string>  $optional
+     * @param  array<string, string>  $optional
      * @return list<string>
      */
     private function availableCapabilities(array $report, array $base, array $optional): array
@@ -249,7 +256,7 @@ final class ServerConnectionTester
         return array_values(array_unique($capabilities));
     }
 
-    /** @param array<string,mixed> $report */
+    /** @param array<string, mixed> $report */
     private function mobiusProfile(array $report, string $chronicle): ?MobiusGameSchemaProfile
     {
         if (($report['connected'] ?? false) !== true) {
@@ -270,7 +277,7 @@ final class ServerConnectionTester
         );
     }
 
-    /** @param array<string,mixed> $report */
+    /** @param array<string, mixed> $report */
     private function tableIsAvailable(array $report, string $table): bool
     {
         $check = $this->tableCheck($report, $table);
@@ -279,7 +286,10 @@ final class ServerConnectionTester
             && ($check['missing_columns'] ?? []) === [];
     }
 
-    /** @param array<string,mixed> $report @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $report
+     * @return array<string, mixed>
+     */
     private function tableCheck(array $report, string $table): array
     {
         $checks = is_array($report['checks'] ?? null) ? $report['checks'] : [];

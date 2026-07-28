@@ -1,4 +1,4 @@
-# KaevCMS 0.41.6
+# KaevCMS 0.41.8
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.41.6 keeps the safe persisted LoginServer/GameServer diagnostics introduced in 0.41.0, updates the production Guzzle dependency line to the security-fixed 7.15.1 release, removes repeated CMS schema queries, deduplicates identical physical database probes within one refresh, and fixes the 768 px diagnostics layout without hiding real overflow. Credentials, DSNs, database names, raw SQL, and exception messages remain excluded from the diagnostic snapshot and support report.
+Version 0.41.8 keeps the safe persisted LoginServer/GameServer diagnostics introduced in 0.41.0, the Guzzle 7.15.1 security update, deduplicated database probes, and the 768 px diagnostics layout fix. It also makes recovery lineage valid when a new cumulative baseline starts at the direct previous release, without duplicating that release in historical recovery sources. Credentials, DSNs, database names, raw SQL, and exception messages remain excluded from the diagnostic snapshot and support report.
 
 ### Requirements
 
@@ -94,7 +94,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.41.6 сохраняет безопасную диагностику LoginServer/GameServer из 0.41.0, переводит production-зависимость Guzzle на исправленную ветку 7.15.1, устраняет повторные schema-запросы CMS, объединяет одинаковые физические проверки базы внутри одного запуска диагностики и исправляет вёрстку на ширине 768 px без скрытия реального переполнения. Реквизиты, DSN, названия баз, SQL и сырые сообщения исключений по-прежнему не попадают в снимок и отчёт поддержки.
+Версия 0.41.8 сохраняет безопасную диагностику LoginServer/GameServer из 0.41.0, обновление Guzzle до 7.15.1, объединение одинаковых проверок базы и исправление вёрстки на ширине 768 px. Дополнительно исправлена recovery lineage для новой кумулятивной базы: прямая предыдущая версия больше не дублируется среди исторических источников восстановления. Реквизиты, DSN, названия баз, SQL и сырые сообщения исключений по-прежнему не попадают в снимок и отчёт поддержки.
 
 ### Требования
 

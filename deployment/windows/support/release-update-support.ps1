@@ -1,4 +1,4 @@
-﻿function Test-KaevCmsVersion {
+function Test-KaevCmsVersion {
     param([Parameter(Mandatory = $true)][string]$Version)
 
     return $Version -match '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$'
@@ -310,8 +310,10 @@ function Get-KaevCmsRecoveryLineage {
             }
     )
     $recoverableFromVersions = @(
-        (@($RecoveryFloorVersion) + @($supersededPendingTargets | Where-Object { $_ -ne $ExpectedFromVersion })) |
-            Select-Object -Unique
+        if ($RecoveryFloorVersion -ne $ExpectedFromVersion) {
+            (@($RecoveryFloorVersion) + @($supersededPendingTargets | Where-Object { $_ -ne $ExpectedFromVersion })) |
+                Select-Object -Unique
+        }
     )
 
     return [pscustomobject]@{

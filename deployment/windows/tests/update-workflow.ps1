@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
@@ -73,10 +73,23 @@ $recoveryLineage = Get-KaevCmsRecoveryLineage `
     -RecoveryFloorVersion ([string]$release.recovery_floor_version) `
     -ExpectedFromVersion ([string]$release.previous_version) `
     -ExpectedToVersion ([string]$release.version)
-Assert-Equal -Actual $recoveryLineage.RecoverableFromVersions[0] -Expected ([string]$release.recovery_floor_version) -Message 'Recovery lineage does not start at the configured floor.'
-Assert-True ($recoveryLineage.RecoverableFromVersions -contains [string]$release.recovery_floor_version) 'Recovery floor is not recoverable.'
+if ([string]$release.recovery_floor_version -eq [string]$release.previous_version) {
+    Assert-Equal -Actual @($recoveryLineage.RecoverableFromVersions).Count -Expected 0 -Message 'A direct previous baseline was duplicated in recoverable versions.'
+    Assert-Equal -Actual @($recoveryLineage.SupersededPendingTargets).Count -Expected 0 -Message 'A direct previous baseline was incorrectly treated as a superseded pending target.'
+} else {
+    Assert-Equal -Actual $recoveryLineage.RecoverableFromVersions[0] -Expected ([string]$release.recovery_floor_version) -Message 'Recovery lineage does not start at the configured floor.'
+    Assert-True ($recoveryLineage.RecoverableFromVersions -contains [string]$release.recovery_floor_version) 'Recovery floor is not recoverable.'
+    Assert-True ($recoveryLineage.SupersededPendingTargets -contains [string]$release.previous_version) 'The previous release is not a superseded pending target.'
+}
 Assert-True ($recoveryLineage.RecoverableFromVersions -notcontains [string]$release.previous_version) 'The direct previous version was duplicated in recoverable versions.'
-Assert-True ($recoveryLineage.SupersededPendingTargets -contains [string]$release.previous_version) 'The previous release is not a superseded pending target.'
+
+$baselineRecoveryLineage = Get-KaevCmsRecoveryLineage `
+    -ProjectRoot $ProjectRoot `
+    -RecoveryFloorVersion ([string]$release.previous_version) `
+    -ExpectedFromVersion ([string]$release.previous_version) `
+    -ExpectedToVersion ([string]$release.version)
+Assert-Equal -Actual @($baselineRecoveryLineage.RecoverableFromVersions).Count -Expected 0 -Message 'A newly established baseline duplicated the direct previous version in recoverable versions.'
+Assert-Equal -Actual @($baselineRecoveryLineage.SupersededPendingTargets).Count -Expected 0 -Message 'A newly established baseline created a false superseded pending target.'
 
 $obsoleteArtifacts = Get-KaevCmsObsoleteReleaseArtifacts -ProjectRoot $ProjectRoot -CurrentVersion ([string]$release.version)
 Assert-True ($obsoleteArtifacts -contains (ConvertTo-KaevCmsPlatformPath -Path ([string]$release.previous_apply_script))) 'The previous apply script is not scheduled for cleanup.'
