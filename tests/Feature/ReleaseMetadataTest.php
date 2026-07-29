@@ -324,6 +324,62 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('account-surface reward-inventory-shell', $aureliaInventory);
     }
 
+    public function test_support_ticket_module_and_scoped_access_artifacts_are_shipped(): void
+    {
+        foreach ([
+            'app/Support/Modules/ModuleAdminAccessDecision.php',
+            'app/Support/Modules/ModuleAdminAccessLevel.php',
+            'app/Support/Modules/ModuleAdminAccessRegistry.php',
+            'app/Support/Modules/ModuleAdminAccessRule.php',
+            'modules/support-tickets/module.json',
+            'modules/support-tickets/bootstrap.php',
+            'modules/support-tickets/assets/README.md',
+            'modules/support-tickets/docs/README.ru.md',
+            'modules/support-tickets/docs/README.en.md',
+            'modules/support-tickets/database/migrations/2026_07_29_200000_create_module_support_ticket_settings_table.php',
+            'modules/support-tickets/database/migrations/2026_07_29_200100_create_module_support_tickets_table.php',
+            'modules/support-tickets/database/migrations/2026_07_29_200200_create_module_support_ticket_messages_table.php',
+            'modules/support-tickets/database/migrations/2026_07_29_200300_create_module_support_ticket_message_revisions_table.php',
+            'public/assets/modules/support-tickets.css',
+            'public/assets/modules/support-tickets.js',
+            'tests/Feature/Modules/SupportTicketsModuleTest.php',
+            'tests/Unit/ModuleAdminAccessRegistryTest.php',
+            'tests/browser/specs/support-tickets.spec.mjs',
+        ] as $artifact) {
+            $this->assertFileExists(base_path($artifact));
+        }
+
+        $manifest = json_decode(
+            $this->readReleaseFile('modules/support-tickets/module.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $this->assertSame('support-tickets', $manifest['id']);
+        $this->assertSame('1.0.0', $manifest['version']);
+        $this->assertSame('0.44.14', $manifest['cms_min']);
+        $this->assertNull($manifest['cms_max']);
+
+        $service = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketService.php');
+        $this->assertStringContainsString('SupportTicket::MAX_OPEN_TICKETS_PER_USER', $service);
+        $this->assertStringContainsString('SupportTicketMessageRevision::query()->create', $service);
+        $this->assertStringContainsString('SupportTicketStatus::AwaitingPlayer', $service);
+        $this->assertStringContainsString('SupportTicketStatus::InProgress', $service);
+        $this->assertStringNotContainsString("details: ['body'", $service);
+
+        $model = $this->readReleaseFile('modules/support-tickets/src/Models/SupportTicket.php');
+        $this->assertStringContainsString('public const SUBJECT_MAX = 120;', $model);
+        $this->assertStringContainsString('public const INITIAL_MESSAGE_MAX = 3000;', $model);
+        $this->assertStringContainsString('public const MESSAGE_MAX = 2000;', $model);
+
+        $bootstrap = $this->readReleaseFile('modules/support-tickets/bootstrap.php');
+        $this->assertStringContainsString('AdminRole::Owner, AdminRole::Administrator', $bootstrap);
+        $this->assertStringContainsString('AdminRole::Editor', $bootstrap);
+        $this->assertStringContainsString('AdminRole::Auditor', $bootstrap);
+        $this->assertStringContainsString('editorsCanManage()', $bootstrap);
+
+        $this->assertFileDoesNotExist(base_path('modules/support-tickets/assets/module.webp'));
+    }
+
     public function test_web_inventory_release_artifacts_are_shipped(): void
     {
         $this->assertFileExists(app_path('Contracts/GameRewardQueueGateway.php'));

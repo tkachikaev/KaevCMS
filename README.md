@@ -1,4 +1,4 @@
-# KaevCMS 0.44.13
+# KaevCMS 0.44.14
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.13 stabilizes the Auditor Promo Codes journal browser coverage by selecting the activation journal through its route and verifying the actual navigation. Module translations, role permissions, and production navigation behavior are unchanged. Auditor credentials may be published only on a separate isolated stand containing artificial data. The cumulative update baseline remains 0.42.4.
+Version 0.44.14 adds the bundled Support Tickets 1.0.0 module. Players receive private ticket conversations with fixed categories and statuses; owners and administrators can reply, assign, close, reopen, add internal notes and edit only their own messages with immutable revision history. Editor access is optional and scoped to this module, while auditors remain read-only. The release includes RU/EN module documentation, PHPUnit coverage and Playwright flows. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.13 стабилизирует browser-проверку журнала активаций промокодов для аудитора: ссылка выбирается по маршруту, а тест проверяет фактический переход. Переводы модулей, права ролей и поведение рабочего меню не меняются. Публиковать учётные данные аудитора допустимо только на отдельном изолированном стенде с искусственными данными. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.14 добавляет встроенный модуль «Техническая поддержка» 1.0.0. Игроки получают приватные обращения с утверждёнными категориями и статусами; владелец и администратор могут отвечать, назначать ответственного, закрывать и повторно открывать тикеты, добавлять внутренние заметки и редактировать только собственные сообщения с сохранением неизменяемой истории правок. Доступ редактора включается отдельно только для этого модуля, аудитор остаётся в режиме чтения. В релиз входят документация RU/EN, PHPUnit и Playwright-проверки. Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 

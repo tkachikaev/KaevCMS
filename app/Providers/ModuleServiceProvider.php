@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleMigrationManager;
@@ -30,6 +31,7 @@ class ModuleServiceProvider extends ServiceProvider
             migrations: $app->make(ModuleMigrationManager::class),
         ));
         $this->app->singleton(ModuleRuntime::class);
+        $this->app->singleton(ModuleAdminAccessRegistry::class);
         $this->app->singleton(ModuleNavigationRegistry::class);
         $this->app->singleton(ModuleGameServerDependencyRegistry::class);
     }

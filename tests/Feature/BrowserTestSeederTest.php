@@ -68,5 +68,21 @@ class BrowserTestSeederTest extends TestCase
             'item_id' => 57,
             'amount' => 1000000,
         ]);
+        $this->assertDatabaseHas('cms_modules', [
+            'id' => 'support-tickets',
+            'enabled' => true,
+        ]);
+        $this->assertDatabaseHas('module_support_tickets', [
+            'user_id' => $player->id,
+            'category' => 'donations_and_bonuses',
+            'status' => 'new',
+            'subject' => 'Browser seeded support ticket',
+        ]);
+        $this->assertDatabaseHas('module_support_ticket_messages', [
+            'user_id' => $player->id,
+            'author_type' => 'player',
+            'is_internal' => false,
+            'body' => 'Browser seeded ticket message.',
+        ]);
     }
 }

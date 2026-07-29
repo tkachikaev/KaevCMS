@@ -4,13 +4,17 @@ namespace App\Http\Middleware;
 
 use App\Auth\AdminAccessPolicy;
 use App\Models\Admin;
+use App\Support\Modules\ModuleAdminAccessRegistry;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 final class EnforceAdminAccess
 {
-    public function __construct(private readonly AdminAccessPolicy $policy) {}
+    public function __construct(
+        private readonly AdminAccessPolicy $policy,
+        private readonly ModuleAdminAccessRegistry $moduleAccess,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -23,6 +27,20 @@ final class EnforceAdminAccess
         }
 
         if ($this->isOwnProfileRoute($request, $admin)) {
+            return $next($request);
+        }
+
+        $moduleDecision = $this->moduleAccess->decision(
+            (string) ($request->route()?->getName() ?? ''),
+            $request->method(),
+            $admin,
+        );
+        if ($moduleDecision !== null) {
+            abort_unless($moduleDecision->allowed, 403);
+            if ($moduleDecision->readOnly) {
+                $request->attributes->set('admin_read_only', true);
+            }
+
             return $next($request);
         }
 
@@ -47,8 +65,13 @@ final class EnforceAdminAccess
         abort_unless(in_array(strtoupper($request->method()), ['GET', 'HEAD'], true), 403);
 
         if (! $this->isOwnProfileRoute($request, $admin)) {
-            $decision = $this->policy->decide($request);
-            abort_unless($admin->hasPermission($decision->permission), 403);
+            $moduleDecision = $this->moduleAccess->decision($routeName, $request->method(), $admin);
+            if ($moduleDecision !== null) {
+                abort_unless($moduleDecision->allowed, 403);
+            } else {
+                $decision = $this->policy->decide($request);
+                abort_unless($admin->hasPermission($decision->permission), 403);
+            }
         }
 
         $request->attributes->set('admin_read_only', true);

@@ -14,3 +14,5 @@ A module may provide optional catalogue artwork at `assets/module.webp`. KaevCMS
 Promo Codes and Daily Rewards use the shared account operation dialog for success and failure results, including granted item icons and amounts.
 
 Browser ZIP installation, automatic remote updates, and sandbox isolation are intentionally not provided yet.
+
+The bundled `support-tickets` module adds private player tickets. Owners and administrators can reply, auditors are read-only, and Editor access is enabled separately in the module settings. Documentation is stored at `modules/support-tickets/docs/README.en.md`.

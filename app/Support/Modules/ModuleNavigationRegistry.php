@@ -2,6 +2,8 @@
 
 namespace App\Support\Modules;
 
+use App\Auth\AdminPermission;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Route;
 use InvalidArgumentException;
 
@@ -57,6 +59,21 @@ final class ModuleNavigationRegistry
     public function adminLinks(): array
     {
         return $this->availableLinks($this->adminLinks);
+    }
+
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    public function availableAdminLinks(Admin $admin, ModuleAdminAccessRegistry $access): array
+    {
+        return array_values(array_filter(
+            $this->adminLinks(),
+            static function (array $link) use ($access, $admin): bool {
+                $routeName = (string) $link['route'];
+
+                return $access->isRegistered($routeName)
+                    ? $access->canViewRoute($admin, $routeName)
+                    : $admin->hasPermission(AdminPermission::ModulesView);
+            },
+        ));
     }
 
     /**

@@ -27,7 +27,7 @@ Build every official artifact with one command:
 ```powershell
 .\deployment\windows\build-release.ps1 `
     -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.13"
+    -OutputDirectory "C:\Releases\0.44.14"
 ```
 
 The builder proves that previous full plus patch exactly matches the target tree, keeps the cumulative baseline at `0.42.4`, excludes runtime-owned files, and writes verified SHA256 values. GitHub Actions separately runs PHP, official Windows quality, official Windows browser quality, and release-contract jobs.

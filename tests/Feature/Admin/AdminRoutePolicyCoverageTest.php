@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Auth\AdminRouteAccessRegistry;
+use App\Support\Modules\ModuleAdminAccessRegistry;
 use Illuminate\Routing\Route;
 use Tests\TestCase;
 
@@ -11,6 +12,7 @@ class AdminRoutePolicyCoverageTest extends TestCase
     public function test_every_named_admin_route_has_an_explicit_access_classification(): void
     {
         $registry = app(AdminRouteAccessRegistry::class);
+        $moduleRegistry = app(ModuleAdminAccessRegistry::class);
         $classified = [];
 
         foreach (app('router')->getRoutes() as $route) {
@@ -26,7 +28,9 @@ class AdminRoutePolicyCoverageTest extends TestCase
             $middleware = $route->gatherMiddleware();
             if (in_array('admin.access', $middleware, true)) {
                 $this->assertTrue(
-                    $registry->isRegistered($routeName) || $registry->isExplicitOwnerOnly($routeName),
+                    $registry->isRegistered($routeName)
+                        || $registry->isExplicitOwnerOnly($routeName)
+                        || $moduleRegistry->isRegistered($routeName),
                     "Protected admin route [{$routeName}] is missing from the access registry.",
                 );
                 $classified[] = $routeName;

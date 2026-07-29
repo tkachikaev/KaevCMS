@@ -1,0 +1,292 @@
+.support-ticket-heading,
+.support-ticket-admin-heading {
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.support-ticket-back {
+    display: inline-flex;
+    margin-bottom: 12px;
+    font-size: .9rem;
+    text-decoration: none;
+}
+
+.support-ticket-open-count,
+.support-ticket-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 5px 11px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.support-ticket-status.new { color: #7c5b00; background: rgba(245, 190, 55, .12); }
+.support-ticket-status.in-progress { color: #1769aa; background: rgba(61, 151, 224, .12); }
+.support-ticket-status.awaiting-player { color: #7b3fa0; background: rgba(159, 93, 200, .12); }
+.support-ticket-status.closed { color: #667085; background: rgba(102, 112, 133, .12); }
+
+.support-ticket-form {
+    max-width: none;
+}
+
+.support-ticket-form textarea,
+.support-reply-form textarea,
+.support-message-editor textarea,
+.support-staff-composer-grid textarea {
+    width: 100%;
+    resize: vertical;
+}
+
+.support-character-counter {
+    display: block;
+    margin-top: 6px;
+    text-align: right;
+    opacity: .72;
+}
+
+.support-character-counter.near-limit {
+    color: #b54708;
+    font-weight: 700;
+}
+
+.support-ticket-list,
+.support-conversation {
+    display: grid;
+    gap: 12px;
+}
+
+.support-ticket-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px;
+    border: 1px solid rgba(127, 127, 127, .18);
+    border-radius: 14px;
+    color: inherit;
+    text-decoration: none;
+    transition: transform .15s ease, border-color .15s ease;
+}
+
+.support-ticket-row:hover {
+    transform: translateY(-1px);
+    border-color: rgba(127, 127, 127, .4);
+}
+
+.support-ticket-row-main {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.support-ticket-row-main strong,
+.support-ticket-row-main span,
+.support-ticket-row-main small {
+    overflow-wrap: anywhere;
+}
+
+.support-ticket-row-main small,
+.support-ticket-row-main span {
+    opacity: .72;
+}
+
+.support-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.support-ticket-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.support-ticket-meta-grid.admin-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.support-ticket-meta-grid > div {
+    display: grid;
+    gap: 5px;
+    padding: 14px;
+    border: 1px solid rgba(127, 127, 127, .18);
+    border-radius: 12px;
+}
+
+.support-ticket-meta-grid span {
+    font-size: .78rem;
+    opacity: .68;
+}
+
+.support-ticket-meta-grid strong {
+    overflow-wrap: anywhere;
+}
+
+.support-message {
+    max-width: min(82%, 860px);
+    padding: 15px 17px;
+    border: 1px solid rgba(127, 127, 127, .18);
+    border-radius: 16px;
+    background: rgba(127, 127, 127, .06);
+}
+
+.support-message.player {
+    justify-self: end;
+    border-bottom-right-radius: 5px;
+}
+
+.support-message.staff {
+    justify-self: start;
+    border-bottom-left-radius: 5px;
+}
+
+.support-message.internal {
+    justify-self: stretch;
+    max-width: none;
+    border-style: dashed;
+    background: rgba(245, 190, 55, .08);
+}
+
+.support-message header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px 10px;
+    margin-bottom: 10px;
+}
+
+.support-message header span,
+.support-message header time,
+.support-message-edited {
+    font-size: .76rem;
+    opacity: .68;
+}
+
+.support-message header time {
+    margin-left: auto;
+}
+
+.support-message-body,
+.support-message-revision p {
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.support-message-edited {
+    display: block;
+    margin-top: 10px;
+}
+
+.support-message-editor,
+.support-message-revisions {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(127, 127, 127, .16);
+}
+
+.support-message-editor summary,
+.support-message-revisions summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.support-message-editor form {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.support-message-revision {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(127, 127, 127, .08);
+}
+
+.support-message-revision p {
+    margin: 6px 0 0;
+}
+
+.support-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.support-filter-grid label,
+.support-staff-composer-grid label {
+    display: grid;
+    gap: 7px;
+}
+
+.support-filter-grid input,
+.support-filter-grid select,
+.support-staff-composer-grid textarea,
+.support-message-editor textarea {
+    width: 100%;
+}
+
+.support-staff-composer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.support-internal-note-form {
+    border-style: dashed;
+}
+
+.support-ticket-admin-heading form {
+    margin: 0;
+}
+
+@media (max-width: 980px) {
+    .support-filter-grid,
+    .support-ticket-meta-grid,
+    .support-ticket-meta-grid.admin-meta,
+    .support-staff-composer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .support-ticket-row,
+    .support-pagination,
+    .support-ticket-admin-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .support-ticket-status {
+        align-self: flex-start;
+        white-space: normal;
+    }
+
+    .support-ticket-meta-grid,
+    .support-ticket-meta-grid.admin-meta,
+    .support-filter-grid,
+    .support-staff-composer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .support-message,
+    .support-message.player,
+    .support-message.staff {
+        justify-self: stretch;
+        max-width: none;
+    }
+
+    .support-message header time {
+        width: 100%;
+        margin-left: 0;
+    }
+}

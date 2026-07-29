@@ -85,15 +85,23 @@
         <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.logs.index') }}"><span>{{ __('Audit log') }}</span></a>
     @endif
 
-    @if($admin->hasPermission(\App\Auth\AdminPermission::ModulesView))
+    @php
+        $moduleAdminLinks = app(\App\Support\Modules\ModuleNavigationRegistry::class)->availableAdminLinks(
+            $admin,
+            app(\App\Support\Modules\ModuleAdminAccessRegistry::class),
+        );
+    @endphp
+    @if($admin->hasPermission(\App\Auth\AdminPermission::ModulesView) || $moduleAdminLinks !== [])
         <details class="admin-menu-group" data-admin-menu-group="modules" @if (request()->routeIs('admin.modules.*', 'admin.module-pages.*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{{ __('Modules') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="admin-menu-group-items">
-                <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.modules.index') }}"><span>{{ __('Modules') }}</span></a>
-                @foreach(app(\App\Support\Modules\ModuleNavigationRegistry::class)->adminLinks() as $moduleLink)
+                @if($admin->hasPermission(\App\Auth\AdminPermission::ModulesView))
+                    <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.modules.index') }}"><span>{{ __('Modules') }}</span></a>
+                @endif
+                @foreach($moduleAdminLinks as $moduleLink)
                     <a
                         wire:navigate.hover
                         wire:current="active"

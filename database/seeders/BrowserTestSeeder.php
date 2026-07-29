@@ -306,6 +306,39 @@ class BrowserTestSeeder extends Seeder
             ],
         ]);
 
+        app(ModuleManager::class)->enable('support-tickets');
+
+        $supportTicketId = DB::table('module_support_tickets')->insertGetId([
+            'user_id' => $player->id,
+            'user_name_snapshot' => $player->name,
+            'user_email_snapshot' => $player->email,
+            'category' => 'donations_and_bonuses',
+            'status' => 'new',
+            'subject' => 'Browser seeded support ticket',
+            'assigned_admin_id' => null,
+            'closed_by_admin_id' => null,
+            'closed_by_user_id' => null,
+            'last_message_at' => now(),
+            'last_player_message_at' => now(),
+            'last_staff_message_at' => null,
+            'closed_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('module_support_ticket_messages')->insert([
+            'ticket_id' => $supportTicketId,
+            'author_type' => 'player',
+            'user_id' => $player->id,
+            'admin_id' => null,
+            'author_name_snapshot' => $player->name,
+            'admin_role_snapshot' => null,
+            'is_internal' => false,
+            'body' => 'Browser seeded ticket message.',
+            'edited_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $queueGrant = app(RewardInventoryService::class)->grant(
             user: $player,
             server: $gameServer,

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.44.14 - 2026-07-29
+
+- Added bundled `support-tickets` module 1.0.0 with private player tickets, approved categories and player-facing statuses.
+- Owners and administrators can process tickets; editor access is optional and module-scoped; auditors remain read-only.
+- Added assignment, internal notes, close/reopen workflow, character limits, duplicate/flood protection and immutable staff-message revision history.
+- Added a reusable module administration access registry so future modules can define scoped role access without receiving global `modules.manage`.
+- Added RU/EN module documentation, feature/unit regressions and Playwright player/staff/mobile coverage.
+- Module artwork is intentionally left for the owner at `modules/support-tickets/assets/module.webp` (512×512 WebP).
+- The cumulative update line remains based on `0.42.4`; the 0.44.14 package supports direct updates from 0.42.4 through 0.44.13.
+
 ## 0.44.13 - 2026-07-29
 
 - Replaced the obsolete Auditor Promo Codes journal label selector with a route-based locator scoped to the main content area.

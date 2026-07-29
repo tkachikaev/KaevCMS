@@ -1,0 +1,20 @@
+{
+    "schema": 1,
+    "id": "support-tickets",
+    "name": "Support Tickets",
+    "version": "1.0.0",
+    "author": "KaevCMS",
+    "description": "Private player support tickets with staff replies, internal notes, assignments, statuses and message revision history.",
+    "cms_min": "0.44.14",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\SupportTickets\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "web": "routes/web.php",
+        "admin": "routes/admin.php"
+    }
+}
