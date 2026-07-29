@@ -20,7 +20,7 @@
     <a wire:navigate @class(['admin-tab', 'settings-section-tab', 'active' => request()->routeIs('admin.settings.system')]) href="{{ route('admin.settings.system') }}" @if(request()->routeIs('admin.settings.system')) aria-current="page" @endif>
         {{ __('System information') }}
     </a>
-    @if(auth('admin')->user()?->isOwner() === true)
+    @if(auth('admin')->user()?->isOwner() === true || auth('admin')->user()?->isReadOnly() === true)
         <a wire:navigate @class(['admin-tab', 'settings-section-tab', 'active' => request()->routeIs('admin.settings.system.updates.*')]) href="{{ route('admin.settings.system.updates.index') }}" @if(request()->routeIs('admin.settings.system.updates.*')) aria-current="page" @endif>
             {{ __('System updates') }}
         </a>

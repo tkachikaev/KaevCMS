@@ -56,18 +56,41 @@
         const form = modal.querySelector('[data-character-rescue-form]');
         const name = modal.querySelector('[data-character-rescue-name]');
         const location = modal.querySelector('[data-character-rescue-location]');
+        const title = modal.querySelector('[data-character-rescue-title]');
+        const description = modal.querySelector('[data-character-rescue-description]');
+        const confirmation = modal.querySelector('[data-character-rescue-confirmation]');
+        const onlineMessage = modal.querySelector('[data-character-rescue-online-message]');
+        const submit = modal.querySelector('[data-character-rescue-submit]');
         const action = trigger.getAttribute('data-character-rescue-action') || '';
+        const online = trigger.getAttribute('data-character-rescue-online') === '1';
 
         if (!(form instanceof HTMLFormElement) || action === '') {
             return;
         }
 
-        form.action = action;
+        form.action = online ? '' : action;
+        form.dataset.characterRescueOnline = online ? '1' : '0';
         if (name) {
             name.textContent = trigger.getAttribute('data-character-rescue-name') || '—';
         }
         if (location) {
             location.textContent = trigger.getAttribute('data-character-rescue-location') || '—';
+        }
+        if (title) {
+            title.textContent = online ? title.dataset.onlineText || '' : title.dataset.offlineText || '';
+        }
+        if (description) {
+            description.textContent = online ? description.dataset.onlineText || '' : description.dataset.offlineText || '';
+        }
+        if (confirmation) {
+            confirmation.toggleAttribute('hidden', online);
+        }
+        if (onlineMessage) {
+            onlineMessage.toggleAttribute('hidden', !online);
+        }
+        if (submit instanceof HTMLButtonElement) {
+            submit.disabled = online;
+            submit.toggleAttribute('hidden', online);
         }
 
         closeProfileMenus();
@@ -92,6 +115,11 @@
             modal.addEventListener('click', (event) => {
                 if (event.target === modal) {
                     closeCharacterRescueModal();
+                }
+            });
+            modal.querySelector('[data-character-rescue-form]')?.addEventListener('submit', (event) => {
+                if (event.currentTarget instanceof HTMLFormElement && event.currentTarget.dataset.characterRescueOnline === '1') {
+                    event.preventDefault();
                 }
             });
         }

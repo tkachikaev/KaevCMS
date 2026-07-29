@@ -26,10 +26,10 @@ class AdminRoleTest extends TestCase
         }
     }
 
-    public function test_only_owner_administrator_and_editor_roles_are_available(): void
+    public function test_owner_administrator_editor_and_read_only_roles_are_available(): void
     {
         $this->assertSame(
-            ['owner', 'administrator', 'editor'],
+            ['owner', 'administrator', 'editor', 'read_only'],
             array_map(static fn (AdminRole $role): string => $role->value, AdminRole::cases()),
         );
     }
@@ -38,7 +38,7 @@ class AdminRoleTest extends TestCase
     {
         $this->assertContains(AdminRole::Owner, AdminRole::assignableBy(AdminRole::Owner));
 
-        foreach ([AdminRole::Administrator, AdminRole::Editor] as $role) {
+        foreach ([AdminRole::Administrator, AdminRole::Editor, AdminRole::ReadOnly] as $role) {
             $this->assertNotContains(AdminRole::Owner, AdminRole::assignableBy($role));
         }
     }
@@ -73,6 +73,7 @@ class AdminRoleTest extends TestCase
                 AdminPermission::ContentManage,
                 AdminPermission::ProfileManage,
             ]],
+            'read-only' => [AdminRole::ReadOnly, AdminPermission::cases()],
         ];
     }
 }

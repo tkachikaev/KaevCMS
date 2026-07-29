@@ -33,14 +33,13 @@
     @endif
 
     @if($admin->hasPermission(\App\Auth\AdminPermission::ServersView))
-        <details class="admin-menu-group" data-admin-menu-group="servers" @if (request()->routeIs('admin.settings.game-server*', 'admin.settings.game-server-features*', 'admin.settings.login-server*')) open @endif>
+        <details class="admin-menu-group" data-admin-menu-group="servers" @if (request()->routeIs('admin.settings.game-server*', 'admin.settings.login-server*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{{ __('Servers') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="admin-menu-group-items">
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.settings.game-server') }}"><span>{{ __('Game servers') }}</span></a>
-                <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.settings.game-server-features.index') }}"><span>{{ __('Features') }}</span></a>
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.settings.login-server') }}"><span>{{ __('Login servers') }}</span></a>
             </div>
         </details>
@@ -70,6 +69,7 @@
     @if($admin->hasPermission(\App\Auth\AdminPermission::SettingsView) || $admin->hasPermission(\App\Auth\AdminPermission::SystemView))
         <a
             wire:navigate.hover
+            wire:current.exact="active"
             class="admin-menu-item"
             data-admin-settings-link
             @if (request()->routeIs('admin.settings.general*', 'admin.settings.admin-panel*', 'admin.settings.registration*', 'admin.settings.game-accounts*', 'admin.settings.languages*', 'admin.settings.security*', 'admin.settings.system*')) data-current @endif

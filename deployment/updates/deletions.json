@@ -297,5 +297,23 @@
     ],
     "0.44.1": [
         "core/deployment/windows/apply-0.44.0.ps1"
+    ],
+    "0.44.2": [
+        "core/deployment/windows/apply-0.44.1.ps1"
+    ],
+    "0.44.3": [
+        "core/deployment/windows/apply-0.44.2.ps1"
+    ],
+    "0.44.4": [
+        "core/app/Http/Controllers/Admin/GameServerFeatureController.php",
+        "core/app/Http/Requests/Admin/SaveGameServerFeatureRequest.php",
+        "core/deployment/windows/apply-0.44.3.ps1",
+        "core/resources/views/admin/settings/game-server-features"
+    ],
+    "0.44.5": [
+        "core/deployment/windows/apply-0.44.4.ps1"
+    ],
+    "0.44.6": [
+        "core/deployment/windows/apply-0.44.5.ps1"
     ]
 }

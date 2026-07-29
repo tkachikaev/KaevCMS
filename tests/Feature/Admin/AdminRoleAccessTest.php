@@ -39,6 +39,8 @@ class AdminRoleAccessTest extends TestCase
             ->assertSee('Администратор')
             ->assertDontSee('Модератор')
             ->assertSee('Редактор')
+            ->assertSee('Только чтение')
+            ->assertSee('Может просматривать все разделы панели администратора')
             ->assertSee('Полный доступ ко всей CMS');
     }
 
@@ -79,6 +81,21 @@ class AdminRoleAccessTest extends TestCase
             ->assertSessionHasErrors('role');
 
         $this->assertDatabaseMissing('admins', ['email' => 'forbidden-owner@example.com']);
+
+        $this->actingAs($administrator, 'admin')
+            ->post('/admin/administrators', [
+                'name' => 'Audit Viewer',
+                'email' => 'audit-viewer@example.com',
+                'role' => AdminRole::ReadOnly->value,
+                'password' => 'SecurePassword123',
+                'password_confirmation' => 'SecurePassword123',
+            ])
+            ->assertRedirect(route('admin.administrators.index'));
+
+        $this->assertDatabaseHas('admins', [
+            'email' => 'audit-viewer@example.com',
+            'role' => AdminRole::ReadOnly->value,
+        ]);
     }
 
     public function test_administrator_can_change_working_settings_but_not_critical_security_or_admin_path(): void
@@ -131,6 +148,103 @@ class AdminRoleAccessTest extends TestCase
         $this->actingAs($editor, 'admin')->get('/admin/settings')->assertForbidden();
         $this->actingAs($editor, 'admin')->get('/admin/settings/mail')->assertForbidden();
         $this->actingAs($editor, 'admin')->get('/admin/administrators/'.$editor->id.'/edit')->assertOk();
+    }
+
+    public function test_read_only_role_can_view_all_sections_but_cannot_change_data(): void
+    {
+        $viewer = $this->createAdmin([
+            'email' => 'viewer@example.com',
+            'role' => AdminRole::ReadOnly,
+        ]);
+        $otherAdmin = $this->createAdmin([
+            'email' => 'other@example.com',
+            'role' => AdminRole::Administrator,
+        ]);
+
+        $this->actingAs($viewer, 'admin')
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('Режим просмотра')
+            ->assertSee('Новости')
+            ->assertSee('Пользователи')
+            ->assertSee('Настройки')
+            ->assertSee('Журнал действий')
+            ->assertSee('Модули')
+            ->assertSee('data-auto-refresh="0"', false);
+
+        foreach ([
+            '/admin/account/security',
+            '/admin/news',
+            '/admin/pages',
+            '/admin/themes',
+            '/admin/account-themes',
+            '/admin/users',
+            '/admin/administrators',
+            '/admin/reward-deliveries',
+            '/admin/settings',
+            '/admin/settings/admin-panel',
+            '/admin/settings/registration',
+            '/admin/settings/game-accounts',
+            '/admin/settings/languages',
+            '/admin/settings/security',
+            '/admin/settings/game-server',
+            '/admin/settings/login-server',
+            '/admin/settings/mail',
+            '/admin/settings/system',
+            '/admin/settings/system/queue',
+            '/admin/settings/system/updates',
+            '/admin/logs',
+            '/admin/modules',
+        ] as $path) {
+            $this->actingAs($viewer, 'admin')
+                ->get($path)
+                ->assertOk()
+                ->assertSee('Режим просмотра');
+        }
+
+        $this->actingAs($viewer, 'admin')
+            ->get('/admin/administrators/'.$otherAdmin->id.'/edit')
+            ->assertOk()
+            ->assertSee($otherAdmin->email)
+            ->assertSee('Режим просмотра');
+
+        $this->actingAs($viewer, 'admin')
+            ->put('/admin/settings', [])
+            ->assertForbidden();
+
+        $this->actingAs($viewer, 'admin')
+            ->post('/admin/news', [])
+            ->assertForbidden();
+
+        $this->actingAs($viewer, 'admin')
+            ->put('/admin/administrators/'.$viewer->id, [
+                'name' => 'Changed viewer',
+                'email' => $viewer->email,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($viewer, 'admin')
+            ->delete('/admin/administrators/'.$otherAdmin->id.'/two-factor')
+            ->assertForbidden();
+
+        $this->actingAs($viewer, 'admin')
+            ->post('/admin/language/en')
+            ->assertRedirect()
+            ->assertSessionHas('admin_locale', 'en');
+
+        $viewer->refresh();
+        $this->assertSame('Test Admin', $viewer->name);
+        $this->assertSame('ru', $viewer->locale);
+    }
+
+    public function test_read_only_role_cannot_bypass_server_permissions_through_livewire_actions(): void
+    {
+        $viewer = $this->createAdmin(['role' => AdminRole::ReadOnly]);
+
+        $this->actingAs($viewer, 'admin');
+
+        $this->assertServerSaveActionForbidden(app(GameServerManager::class));
+        $this->assertServerSaveActionForbidden(app(LoginServerManager::class));
     }
 
     public function test_last_active_owner_cannot_be_downgraded_or_disabled(): void
@@ -197,6 +311,19 @@ class AdminRoleAccessTest extends TestCase
         }
 
         $this->fail('Expected the Livewire server action to be forbidden.');
+    }
+
+    private function assertServerSaveActionForbidden(GameServerManager|LoginServerManager $component): void
+    {
+        try {
+            $component->save();
+        } catch (HttpExceptionInterface $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+
+            return;
+        }
+
+        $this->fail('Expected the Livewire server mutation to be forbidden.');
     }
 
     private function createAdmin(array $attributes = []): Admin

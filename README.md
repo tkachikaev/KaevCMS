@@ -1,4 +1,4 @@
-# KaevCMS 0.44.1
+# KaevCMS 0.44.6
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.1 is a quality hotfix for the character rescue release. It aligns the Mobius schema regression, RU/EN literal translations, and Laravel Pint formatting with the shipped 0.44.0 runtime behavior. The cumulative update baseline remains 0.42.4.
+Version 0.44.6 improves the character rescue discoverability: when the feature is enabled, the Return to city button remains visible for online characters and explains that the player must log out before the operation can run. The server-side online check remains mandatory. This hotfix also restores Pint formatting and corrects the read-only navigation regression expectation. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -66,7 +66,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Separate public and account themes, including Kaev Aurelia Account.
 - Persistent Livewire navigation for administration and player account pages.
 - Multilingual news, pages, settings, mail templates, and localized routes.
-- Owner, administrator, and editor roles; two-factor authentication and recovery codes.
+- Owner, administrator, editor, and full-panel read-only roles; two-factor authentication and recovery codes.
 - Encrypted infrastructure credentials and redacted audit logs.
 - One L2JMobius game driver with compatible schema profiles.
 - Player game-account creation, password management, and configurable offline character rescue.
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.1 — исправление качества релиза переноса персонажа. Она синхронизирует тест схемы Mobius, буквальные переводы RU/EN и форматирование Laravel Pint с уже выпущенной runtime-логикой 0.44.0. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.6 делает функцию возврата персонажа понятнее: если она включена, кнопка «Вернуть в город» отображается и для персонажа в игре, но сообщает, что сначала необходимо выйти. Серверная проверка online остаётся обязательной. Также исправлены форматирование Pint и ожидание названия журнала в тесте роли «Только чтение». Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 
@@ -155,7 +155,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Раздельные публичные шаблоны и шаблоны личного кабинета, включая Kaev Aurelia Account.
 - Постоянная Livewire-навигация в административной панели и кабинете игрока.
 - Многоязычные новости, страницы, настройки, почтовые шаблоны и маршруты.
-- Роли владельца, администратора и редактора; двухфакторная защита и recovery codes.
+- Роли владельца, администратора, редактора и полного просмотра без изменений; двухфакторная защита и recovery codes.
 - Шифрование инфраструктурных реквизитов и очистка аудита от секретов.
 - Один драйвер L2JMobius с совместимыми профилями схем.
 - Создание игровых аккаунтов и изменение игровых паролей.

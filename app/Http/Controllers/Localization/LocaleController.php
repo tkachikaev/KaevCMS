@@ -31,7 +31,7 @@ final class LocaleController extends Controller
         $request->session()->put('admin_locale', $locale);
         $administrator = auth('admin')->user();
 
-        if ($administrator !== null && $administrator->locale !== $locale) {
+        if ($administrator !== null && ! $administrator->isReadOnly() && $administrator->locale !== $locale) {
             $administrator->forceFill(['locale' => $locale])->save();
         }
 

@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.44.6 - 2026-07-29
+
+- Kept the player-facing `Return to city` action visible whenever character rescue is enabled and supported, including while the character is online. Online characters now open an informational modal instructing the player to log out; the submit action is hidden and guarded from submission.
+- Preserved the mandatory server-side online-state check and the existing atomic database write, so the UI change does not weaken rescue safety.
+- Added feature and shared-runtime regressions for online/offline button state, the online informational modal, and the non-submittable online form path.
+- Corrected the read-only role navigation assertion to use the actual Russian label `Журнал действий` without weakening section-access coverage.
+- Restored Laravel Pint formatting in `AccountCharacterDirectory`, including the empty constructor body and PHPDoc alignment.
+- Updated both bundled account themes to `1.6.1`. The cumulative update line remains based on `0.42.4`; the 0.44.6 package supports direct updates from 0.42.4 through 0.44.5.
+
+## 0.44.5 - 2026-07-29
+
+- Added the system `read_only` administrator role for public demo credentials, audits, and support reviews. The role is selectable in administrator management without a database migration because the existing role column is string-based.
+- Read-only administrators can open every registered administration section, including users, other administrator profiles, server settings, modules, audit logs, queue information, and system-update history. Pages render with the existing read-only notice and disabled mutation controls.
+- Added a strict server-side mutation guard: non-safe administration requests are rejected before controllers run, own-profile changes are blocked, Livewire GameServer/LoginServer actions explicitly deny read-only users, automatic server-status refresh is disabled, and language switching remains session-only without changing the administrator row.
+- Read-only users may inspect owner-only system-update pages, but cannot upload, apply, recover, or discard packages. Viewing a staged update does not create a maintenance recovery secret for this role.
+- Added role, permissions, administrator-assignment, all-section visibility, HTTP mutation, Livewire mutation, system-update visibility, language persistence, and dashboard auto-refresh regressions. Existing permission tests were extended rather than weakened.
+- The cumulative update line remains based on `0.42.4`; the 0.44.5 package supports direct updates from 0.42.4 through 0.44.4.
+
+## 0.44.4 - 2026-07-29
+
+- Moved character rescue configuration from the separate Additional administration page into the existing GameServer drawer as a compact **Features** tab. The fields now reuse the same `server-form-grid` and `form-group` controls as the General and Miscellaneous tabs.
+- The rescue switch follows the maintenance-mode interaction: parameters remain hidden until the feature is enabled. Existing per-server settings, capability checks, validation, cooldowns, audit events, and player behavior are preserved.
+- Removed the obsolete Additional sidebar item, controller, request, routes, and views. Versioned deletions remove those files during patch and cumulative updates.
+- Fixed sidebar interaction priority so an active or `data-current` item remains blue while hovered instead of falling back to the ordinary dark hover state.
+- Replaced the separate-page regressions with Livewire and Playwright coverage for the GameServer Features tab, compact conditional fields, validation tab activation, capability blocking, sidebar item count, and active-hover color persistence. Tests were not weakened.
+- Normalized the English `Login servers` label so the existing sidebar-order regression matches the rendered interface.
+- The cumulative update line remains based on `0.42.4`; the 0.44.4 package supports direct updates from 0.42.4 through 0.44.3.
+
+## 0.44.3 - 2026-07-29
+
+- Restored `deployment/release-files.json` as the required schema-1 object with a sorted `required_files` list; the 0.44.2 archive accidentally contained only the literal strings `schema` and `required_files`, causing `apply-0.44.2.ps1` to stop before update execution.
+- Synchronized the required current apply-script path with `deployment/windows/apply-0.44.3.ps1` and retained the existing PowerShell and PHPUnit release-metadata checks that reject malformed manifests.
+- Character rescue runtime logic, database migrations, GameServer capabilities, account themes, and the Additional administration interface are unchanged.
+- The cumulative update line remains based on `0.42.4`; the 0.44.3 package supports direct updates from 0.42.4 through 0.44.2.
+
+## 0.44.2 - 2026-07-29
+
+- Reworked the separate GameServer Additional administration page to follow the shared admin design system: the index now reuses server-style summary cards instead of a custom cramped row layout, while the per-server editor stays in the standard settings-form pattern.
+- Moved the sidebar entry below Login servers, renamed it to `Additional`, and excluded `/admin/settings/game-server-features*` from the Settings sidebar highlighter so the separate page no longer marks Settings as current.
+- Added regression coverage for the new sidebar order, the Additional label, the separate-page heading, the server-card layout, and the client-side rule that keeps Settings inactive on the Additional page.
+- Restored Laravel Pint compliance for `AccountCharacterDirectory` after the rescue-related follow-up changes. Runtime rescue logic, migrations, capabilities, and user data remain unchanged.
+- The cumulative update line remains based on `0.42.4`; the 0.44.2 package supports direct updates from 0.42.4 through 0.44.1.
+
 ## 0.44.1 - 2026-07-28
 
 - Updated `ServerDriverRegistryTest` to include the optional Mobius `characters.x`, `characters.y`, and `characters.z` schema columns introduced for character rescue.

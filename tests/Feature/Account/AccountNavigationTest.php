@@ -208,7 +208,10 @@ class AccountNavigationTest extends TestCase
         $this->assertIsString($runtime);
         $this->assertIsString($modal);
         $this->assertStringContainsString('data-character-rescue-open', $runtime);
+        $this->assertStringContainsString('data-character-rescue-online', $runtime);
         $this->assertStringContainsString('data-character-rescue-modal', $modal);
+        $this->assertStringContainsString('data-character-rescue-online-message', $modal);
+        $this->assertStringContainsString('data-character-rescue-submit', $modal);
 
         foreach (['kaev-aurelia', 'luxury'] as $theme) {
             $row = file_get_contents(base_path("account-themes/{$theme}/views/components/character-row.blade.php"));
@@ -217,6 +220,8 @@ class AccountNavigationTest extends TestCase
             $this->assertIsString($row);
             $this->assertIsString($directory);
             $this->assertStringContainsString('data-character-rescue-open', $row);
+            $this->assertStringContainsString('data-character-rescue-online', $row);
+            $this->assertStringContainsString("@if(\$character['rescue_visible'])", $row);
             $this->assertStringContainsString('<x-account-character-rescue-modal', $directory);
         }
     }

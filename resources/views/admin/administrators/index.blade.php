@@ -15,7 +15,8 @@
         @php
             $isCurrent = $currentAdmin?->is($administrator) ?? false;
             $canManageOther = $currentAdmin->isOwner() || ($currentAdmin->role === \App\Auth\AdminRole::Administrator && ! $administrator->isOwner());
-            $canEdit = $isCurrent || $canManageOther;
+            $canViewOther = $currentAdmin->isReadOnly() || $canManageOther;
+            $canEdit = $isCurrent || $canViewOther;
             $ownerProtection = $administrator->isOwner() && $activeOwnerCount <= 1;
             $canDisable = $administrator->is_active && ! $isCurrent && $canManageOther && ! $ownerProtection && $activeCount > 1;
         @endphp
@@ -28,7 +29,7 @@
             <div><span @class(['status-badge','status-badge-success' => $administrator->is_active,'status-badge-muted' => ! $administrator->is_active])>{{ $administrator->is_active ? __('Active') : __('Disabled') }}</span></div>
             <div class="admin-row-actions administrator-actions">
                 @if($canEdit)
-                    <a wire:navigate class="button button-secondary" href="{{ route('admin.administrators.edit', $administrator) }}">{{ __('Edit') }}</a>
+                    <a wire:navigate class="button button-secondary" href="{{ route('admin.administrators.edit', $administrator) }}">{{ $currentAdmin->isReadOnly() ? __('View') : __('Edit') }}</a>
                 @endif
                 @if ($administrator->is_active)
                     <form method="POST" action="{{ route('admin.administrators.status', $administrator) }}">@csrf

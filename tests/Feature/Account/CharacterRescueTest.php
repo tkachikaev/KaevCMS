@@ -162,7 +162,35 @@ class CharacterRescueTest extends TestCase
             ->get(route('characters.index'))
             ->assertOk()
             ->assertSee('Вернуть в город')
-            ->assertSee('data-character-rescue-open', false);
+            ->assertSee('data-character-rescue-open', false)
+            ->assertSee('data-character-rescue-online="0"', false);
+    }
+
+    public function test_online_character_card_keeps_rescue_button_and_explains_that_logout_is_required(): void
+    {
+        [$user, $server] = $this->context();
+        $this->enable($server);
+        $gameAccounts = new FakeGameAccountGateway;
+        $gameAccounts->charactersByServer[$server->id] = [[
+            'id' => 100,
+            'name' => 'Bubi',
+            'level' => 80,
+            'class_id' => 88,
+            'race' => 0,
+            'gender' => 1,
+            'online' => true,
+            'last_access' => CarbonImmutable::now()->subMinute()->getTimestamp() * 1000,
+        ]];
+        $this->app->instance(GameAccountGateway::class, $gameAccounts);
+
+        $this->actingAs($user)
+            ->get(route('characters.index'))
+            ->assertOk()
+            ->assertSee('Вернуть в город')
+            ->assertSee('data-character-rescue-open', false)
+            ->assertSee('data-character-rescue-online="1"', false)
+            ->assertSee('Персонаж должен быть вне игры')
+            ->assertSee('Выйдите из игры, дождитесь статуса «Не в игре» и нажмите кнопку ещё раз.');
     }
 
     /** @return array{User,GameServer,UserGameAccount} */

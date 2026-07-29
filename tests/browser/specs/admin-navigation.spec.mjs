@@ -145,17 +145,23 @@ test('persisted sidebar keeps group state during navigation and history changes'
     await expect(appearanceGroup).toHaveAttribute('open', '');
 });
 
-test('game server features are configured on a separate compact page', async ({ page }) => {
-    await openMenuGroup(page, 'servers');
-    await page.locator('[data-admin-menu-group="servers"]').getByRole('link', { name: 'Возможности', exact: true }).click();
+test('active sidebar item keeps its selected color while hovered', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/game-server');
 
-    await expect(page).toHaveURL(/\/admin\/settings\/game-server-features$/);
-    await expect(page.getByRole('heading', { name: 'Возможности игровых серверов' }).first()).toBeVisible();
-    await expect(page.locator('.game-feature-row').first()).toBeVisible();
-    await expectNoDocumentHorizontalOverflow(page, 'game server features desktop');
+    const serversGroup = page.locator('[data-admin-menu-group="servers"]');
+    const gameServersLink = serversGroup.getByRole('link', { name: 'Игровые серверы', exact: true });
+    const serverLinks = serversGroup.locator('.admin-menu-group-items .admin-menu-item');
 
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expectNoDocumentHorizontalOverflow(page, 'game server features mobile');
+    await expect(serverLinks).toHaveCount(2);
+    await expect(serverLinks.nth(0)).toContainText('Игровые серверы');
+    await expect(serverLinks.nth(1)).toContainText('Логин серверы');
+    await expect(gameServersLink).toHaveClass(/active/);
+
+    const selectedBackground = await gameServersLink.evaluate((element) => getComputedStyle(element).backgroundColor);
+    await gameServersLink.hover();
+    const hoveredBackground = await gameServersLink.evaluate((element) => getComputedStyle(element).backgroundColor);
+
+    expect(hoveredBackground).toBe(selectedBackground);
 });
 
 test('settings use one sidebar entry and local tabs', async ({ page }) => {
@@ -290,6 +296,14 @@ test('game server settings keep fields separated by accessible tabs', async ({ p
     await expect(dialog.getByRole('tab', { name: 'Разное' })).toHaveAttribute('aria-selected', 'true');
     await expect(dialog.getByText('Режим обслуживания')).toBeVisible();
     await expect(dialog.getByText('Дополнительные сетевые настройки')).toBeVisible();
+
+    await dialog.getByRole('tab', { name: 'Возможности' }).click();
+    await expect(dialog.getByRole('tab', { name: 'Возможности' })).toHaveAttribute('aria-selected', 'true');
+    const rescueSettings = dialog.getByTestId('character-rescue-settings');
+    await expect(rescueSettings).toBeVisible();
+    await expect(rescueSettings.getByText('Возврат персонажа в город')).toBeVisible();
+    await expect(rescueSettings.locator('input[type="checkbox"]')).toBeDisabled();
+    await expect(dialog.getByTestId('character-rescue-fields')).toHaveCount(0);
     await expect(page.getByTestId('game-server-dialog-footer')).toBeVisible();
 });
 
@@ -519,4 +533,36 @@ test('promo code module manages dynamic rewards and status controls', async ({ p
     page.once('dialog', (dialog) => dialog.accept());
     await createdCode.getByRole('button', { name: 'Удалить', exact: true }).click();
     await expect(page.getByText('BROWSER-NEW', { exact: true })).toHaveCount(0);
+});
+
+test('read-only administrator can browse the full panel while mutation controls stay disabled', async ({ page }) => {
+    await page.context().clearCookies();
+    await gotoWithLocalNetworkRetry(page, '/admin/login');
+    await page.locator('#email').fill(process.env.PLAYWRIGHT_READ_ONLY_EMAIL || 'browser-viewer@example.test');
+    await page.locator('#password').fill(process.env.PLAYWRIGHT_READ_ONLY_PASSWORD || 'BrowserViewerPassword123!');
+    await page.getByRole('button', { name: 'Войти в панель' }).click();
+
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByText('Режим просмотра').first()).toBeVisible();
+    await expect(page.locator('[data-server-monitor-dashboard]')).toHaveAttribute('data-auto-refresh', '0');
+
+    await openMenuGroup(page, 'servers');
+    await page.getByRole('link', { name: 'Игровые серверы', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Игровые серверы' }).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Настроить', exact: true }).first().click();
+
+    const gameServerDialog = page.getByTestId('game-server-dialog');
+    await expect(gameServerDialog).toBeVisible();
+    await gameServerDialog.getByRole('tab', { name: 'Возможности' }).click();
+    await expect(gameServerDialog.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
+    await expect(gameServerDialog.getByLabel('Название точки')).toBeDisabled();
+    await gameServerDialog.getByRole('button', { name: 'Закрыть' }).click();
+
+    await page.getByRole('link', { name: 'Настройки', exact: true }).click();
+    await expect(page.getByTestId('settings-section-tabs').getByRole('link', { name: 'Обновления системы' })).toBeVisible();
+
+    await openMenuGroup(page, 'modules');
+    await page.locator('[data-admin-menu-group="modules"]').getByRole('link', { name: 'Модули', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Модули' }).first()).toBeVisible();
+    await expect(page.getByText('Режим просмотра').first()).toBeVisible();
 });

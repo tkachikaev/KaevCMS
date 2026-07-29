@@ -47,9 +47,11 @@ use Throwable;
  *     server_name:string,
  *     account_id:int,
  *     account_login:string,
+ *     rescue_visible:bool,
  *     rescue_available:bool,
  *     rescue_location_name:?string
  * }
+ * @phpstan-type RescueSettings array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int}
  * @phpstan-type AccountRow array{id:int,login:string,available:bool,characters:list<CharacterRow>}
  * @phpstan-type ServerRow array{id:int,name:string,chronicle:string,rates:string,sort_order:int,accounts:list<AccountRow>}
  */
@@ -135,7 +137,7 @@ final class AccountCharacterDirectory
 
     /**
      * @param  array<int,ServerRow>  $servers
-     * @param  list<CharacterRow>  $allCharacters
+     * @param  list<CharacterRow>    $allCharacters
      */
     private function appendAccount(array &$servers, array &$allCharacters, UserGameAccount $account): void
     {
@@ -172,7 +174,7 @@ final class AccountCharacterDirectory
     }
 
     /**
-     * @param array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int} $rescue
+     * @param  RescueSettings  $rescue
      * @return array{available:bool,characters:list<CharacterRow>}
      */
     private function characters(GameServer $gameServer, UserGameAccount $account, array $rescue): array
@@ -218,8 +220,8 @@ final class AccountCharacterDirectory
     }
 
     /**
-     * @param array<string,mixed> $character
-     * @param array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int} $rescue
+     * @param  array<string,mixed>  $character
+     * @param  RescueSettings       $rescue
      * @return CharacterRow
      */
     private function normalizeCharacter(
@@ -273,6 +275,7 @@ final class AccountCharacterDirectory
             'server_name' => $server->nameFor(),
             'account_id' => (int) $account->id,
             'account_login' => $account->game_login,
+            'rescue_visible' => $rescue['enabled'] && $this->rescueGateway->supports($server),
             'rescue_available' => $rescue['enabled']
                 && $this->rescueGateway->supports($server)
                 && (bool) ($character['online'] ?? false) === false,

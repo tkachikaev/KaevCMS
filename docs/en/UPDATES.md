@@ -6,7 +6,7 @@ KaevCMS is distributed as:
 - a Windows patch from the previous version;
 - a cumulative Update ZIP covering a supported installed-version range.
 
-The public cumulative line starts at `0.42.4`. The `KaevCMS-cumulative-update-0.42.4-0.44.0-to-0.44.1.zip` package updates supported releases from 0.42.4 through 0.44.0 directly to 0.44.1.
+The public cumulative line starts at `0.42.4`. The `KaevCMS-cumulative-update-0.42.4-0.44.5-to-0.44.6.zip` package updates supported releases from 0.42.4 through 0.44.5 directly to 0.44.6.
 
 
 The cumulative archive is validated against the oldest Web Updater included in its declared source range, not only against the newest updater. Releases older than `0.42.4` are outside the public update line. Clean-install templates and runtime-owned upload files are excluded from the payload. Missing upload protection is recreated idempotently by the updated application after installation.

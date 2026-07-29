@@ -67,7 +67,7 @@ class LoginServerManager extends Component
 
     public function create(): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
         $this->resetValidation();
         $this->resetForm();
         $this->activeTab = 'general';
@@ -76,7 +76,7 @@ class LoginServerManager extends Component
 
     public function edit(int $serverId): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
         $server = LoginServer::query()->findOrFail($serverId);
 
         $this->resetValidation();
@@ -101,7 +101,7 @@ class LoginServerManager extends Component
 
     public function setActiveTab(string $tab): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
 
         if (in_array($tab, ['general', 'network'], true)) {
             $this->activeTab = $tab;
@@ -110,7 +110,7 @@ class LoginServerManager extends Component
 
     public function closeDrawer(): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
         $this->drawerOpen = false;
         $this->connectionReport = null;
         $this->showChecks = false;
@@ -364,7 +364,9 @@ class LoginServerManager extends Component
         $admin = auth('admin')->user();
 
         abort_unless(
-            $admin instanceof Admin && $admin->hasPermission(AdminPermission::ServersManage),
+            $admin instanceof Admin
+                && ! $admin->isReadOnly()
+                && $admin->hasPermission(AdminPermission::ServersManage),
             403,
         );
     }

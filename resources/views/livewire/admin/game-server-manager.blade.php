@@ -16,7 +16,7 @@
                     <span aria-hidden="true"></span>
                 </span>
             </label>
-            <button class="button button-primary" type="button" wire:click="create">+ {{ __('Add game server') }}</button>
+            <button class="button button-primary" type="button" data-read-only-allowed wire:click="create">+ {{ __('Add game server') }}</button>
         </div>
     </div>
 
@@ -114,7 +114,7 @@
                             <span wire:loading.remove wire:target="testStored({{ $server['id'] }})">{{ __('Test connection') }}</span>
                             <span wire:loading wire:target="testStored({{ $server['id'] }})">{{ __('Checking…') }}</span>
                         </button>
-                        <button class="button button-primary" type="button" wire:click="edit({{ $server['id'] }})">{{ __('Configure') }}</button>
+                        <button class="button button-primary" type="button" data-read-only-allowed wire:click="edit({{ $server['id'] }})">{{ __('Configure') }}</button>
                         <details class="server-card-menu">
                             <summary aria-label="{{ __('More actions') }}">⋯</summary>
                             <button type="button" wire:click="confirmDelete({{ $server['id'] }})">{{ __('Delete') }}</button>
@@ -132,7 +132,7 @@
                     <span>{{ $editingId === null ? __('New game server') : __('Game server settings') }}</span>
                     <h2 id="game-server-drawer-title">{{ $editingId === null ? __('Add game server') : ($translations[$defaultLocale] ?? __('Game server')) }}</h2>
                 </div>
-                <button class="server-drawer-close" type="button" wire:click="closeDrawer" aria-label="{{ __('Close') }}">×</button>
+                <button class="server-drawer-close" type="button" data-read-only-allowed wire:click="closeDrawer" aria-label="{{ __('Close') }}">×</button>
             </header>
 
             <nav class="server-drawer-tabs" role="tablist" aria-label="{{ __('Game server settings sections') }}">
@@ -142,7 +142,7 @@
                     role="tab"
                     aria-selected="{{ $activeTab === 'general' ? 'true' : 'false' }}"
                     aria-controls="game-server-tab-general"
-                    wire:click="setActiveTab('general')"
+                    data-read-only-allowed wire:click="setActiveTab('general')"
                 >
                     <span aria-hidden="true">●</span>{{ __('Basic settings') }}
                 </button>
@@ -152,7 +152,7 @@
                     role="tab"
                     aria-selected="{{ $activeTab === 'statistics' ? 'true' : 'false' }}"
                     aria-controls="game-server-tab-statistics"
-                    wire:click="setActiveTab('statistics')"
+                    data-read-only-allowed wire:click="setActiveTab('statistics')"
                 >
                     <span aria-hidden="true">▥</span>{{ __('Statistics') }}
                 </button>
@@ -162,10 +162,22 @@
                     role="tab"
                     aria-selected="{{ $activeTab === 'miscellaneous' ? 'true' : 'false' }}"
                     aria-controls="game-server-tab-miscellaneous"
-                    wire:click="setActiveTab('miscellaneous')"
+                    data-read-only-allowed wire:click="setActiveTab('miscellaneous')"
                 >
                     <span aria-hidden="true">•••</span>{{ __('Miscellaneous') }}
                 </button>
+                @if($editingId !== null)
+                    <button
+                        @class(['server-drawer-tab', 'active' => $activeTab === 'features'])
+                        type="button"
+                        role="tab"
+                        aria-selected="{{ $activeTab === 'features' ? 'true' : 'false' }}"
+                        aria-controls="game-server-tab-features"
+                        data-read-only-allowed wire:click="setActiveTab('features')"
+                    >
+                        <span aria-hidden="true">✦</span>{{ __('Features') }}
+                    </button>
+                @endif
             </nav>
 
             <div class="server-drawer-body">
@@ -417,7 +429,7 @@
                             </section>
                         @endif
                     </div>
-                @else
+                @elseif($activeTab === 'miscellaneous')
                     <div id="game-server-tab-miscellaneous" role="tabpanel">
                         <section class="server-drawer-section">
                             <label class="server-connection-enable">
@@ -470,6 +482,82 @@
                             @else
                                 <div class="settings-disabled-notice">
                                     {{ __('Enable the database connection on the General tab to configure service monitoring.') }}
+                                </div>
+                            @endif
+                        </section>
+                    </div>
+                @else
+                    <div id="game-server-tab-features" role="tabpanel">
+                        <section class="server-drawer-section" data-testid="character-rescue-settings">
+                            <label class="server-connection-enable">
+                                <span>
+                                    <strong>{{ __('Return character to city') }}</strong>
+                                    <small>{{ __('Players will see the action in an offline character card. The operation updates only the saved coordinates.') }}</small>
+                                </span>
+                                <span class="switch-control">
+                                    <input
+                                        type="checkbox"
+                                        @checked($characterRescueEnabled)
+                                        wire:change="setCharacterRescueEnabled($event.target.checked)"
+                                        @disabled($characterRescueCapabilityState !== 'supported' && ! $characterRescueEnabled)
+                                    >
+                                    <span></span>
+                                </span>
+                            </label>
+
+                            @if($characterRescueCapabilityState === 'error')
+                                <div class="settings-disabled-notice">
+                                    {{ __('The GameServer database could not be checked. Saved settings are preserved, but the player button will fail safely until the connection is restored.') }}
+                                </div>
+                            @elseif($characterRescueCapabilityState !== 'supported')
+                                <div class="settings-disabled-notice">
+                                    {{ __('Required characters table columns are missing or the selected driver is unsupported.') }}
+                                    @if($characterRescueMissingColumns !== [])
+                                        <code>{{ implode(', ', $characterRescueMissingColumns) }}</code>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @error('characterRescueEnabled')<small class="field-error">{{ $message }}</small>@enderror
+
+                            @if($characterRescueEnabled)
+                                <div class="server-form-grid server-form-grid-three" data-testid="character-rescue-fields">
+                                    <div class="form-group">
+                                        <label for="live_game_rescue_location">{{ __('Location name') }}</label>
+                                        <input id="live_game_rescue_location" type="text" maxlength="100" wire:model="characterRescueLocationName">
+                                        <small>{{ __('Shown to the player in the confirmation window.') }}</small>
+                                        @error('characterRescueLocationName')<small class="field-error">{{ $message }}</small>@enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="live_game_rescue_offline_delay">{{ __('Minimum offline time') }}</label>
+                                        <input id="live_game_rescue_offline_delay" type="number" min="0" max="1440" wire:model="characterRescueOfflineDelayMinutes">
+                                        <small>{{ __('Minutes after the last game session before rescue is allowed.') }}</small>
+                                        @error('characterRescueOfflineDelayMinutes')<small class="field-error">{{ $message }}</small>@enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="live_game_rescue_cooldown">{{ __('Reuse cooldown') }}</label>
+                                        <input id="live_game_rescue_cooldown" type="number" min="0" max="720" wire:model="characterRescueCooldownHours">
+                                        <small>{{ __('Hours between successful rescues of the same character. Use 0 to disable cooldown.') }}</small>
+                                        @error('characterRescueCooldownHours')<small class="field-error">{{ $message }}</small>@enderror
+                                    </div>
+                                </div>
+
+                                <div class="server-form-grid server-form-grid-three">
+                                    <div class="form-group">
+                                        <label for="live_game_rescue_x">{{ __('Coordinate X') }}</label>
+                                        <input id="live_game_rescue_x" type="number" wire:model="characterRescueX">
+                                        @error('characterRescueX')<small class="field-error">{{ $message }}</small>@enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="live_game_rescue_y">{{ __('Coordinate Y') }}</label>
+                                        <input id="live_game_rescue_y" type="number" wire:model="characterRescueY">
+                                        @error('characterRescueY')<small class="field-error">{{ $message }}</small>@enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="live_game_rescue_z">{{ __('Coordinate Z') }}</label>
+                                        <input id="live_game_rescue_z" type="number" wire:model="characterRescueZ">
+                                        @error('characterRescueZ')<small class="field-error">{{ $message }}</small>@enderror
+                                    </div>
                                 </div>
                             @endif
                         </section>

@@ -12,7 +12,7 @@
         <span class="system-eyebrow">KaevCMS</span>
         <strong>{{ __('Version :version', ['version' => $system['cms']['version']]) }}</strong>
         <p>{!! __('The version is read from the <code>VERSION</code> file in the project root.') !!}</p>
-        @if(auth('admin')->user()?->isOwner() === true)
+        @if(auth('admin')->user()?->isOwner() === true || auth('admin')->user()?->isReadOnly() === true)
             <a wire:navigate class="button button-primary system-version-update-button" href="{{ route('admin.settings.system.updates.index') }}">{{ __('Manage updates') }}</a>
         @endif
     </div>

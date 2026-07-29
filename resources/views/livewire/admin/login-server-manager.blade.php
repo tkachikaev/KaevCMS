@@ -12,7 +12,7 @@
             <span>{{ __('Login server count') }}</span>
             <strong>{{ $servers->count() }}</strong>
         </div>
-        <button class="button button-primary" type="button" wire:click="create">+ {{ __('Add login server') }}</button>
+        <button class="button button-primary" type="button" data-read-only-allowed wire:click="create">+ {{ __('Add login server') }}</button>
     </div>
 
     @if($servers->isEmpty())
@@ -77,7 +77,7 @@
                             <span wire:loading.remove wire:target="testStored({{ $server->id }})">{{ __('Test connection') }}</span>
                             <span wire:loading wire:target="testStored({{ $server->id }})">{{ __('Checking…') }}</span>
                         </button>
-                        <button class="button button-primary" type="button" wire:click="edit({{ $server->id }})">{{ __('Configure') }}</button>
+                        <button class="button button-primary" type="button" data-read-only-allowed wire:click="edit({{ $server->id }})">{{ __('Configure') }}</button>
                         <details class="server-card-menu">
                             <summary aria-label="{{ __('More actions') }}">⋯</summary>
                             <button type="button" wire:click="confirmDelete({{ $server->id }})" @disabled($server->game_servers_count > 0 || $server->user_game_accounts_count > 0)>{{ __('Delete') }}</button>
@@ -95,7 +95,7 @@
                     <span>{{ $editingId === null ? __('New connection') : __('Connection settings') }}</span>
                     <h2 id="login-server-drawer-title">{{ $editingId === null ? __('Add login server') : $name }}</h2>
                 </div>
-                <button class="server-drawer-close" type="button" wire:click="closeDrawer" aria-label="{{ __('Close') }}">×</button>
+                <button class="server-drawer-close" type="button" data-read-only-allowed wire:click="closeDrawer" aria-label="{{ __('Close') }}">×</button>
             </header>
 
             <nav class="server-drawer-tabs" role="tablist" aria-label="{{ __('Login server settings sections') }}">
@@ -105,7 +105,7 @@
                     role="tab"
                     aria-selected="{{ $activeTab === 'general' ? 'true' : 'false' }}"
                     aria-controls="login-server-tab-general"
-                    wire:click="setActiveTab('general')"
+                    data-read-only-allowed wire:click="setActiveTab('general')"
                 >
                     <span aria-hidden="true">●</span>{{ __('Basic settings') }}
                 </button>
@@ -115,7 +115,7 @@
                     role="tab"
                     aria-selected="{{ $activeTab === 'network' ? 'true' : 'false' }}"
                     aria-controls="login-server-tab-network"
-                    wire:click="setActiveTab('network')"
+                    data-read-only-allowed wire:click="setActiveTab('network')"
                 >
                     <span aria-hidden="true">↔</span>{{ __('Network settings') }}
                 </button>

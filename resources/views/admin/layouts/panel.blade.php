@@ -81,9 +81,15 @@
                     <strong>{{ __('Read-only mode') }}</strong>
                     <span>{{ __('Your role allows viewing this section, but changes are unavailable.') }}</span>
                 </div>
-                <fieldset class="admin-read-only-fieldset" disabled>
-                    @yield('content')
-                </fieldset>
+                @if(auth('admin')->user()?->isReadOnly() === true)
+                    <div class="admin-read-only-scope" data-admin-read-only-role>
+                        @yield('content')
+                    </div>
+                @else
+                    <fieldset class="admin-read-only-fieldset" disabled>
+                        @yield('content')
+                    </fieldset>
+                @endif
             @else
                 @yield('content')
             @endif

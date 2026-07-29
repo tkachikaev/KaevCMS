@@ -202,7 +202,7 @@ class AdminPanelTest extends TestCase
                 'Themes',
                 'Servers',
                 'Game servers',
-                'Login Servers',
+                'Login servers',
                 'Users',
                 'Administrators',
                 'Mail',
@@ -345,6 +345,7 @@ class AdminPanelTest extends TestCase
         $this->assertIsString($navigation);
         $this->assertStringContainsString('assets/admin/js/page-lifecycle.js', $layout);
         $this->assertStringContainsString('assets/admin/js/navigation.js', $layout);
+        $this->assertStringContainsString('assets/admin/js/read-only.js', $layout);
         $this->assertStringContainsString("'base',", $layout);
         $this->assertStringContainsString("'catalogs',", $layout);
         $this->assertStringNotContainsString('assets/admin/css/app.css', $layout);
@@ -352,11 +353,13 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString("@persist('admin-sidebar')", $panel);
         $this->assertStringContainsString('wire:navigate:scroll', $panel);
         $this->assertStringContainsString('data-admin-sidebar', $panel);
+        $this->assertStringContainsString('data-admin-read-only-role', $panel);
         $this->assertStringContainsString('wire:navigate.hover', $navigation);
         $this->assertStringContainsString('wire:current.exact="active"', $navigation);
         $this->assertStringContainsString('data-admin-settings-link', $navigation);
         $this->assertStringContainsString('data-current', $navigation);
         $this->assertStringContainsString('data-admin-menu-group="modules"', $navigation);
+        $this->assertStringNotContainsString("route('admin.settings.game-server-features.index')", $navigation);
         $modulesLinkPosition = strpos($navigation, "route('admin.modules.index')");
         $moduleLinksPosition = strpos($navigation, 'ModuleNavigationRegistry::class');
         if (! is_int($modulesLinkPosition) || ! is_int($moduleLinksPosition)) {
@@ -381,6 +384,8 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('scrollbar-gutter: stable', $styles);
         $this->assertStringContainsString('html.admin-is-navigating .admin-main', $styles);
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
+        $this->assertStringContainsString('a.admin-menu-item.active:hover', $styles);
+        $this->assertStringContainsString('a.admin-menu-item[data-current]:hover', $styles);
     }
 
     public function test_admin_scripts_use_one_livewire_page_lifecycle(): void
@@ -405,6 +410,7 @@ class AdminPanelTest extends TestCase
             'news-actions.js',
             'news-editor.js',
             'page-actions.js',
+            'read-only.js',
             'security.js',
             'server-monitor.js',
             'settings.js',

@@ -52,6 +52,7 @@
 .admin-menu-item { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 11px; border-radius: 7px; color: var(--sidebar-text); }
 a.admin-menu-item:hover { background: var(--sidebar-hover); color: #fff; }
 .admin-menu-item.active, .admin-menu-item[data-current] { background: var(--accent); color: #fff; }
+a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { background: var(--accent); color: #fff; }
 .admin-menu-item.disabled { color: #6b7280; }
 .admin-menu-item small { font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
 .admin-sidebar-footer { display: grid; gap: 7px; margin-top: auto; padding: 18px 8px 0; border-top: 1px solid rgba(255,255,255,.08); color: #9ca3af; font-size: 11px; }

@@ -5,11 +5,13 @@ namespace Database\Seeders;
 use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\GameServer;
+use App\Models\GameServerFeature;
 use App\Models\LoginServer;
 use App\Models\RewardDelivery;
 use App\Models\RewardInventoryItem;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\Rewards\RewardInventoryService;
 use App\Support\Modules\ModuleManager;
 use App\Support\Rewards\RewardGrantItem;
@@ -39,6 +41,20 @@ class BrowserTestSeeder extends Seeder
                 'password' => Hash::make($adminPassword),
                 'is_active' => true,
                 'role' => AdminRole::Owner,
+                'locale' => 'ru',
+            ],
+        );
+
+        $readOnlyEmail = (string) config('browser_tests.read_only.email');
+        $readOnlyPassword = (string) config('browser_tests.read_only.password');
+
+        Admin::query()->updateOrCreate(
+            ['email' => $readOnlyEmail],
+            [
+                'name' => 'Browser Read-only Admin',
+                'password' => Hash::make($readOnlyPassword),
+                'is_active' => true,
+                'role' => AdminRole::ReadOnly,
                 'locale' => 'ru',
             ],
         );
@@ -170,6 +186,24 @@ class BrowserTestSeeder extends Seeder
                 'monitor_status' => 'online',
                 'monitor_checked_at' => now(),
                 'monitor_last_online_at' => now(),
+            ],
+        );
+
+        GameServerFeature::query()->updateOrCreate(
+            [
+                'game_server_id' => $gameServer->id,
+                'feature_key' => GameServerFeatureSettings::CHARACTER_RESCUE,
+            ],
+            [
+                'enabled' => true,
+                'settings' => [
+                    'location_name' => 'Giran',
+                    'x' => 83400,
+                    'y' => 148600,
+                    'z' => -3400,
+                    'offline_delay_minutes' => 5,
+                    'cooldown_hours' => 12,
+                ],
             ],
         );
 

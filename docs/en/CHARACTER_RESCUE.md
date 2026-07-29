@@ -4,7 +4,7 @@ KaevCMS can safely change a character's saved coordinates when the character is 
 
 ## Configuration
 
-Open **Game servers → Features**, select a GameServer, and configure **Return character to city**:
+Open **Game servers**, choose **Configure** for the required GameServer, open the **Features** tab, and configure **Return character to city**:
 
 - enable the feature;
 - enter a clear destination name;
@@ -12,7 +12,7 @@ Open **Game servers → Features**, select a GameServer, and configure **Return 
 - set the minimum offline time;
 - set the cooldown between successful rescues of the same character.
 
-Settings are stored separately for every GameServer. The server owner must choose coordinates appropriate for the chronicle, geodata, and custom game build.
+Settings are stored separately for every GameServer. The server owner must choose coordinates appropriate for the chronicle, geodata, and custom game build. When enabled, the player button remains visible for both offline and online characters. An online character receives a clear logout notice instead of a write attempt.
 
 ## Execution rules
 

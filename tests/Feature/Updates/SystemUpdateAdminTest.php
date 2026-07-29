@@ -57,6 +57,40 @@ class SystemUpdateAdminTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_read_only_administrator_can_inspect_updates_without_creating_a_recovery_secret(): void
+    {
+        $viewer = Admin::factory()->readOnly()->create();
+        $owner = Admin::factory()->create();
+        $update = SystemUpdate::query()->create([
+            'uuid' => '5ea55e61-a1b6-4f68-91c2-fb7d4c979f60',
+            'admin_id' => $owner->id,
+            'package_id' => 'kaevcms-read-only-demo',
+            'from_version' => cms_version(),
+            'target_version' => cms_version(),
+            'status' => SystemUpdate::STATUS_STAGED,
+            'installation_type' => 'standard',
+            'package_path' => 'kaevcms/updates/packages/missing.zip',
+            'file_count' => 1,
+            'delete_count' => 0,
+            'manifest' => ['schema' => 1],
+        ]);
+
+        $this->actingAs($viewer, 'admin')
+            ->get('/admin/settings/system/updates')
+            ->assertOk()
+            ->assertSee('Режим просмотра');
+
+        $this->actingAs($viewer, 'admin')
+            ->get('/admin/settings/system/updates/'.$update->id)
+            ->assertOk()
+            ->assertSee('Режим просмотра')
+            ->assertSessionMissing('kaevcms.system-update.'.$update->uuid.'.maintenance-secret');
+
+        $this->actingAs($viewer, 'admin')
+            ->post('/admin/settings/system/updates/'.$update->id.'/apply', [])
+            ->assertForbidden();
+    }
+
     public function test_installation_requires_the_current_owner_password(): void
     {
         $owner = Admin::factory()->create();

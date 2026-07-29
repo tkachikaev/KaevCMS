@@ -7,6 +7,7 @@ enum AdminRole: string
     case Owner = 'owner';
     case Administrator = 'administrator';
     case Editor = 'editor';
+    case ReadOnly = 'read_only';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum AdminRole: string
             self::Owner => __('Owner'),
             self::Administrator => __('Administrator'),
             self::Editor => __('Editor'),
+            self::ReadOnly => __('Read-only'),
         };
     }
 
@@ -23,6 +25,7 @@ enum AdminRole: string
             self::Owner => __('Full access to the entire CMS, critical settings, owners and future modules.'),
             self::Administrator => __('Manages the CMS and its working sections, but cannot manage owners or critical settings.'),
             self::Editor => __('Works only with news, pages and content images.'),
+            self::ReadOnly => __('Can view every administration section but cannot create, change, delete or run administrative actions.'),
         };
     }
 
@@ -56,6 +59,7 @@ enum AdminRole: string
                 AdminPermission::ContentManage,
                 AdminPermission::ProfileManage,
             ],
+            self::ReadOnly => AdminPermission::cases(),
         };
     }
 
@@ -83,6 +87,6 @@ enum AdminRole: string
     {
         return $actorRole === self::Owner
             ? self::cases()
-            : [self::Administrator, self::Editor];
+            : [self::Administrator, self::Editor, self::ReadOnly];
     }
 }

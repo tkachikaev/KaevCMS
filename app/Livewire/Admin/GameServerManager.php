@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Auth\AdminPermission;
+use App\Contracts\CharacterRescueGateway;
 use App\Exceptions\GameServerDeletionConfirmationRequired;
 use App\Exceptions\GameServerHasRewardData;
 use App\Models\Admin;
@@ -10,6 +11,7 @@ use App\Models\GameServer;
 use App\Models\GameServerTranslation;
 use App\Models\LoginServer;
 use App\Services\AuditLogger;
+use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
 use App\Services\Servers\GameServerAdministration;
@@ -20,6 +22,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Throwable;
 
 class GameServerManager extends Component
 {
@@ -55,6 +58,27 @@ class GameServerManager extends Component
     public array $maintenanceMessages = [];
 
     public bool $maintenanceEnabled = false;
+
+    public bool $characterRescueEnabled = false;
+
+    public string $characterRescueLocationName = 'Giran';
+
+    public string $characterRescueX = '83400';
+
+    public string $characterRescueY = '148600';
+
+    public string $characterRescueZ = '-3400';
+
+    public string $characterRescueOfflineDelayMinutes = '5';
+
+    public string $characterRescueCooldownHours = '12';
+
+    #[Locked]
+    public string $characterRescueCapabilityState = 'unavailable';
+
+    /** @var list<string> */
+    #[Locked]
+    public array $characterRescueMissingColumns = [];
 
     public bool $statisticsEnabled = false;
 
@@ -135,7 +159,7 @@ class GameServerManager extends Component
 
     public function create(): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
         $this->resetValidation();
         $this->resetForm();
         $this->activeTab = 'general';
@@ -144,9 +168,9 @@ class GameServerManager extends Component
 
     public function edit(int $serverId): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
         $server = GameServer::query()
-            ->with(['translations', 'loginServer'])
+            ->with(['translations', 'loginServer', 'features'])
             ->findOrFail($serverId);
         $languages = app(LanguageManager::class);
 
@@ -193,6 +217,7 @@ class GameServerManager extends Component
         $this->databaseCharset = trim((string) $server->database_charset) !== '' ? trim((string) $server->database_charset) : 'utf8mb4';
         $this->serviceHost = trim((string) $server->service_host);
         $this->servicePort = (string) ($server->service_port ?? 7777);
+        $this->loadCharacterRescue($server);
         $this->connectionReport = null;
         $this->status = null;
         $this->showChecks = false;
@@ -203,16 +228,17 @@ class GameServerManager extends Component
 
     public function setActiveTab(string $tab): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
 
-        if (in_array($tab, ['general', 'statistics', 'miscellaneous'], true)) {
+        if (in_array($tab, ['general', 'statistics', 'miscellaneous', 'features'], true)
+            && ($tab !== 'features' || $this->editingId !== null)) {
             $this->activeTab = $tab;
         }
     }
 
     public function closeDrawer(): void
     {
-        $this->ensureCanManage();
+        $this->ensureCanView();
         $this->drawerOpen = false;
         $this->connectionReport = null;
         $this->showChecks = false;
@@ -227,6 +253,29 @@ class GameServerManager extends Component
         $this->maintenanceEnabled = $enabled;
         $this->syncEnabledLanguageFields();
         $this->resetValidation('maintenanceMessages');
+    }
+
+    public function setCharacterRescueEnabled(bool $enabled): void
+    {
+        $this->ensureCanManage();
+        $this->activeTab = 'features';
+
+        if ($enabled && $this->characterRescueCapabilityState !== 'supported') {
+            $this->addError('characterRescueEnabled', __('Character rescue unavailable'));
+
+            return;
+        }
+
+        $this->characterRescueEnabled = $enabled;
+        $this->resetValidation([
+            'characterRescueEnabled',
+            'characterRescueLocationName',
+            'characterRescueX',
+            'characterRescueY',
+            'characterRescueZ',
+            'characterRescueOfflineDelayMinutes',
+            'characterRescueCooldownHours',
+        ]);
     }
 
     public function setShowPublicOnline(bool $enabled): void
@@ -298,6 +347,7 @@ class GameServerManager extends Component
     public function save(): void
     {
         $this->ensureCanManage();
+
         try {
             $general = $this->validate($this->generalRules(), [], $this->generalAttributes());
         } catch (ValidationException $exception) {
@@ -305,11 +355,40 @@ class GameServerManager extends Component
 
             throw $exception;
         }
+
         if ($this->statisticsCapabilities() !== [] && $this->statisticsEnabled && ! $this->hasEnabledStatisticsSection()) {
             $this->activeTab = 'statistics';
             $this->addError('statisticsEnabled', __('Enable at least one public statistics section.'));
 
             return;
+        }
+
+        $server = $this->editingId !== null
+            ? GameServer::query()->with('features')->findOrFail($this->editingId)
+            : null;
+        $featureBefore = null;
+        $featureAfter = null;
+
+        if ($server instanceof GameServer) {
+            try {
+                $feature = $this->validate($this->featureRules(), [], $this->featureAttributes());
+            } catch (ValidationException $exception) {
+                $this->activateTabForErrors(array_keys($exception->errors()));
+
+                throw $exception;
+            }
+
+            $featureBefore = app(GameServerFeatureSettings::class)->characterRescue($server);
+            $featureAfter = $this->featureValues($feature);
+
+            if ($featureAfter['enabled']
+                && ! $featureBefore['enabled']
+                && $this->characterRescueCapabilityState !== 'supported') {
+                $this->activeTab = 'features';
+                $this->addError('characterRescueEnabled', __('Character rescue unavailable'));
+
+                return;
+            }
         }
 
         try {
@@ -321,9 +400,7 @@ class GameServerManager extends Component
 
             throw $exception;
         }
-        $server = $this->editingId !== null
-            ? GameServer::query()->findOrFail($this->editingId)
-            : null;
+
         $mode = $this->connectionEnabled
             ? GameServerAdministration::CONNECTION_CONNECT
             : GameServerAdministration::CONNECTION_DISCONNECT;
@@ -334,6 +411,22 @@ class GameServerManager extends Component
             is_array($connection) ? $this->connectionValues($connection) : null,
         );
         $server = $result['server'];
+
+        if (is_array($featureBefore) && is_array($featureAfter)) {
+            app(GameServerFeatureSettings::class)->updateCharacterRescue($server, $featureAfter);
+
+            if ($featureBefore !== $featureAfter) {
+                app(AuditLogger::class)->success(
+                    category: 'server',
+                    action: 'game_server.character_rescue_settings_updated',
+                    target: $server,
+                    details: ['before' => $featureBefore, 'after' => $featureAfter],
+                );
+            }
+        }
+
+        $server->load('features');
+        $this->loadCharacterRescue($server);
 
         if ($result['created']) {
             $this->editingId = $server->id;
@@ -471,6 +564,34 @@ class GameServerManager extends Component
         return $rules;
     }
 
+    /** @return array<string,mixed> */
+    private function featureRules(): array
+    {
+        return [
+            'characterRescueEnabled' => ['required', 'boolean'],
+            'characterRescueLocationName' => ['required', 'string', 'max:100'],
+            'characterRescueX' => ['required', 'integer', 'between:-2147483648,2147483647'],
+            'characterRescueY' => ['required', 'integer', 'between:-2147483648,2147483647'],
+            'characterRescueZ' => ['required', 'integer', 'between:-2147483648,2147483647'],
+            'characterRescueOfflineDelayMinutes' => ['required', 'integer', 'between:0,1440'],
+            'characterRescueCooldownHours' => ['required', 'integer', 'between:0,720'],
+        ];
+    }
+
+    /** @return array<string,string> */
+    private function featureAttributes(): array
+    {
+        return [
+            'characterRescueEnabled' => __('Enable character rescue'),
+            'characterRescueLocationName' => __('Location name'),
+            'characterRescueX' => __('Coordinate X'),
+            'characterRescueY' => __('Coordinate Y'),
+            'characterRescueZ' => __('Coordinate Z'),
+            'characterRescueOfflineDelayMinutes' => __('Minimum offline time'),
+            'characterRescueCooldownHours' => __('Reuse cooldown'),
+        ];
+    }
+
     /** @return array<string,string> */
     private function generalAttributes(): array
     {
@@ -548,6 +669,23 @@ class GameServerManager extends Component
         ];
     }
 
+    /**
+     * @param  array<string,mixed>  $validated
+     * @return array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int}
+     */
+    private function featureValues(array $validated): array
+    {
+        return [
+            'enabled' => (bool) $validated['characterRescueEnabled'],
+            'location_name' => trim((string) $validated['characterRescueLocationName']),
+            'x' => (int) $validated['characterRescueX'],
+            'y' => (int) $validated['characterRescueY'],
+            'z' => (int) $validated['characterRescueZ'],
+            'offline_delay_minutes' => (int) $validated['characterRescueOfflineDelayMinutes'],
+            'cooldown_hours' => (int) $validated['characterRescueCooldownHours'],
+        ];
+    }
+
     /** @param array<string,mixed> $validated @return array<string,mixed> */
     private function connectionValues(array $validated): array
     {
@@ -591,6 +729,12 @@ class GameServerManager extends Component
 
             if (str_starts_with($field, 'statistics')) {
                 $this->activeTab = 'statistics';
+
+                return;
+            }
+
+            if (str_starts_with($field, 'characterRescue')) {
+                $this->activeTab = 'features';
 
                 return;
             }
@@ -645,12 +789,54 @@ class GameServerManager extends Component
         }
     }
 
+    private function loadCharacterRescue(GameServer $server): void
+    {
+        $rescue = app(GameServerFeatureSettings::class)->characterRescue($server);
+        $this->characterRescueEnabled = $rescue['enabled'];
+        $this->characterRescueLocationName = $rescue['location_name'];
+        $this->characterRescueX = (string) $rescue['x'];
+        $this->characterRescueY = (string) $rescue['y'];
+        $this->characterRescueZ = (string) $rescue['z'];
+        $this->characterRescueOfflineDelayMinutes = (string) $rescue['offline_delay_minutes'];
+        $this->characterRescueCooldownHours = (string) $rescue['cooldown_hours'];
+        $this->inspectCharacterRescueCapability($server);
+    }
+
+    private function inspectCharacterRescueCapability(GameServer $server): void
+    {
+        $gateway = app(CharacterRescueGateway::class);
+        $this->characterRescueMissingColumns = [];
+
+        if (! $gateway->supports($server)) {
+            $this->characterRescueCapabilityState = 'unavailable';
+
+            return;
+        }
+
+        try {
+            $capabilities = $gateway->capabilities($server);
+            $this->characterRescueCapabilityState = $capabilities->supported ? 'supported' : 'unavailable';
+            $this->characterRescueMissingColumns = $capabilities->missingColumns;
+        } catch (Throwable) {
+            $this->characterRescueCapabilityState = 'error';
+        }
+    }
+
     private function resetForm(): void
     {
         $this->editingId = null;
         $this->clearDeleteConfirmation();
         $this->initializeTranslations();
         $this->maintenanceEnabled = false;
+        $this->characterRescueEnabled = false;
+        $this->characterRescueLocationName = 'Giran';
+        $this->characterRescueX = '83400';
+        $this->characterRescueY = '148600';
+        $this->characterRescueZ = '-3400';
+        $this->characterRescueOfflineDelayMinutes = '5';
+        $this->characterRescueCooldownHours = '12';
+        $this->characterRescueCapabilityState = 'unavailable';
+        $this->characterRescueMissingColumns = [];
         $this->statisticsEnabled = false;
         $this->statisticsLevelEnabled = true;
         $this->statisticsPvpEnabled = true;
@@ -735,7 +921,9 @@ class GameServerManager extends Component
         $admin = auth('admin')->user();
 
         abort_unless(
-            $admin instanceof Admin && $admin->hasPermission(AdminPermission::ServersManage),
+            $admin instanceof Admin
+                && ! $admin->isReadOnly()
+                && $admin->hasPermission(AdminPermission::ServersManage),
             403,
         );
     }

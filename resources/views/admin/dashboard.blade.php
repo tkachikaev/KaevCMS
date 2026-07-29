@@ -23,7 +23,7 @@
         'unknown' => __('Status pending'),
     ];
     $adminUser = auth('admin')->user();
-    $canRefreshMonitor = $adminUser->hasPermission(\App\Auth\AdminPermission::DashboardRefresh);
+    $canRefreshMonitor = ! $adminUser->isReadOnly() && $adminUser->hasPermission(\App\Auth\AdminPermission::DashboardRefresh);
     $canViewServers = $adminUser->hasPermission(\App\Auth\AdminPermission::ServersView);
     $canViewMail = $adminUser->hasPermission(\App\Auth\AdminPermission::MailView);
     $canViewSystem = $adminUser->hasPermission(\App\Auth\AdminPermission::SystemView);
@@ -33,7 +33,7 @@
     class="admin-dashboard-stack"
     data-server-monitor-dashboard
     data-refresh-url="{{ route('admin.server-monitor.status') }}"
-    data-auto-refresh="{{ $monitorRefreshDue ? '1' : '0' }}"
+    data-auto-refresh="{{ $monitorRefreshDue && ! $adminUser->isReadOnly() ? '1' : '0' }}"
 >
     <section class="admin-overview dashboard-monitor-summary">
         <div>

@@ -18,6 +18,10 @@ final class EnforceAdminAccess
         $admin = $request->user('admin');
         abort_unless($admin !== null, 403);
 
+        if ($admin->isReadOnly()) {
+            return $this->handleReadOnly($request, $next, $admin);
+        }
+
         if ($this->isOwnProfileRoute($request, $admin)) {
             return $next($request);
         }
@@ -28,6 +32,24 @@ final class EnforceAdminAccess
         if ($decision->managePermission !== null && ! $admin->hasPermission($decision->managePermission)) {
             $request->attributes->set('admin_read_only', true);
         }
+
+        return $next($request);
+    }
+
+    private function handleReadOnly(Request $request, Closure $next, Admin $admin): Response
+    {
+        $routeName = (string) ($request->route()?->getName() ?? '');
+
+        if ($routeName === 'admin.logout') {
+            return $next($request);
+        }
+
+        abort_unless(in_array(strtoupper($request->method()), ['GET', 'HEAD'], true), 403);
+
+        $decision = $this->policy->decide($request);
+        abort_unless($admin->hasPermission($decision->permission), 403);
+
+        $request->attributes->set('admin_read_only', true);
 
         return $next($request);
     }

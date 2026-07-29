@@ -49,6 +49,12 @@ a.admin-menu-item:hover {
     box-shadow: 0 5px 16px rgba(37, 99, 235, .24);
 }
 
+a.admin-menu-item.active:hover,
+a.admin-menu-item[data-current]:hover {
+    border-color: rgba(255, 255, 255, .08);
+    background: var(--admin-primary);
+}
+
 .form-card,
 .admin-section-card,
 .settings-actions,

@@ -32,7 +32,7 @@ final class SystemUpdateController extends Controller
         UpdateInstallationLayout $layout,
         UpdatePackageInspector $inspector,
     ): View {
-        $admin = $this->owner();
+        $admin = $this->viewer();
 
         return view('admin.settings.updates.index', [
             'currentVersion' => $this->currentVersion($installedVersion),
@@ -128,7 +128,7 @@ final class SystemUpdateController extends Controller
         UpdatePackageInspector $inspector,
         UpdatePreflight $preflight,
     ): View {
-        $this->owner();
+        $admin = $this->viewer();
         $package = null;
         $checks = [];
         $inspectionError = null;
@@ -146,7 +146,7 @@ final class SystemUpdateController extends Controller
         }
 
         $maintenanceSecret = null;
-        if ($systemUpdate->isStaged() || $systemUpdate->status === SystemUpdate::STATUS_APPLYING) {
+        if (! $admin->isReadOnly() && ($systemUpdate->isStaged() || $systemUpdate->status === SystemUpdate::STATUS_APPLYING)) {
             $maintenanceSecret = $this->maintenanceSecret($systemUpdate);
         }
 
@@ -262,7 +262,7 @@ final class SystemUpdateController extends Controller
 
     public function log(SystemUpdate $systemUpdate): Response
     {
-        $this->owner();
+        $this->viewer();
         $path = $this->absoluteLogPath($systemUpdate);
         abort_unless($path !== null && is_file($path), 404);
 
@@ -278,6 +278,17 @@ final class SystemUpdateController extends Controller
     {
         $admin = request()->user('admin');
         abort_unless($admin instanceof Admin && $admin->isOwner(), 403);
+
+        return $admin;
+    }
+
+    private function viewer(): Admin
+    {
+        $admin = request()->user('admin');
+        abort_unless(
+            $admin instanceof Admin && ($admin->isOwner() || $admin->isReadOnly()),
+            403,
+        );
 
         return $admin;
     }
