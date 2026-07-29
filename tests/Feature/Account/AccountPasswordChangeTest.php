@@ -4,6 +4,7 @@ namespace Tests\Feature\Account;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\RegistrationSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -47,6 +48,42 @@ class AccountPasswordChangeTest extends TestCase
             'actor_id' => (string) $user->id,
             'result' => 'success',
         ]);
+    }
+
+    public function test_player_password_change_uses_the_configured_public_account_policy(): void
+    {
+        app(RegistrationSettings::class)->update(true, false, [
+            'password_min' => 12,
+            'password_letters' => true,
+            'password_mixed_case' => true,
+            'password_numbers' => true,
+            'password_symbols' => true,
+        ]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/account/security')
+            ->assertOk()
+            ->assertSee('minlength="12"', false)
+            ->assertSee('Хотя бы один специальный символ.');
+
+        $this->actingAs($user)
+            ->put('/account/security/password', [
+                'current_password' => 'Password123',
+                'password' => 'NewPassword456',
+                'password_confirmation' => 'NewPassword456',
+            ])
+            ->assertSessionHasErrors('password');
+
+        $this->actingAs($user)
+            ->put('/account/security/password', [
+                'current_password' => 'Password123',
+                'password' => 'NewPassword456!',
+                'password_confirmation' => 'NewPassword456!',
+            ])
+            ->assertRedirect('/account/security');
+
+        $this->assertTrue(Hash::check('NewPassword456!', $user->fresh()->password));
     }
 
     public function test_wrong_current_password_is_rejected_without_changing_the_password(): void

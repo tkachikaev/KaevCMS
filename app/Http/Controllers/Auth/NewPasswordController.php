@@ -9,6 +9,7 @@ use App\Rules\PasswordWithinHasherLimit;
 use App\Services\AuditLogger;
 use App\Services\Mail\MailDeliveryDispatcher;
 use App\Services\MailSettings;
+use App\Services\RegistrationSettings;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,13 +17,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\View\View;
 use Throwable;
 
 class NewPasswordController extends Controller
 {
-    public function create(Request $request): View|RedirectResponse
+    public function create(Request $request, RegistrationSettings $settings): View|RedirectResponse
     {
         $token = (string) $request->route('token', '');
         $email = Str::lower(trim((string) $request->query('email', '')));
@@ -37,6 +37,8 @@ class NewPasswordController extends Controller
         return view('theme::auth.reset-password', [
             'token' => $token,
             'email' => $email,
+            'passwordPolicy' => $settings->values(),
+            'passwordRequirements' => $settings->passwordRequirements(),
         ]);
     }
 
@@ -45,21 +47,24 @@ class NewPasswordController extends Controller
         AuditLogger $auditLogger,
         MailSettings $mailSettings,
         MailDeliveryDispatcher $mailDelivery,
+        RegistrationSettings $registrationSettings,
     ): RedirectResponse {
         $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
 
         $validated = $request->validate([
             'token' => ['required', 'string'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers(), new PasswordWithinHasherLimit],
+            'password' => ['required', 'confirmed', $registrationSettings->passwordRule(), new PasswordWithinHasherLimit],
         ], [
             'email.required' => __('Enter an email address.'),
             'email.email' => __('The email address is invalid.'),
             'password.required' => __('Enter a new password.'),
             'password.string' => __('The password must be a string.'),
-            'password.min' => __('The password must be at least 8 characters.'),
+            'password.min' => __('The password must be at least :count characters.', ['count' => $registrationSettings->values()['password_min']]),
             'password.letters' => __('The password must contain at least one letter.'),
+            'password.mixed' => __('The password must contain uppercase and lowercase letters.'),
             'password.numbers' => __('The password must contain at least one digit.'),
+            'password.symbols' => __('The password must contain at least one symbol.'),
             'password.confirmed' => __('The passwords do not match.'),
         ]);
 

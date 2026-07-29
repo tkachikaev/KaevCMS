@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix keeps character rescue visible for online characters with a clear logout notice, restores Pint formatting, and corrects the read-only navigation regression expectation.'
+Write-Host 'This hotfix aligns account-theme metadata regressions, translation catalogs, and Laravel Pint formatting with the shipped 0.44.7 runtime behavior.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

@@ -13,8 +13,8 @@
             @csrf
 
             <label for="name">{{ __('Login') }}
-                <input id="name" name="name" type="text" minlength="3" maxlength="32" required autofocus autocomplete="username" value="{{ old('name') }}" pattern="[A-Za-z0-9_-]+">
-                <small>{{ __('Latin letters, digits, hyphen and underscore.') }}</small>
+                <input id="name" name="name" type="text" minlength="{{ $registrationPolicy['username_min'] }}" maxlength="{{ $registrationPolicy['username_max'] }}" required autofocus autocomplete="username" value="{{ old('name') }}" pattern="{{ $usernamePattern }}">
+                <small>{{ implode(' ', $usernameRequirements) }}</small>
             </label>
 
             <label for="email">Email
@@ -22,12 +22,12 @@
             </label>
 
             <label for="password">{{ __('Password') }}
-                <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
-                <small>{{ __('At least 8 characters, including at least one letter and one digit.') }}</small>
+                <input id="password" name="password" type="password" minlength="{{ $registrationPolicy['password_min'] }}" required autocomplete="new-password">
+                <small>{{ implode(' ', $passwordRequirements) }}</small>
             </label>
 
             <label for="password_confirmation">{{ __('Confirm password') }}
-                <input id="password_confirmation" name="password_confirmation" type="password" minlength="8" required autocomplete="new-password">
+                <input id="password_confirmation" name="password_confirmation" type="password" minlength="{{ $registrationPolicy['password_min'] }}" required autocomplete="new-password">
             </label>
 
             @if ($emailVerificationRequired)

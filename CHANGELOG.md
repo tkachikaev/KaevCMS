@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.44.8 - 2026-07-29
+
+- Updated the bundled account-theme regressions to the shipped `1.6.2` manifests instead of the obsolete `1.6.0` expectation.
+- Removed the unused lower-case `at least one digit.` translation key, preserving the canonical `At least one digit.` key and restoring case-insensitive RU/EN catalog uniqueness.
+- Restored Laravel Pint formatting in `AccountCharacterDirectory` and the registration-policy feature tests without weakening or removing assertions.
+- Registration policy behavior, account themes, database schema, modules, and user-owned runtime data are unchanged.
+- The cumulative update line remains based on `0.42.4`; the 0.44.8 package supports direct updates from 0.42.4 through 0.44.7.
+
+## 0.44.7 - 2026-07-29
+
+- Unified `settings-field` inputs, selects, and textareas with the same explicit one-pixel control border used by standard `form-group` fields, removing the thicker browser-default border visible in Game account settings and other compact forms.
+- Added a configurable website username policy: minimum and maximum length plus independent hyphen and underscore allowances. Latin letters and digits remain the safe base character set.
+- Added a configurable website password policy: minimum length, letter requirement, mixed-case requirement, digit requirement, and symbol requirement. Safe ranges are validated in the administration panel.
+- Applied the saved password policy consistently to new registration, password reset, and player-account password changes. Public forms render matching HTML constraints and localized requirement summaries.
+- Added administration, registration, reset, account-password, translation, style, validation, persistence, and audit regressions without weakening existing coverage.
+- Updated both bundled account themes to `1.6.2`. The cumulative update line remains based on `0.42.4`; the 0.44.7 package supports direct updates from 0.42.4 through 0.44.6.
+
 ## 0.44.6 - 2026-07-29
 
 - Kept the player-facing `Return to city` action visible whenever character rescue is enabled and supported, including while the character is online. Online characters now open an informational modal instructing the player to log out; the submit action is hidden and guarded from submission.

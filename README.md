@@ -1,4 +1,4 @@
-# KaevCMS 0.44.6
+# KaevCMS 0.44.8
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.6 improves the character rescue discoverability: when the feature is enabled, the Return to city button remains visible for online characters and explains that the player must log out before the operation can run. The server-side online check remains mandatory. This hotfix also restores Pint formatting and corrects the read-only navigation regression expectation. The cumulative update baseline remains 0.42.4.
+Version 0.44.8 is a quality hotfix for the configurable public-account policy release. It updates the bundled account-theme version regressions to 1.6.2, removes a case-insensitive duplicate translation key, and restores Laravel Pint formatting in the affected services and tests. Runtime registration policy behavior is unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.6 делает функцию возврата персонажа понятнее: если она включена, кнопка «Вернуть в город» отображается и для персонажа в игре, но сообщает, что сначала необходимо выйти. Серверная проверка online остаётся обязательной. Также исправлены форматирование Pint и ожидание названия журнала в тесте роли «Только чтение». Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.8 — исправление качества релиза настраиваемой политики аккаунтов сайта. Обновлены тестовые ожидания версий встроенных тем до 1.6.2, удалён регистронезависимый дубликат ключа перевода и восстановлено форматирование Laravel Pint в затронутых сервисах и тестах. Runtime-логика политики регистрации не изменена. Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 

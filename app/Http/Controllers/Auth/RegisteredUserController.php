@@ -35,6 +35,10 @@ class RegisteredUserController extends Controller
 
         return view('theme::auth.register', [
             'emailVerificationRequired' => $settings->emailVerificationRequired(),
+            'registrationPolicy' => $settings->values(),
+            'usernameRequirements' => $settings->usernameRequirements(),
+            'passwordRequirements' => $settings->passwordRequirements(),
+            'usernamePattern' => $settings->usernameHtmlPattern(),
         ]);
     }
 

@@ -48,7 +48,7 @@
             <label for="password">
                 <span>{{ __('New password') }}</span>
                 <div class="account-field-control account-password-control">
-                    <input id="password" name="password" type="password" autocomplete="new-password" required maxlength="4096" @class(['account-field-invalid' => $errors->has('password')]) @error('password') aria-describedby="password-error" @enderror>
+                    <input id="password" name="password" type="password" autocomplete="new-password" required minlength="{{ $passwordPolicy['password_min'] }}" maxlength="4096" @class(['account-field-invalid' => $errors->has('password')]) @error('password') aria-describedby="password-error" @enderror>
                     <button type="button" class="account-password-toggle" data-password-toggle="password" data-show-label="{{ __('Show password') }}" data-hide-label="{{ __('Hide password') }}" data-show-text="{{ __('Show') }}" data-hide-text="{{ __('Hide') }}" aria-label="{{ __('Show password') }}" aria-pressed="false">{{ __('Show') }}</button>
                     @error('password')<small class="account-field-error" id="password-error" role="alert">{{ $message }}</small>@enderror
                 </div>
@@ -57,7 +57,7 @@
             <label for="password_confirmation">
                 <span>{{ __('Repeat new password') }}</span>
                 <div class="account-field-control account-password-control">
-                    <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required maxlength="4096" @class(['account-field-invalid' => $errors->has('password_confirmation')])>
+                    <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required minlength="{{ $passwordPolicy['password_min'] }}" maxlength="4096" @class(['account-field-invalid' => $errors->has('password_confirmation')])>
                     <button type="button" class="account-password-toggle" data-password-toggle="password_confirmation" data-show-label="{{ __('Show password') }}" data-hide-label="{{ __('Hide password') }}" data-show-text="{{ __('Show') }}" data-hide-text="{{ __('Hide') }}" aria-label="{{ __('Show password') }}" aria-pressed="false">{{ __('Show') }}</button>
                 </div>
             </label>
@@ -65,7 +65,7 @@
 
         <div class="account-form-note">
             <strong>{{ __('Password requirements') }}</strong>
-            <span>{{ __('At least 8 characters, including a letter and a digit.') }}</span>
+            <span>{{ implode(' ', $passwordRequirements) }}</span>
         </div>
 
         <div class="account-form-actions">

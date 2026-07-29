@@ -24,10 +24,10 @@ class AdminRegistrationMailSettingsTest extends TestCase
             ->assertOk()
             ->assertSee('Регистрация пользователей')
             ->assertSee('Требовать подтверждение регистрации по email')
-            ->assertSee('Требования к логину')
-            ->assertSee('от 3 до 32 символов')
-            ->assertSee('Требования к паролю')
-            ->assertSee('не менее 8 символов');
+            ->assertSee('Политика логина сайта')
+            ->assertSee('Разрешить дефис')
+            ->assertSee('Политика пароля сайта')
+            ->assertSee('Требовать специальный символ');
 
         $this->actingAs($admin, 'admin')
             ->get('/admin/settings/mail')
@@ -95,6 +95,57 @@ class AdminRegistrationMailSettingsTest extends TestCase
 
         $this->assertDatabaseHas('cms_settings', ['key' => 'registration.enabled', 'value' => '1']);
         $this->assertDatabaseHas('cms_settings', ['key' => 'registration.email_verification_required', 'value' => '1']);
+    }
+
+    public function test_admin_can_save_public_account_registration_policy(): void
+    {
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')
+            ->put('/admin/settings/registration', [
+                'registration_enabled' => '1',
+                'email_verification_required' => '0',
+                'username_min' => '5',
+                'username_max' => '20',
+                'username_allow_hyphen' => '0',
+                'username_allow_underscore' => '1',
+                'password_min' => '12',
+                'password_letters' => '1',
+                'password_mixed_case' => '1',
+                'password_numbers' => '1',
+                'password_symbols' => '1',
+            ])
+            ->assertRedirect(route('admin.settings.registration'))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.username_min', 'value' => '5']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.username_max', 'value' => '20']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.username_allow_hyphen', 'value' => '0']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.username_allow_underscore', 'value' => '1']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.password_min', 'value' => '12']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.password_mixed_case', 'value' => '1']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'registration.password_symbols', 'value' => '1']);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'settings.registration_updated',
+            'result' => 'success',
+        ]);
+    }
+
+    public function test_registration_policy_ranges_are_validated(): void
+    {
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')
+            ->from('/admin/settings/registration')
+            ->put('/admin/settings/registration', [
+                'registration_enabled' => '1',
+                'email_verification_required' => '0',
+                'username_min' => '20',
+                'username_max' => '10',
+                'password_min' => '4',
+            ])
+            ->assertRedirect('/admin/settings/registration')
+            ->assertSessionHasErrors(['username_max', 'password_min']);
     }
 
     public function test_empty_password_field_keeps_existing_encrypted_password(): void

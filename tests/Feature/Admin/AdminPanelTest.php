@@ -362,7 +362,7 @@ class AdminPanelTest extends TestCase
         $this->assertStringNotContainsString("route('admin.settings.game-server-features.index')", $navigation);
         $modulesLinkPosition = strpos($navigation, "route('admin.modules.index')");
         $moduleLinksPosition = strpos($navigation, 'ModuleNavigationRegistry::class');
-        if (! is_int($modulesLinkPosition) || ! is_int($moduleLinksPosition)) {
+        if (is_int($modulesLinkPosition) === false || is_int($moduleLinksPosition) === false) {
             $this->fail('The module navigation group is incomplete.');
         }
         $this->assertLessThan($moduleLinksPosition, $modulesLinkPosition);
@@ -386,6 +386,15 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
         $this->assertStringContainsString('a.admin-menu-item.active:hover', $styles);
         $this->assertStringContainsString('a.admin-menu-item[data-current]:hover', $styles);
+    }
+
+    public function test_settings_fields_use_the_shared_thin_control_border(): void
+    {
+        $components = file_get_contents(public_path('assets/admin/css/components.css'));
+
+        $this->assertIsString($components);
+        $this->assertStringContainsString('.settings-field input,', $components);
+        $this->assertStringContainsString('border: 1px solid var(--admin-border-strong);', $components);
     }
 
     public function test_admin_scripts_use_one_livewire_page_lifecycle(): void
@@ -427,7 +436,7 @@ class AdminPanelTest extends TestCase
 
         foreach (File::allFiles(resource_path('views/admin')) as $view) {
             $contents = $view->getContents();
-            if (! str_contains($contents, 'assets/admin/js/')) {
+            if (str_contains($contents, 'assets/admin/js/') === false) {
                 continue;
             }
 

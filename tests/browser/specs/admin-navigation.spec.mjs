@@ -208,6 +208,25 @@ test('settings use one sidebar entry and local tabs', async ({ page }) => {
     await expect(page.locator('.mail-template-tabs .admin-tab.active')).toBeVisible();
 });
 
+test('settings controls use one-pixel borders and registration policy is editable', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/game-accounts');
+
+    const accountLimit = page.getByRole('spinbutton', { name: 'Максимум аккаунтов на пользователя CMS' });
+    await expect(accountLimit).toBeVisible();
+    expect(await accountLimit.evaluate((element) => getComputedStyle(element).borderTopWidth)).toBe('1px');
+
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/registration');
+    await expect(page.getByRole('heading', { name: 'Политика логина сайта' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Политика пароля сайта' })).toBeVisible();
+    await expect(page.getByRole('spinbutton', { name: 'Минимальная длина' }).first()).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Разрешить дефис' })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Требовать специальный символ' })).toBeVisible();
+    await expectNoDocumentHorizontalOverflow(page, 'registration policy desktop');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoDocumentHorizontalOverflow(page, 'registration policy mobile');
+});
+
 test('module foundation is available from the administrator sidebar', async ({ page }) => {
     await openMenuGroup(page, 'modules');
     await page.locator('[data-admin-menu-group="modules"]').getByRole('link', { name: 'Модули', exact: true }).click();

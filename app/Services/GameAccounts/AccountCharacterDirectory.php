@@ -137,7 +137,7 @@ final class AccountCharacterDirectory
 
     /**
      * @param  array<int,ServerRow>  $servers
-     * @param  list<CharacterRow>    $allCharacters
+     * @param  list<CharacterRow>  $allCharacters
      */
     private function appendAccount(array &$servers, array &$allCharacters, UserGameAccount $account): void
     {
@@ -221,7 +221,7 @@ final class AccountCharacterDirectory
 
     /**
      * @param  array<string,mixed>  $character
-     * @param  RescueSettings       $rescue
+     * @param  RescueSettings  $rescue
      * @return CharacterRow
      */
     private function normalizeCharacter(
@@ -229,8 +229,7 @@ final class AccountCharacterDirectory
         GameServer $server,
         UserGameAccount $account,
         array $rescue,
-    ): array
-    {
+    ): array {
         $playTimeSeconds = max(0, (int) ($character['play_time_seconds'] ?? 0));
         $lastAccess = max(0, (int) ($character['last_access'] ?? 0));
         $clan = trim((string) ($character['clan'] ?? $character['clan_name'] ?? ''));

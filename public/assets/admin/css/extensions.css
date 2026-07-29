@@ -392,3 +392,8 @@
     .reward-queue-table .audit-details-link form,.reward-queue-table .audit-details-link button{width:100%}
 }
 @media(max-width:480px){.reward-queue-table td{grid-template-columns:1fr;gap:6px}.reward-queue-capability{padding:13px}}
+
+
+/* KaevCMS 0.44.7 — configurable public registration policy. */
+.registration-policy-single-field{grid-template-columns:minmax(0,1fr)}
+.registration-policy-single-field .form-group{max-width:360px}

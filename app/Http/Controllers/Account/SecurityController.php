@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Account\ChangeAccountPasswordRequest;
 use App\Models\User;
 use App\Services\Account\AccountPasswordChanger;
+use App\Services\RegistrationSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,7 @@ class SecurityController extends Controller
 {
     public function __construct(
         private readonly AccountPasswordChanger $passwords,
+        private readonly RegistrationSettings $registrationSettings,
     ) {}
 
     public function edit(Request $request): View
@@ -26,6 +28,8 @@ class SecurityController extends Controller
 
         return view('account-theme::security.edit', [
             'user' => $user,
+            'passwordPolicy' => $this->registrationSettings->values(),
+            'passwordRequirements' => $this->registrationSettings->passwordRequirements(),
         ]);
     }
 

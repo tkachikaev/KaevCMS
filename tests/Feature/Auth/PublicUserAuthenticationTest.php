@@ -56,6 +56,55 @@ class PublicUserAuthenticationTest extends TestCase
         ]);
     }
 
+    public function test_registration_form_and_validation_follow_the_configured_policy(): void
+    {
+        app(RegistrationSettings::class)->update(true, false, [
+            'username_min' => 5,
+            'username_max' => 12,
+            'username_allow_hyphen' => false,
+            'username_allow_underscore' => false,
+            'password_min' => 10,
+            'password_letters' => true,
+            'password_mixed_case' => true,
+            'password_numbers' => true,
+            'password_symbols' => true,
+        ]);
+
+        $this->get('/register')
+            ->assertOk()
+            ->assertSee('minlength="5"', false)
+            ->assertSee('maxlength="12"', false)
+            ->assertSee('pattern="[A-Za-z0-9]+"', false)
+            ->assertSee('minlength="10"', false)
+            ->assertSee('Хотя бы один специальный символ.');
+
+        $this->post('/register', [
+            'name' => 'player_one',
+            'email' => 'player@example.com',
+            'password' => 'Password12!',
+            'password_confirmation' => 'Password12!',
+        ])->assertSessionHasErrors('name');
+
+        $this->post('/register', [
+            'name' => 'playerone',
+            'email' => 'player@example.com',
+            'password' => 'password12',
+            'password_confirmation' => 'password12',
+        ])->assertSessionHasErrors('password');
+
+        $this->post('/register', [
+            'name' => 'playerone',
+            'email' => 'player@example.com',
+            'password' => 'Password12!',
+            'password_confirmation' => 'Password12!',
+        ])->assertRedirect(route('account'));
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'playerone',
+            'email' => 'player@example.com',
+        ]);
+    }
+
     public function test_user_can_register_without_email_verification(): void
     {
         app(RegistrationSettings::class)->update(true, false);
@@ -254,6 +303,45 @@ class PublicUserAuthenticationTest extends TestCase
                 'password_confirmation' => 'NewPassword123',
             ])
             ->assertStatus(429);
+    }
+
+    public function test_password_reset_uses_the_configured_public_account_policy(): void
+    {
+        app(RegistrationSettings::class)->update(true, false, [
+            'password_min' => 12,
+            'password_letters' => true,
+            'password_mixed_case' => true,
+            'password_numbers' => true,
+            'password_symbols' => true,
+        ]);
+        $user = User::query()->create([
+            'name' => 'player',
+            'email' => 'player@example.com',
+            'email_verified_at' => now(),
+            'password' => Hash::make('Password123'),
+        ]);
+        $token = Password::broker('users')->createToken($user);
+
+        $this->get('/reset-password/'.$token.'?email='.$user->email)
+            ->assertOk()
+            ->assertSee('minlength="12"', false)
+            ->assertSee('Хотя бы один специальный символ.');
+
+        $this->post('/reset-password', [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'NewPassword456',
+            'password_confirmation' => 'NewPassword456',
+        ])->assertSessionHasErrors('password');
+
+        $this->post('/reset-password', [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'NewPassword456!',
+            'password_confirmation' => 'NewPassword456!',
+        ])->assertRedirect(route('login'));
+
+        $this->assertTrue(Hash::check('NewPassword456!', $user->fresh()->password));
     }
 
     public function test_reset_form_rejects_invalid_token_before_password_is_entered(): void

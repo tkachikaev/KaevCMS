@@ -19,12 +19,12 @@
             </label>
 
             <label for="password">{{ __('New password') }}
-                <input id="password" name="password" type="password" minlength="8" required autofocus autocomplete="new-password">
-                <small>{{ __('At least 8 characters, including at least one letter and one digit.') }}</small>
+                <input id="password" name="password" type="password" minlength="{{ $passwordPolicy['password_min'] }}" required autofocus autocomplete="new-password">
+                <small>{{ implode(' ', $passwordRequirements) }}</small>
             </label>
 
             <label for="password_confirmation">{{ __('Confirm password') }}
-                <input id="password_confirmation" name="password_confirmation" type="password" minlength="8" required autocomplete="new-password">
+                <input id="password_confirmation" name="password_confirmation" type="password" minlength="{{ $passwordPolicy['password_min'] }}" required autocomplete="new-password">
             </label>
 
             <button class="button button-gold" type="submit">{{ __('Save new password') }}</button>

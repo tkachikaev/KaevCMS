@@ -96,7 +96,7 @@ a.admin-menu-item[data-current]:hover {
 .settings-field input,
 .settings-field select,
 .settings-field textarea {
-    border-color: var(--admin-border-strong);
+    border: 1px solid var(--admin-border-strong);
     border-radius: var(--admin-radius-control);
     background: var(--admin-surface);
 }
