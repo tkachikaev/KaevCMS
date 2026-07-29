@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Auth\AdminPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApplySystemUpdateRequest;
 use App\Http\Requests\Admin\RecoverSystemUpdateRequest;
@@ -146,7 +147,8 @@ final class SystemUpdateController extends Controller
         }
 
         $maintenanceSecret = null;
-        if (! $admin->isReadOnly() && ($systemUpdate->isStaged() || $systemUpdate->status === SystemUpdate::STATUS_APPLYING)) {
+        if ($admin->hasPermission(AdminPermission::SystemUpdatesManage)
+            && ($systemUpdate->isStaged() || $systemUpdate->status === SystemUpdate::STATUS_APPLYING)) {
             $maintenanceSecret = $this->maintenanceSecret($systemUpdate);
         }
 
@@ -277,7 +279,11 @@ final class SystemUpdateController extends Controller
     private function owner(): Admin
     {
         $admin = request()->user('admin');
-        abort_unless($admin instanceof Admin && $admin->isOwner(), 403);
+        abort_unless(
+            $admin instanceof Admin
+                && $admin->hasPermission(AdminPermission::SystemUpdatesManage),
+            403,
+        );
 
         return $admin;
     }
@@ -286,7 +292,8 @@ final class SystemUpdateController extends Controller
     {
         $admin = request()->user('admin');
         abort_unless(
-            $admin instanceof Admin && ($admin->isOwner() || $admin->isReadOnly()),
+            $admin instanceof Admin
+                && $admin->hasPermission(AdminPermission::SystemUpdatesView),
             403,
         );
 

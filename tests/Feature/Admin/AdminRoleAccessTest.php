@@ -37,14 +37,14 @@ class AdminRoleAccessTest extends TestCase
             ->assertOk()
             ->assertSee('Владелец')
             ->assertSee('Администратор')
-            ->assertDontSee('Модератор')
             ->assertSee('Редактор')
-            ->assertSee('Только чтение')
-            ->assertSee('Может просматривать все разделы панели администратора')
-            ->assertSee('Полный доступ ко всей CMS');
+            ->assertSee('Аудитор')
+            ->assertSee('без возможности что-либо изменить')
+            ->assertSee('Полный доступ ко всей CMS')
+            ->assertDontSee('Демонстрация');
     }
 
-    public function test_administrator_can_manage_non_owners_but_cannot_manage_or_create_an_owner(): void
+    public function test_administrator_cannot_create_or_take_over_a_more_privileged_read_role(): void
     {
         $owner = $this->createAdmin(['email' => 'owner@example.com']);
         $administrator = $this->createAdmin([
@@ -55,7 +55,10 @@ class AdminRoleAccessTest extends TestCase
             'email' => 'editor@example.com',
             'role' => AdminRole::Editor,
         ]);
-
+        $auditor = $this->createAdmin([
+            'email' => 'auditor@example.com',
+            'role' => AdminRole::Auditor,
+        ]);
         $this->actingAs($administrator, 'admin')
             ->get('/admin/administrators/'.$owner->id.'/edit')
             ->assertForbidden();
@@ -70,35 +73,45 @@ class AdminRoleAccessTest extends TestCase
 
         $this->assertSame(AdminRole::Administrator, $editor->fresh()->role);
 
+        foreach ([AdminRole::Owner, AdminRole::Auditor] as $forbiddenRole) {
+            $email = $forbiddenRole->value.'-forbidden@example.com';
+
+            $this->actingAs($administrator, 'admin')
+                ->post('/admin/administrators', [
+                    'name' => 'Forbidden role',
+                    'email' => $email,
+                    'role' => $forbiddenRole->value,
+                    'password' => 'SecurePassword123',
+                    'password_confirmation' => 'SecurePassword123',
+                ])
+                ->assertSessionHasErrors('role');
+
+            $this->assertDatabaseMissing('admins', ['email' => $email]);
+        }
+
         $this->actingAs($administrator, 'admin')
-            ->post('/admin/administrators', [
-                'name' => 'Forbidden Owner',
-                'email' => 'forbidden-owner@example.com',
-                'role' => AdminRole::Owner->value,
-                'password' => 'SecurePassword123',
-                'password_confirmation' => 'SecurePassword123',
-            ])
-            ->assertSessionHasErrors('role');
-
-        $this->assertDatabaseMissing('admins', ['email' => 'forbidden-owner@example.com']);
+            ->get('/admin/administrators/'.$auditor->id.'/edit')
+            ->assertForbidden();
 
         $this->actingAs($administrator, 'admin')
-            ->post('/admin/administrators', [
-                'name' => 'Audit Viewer',
-                'email' => 'audit-viewer@example.com',
-                'role' => AdminRole::ReadOnly->value,
-                'password' => 'SecurePassword123',
-                'password_confirmation' => 'SecurePassword123',
+            ->put('/admin/administrators/'.$auditor->id.'/password', [
+                'password' => 'AnotherSecurePassword123',
+                'password_confirmation' => 'AnotherSecurePassword123',
             ])
-            ->assertRedirect(route('admin.administrators.index'));
+            ->assertForbidden();
 
-        $this->assertDatabaseHas('admins', [
-            'email' => 'audit-viewer@example.com',
-            'role' => AdminRole::ReadOnly->value,
-        ]);
+        $this->actingAs($administrator, 'admin')
+            ->patch('/admin/administrators/'.$auditor->id.'/status', ['is_active' => 0])
+            ->assertForbidden();
+
+        $this->actingAs($administrator, 'admin')
+            ->delete('/admin/administrators/'.$auditor->id.'/two-factor', [
+                'current_password' => 'CorrectPassword123',
+            ])
+            ->assertForbidden();
     }
 
-    public function test_administrator_can_change_working_settings_but_not_critical_security_or_admin_path(): void
+    public function test_administrator_can_change_working_settings_but_not_critical_security_or_updates(): void
     {
         $administrator = $this->createAdmin(['role' => AdminRole::Administrator]);
 
@@ -112,6 +125,10 @@ class AdminRoleAccessTest extends TestCase
 
         $this->actingAs($administrator, 'admin')
             ->put('/admin/settings/admin-panel/admin-path', ['admin_path_suffix' => 'private'])
+            ->assertForbidden();
+
+        $this->actingAs($administrator, 'admin')
+            ->get('/admin/settings/system/updates')
             ->assertForbidden();
     }
 
@@ -150,18 +167,18 @@ class AdminRoleAccessTest extends TestCase
         $this->actingAs($editor, 'admin')->get('/admin/administrators/'.$editor->id.'/edit')->assertOk();
     }
 
-    public function test_read_only_role_can_view_all_sections_but_cannot_change_data(): void
+    public function test_auditor_can_view_trusted_sections_but_cannot_change_data(): void
     {
-        $viewer = $this->createAdmin([
-            'email' => 'viewer@example.com',
-            'role' => AdminRole::ReadOnly,
+        $auditor = $this->createAdmin([
+            'email' => 'auditor@example.com',
+            'role' => AdminRole::Auditor,
         ]);
         $otherAdmin = $this->createAdmin([
             'email' => 'other@example.com',
             'role' => AdminRole::Administrator,
         ]);
 
-        $this->actingAs($viewer, 'admin')
+        $this->actingAs($auditor, 'admin')
             ->get('/admin')
             ->assertOk()
             ->assertSee('Режим просмотра')
@@ -196,52 +213,40 @@ class AdminRoleAccessTest extends TestCase
             '/admin/logs',
             '/admin/modules',
         ] as $path) {
-            $this->actingAs($viewer, 'admin')
+            $this->actingAs($auditor, 'admin')
                 ->get($path)
                 ->assertOk()
                 ->assertSee('Режим просмотра');
         }
 
-        $this->actingAs($viewer, 'admin')
+        $this->actingAs($auditor, 'admin')
             ->get('/admin/administrators/'.$otherAdmin->id.'/edit')
             ->assertOk()
             ->assertSee($otherAdmin->email)
             ->assertSee('Режим просмотра');
 
-        $this->actingAs($viewer, 'admin')
-            ->put('/admin/settings', [])
-            ->assertForbidden();
+        foreach ([
+            ['put', '/admin/settings', []],
+            ['post', '/admin/news', []],
+            ['post', '/admin/settings/system/queue/cleanup', []],
+            ['post', '/admin/settings/system/updates', []],
+        ] as [$method, $path, $data]) {
+            $this->actingAs($auditor, 'admin')->{$method}($path, $data)->assertForbidden();
+        }
 
-        $this->actingAs($viewer, 'admin')
-            ->post('/admin/news', [])
-            ->assertForbidden();
-
-        $this->actingAs($viewer, 'admin')
-            ->put('/admin/administrators/'.$viewer->id, [
-                'name' => 'Changed viewer',
-                'email' => $viewer->email,
+        $this->actingAs($auditor, 'admin')
+            ->put('/admin/administrators/'.$auditor->id, [
+                'name' => 'Changed auditor',
+                'email' => $auditor->email,
             ])
             ->assertForbidden();
-
-        $this->actingAs($viewer, 'admin')
-            ->delete('/admin/administrators/'.$otherAdmin->id.'/two-factor')
-            ->assertForbidden();
-
-        $this->actingAs($viewer, 'admin')
-            ->post('/admin/language/en')
-            ->assertRedirect()
-            ->assertSessionHas('admin_locale', 'en');
-
-        $viewer->refresh();
-        $this->assertSame('Test Admin', $viewer->name);
-        $this->assertSame('ru', $viewer->locale);
     }
 
-    public function test_read_only_role_cannot_bypass_server_permissions_through_livewire_actions(): void
+    public function test_auditor_cannot_bypass_server_permissions_through_livewire_actions(): void
     {
-        $viewer = $this->createAdmin(['role' => AdminRole::ReadOnly]);
+        $auditor = $this->createAdmin(['role' => AdminRole::Auditor]);
 
-        $this->actingAs($viewer, 'admin');
+        $this->actingAs($auditor, 'admin');
 
         $this->assertServerSaveActionForbidden(app(GameServerManager::class));
         $this->assertServerSaveActionForbidden(app(LoginServerManager::class));

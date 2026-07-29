@@ -57,14 +57,14 @@ class SystemUpdateAdminTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_read_only_administrator_can_inspect_updates_without_creating_a_recovery_secret(): void
+    public function test_auditor_can_inspect_updates_without_creating_a_recovery_secret(): void
     {
-        $viewer = Admin::factory()->readOnly()->create();
+        $viewer = Admin::factory()->auditor()->create();
         $owner = Admin::factory()->create();
         $update = SystemUpdate::query()->create([
             'uuid' => '5ea55e61-a1b6-4f68-91c2-fb7d4c979f60',
             'admin_id' => $owner->id,
-            'package_id' => 'kaevcms-read-only-demo',
+            'package_id' => 'kaevcms-auditor-review',
             'from_version' => cms_version(),
             'target_version' => cms_version(),
             'status' => SystemUpdate::STATUS_STAGED,

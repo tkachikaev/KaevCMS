@@ -321,5 +321,20 @@
     ],
     "0.44.8": [
         "core/deployment/windows/apply-0.44.7.ps1"
+    ],
+    "0.44.9": [
+        "core/deployment/windows/apply-0.44.8.ps1"
+    ],
+    "0.44.10": [
+        "core/deployment/windows/apply-0.44.9.ps1"
+    ],
+    "0.44.11": [
+        "core/deployment/windows/apply-0.44.10.ps1"
+    ],
+    "0.44.12": [
+        "core/deployment/windows/apply-0.44.11.ps1"
+    ],
+    "0.44.13": [
+        "core/deployment/windows/apply-0.44.12.ps1"
     ]
 }

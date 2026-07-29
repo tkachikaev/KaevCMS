@@ -5,7 +5,7 @@ The unified builder creates the four official artifacts from the current source 
 ```powershell
 .\deployment\windows\build-release.ps1 `
     -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.8"
+    -OutputDirectory "C:\Releases\0.44.13"
 ```
 
 It builds and verifies:
@@ -24,7 +24,7 @@ The build stops when metadata is inconsistent, a required file is missing, an un
 ```powershell
 .\deployment\windows\build-release.ps1 `
     -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.8"
+    -OutputDirectory "C:\Releases\0.44.13"
 ```
 
 Он собирает и проверяет:

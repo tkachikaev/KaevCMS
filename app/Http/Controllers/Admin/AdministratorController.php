@@ -41,10 +41,10 @@ class AdministratorController extends Controller
     {
         $currentAdmin = $this->currentAdmin();
 
+        abort_unless(! $currentAdmin->isReadOnly(), 403);
+
         return view('admin.administrators.create', [
-            'roles' => $currentAdmin->isReadOnly()
-                ? AdminRole::cases()
-                : AdminRole::assignableBy($currentAdmin->role),
+            'roles' => AdminRole::assignableBy($currentAdmin->role),
             'defaultRole' => AdminRole::Administrator,
         ]);
     }
@@ -95,7 +95,9 @@ class AdministratorController extends Controller
         if (! $currentAdmin->isReadOnly()) {
             $this->assertCanManageTarget($currentAdmin, $administrator);
         }
-        $canManageRole = ! $currentAdmin->isReadOnly() && $this->canManageRole($currentAdmin, $administrator);
+
+        $canManageRole = ! $currentAdmin->isReadOnly()
+            && $this->canManageRole($currentAdmin, $administrator);
 
         return view('admin.administrators.edit', [
             'administrator' => $administrator,
@@ -423,7 +425,8 @@ class AdministratorController extends Controller
             return true;
         }
 
-        return $actor->role === AdminRole::Administrator && ! $target->isOwner();
+        return $actor->role === AdminRole::Administrator
+            && in_array($target->role, [AdminRole::Administrator, AdminRole::Editor], true);
     }
 
     private function canManageRole(Admin $actor, Admin $target): bool

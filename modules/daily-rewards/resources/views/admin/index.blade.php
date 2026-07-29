@@ -7,7 +7,9 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('module-daily-rewards::messages.total') }}</span><strong>{{ $totalCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-daily-rewards::messages.enabled_count') }}</span><strong>{{ $enabledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-daily-rewards::messages.claims') }}</span><strong>{{ number_format($claimCount, 0, '.', ' ') }}</strong></div>
+    @if($canViewJournal)
     <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.daily-rewards.claims', ['adminPath' => $adminPath]) }}">{{ __('module-daily-rewards::messages.open_journal') }}</a>
+    @endif
     @if($canManage)
         <a wire:navigate class="button button-primary" href="{{ route('admin.module-pages.daily-rewards.create', ['adminPath' => $adminPath]) }}">{{ __('module-daily-rewards::messages.create') }}</a>
     @endif

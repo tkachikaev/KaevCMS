@@ -74,6 +74,26 @@ class DailyRewardsModuleTest extends TestCase
         );
     }
 
+    public function test_auditor_can_preview_daily_rewards_and_its_journal_without_changing_data(): void
+    {
+        $auditor = Admin::factory()->auditor()->create();
+
+        $this->actingAs($auditor, 'admin')
+            ->get('/admin/extensions/daily-rewards')
+            ->assertOk()
+            ->assertSee(__('Read-only mode'))
+            ->assertSee('/admin/extensions/daily-rewards/claims', false);
+
+        $this->actingAs($auditor, 'admin')
+            ->get('/admin/extensions/daily-rewards/claims')
+            ->assertOk()
+            ->assertSee(__('Read-only mode'));
+
+        $this->actingAs($auditor, 'admin')
+            ->post('/admin/extensions/daily-rewards', [])
+            ->assertForbidden();
+    }
+
     public function test_language_switch_from_selected_calendar_returns_to_localized_account_overview(): void
     {
         $user = User::factory()->create(['locale' => 'en']);

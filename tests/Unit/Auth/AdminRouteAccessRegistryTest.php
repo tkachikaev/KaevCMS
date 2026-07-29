@@ -58,6 +58,42 @@ class AdminRouteAccessRegistryTest extends TestCase
                 AdminPermission::DashboardView,
                 null,
             ],
+            'content read-only' => [
+                'admin.news.index',
+                'GET',
+                AdminPermission::ContentView,
+                AdminPermission::ContentManage,
+            ],
+            'content manage' => [
+                'admin.news.store',
+                'POST',
+                AdminPermission::ContentManage,
+                null,
+            ],
+            'users read-only' => [
+                'admin.users.index',
+                'GET',
+                AdminPermission::UsersView,
+                AdminPermission::UsersManage,
+            ],
+            'administrators read-only' => [
+                'admin.administrators.index',
+                'GET',
+                AdminPermission::AdministratorsView,
+                AdminPermission::AdministratorsManage,
+            ],
+            'promo activation journal is sensitive reward data' => [
+                'admin.module-pages.promo-codes.activations',
+                'GET',
+                AdminPermission::RewardsView,
+                null,
+            ],
+            'daily reward claim journal is sensitive reward data' => [
+                'admin.module-pages.daily-rewards.claims',
+                'GET',
+                AdminPermission::RewardsView,
+                null,
+            ],
             'module catalogue read-only' => [
                 'admin.modules.index',
                 'GET',
@@ -76,12 +112,6 @@ class AdminRouteAccessRegistryTest extends TestCase
                 AdminPermission::ModulesView,
                 AdminPermission::ModulesManage,
             ],
-            'bundled module update' => [
-                'admin.module-pages.daily-rewards.update',
-                'PUT',
-                AdminPermission::ModulesManage,
-                null,
-            ],
             'appearance read-only' => [
                 'admin.account-themes.index',
                 'GET',
@@ -91,7 +121,7 @@ class AdminRouteAccessRegistryTest extends TestCase
             'security read-only' => [
                 'admin.settings.security',
                 'GET',
-                AdminPermission::SettingsView,
+                AdminPermission::SecurityView,
                 AdminPermission::SecurityManage,
             ],
             'security update' => [
@@ -112,16 +142,28 @@ class AdminRouteAccessRegistryTest extends TestCase
                 AdminPermission::SettingsManage,
                 null,
             ],
-            'system updates view preserves existing non-read-only decision' => [
+            'system updates view' => [
                 'admin.settings.system.updates.index',
                 'GET',
-                AdminPermission::SystemView,
-                null,
+                AdminPermission::SystemUpdatesView,
+                AdminPermission::SystemUpdatesManage,
             ],
             'system updates manage' => [
                 'admin.settings.system.updates.apply',
                 'POST',
-                AdminPermission::SettingsManage,
+                AdminPermission::SystemUpdatesManage,
+                null,
+            ],
+            'queue view' => [
+                'admin.settings.system.queue',
+                'GET',
+                AdminPermission::QueueView,
+                AdminPermission::QueueManage,
+            ],
+            'queue manage' => [
+                'admin.settings.system.queue.cleanup',
+                'POST',
+                AdminPermission::QueueManage,
                 null,
             ],
             'admin path owner only' => [

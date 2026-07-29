@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * @phpstan-type CharacterRow array{
+ * @phpstan-type CharacterRow   array{
  *     id:int,
  *     name:string,
  *     level:int,
@@ -52,8 +52,8 @@ use Throwable;
  *     rescue_location_name:?string
  * }
  * @phpstan-type RescueSettings array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int}
- * @phpstan-type AccountRow array{id:int,login:string,available:bool,characters:list<CharacterRow>}
- * @phpstan-type ServerRow array{id:int,name:string,chronicle:string,rates:string,sort_order:int,accounts:list<AccountRow>}
+ * @phpstan-type AccountRow     array{id:int,login:string,available:bool,characters:list<CharacterRow>}
+ * @phpstan-type ServerRow      array{id:int,name:string,chronicle:string,rates:string,sort_order:int,accounts:list<AccountRow>}
  */
 final class AccountCharacterDirectory
 {

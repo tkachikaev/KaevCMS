@@ -8,7 +8,9 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.enabled_count') }}</span><strong>{{ $enabledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.disabled_count') }}</span><strong>{{ $disabledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.activations') }}</span><strong>{{ number_format($activationsCount, 0, '.', ' ') }}</strong></div>
+    @if($canViewJournal)
     <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.promo-codes.activations', ['adminPath' => $adminPath]) }}">{{ __('module-promo-codes::messages.open_journal') }}</a>
+    @endif
     @if($canManage)
         <a wire:navigate class="button button-primary" href="{{ route('admin.module-pages.promo-codes.create', ['adminPath' => $adminPath]) }}">{{ __('module-promo-codes::messages.create') }}</a>
     @endif

@@ -412,7 +412,7 @@ class GameServerManager extends Component
         );
         $server = $result['server'];
 
-        if (is_array($featureBefore) && is_array($featureAfter)) {
+        if ($featureBefore !== null) {
             app(GameServerFeatureSettings::class)->updateCharacterRescue($server, $featureAfter);
 
             if ($featureBefore !== $featureAfter) {

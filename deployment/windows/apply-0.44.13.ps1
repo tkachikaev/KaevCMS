@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix aligns account-theme metadata regressions, translation catalogs, and Laravel Pint formatting with the shipped 0.44.7 runtime behavior.'
+Write-Host 'This release stabilizes the Auditor Promo Codes activation-journal browser check by using its route and verifying the actual navigation without changing permissions or production behavior.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

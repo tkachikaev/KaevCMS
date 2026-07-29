@@ -32,8 +32,16 @@ final class AdminRouteAccessRegistry
                 AdminPermission::SettingsManage,
             ),
             $this->prefix('admin.account.', AdminPermission::ProfileManage),
-            $this->prefix('admin.news.', AdminPermission::ContentManage),
-            $this->prefix('admin.pages.', AdminPermission::ContentManage),
+            $this->prefix(
+                'admin.news.',
+                AdminPermission::ContentView,
+                AdminPermission::ContentManage,
+            ),
+            $this->prefix(
+                'admin.pages.',
+                AdminPermission::ContentView,
+                AdminPermission::ContentManage,
+            ),
             $this->prefix(
                 'admin.themes.',
                 AdminPermission::AppearanceView,
@@ -49,17 +57,33 @@ final class AdminRouteAccessRegistry
                 AdminPermission::ModulesView,
                 AdminPermission::ModulesManage,
             ),
+            $this->exact(
+                'admin.module-pages.promo-codes.activations',
+                AdminPermission::RewardsView,
+            ),
+            $this->exact(
+                'admin.module-pages.daily-rewards.claims',
+                AdminPermission::RewardsView,
+            ),
             $this->prefix(
                 'admin.module-pages.',
                 AdminPermission::ModulesView,
                 AdminPermission::ModulesManage,
             ),
-            $this->prefix('admin.users.', AdminPermission::UsersManage),
-            $this->prefix('admin.administrators.', AdminPermission::AdministratorsManage),
+            $this->prefix(
+                'admin.users.',
+                AdminPermission::UsersView,
+                AdminPermission::UsersManage,
+            ),
+            $this->prefix(
+                'admin.administrators.',
+                AdminPermission::AdministratorsView,
+                AdminPermission::AdministratorsManage,
+            ),
             $this->prefix('admin.logs.', AdminPermission::AuditView),
             $this->prefix(
                 'admin.rewards.',
-                AdminPermission::AuditView,
+                AdminPermission::RewardsView,
                 AdminPermission::RewardsManage,
             ),
             $this->prefix(
@@ -79,25 +103,23 @@ final class AdminRouteAccessRegistry
             ),
             $this->prefix(
                 'admin.settings.security',
-                AdminPermission::SettingsView,
+                AdminPermission::SecurityView,
                 AdminPermission::SecurityManage,
             ),
             $this->prefix(
                 'admin.settings.admin-panel',
-                AdminPermission::SettingsView,
+                AdminPermission::AdminPanelView,
                 AdminPermission::SettingsManage,
             ),
             $this->prefix(
                 'admin.settings.system.updates',
-                AdminPermission::SystemView,
-                AdminPermission::SettingsManage,
-                markReadOnly: false,
+                AdminPermission::SystemUpdatesView,
+                AdminPermission::SystemUpdatesManage,
             ),
             $this->prefix(
                 'admin.settings.system.queue',
-                AdminPermission::SystemView,
-                AdminPermission::SettingsManage,
-                markReadOnly: false,
+                AdminPermission::QueueView,
+                AdminPermission::QueueManage,
             ),
             $this->prefix(
                 'admin.settings.',

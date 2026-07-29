@@ -6,7 +6,9 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('Total') }}</span><strong>{{ $totalCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('Active') }}</span><strong>{{ $activeCount }}</strong></div>
     <p class="admin-overview-copy">{{ __('Roles limit which control panel sections and actions are available to each account.') }}</p>
-    <a wire:navigate class="button button-primary" href="{{ route('admin.administrators.create') }}">{{ __('Create administrator') }}</a>
+    @if($currentAdmin->hasPermission(\App\Auth\AdminPermission::AdministratorsManage) && ! $currentAdmin->isReadOnly())
+        <a wire:navigate class="button button-primary" href="{{ route('admin.administrators.create') }}">{{ __('Create administrator') }}</a>
+    @endif
 </div>
 <div class="notice notice-warning administrators-notice"><p>{{ __('Administrator accounts are not deleted. Disable unused accounts to preserve their audit history.') }}</p></div>
 <div class="admin-card-list administrators-list">
@@ -14,9 +16,12 @@
     @foreach ($administrators as $administrator)
         @php
             $isCurrent = $currentAdmin?->is($administrator) ?? false;
-            $canManageOther = $currentAdmin->isOwner() || ($currentAdmin->role === \App\Auth\AdminRole::Administrator && ! $administrator->isOwner());
-            $canViewOther = $currentAdmin->isReadOnly() || $canManageOther;
-            $canEdit = $isCurrent || $canViewOther;
+            $canManageOther = $currentAdmin->isOwner()
+                || ($currentAdmin->role === \App\Auth\AdminRole::Administrator
+                    && in_array($administrator->role, [\App\Auth\AdminRole::Administrator, \App\Auth\AdminRole::Editor], true));
+            $canViewOther = $currentAdmin->isReadOnly()
+                && $currentAdmin->hasPermission(\App\Auth\AdminPermission::AdministratorsView);
+            $canEdit = $isCurrent || $canManageOther || $canViewOther;
             $ownerProtection = $administrator->isOwner() && $activeOwnerCount <= 1;
             $canDisable = $administrator->is_active && ! $isCurrent && $canManageOther && ! $ownerProtection && $activeCount > 1;
         @endphp
@@ -29,7 +34,7 @@
             <div><span @class(['status-badge','status-badge-success' => $administrator->is_active,'status-badge-muted' => ! $administrator->is_active])>{{ $administrator->is_active ? __('Active') : __('Disabled') }}</span></div>
             <div class="admin-row-actions administrator-actions">
                 @if($canEdit)
-                    <a wire:navigate class="button button-secondary" href="{{ route('admin.administrators.edit', $administrator) }}">{{ $currentAdmin->isReadOnly() ? __('View') : __('Edit') }}</a>
+                    <a wire:navigate class="button button-secondary" href="{{ route('admin.administrators.edit', $administrator) }}">{{ $currentAdmin->isReadOnly() || ! $canManageOther ? __('View') : __('Edit') }}</a>
                 @endif
                 @if ($administrator->is_active)
                     <form method="POST" action="{{ route('admin.administrators.status', $administrator) }}">@csrf

@@ -45,16 +45,16 @@ class BrowserTestSeeder extends Seeder
             ],
         );
 
-        $readOnlyEmail = (string) config('browser_tests.read_only.email');
-        $readOnlyPassword = (string) config('browser_tests.read_only.password');
+        $auditorEmail = (string) config('browser_tests.auditor.email');
+        $auditorPassword = (string) config('browser_tests.auditor.password');
 
         Admin::query()->updateOrCreate(
-            ['email' => $readOnlyEmail],
+            ['email' => $auditorEmail],
             [
-                'name' => 'Browser Read-only Admin',
-                'password' => Hash::make($readOnlyPassword),
+                'name' => 'Browser Test Auditor',
+                'password' => Hash::make($auditorPassword),
                 'is_active' => true,
-                'role' => AdminRole::ReadOnly,
+                'role' => AdminRole::Auditor,
                 'locale' => 'ru',
             ],
         );

@@ -28,7 +28,8 @@ class AdministratorTwoFactorController extends Controller
 
         abort_unless(
             $currentAdmin->role === AdminRole::Owner
-            || ($currentAdmin->role === AdminRole::Administrator && ! $administrator->isOwner()),
+            || ($currentAdmin->role === AdminRole::Administrator
+                && in_array($administrator->role, [AdminRole::Administrator, AdminRole::Editor], true)),
             403,
         );
 

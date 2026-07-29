@@ -77,7 +77,12 @@ class Admin extends Authenticatable
 
     public function isReadOnly(): bool
     {
-        return $this->role === AdminRole::ReadOnly;
+        return $this->role->isReadOnly();
+    }
+
+    public function isAuditor(): bool
+    {
+        return $this->role === AdminRole::Auditor;
     }
 
     public function roleLabel(): string

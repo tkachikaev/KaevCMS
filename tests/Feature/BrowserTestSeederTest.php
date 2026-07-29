@@ -20,6 +20,8 @@ class BrowserTestSeederTest extends TestCase
     {
         config()->set('browser_tests.admin.email', 'configured-browser-admin@example.test');
         config()->set('browser_tests.admin.password', 'ConfiguredBrowserPassword123!');
+        config()->set('browser_tests.auditor.email', 'configured-browser-auditor@example.test');
+        config()->set('browser_tests.auditor.password', 'ConfiguredBrowserAuditorPassword123!');
         config()->set('browser_tests.player.email', 'configured-browser-player@example.test');
         config()->set('browser_tests.player.password', 'ConfiguredBrowserPlayerPassword123!');
 
@@ -34,6 +36,14 @@ class BrowserTestSeederTest extends TestCase
         $this->assertSame(AdminRole::Owner, $admin->role);
         $this->assertSame('ru', $admin->locale);
         $this->assertTrue(Hash::check('ConfiguredBrowserPassword123!', $admin->password));
+
+        $auditor = Admin::query()
+            ->where('email', 'configured-browser-auditor@example.test')
+            ->firstOrFail();
+
+        $this->assertSame('Browser Test Auditor', $auditor->name);
+        $this->assertSame(AdminRole::Auditor, $auditor->role);
+        $this->assertTrue(Hash::check('ConfiguredBrowserAuditorPassword123!', $auditor->password));
 
         $player = User::query()->where('email', 'configured-browser-player@example.test')->firstOrFail();
         $this->assertSame('browser-player', $player->name);

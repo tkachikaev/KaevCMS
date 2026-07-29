@@ -46,8 +46,10 @@ final class EnforceAdminAccess
 
         abort_unless(in_array(strtoupper($request->method()), ['GET', 'HEAD'], true), 403);
 
-        $decision = $this->policy->decide($request);
-        abort_unless($admin->hasPermission($decision->permission), 403);
+        if (! $this->isOwnProfileRoute($request, $admin)) {
+            $decision = $this->policy->decide($request);
+            abort_unless($admin->hasPermission($decision->permission), 403);
+        }
 
         $request->attributes->set('admin_read_only', true);
 

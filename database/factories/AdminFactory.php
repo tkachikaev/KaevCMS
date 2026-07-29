@@ -37,9 +37,9 @@ class AdminFactory extends Factory
         return $this->state(fn (): array => ['role' => AdminRole::Editor]);
     }
 
-    public function readOnly(): static
+    public function auditor(): static
     {
-        return $this->state(fn (): array => ['role' => AdminRole::ReadOnly]);
+        return $this->state(fn (): array => ['role' => AdminRole::Auditor]);
     }
 
     public function inactive(): static

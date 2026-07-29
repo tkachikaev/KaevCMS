@@ -7,7 +7,7 @@ enum AdminRole: string
     case Owner = 'owner';
     case Administrator = 'administrator';
     case Editor = 'editor';
-    case ReadOnly = 'read_only';
+    case Auditor = 'auditor';
 
     public function label(): string
     {
@@ -15,7 +15,7 @@ enum AdminRole: string
             self::Owner => __('Owner'),
             self::Administrator => __('Administrator'),
             self::Editor => __('Editor'),
-            self::ReadOnly => __('Read-only'),
+            self::Auditor => __('Auditor'),
         };
     }
 
@@ -23,9 +23,9 @@ enum AdminRole: string
     {
         return match ($this) {
             self::Owner => __('Full access to the entire CMS, critical settings, owners and future modules.'),
-            self::Administrator => __('Manages the CMS and its working sections, but cannot manage owners or critical settings.'),
+            self::Administrator => __('Manages the CMS and its working sections, but cannot manage owners, auditors or critical settings.'),
             self::Editor => __('Works only with news, pages and content images.'),
-            self::ReadOnly => __('Can view every administration section but cannot create, change, delete or run administrative actions.'),
+            self::Auditor => __('Can inspect trusted administration data, diagnostics and journals without changing anything.'),
         };
     }
 
@@ -37,7 +37,9 @@ enum AdminRole: string
             self::Administrator => [
                 AdminPermission::DashboardView,
                 AdminPermission::DashboardRefresh,
+                AdminPermission::ContentView,
                 AdminPermission::ContentManage,
+                AdminPermission::UsersView,
                 AdminPermission::UsersManage,
                 AdminPermission::AppearanceView,
                 AdminPermission::AppearanceManage,
@@ -48,18 +50,43 @@ enum AdminRole: string
                 AdminPermission::MailManage,
                 AdminPermission::SettingsView,
                 AdminPermission::SettingsManage,
+                AdminPermission::SecurityView,
+                AdminPermission::AdminPanelView,
+                AdminPermission::AdministratorsView,
                 AdminPermission::AdministratorsManage,
                 AdminPermission::AuditView,
+                AdminPermission::RewardsView,
                 AdminPermission::RewardsManage,
                 AdminPermission::SystemView,
+                AdminPermission::QueueView,
+                AdminPermission::QueueManage,
                 AdminPermission::ProfileManage,
             ],
             self::Editor => [
                 AdminPermission::DashboardView,
+                AdminPermission::ContentView,
                 AdminPermission::ContentManage,
                 AdminPermission::ProfileManage,
             ],
-            self::ReadOnly => AdminPermission::cases(),
+            self::Auditor => [
+                AdminPermission::DashboardView,
+                AdminPermission::ContentView,
+                AdminPermission::UsersView,
+                AdminPermission::AppearanceView,
+                AdminPermission::ModulesView,
+                AdminPermission::ServersView,
+                AdminPermission::MailView,
+                AdminPermission::SettingsView,
+                AdminPermission::SecurityView,
+                AdminPermission::AdminPanelView,
+                AdminPermission::AdministratorsView,
+                AdminPermission::AuditView,
+                AdminPermission::RewardsView,
+                AdminPermission::SystemView,
+                AdminPermission::SystemUpdatesView,
+                AdminPermission::QueueView,
+                AdminPermission::ProfileManage,
+            ],
         };
     }
 
@@ -73,20 +100,43 @@ enum AdminRole: string
             return false;
         }
 
-        foreach ($this->permissions() as $allowedPermission) {
-            if ($allowedPermission === $permission) {
-                return true;
+        return in_array($permission, $this->permissions(), true);
+    }
+
+    public function isReadOnly(): bool
+    {
+        return $this === self::Auditor;
+    }
+
+    public function canBeAssignedBy(self $actorRole): bool
+    {
+        if ($actorRole === self::Owner) {
+            return true;
+        }
+
+        if ($actorRole !== self::Administrator) {
+            return false;
+        }
+
+        if (in_array($this, [self::Owner, self::Auditor], true)) {
+            return false;
+        }
+
+        foreach ($this->permissions() as $permission) {
+            if (! $actorRole->allows($permission)) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     /** @return list<self> */
     public static function assignableBy(self $actorRole): array
     {
-        return $actorRole === self::Owner
-            ? self::cases()
-            : [self::Administrator, self::Editor, self::ReadOnly];
+        return array_values(array_filter(
+            self::cases(),
+            static fn (self $role): bool => $role->canBeAssignedBy($actorRole),
+        ));
     }
 }

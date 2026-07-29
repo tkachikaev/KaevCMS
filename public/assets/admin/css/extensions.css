@@ -63,7 +63,7 @@
 .administrator-role-badge.role-owner { border-color: #c4b5fd; background: #f5f3ff; color: #6d28d9; }
 .administrator-role-badge.role-administrator { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
 .administrator-role-badge.role-editor { border-color: #fde68a; background: #fffbeb; color: #b45309; }
-.administrator-role-badge.role-read_only { border-color: #cbd5e1; background: #f8fafc; color: #475569; }
+.administrator-role-badge.role-auditor { border-color: #99f6e4; background: #f0fdfa; color: #0f766e; }
 .administrator-page-statuses { display: flex; align-items: center; gap: 8px; }
 
 .administrator-row {

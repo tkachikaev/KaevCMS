@@ -47,6 +47,7 @@ final class AdminDailyRewardController extends Controller
             'enabledCount' => DailyRewardCalendar::query()->where('enabled', true)->count(),
             'claimCount' => DailyRewardClaim::query()->count(),
             'canManage' => $this->canManage(),
+            'canViewJournal' => $this->canViewJournal(),
         ]);
     }
 
@@ -306,6 +307,13 @@ final class AdminDailyRewardController extends Controller
         $admin = auth('admin')->user();
 
         return $admin instanceof Admin && $admin->hasPermission(AdminPermission::ModulesManage);
+    }
+
+    private function canViewJournal(): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin instanceof Admin && $admin->hasPermission(AdminPermission::RewardsView);
     }
 
     /** @param array<string, mixed> $parameters */

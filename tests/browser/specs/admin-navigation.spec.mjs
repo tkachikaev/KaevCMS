@@ -4,11 +4,23 @@ import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
 const email = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'BrowserPassword123!';
 
-const openMenuGroup = async (page, group) => {
-    const details = page.locator(`[data-admin-menu-group="${group}"]`);
-    if (!(await details.evaluate((element) => element.open))) {
-        await details.locator('summary').click();
+const openMenuGroup = async (page, groupName) => {
+    const navigation = page.getByRole('navigation', {
+        name: 'Меню администратора',
+    });
+    const group = navigation.locator(
+        `[data-admin-menu-group="${groupName}"]`,
+    );
+
+    await expect(group.locator('summary')).toBeVisible();
+
+    if (await group.getAttribute('open') === null) {
+        await group.locator('summary').click();
     }
+
+    await expect(group).toHaveAttribute('open', '');
+
+    return group;
 };
 
 const signIn = async (page) => {
@@ -554,34 +566,45 @@ test('promo code module manages dynamic rewards and status controls', async ({ p
     await expect(page.getByText('BROWSER-NEW', { exact: true })).toHaveCount(0);
 });
 
-test('read-only administrator can browse the full panel while mutation controls stay disabled', async ({ page }) => {
+test('auditor can browse every administration section without changing data', async ({ page }) => {
     await page.context().clearCookies();
     await gotoWithLocalNetworkRetry(page, '/admin/login');
-    await page.locator('#email').fill(process.env.PLAYWRIGHT_READ_ONLY_EMAIL || 'browser-viewer@example.test');
-    await page.locator('#password').fill(process.env.PLAYWRIGHT_READ_ONLY_PASSWORD || 'BrowserViewerPassword123!');
+    await page.locator('#email').fill(process.env.PLAYWRIGHT_AUDITOR_EMAIL || 'browser-auditor@example.test');
+    await page.locator('#password').fill(process.env.PLAYWRIGHT_AUDITOR_PASSWORD || 'BrowserAuditorPassword123!');
     await page.getByRole('button', { name: 'Войти в панель' }).click();
 
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByText('Режим просмотра').first()).toBeVisible();
     await expect(page.locator('[data-server-monitor-dashboard]')).toHaveAttribute('data-auto-refresh', '0');
+    await expect(page.locator('[data-admin-menu-group="servers"]')).toHaveCount(1);
 
-    await openMenuGroup(page, 'servers');
-    await page.getByRole('link', { name: 'Игровые серверы', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Игровые серверы' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Настроить', exact: true }).first().click();
+    const usersGroup = await openMenuGroup(page, 'users');
+    await expect(
+        usersGroup.getByRole('link', { name: 'Пользователи', exact: true }),
+    ).toBeVisible();
 
-    const gameServerDialog = page.getByTestId('game-server-dialog');
-    await expect(gameServerDialog).toBeVisible();
-    await gameServerDialog.getByRole('tab', { name: 'Возможности' }).click();
-    await expect(gameServerDialog.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
-    await expect(gameServerDialog.getByLabel('Название точки')).toBeDisabled();
-    await gameServerDialog.getByRole('button', { name: 'Закрыть' }).click();
+    const adminNavigation = page.getByRole('navigation', {
+        name: 'Меню администратора',
+    });
+    await expect(
+        adminNavigation.getByRole('link', { name: 'Журнал действий', exact: true }),
+    ).toBeVisible();
 
-    await page.getByRole('link', { name: 'Настройки', exact: true }).click();
-    await expect(page.getByTestId('settings-section-tabs').getByRole('link', { name: 'Обновления системы' })).toBeVisible();
+    await page.locator('[data-admin-settings-link]').click();
+    const settingsTabs = page.getByTestId('settings-section-tabs');
+    await expect(settingsTabs.locator('a[href$="/settings/security"]')).toBeVisible();
+    await expect(settingsTabs.locator('a[href$="/settings/system"]')).toBeVisible();
+    await expect(settingsTabs.locator('a[href$="/settings/system/updates"]')).toBeVisible();
+    await expect(page.locator('#admin_email')).toBeDisabled();
 
-    await openMenuGroup(page, 'modules');
-    await page.locator('[data-admin-menu-group="modules"]').getByRole('link', { name: 'Модули', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Модули' }).first()).toBeVisible();
+    const modulesGroup = await openMenuGroup(page, 'modules');
+    await modulesGroup.getByRole('link', { name: 'Промокоды', exact: true }).click();
+    await expect(page).toHaveURL(/\/admin\/extensions\/promo-codes$/);
+    const activationJournalLink = page.locator(
+        'main a[href$="/extensions/promo-codes/activations"]',
+    );
+    await expect(activationJournalLink).toBeVisible();
+    await activationJournalLink.click();
+    await expect(page).toHaveURL(/\/admin\/extensions\/promo-codes\/activations$/);
     await expect(page.getByText('Режим просмотра').first()).toBeVisible();
 });

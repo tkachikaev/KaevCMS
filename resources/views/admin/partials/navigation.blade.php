@@ -6,7 +6,7 @@
         <span>{{ __('Dashboard') }}</span>
     </a>
 
-    @if($admin->hasPermission(\App\Auth\AdminPermission::ContentManage))
+    @if($admin->hasPermission(\App\Auth\AdminPermission::ContentView))
         <details class="admin-menu-group" data-admin-menu-group="content" @if (request()->routeIs('admin.news.*', 'admin.pages.*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{{ __('Content') }}</span>
@@ -45,17 +45,17 @@
         </details>
     @endif
 
-    @if($admin->hasPermission(\App\Auth\AdminPermission::UsersManage) || $admin->hasPermission(\App\Auth\AdminPermission::AdministratorsManage))
+    @if($admin->hasPermission(\App\Auth\AdminPermission::UsersView) || $admin->hasPermission(\App\Auth\AdminPermission::AdministratorsView))
         <details class="admin-menu-group" data-admin-menu-group="users" @if (request()->routeIs('admin.users.*', 'admin.administrators.*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{{ __('Users') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="admin-menu-group-items">
-                @if($admin->hasPermission(\App\Auth\AdminPermission::UsersManage))
+                @if($admin->hasPermission(\App\Auth\AdminPermission::UsersView))
                     <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.users.index') }}"><span>{{ __('Users') }}</span></a>
                 @endif
-                @if($admin->hasPermission(\App\Auth\AdminPermission::AdministratorsManage))
+                @if($admin->hasPermission(\App\Auth\AdminPermission::AdministratorsView))
                     <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.administrators.index') }}"><span>{{ __('Administrators') }}</span></a>
                 @endif
             </div>
@@ -77,8 +77,11 @@
         ><span>{{ __('Settings') }}</span></a>
     @endif
 
-    @if($admin->hasPermission(\App\Auth\AdminPermission::AuditView))
+    @if($admin->hasPermission(\App\Auth\AdminPermission::RewardsView))
         <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.rewards.index') }}"><span>{{ __('Reward queue') }}</span></a>
+    @endif
+
+    @if($admin->hasPermission(\App\Auth\AdminPermission::AuditView))
         <a wire:navigate.hover wire:current="active" class="admin-menu-item" href="{{ route('admin.logs.index') }}"><span>{{ __('Audit log') }}</span></a>
     @endif
 

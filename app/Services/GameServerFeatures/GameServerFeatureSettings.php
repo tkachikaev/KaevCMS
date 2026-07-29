@@ -22,7 +22,7 @@ final class GameServerFeatureSettings
         $settings = is_array($feature?->settings) ? $feature->settings : [];
 
         return [
-            'enabled' => (bool) ($feature?->enabled ?? false),
+            'enabled' => (bool) ($feature->enabled ?? false),
             'location_name' => $this->string($settings['location_name'] ?? null, 'Giran', 100),
             'x' => $this->integer($settings['x'] ?? null, 83400),
             'y' => $this->integer($settings['y'] ?? null, 148600),

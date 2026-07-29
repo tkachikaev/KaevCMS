@@ -59,6 +59,26 @@ class PromoCodesModuleTest extends TestCase
         $this->assertSame('admin.module-pages.promo-codes.index', $adminLinks[0]['route'] ?? null);
     }
 
+    public function test_auditor_can_preview_promo_codes_and_its_journal_without_changing_data(): void
+    {
+        $auditor = Admin::factory()->auditor()->create();
+
+        $this->actingAs($auditor, 'admin')
+            ->get('/admin/extensions/promo-codes')
+            ->assertOk()
+            ->assertSee(__('Read-only mode'))
+            ->assertSee('/admin/extensions/promo-codes/activations', false);
+
+        $this->actingAs($auditor, 'admin')
+            ->get('/admin/extensions/promo-codes/activations')
+            ->assertOk()
+            ->assertSee(__('Read-only mode'));
+
+        $this->actingAs($auditor, 'admin')
+            ->post('/admin/extensions/promo-codes', [])
+            ->assertForbidden();
+    }
+
     public function test_promo_reward_uses_the_interlude_catalog_name_and_external_icon(): void
     {
         $server = GameServer::factory()->create(['chronicle' => 'Interlude']);

@@ -148,5 +148,7 @@ class RewardDeliveryJournalTest extends TestCase
         $this->assertTrue(AdminRole::Owner->allows(AdminPermission::RewardsManage));
         $this->assertTrue(AdminRole::Administrator->allows(AdminPermission::RewardsManage));
         $this->assertFalse(AdminRole::Editor->allows(AdminPermission::RewardsManage));
+        $this->assertTrue(AdminRole::Auditor->allows(AdminPermission::RewardsView));
+        $this->assertFalse(AdminRole::Auditor->allows(AdminPermission::RewardsManage));
     }
 }

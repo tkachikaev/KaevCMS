@@ -36,6 +36,8 @@ const browserPort = process.env.PLAYWRIGHT_BASE_URL
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${browserPort}`;
 const adminEmail = 'browser-admin@example.test';
 const adminPassword = 'BrowserPassword123!';
+const auditorEmail = 'browser-auditor@example.test';
+const auditorPassword = 'BrowserAuditorPassword123!';
 const playerEmail = 'browser-player@example.test';
 const playerPassword = 'BrowserPlayerPassword123!';
 
@@ -62,6 +64,10 @@ const environment = {
     PLAYWRIGHT_BASE_URL: baseUrl,
     PLAYWRIGHT_ADMIN_EMAIL: adminEmail,
     PLAYWRIGHT_ADMIN_PASSWORD: adminPassword,
+    BROWSER_TEST_AUDITOR_EMAIL: auditorEmail,
+    BROWSER_TEST_AUDITOR_PASSWORD: auditorPassword,
+    PLAYWRIGHT_AUDITOR_EMAIL: auditorEmail,
+    PLAYWRIGHT_AUDITOR_PASSWORD: auditorPassword,
     BROWSER_TEST_PLAYER_EMAIL: playerEmail,
     BROWSER_TEST_PLAYER_PASSWORD: playerPassword,
     PLAYWRIGHT_PLAYER_EMAIL: playerEmail,

@@ -3,7 +3,7 @@
 @section('description', __('Edit account details, role, password and status.'))
 @section('content')
 <div class="admin-page-toolbar administrator-page-toolbar">
-    @if(auth('admin')->user()->hasPermission(\App\Auth\AdminPermission::AdministratorsManage))
+    @if(auth('admin')->user()->hasPermission(\App\Auth\AdminPermission::AdministratorsView))
         <a wire:navigate class="button button-secondary" href="{{ route('admin.administrators.index') }}">← {{ __('Back to list') }}</a>
     @else
         <a wire:navigate class="button button-secondary" href="{{ route('admin.dashboard') }}">← {{ __('Back to dashboard') }}</a>

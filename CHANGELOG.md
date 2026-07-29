@@ -1,5 +1,56 @@
 # Changelog
 
+## 0.44.13 - 2026-07-29
+
+- Replaced the obsolete Auditor Promo Codes journal label selector with a route-based locator scoped to the main content area.
+- The browser scenario now opens the activation journal, verifies its URL, and confirms that Auditor read-only mode remains active.
+- Kept module translations, Auditor permissions, and production navigation unchanged.
+- The cumulative update line remains based on `0.42.4`; the 0.44.13 package supports direct updates from 0.42.4 through 0.44.12.
+
+## 0.44.12 - 2026-07-29
+
+- Removed the redundant `$featureAfter !== null` comparison in `GameServerManager`; PHPStan can infer the paired assignment once `$featureBefore` is non-null.
+- Kept `treatPhpDocTypesAsCertain` enabled and did not weaken static analysis.
+- Replaced Auditor system-tab browser selectors based on exact Russian labels with route-based scoped selectors for Security, System information, and System updates.
+- Corrected the obsolete **Сведения о системе** expectation without changing translations, role permissions, Blade navigation, or production behavior.
+- The cumulative update line remains based on `0.42.4`; the 0.44.12 package supports direct updates from 0.42.4 through 0.44.11.
+
+## 0.44.11 - 2026-07-29
+
+- Fixed the remaining Laravel Pint `class_attributes_separation` findings in `Admin` and `AdminFactory` by removing duplicate blank lines between methods.
+- Stabilized the Auditor Playwright navigation test: collapsible sidebar groups are now opened explicitly and verified through their `open` state before nested links are used.
+- Scoped duplicate navigation labels to the administrator sidebar and replaced the ambiguous global **Settings** locator with the existing `data-admin-settings-link` selector.
+- Kept production navigation behavior unchanged. Tests no longer depend on cookies, persisted Livewire sidebar state, or `localStorage` leaving a menu group open.
+- Access permissions, Auditor visibility, and server-side read-only enforcement are unchanged.
+- The cumulative update line remains based on `0.42.4`; the 0.44.11 package supports direct updates from 0.42.4 through 0.44.10.
+
+## 0.44.10 - 2026-07-29
+
+- Removed the redundant **Demo viewer** role and retained one trusted global read-only role: **Auditor**.
+- Migrated legacy `read_only` and `demo_viewer` administrator accounts to Auditor and incremented their session version so existing sessions are revoked.
+- Preserved the owner-only Auditor assignment rule and the permission-subset guard that prevents administrators from creating accounts with broader access than their own.
+- Updated browser-test credentials and coverage to use Auditor. Auditor can inspect every administration section and sensitive journals, while every HTTP and Livewire mutation remains blocked server-side.
+- Documented that published Auditor credentials are acceptable only on a separate isolated demonstration stand containing artificial users, test databases, non-secret connection values, and no production data.
+- Fixed the remaining Laravel Pint `single_line_empty_body` finding in `AccountCharacterDirectory`.
+- Removed the obsolete demo-only redaction, navigation, role, factory, seeder, translation, CSS, and regression branches. Existing security coverage was converted to Auditor coverage rather than weakened.
+- Fixed the role-access regression that could reach the two-factor reset throttle while testing two protected accounts; only the remaining protected Auditor account is now exercised.
+- The cumulative update line remains based on `0.42.4`; the 0.44.10 package supports direct updates from 0.42.4 through 0.44.9.
+
+## 0.44.9 - 2026-07-29
+
+- Replaced the unsafe global `read_only` role with two explicit system roles: trusted **Auditor** and public **Demo viewer**.
+- Added separate view permissions for content, users, administrators, rewards, security, administrator-panel settings, system updates, and queue operations. Auditor and Demo viewer permissions are explicitly enumerated and never inherit future permissions automatically.
+- Restricted Auditor and Demo viewer assignment to the owner. Administrators can assign only Administrator or Editor and cannot edit, disable, reset passwords, or reset two-factor authentication for owner-managed auditor/demo accounts.
+- Added a general permission-subset rule so a non-owner cannot assign a role containing permissions that the actor does not have.
+- Limited Demo viewer to dashboard, content, themes, modules, and safe site/registration/game-account/language settings. Users, administrators, journals, servers, mail, security, administrator-panel settings, system diagnostics, queues, and updates are denied server-side.
+- Classified bundled promo-code activation and daily-reward claim journals as sensitive reward history: Demo viewer cannot see their links or open the routes, while Auditor retains read-only access.
+- Redacted the public administrator contact address in Demo viewer mode and preserved session-only language switching for shared read-only credentials.
+- Migrated legacy `read_only` accounts to the safer `demo_viewer` role and incremented their session version so previously issued sessions are revoked.
+- Replaced role-specific system-update checks with explicit `system_updates.view` and `system_updates.manage` permissions.
+- Fixed the two PHPStan findings in GameServer feature persistence and feature settings, and restored the expected Pint shape for `AccountCharacterDirectory`.
+- Added role-escalation, protected-account takeover, trusted-auditor, safe-demo, PII/infrastructure denial, migration, Livewire mutation, updater, and browser regressions without weakening existing tests.
+- The cumulative update line remains based on `0.42.4`; the 0.44.9 package supports direct updates from 0.42.4 through 0.44.8.
+
 ## 0.44.8 - 2026-07-29
 
 - Updated the bundled account-theme regressions to the shipped `1.6.2` manifests instead of the obsolete `1.6.0` expectation.
