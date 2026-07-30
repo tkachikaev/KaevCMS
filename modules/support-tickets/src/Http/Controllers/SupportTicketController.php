@@ -8,7 +8,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use KaevCMS\Modules\SupportTickets\Enums\SupportTicketCategory;
-use KaevCMS\Modules\SupportTickets\Enums\SupportTicketStatus;
 use KaevCMS\Modules\SupportTickets\Http\Requests\CreateSupportTicketRequest;
 use KaevCMS\Modules\SupportTickets\Http\Requests\PlayerSupportTicketReplyRequest;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
@@ -21,17 +20,8 @@ final class SupportTicketController extends Controller
     public function index(Request $request): View
     {
         $user = $this->user($request);
-        $tickets = SupportTicket::query()
-            ->where('user_id', $user->id)
-            ->latest('last_message_at')
-            ->paginate(15);
 
-        return view('module-support-tickets::account.index', [
-            'user' => $user,
-            'tickets' => $tickets,
-            'categories' => SupportTicketCategory::cases(),
-            'openCount' => SupportTicket::query()->where('user_id', $user->id)->open()->count(),
-        ]);
+        return view('module-support-tickets::account.index', ['user' => $user]);
     }
 
     public function store(CreateSupportTicketRequest $request): RedirectResponse
@@ -52,14 +42,10 @@ final class SupportTicketController extends Controller
     {
         $user = $this->user($request);
         $this->assertOwner($ticket, $user);
-        $ticket->load([
-            'assignedAdmin',
-            'messages' => static fn ($query) => $query->where('is_internal', false)->orderBy('id'),
-        ]);
 
         return view('module-support-tickets::account.show', [
-            'user' => $user,
             'ticket' => $ticket,
+            'user' => $user,
         ]);
     }
 

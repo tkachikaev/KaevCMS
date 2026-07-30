@@ -303,7 +303,9 @@ if (-not $appKeyMatch.Success -or [string]::IsNullOrWhiteSpace($appKeyMatch.Grou
     Write-Host '==> Application key already exists; keeping it unchanged.'
 }
 
+Invoke-Checked 'Verifying runtime directory writes before cache clear' { php artisan kaevcms:runtime-directories --probe }
 Invoke-Checked 'Clearing Laravel caches' { php artisan optimize:clear }
+Invoke-Checked 'Recreating runtime directories after cache clear' { php artisan kaevcms:runtime-directories --probe }
 Invoke-Checked 'Running database migrations and seeders' { php artisan migrate --seed --force }
 Invoke-Checked 'Refreshing server monitoring snapshot' { php artisan kaevcms:servers-monitor --force }
 Invoke-Checked 'Application smoke check' { php artisan about }

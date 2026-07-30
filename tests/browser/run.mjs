@@ -55,6 +55,8 @@ const environment = {
     DB_CONNECTION: 'sqlite',
     DB_DATABASE: databasePath,
     CACHE_STORE: 'array',
+    CACHE_LIMITER: 'array',
+    BROWSER_TEST_LOGIN_LIMIT: '1000',
     SESSION_DRIVER: 'file',
     QUEUE_CONNECTION: 'sync',
     MAIL_MAILER: 'array',
@@ -87,17 +89,56 @@ const run = (command, args) => {
     }
 };
 
-const stopProcessTree = (child) => {
-    if (!child || child.killed) {
+const delay = (milliseconds) => new Promise((resolvePromise) => {
+    setTimeout(resolvePromise, milliseconds);
+});
+
+const stopProcessTree = async (child) => {
+    if (!child || child.exitCode !== null || child.signalCode !== null) {
         return;
     }
 
     if (process.platform === 'win32') {
         spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
-        return;
+    } else {
+        child.kill('SIGTERM');
     }
 
-    child.kill('SIGTERM');
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+        if (child.exitCode !== null || child.signalCode !== null) {
+            break;
+        }
+
+        await delay(100);
+    }
+
+    if (process.platform !== 'win32' && child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGKILL');
+        await delay(200);
+    }
+
+    // Windows can release the SQLite handle slightly after php.exe exits.
+    await delay(250);
+};
+
+const removeFileWithRetry = async (path) => {
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        try {
+            rmSync(path, { force: true });
+            return;
+        } catch (error) {
+            if (!['EBUSY', 'EACCES', 'EPERM'].includes(error?.code)) {
+                throw error;
+            }
+
+            lastError = error;
+            await delay(100 + (attempt * 50));
+        }
+    }
+
+    throw lastError;
 };
 
 const waitForServer = async () => {
@@ -118,6 +159,8 @@ const waitForServer = async () => {
 };
 
 let server = null;
+let primaryError = null;
+let cleanupError = null;
 
 try {
     if (!existsSync(resolve(root, 'vendor/autoload.php'))) {
@@ -141,8 +184,27 @@ try {
 
     const playwrightCli = resolve(root, 'node_modules/@playwright/test/cli.js');
     run(process.execPath, [playwrightCli, 'test', '--config=playwright.config.mjs']);
+} catch (error) {
+    primaryError = error;
 } finally {
-    stopProcessTree(server);
-    rmSync(databasePath, { force: true });
-    rmSync(browserAvatarPath, { force: true });
+    await stopProcessTree(server);
+
+    try {
+        await removeFileWithRetry(databasePath);
+        await removeFileWithRetry(browserAvatarPath);
+    } catch (error) {
+        cleanupError = error;
+    }
+}
+
+if (primaryError !== null) {
+    if (cleanupError !== null) {
+        console.error(`Browser test cleanup also failed: ${cleanupError.message}`);
+    }
+
+    throw primaryError;
+}
+
+if (cleanupError !== null) {
+    throw cleanupError;
 }

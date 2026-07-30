@@ -57,6 +57,23 @@ class ModuleAdminAccessRegistryTest extends TestCase
         $this->assertTrue($registry->decision('admin.module-pages.fixture.settings', 'POST', $owner)?->allowed);
     }
 
+
+    public function test_module_role_lists_are_validated_at_runtime(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Module access roles must use AdminRole values.');
+
+        /** @var list<AdminRole> $invalidRoles */
+        $invalidRoles = [AdminRole::Owner, 'administrator'];
+
+        (new ModuleAdminAccessRegistry)->registerExact(
+            moduleId: 'fixture',
+            routeName: 'admin.module-pages.fixture.index',
+            viewRoles: $invalidRoles,
+            manageRoles: [AdminRole::Owner],
+        );
+    }
+
     public function test_module_cannot_register_routes_outside_its_namespace(): void
     {
         $this->expectException(InvalidArgumentException::class);

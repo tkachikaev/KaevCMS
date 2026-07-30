@@ -29,6 +29,11 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['previous_apply_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
+        $this->assertSame([
+            'app/Support/Modules/ModuleAdminAccessRegistry.php',
+            'tests/Feature/RuntimeCacheConfigurationTest.php',
+            'tests/browser/run.mjs',
+        ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
             $release['composer_lock']['current_sha256'],
@@ -340,11 +345,26 @@ class ReleaseMetadataTest extends TestCase
             'modules/support-tickets/database/migrations/2026_07_29_200100_create_module_support_tickets_table.php',
             'modules/support-tickets/database/migrations/2026_07_29_200200_create_module_support_ticket_messages_table.php',
             'modules/support-tickets/database/migrations/2026_07_29_200300_create_module_support_ticket_message_revisions_table.php',
+            'modules/support-tickets/database/migrations/2026_07_29_210000_harden_module_support_tickets.php',
+            'modules/support-tickets/database/migrations/2026_07_29_220000_make_support_ticket_limits_configurable.php',
+            'modules/support-tickets/resources/views/livewire/account-ticket-conversation.blade.php',
+            'modules/support-tickets/resources/views/livewire/account-ticket-index.blade.php',
+            'modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php',
+            'modules/support-tickets/src/Console/Commands/CleanupSupportTicketsCommand.php',
+            'modules/support-tickets/src/Livewire/AccountTicketConversation.php',
+            'modules/support-tickets/src/Livewire/AccountTicketIndex.php',
+            'modules/support-tickets/src/Livewire/AdminTicketConversation.php',
+            'app/Support/Modules/AuthorizesModuleAdminAccess.php',
+            'app/Support/Modules/ModuleAdminAuthorizer.php',
+            'modules/support-tickets/src/Services/SupportTicketCleanupService.php',
             'public/assets/modules/support-tickets.css',
             'public/assets/modules/support-tickets.js',
             'tests/Feature/Modules/SupportTicketsModuleTest.php',
             'tests/Unit/ModuleAdminAccessRegistryTest.php',
+            'tests/Unit/ModuleAdminAuthorizerTest.php',
             'tests/browser/specs/support-tickets.spec.mjs',
+            'tests/browser/support/authentication.mjs',
+            'tests/browser/support/authentication.test.mjs',
         ] as $artifact) {
             $this->assertFileExists(base_path($artifact));
         }
@@ -355,12 +375,16 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.0.0', $manifest['version']);
-        $this->assertSame('0.44.14', $manifest['cms_min']);
+        $this->assertSame('1.3.1', $manifest['version']);
+        $this->assertSame('0.44.20', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
         $service = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketService.php');
-        $this->assertStringContainsString('SupportTicket::MAX_OPEN_TICKETS_PER_USER', $service);
+        $this->assertStringContainsString('maxOpenTicketsPerUser()', $service);
+        $this->assertStringContainsString('maxTicketsPerDay()', $service);
+        $this->assertStringContainsString('maxPlayerMessagesPerDay()', $service);
+        $this->assertStringContainsString('maxMessagesPerTicket()', $service);
+        $this->assertStringContainsString('maxRevisionsPerMessage()', $service);
         $this->assertStringContainsString('SupportTicketMessageRevision::query()->create', $service);
         $this->assertStringContainsString('SupportTicketStatus::AwaitingPlayer', $service);
         $this->assertStringContainsString('SupportTicketStatus::InProgress', $service);
@@ -370,12 +394,30 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('public const SUBJECT_MAX = 120;', $model);
         $this->assertStringContainsString('public const INITIAL_MESSAGE_MAX = 3000;', $model);
         $this->assertStringContainsString('public const MESSAGE_MAX = 2000;', $model);
+        $this->assertStringContainsString('public const MAX_TICKETS_PER_USER_PER_DAY = 10;', $model);
+        $this->assertStringContainsString('public const MAX_PLAYER_MESSAGES_PER_DAY = 100;', $model);
+        $this->assertStringContainsString('public const MAX_MESSAGES_PER_TICKET = 300;', $model);
+        $this->assertStringContainsString('public const MAX_REVISIONS_PER_MESSAGE = 20;', $model);
+        $this->assertStringContainsString('public const MESSAGES_PER_PAGE = 50;', $model);
+
+        $settings = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketSettings.php');
+        $this->assertStringContainsString('DEFAULT_MAX_TICKETS_PER_DAY = 10', $settings);
+        $this->assertStringContainsString('DEFAULT_MAX_PLAYER_MESSAGES_PER_DAY = 100', $settings);
+        $this->assertStringContainsString('DEFAULT_MAX_MESSAGES_PER_TICKET = 300', $settings);
+        $this->assertStringContainsString('DEFAULT_MAX_REVISIONS_PER_MESSAGE = 20', $settings);
+        $this->assertStringContainsString('DEFAULT_MAX_OPEN_TICKETS_PER_USER = 5', $settings);
+        $this->assertStringContainsString('DEFAULT_SUBJECT_MAX_LENGTH = 120', $settings);
+        $this->assertStringContainsString('DEFAULT_INITIAL_MESSAGE_MAX_LENGTH = 3000', $settings);
+        $this->assertStringContainsString('DEFAULT_MESSAGE_MAX_LENGTH = 2000', $settings);
 
         $bootstrap = $this->readReleaseFile('modules/support-tickets/bootstrap.php');
         $this->assertStringContainsString('AdminRole::Owner, AdminRole::Administrator', $bootstrap);
         $this->assertStringContainsString('AdminRole::Editor', $bootstrap);
         $this->assertStringContainsString('AdminRole::Auditor', $bootstrap);
-        $this->assertStringContainsString('editorsCanManage()', $bootstrap);
+        $this->assertStringContainsString('editorCanView()', $bootstrap);
+        $this->assertStringContainsString('editorCanReply()', $bootstrap);
+        $this->assertStringContainsString('editorCanAddInternalNotes()', $bootstrap);
+        $this->assertStringContainsString('kaevcms:support-tickets-cleanup --scheduled', $bootstrap);
 
         $this->assertFileDoesNotExist(base_path('modules/support-tickets/assets/module.webp'));
     }

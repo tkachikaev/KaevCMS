@@ -16,3 +16,30 @@ Promo Codes и Daily Rewards используют общее модальное 
 Установка ZIP через браузер, автоматическое удалённое обновление модулей и sandbox пока намеренно отсутствуют.
 
 Встроенный модуль `support-tickets` добавляет приватные обращения игроков. Владелец и администратор могут отвечать, аудитор работает только на чтение, а доступ редактора включается отдельно в настройках самого модуля. Документация находится в `modules/support-tickets/docs/README.ru.md`.
+## Авторизация административных Livewire-компонентов
+
+Регистрация административного маршрута в `ModuleAdminAccessRegistry` защищает обычный HTTP-маршрут, но не переносит его права автоматически на общий endpoint `/livewire/update`. Административный Livewire-компонент модуля должен использовать `AuthorizesModuleAdminAccess` и проверять зарегистрированное route name перед каждым публичным действием.
+
+Базовый шаблон:
+
+```php
+use App\Support\Modules\AuthorizesModuleAdminAccess;
+
+final class ExampleComponent extends Component
+{
+    use AuthorizesModuleAdminAccess;
+
+    public function save(): void
+    {
+        $this->authorizeModuleAdminRoute(
+            'admin.module-pages.example.update',
+            'PUT',
+        );
+
+        // Изменение данных выполняется только после проверки.
+    }
+}
+```
+
+`ModuleAdminAuthorizer` является единым источником решения для middleware и Livewire. Не копируйте списки ролей в компонент. Для каждого публичного Livewire action добавляйте регрессии для владельца, администратора, редактора, аудитора и неавторизованного пользователя. Неизвестное route name блокируется по принципу fail-closed.
+

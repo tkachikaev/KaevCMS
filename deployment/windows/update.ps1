@@ -309,7 +309,9 @@ try {
     Invoke-Checked 'Rebuilding optimized autoload and discovering packages' {
         composer dump-autoload --optimize --no-interaction
     }
+    Invoke-Checked 'Verifying runtime directory writes before cache clear' { php artisan kaevcms:runtime-directories --probe }
     Invoke-Checked 'Clearing Laravel runtime caches' { php artisan optimize:clear }
+    Invoke-Checked 'Recreating runtime directories after cache clear' { php artisan kaevcms:runtime-directories --probe }
     Invoke-Checked 'Running database migrations' { php artisan migrate --force }
     Invoke-Checked 'Signalling queue workers to restart' { php artisan queue:restart }
     Invoke-Checked 'Refreshing server monitoring snapshot' { php artisan kaevcms:servers-monitor --force }

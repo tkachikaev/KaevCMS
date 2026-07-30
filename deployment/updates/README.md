@@ -15,8 +15,8 @@ Use the unified release builder for official releases:
 
 ```powershell
 .\deployment\windows\build-release.ps1 `
-    -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.14"
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.44.19-full.zip" `
+    -OutputDirectory "C:\Releases\0.44.20"
 ```
 
 `deployment/updates/build-package.php` remains the lower-level cumulative-package component used by that command. `deletions.json` stores versioned deletion history; removed paths must be declared before a release can be built.
@@ -36,8 +36,8 @@ Cumulative Web Update ZIP содержит `kaevcms-update.json` в корне �
 
 ```powershell
 .\deployment\windows\build-release.ps1 `
-    -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.14"
+    -PreviousFullArchive "C:\Releases\KaevCMS-0.44.19-full.zip" `
+    -OutputDirectory "C:\Releases\0.44.20"
 ```
 
 `deployment/updates/build-package.php` остаётся низкоуровневой частью сборки cumulative-пакета. `deletions.json` хранит историю удалений по версиям; незаявленное удаление блокирует выпуск.

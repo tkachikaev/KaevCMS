@@ -1,16 +1,21 @@
 {
     "schema": 1,
-    "version": "0.44.14",
-    "previous_version": "0.44.13",
-    "released_at": "2026-07-29",
+    "version": "0.44.22",
+    "previous_version": "0.44.21",
+    "released_at": "2026-07-30",
     "recovery_floor_version": "0.42.4",
     "cumulative_base_version": "0.42.4",
-    "apply_script": "deployment/windows/apply-0.44.14.ps1",
+    "apply_script": "deployment/windows/apply-0.44.22.ps1",
     "update_script": "deployment/windows/update.ps1",
-    "previous_apply_script": "deployment/windows/apply-0.44.13.ps1",
-    "previous_apply_sha256": "0e81a6dfa4629465f1ad04826266fac4f2b52a1b3c80ebdd62ffd0079a71d274",
+    "previous_apply_script": "deployment/windows/apply-0.44.21.ps1",
+    "previous_apply_sha256": "b4a1d6b5c510d23fad3411deabb7da9c5eec7e1b0dd1ab84c3885105f8ed10f1",
     "composer_lock": {
         "previous_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7",
         "current_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7"
-    }
+    },
+    "repair_files": [
+        "app/Support/Modules/ModuleAdminAccessRegistry.php",
+        "tests/Feature/RuntimeCacheConfigurationTest.php",
+        "tests/browser/run.mjs"
+    ]
 }

@@ -41,6 +41,9 @@ foreach ($guides as $language => $path) {
         'public/uploads/pages',
         'public/uploads/settings',
         'public/uploads/game-assets',
+        'CACHE_LIMITER=database',
+        'sudo -u www-data php artisan kaevcms:runtime-directories --probe',
+        'storage/framework/cache/data',
     ] as $required) {
         if (! str_contains($contents, $required)) {
             throw new RuntimeException("{$language} VDS guide is missing: {$required}");

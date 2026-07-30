@@ -94,6 +94,9 @@ function kaevReleaseBuild(array $options): array
         $checksumPath = $outputDirectory.'/KaevCMS-'.$version.'-SHA256SUMS.txt';
 
         $changedFiles = kaevReleaseChangedFiles($root, $currentFiles, $previousRoot, $previousFiles);
+        $repairFiles = kaevReleaseRepairFiles($release['repair_files'] ?? [], $currentFiles);
+        $changedFiles = array_values(array_unique(array_merge($changedFiles, $repairFiles)));
+        sort($changedFiles, SORT_STRING);
         $removedFiles = array_values(array_diff($previousFiles, $currentFiles));
         sort($removedFiles, SORT_STRING);
         kaevReleaseAssertDeletionsDeclared($root, $version, $removedFiles);
@@ -149,6 +152,37 @@ function kaevReleaseBuild(array $options): array
     } finally {
         kaevReleaseRemoveTree($temporaryRoot);
     }
+}
+
+/**
+ * @param  mixed  $configured
+ * @param  list<string>  $currentFiles
+ * @return list<string>
+ */
+function kaevReleaseRepairFiles(mixed $configured, array $currentFiles): array
+{
+    if (! is_array($configured)) {
+        throw new RuntimeException('release.json repair_files must be an array.');
+    }
+
+    $currentLookup = array_fill_keys($currentFiles, true);
+    $repairFiles = [];
+
+    foreach ($configured as $path) {
+        if (! is_string($path) || ! kaevReleaseSafeRelativePath($path)) {
+            throw new RuntimeException('release.json contains an invalid repair file path.');
+        }
+        if (! isset($currentLookup[$path])) {
+            throw new RuntimeException('Repair file is missing from the release tree: '.$path);
+        }
+
+        $repairFiles[] = $path;
+    }
+
+    $repairFiles = array_values(array_unique($repairFiles));
+    sort($repairFiles, SORT_STRING);
+
+    return $repairFiles;
 }
 
 /** @return list<string> */

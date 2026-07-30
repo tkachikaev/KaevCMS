@@ -15,7 +15,10 @@ use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessageRevision;
 
 final class SupportTicketService
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly SupportTicketSettings $settings,
+    ) {}
 
     public function create(
         User $user,
@@ -25,15 +28,17 @@ final class SupportTicketService
     ): SupportTicket {
         $ticket = DB::transaction(function () use ($user, $category, $subject, $body): SupportTicket {
             User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $this->assertDailyTicketLimit($user);
+            $this->assertDailyPlayerMessageLimit($user);
             $openCount = SupportTicket::query()
                 ->where('user_id', $user->id)
                 ->open()
                 ->count();
 
-            if ($openCount >= SupportTicket::MAX_OPEN_TICKETS_PER_USER) {
+            if ($openCount >= $this->settings->maxOpenTicketsPerUser()) {
                 throw ValidationException::withMessages([
                     'subject' => __('module-support-tickets::messages.open_ticket_limit', [
-                        'count' => SupportTicket::MAX_OPEN_TICKETS_PER_USER,
+                        'count' => $this->settings->maxOpenTicketsPerUser(),
                     ]),
                 ]);
             }
@@ -79,9 +84,12 @@ final class SupportTicketService
     public function replyAsPlayer(SupportTicket $ticket, User $user, string $body): SupportTicketMessage
     {
         $message = DB::transaction(function () use ($ticket, $user, $body): SupportTicketMessage {
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
             $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
             abort_unless($locked->user_id === $user->id, 404);
             $this->assertOpen($locked);
+            $this->assertDailyPlayerMessageLimit($user);
+            $this->assertTicketMessageCapacity($locked);
             $normalized = $this->normalize($body);
             $this->assertNotDuplicate($locked, SupportTicketMessage::AUTHOR_PLAYER, $user->id, $normalized);
             $now = now();
@@ -122,6 +130,7 @@ final class SupportTicketService
         $message = DB::transaction(function () use ($ticket, $admin, $body): SupportTicketMessage {
             $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
             $this->assertOpen($locked);
+            $this->assertTicketMessageCapacity($locked);
             $normalized = $this->normalize($body);
             $this->assertNotDuplicate($locked, SupportTicketMessage::AUTHOR_ADMIN, $admin->id, $normalized);
             $now = now();
@@ -160,6 +169,7 @@ final class SupportTicketService
     {
         $message = DB::transaction(function () use ($ticket, $admin, $body): SupportTicketMessage {
             $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
+            $this->assertTicketMessageCapacity($locked);
             $normalized = $this->normalize($body);
             $this->assertNotDuplicate($locked, SupportTicketMessage::AUTHOR_ADMIN, $admin->id, $normalized, true);
 
@@ -277,6 +287,23 @@ final class SupportTicketService
         );
     }
 
+    public function setRetentionProtected(SupportTicket $ticket, Admin $admin, bool $protected): void
+    {
+        DB::transaction(function () use ($ticket, $protected): void {
+            SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id)->update([
+                'retention_protected' => $protected,
+            ]);
+        }, 3);
+
+        $this->auditLogger->success(
+            category: 'module',
+            action: $protected ? 'support_ticket.retention_protected' : 'support_ticket.retention_unprotected',
+            actor: $admin,
+            target: $ticket,
+            details: ['ticket_id' => $ticket->id, 'retention_protected' => $protected],
+        );
+    }
+
     public function editStaffMessage(SupportTicketMessage $message, Admin $admin, string $body): void
     {
         DB::transaction(function () use ($message, $admin, $body): void {
@@ -286,6 +313,13 @@ final class SupportTicketService
             }
 
             $normalized = $this->normalize($body);
+            if ($locked->revisions()->count() >= $this->settings->maxRevisionsPerMessage()) {
+                throw ValidationException::withMessages([
+                    'body' => __('module-support-tickets::messages.message_revision_limit', [
+                        'count' => $this->settings->maxRevisionsPerMessage(),
+                    ]),
+                ]);
+            }
             if (hash_equals($locked->body, $normalized)) {
                 throw ValidationException::withMessages([
                     'body' => __('module-support-tickets::messages.message_not_changed'),
@@ -313,6 +347,50 @@ final class SupportTicketService
             target: $message->ticket,
             details: ['ticket_id' => $message->ticket_id, 'message_id' => $message->id],
         );
+    }
+
+    private function assertDailyTicketLimit(User $user): void
+    {
+        $count = SupportTicket::query()
+            ->where('user_id', $user->id)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->count();
+
+        if ($count >= $this->settings->maxTicketsPerDay()) {
+            throw ValidationException::withMessages([
+                'subject' => __('module-support-tickets::messages.daily_ticket_limit', [
+                    'count' => $this->settings->maxTicketsPerDay(),
+                ]),
+            ]);
+        }
+    }
+
+    private function assertDailyPlayerMessageLimit(User $user): void
+    {
+        $count = SupportTicketMessage::query()
+            ->where('author_type', SupportTicketMessage::AUTHOR_PLAYER)
+            ->where('user_id', $user->id)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->count();
+
+        if ($count >= $this->settings->maxPlayerMessagesPerDay()) {
+            throw ValidationException::withMessages([
+                'body' => __('module-support-tickets::messages.daily_message_limit', [
+                    'count' => $this->settings->maxPlayerMessagesPerDay(),
+                ]),
+            ]);
+        }
+    }
+
+    private function assertTicketMessageCapacity(SupportTicket $ticket): void
+    {
+        if ($ticket->messages()->count() >= $this->settings->maxMessagesPerTicket()) {
+            throw ValidationException::withMessages([
+                'body' => __('module-support-tickets::messages.ticket_message_limit', [
+                    'count' => $this->settings->maxMessagesPerTicket(),
+                ]),
+            ]);
+        }
     }
 
     private function assertOpen(SupportTicket $ticket): void

@@ -2,8 +2,10 @@
 
 namespace KaevCMS\Modules\SupportTickets\Http\Controllers;
 
+use App\Auth\AdminRole;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\Admin\AdminPathSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,10 +17,15 @@ use KaevCMS\Modules\SupportTickets\Http\Requests\AdminSupportTicketMessageReques
 use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessage;
 use KaevCMS\Modules\SupportTickets\Services\SupportTicketService;
+use KaevCMS\Modules\SupportTickets\Services\SupportTicketSettings;
 
 final class AdminSupportTicketController extends Controller
 {
-    public function __construct(private readonly SupportTicketService $tickets) {}
+    public function __construct(
+        private readonly SupportTicketService $tickets,
+        private readonly SupportTicketSettings $settings,
+        private readonly AdminPathSettings $adminPathSettings,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -62,24 +69,23 @@ final class AdminSupportTicketController extends Controller
             'categories' => SupportTicketCategory::cases(),
             'statuses' => SupportTicketStatus::cases(),
             'filters' => $validated,
+            'adminPath' => $this->adminPathSettings->path(),
             'counts' => [
                 'new' => SupportTicket::query()->where('status', SupportTicketStatus::New)->count(),
                 'in_progress' => SupportTicket::query()->where('status', SupportTicketStatus::InProgress)->count(),
                 'awaiting_player' => SupportTicket::query()->where('status', SupportTicketStatus::AwaitingPlayer)->count(),
                 'closed' => SupportTicket::query()->where('status', SupportTicketStatus::Closed)->count(),
             ],
-            'canManage' => $this->canManage($request),
         ]);
     }
 
     public function show(Request $request, SupportTicket $ticket): View
     {
-        $ticket->load(['assignedAdmin', 'messages.revisions']);
+        $this->admin($request);
 
         return view('module-support-tickets::admin.show', [
             'ticket' => $ticket,
-            'canManage' => $this->canManage($request),
-            'admin' => $this->admin($request),
+            'adminPath' => $this->adminPathSettings->path(),
         ]);
     }
 
@@ -122,13 +128,26 @@ final class AdminSupportTicketController extends Controller
         return $this->backToTicket($ticket)->with('status', __('module-support-tickets::messages.ticket_reopened'));
     }
 
+    public function protection(Request $request, SupportTicket $ticket): RedirectResponse
+    {
+        $validated = validator($request->all(), ['protected' => ['required', 'boolean']])->validate();
+        $this->tickets->setRetentionProtected($ticket, $this->admin($request), (bool) $validated['protected']);
+
+        return $this->backToTicket($ticket)->with('status', __('module-support-tickets::messages.retention_protection_updated'));
+    }
+
     public function editMessage(
         AdminSupportTicketMessageRequest $request,
         SupportTicket $ticket,
         SupportTicketMessage $message,
     ): RedirectResponse {
         abort_unless($message->ticket_id === $ticket->id, 404);
-        $this->tickets->editStaffMessage($message, $this->admin($request), (string) $request->validated('body'));
+        $admin = $this->admin($request);
+        abort_unless(
+            $message->is_internal ? $this->canAddInternalNote($admin) : $this->canReply($admin),
+            403,
+        );
+        $this->tickets->editStaffMessage($message, $admin, (string) $request->validated('body'));
 
         return $this->backToTicket($ticket)->with('status', __('module-support-tickets::messages.message_updated'));
     }
@@ -141,15 +160,22 @@ final class AdminSupportTicketController extends Controller
         return $admin;
     }
 
-    private function canManage(Request $request): bool
+    private function canReply(Admin $admin): bool
     {
-        return ! (bool) $request->attributes->get('admin_read_only', false);
+        return in_array($admin->role, [AdminRole::Owner, AdminRole::Administrator], true)
+            || ($admin->role === AdminRole::Editor && $this->settings->editorCanReply());
+    }
+
+    private function canAddInternalNote(Admin $admin): bool
+    {
+        return in_array($admin->role, [AdminRole::Owner, AdminRole::Administrator], true)
+            || ($admin->role === AdminRole::Editor && $this->settings->editorCanAddInternalNotes());
     }
 
     private function backToTicket(SupportTicket $ticket): RedirectResponse
     {
         return redirect()->route('admin.module-pages.support-tickets.show', [
-            'adminPath' => request()->route('adminPath'),
+            'adminPath' => $this->adminPathSettings->path(),
             'ticket' => $ticket,
         ]);
     }

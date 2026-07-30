@@ -207,6 +207,20 @@ sudo find /var/www/kaevcms/storage \
     -type d -exec chmod 2775 {} \;
 ```
 
+Verify that the PHP-FPM account can create nested cache directories and files:
+
+```bash
+cd /var/www/kaevcms
+sudo -u www-data php artisan kaevcms:runtime-directories --probe
+```
+
+KaevCMS keeps the general application cache on files by default, but stores login and other rate-limit counters in the CMS database:
+
+```env
+CACHE_STORE=file
+CACHE_LIMITER=database
+```
+
 The Web Installer must create `.env` in the project root. Temporarily allow group write access:
 
 ```bash
@@ -612,6 +626,22 @@ sudo -u www-data test -w /var/www/kaevcms/public/uploads && echo uploads-writabl
 ```
 
 Do not fix this with `chmod -R 777 /var/www/kaevcms`.
+
+
+If Laravel reports `storage/framework/cache/data/...: No such file or directory`, recreate and write-test the runtime tree as the PHP-FPM account:
+
+```bash
+cd /var/www/kaevcms
+sudo mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+sudo chown -R "$USER":www-data storage bootstrap/cache
+sudo chmod -R g+rwX storage bootstrap/cache
+sudo find storage bootstrap/cache -type d -exec chmod 2775 {} \;
+sudo -u www-data php artisan kaevcms:runtime-directories --probe
+php artisan optimize:clear
+sudo -u www-data php artisan kaevcms:runtime-directories --probe
+```
+
+`optimize:clear` is not a substitute for correct ownership. The updater runs the runtime-directory probe both before and after clearing caches.
 
 ### `419 Page Expired` after signing in over HTTP
 

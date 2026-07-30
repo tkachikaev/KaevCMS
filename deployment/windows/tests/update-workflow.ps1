@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 Set-Location -LiteralPath $ProjectRoot
 
@@ -47,6 +47,16 @@ Assert-Equal -Actual ([string]$release.previous_apply_script) -Expected ("deploy
 Assert-True ($requiredFiles -contains 'release.json') 'Release file manifest does not require release.json.'
 Assert-True ($requiredFiles -contains 'deployment/windows/update-contract.json') 'Release file manifest does not require the Windows update contract.'
 Assert-True ($requiredFiles -contains [string]$release.apply_script) 'Release file manifest does not require the current apply script.'
+
+foreach ($scriptPath in @('deployment/windows/setup.ps1', 'deployment/windows/update.ps1')) {
+    $scriptSource = Get-Content -LiteralPath (Join-Path $ProjectRoot (ConvertTo-KaevCmsPlatformPath -Path $scriptPath)) -Raw
+    $beforeProbe = $scriptSource.IndexOf('php artisan kaevcms:runtime-directories --probe')
+    $cacheClear = $scriptSource.IndexOf('php artisan optimize:clear')
+    $afterProbe = $scriptSource.IndexOf('php artisan kaevcms:runtime-directories --probe', $beforeProbe + 1)
+    Assert-True ($beforeProbe -ge 0) "$scriptPath does not verify runtime directories before optimize:clear."
+    Assert-True ($cacheClear -gt $beforeProbe) "$scriptPath clears caches before the runtime write probe."
+    Assert-True ($afterProbe -gt $cacheClear) "$scriptPath does not recreate and verify runtime directories after optimize:clear."
+}
 
 Assert-KaevCmsRequiredReleaseFiles -ProjectRoot $ProjectRoot
 

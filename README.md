@@ -1,4 +1,4 @@
-# KaevCMS 0.44.14
+# KaevCMS 0.44.22
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.14 adds the bundled Support Tickets 1.0.0 module. Players receive private ticket conversations with fixed categories and statuses; owners and administrators can reply, assign, close, reopen, add internal notes and edit only their own messages with immutable revision history. Editor access is optional and scoped to this module, while auditors remain read-only. The release includes RU/EN module documentation, PHPUnit coverage and Playwright flows. The cumulative update baseline remains 0.42.4.
+Version 0.44.20 hardens Support Tickets retention cleanup against concurrent reopen/protection changes, moves module administration Livewire actions to the same fail-closed authorizer as normal routes, and adds explicit browser-login diagnostics for HTTP 429 and server failures. Production rate limits remain unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.14 добавляет встроенный модуль «Техническая поддержка» 1.0.0. Игроки получают приватные обращения с утверждёнными категориями и статусами; владелец и администратор могут отвечать, назначать ответственного, закрывать и повторно открывать тикеты, добавлять внутренние заметки и редактировать только собственные сообщения с сохранением неизменяемой истории правок. Доступ редактора включается отдельно только для этого модуля, аудитор остаётся в режиме чтения. В релиз входят документация RU/EN, PHPUnit и Playwright-проверки. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.20 защищает очистку обращений от конкурентного переоткрытия и включения защиты, переводит административные Livewire-действия модулей на тот же fail-closed авторизатор, что и обычные маршруты, и добавляет явную диагностику HTTP 429 и серверных ошибок при browser-входе. Рабочие ограничения входа не изменены. Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 

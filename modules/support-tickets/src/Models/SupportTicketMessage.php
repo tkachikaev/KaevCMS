@@ -27,7 +27,9 @@ use Illuminate\Support\Carbon;
 final class SupportTicketMessage extends Model
 {
     public const AUTHOR_PLAYER = 'player';
+
     public const AUTHOR_ADMIN = 'admin';
+
     public const AUTHOR_SYSTEM = 'system';
 
     protected $table = 'module_support_ticket_messages';

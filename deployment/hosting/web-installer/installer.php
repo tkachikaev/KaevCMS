@@ -649,15 +649,27 @@ function ensureWritableDirectory(string $path): bool
         return false;
     }
 
-    $probe = $path.'/.kaevcms-write-'.bin2hex(random_bytes(6));
-    $written = @file_put_contents($probe, 'ok', LOCK_EX);
-    if ($written === false) {
-        return false;
+    $probeRoot = $path.'/.kaevcms-write-'.bin2hex(random_bytes(6));
+    $probeDirectory = $probeRoot.'/nested';
+    $probeFile = $probeDirectory.'/write-test';
+
+    try {
+        if (! @mkdir($probeDirectory, 0775, true) && ! is_dir($probeDirectory)) {
+            return false;
+        }
+
+        return @file_put_contents($probeFile, 'ok', LOCK_EX) !== false && is_file($probeFile);
+    } finally {
+        if (is_file($probeFile)) {
+            @unlink($probeFile);
+        }
+        if (is_dir($probeDirectory)) {
+            @rmdir($probeDirectory);
+        }
+        if (is_dir($probeRoot)) {
+            @rmdir($probeRoot);
+        }
     }
-
-    @unlink($probe);
-
-    return true;
 }
 
 /** @param list<array{label:string,ok:bool,details:string}> $checks */
@@ -902,6 +914,7 @@ function performInstallation(string $root, string $publicRoot, string $envExampl
 
         callArtisanOrFail('kaevcms:release-version', ['--mark' => $version]);
         callArtisanOrFail('optimize:clear');
+        callArtisanOrFail('kaevcms:runtime-directories', ['--probe' => true]);
 
         $owner = DB::transaction(function () use ($administrator, $language): Admin {
             assertNoExistingAdministrators(Admin::query()->lockForUpdate()->get(['id'])->count());

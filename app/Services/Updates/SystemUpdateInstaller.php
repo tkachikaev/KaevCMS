@@ -4,6 +4,7 @@ namespace App\Services\Updates;
 
 use App\Models\SystemUpdate;
 use App\Services\AuditLogger;
+use App\Services\Infrastructure\RuntimeDirectoryManager;
 use App\Services\Releases\InstalledVersion;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
@@ -21,6 +22,7 @@ final class SystemUpdateInstaller
         private readonly UpdateFilesystemTransaction $filesystem,
         private readonly UpdateLock $updateLock,
         private readonly AuditLogger $auditLogger,
+        private readonly RuntimeDirectoryManager $runtimeDirectories,
         private readonly Application $application,
     ) {}
 
@@ -67,6 +69,7 @@ final class SystemUpdateInstaller
             }
             $currentVersion = $recordedVersion;
 
+            $this->runtimeDirectories->ensure(true);
             $log->write("Starting KaevCMS update {$currentVersion} -> {$update->target_version}.");
             $package = $this->inspector->inspect($this->absolutePackagePath($update), $currentVersion);
             $this->assertPackageMatchesRecord($package, $update);
@@ -113,6 +116,8 @@ final class SystemUpdateInstaller
 
             $this->setPhase($update, SystemUpdate::PHASE_FINALIZING, $log);
             $this->runArtisan('optimize:clear', [], $log);
+            $this->runtimeDirectories->ensure(true);
+            $log->write('Runtime directories recreated and write-tested after cache clear.');
             $this->runArtisan('queue:restart', [], $log);
             $this->installedVersion->mark($package->targetVersion);
 

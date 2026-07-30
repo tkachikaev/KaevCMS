@@ -5,7 +5,7 @@ namespace KaevCMS\Modules\SupportTickets\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use KaevCMS\Modules\SupportTickets\Enums\SupportTicketCategory;
-use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
+use KaevCMS\Modules\SupportTickets\Services\SupportTicketSettings;
 
 final class CreateSupportTicketRequest extends FormRequest
 {
@@ -25,10 +25,12 @@ final class CreateSupportTicketRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        $settings = app(SupportTicketSettings::class);
+
         return [
             'category' => ['required', Rule::enum(SupportTicketCategory::class)],
-            'subject' => ['required', 'string', 'min:3', 'max:'.SupportTicket::SUBJECT_MAX],
-            'body' => ['required', 'string', 'min:3', 'max:'.SupportTicket::INITIAL_MESSAGE_MAX],
+            'subject' => ['required', 'string', 'min:3', 'max:'.$settings->subjectMaxLength()],
+            'body' => ['required', 'string', 'min:3', 'max:'.$settings->initialMessageMaxLength()],
         ];
     }
 

@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.44.22 - 2026-07-30
+
+- Integrated the externally verified module-access and browser-cache fixes into the current source without regressing the newer Windows SQLite cleanup and explicit browser login diagnostics.
+- Normalized module role lists before constructing access rules, preserving runtime validation through `array<array-key, mixed> -> list<AdminRole>` while remaining compatible with strict PHPStan analysis.
+- Added `RuntimeCacheConfigurationTest.php` to `repair_files` alongside the module access registry and browser runner so the direct patch force-replaces all three verified files on installations affected by incomplete earlier updates.
+- Kept production `CACHE_LIMITER=database`; Playwright continues to use isolated array stores and a testing-only login limit.
+- The cumulative update line remains based on `0.42.4`; the 0.44.22 package supports direct updates from 0.42.4 through 0.44.21.
+
+## 0.44.21 - 2026-07-30
+
+- Added a runtime role normalizer for module administration rules, preserving defensive validation while satisfying strict PHPStan contracts without weakening analysis.
+- Added a test-only browser login limit override and environment-backed public authentication limits; Playwright now keeps production throttling unchanged while avoiding the shared 127.0.0.1 login cascade.
+- Added `repair_files` support to the reproducible release builder and marked the module access registry and browser runner for forced replacement, repairing installations where an earlier patch was only partially applied.
+- Added regressions for invalid module role values, browser login-limit isolation and repair-file release metadata.
+- The cumulative update line remains based on `0.42.4`; the 0.44.21 package supports direct updates from 0.42.4 through 0.44.20.
+
+## 0.44.20 - 2026-07-30
+
+- Updated bundled `support-tickets` to 1.3.1 and closed the retention-cleanup race: eligible tickets are selected with `lockForUpdate()` and rechecked with the closed, unprotected and cutoff predicates immediately before deletion.
+- Cleanup reports now count only tickets, messages and revisions that were actually deleted; tickets reopened, protected or given a newer close date during cleanup are preserved.
+- Added a shared `ModuleAdminAuthorizer` and `AuthorizesModuleAdminAccess` trait so normal administration routes and module Livewire actions use the same fail-closed access rules.
+- Converted the Support Tickets administration Livewire component from duplicated role checks to registered module route permissions and added Owner, Administrator, Editor, Auditor, player and guest regressions.
+- Added explicit Playwright login diagnostics for HTTP 429 and server errors across administrator, player and support-ticket browser flows; production rate limits remain unchanged.
+- Added browser-helper unit tests and module-development documentation explaining that route registration alone does not protect `/livewire/update`.
+- The cumulative update line remains based on `0.42.4`; the 0.44.20 package supports direct updates from 0.42.4 through 0.44.19.
+
+## 0.44.19 - 2026-07-30
+
+- Removed redundant `AdminRole` runtime filtering and list reindexing from the typed module administration access registry, resolving the three reported PHPStan findings without weakening analysis.
+- Isolated Playwright rate-limit counters with `CACHE_LIMITER=array`, so browser authentication no longer depends on the production database-cache store while the application default remains `database`.
+- Restored the standard `cache_locks` table default for the database cache store.
+- Made browser test shutdown wait for the PHP process tree and retry locked SQLite cleanup on Windows; a cleanup failure no longer hides the original Playwright failure.
+- Added regressions for browser limiter isolation, the database lock-table default and locked-file cleanup behavior.
+- The cumulative update line remains based on `0.42.4`; the 0.44.19 package supports direct updates from 0.42.4 through 0.44.18.
+
+## 0.44.18 - 2026-07-30
+
+- Added a separate `cache.limiter` store with `CACHE_LIMITER=database` by default, keeping the general application cache file-based while moving login and other rate-limit counters to the existing CMS `cache` table.
+- Added `kaevcms:runtime-directories --probe`, which creates the required Laravel runtime tree and verifies nested directory and file creation without leaving probe files behind.
+- Added runtime-directory verification before and after `optimize:clear` in Windows setup/update, the Web Installer, Web/CLI update installation and interrupted-update recovery.
+- Strengthened Web Installer write checks to verify recursive directory creation rather than only writing one file into an existing parent.
+- Added PHPUnit, Web Installer, Windows workflow and Ubuntu/VDS documentation regressions for the limiter store, runtime repair order and nested write probes.
+- Documented safe `storage` and `bootstrap/cache` ownership repair without `chmod 777` and added a PHP-FPM-user diagnostic command.
+- The cumulative update line remains based on `0.42.4`; the 0.44.18 package supports direct updates from 0.42.4 through 0.44.17.
+
+## 0.44.17 - 2026-07-29
+
+- Updated bundled `support-tickets` to 1.3.0, restored ticket pages after the Livewire conversion and corrected the remaining Pint PHPDoc alignment finding.
+- Passed the authenticated player explicitly to account-theme layouts and resolved the administration path inside the staff Livewire component instead of accepting a nullable route parameter.
+- Moved ticket, message, revision, open-ticket and character limits into owner-only module settings with bounded validation and unchanged safe defaults.
+- Added a module migration and regressions for configurable limits while preserving existing tickets, messages and cleanup settings.
+- The cumulative update line remains based on `0.42.4`; the 0.44.17 package supports direct updates from 0.42.4 through 0.44.16.
+
+## 0.44.16 - 2026-07-29
+
+- Updated bundled `support-tickets` to 1.2.0 and corrected the sorted release-file contract, Pint formatting and strict Playwright locators reported by the 0.44.15 quality gates.
+- Changed the player landing page to show **My tickets** first and open the new-ticket form only from a compact action button; removed the redundant limits notice while preserving field counters and server-side validation.
+- Converted ticket creation, player replies, staff replies, status actions, assignment, message editing and internal notes to Livewire interactions without full-page reloads.
+- Added dedicated scrollable conversation panels that initially show the latest 50 messages and retain the existing **Show previous messages** control.
+- Changed the staff-facing `in_progress` label to **Awaiting your reply** while preserving the player-facing **In progress** label.
+- Reworked the internal-note composer into a compact expandable control and aligned module settings with the standard administration toggle layout.
+- Added Livewire feature regressions, stable browser selectors, no-reload checks, mobile overflow coverage and release-manifest coverage for the new module files.
+- The cumulative update line remains based on `0.42.4`; the 0.44.16 package supports direct updates from 0.42.4 through 0.44.15.
+
+## 0.44.15 - 2026-07-29
+
+- Updated bundled `support-tickets` to 1.1.0 and fixed stale PHPUnit, Playwright and Pint contracts from 0.44.14.
+- Collapsed the internal-note composer by default while preserving staff-only notes and immutable edit history.
+- Split Editor access into independent view, reply/status and internal-note settings; Owner settings remain private and Auditor remains read-only.
+- Added limits of 10 tickets per player per day, 100 player messages per day, 300 total messages per ticket and 20 stored revisions per staff message.
+- Added cursor pagination for the latest 50 conversation messages and database indexes for player, staff assignment and retention queries.
+- Added configurable 6/12/24/36-month or indefinite retention, per-ticket cleanup protection, dry-run/manual cleanup, daily scheduled batch cleanup and an optional manual SQLite `VACUUM` command.
+- Expanded RU/EN module documentation and regressions for limits, pagination, permissions, indexes and cleanup safety.
+- The cumulative update line remains based on `0.42.4`; the 0.44.15 package supports direct updates from 0.42.4 through 0.44.14.
+
 ## 0.44.14 - 2026-07-29
 
 - Added bundled `support-tickets` module 1.0.0 with private player tickets, approved categories and player-facing statuses.

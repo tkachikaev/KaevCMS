@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { submitLogin } from '../support/authentication.mjs';
 import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const email = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
@@ -27,7 +28,12 @@ const signIn = async (page) => {
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(email);
     await page.locator('#password').fill(password);
-    await page.getByRole('button', { name: 'Войти в панель' }).click();
+    await submitLogin({
+        page,
+        postPath: '/admin/login',
+        label: 'Administrator login',
+        submit: () => page.getByRole('button', { name: 'Войти в панель' }).click(),
+    });
     await expect(page).toHaveURL(/\/admin$/);
 };
 
@@ -250,16 +256,19 @@ test('module foundation is available from the administrator sidebar', async ({ p
 
     const moduleCatalog = page.getByTestId('module-catalog');
     await expect(moduleCatalog).toHaveAttribute('data-layout', 'single-column');
-    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(2);
+    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(3);
 
     const promoModule = page.locator('[data-module-id="promo-codes"]');
     const dailyModule = page.locator('[data-module-id="daily-rewards"]');
+    const supportModule = page.locator('[data-module-id="support-tickets"]');
     await expect(promoModule.getByRole('heading', { name: 'Promo Codes' })).toBeVisible();
     await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
     await expect(promoModule.locator('.admin-catalog-side')).toBeVisible();
     await expect(dailyModule.getByRole('heading', { name: 'Daily Rewards' })).toBeVisible();
     await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
     await expect(dailyModule.locator('.admin-catalog-side')).toBeVisible();
+    await expect(supportModule.getByRole('heading', { name: 'Support Tickets' })).toBeVisible();
+    await expect(supportModule.locator('.admin-catalog-side')).toBeVisible();
 });
 
 test('theme catalogues expose semantic single-column catalogues', async ({ page }) => {

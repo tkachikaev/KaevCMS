@@ -103,19 +103,35 @@ final class ModuleAdminAccessRegistry
             throw new InvalidArgumentException('Module access route is outside its module namespace.');
         }
 
-        foreach (array_merge($viewRoles, $manageRoles) as $role) {
-            if (! $role instanceof AdminRole) {
-                throw new InvalidArgumentException('Module access roles must use AdminRole values.');
-            }
-        }
+        $viewRoles = $this->normalizeRoles($viewRoles);
+        $manageRoles = $this->normalizeRoles($manageRoles);
 
         $this->rules[] = new ModuleAdminAccessRule(
             moduleId: $moduleId,
             pattern: $pattern,
-            viewRoles: array_values($viewRoles),
-            manageRoles: array_values($manageRoles),
+            viewRoles: $viewRoles,
+            manageRoles: $manageRoles,
             prefix: $prefix,
             additionalAccess: $additionalAccess,
         );
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $roles
+     * @return list<AdminRole>
+     */
+    private function normalizeRoles(array $roles): array
+    {
+        $normalized = [];
+
+        foreach ($roles as $role) {
+            if (! $role instanceof AdminRole) {
+                throw new InvalidArgumentException('Module access roles must use AdminRole values.');
+            }
+
+            $normalized[] = $role;
+        }
+
+        return $normalized;
     }
 }

@@ -207,6 +207,20 @@ sudo find /var/www/kaevcms/storage \
     -type d -exec chmod 2775 {} \;
 ```
 
+Проверьте, что пользователь PHP-FPM действительно может создавать вложенные каталоги кэша и файлы:
+
+```bash
+cd /var/www/kaevcms
+sudo -u www-data php artisan kaevcms:runtime-directories --probe
+```
+
+Общий кэш приложения по умолчанию остаётся файловым, а счётчики ограничений входа и других запросов хранятся в основной базе CMS:
+
+```env
+CACHE_STORE=file
+CACHE_LIMITER=database
+```
+
 Web Installer должен создать `.env` в корне проекта. Временно разрешите группе `www-data` запись в корень:
 
 ```bash
@@ -612,6 +626,22 @@ sudo -u www-data test -w /var/www/kaevcms/public/uploads && echo uploads-writabl
 ```
 
 Не исправляйте проблему командой `chmod -R 777 /var/www/kaevcms`.
+
+
+Если Laravel пишет `storage/framework/cache/data/...: No such file or directory`, восстановите runtime-каталоги и проверьте запись от пользователя PHP-FPM:
+
+```bash
+cd /var/www/kaevcms
+sudo mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+sudo chown -R "$USER":www-data storage bootstrap/cache
+sudo chmod -R g+rwX storage bootstrap/cache
+sudo find storage bootstrap/cache -type d -exec chmod 2775 {} \;
+sudo -u www-data php artisan kaevcms:runtime-directories --probe
+php artisan optimize:clear
+sudo -u www-data php artisan kaevcms:runtime-directories --probe
+```
+
+`optimize:clear` не заменяет правильные права и владельца. Updater проверяет runtime-каталоги до очистки кэша и повторно создаёт и проверяет их после неё.
 
 ### `419 Page Expired` после входа по HTTP
 

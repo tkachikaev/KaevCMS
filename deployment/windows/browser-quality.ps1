@@ -19,8 +19,8 @@ if (-not (Test-Path -LiteralPath $playwrightPackage -PathType Leaf)) {
     throw 'Browser test dependencies are missing. This is expected after extracting a fresh ZIP. Run .\deployment\windows\browser-setup.ps1 once while internet access is available.'
 }
 
-node --test tests/browser/support/navigation.test.mjs
-if ($LASTEXITCODE -ne 0) { throw "Browser navigation helper tests failed with exit code $LASTEXITCODE." }
+node --test tests/browser/support/navigation.test.mjs tests/browser/support/authentication.test.mjs
+if ($LASTEXITCODE -ne 0) { throw "Browser helper tests failed with exit code $LASTEXITCODE." }
 
 npm run test:browser
 if ($LASTEXITCODE -ne 0) { throw "Browser tests failed with exit code $LASTEXITCODE." }

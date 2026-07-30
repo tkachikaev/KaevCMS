@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { submitLogin } from '../support/authentication.mjs';
 import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const email = process.env.PLAYWRIGHT_PLAYER_EMAIL || 'browser-player@example.test';
@@ -8,7 +9,12 @@ const signIn = async (page) => {
     await gotoWithLocalNetworkRetry(page, '/login');
     await page.locator('#login').fill(email);
     await page.locator('#password').fill(password);
-    await page.locator('form').getByRole('button').click();
+    await submitLogin({
+        page,
+        postPath: '/login',
+        label: 'Player login',
+        submit: () => page.locator('form').getByRole('button').click(),
+    });
     await expect(page).toHaveURL(/\/account$/);
 };
 
@@ -213,7 +219,12 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(adminEmail);
     await page.locator('#password').fill(adminPassword);
-    await page.getByRole('button', { name: 'Войти в панель' }).click();
+    await submitLogin({
+        page,
+        postPath: '/admin/login',
+        label: 'Administrator login',
+        submit: () => page.getByRole('button', { name: 'Войти в панель' }).click(),
+    });
     await expect(page).toHaveURL(/\/admin$/);
 
     await gotoWithLocalNetworkRetry(page, '/admin/account-themes');

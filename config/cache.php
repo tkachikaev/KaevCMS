@@ -2,6 +2,7 @@
 
 return [
     'default' => env('CACHE_STORE', 'file'),
+    'limiter' => env('CACHE_LIMITER', 'database'),
     'stores' => [
         'array' => [
             'driver' => 'array',
@@ -12,7 +13,7 @@ return [
             'connection' => env('DB_CACHE_CONNECTION'),
             'table' => env('DB_CACHE_TABLE', 'cache'),
             'lock_connection' => env('DB_CACHE_LOCK_CONNECTION'),
-            'lock_table' => env('DB_CACHE_LOCK_TABLE'),
+            'lock_table' => env('DB_CACHE_LOCK_TABLE', 'cache_locks'),
         ],
         'file' => [
             'driver' => 'file',

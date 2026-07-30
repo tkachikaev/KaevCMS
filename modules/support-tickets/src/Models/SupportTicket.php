@@ -28,6 +28,7 @@ use KaevCMS\Modules\SupportTickets\Enums\SupportTicketStatus;
  * @property Carbon|null $last_player_message_at
  * @property Carbon|null $last_staff_message_at
  * @property Carbon|null $closed_at
+ * @property bool $retention_protected
  * @property-read User|null $user
  * @property-read Admin|null $assignedAdmin
  * @property-read Collection<int, SupportTicketMessage> $messages
@@ -35,9 +36,22 @@ use KaevCMS\Modules\SupportTickets\Enums\SupportTicketStatus;
 final class SupportTicket extends Model
 {
     public const SUBJECT_MAX = 120;
+
     public const INITIAL_MESSAGE_MAX = 3000;
+
     public const MESSAGE_MAX = 2000;
+
     public const MAX_OPEN_TICKETS_PER_USER = 5;
+
+    public const MAX_TICKETS_PER_USER_PER_DAY = 10;
+
+    public const MAX_PLAYER_MESSAGES_PER_DAY = 100;
+
+    public const MAX_MESSAGES_PER_TICKET = 300;
+
+    public const MAX_REVISIONS_PER_MESSAGE = 20;
+
+    public const MESSAGES_PER_PAGE = 50;
 
     protected $table = 'module_support_tickets';
 
@@ -55,6 +69,7 @@ final class SupportTicket extends Model
         'last_player_message_at',
         'last_staff_message_at',
         'closed_at',
+        'retention_protected',
     ];
 
     protected function casts(): array
@@ -70,6 +85,7 @@ final class SupportTicket extends Model
             'last_player_message_at' => 'datetime',
             'last_staff_message_at' => 'datetime',
             'closed_at' => 'datetime',
+            'retention_protected' => 'boolean',
         ];
     }
 

@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Auth\AdminAccessPolicy;
 use App\Models\Admin;
-use App\Support\Modules\ModuleAdminAccessRegistry;
+use App\Support\Modules\ModuleAdminAuthorizer;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +13,7 @@ final class EnforceAdminAccess
 {
     public function __construct(
         private readonly AdminAccessPolicy $policy,
-        private readonly ModuleAdminAccessRegistry $moduleAccess,
+        private readonly ModuleAdminAuthorizer $moduleAccess,
     ) {}
 
     public function handle(Request $request, Closure $next): Response

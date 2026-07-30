@@ -4,6 +4,7 @@ namespace App\Services\Updates;
 
 use App\Models\SystemUpdate;
 use App\Services\AuditLogger;
+use App\Services\Infrastructure\RuntimeDirectoryManager;
 use App\Services\Releases\InstalledVersion;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
@@ -19,6 +20,7 @@ final class SystemUpdateRecovery
         private readonly UpdateFilesystemTransaction $filesystem,
         private readonly UpdateLock $updateLock,
         private readonly AuditLogger $auditLogger,
+        private readonly RuntimeDirectoryManager $runtimeDirectories,
         private readonly Application $application,
     ) {}
 
@@ -76,7 +78,10 @@ final class SystemUpdateRecovery
             }
 
             $this->installedVersion->mark($update->from_version);
+            $this->runtimeDirectories->ensure(true);
             $this->runArtisan('optimize:clear', $log);
+            $this->runtimeDirectories->ensure(true);
+            $log->write('Runtime directories recreated and write-tested after recovery cache clear.');
             $this->runArtisan('queue:restart', $log);
 
             if ($this->application->isDownForMaintenance()) {

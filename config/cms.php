@@ -77,14 +77,18 @@ return [
     ],
 
     'public_auth' => [
-        'login_ip_per_minute' => 10,
-        'login_identity_per_hour' => 20,
-        'registration_ip_per_minute' => 5,
-        'registration_identity_per_hour' => 5,
-        'password_email_ip_per_minute' => 5,
-        'password_email_identity_per_hour' => 3,
-        'password_reset_ip_per_minute' => 5,
-        'password_reset_identity_per_hour' => 5,
+        'login_ip_per_minute' => (int) env('PUBLIC_LOGIN_IP_PER_MINUTE', 10),
+        'login_identity_per_hour' => (int) env('PUBLIC_LOGIN_IDENTITY_PER_HOUR', 20),
+        'registration_ip_per_minute' => (int) env('PUBLIC_REGISTRATION_IP_PER_MINUTE', 5),
+        'registration_identity_per_hour' => (int) env('PUBLIC_REGISTRATION_IDENTITY_PER_HOUR', 5),
+        'password_email_ip_per_minute' => (int) env('PUBLIC_PASSWORD_EMAIL_IP_PER_MINUTE', 5),
+        'password_email_identity_per_hour' => (int) env('PUBLIC_PASSWORD_EMAIL_IDENTITY_PER_HOUR', 3),
+        'password_reset_ip_per_minute' => (int) env('PUBLIC_PASSWORD_RESET_IP_PER_MINUTE', 5),
+        'password_reset_identity_per_hour' => (int) env('PUBLIC_PASSWORD_RESET_IDENTITY_PER_HOUR', 5),
+    ],
+
+    'testing' => [
+        'browser_login_limit' => (int) env('BROWSER_TEST_LOGIN_LIMIT', 0),
     ],
 
     'admin' => [

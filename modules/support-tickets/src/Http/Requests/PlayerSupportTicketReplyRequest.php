@@ -3,7 +3,7 @@
 namespace KaevCMS\Modules\SupportTickets\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
+use KaevCMS\Modules\SupportTickets\Services\SupportTicketSettings;
 
 final class PlayerSupportTicketReplyRequest extends FormRequest
 {
@@ -20,7 +20,12 @@ final class PlayerSupportTicketReplyRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return ['body' => ['required', 'string', 'min:1', 'max:'.SupportTicket::MESSAGE_MAX]];
+        return ['body' => [
+            'required',
+            'string',
+            'min:1',
+            'max:'.app(SupportTicketSettings::class)->messageMaxLength(),
+        ]];
     }
 
     /** @return array<string, string> */

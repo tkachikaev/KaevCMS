@@ -160,15 +160,23 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiters(SecuritySettings $securitySettings): void
     {
-        RateLimiter::for('public-login', static function (Request $request): array {
+        $browserLoginLimit = config('app.env') === 'testing'
+            ? max(0, (int) config('cms.testing.browser_login_limit', 0))
+            : 0;
+
+        RateLimiter::for('public-login', static function (Request $request) use ($browserLoginLimit): array {
             $ip = hash('sha256', $request->ip() ?? 'unknown');
             $identity = hash('sha256', Str::lower(trim((string) $request->input('login', 'unknown'))));
+            $perMinute = $browserLoginLimit > 0
+                ? $browserLoginLimit
+                : max(1, (int) config('cms.public_auth.login_ip_per_minute', 10));
+            $perHour = $browserLoginLimit > 0
+                ? $browserLoginLimit
+                : max(1, (int) config('cms.public_auth.login_identity_per_hour', 20));
 
             return [
-                Limit::perMinute(max(1, (int) config('cms.public_auth.login_ip_per_minute', 10)))
-                    ->by('public-login-ip:'.$ip),
-                Limit::perHour(max(1, (int) config('cms.public_auth.login_identity_per_hour', 20)))
-                    ->by('public-login-identity:'.$identity),
+                Limit::perMinute($perMinute)->by('public-login-ip:'.$ip),
+                Limit::perHour($perHour)->by('public-login-identity:'.$identity),
             ];
         });
 
@@ -208,15 +216,16 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
-        RateLimiter::for('admin-login-ip', static function (Request $request) use ($securitySettings): array {
+        RateLimiter::for('admin-login-ip', static function (Request $request) use ($securitySettings, $browserLoginLimit): array {
             $ip = $request->ip() ?? 'unknown';
             $key = 'admin-login-ip:'.hash('sha256', $ip);
-
             $settings = $securitySettings->values();
+            $perMinute = $browserLoginLimit > 0 ? $browserLoginLimit : $settings['login_ip_per_minute'];
+            $perHour = $browserLoginLimit > 0 ? $browserLoginLimit : $settings['login_ip_per_hour'];
 
             return [
-                Limit::perMinute($settings['login_ip_per_minute'])->by($key.':minute'),
-                Limit::perHour($settings['login_ip_per_hour'])->by($key.':hour'),
+                Limit::perMinute($perMinute)->by($key.':minute'),
+                Limit::perHour($perHour)->by($key.':hour'),
             ];
         });
 

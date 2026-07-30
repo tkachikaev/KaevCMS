@@ -2,68 +2,112 @@
 
 ## Purpose
 
-The module adds private player tickets and a dedicated administration interface. All data is stored in the main KaevCMS database. LoginServer and GameServer databases are not used.
+The module adds private player tickets and a dedicated administration interface. All records are stored in the main KaevCMS database. LoginServer and GameServer databases are not used.
 
 ## Player features
 
-- create a ticket;
-- fixed categories: Gameplay, Game account, Technical problem, Website error, Donations and bonuses, Complaint, Other;
-- “My tickets” list;
-- private conversation history;
+- open the “My tickets” list first;
+- reveal the new-ticket form only after pressing “Create ticket”;
+- create a ticket using an approved category;
+- use the private conversation without full-page reloads;
+- New, In progress, Awaiting your reply and Closed statuses;
 - close an own ticket;
-- read a closed ticket without replying or reopening it.
+- keep reading a closed ticket without reopening it.
 
-Player-facing statuses:
-
-- **New** — the ticket was created;
-- **In progress** — staff accepted it or the player sent a new reply;
-- **Awaiting your reply** — staff replied to the player;
-- **Closed** — the conversation is complete.
+Categories: gameplay, game account, technical problem, website error, donations and bonuses, complaint and other.
 
 ## Staff features
 
-- Owner and Administrator can view and process tickets;
-- Auditor has read-only access;
-- Editor receives access only when “Allow editors to process tickets” is enabled;
-- assign a ticket to self;
-- public player replies;
-- staff-only internal notes;
-- close and reopen tickets;
-- status, category and assignment filters;
-- search by number, subject, player name or email;
-- edit only the staff member’s own messages;
-- preserve the previous body, editor and edit timestamp for every revision.
+Owner and Administrator can view and process every ticket. Auditor remains read-only.
 
-Enabling Editor access does not grant global module-management permissions and does not allow Editors to change support settings.
+Editor access is configured separately for:
+
+- ticket viewing;
+- replies, assignment and status actions;
+- internal notes.
+
+Editors never receive global module-management permissions and cannot change support settings. Reply and note permissions are automatically disabled when viewing is disabled.
+
+Staff can edit only their own replies or notes. The previous body, editor and edit time are preserved. Replies, assignment, close/reopen actions, edits and internal notes use Livewire without full-page reloads. The internal-note composer is collapsed by default and uses a compact expandable panel.
+
+## Status labels
+
+Players see New, In progress, Awaiting your reply and Closed. In the administration panel, `in_progress` is rendered as “Awaiting your reply” so staff can identify tickets that require action. After a staff reply, the player sees “Awaiting your reply” while staff sees “Awaiting player reply”.
 
 ## Limits
 
+Owner configures the limits in module settings. Secure defaults are:
+
 - subject: 3–120 characters;
 - first message: 3–3000 characters;
-- replies and internal notes: up to 2000 characters;
-- at most 5 simultaneously open tickets per player;
-- identical messages within one minute are rejected;
-- ticket creation: at most 3 per 10 minutes;
-- player replies: at most 10 per minute;
-- staff messages: at most 30 per minute.
+- reply or note: up to 2000 characters;
+- at most 5 simultaneously open tickets;
+- at most 10 new tickets per day;
+- at most 100 player messages per day;
+- at most 300 messages in one ticket;
+- at most 20 stored revisions of one message.
 
-Limits are enforced by both browser fields and server-side validation.
+Allowed ranges:
+
+- new tickets per day: 1–50;
+- player messages per day: 10–1000;
+- messages per ticket: 20–2000;
+- revisions per message: 1–100;
+- simultaneously open tickets: 1–50;
+- subject maximum length: 30–120;
+- first-message maximum length: 300–10,000;
+- reply or note maximum length: 100–10,000.
+
+Identical messages within one minute are rejected and route throttles provide an additional request-rate limit. Every value is enforced server-side and the interface uses the same limits for field attributes and character counters. Only Owner can change these settings.
+
+## Pagination
+
+The conversation is contained in a dedicated scrollable panel. The latest 50 messages are shown first and older history is loaded with “Show previous messages”. Internal notes are never included in player queries.
+
+## Retention and cleanup
+
+Closed tickets are kept for 24 months by default. Owner can select 6, 12, 24 or 36 months, or keep them forever.
+
+Cleanup:
+
+- never removes active tickets;
+- preserves tickets marked “Keep indefinitely”;
+- deletes in batches of 100 tickets;
+- cascades to messages, internal notes and revisions;
+- can run automatically once per day;
+- provides a dry-run preview.
+
+Commands:
+
+```bash
+php artisan kaevcms:support-tickets-cleanup --dry-run
+php artisan kaevcms:support-tickets-cleanup
+php artisan kaevcms:support-tickets-cleanup --batch=100
+```
+
+SQLite can be rebuilt manually during maintenance and after a verified backup:
+
+```bash
+php artisan kaevcms:support-tickets-cleanup --vacuum
+```
+
+Normal deletes make pages reusable but may not immediately shrink the SQLite file. `VACUUM` rebuilds the file and can temporarily block writes. Scheduled cleanup never runs `VACUUM`.
 
 ## Installation and updates
 
-The module is bundled with KaevCMS. The Owner enables it from Modules. On first enable KaevCMS applies the module migrations and records their SHA256 hashes. Applied migrations must not be modified or removed.
+Module version 1.3.1 requires KaevCMS 0.44.20 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.3.1 adds no new migration.
 
-Disabling the module removes its routes and navigation but preserves tickets, messages, notes and revision history.
+The module is bundled with KaevCMS. Module migrations are applied with SHA256 tracking. Applied migrations must not be modified or removed. Disabling the module hides routes and navigation without deleting data.
 
 ## Module artwork
 
-Place the prepared image at:
+Place the prepared image at the shared module path:
 
 ```text
 modules/support-tickets/assets/module.webp
 ```
 
-Requirements: WebP, 512×512, no larger than 2 MB. No manifest field is required.
+Use WebP, 512×512, no larger than 2 MB. No `module.json` field is required.
 
 ## Tables
 
@@ -72,19 +116,19 @@ Requirements: WebP, 512×512, no larger than 2 MB. No manifest field is required
 - `module_support_ticket_messages`;
 - `module_support_ticket_message_revisions`.
 
-Messages are not silently replaced. Players cannot see internal notes or previous revisions of staff replies.
-
-## Developer checks
+## Checks
 
 ```powershell
 .\deployment\windows\quality.ps1
 .\deployment\windows\browser-quality.ps1
 ```
 
-Module tests:
+Primary tests:
 
 ```text
 tests/Feature/Modules/SupportTicketsModuleTest.php
 tests/Unit/ModuleAdminAccessRegistryTest.php
 tests/browser/specs/support-tickets.spec.mjs
 ```
+
+Administration Livewire actions use the shared `ModuleAdminAuthorizer`; the normal registered route name and `/livewire/update` use the same access decision.

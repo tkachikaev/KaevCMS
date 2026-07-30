@@ -361,7 +361,7 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('data-admin-menu-group="modules"', $navigation);
         $this->assertStringNotContainsString("route('admin.settings.game-server-features.index')", $navigation);
         $modulesLinkPosition = strpos($navigation, "route('admin.modules.index')");
-        $moduleLinksPosition = strpos($navigation, 'ModuleNavigationRegistry::class');
+        $moduleLinksPosition = strpos($navigation, '@foreach($moduleAdminLinks as $moduleLink)');
         if (is_int($modulesLinkPosition) === false || is_int($moduleLinksPosition) === false) {
             $this->fail('The module navigation group is incomplete.');
         }

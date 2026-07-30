@@ -7,6 +7,10 @@ use KaevCMS\Modules\SupportTickets\Http\Controllers\AdminSupportTicketSettingsCo
 Route::get('/', [AdminSupportTicketController::class, 'index'])->name('index');
 Route::get('/settings', [AdminSupportTicketSettingsController::class, 'edit'])->name('settings');
 Route::put('/settings', [AdminSupportTicketSettingsController::class, 'update'])->name('settings.update');
+Route::post('/settings/cleanup-preview', [AdminSupportTicketSettingsController::class, 'previewCleanup'])
+    ->name('settings.cleanup-preview');
+Route::post('/settings/cleanup', [AdminSupportTicketSettingsController::class, 'runCleanup'])
+    ->name('settings.cleanup');
 Route::get('/{ticket}', [AdminSupportTicketController::class, 'show'])->whereNumber('ticket')->name('show');
 Route::patch('/{ticket}/assign', [AdminSupportTicketController::class, 'assign'])->whereNumber('ticket')->name('assign');
 Route::post('/{ticket}/reply', [AdminSupportTicketController::class, 'reply'])
@@ -19,6 +23,9 @@ Route::post('/{ticket}/note', [AdminSupportTicketController::class, 'note'])
     ->name('note');
 Route::patch('/{ticket}/close', [AdminSupportTicketController::class, 'close'])->whereNumber('ticket')->name('close');
 Route::patch('/{ticket}/reopen', [AdminSupportTicketController::class, 'reopen'])->whereNumber('ticket')->name('reopen');
+Route::patch('/{ticket}/retention-protection', [AdminSupportTicketController::class, 'protection'])
+    ->whereNumber('ticket')
+    ->name('retention-protection');
 Route::put('/{ticket}/messages/{message}', [AdminSupportTicketController::class, 'editMessage'])
     ->whereNumber(['ticket', 'message'])
     ->name('messages.update');

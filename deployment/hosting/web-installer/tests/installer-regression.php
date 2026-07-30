@@ -149,6 +149,8 @@ try {
     assertInstaller(is_string($installerSource), 'The installer source must be readable.');
     assertInstaller(! str_contains($installerSource, 'requireSecureInstallerSubmission'), 'HTTP password submission must not be blocked by a transport gate.');
     assertInstaller(! str_contains($installerSource, 'https_required'), 'The obsolete blocking HTTPS validation message must be removed.');
+    assertInstaller(str_contains($installerSource, "callArtisanOrFail('kaevcms:runtime-directories', ['--probe' => true])"), 'The installer must recreate and write-test runtime directories after clearing caches.');
+    assertInstaller(str_contains($installerSource, '$probeDirectory = $probeRoot.\'/nested\''), 'The installer write check must verify nested directory creation.');
 
     $rateState = [];
     enforceInstallerRateLimit($rateState, 'database', 2, 60, 'limited');

@@ -9,12 +9,22 @@ use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use KaevCMS\Modules\SupportTickets\Enums\SupportTicketCategory;
 use KaevCMS\Modules\SupportTickets\Enums\SupportTicketStatus;
+use KaevCMS\Modules\SupportTickets\Livewire\AccountTicketConversation;
+use KaevCMS\Modules\SupportTickets\Livewire\AccountTicketIndex;
+use KaevCMS\Modules\SupportTickets\Livewire\AdminTicketConversation;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessage;
+use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessageRevision;
+use KaevCMS\Modules\SupportTickets\Models\SupportTicketSetting;
+use KaevCMS\Modules\SupportTickets\Services\SupportTicketCleanupService;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class SupportTicketsModuleTest extends TestCase
@@ -43,9 +53,20 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_support_tickets'));
         $this->assertTrue(Schema::hasTable('module_support_ticket_messages'));
         $this->assertTrue(Schema::hasTable('module_support_ticket_message_revisions'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'allow_editor_view'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'retention_months'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'max_tickets_per_day'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'max_player_messages_per_day'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'max_messages_per_ticket'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'max_revisions_per_message'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'max_open_tickets_per_user'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'subject_max_length'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'initial_message_max_length'));
+        $this->assertTrue(Schema::hasColumn('module_support_ticket_settings', 'message_max_length'));
+        $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.0.0',
+            'version' => '1.3.1',
             'enabled' => true,
         ]);
 
@@ -76,7 +97,7 @@ class SupportTicketsModuleTest extends TestCase
         ], array_column(SupportTicketStatus::cases(), 'value'));
     }
 
-    public function test_player_creates_ticket_with_fixed_category_and_length_limits(): void
+    public function test_player_creates_ticket_with_default_category_and_length_limits(): void
     {
         $user = User::factory()->create(['name' => 'Support Player']);
 
@@ -251,7 +272,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertSame(SupportTicketStatus::AwaitingPlayer, $ticket->fresh()->status);
     }
 
-    public function test_owner_and_administrator_manage_tickets_editor_is_optional_and_auditor_is_read_only(): void
+    public function test_owner_and_administrator_manage_tickets_editor_permissions_are_separate_and_auditor_is_read_only(): void
     {
         $user = User::factory()->create();
         $ticket = $this->ticket($user);
@@ -278,13 +299,20 @@ class SupportTicketsModuleTest extends TestCase
             ->post('/admin/extensions/support-tickets/'.$ticket->id.'/reply', ['body' => 'Нельзя'])
             ->assertForbidden();
 
-        $this->actingAs($owner, 'admin')
-            ->put('/admin/extensions/support-tickets/settings', ['allow_editor_management' => '1'])
-            ->assertRedirect();
+        $this->updateSettings($owner, allowEditorView: true);
 
         $this->actingAs($editor, 'admin')
             ->get('/admin/extensions/support-tickets/'.$ticket->id)
-            ->assertOk();
+            ->assertOk()
+            ->assertDontSee(__('module-support-tickets::messages.reply_to_player'));
+        $this->actingAs($editor, 'admin')
+            ->post('/admin/extensions/support-tickets/'.$ticket->id.'/reply', ['body' => 'Ответ запрещён'])
+            ->assertForbidden();
+        $this->actingAs($editor, 'admin')
+            ->post('/admin/extensions/support-tickets/'.$ticket->id.'/note', ['body' => 'Заметка запрещена'])
+            ->assertForbidden();
+
+        $this->updateSettings($owner, allowEditorView: true, allowEditorReply: true);
         $this->actingAs($editor, 'admin')
             ->post('/admin/extensions/support-tickets/'.$ticket->id.'/reply', ['body' => 'Ответ редактора'])
             ->assertRedirect();
@@ -292,12 +320,31 @@ class SupportTicketsModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'admin_id' => $editor->id,
             'body' => 'Ответ редактора',
+            'is_internal' => false,
+        ]);
+        $this->actingAs($editor, 'admin')
+            ->post('/admin/extensions/support-tickets/'.$ticket->id.'/note', ['body' => 'Заметка пока запрещена'])
+            ->assertForbidden();
+
+        $this->updateSettings(
+            $owner,
+            allowEditorView: true,
+            allowEditorReply: true,
+            allowEditorInternalNotes: true,
+        );
+        $this->actingAs($editor, 'admin')
+            ->post('/admin/extensions/support-tickets/'.$ticket->id.'/note', ['body' => 'Заметка редактора'])
+            ->assertRedirect();
+        $this->assertDatabaseHas('module_support_ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'admin_id' => $editor->id,
+            'body' => 'Заметка редактора',
+            'is_internal' => true,
         ]);
 
         $this->actingAs($editor, 'admin')
             ->get('/admin/extensions/support-tickets/settings')
             ->assertForbidden();
-
         $this->actingAs($administrator, 'admin')
             ->get('/admin/extensions/support-tickets/settings')
             ->assertForbidden();
@@ -342,7 +389,6 @@ class SupportTicketsModuleTest extends TestCase
             'previous_body' => 'Ответ с опечаткой',
         ]);
 
-
         $this->actingAs($user)
             ->get('/modules/support-tickets/'.$ticket->id)
             ->assertOk()
@@ -351,6 +397,24 @@ class SupportTicketsModuleTest extends TestCase
                 'date' => $message->fresh()->edited_at?->format('d.m.Y H:i'),
             ]))
             ->assertDontSee('Ответ с опечаткой');
+
+        for ($index = 1; $index < SupportTicket::MAX_REVISIONS_PER_MESSAGE; $index++) {
+            SupportTicketMessageRevision::query()->create([
+                'message_id' => $message->id,
+                'editor_admin_id' => $first->id,
+                'editor_name_snapshot' => $first->name,
+                'previous_body' => 'Архивная версия '.$index,
+                'edited_at' => now(),
+            ]);
+        }
+
+        $this->actingAs($first, 'admin')
+            ->from('/admin/extensions/support-tickets/'.$ticket->id)
+            ->put('/admin/extensions/support-tickets/'.$ticket->id.'/messages/'.$message->id, [
+                'body' => 'Правка сверх лимита истории',
+            ])
+            ->assertSessionHasErrors('body');
+        $this->assertSame('Исправленный ответ', $message->fresh()->body);
     }
 
     public function test_duplicate_messages_and_open_ticket_flood_are_rejected(): void
@@ -382,6 +446,558 @@ class SupportTicketsModuleTest extends TestCase
                 'body' => 'Оно должно быть отклонено.',
             ])
             ->assertSessionHasErrors('subject');
+    }
+
+    public function test_daily_and_per_ticket_limits_are_enforced(): void
+    {
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user, SupportTicketStatus::InProgress);
+
+        for ($index = 1; $index < SupportTicket::MAX_PLAYER_MESSAGES_PER_DAY; $index++) {
+            $ticket->messages()->create([
+                'author_type' => SupportTicketMessage::AUTHOR_PLAYER,
+                'user_id' => $user->id,
+                'author_name_snapshot' => $user->name,
+                'is_internal' => false,
+                'body' => 'Дневное сообщение '.$index,
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->from('/modules/support-tickets/'.$ticket->id)
+            ->post('/modules/support-tickets/'.$ticket->id.'/reply', ['body' => 'Сообщение сверх суточного лимита'])
+            ->assertSessionHasErrors('body');
+
+        $anotherUser = User::factory()->create();
+        for ($index = 0; $index < SupportTicket::MAX_TICKETS_PER_USER_PER_DAY; $index++) {
+            $dailyTicket = $this->ticket($anotherUser, SupportTicketStatus::Closed, 'Закрытое обращение '.$index);
+            $dailyTicket->forceFill(['created_at' => now()->subMinutes($index)])->save();
+        }
+
+        $this->actingAs($anotherUser)
+            ->from('/modules/support-tickets')
+            ->post('/modules/support-tickets', [
+                'category' => SupportTicketCategory::Other->value,
+                'subject' => 'Обращение сверх суточного лимита',
+                'body' => 'Оно не должно создаться.',
+            ])
+            ->assertSessionHasErrors('subject');
+
+        $staffUser = User::factory()->create();
+        $fullTicket = $this->ticket($staffUser, SupportTicketStatus::InProgress);
+        $admin = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        for ($index = 1; $index < SupportTicket::MAX_MESSAGES_PER_TICKET; $index++) {
+            $fullTicket->messages()->create([
+                'author_type' => SupportTicketMessage::AUTHOR_ADMIN,
+                'admin_id' => $admin->id,
+                'author_name_snapshot' => $admin->name,
+                'admin_role_snapshot' => $admin->role->value,
+                'is_internal' => false,
+                'body' => 'Сообщение переполненного тикета '.$index,
+            ]);
+        }
+
+        $this->actingAs($admin, 'admin')
+            ->from('/admin/extensions/support-tickets/'.$fullTicket->id)
+            ->post('/admin/extensions/support-tickets/'.$fullTicket->id.'/reply', ['body' => 'Сообщение 301'])
+            ->assertSessionHasErrors('body');
+    }
+
+    public function test_livewire_conversation_loads_fifty_latest_messages_first(): void
+    {
+        $user = User::factory()->create();
+        $admin = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        $ticket = $this->ticket($user, SupportTicketStatus::InProgress);
+
+        for ($index = 1; $index <= 55; $index++) {
+            $ticket->messages()->create([
+                'author_type' => SupportTicketMessage::AUTHOR_ADMIN,
+                'admin_id' => $admin->id,
+                'author_name_snapshot' => $admin->name,
+                'admin_role_snapshot' => $admin->role->value,
+                'is_internal' => false,
+                'body' => sprintf('Сообщение %02d', $index),
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->get('/modules/support-tickets/'.$ticket->id)
+            ->assertOk()
+            ->assertSee('Сообщение 55')
+            ->assertDontSee('Начальное сообщение')
+            ->assertSee(__('module-support-tickets::messages.show_previous_messages'));
+
+        $this->actingAs($admin, 'admin')
+            ->get('/admin/extensions/support-tickets/'.$ticket->id)
+            ->assertOk()
+            ->assertSee('Сообщение 55')
+            ->assertDontSee('Начальное сообщение')
+            ->assertSee(__('module-support-tickets::messages.show_previous_messages'));
+    }
+
+    public function test_cleanup_deletes_only_expired_unprotected_closed_tickets(): void
+    {
+        $user = User::factory()->create();
+        $old = $this->ticket($user, SupportTicketStatus::Closed, 'Старое удаляемое');
+        $protected = $this->ticket($user, SupportTicketStatus::Closed, 'Старое защищённое');
+        $active = $this->ticket($user, SupportTicketStatus::InProgress, 'Активное');
+        $recent = $this->ticket($user, SupportTicketStatus::Closed, 'Недавнее закрытое');
+
+        $old->update(['closed_at' => now()->subMonths(25)]);
+        $protected->update(['closed_at' => now()->subMonths(25), 'retention_protected' => true]);
+        $recent->update(['closed_at' => now()->subMonths(2)]);
+
+        $message = $old->messages()->firstOrFail();
+        SupportTicketMessageRevision::query()->create([
+            'message_id' => $message->id,
+            'editor_name_snapshot' => 'Support',
+            'previous_body' => 'Старая версия',
+            'edited_at' => now()->subMonths(25),
+        ]);
+
+        $cleanup = app(SupportTicketCleanupService::class);
+        $preview = $cleanup->preview(24);
+        $this->assertSame(1, $preview['tickets']);
+        $this->assertSame(1, $preview['messages']);
+        $this->assertSame(1, $preview['revisions']);
+
+        $result = $cleanup->cleanup(24, 1);
+        $this->assertSame(1, $result['tickets']);
+        $this->assertSame(1, $result['messages']);
+        $this->assertSame(1, $result['revisions']);
+        $this->assertDatabaseMissing('module_support_tickets', ['id' => $old->id]);
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $protected->id]);
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $active->id]);
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $recent->id]);
+    }
+
+    public function test_cleanup_rechecks_selected_tickets_before_delete_and_reports_only_actual_deletions(): void
+    {
+        $user = User::factory()->create();
+        $reopened = $this->ticket($user, SupportTicketStatus::Closed, 'Переоткрыто во время очистки');
+        $protected = $this->ticket($user, SupportTicketStatus::Closed, 'Защищено во время очистки');
+        $reopened->update(['closed_at' => now()->subMonths(25)]);
+        $protected->update(['closed_at' => now()->subMonths(25)]);
+
+        $changed = false;
+        DB::listen(function (QueryExecuted $query) use (&$changed, $reopened, $protected): void {
+            if (
+                $changed
+                || ! str_starts_with(strtolower(ltrim($query->sql)), 'select')
+                || ! str_contains(strtolower($query->sql), 'module_support_tickets')
+            ) {
+                return;
+            }
+
+            $changed = true;
+            SupportTicket::query()->whereKey($reopened->id)->update([
+                'status' => SupportTicketStatus::InProgress->value,
+                'closed_at' => null,
+            ]);
+            SupportTicket::query()->whereKey($protected->id)->update([
+                'retention_protected' => true,
+            ]);
+        });
+
+        $result = app(SupportTicketCleanupService::class)->cleanup(24, 2);
+
+        $this->assertTrue($changed);
+        $this->assertSame(0, $result['tickets']);
+        $this->assertSame(0, $result['messages']);
+        $this->assertSame(0, $result['revisions']);
+        $this->assertDatabaseHas('module_support_tickets', [
+            'id' => $reopened->id,
+            'status' => SupportTicketStatus::InProgress->value,
+        ]);
+        $this->assertDatabaseHas('module_support_tickets', [
+            'id' => $protected->id,
+            'retention_protected' => true,
+        ]);
+    }
+
+    public function test_staff_can_protect_a_ticket_and_only_owner_can_run_cleanup_actions(): void
+    {
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user, SupportTicketStatus::Closed);
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $administrator = Admin::factory()->create(['role' => AdminRole::Administrator]);
+
+        $this->actingAs($administrator, 'admin')
+            ->patch('/admin/extensions/support-tickets/'.$ticket->id.'/retention-protection', ['protected' => true])
+            ->assertRedirect();
+        $this->assertTrue($ticket->fresh()->retention_protected);
+
+        $this->actingAs($administrator, 'admin')
+            ->post('/admin/extensions/support-tickets/settings/cleanup-preview')
+            ->assertForbidden();
+
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/extensions/support-tickets/settings/cleanup-preview')
+            ->assertRedirect()
+            ->assertSessionHas('support_cleanup_preview');
+    }
+
+    public function test_support_ticket_indexes_cover_lists_assignments_and_retention(): void
+    {
+        $indexNames = array_column(Schema::getIndexes('module_support_tickets'), 'name');
+
+        $this->assertContains('support_tickets_user_last_id_index', $indexNames);
+        $this->assertContains('support_tickets_last_id_index', $indexNames);
+        $this->assertContains('support_tickets_assigned_last_id_index', $indexNames);
+        $this->assertContains('support_tickets_retention_index', $indexNames);
+        $this->assertContains('support_tickets_user_created_id_index', $indexNames);
+
+        $messageIndexNames = array_column(Schema::getIndexes('module_support_ticket_messages'), 'name');
+        $this->assertContains('support_messages_player_daily_index', $messageIndexNames);
+    }
+
+    public function test_editor_reply_and_note_permissions_cannot_remain_enabled_without_view_access(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->put('/admin/extensions/support-tickets/settings', [
+                'allow_editor_view' => false,
+                'allow_editor_reply' => true,
+                'allow_editor_internal_notes' => true,
+                'retention_months' => 24,
+                'automatic_cleanup_enabled' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('module_support_ticket_settings', [
+            'id' => 1,
+            'allow_editor_view' => false,
+            'allow_editor_reply' => false,
+            'allow_editor_internal_notes' => false,
+        ]);
+    }
+
+    public function test_cleanup_command_supports_dry_run_and_respects_disabled_automatic_cleanup(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user, SupportTicketStatus::Closed, 'Старое обращение для команды');
+        $ticket->update(['closed_at' => now()->subMonths(25)]);
+
+        $this->artisan('kaevcms:support-tickets-cleanup', ['--dry-run' => true])
+            ->expectsOutput('Dry run completed. No records were deleted.')
+            ->assertSuccessful();
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $ticket->id]);
+
+        $this->actingAs($owner, 'admin')
+            ->put('/admin/extensions/support-tickets/settings', [
+                'allow_editor_view' => false,
+                'allow_editor_reply' => false,
+                'allow_editor_internal_notes' => false,
+                'retention_months' => 24,
+                'automatic_cleanup_enabled' => false,
+            ])
+            ->assertRedirect();
+
+        $this->artisan('kaevcms:support-tickets-cleanup', ['--scheduled' => true])
+            ->expectsOutput('Automatic support ticket cleanup is disabled.')
+            ->assertSuccessful();
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $ticket->id]);
+    }
+
+    public function test_livewire_account_page_opens_with_ticket_list_and_reveals_creation_form_on_demand(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+        Livewire::test(AccountTicketIndex::class)
+            ->assertSet('creating', false)
+            ->assertSee('Мои обращения')
+            ->assertDontSee('Кратко опишите проблему')
+            ->call('openCreateForm')
+            ->assertSet('creating', true)
+            ->assertSee('Кратко опишите проблему')
+            ->assertSeeHtml('data-testid="support-ticket-create-form"');
+    }
+
+    public function test_livewire_player_reply_preserves_the_route_rate_limit(): void
+    {
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user, SupportTicketStatus::AwaitingPlayer);
+        $rateLimitKey = 'support-ticket-player-reply:'.$user->getAuthIdentifier();
+        RateLimiter::clear($rateLimitKey);
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            RateLimiter::hit($rateLimitKey, 60);
+        }
+
+        $this->actingAs($user);
+        Livewire::test(AccountTicketConversation::class, ['ticketId' => $ticket->id])
+            ->set('body', 'Сообщение сверх минутного лимита')
+            ->call('reply')
+            ->assertHasErrors('body');
+
+        $this->assertDatabaseMissing('module_support_ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'body' => 'Сообщение сверх минутного лимита',
+        ]);
+        RateLimiter::clear($rateLimitKey);
+    }
+
+    public function test_livewire_player_reply_updates_conversation_without_redirect_contract(): void
+    {
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user, SupportTicketStatus::AwaitingPlayer);
+
+        $this->actingAs($user);
+        Livewire::test(AccountTicketConversation::class, ['ticketId' => $ticket->id])
+            ->set('body', 'Дополнительная информация от игрока')
+            ->call('reply')
+            ->assertSet('body', '')
+            ->assertSee('Дополнительная информация от игрока')
+            ->assertSee('В работе');
+
+        $this->assertSame(SupportTicketStatus::InProgress, $ticket->fresh()->status);
+    }
+
+    public function test_livewire_admin_reply_uses_staff_status_and_internal_note_is_collapsed_by_default(): void
+    {
+        $user = User::factory()->create();
+        $admin = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        $ticket = $this->ticket($user, SupportTicketStatus::InProgress);
+
+        $this->actingAs($admin, 'admin');
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])
+            ->assertSet('noteOpen', false)
+            ->assertDontSeeHtml('data-testid="internal-note-form"')
+            ->assertSee('Ожидает вашего ответа')
+            ->call('toggleNote')
+            ->assertSet('noteOpen', true)
+            ->assertSeeHtml('data-testid="internal-note-form"')
+            ->set('body', 'Ответ сотрудника без перезагрузки страницы')
+            ->call('reply')
+            ->assertSet('body', '')
+            ->assertSee('Ответ сотрудника без перезагрузки страницы')
+            ->assertSee('Ожидает ответа игрока');
+
+        $this->assertSame(SupportTicketStatus::AwaitingPlayer, $ticket->fresh()->status);
+    }
+
+    public function test_livewire_staff_actions_share_the_registered_module_authorization_rules(): void
+    {
+        $user = User::factory()->create();
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $administrator = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
+        $auditor = Admin::factory()->create(['role' => AdminRole::Auditor]);
+
+        foreach ([$owner, $administrator] as $staff) {
+            $ticket = $this->ticket($user, SupportTicketStatus::New, 'Разрешённое действие '.$staff->id);
+            $this->actingAs($staff, 'admin');
+            Livewire::test(AdminTicketConversation::class, [
+                'ticketId' => $ticket->id,
+                'adminPath' => 'admin',
+            ])->call('assignToMe');
+            $this->assertSame($staff->id, $ticket->fresh()->assigned_admin_id);
+        }
+
+        $ticket = $this->ticket($user, SupportTicketStatus::InProgress, 'Матрица Livewire-доступа');
+        $this->actingAs($auditor, 'admin');
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->set('body', 'Запрещённый ответ аудитора')->call('reply')->assertForbidden();
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->assertForbidden();
+
+        SupportTicketSetting::query()->updateOrCreate(['id' => 1], [
+            'allow_editor_management' => false,
+            'allow_editor_view' => true,
+            'allow_editor_reply' => false,
+            'allow_editor_internal_notes' => false,
+            'retention_months' => 24,
+            'automatic_cleanup_enabled' => true,
+        ]);
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->assertSee($ticket->subject)
+            ->set('body', 'Запрещённый ответ редактора')
+            ->call('reply')
+            ->assertForbidden();
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->call('toggleNote')->assertForbidden();
+
+        SupportTicketSetting::query()->whereKey(1)->update([
+            'allow_editor_reply' => true,
+            'allow_editor_internal_notes' => true,
+        ]);
+
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->set('body', 'Разрешённый ответ редактора')
+            ->call('reply')
+            ->assertSee('Разрешённый ответ редактора')
+            ->call('toggleNote')
+            ->set('noteBody', 'Разрешённая заметка редактора')
+            ->call('addNote')
+            ->assertSee('Разрешённая заметка редактора');
+
+        auth('admin')->logout();
+        $this->actingAs($user);
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->assertForbidden();
+
+        auth()->logout();
+        Livewire::test(AdminTicketConversation::class, [
+            'ticketId' => $ticket->id,
+            'adminPath' => 'admin',
+        ])->assertForbidden();
+    }
+
+    public function test_support_settings_use_standard_admin_toggle_layout(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets/settings')
+            ->assertOk()
+            ->assertSee('settings-toggle-row', false)
+            ->assertSee('switch-control', false)
+            ->assertDontSee('class="toggle-row"', false)
+            ->assertSee('Ограничения обращений')
+            ->assertSee('name="max_tickets_per_day"', false)
+            ->assertSee('name="message_max_length"', false)
+            ->assertSee('Отсчёт начинается с даты закрытия.');
+    }
+
+    public function test_owner_can_configure_support_limits_and_the_values_are_enforced(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $user = User::factory()->create();
+
+        $this->actingAs($owner, 'admin')
+            ->put('/admin/extensions/support-tickets/settings', [
+                'allow_editor_view' => false,
+                'allow_editor_reply' => false,
+                'allow_editor_internal_notes' => false,
+                'retention_months' => 24,
+                'automatic_cleanup_enabled' => true,
+                'max_tickets_per_day' => 2,
+                'max_player_messages_per_day' => 10,
+                'max_messages_per_ticket' => 20,
+                'max_revisions_per_message' => 2,
+                'max_open_tickets_per_user' => 1,
+                'subject_max_length' => 40,
+                'initial_message_max_length' => 500,
+                'message_max_length' => 200,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('module_support_ticket_settings', [
+            'id' => 1,
+            'max_tickets_per_day' => 2,
+            'max_player_messages_per_day' => 10,
+            'max_messages_per_ticket' => 20,
+            'max_revisions_per_message' => 2,
+            'max_open_tickets_per_user' => 1,
+            'subject_max_length' => 40,
+            'initial_message_max_length' => 500,
+            'message_max_length' => 200,
+        ]);
+
+        $this->actingAs($user)
+            ->post('/modules/support-tickets', [
+                'category' => SupportTicketCategory::TechnicalProblem->value,
+                'subject' => str_repeat('S', 41),
+                'body' => str_repeat('B', 501),
+            ])
+            ->assertSessionHasErrors(['subject', 'body']);
+
+        $this->actingAs($user)
+            ->post('/modules/support-tickets', [
+                'category' => SupportTicketCategory::TechnicalProblem->value,
+                'subject' => 'Настраиваемое ограничение',
+                'body' => 'Допустимое первое сообщение.',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($user)
+            ->post('/modules/support-tickets', [
+                'category' => SupportTicketCategory::TechnicalProblem->value,
+                'subject' => 'Второе открытое обращение',
+                'body' => 'Это обращение должно быть отклонено.',
+            ])
+            ->assertSessionHasErrors('subject');
+    }
+
+    public function test_owner_cannot_save_support_limits_outside_safe_ranges(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->from('/admin/extensions/support-tickets/settings')
+            ->put('/admin/extensions/support-tickets/settings', [
+                'allow_editor_view' => false,
+                'allow_editor_reply' => false,
+                'allow_editor_internal_notes' => false,
+                'retention_months' => 24,
+                'automatic_cleanup_enabled' => true,
+                'max_tickets_per_day' => 0,
+                'max_player_messages_per_day' => 9,
+                'max_messages_per_ticket' => 19,
+                'max_revisions_per_message' => 0,
+                'max_open_tickets_per_user' => 0,
+                'subject_max_length' => 121,
+                'initial_message_max_length' => 10001,
+                'message_max_length' => 99,
+            ])
+            ->assertRedirect('/admin/extensions/support-tickets/settings')
+            ->assertSessionHasErrors([
+                'max_tickets_per_day',
+                'max_player_messages_per_day',
+                'max_messages_per_ticket',
+                'max_revisions_per_message',
+                'max_open_tickets_per_user',
+                'subject_max_length',
+                'initial_message_max_length',
+                'message_max_length',
+            ]);
+
+        $this->assertDatabaseMissing('module_support_ticket_settings', ['id' => 1]);
+    }
+
+    private function updateSettings(
+        Admin $owner,
+        bool $allowEditorView = false,
+        bool $allowEditorReply = false,
+        bool $allowEditorInternalNotes = false,
+    ): void {
+        $this->actingAs($owner, 'admin')
+            ->put('/admin/extensions/support-tickets/settings', [
+                'allow_editor_view' => $allowEditorView,
+                'allow_editor_reply' => $allowEditorReply,
+                'allow_editor_internal_notes' => $allowEditorInternalNotes,
+                'retention_months' => 24,
+                'automatic_cleanup_enabled' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('module_support_ticket_settings', [
+            'id' => 1,
+            'allow_editor_view' => $allowEditorView,
+            'allow_editor_reply' => $allowEditorReply,
+            'allow_editor_internal_notes' => $allowEditorInternalNotes,
+        ]);
     }
 
     private function ticket(

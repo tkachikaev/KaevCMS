@@ -2,7 +2,6 @@
 @section('title', __('module-support-tickets::messages.admin_title'))
 @section('description', __('module-support-tickets::messages.admin_description'))
 @section('content')
-@php($adminPath = request()->route('adminPath'))
 <div class="admin-overview content-toolbar support-ticket-stats">
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_new') }}</span><strong>{{ $counts['new'] }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_in_progress') }}</span><strong>{{ $counts['in_progress'] }}</strong></div>
