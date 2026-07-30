@@ -2,10 +2,18 @@
   "name": "kaevcms-browser-tests",
   "private": true,
   "scripts": {
+    "build:editor": "esbuild resources/js/admin/content-editor.js --bundle --minify --banner:js=\"/*! Third-party notices: news-editor.LICENSE.txt */\" --target=es2020 --format=iife --outfile=public/assets/admin/js/news-editor.js",
     "browser:install": "playwright install chromium",
     "test:browser": "node tests/browser/run.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1"
+    "@playwright/test": "1.61.1",
+    "@tiptap/core": "3.29.2",
+    "@tiptap/extension-character-count": "3.29.2",
+    "@tiptap/extension-placeholder": "3.29.2",
+    "@tiptap/extension-table": "3.29.2",
+    "@tiptap/extension-text-align": "3.29.2",
+    "@tiptap/starter-kit": "3.29.2",
+    "esbuild": "0.28.1"
   }
 }

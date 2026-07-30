@@ -1,5 +1,5 @@
 # Module artwork
 
-Place the module catalog image here as `module.webp`.
+The bundled catalogue image is stored as `module.webp`.
 
-Requirements: WebP, exactly 512×512 pixels, no more than 2 MB. The image is optional; KaevCMS shows the standard placeholder until it is added.
+Requirements: WebP, exactly 512×512 pixels, no more than 2 MB. KaevCMS validates the file before displaying it in the module catalogue.

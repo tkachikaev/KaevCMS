@@ -1,4 +1,4 @@
-# KaevCMS 0.44.22
+# KaevCMS 0.44.26
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.20 hardens Support Tickets retention cleanup against concurrent reopen/protection changes, moves module administration Livewire actions to the same fail-closed authorizer as normal routes, and adds explicit browser-login diagnostics for HTTP 429 and server failures. Production rate limits remain unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.44.26 fixes PHPStan trait analysis without weakening static-analysis rules: administrative Livewire modules now inherit the shared ModuleAdminComponent, which uses the common authorization trait inside the analysed core tree. Support Tickets is updated to 1.4.2 with no database migrations. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -73,7 +73,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Public game statistics with caching and failure cooldowns.
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
 - Trusted modules with strict manifests and immutable migration tracking.
-- Bundled promo-code and monthly Daily Rewards modules.
+- Bundled Promo Codes, Daily Rewards and Support Tickets modules.
 - Versioned chronicle item catalogs with localized manual overrides and one owner-managed icon pool under `public/uploads/game-assets`.
 - Cumulative Web Updater for shared hosting and a deployment-user CLI updater for VDS, with hashes, backups, recovery, and path policy.
 
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.20 защищает очистку обращений от конкурентного переоткрытия и включения защиты, переводит административные Livewire-действия модулей на тот же fail-closed авторизатор, что и обычные маршруты, и добавляет явную диагностику HTTP 429 и серверных ошибок при browser-входе. Рабочие ограничения входа не изменены. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.26 исправляет анализ trait в PHPStan без ослабления правил: административные Livewire-модули теперь наследуют общий ModuleAdminComponent, использующий единый trait авторизации внутри анализируемого ядра. Support Tickets обновлён до 1.4.2 без новых миграций. Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 
@@ -162,7 +162,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Публичная статистика с кешем и cooldown при сбоях.
 - Веб-инвентарь с привязкой к GameServer и нейтральной `kaev_reward_queue`.
 - Доверенные модули со строгим manifest и неизменяемой историей миграций.
-- Встроенные модули промокодов и месячных ежедневных наград.
+- Встроенные модули Promo Codes, Daily Rewards и технической поддержки.
 - Версионируемые каталоги предметов по хроникам с ручными переводами и единым внешним пулом иконок под исходными именами.
 - Кумулятивный Web Updater для shared-hosting и CLI updater от deployment-пользователя для VDS с хешами, резервными копиями, восстановлением и политикой путей.
 

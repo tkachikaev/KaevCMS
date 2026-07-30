@@ -61,7 +61,7 @@ final class AdminSupportTicketSettingsController extends Controller
             details: $values,
         );
 
-        return $this->backToSettings($request)
+        return $this->backToSettings()
             ->with('status', __('module-support-tickets::messages.settings_saved'));
     }
 
@@ -69,7 +69,7 @@ final class AdminSupportTicketSettingsController extends Controller
     {
         $result = $this->cleanup->preview($this->settings->retentionMonths());
 
-        return $this->backToSettings($request)->with('support_cleanup_preview', $result);
+        return $this->backToSettings('cleanup')->with('support_cleanup_preview', $result);
     }
 
     public function runCleanup(Request $request): RedirectResponse
@@ -85,7 +85,7 @@ final class AdminSupportTicketSettingsController extends Controller
             details: $result,
         );
 
-        return $this->backToSettings($request)
+        return $this->backToSettings('cleanup')
             ->with('support_cleanup_result', $result)
             ->with('status', __('module-support-tickets::messages.cleanup_completed'));
     }
@@ -98,10 +98,13 @@ final class AdminSupportTicketSettingsController extends Controller
         return $admin;
     }
 
-    private function backToSettings(Request $request): RedirectResponse
+    private function backToSettings(?string $tab = null): RedirectResponse
     {
-        return redirect()->route('admin.module-pages.support-tickets.settings', [
-            'adminPath' => $this->adminPathSettings->path(),
-        ]);
+        $parameters = ['adminPath' => $this->adminPathSettings->path()];
+        if ($tab !== null) {
+            $parameters['tab'] = $tab;
+        }
+
+        return redirect()->route('admin.module-pages.support-tickets.settings', $parameters);
     }
 }

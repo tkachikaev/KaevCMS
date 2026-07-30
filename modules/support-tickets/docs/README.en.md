@@ -60,6 +60,17 @@ Allowed ranges:
 
 Identical messages within one minute are rejected and route throttles provide an additional request-rate limit. Every value is enforced server-side and the interface uses the same limits for field attributes and character counters. Only Owner can change these settings.
 
+## Administration interface
+
+The ticket catalogue uses the same compact filter bar as the Users section. On a ticket page, the conversation stays in the main column while player data, category, assignment and timestamps are shown in a dedicated right-side panel.
+
+Owner settings are split into tabs:
+
+- “General settings” — editor permissions, protective limits and retention period;
+- “Database cleanup” — deletion preview and manual cleanup actions.
+
+The save action belongs only to the general form and appears after all of its sections.
+
 ## Pagination
 
 The conversation is contained in a dedicated scrollable panel. The latest 50 messages are shown first and older history is loaded with “Show previous messages”. Internal notes are never included in player queries.
@@ -95,19 +106,19 @@ Normal deletes make pages reusable but may not immediately shrink the SQLite fil
 
 ## Installation and updates
 
-Module version 1.3.1 requires KaevCMS 0.44.20 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.3.1 adds no new migration.
+Module version 1.4.2 requires KaevCMS 0.44.26 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.4.2 adds no new migration and moves the shared Livewire authorization trait behind the core ModuleAdminComponent contract for complete PHPStan analysis.
 
 The module is bundled with KaevCMS. Module migrations are applied with SHA256 tracking. Applied migrations must not be modified or removed. Disabling the module hides routes and navigation without deleting data.
 
 ## Module artwork
 
-Place the prepared image at the shared module path:
+The bundled module image is stored at the shared module path:
 
 ```text
 modules/support-tickets/assets/module.webp
 ```
 
-Use WebP, 512×512, no larger than 2 MB. No `module.json` field is required.
+The file is WebP, 512×512 and no larger than 2 MB. KaevCMS validates it before display; no `module.json` field is required.
 
 ## Tables
 

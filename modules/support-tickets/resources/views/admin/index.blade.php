@@ -2,6 +2,7 @@
 @section('title', __('module-support-tickets::messages.admin_title'))
 @section('description', __('module-support-tickets::messages.admin_description'))
 @section('content')
+@php($hasFilters = ($filters['q'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['category'] ?? '') !== '' || ($filters['assigned'] ?? '') !== '')
 <div class="admin-overview content-toolbar support-ticket-stats">
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_new') }}</span><strong>{{ $counts['new'] }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_in_progress') }}</span><strong>{{ $counts['in_progress'] }}</strong></div>
@@ -12,19 +13,45 @@
     @endif
 </div>
 
-<form class="settings-card support-ticket-filters" method="GET" action="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">
-    <div class="settings-card-heading"><div><h2>{{ __('module-support-tickets::messages.filters') }}</h2></div></div>
-    <div class="support-filter-grid">
-        <label><span>{{ __('module-support-tickets::messages.search') }}</span><input name="q" type="search" maxlength="120" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('module-support-tickets::messages.search_placeholder') }}"></label>
-        <label><span>{{ __('module-support-tickets::messages.status') }}</span><select name="status"><option value="">{{ __('module-support-tickets::messages.all_statuses') }}</option>@foreach($statuses as $status)<option value="{{ $status->value }}" @selected(($filters['status'] ?? '') === $status->value)>{{ $status->adminLabel() }}</option>@endforeach</select></label>
-        <label><span>{{ __('module-support-tickets::messages.category') }}</span><select name="category"><option value="">{{ __('module-support-tickets::messages.all_categories') }}</option>@foreach($categories as $category)<option value="{{ $category->value }}" @selected(($filters['category'] ?? '') === $category->value)>{{ $category->label() }}</option>@endforeach</select></label>
-        <label><span>{{ __('module-support-tickets::messages.assigned_to') }}</span><select name="assigned"><option value="">{{ __('module-support-tickets::messages.all_assignments') }}</option><option value="mine" @selected(($filters['assigned'] ?? '') === 'mine')>{{ __('module-support-tickets::messages.assigned_to_me') }}</option><option value="unassigned" @selected(($filters['assigned'] ?? '') === 'unassigned')>{{ __('module-support-tickets::messages.unassigned') }}</option></select></label>
+<form class="admin-filter-bar support-ticket-filters" method="GET" action="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}" data-testid="support-ticket-filters">
+    <div class="support-ticket-search-field">
+        <label for="support-ticket-search">{{ __('module-support-tickets::messages.search') }}</label>
+        <input id="support-ticket-search" name="q" type="search" maxlength="120" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('module-support-tickets::messages.search_placeholder') }}">
     </div>
-    <div class="settings-actions"><button class="button button-primary" type="submit">{{ __('module-support-tickets::messages.apply_filters') }}</button><a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">{{ __('module-support-tickets::messages.reset_filters') }}</a></div>
+    <div>
+        <label for="support-ticket-status">{{ __('module-support-tickets::messages.status') }}</label>
+        <select id="support-ticket-status" name="status">
+            <option value="">{{ __('module-support-tickets::messages.all_statuses') }}</option>
+            @foreach($statuses as $status)
+                <option value="{{ $status->value }}" @selected(($filters['status'] ?? '') === $status->value)>{{ $status->adminLabel() }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label for="support-ticket-category">{{ __('module-support-tickets::messages.category') }}</label>
+        <select id="support-ticket-category" name="category">
+            <option value="">{{ __('module-support-tickets::messages.all_categories') }}</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->value }}" @selected(($filters['category'] ?? '') === $category->value)>{{ $category->label() }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label for="support-ticket-assigned">{{ __('module-support-tickets::messages.assigned_to') }}</label>
+        <select id="support-ticket-assigned" name="assigned">
+            <option value="">{{ __('module-support-tickets::messages.all_assignments') }}</option>
+            <option value="mine" @selected(($filters['assigned'] ?? '') === 'mine')>{{ __('module-support-tickets::messages.assigned_to_me') }}</option>
+            <option value="unassigned" @selected(($filters['assigned'] ?? '') === 'unassigned')>{{ __('module-support-tickets::messages.unassigned') }}</option>
+        </select>
+    </div>
+    <button class="button button-primary" type="submit">{{ __('module-support-tickets::messages.apply_filters') }}</button>
+    @if($hasFilters)
+        <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">{{ __('module-support-tickets::messages.reset_filters') }}</a>
+    @endif
 </form>
 
 @if($tickets->isEmpty())
-    <div class="admin-empty-state empty-state"><div class="empty-state-mark">?</div><h2>{{ __('module-support-tickets::messages.no_admin_tickets_title') }}</h2><p>{{ __('module-support-tickets::messages.no_admin_tickets_description') }}</p></div>
+    <div class="admin-empty-state empty-state"><div class="empty-state-mark">?</div><h2>{{ __('module-support-tickets::messages.no_admin_tickets_title') }}</h2><p>{{ __('module-support-tickets::messages.no_admin_tickets_description') }}</p>@if($hasFilters)<a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">{{ __('module-support-tickets::messages.reset_filters') }}</a>@endif</div>
 @else
     <div class="admin-card-list content-list support-admin-ticket-list">
         @foreach($tickets as $ticket)

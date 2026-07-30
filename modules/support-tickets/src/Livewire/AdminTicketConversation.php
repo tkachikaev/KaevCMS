@@ -4,7 +4,7 @@ namespace KaevCMS\Modules\SupportTickets\Livewire;
 
 use App\Models\Admin;
 use App\Services\Admin\AdminPathSettings;
-use App\Support\Modules\AuthorizesModuleAdminAccess;
+use App\Support\Modules\ModuleAdminComponent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
@@ -13,12 +13,9 @@ use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessage;
 use KaevCMS\Modules\SupportTickets\Services\SupportTicketService;
 use KaevCMS\Modules\SupportTickets\Services\SupportTicketSettings;
 use Livewire\Attributes\Locked;
-use Livewire\Component;
 
-final class AdminTicketConversation extends Component
+final class AdminTicketConversation extends ModuleAdminComponent
 {
-    use AuthorizesModuleAdminAccess;
-
     private const ROUTE_SHOW = 'admin.module-pages.support-tickets.show';
 
     private const ROUTE_ASSIGN = 'admin.module-pages.support-tickets.assign';

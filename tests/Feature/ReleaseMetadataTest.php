@@ -30,9 +30,29 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'app/Support/Modules/ModuleAdminAccessRegistry.php',
-            'tests/Feature/RuntimeCacheConfigurationTest.php',
-            'tests/browser/run.mjs',
+            'app/Services/Html/SafeHtmlSanitizer.php',
+            'app/Support/Modules/AuthorizesModuleAdminAccess.php',
+            'app/Support/Modules/ModuleAdminComponent.php',
+            'deployment/release/build-release.php',
+            'lang/en.json',
+            'lang/ru.json',
+            'modules/support-tickets/module.json',
+            'modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php',
+            'modules/support-tickets/src/Livewire/AdminTicketConversation.php',
+            'public/assets/admin/css/content.css',
+            'public/assets/admin/js/news-editor.js',
+            'public/assets/modules/support-tickets.css',
+            'public/themes/default/assets/css/app.css',
+            'public/themes/kaev-aurelia/assets/css/app.css',
+            'resources/js/admin/content-editor.js',
+            'resources/views/admin/content/_rich-editor.blade.php',
+            'tests/Feature/ContentEditorContractTest.php',
+            'tests/Feature/CoreStabilizationTest.php',
+            'tests/Feature/Modules/SupportTicketsModuleTest.php',
+            'tests/Feature/ReleaseMetadataTest.php',
+            'tests/Unit/ModuleAdminAccessRegistryTest.php',
+            'tests/browser/specs/content-editor.spec.mjs',
+            'tests/browser/specs/support-tickets.spec.mjs',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
@@ -339,6 +359,7 @@ class ReleaseMetadataTest extends TestCase
             'modules/support-tickets/module.json',
             'modules/support-tickets/bootstrap.php',
             'modules/support-tickets/assets/README.md',
+            'modules/support-tickets/assets/module.webp',
             'modules/support-tickets/docs/README.ru.md',
             'modules/support-tickets/docs/README.en.md',
             'modules/support-tickets/database/migrations/2026_07_29_200000_create_module_support_ticket_settings_table.php',
@@ -356,6 +377,7 @@ class ReleaseMetadataTest extends TestCase
             'modules/support-tickets/src/Livewire/AdminTicketConversation.php',
             'app/Support/Modules/AuthorizesModuleAdminAccess.php',
             'app/Support/Modules/ModuleAdminAuthorizer.php',
+            'app/Support/Modules/ModuleAdminComponent.php',
             'modules/support-tickets/src/Services/SupportTicketCleanupService.php',
             'public/assets/modules/support-tickets.css',
             'public/assets/modules/support-tickets.js',
@@ -375,8 +397,8 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.3.1', $manifest['version']);
-        $this->assertSame('0.44.20', $manifest['cms_min']);
+        $this->assertSame('1.4.2', $manifest['version']);
+        $this->assertSame('0.44.26', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
         $service = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketService.php');
@@ -419,7 +441,22 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('editorCanAddInternalNotes()', $bootstrap);
         $this->assertStringContainsString('kaevcms:support-tickets-cleanup --scheduled', $bootstrap);
 
-        $this->assertFileDoesNotExist(base_path('modules/support-tickets/assets/module.webp'));
+        $settingsView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/settings.blade.php');
+        $this->assertStringContainsString('admin-tabs settings-section-tabs support-settings-tabs', $settingsView);
+        $this->assertStringContainsString('data-testid="support-cleanup-panel"', $settingsView);
+        $this->assertStringContainsString('support-settings-actions', $settingsView);
+
+        $indexView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/index.blade.php');
+        $this->assertStringContainsString('admin-filter-bar support-ticket-filters', $indexView);
+        $this->assertStringNotContainsString("<h2>{{ __('module-support-tickets::messages.filters') }}</h2>", $indexView);
+
+        $conversationView = $this->readReleaseFile('modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php');
+        $this->assertStringContainsString('data-testid="support-admin-ticket-layout"', $conversationView);
+        $this->assertStringContainsString('support-admin-ticket-side', $conversationView);
+        $this->assertStringContainsString('support-ticket-detail-list', $conversationView);
+
+        $this->assertFileExists(base_path('modules/support-tickets/assets/module.webp'));
+        $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/support-tickets/assets/module.webp')), 0, 2));
     }
 
     public function test_web_inventory_release_artifacts_are_shipped(): void
@@ -600,7 +637,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
-        $this->assertSame('1.3.0', $dailyRewardsManifest['version']);
+        $this->assertSame('1.3.1', $dailyRewardsManifest['version']);
 
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),
@@ -608,7 +645,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.3.0', $manifest['version']);
+        $this->assertSame('1.3.1', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 

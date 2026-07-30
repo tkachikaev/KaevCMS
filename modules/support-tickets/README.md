@@ -3,10 +3,10 @@
 - Русская документация: [`docs/README.ru.md`](docs/README.ru.md)
 - English documentation: [`docs/README.en.md`](docs/README.en.md)
 
-Bundled version: **1.3.1** for KaevCMS **0.44.20+**. Usage and text limits are configured by Owner in the module settings and retain safe defaults.
+Bundled version: **1.4.2** for KaevCMS **0.44.26+**. Usage and text limits are configured by Owner in the module settings and retain safe defaults.
 
-Встроенная версия: **1.3.1** для KaevCMS **0.44.20+**. Лимиты обращений и длины текста настраиваются владельцем в настройках модуля; безопасные значения по умолчанию сохранены.
+Встроенная версия: **1.4.2** для KaevCMS **0.44.26+**. Лимиты обращений и длины текста настраиваются владельцем в настройках модуля; безопасные значения по умолчанию сохранены.
 
-The module artwork is intentionally not included yet. Add a 512×512 WebP file at `assets/module.webp`; KaevCMS will discover it automatically.
+The bundled 512×512 WebP module artwork is stored at `assets/module.webp` and is discovered automatically by KaevCMS.
 
-Изображение модуля пока намеренно не включено. Добавьте WebP 512×512 по пути `assets/module.webp`; KaevCMS обнаружит его автоматически.
+Комплектное изображение модуля WebP 512×512 хранится по пути `assets/module.webp` и автоматически обнаруживается KaevCMS.

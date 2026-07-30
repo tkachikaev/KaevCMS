@@ -153,6 +153,38 @@ class CoreStabilizationTest extends TestCase
         $this->assertStringNotContainsString('behavior:', $safeMail);
     }
 
+    public function test_content_sanitizer_preserves_only_the_rich_editor_safe_schema(): void
+    {
+        $html = '<p data-align="justify" style="position:fixed" onclick="alert(1)">'
+            .'<span data-color="fuchsia" data-highlight="rose" data-text-size="large" style="font-size:99px">Text</span>'
+            .'<span data-color="chartreuse" data-highlight="black" data-text-size="huge">Unsafe tokens</span></p>'
+            .'<table class="external"><thead><tr><th scope="col">Column</th></tr></thead>'
+            .'<tbody><tr><td onclick="alert(1)">Value</td></tr></tbody></table>'
+            .'<figure data-align="center" data-size="medium" style="width:9999px">'
+            .'<img src="/uploads/pages/content/2026/07/abc-def.webp" alt="Preview" onerror="alert(1)">'
+            .'<figcaption>Caption</figcaption></figure>';
+
+        $safe = app(PageHtmlSanitizer::class)->sanitize($html);
+
+        $this->assertStringContainsString('data-align="justify"', $safe);
+        $this->assertStringContainsString('data-color="fuchsia"', $safe);
+        $this->assertStringContainsString('data-highlight="rose"', $safe);
+        $this->assertStringContainsString('data-text-size="large"', $safe);
+        $this->assertStringContainsString('<table>', $safe);
+        $this->assertStringContainsString('<th>Column</th>', $safe);
+        $this->assertStringContainsString('data-align="center"', $safe);
+        $this->assertStringContainsString('data-size="medium"', $safe);
+        $this->assertStringContainsString('/uploads/pages/content/2026/07/abc-def.webp', $safe);
+        $this->assertStringNotContainsString('chartreuse', $safe);
+        $this->assertStringNotContainsString('data-highlight="black"', $safe);
+        $this->assertStringNotContainsString('data-text-size="huge"', $safe);
+        $this->assertStringNotContainsString('style=', $safe);
+        $this->assertStringNotContainsString('onclick', $safe);
+        $this->assertStringNotContainsString('onerror', $safe);
+        $this->assertStringNotContainsString('scope=', $safe);
+        $this->assertStringNotContainsString('class=', $safe);
+    }
+
     public function test_shared_theme_validator_rejects_missing_files_and_path_traversal(): void
     {
         $files = new Filesystem;

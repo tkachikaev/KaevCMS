@@ -55,3 +55,17 @@ public/assets/account/js/navigation.js
 ```
 
 Theme-specific JavaScript copies are not shipped. Theme layouts may keep their own CSS and Blade markup, but persistent Livewire navigation, avatar/result dialogs, sidebar toggling, password controls, and navigation cleanup belong to the shared runtime.
+
+## Building the content editor
+
+The news/page editor keeps readable source in `resources/js/admin/content-editor.js` and ships the autonomous `public/assets/admin/js/news-editor.js` bundle. Tiptap and esbuild are pinned in `package-lock.json`; no CDN is used.
+
+After changing the source, run:
+
+```powershell
+npm ci --include=dev
+npm run build:editor
+```
+
+A release must include the source, bundle, and `public/assets/admin/js/news-editor.LICENSE.txt`. Do not allow arbitrary `style` or `class` attributes: the editor, `SafeHtmlSanitizer`, and both public-theme stylesheets form one safe `data-*` token contract.
+

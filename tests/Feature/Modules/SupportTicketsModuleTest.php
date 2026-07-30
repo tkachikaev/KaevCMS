@@ -6,6 +6,7 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
 use App\Support\Modules\ModuleAdminAccessRegistry;
+use App\Support\Modules\ModuleAdminComponent;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
@@ -48,7 +49,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue($module['compatible'], implode(PHP_EOL, $module['errors']));
         $this->assertTrue($module['enabled']);
         $this->assertSame([], $module['pending_migrations']);
-        $this->assertNull($module['image_path']);
+        $this->assertSame(realpath(base_path('modules/support-tickets/assets/module.webp')), $module['image_path']);
         $this->assertTrue(Schema::hasTable('module_support_ticket_settings'));
         $this->assertTrue(Schema::hasTable('module_support_tickets'));
         $this->assertTrue(Schema::hasTable('module_support_ticket_messages'));
@@ -66,7 +67,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.3.1',
+            'version' => '1.4.2',
             'enabled' => true,
         ]);
 
@@ -76,6 +77,14 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertContains('admin.module-pages.support-tickets.index', array_column($adminLinks, 'route'));
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.support-tickets.index'));
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.support-tickets.settings'));
+        $this->assertTrue(is_subclass_of(AdminTicketConversation::class, ModuleAdminComponent::class));
+        $adminConversation = (string) file_get_contents(base_path('modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php'));
+        $supportCss = (string) file_get_contents(public_path('assets/modules/support-tickets.css'));
+        $this->assertStringContainsString('support-ticket-admin-heading-start', $adminConversation);
+        $this->assertStringContainsString('support-ticket-admin-heading-center', $adminConversation);
+        $this->assertStringContainsString('support-ticket-admin-heading-actions', $adminConversation);
+        $this->assertStringContainsString('.support-chat-composer textarea', $supportCss);
+        $this->assertStringContainsString('border-radius: 12px', $supportCss);
     }
 
     public function test_public_categories_and_status_values_match_the_approved_contract(): void
@@ -825,7 +834,7 @@ class SupportTicketsModuleTest extends TestCase
         Livewire::test(AdminTicketConversation::class, [
             'ticketId' => $ticket->id,
             'adminPath' => 'admin',
-        ])->assertSee($ticket->subject)
+        ])->assertSee(__('module-support-tickets::messages.conversation'))
             ->set('body', 'Запрещённый ответ редактора')
             ->call('reply')
             ->assertForbidden();
@@ -878,6 +887,54 @@ class SupportTicketsModuleTest extends TestCase
             ->assertSee('name="max_tickets_per_day"', false)
             ->assertSee('name="message_max_length"', false)
             ->assertSee('Отсчёт начинается с даты закрытия.');
+    }
+
+    public function test_support_settings_separate_cleanup_into_its_own_tab(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets/settings')
+            ->assertOk()
+            ->assertSee('data-testid="support-settings-tabs"', false)
+            ->assertSee('Основные настройки')
+            ->assertSee('Очистка базы')
+            ->assertSee('support-settings-actions', false)
+            ->assertDontSee('data-testid="support-cleanup-panel"', false);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets/settings?tab=cleanup')
+            ->assertOk()
+            ->assertSee('data-testid="support-cleanup-panel"', false)
+            ->assertSee('Очистка базы технической поддержки')
+            ->assertDontSee('name="allow_editor_view"', false)
+            ->assertDontSee('Сохранить настройки');
+
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/extensions/support-tickets/settings/cleanup-preview')
+            ->assertRedirect('/admin/extensions/support-tickets/settings?tab=cleanup');
+    }
+
+    public function test_support_admin_list_and_ticket_page_use_shared_compact_layouts(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets')
+            ->assertOk()
+            ->assertSee('admin-filter-bar support-ticket-filters', false)
+            ->assertSee('data-testid="support-ticket-filters"', false)
+            ->assertDontSee('<h2>Фильтры</h2>', false);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets/'.$ticket->id)
+            ->assertOk()
+            ->assertSee('data-testid="support-admin-ticket-layout"', false)
+            ->assertSee('support-admin-ticket-main', false)
+            ->assertSee('support-admin-ticket-side', false)
+            ->assertSee('support-ticket-detail-list', false);
     }
 
     public function test_owner_can_configure_support_limits_and_the_values_are_enforced(): void

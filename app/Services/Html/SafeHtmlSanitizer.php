@@ -27,6 +27,7 @@ final class SafeHtmlSanitizer
         'blockquote', 'a', 'hr',
         'figure', 'img', 'figcaption', 'span',
         'pre', 'code',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
     ];
 
     private const CONTENT_DROP_WITH_CONTENT = [
@@ -44,9 +45,23 @@ final class SafeHtmlSanitizer
 
     private const ALIGNABLE_ELEMENTS = ['p', 'h2', 'h3', 'h4', 'blockquote', 'figure'];
 
-    private const COLORS = ['default', 'gold', 'red', 'green', 'blue', 'muted'];
+    private const COLORS = [
+        'default', 'gold', 'amber', 'yellow', 'red', 'rose', 'coral', 'orange',
+        'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue',
+        'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc',
+        'muted',
+    ];
 
-    private const ALIGNMENTS = ['left', 'center', 'right'];
+    private const HIGHLIGHTS = [
+        'yellow', 'amber', 'orange', 'rose', 'red', 'lime',
+        'green', 'teal', 'cyan', 'blue', 'purple', 'gray',
+    ];
+
+    private const TEXT_SIZES = ['small', 'large'];
+
+    private const IMAGE_SIZES = ['narrow', 'medium', 'wide', 'full'];
+
+    private const ALIGNMENTS = ['left', 'center', 'right', 'justify'];
 
     public function sanitize(string $html, string $profile): string
     {
@@ -143,7 +158,7 @@ final class SafeHtmlSanitizer
     {
         $safe = $this->sanitizeContent($html, $profile);
         $safe = preg_replace('/<br\s*\/?>/i', "\n", $safe) ?? $safe;
-        $safe = preg_replace('/<\/(p|h2|h3|h4|li|blockquote|figcaption|pre)>/i', "\n", $safe) ?? $safe;
+        $safe = preg_replace('/<\/(p|h2|h3|h4|li|blockquote|figcaption|pre|th|td|tr)>/i', "\n", $safe) ?? $safe;
         $safe = html_entity_decode(strip_tags($safe), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $safe = preg_replace('/[\t ]+/u', ' ', $safe) ?? $safe;
         $safe = preg_replace('/\n{3,}/u', "\n\n", $safe) ?? $safe;
@@ -207,7 +222,8 @@ final class SafeHtmlSanitizer
         $allowed = match ($tag) {
             'a' => ['href', 'title'],
             'img' => ['src', 'alt'],
-            'span' => ['data-color'],
+            'span' => ['data-color', 'data-highlight', 'data-text-size'],
+            'figure' => ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
         };
 
@@ -257,14 +273,39 @@ final class SafeHtmlSanitizer
             } else {
                 $element->setAttribute('data-color', $color);
             }
+
+            $highlight = strtolower($element->getAttribute('data-highlight'));
+            if (! in_array($highlight, self::HIGHLIGHTS, true)) {
+                $element->removeAttribute('data-highlight');
+            } else {
+                $element->setAttribute('data-highlight', $highlight);
+            }
+
+            $textSize = strtolower($element->getAttribute('data-text-size'));
+            if (! in_array($textSize, self::TEXT_SIZES, true)) {
+                $element->removeAttribute('data-text-size');
+            } else {
+                $element->setAttribute('data-text-size', $textSize);
+            }
         }
 
         if (in_array($tag, self::ALIGNABLE_ELEMENTS, true)) {
             $alignment = strtolower($element->getAttribute('data-align'));
-            if (! in_array($alignment, self::ALIGNMENTS, true) || $alignment === 'left') {
+            if (! in_array($alignment, self::ALIGNMENTS, true)
+                || $alignment === 'left'
+                || ($tag === 'figure' && $alignment === 'justify')) {
                 $element->removeAttribute('data-align');
             } else {
                 $element->setAttribute('data-align', $alignment);
+            }
+        }
+
+        if ($tag === 'figure') {
+            $size = strtolower($element->getAttribute('data-size'));
+            if (! in_array($size, self::IMAGE_SIZES, true) || $size === 'full') {
+                $element->removeAttribute('data-size');
+            } else {
+                $element->setAttribute('data-size', $size);
             }
         }
     }

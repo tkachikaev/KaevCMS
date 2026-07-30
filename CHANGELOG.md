@@ -1,4 +1,40 @@
+## 0.44.26 - 2026-07-30
+
+- Added the core `ModuleAdminComponent` base class for administrative Livewire modules. It inherits `Livewire\Component` and uses `AuthorizesModuleAdminAccess` inside the PHPStan analysed `app` tree.
+- Updated bundled `support-tickets` to 1.4.2 so `AdminTicketConversation` inherits the shared component without changing its authorization behaviour.
+- Added release and module contract tests for the inheritance relationship. PHPStan rules, baseline and `treatPhpDocTypesAsCertain` remain unchanged.
+- No database migrations, Composer dependencies, npm dependencies or public UI changes were introduced.
+- The cumulative update line remains based on `0.42.4`; the 0.44.26 package supports direct updates from 0.42.4 through 0.44.25.
+
 # Changelog
+
+## 0.44.25 - 2026-07-30
+
+- Updated bundled `support-tickets` to 1.4.1: the back action is anchored on the left, the ticket status occupies the centered toolbar column and staff actions remain aligned on the right with responsive stacking.
+- Rounded the player reply, staff reply, message edit and internal-note text areas consistently with the rest of the account and administration controls.
+- Expanded the strict Tiptap schema to 24 text colors and 12 highlights across the editor, server sanitizer and both public themes. Arbitrary `style` and `class` attributes remain forbidden.
+- Fixed the Support Tickets module-image expectation and the Livewire authorization rendering assertion, and corrected the reported Pint formatting in the release builder and module access unit test.
+- Added PHPUnit and Playwright contracts for the toolbar layout, rounded composers and expanded safe palette. No database migration was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.25 package supports direct updates from 0.42.4 through 0.44.24.
+
+## 0.44.24 - 2026-07-30
+
+- Replaced the legacy `document.execCommand` news/page editor with a locally bundled Tiptap 3.29.2 editor shared by both content types; no CDN or production Node.js runtime is required.
+- Added undo/redo, headings, lists, quotes, inline and block code, safe text colors/highlights/sizes, four alignments, horizontal rules, tables, full-screen mode and character counting.
+- Added accessible link and image dialogs, safe URL normalization, existing protected upload routes, alt text, captions, image alignment and four controlled image sizes.
+- Extended `SafeHtmlSanitizer` only with table elements and bounded `data-*` tokens; arbitrary styles, classes, event handlers, external images and unsafe URL schemes remain forbidden.
+- Updated both bundled public themes for identical `.news-prose` and `.cms-page-prose` rendering of the new tokens, responsive figures, tables and code blocks.
+- Added the readable editor source, pinned npm dependencies, compiled bundle license notices and PHPUnit/Playwright contracts. Fixed required validation for image-only, divider-only and table-only documents and avoided invalid nested forms in editor dialogs.
+- The cumulative update line remains based on `0.42.4`; the 0.44.24 package supports direct updates from 0.42.4 through 0.44.23.
+
+## 0.44.23 - 2026-07-30
+
+- Updated bundled `support-tickets` to 1.4.0 and moved manual database cleanup into a dedicated settings tab using the shared administration tab component. The save action now remains below the complete general-settings form.
+- Reworked the Support Tickets administration detail page into a two-column layout with the conversation on the left and ticket metadata in a compact right-side panel, matching the established Users detail pattern.
+- Replaced the previous Support Tickets filter card with the shared one-line administration filter bar and conditional reset action used by the Users catalogue.
+- Replaced bundled module artwork for Daily Rewards, Promo Codes and Support Tickets with the supplied designs, normalized to the required validated 512×512 WebP format. Daily Rewards and Promo Codes are now 1.3.1.
+- Added PHPUnit, Playwright, release-manifest and artwork-dimension regressions for the new tabs, layouts, filters and catalogue images. No database migration or dependency update was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.23 package supports direct updates from 0.42.4 through 0.44.22.
 
 ## 0.44.22 - 2026-07-30
 

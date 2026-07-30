@@ -55,3 +55,17 @@ public/assets/account/js/navigation.js
 ```
 
 Отдельные копии JavaScript внутри тем больше не поставляются. У темы остаются собственные CSS и Blade-шаблоны, но постоянная Livewire-навигация, окна аватара и результатов операций, мобильная боковая панель, управление паролями и очистка обработчиков относятся к общему runtime.
+
+## Сборка редактора контента
+
+Редактор новостей и страниц имеет читаемый исходник `resources/js/admin/content-editor.js` и поставляемый автономный bundle `public/assets/admin/js/news-editor.js`. Зависимости Tiptap и esbuild зафиксированы в `package-lock.json`; CDN не используется.
+
+После изменения исходника выполните:
+
+```powershell
+npm ci --include=dev
+npm run build:editor
+```
+
+В релиз обязательно включаются исходник, bundle и `public/assets/admin/js/news-editor.LICENSE.txt`. Не разрешайте произвольные `style` или `class`: редактор, `SafeHtmlSanitizer` и CSS обеих публичных тем образуют единый контракт безопасных `data-*` токенов.
+

@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "promo-codes",
     "name": "Promo Codes",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "author": "KaevCMS",
     "description": "Server-bound promo codes that grant rewards to the KaevCMS web inventory.",
     "cms_min": "0.36.2",

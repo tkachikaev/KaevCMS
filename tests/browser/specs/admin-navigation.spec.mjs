@@ -99,14 +99,13 @@ test('administration loads the split stylesheet stack once and in order', async 
 test('news editor initializes again after SPA navigation', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/news/create');
 
-    const canvas = page.locator('#body-editor-ru');
+    const editorRoot = page.locator('[data-rich-editor]').first();
+    const canvas = page.locator('#body-editor-ru .ProseMirror');
     const source = page.locator('#body_ru');
+    await expect(editorRoot).toHaveAttribute('data-editor-ready', '1');
     await expect(canvas).toBeVisible();
 
-    await canvas.evaluate((element) => {
-        element.innerHTML = '<p>Первый текст</p>';
-        element.dispatchEvent(new InputEvent('input', { bubbles: true }));
-    });
+    await canvas.fill('Первый текст');
     await expect(source).toHaveValue('<p>Первый текст</p>');
 
     await page.getByRole('link', { name: 'Настройки', exact: true }).click();
@@ -116,12 +115,41 @@ test('news editor initializes again after SPA navigation', async ({ page }) => {
     await page.getByRole('link', { name: 'Новости' }).click();
     await page.getByRole('link', { name: /Создать/ }).first().click();
 
+    await expect(editorRoot).toHaveAttribute('data-editor-ready', '1');
     await expect(canvas).toBeVisible();
-    await canvas.evaluate((element) => {
-        element.innerHTML = '<p>Повторная инициализация</p>';
-        element.dispatchEvent(new InputEvent('input', { bubbles: true }));
-    });
+    await canvas.fill('Повторная инициализация');
     await expect(source).toHaveValue('<p>Повторная инициализация</p>');
+});
+
+test('content editor applies formatting to the selection and keeps paragraphs independent', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/news/create');
+
+    const editorRoot = page.locator('[data-rich-editor]').first();
+    const canvas = page.locator('#body-editor-ru .ProseMirror');
+    const source = page.locator('#body_ru');
+    await expect(editorRoot).toHaveAttribute('data-editor-ready', '1');
+
+    await canvas.click();
+    await page.keyboard.insertText('Первый абзац');
+    await page.keyboard.press('Enter');
+    await page.keyboard.insertText('Второй абзац');
+    await expect(source).toHaveValue('<p>Первый абзац</p><p>Второй абзац</p>');
+
+    await page.getByRole('button', { name: 'По центру', exact: true }).first().click();
+    await expect(source).toHaveValue('<p>Первый абзац</p><p data-align="center">Второй абзац</p>');
+
+    await canvas.press('Control+A');
+    await page.getByRole('button', { name: 'Жирный', exact: true }).first().click();
+    await expect(source).toHaveValue(/<strong>Первый абзац<\/strong>/);
+    await expect(source).toHaveValue(/<strong>Второй абзац<\/strong>/);
+
+    await editorRoot.locator('.editor-menu').filter({ hasText: 'Цвет текста' }).locator('summary').click();
+    await editorRoot.getByRole('button', { name: 'Бирюзовый', exact: true }).click();
+    await expect(source).toHaveValue(/data-color="teal"/);
+
+    await editorRoot.locator('.editor-menu').filter({ hasText: 'Таблица' }).locator('summary').click();
+    await editorRoot.getByRole('button', { name: 'Вставить таблицу 3 × 3', exact: true }).click();
+    await expect(source).toHaveValue(/<table/);
 });
 
 test('two-factor QR is rendered after leaving and returning', async ({ page }) => {
@@ -268,6 +296,7 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
     await expect(dailyModule.locator('.admin-catalog-side')).toBeVisible();
     await expect(supportModule.getByRole('heading', { name: 'Support Tickets' })).toBeVisible();
+    await expect(supportModule.locator('img[src*="/modules/support-tickets/image"]')).toBeVisible();
     await expect(supportModule.locator('.admin-catalog-side')).toBeVisible();
 });
 

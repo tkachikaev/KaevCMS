@@ -57,7 +57,6 @@ class ModuleAdminAccessRegistryTest extends TestCase
         $this->assertTrue($registry->decision('admin.module-pages.fixture.settings', 'POST', $owner)?->allowed);
     }
 
-
     public function test_module_role_lists_are_validated_at_runtime(): void
     {
         $this->expectException(InvalidArgumentException::class);

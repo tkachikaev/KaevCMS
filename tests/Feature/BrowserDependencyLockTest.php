@@ -15,6 +15,8 @@ class BrowserDependencyLockTest extends TestCase
         $this->assertStringNotContainsString('.internal.api.openai.org', $lock);
         $this->assertStringContainsString('https://registry.npmjs.org/@playwright/test/', $lock);
         $this->assertStringContainsString('https://registry.npmjs.org/playwright-core/', $lock);
+        $this->assertStringContainsString('https://registry.npmjs.org/@tiptap/core/', $lock);
+        $this->assertStringContainsString('https://registry.npmjs.org/esbuild/', $lock);
     }
 
     public function test_browser_setup_forces_dev_dependencies_and_quality_checks_the_installed_package(): void

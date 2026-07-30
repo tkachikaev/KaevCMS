@@ -165,27 +165,30 @@ class ModuleFoundationTest extends TestCase
 
     public function test_module_artwork_is_auto_discovered_and_served_from_the_admin_catalog(): void
     {
-        $module = app(ModuleManager::class)->inspect('daily-rewards');
-
-        $this->assertIsString($module['image_path']);
-        $this->assertStringEndsWith(
-            'modules'.DIRECTORY_SEPARATOR.'daily-rewards'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'module.webp',
-            $module['image_path'],
-        );
-        $this->assertSame([512, 512], array_slice((array) getimagesize($module['image_path']), 0, 2));
-
         $owner = $this->createAdmin(AdminRole::Owner, 'artwork-owner@example.test');
-        $response = $this->actingAs($owner, 'admin')
-            ->get('/admin/modules/daily-rewards/image')
-            ->assertOk()
-            ->assertHeader('Content-Type', 'image/webp')
-            ->assertHeader('X-Content-Type-Options', 'nosniff');
 
-        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
-        $this->assertSame(
-            realpath((string) $module['image_path']),
-            $response->baseResponse->getFile()->getRealPath(),
-        );
+        foreach (['daily-rewards', 'promo-codes', 'support-tickets'] as $moduleId) {
+            $module = app(ModuleManager::class)->inspect($moduleId);
+
+            $this->assertIsString($module['image_path']);
+            $this->assertStringEndsWith(
+                'modules'.DIRECTORY_SEPARATOR.$moduleId.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'module.webp',
+                $module['image_path'],
+            );
+            $this->assertSame([512, 512], array_slice((array) getimagesize($module['image_path']), 0, 2));
+
+            $response = $this->actingAs($owner, 'admin')
+                ->get('/admin/modules/'.$moduleId.'/image')
+                ->assertOk()
+                ->assertHeader('Content-Type', 'image/webp')
+                ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+            $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+            $this->assertSame(
+                realpath((string) $module['image_path']),
+                $response->baseResponse->getFile()->getRealPath(),
+            );
+        }
 
         $root = $this->createModule('invalid-artwork-fixture');
         $files = new Filesystem;

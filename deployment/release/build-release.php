@@ -155,7 +155,6 @@ function kaevReleaseBuild(array $options): array
 }
 
 /**
- * @param  mixed  $configured
  * @param  list<string>  $currentFiles
  * @return list<string>
  */

@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This repair release integrates the verified module access and browser cache fixes and force-replaces all related regression files on installations affected by incomplete earlier updates.'
+Write-Host 'This release makes module Livewire authorization visible to PHPStan through the shared ModuleAdminComponent contract.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

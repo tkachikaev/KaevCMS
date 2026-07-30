@@ -70,10 +70,15 @@ test('player and administrator complete the support ticket conversation flow wit
     await context.clearCookies();
     await signInAdmin(page);
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
+    await expect(page.locator('[data-testid="support-ticket-filters"]')).toHaveCSS('display', 'grid');
+    await expect(page.getByRole('heading', { name: 'Фильтры', exact: true })).toHaveCount(0);
     const ticketRow = page.locator('.support-admin-ticket-row').filter({ hasText: subject });
     await expect(ticketRow).toHaveCount(1);
     await ticketRow.getByRole('link', { name: 'Открыть обращение', exact: true }).click();
     await expect(page.getByRole('heading', { name: subject, exact: true })).toBeVisible();
+    await expect(page.locator('[data-testid="support-admin-ticket-layout"]')).toHaveCSS('display', 'grid');
+    await expect(page.locator('[data-testid="support-ticket-admin-heading"]')).toHaveCSS('display', 'grid');
+    await expect(page.locator('.support-admin-ticket-side').getByRole('heading', { name: 'Данные обращения', exact: true })).toBeVisible();
 
     const noteToggle = page.locator('[data-testid="internal-note-toggle"]');
     await expect(page.locator('[data-testid="internal-note-form"]')).toHaveCount(0);
@@ -84,6 +89,7 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(page.locator('[data-testid="internal-note-form"]')).toHaveCount(0);
 
     const staffReplyForm = page.locator('[data-testid="staff-reply-form"]');
+    await expect(staffReplyForm.locator('textarea[name="body"]')).toHaveCSS('border-radius', '12px');
     const originalStaffReply = 'Уточните, пожалуйста, когда появилась проблема.';
     const correctedStaffReply = 'Уточните, пожалуйста, когда именно появилась проблема.';
     await staffReplyForm.locator('textarea[name="body"]').fill(originalStaffReply);
@@ -112,6 +118,7 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(page.locator('.support-message-body', { hasText: correctedStaffReply })).toBeVisible();
     await expect(page.locator('.support-message-body', { hasText: originalStaffReply })).toHaveCount(0);
     const playerReplyForm = page.locator('[data-testid="player-reply-form"]');
+    await expect(playerReplyForm.locator('textarea[name="body"]')).toHaveCSS('border-radius', '12px');
     await playerReplyForm.locator('textarea[name="body"]').fill('Проблема появилась сегодня после входа в игру.');
     const playerMarker = await setNoReloadMarker(page);
     await playerReplyForm.getByRole('button', { name: 'Отправить ответ', exact: true }).click();
@@ -152,6 +159,8 @@ test('support ticket pages stay usable without horizontal overflow on mobile', a
 test('support ticket editor permissions expose dependent controls safely', async ({ page }) => {
     await signInAdmin(page);
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets/settings');
+    await expect(page.locator('[data-testid="support-settings-tabs"]')).toBeVisible();
+    await expect(page.locator('[data-testid="support-cleanup-panel"]')).toHaveCount(0);
 
     const viewToggle = page.locator('input[type="checkbox"][name="allow_editor_view"]');
     const replyToggle = page.locator('input[type="checkbox"][name="allow_editor_reply"]');
@@ -193,4 +202,15 @@ test('support ticket editor permissions expose dependent controls safely', async
     await expect(noteToggle).toBeDisabled();
     await expect(replyToggle).not.toBeChecked();
     await expect(noteToggle).not.toBeChecked();
+});
+
+test('support cleanup tools live in a dedicated settings tab', async ({ page }) => {
+    await signInAdmin(page);
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets/settings');
+
+    await page.getByRole('link', { name: 'Очистка базы', exact: true }).click();
+    await expect(page).toHaveURL(/\/admin\/extensions\/support-tickets\/settings\?tab=cleanup$/);
+    await expect(page.locator('[data-testid="support-cleanup-panel"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Сохранить настройки', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Проверить объём очистки', exact: true })).toBeVisible();
 });
