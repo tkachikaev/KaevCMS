@@ -44,6 +44,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
 
     public bool $noteOpen = false;
 
+    #[Locked]
     public int $visibleMessages = SupportTicket::MESSAGES_PER_PAGE;
 
     public ?int $editingMessageId = null;
@@ -72,7 +73,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
     {
         $this->ensureCanView();
         $this->visibleMessages = min(
-            app(SupportTicketSettings::class)->maxMessagesPerTicket(),
+            SupportTicketSettings::MAX_MAX_MESSAGES_PER_TICKET,
             $this->visibleMessages + SupportTicket::MESSAGES_PER_PAGE,
         );
     }
@@ -102,6 +103,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
         $this->reset('body');
         $this->notice = __('module-support-tickets::messages.reply_sent');
         $this->dispatch('support-conversation-updated');
+        $this->refreshAttentionBadge();
     }
 
     public function toggleNote(): void
@@ -139,6 +141,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
         $this->authorizeModuleAdminRoute(self::ROUTE_CLOSE, 'PATCH');
         $tickets->closeByStaff($this->ticket(), $this->admin());
         $this->notice = __('module-support-tickets::messages.ticket_closed');
+        $this->refreshAttentionBadge();
     }
 
     public function reopenTicket(SupportTicketService $tickets): void
@@ -146,6 +149,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
         $this->authorizeModuleAdminRoute(self::ROUTE_REOPEN, 'PATCH');
         $tickets->reopenByStaff($this->ticket(), $this->admin());
         $this->notice = __('module-support-tickets::messages.ticket_reopened');
+        $this->refreshAttentionBadge();
     }
 
     public function toggleRetentionProtection(SupportTicketService $tickets): void
@@ -196,7 +200,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
         $admin = $this->admin();
         $ticket = $this->ticket()->load('assignedAdmin');
         $this->visibleMessages = min(
-            app(SupportTicketSettings::class)->maxMessagesPerTicket(),
+            SupportTicketSettings::MAX_MAX_MESSAGES_PER_TICKET,
             max(SupportTicket::MESSAGES_PER_PAGE, $this->visibleMessages),
         );
         $query = SupportTicketMessage::query()->where('ticket_id', $ticket->id);
@@ -217,8 +221,14 @@ final class AdminTicketConversation extends ModuleAdminComponent
             'hasPreviousMessages' => $totalMessages > $messages->count(),
             'canReply' => $this->canReply($admin),
             'canAddInternalNote' => $this->canAddInternalNote($admin),
+            'canManageRetention' => $this->canUseModuleAdminRoute(self::ROUTE_RETENTION_PROTECTION, 'PATCH', $admin),
             'messageMaxLength' => $messageMaxLength,
         ]);
+    }
+
+    private function refreshAttentionBadge(): void
+    {
+        $this->dispatch('module-admin-badge-refresh', moduleId: 'support-tickets');
     }
 
     private function allowStaffMessage(string $field): bool

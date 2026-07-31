@@ -3,6 +3,7 @@
 namespace KaevCMS\Modules\SupportTickets\Livewire;
 
 use App\Models\User;
+use App\Services\RegistrationSettings;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -98,7 +99,8 @@ final class AccountTicketIndex extends Component
         return view('module-support-tickets::livewire.account-ticket-index', [
             'tickets' => SupportTicket::query()
                 ->where('user_id', $user->id)
-                ->latest('last_message_at')
+                ->orderByDesc('last_message_at')
+                ->orderByDesc('id')
                 ->paginate(15, ['*'], 'ticketsPage'),
             'categories' => SupportTicketCategory::cases(),
             'openCount' => SupportTicket::query()->where('user_id', $user->id)->open()->count(),
@@ -114,6 +116,12 @@ final class AccountTicketIndex extends Component
     {
         $user = auth()->user();
         abort_unless($user instanceof User, 401);
+        $user->refresh();
+        abort_unless($user->is_active, 403);
+        abort_if(
+            app(RegistrationSettings::class)->emailVerificationRequired() && ! $user->hasVerifiedEmail(),
+            403,
+        );
 
         return $user;
     }

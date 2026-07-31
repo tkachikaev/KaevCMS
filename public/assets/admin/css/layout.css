@@ -49,7 +49,9 @@
 .admin-menu-group-chevron { font-size: 14px; line-height: 1; transition: transform .16s ease; }
 .admin-menu-group[open] > .admin-menu-group-summary .admin-menu-group-chevron { transform: rotate(180deg); }
 .admin-menu-group-items { display: grid; gap: 4px; padding: 4px 0 5px 8px; }
-.admin-menu-item { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 11px; border-radius: 7px; color: var(--sidebar-text); }
+.admin-menu-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; padding: 0 11px; border-radius: 7px; color: var(--sidebar-text); }
+.admin-menu-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+
 a.admin-menu-item:hover { background: var(--sidebar-hover); color: #fff; }
 .admin-menu-item.active, .admin-menu-item[data-current] { background: var(--accent); color: #fff; }
 a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { background: var(--accent); color: #fff; }
@@ -124,11 +126,66 @@ a.admin-section-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(
     .admin-shell > [x-persist="admin-sidebar"],
     .admin-sidebar,
     .admin-menu { min-width: 0; max-width: 100%; }
-    .admin-sidebar { position: static; width: 100%; height: auto; overflow: visible; contain: none; }
-    .admin-menu { display: flex; width: 100%; gap: 6px; overflow-x: auto; }
-    .admin-menu-group, .admin-menu-group-items, details.admin-menu-group:not([open]) > .admin-menu-group-items { display: contents; }
-    .admin-menu-group-summary, .admin-menu-item.disabled, .admin-sidebar-footer { display: none; }
-    .admin-menu-item { flex: 0 0 auto; padding: 0 14px; }
+    .admin-sidebar { position: static; width: 100%; height: auto; padding: 18px 14px; overflow: visible; contain: none; }
+    .admin-brand { padding-bottom: 16px; }
+    .admin-menu {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 8px;
+        margin-top: 14px;
+        overflow: visible;
+    }
+    .admin-menu-group {
+        display: block;
+        min-width: 0;
+        margin: 0;
+        border: 1px solid rgba(148, 163, 184, .14);
+        border-radius: 9px;
+        background: rgba(255, 255, 255, .025);
+    }
+    .admin-menu-group[open] { grid-column: 1 / -1; }
+    .admin-menu-group-summary {
+        display: flex;
+        min-height: 42px;
+        padding: 0 12px;
+        border-radius: 8px;
+        color: var(--sidebar-text);
+        font-size: 11px;
+        letter-spacing: .075em;
+    }
+    .admin-menu-group[open] > .admin-menu-group-summary {
+        border-bottom: 1px solid rgba(148, 163, 184, .12);
+        border-radius: 8px 8px 0 0;
+        background: rgba(255, 255, 255, .05);
+        color: #fff;
+    }
+    .admin-menu-group-items {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        padding: 9px;
+    }
+    details.admin-menu-group:not([open]) > .admin-menu-group-items { display: none; }
+    .admin-menu-group-items .admin-menu-item {
+        min-width: 0;
+        min-height: 42px;
+        padding: 8px 11px;
+        border-color: rgba(148, 163, 184, .1);
+        background: rgba(15, 23, 42, .34);
+        line-height: 1.25;
+        white-space: normal;
+    }
+    .admin-menu > .admin-menu-item {
+        min-width: 0;
+        min-height: 44px;
+        padding: 8px 12px;
+        border-color: rgba(148, 163, 184, .12);
+        background: rgba(255, 255, 255, .025);
+        line-height: 1.25;
+        white-space: normal;
+    }
+    .admin-menu-item.disabled, .admin-sidebar-footer { display: none; }
     .admin-main { padding: 0 16px 36px; }
     .admin-header { align-items: flex-start; padding: 20px 0; }
     .admin-user > div { display: none; }
@@ -137,6 +194,11 @@ a.admin-section-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(
     .themes-toolbar .button { margin-left: 0; }
     .theme-row { grid-template-columns: 1fr; }
     .theme-actions { grid-column: auto; }
+}
+
+@media (max-width: 430px) {
+    .admin-menu,
+    .admin-menu-group-items { grid-template-columns: 1fr; }
 }
 
 

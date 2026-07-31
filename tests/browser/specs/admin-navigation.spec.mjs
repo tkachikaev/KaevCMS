@@ -191,6 +191,50 @@ test('persisted sidebar keeps group state during navigation and history changes'
     await expect(appearanceGroup).toHaveAttribute('open', '');
 });
 
+test('mobile administration keeps grouped navigation visible and distinct', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    const usersGroup = page.locator('[data-admin-menu-group="users"]');
+    const modulesGroup = page.locator('[data-admin-menu-group="modules"]');
+
+    await expect(usersGroup.locator('summary')).toBeVisible();
+    await expect(modulesGroup.locator('summary')).toBeVisible();
+    await expect(usersGroup.getByRole('link', { name: 'Пользователи', exact: true })).toBeHidden();
+
+    await usersGroup.locator('summary').click();
+    await expect(usersGroup).toHaveAttribute('open', '');
+    await expect(usersGroup.getByRole('link', { name: 'Пользователи', exact: true })).toBeVisible();
+    await expect(usersGroup.getByRole('link', { name: 'Администраторы', exact: true })).toBeVisible();
+
+    await modulesGroup.locator('summary').click();
+    await expect(modulesGroup).toHaveAttribute('open', '');
+    await expect(modulesGroup.getByRole('link', { name: 'Техническая поддержка', exact: true })).toBeVisible();
+
+    const visualSeparation = await modulesGroup.evaluate((group) => {
+        const summary = group.querySelector('summary');
+        const child = group.querySelector('.admin-menu-group-items .admin-menu-item');
+        const groupStyles = getComputedStyle(group);
+        const summaryStyles = summary ? getComputedStyle(summary) : null;
+        const childStyles = child ? getComputedStyle(child) : null;
+
+        return {
+            groupBorderWidth: groupStyles.borderTopWidth,
+            summaryDisplay: summaryStyles?.display ?? '',
+            childBackground: childStyles?.backgroundColor ?? '',
+        };
+    });
+
+    expect(visualSeparation.groupBorderWidth).not.toBe('0px');
+    expect(visualSeparation.summaryDisplay).toBe('flex');
+    expect(visualSeparation.childBackground).not.toBe('rgba(0, 0, 0, 0)');
+    await expectNoDocumentHorizontalOverflow(page, 'mobile grouped administration navigation');
+
+    await modulesGroup.locator('summary').click();
+    await expect(modulesGroup).not.toHaveAttribute('open', '');
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
+    await expect(page.locator('[data-admin-menu-group="modules"]')).toHaveAttribute('open', '');
+});
+
 test('active sidebar item keeps its selected color while hovered', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/game-server');
 

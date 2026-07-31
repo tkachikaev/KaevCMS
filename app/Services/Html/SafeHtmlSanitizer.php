@@ -8,6 +8,7 @@ use DOMElement;
 use DOMNode;
 use DOMXPath;
 use InvalidArgumentException;
+use LengthException;
 use RuntimeException;
 
 final class SafeHtmlSanitizer
@@ -120,10 +121,6 @@ final class SafeHtmlSanitizer
             return '';
         }
 
-        if (strlen($html) > self::MAX_LENGTH) {
-            $html = substr($html, 0, self::MAX_LENGTH);
-        }
-
         $rootId = $profile === self::PROFILE_NEWS ? 'kaevcms-news-root' : 'kaevcms-page-root';
         $previous = libxml_use_internal_errors(true);
 
@@ -147,7 +144,10 @@ final class SafeHtmlSanitizer
                 $result .= $document->saveHTML($child) ?: '';
             }
 
-            return trim($result);
+            $result = trim($result);
+            $this->guardMaximumLength($result);
+
+            return $result;
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
@@ -360,9 +360,6 @@ final class SafeHtmlSanitizer
             return '';
         }
 
-        if (strlen($html) > self::MAX_LENGTH) {
-            $html = substr($html, 0, self::MAX_LENGTH);
-        }
 
         $previous = libxml_use_internal_errors(true);
 
@@ -412,9 +409,10 @@ final class SafeHtmlSanitizer
                 return '';
             }
 
-            $result = $document->saveHTML($root) ?: '';
+            $result = '<!doctype html>'.trim($document->saveHTML($root) ?: '');
+            $this->guardMaximumLength($result);
 
-            return '<!doctype html>'.trim($result);
+            return $result;
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
@@ -497,6 +495,13 @@ final class SafeHtmlSanitizer
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
 
         return in_array($scheme, ['http', 'https', 'mailto', 'cid'], true) ? $url : null;
+    }
+
+    private function guardMaximumLength(string $html): void
+    {
+        if (strlen($html) > self::MAX_LENGTH) {
+            throw new LengthException('Sanitized HTML exceeds the maximum allowed byte length.');
+        }
     }
 
     private function requireDom(string $profile): void

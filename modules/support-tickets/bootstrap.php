@@ -13,6 +13,7 @@ use KaevCMS\Modules\SupportTickets\Console\Commands\CleanupSupportTicketsCommand
 use KaevCMS\Modules\SupportTickets\Livewire\AccountTicketConversation;
 use KaevCMS\Modules\SupportTickets\Livewire\AccountTicketIndex;
 use KaevCMS\Modules\SupportTickets\Livewire\AdminTicketConversation;
+use KaevCMS\Modules\SupportTickets\Services\SupportTicketAttentionCounter;
 use KaevCMS\Modules\SupportTickets\Services\SupportTicketSettings;
 use Livewire\Livewire;
 
@@ -35,6 +36,7 @@ return static function (Application $app, ModuleContext $module): void {
         labelKey: 'module-support-tickets::messages.admin_navigation_label',
         descriptionKey: 'module-support-tickets::messages.admin_navigation_description',
         sortOrder: 60,
+        badgeResolver: static fn (Admin $admin): int => $app->make(SupportTicketAttentionCounter::class)->countFor($admin),
     );
 
     $settings = static fn (): SupportTicketSettings => $app->make(SupportTicketSettings::class);
@@ -88,7 +90,6 @@ return static function (Application $app, ModuleContext $module): void {
         'admin.module-pages.support-tickets.reply',
         'admin.module-pages.support-tickets.close',
         'admin.module-pages.support-tickets.reopen',
-        'admin.module-pages.support-tickets.retention-protection',
     ] as $routeName) {
         $access->registerExact(
             moduleId: $module->id,
@@ -98,6 +99,13 @@ return static function (Application $app, ModuleContext $module): void {
             additionalAccess: $editorReply,
         );
     }
+
+    $access->registerExact(
+        moduleId: $module->id,
+        routeName: 'admin.module-pages.support-tickets.retention-protection',
+        viewRoles: [],
+        manageRoles: [AdminRole::Owner, AdminRole::Administrator],
+    );
 
     $access->registerExact(
         moduleId: $module->id,

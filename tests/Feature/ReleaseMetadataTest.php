@@ -30,29 +30,15 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'app/Services/Html/SafeHtmlSanitizer.php',
-            'app/Support/Modules/AuthorizesModuleAdminAccess.php',
-            'app/Support/Modules/ModuleAdminComponent.php',
-            'deployment/release/build-release.php',
-            'lang/en.json',
-            'lang/ru.json',
-            'modules/support-tickets/module.json',
-            'modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php',
-            'modules/support-tickets/src/Livewire/AdminTicketConversation.php',
-            'public/assets/admin/css/content.css',
-            'public/assets/admin/js/news-editor.js',
-            'public/assets/modules/support-tickets.css',
-            'public/themes/default/assets/css/app.css',
-            'public/themes/kaev-aurelia/assets/css/app.css',
-            'resources/js/admin/content-editor.js',
-            'resources/views/admin/content/_rich-editor.blade.php',
-            'tests/Feature/ContentEditorContractTest.php',
-            'tests/Feature/CoreStabilizationTest.php',
-            'tests/Feature/Modules/SupportTicketsModuleTest.php',
+            'account-themes/kaev-aurelia/views/partials/navigation.blade.php',
+            'account-themes/luxury/views/partials/navigation.blade.php',
+            'public/assets/admin/css/layout.css',
+            'tests/Feature/Account/AccountNavigationTest.php',
+            'tests/Feature/Admin/AdminPanelTest.php',
             'tests/Feature/ReleaseMetadataTest.php',
-            'tests/Unit/ModuleAdminAccessRegistryTest.php',
-            'tests/browser/specs/content-editor.spec.mjs',
-            'tests/browser/specs/support-tickets.spec.mjs',
+            'tests/browser/run.mjs',
+            'tests/browser/specs/admin-navigation.spec.mjs',
+            'tests/browser/specs/player-character-directory.spec.mjs',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
@@ -341,8 +327,14 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('.account-dashboard-tools {', $aureliaCss);
         $this->assertStringContainsString('border-radius: 24px;', $aureliaCss);
 
+        $luxuryNavigation = $this->readReleaseFile('account-themes/luxury/views/partials/navigation.blade.php');
+        $this->assertStringContainsString('data-account-module-id', $luxuryNavigation);
+        $this->assertStringNotContainsString('wire:navigate.hover @class', $luxuryNavigation);
+
         $aureliaNavigation = $this->readReleaseFile('account-themes/kaev-aurelia/views/partials/navigation.blade.php');
         $this->assertStringContainsString('wire:current="active"', $aureliaNavigation);
+        $this->assertStringContainsString('data-account-module-id', $aureliaNavigation);
+        $this->assertStringNotContainsString('wire:navigate.hover @class', $aureliaNavigation);
         $this->assertStringNotContainsString('request()->routeIs(\'modules.\'', $aureliaNavigation);
 
         $aureliaInventory = $this->readReleaseFile('account-themes/kaev-aurelia/views/web-inventory/index.blade.php');
@@ -378,6 +370,7 @@ class ReleaseMetadataTest extends TestCase
             'app/Support/Modules/AuthorizesModuleAdminAccess.php',
             'app/Support/Modules/ModuleAdminAuthorizer.php',
             'app/Support/Modules/ModuleAdminComponent.php',
+            'app/Livewire/Admin/ModuleNavigationBadge.php',
             'modules/support-tickets/src/Services/SupportTicketCleanupService.php',
             'public/assets/modules/support-tickets.css',
             'public/assets/modules/support-tickets.js',
@@ -397,8 +390,8 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.4.2', $manifest['version']);
-        $this->assertSame('0.44.26', $manifest['cms_min']);
+        $this->assertSame('1.5.1', $manifest['version']);
+        $this->assertSame('0.44.28', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
         $service = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketService.php');
@@ -440,6 +433,15 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('editorCanReply()', $bootstrap);
         $this->assertStringContainsString('editorCanAddInternalNotes()', $bootstrap);
         $this->assertStringContainsString('kaevcms:support-tickets-cleanup --scheduled', $bootstrap);
+        $this->assertStringContainsString('SupportTicketAttentionCounter', $bootstrap);
+        $this->assertStringContainsString('retention-protection', $bootstrap);
+
+        $navigation = $this->readReleaseFile('resources/views/admin/partials/navigation.blade.php');
+        $this->assertStringContainsString('livewire:admin.module-navigation-badge', $navigation);
+        $badge = $this->readReleaseFile('resources/views/livewire/admin/module-navigation-badge.blade.php');
+        $this->assertStringContainsString('wire:poll.30s="refreshBadge"', $badge);
+        $this->assertStringContainsString('admin-menu-badge', $badge);
+        $this->assertStringContainsString('99+', $badge);
 
         $settingsView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/settings.blade.php');
         $this->assertStringContainsString('admin-tabs settings-section-tabs support-settings-tabs', $settingsView);

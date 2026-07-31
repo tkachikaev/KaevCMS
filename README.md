@@ -1,4 +1,4 @@
-# KaevCMS 0.44.26
+# KaevCMS 0.44.29
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.26 fixes PHPStan trait analysis without weakening static-analysis rules: administrative Livewire modules now inherit the shared ModuleAdminComponent, which uses the common authorization trait inside the analysed core tree. Support Tickets is updated to 1.4.2 with no database migrations. The cumulative update baseline remains 0.42.4.
+Version 0.44.29 improves mobile administration navigation and browser-suite reliability. Grouped menu sections now remain visible and expandable on phones, nested links are visually separated, dynamic player-account module links navigate without hover-prefetch races, and browser-test monitoring fixtures remain fresh without repeated expected warnings. Support Tickets remains at 1.5.1. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.26 исправляет анализ trait в PHPStan без ослабления правил: административные Livewire-модули теперь наследуют общий ModuleAdminComponent, использующий единый trait авторизации внутри анализируемого ядра. Support Tickets обновлён до 1.4.2 без новых миграций. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.29 улучшает мобильную навигацию админки и стабильность браузерных проверок. Группы меню теперь всегда видны и раскрываются на телефонах, вложенные пункты визуально отделены, динамические ссылки модулей личного кабинета работают без нестабильной предварительной загрузки по наведению, а тестовый мониторинг серверов больше не засоряет лог ожидаемыми предупреждениями. Support Tickets остаётся на версии 1.5.1. Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 

@@ -64,6 +64,7 @@
                         @error('body')<small class="account-field-error" role="alert">{{ $message }}</small>@enderror
                     </div>
                 </label>
+                @error('close')<small class="account-field-error" role="alert">{{ $message }}</small>@enderror
                 <div class="account-form-actions support-chat-actions">
                     <button class="account-button secondary" type="button" wire:click="closeTicket" wire:confirm="{{ __('module-support-tickets::messages.close_ticket_confirm') }}">{{ __('module-support-tickets::messages.close_ticket') }}</button>
                     <button class="account-button primary" type="submit" wire:loading.attr="disabled" wire:target="reply">{{ __('module-support-tickets::messages.send_reply') }}</button>

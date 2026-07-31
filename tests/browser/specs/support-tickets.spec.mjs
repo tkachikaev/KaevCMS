@@ -69,6 +69,7 @@ test('player and administrator complete the support ticket conversation flow wit
 
     await context.clearCookies();
     await signInAdmin(page);
+    await expect(page.locator('a[href$="/admin/extensions/support-tickets"] .admin-menu-badge')).toHaveText('2');
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
     await expect(page.locator('[data-testid="support-ticket-filters"]')).toHaveCSS('display', 'grid');
     await expect(page.getByRole('heading', { name: 'Фильтры', exact: true })).toHaveCount(0);
@@ -96,6 +97,7 @@ test('player and administrator complete the support ticket conversation flow wit
     const adminMarker = await setNoReloadMarker(page);
     await staffReplyForm.getByRole('button', { name: 'Отправить ответ', exact: true }).click();
     await expect(page.getByText('Ожидает ответа игрока', { exact: true })).toBeVisible();
+    await expect(page.locator('a[href$="/admin/extensions/support-tickets"] .admin-menu-badge')).toHaveText('1');
     await expectNoReload(page, adminMarker);
 
     const staffMessageByBody = page.locator('.support-message').filter({ has: page.locator('.support-message-body', { hasText: originalStaffReply }) });

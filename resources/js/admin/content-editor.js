@@ -6,6 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import TextAlign from '@tiptap/extension-text-align';
 
 const MAX_CONTENT_LENGTH = 200000;
+const contentByteLength = (value) => new TextEncoder().encode(value).length;
 const SAFE_COLORS = ['gold', 'amber', 'yellow', 'red', 'rose', 'coral', 'orange', 'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc', 'muted'];
 const SAFE_HIGHLIGHTS = ['yellow', 'amber', 'orange', 'rose', 'red', 'lime', 'green', 'teal', 'cyan', 'blue', 'purple', 'gray'];
 const SAFE_TEXT_SIZES = ['small', 'large'];
@@ -661,6 +662,14 @@ const initializeRichEditor = (root, signal) => {
             window.setTimeout(() => {
                 methodOverride.disabled = false;
             }, 0);
+        }
+
+        if (contentByteLength(source.value) > MAX_CONTENT_LENGTH) {
+            event.preventDefault();
+            setStatus(root.dataset.tooLargeMessage ?? 'The formatted content is too large.', 'error');
+            editor.commands.focus();
+
+            return;
         }
 
         if (root.dataset.required === '1' && !hasRequiredContent()) {

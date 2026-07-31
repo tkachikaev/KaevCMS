@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
+use LengthException;
 use Throwable;
 
 class MailSettingsController extends Controller
@@ -64,7 +65,13 @@ class MailSettingsController extends Controller
         $validated = $request->validated();
         $address = trim((string) $validated['recipient']);
         $subject = trim((string) preg_replace('/[\r\n\t]+/u', ' ', strip_tags((string) $validated['subject'])));
-        $safeHtml = $sanitizer->sanitize((string) $validated['html']);
+        try {
+            $safeHtml = $sanitizer->sanitize((string) $validated['html']);
+        } catch (LengthException) {
+            return back()->withInput()->withErrors([
+                'html' => __('The formatted content is too large. Reduce the text, tables, or images and try again.'),
+            ]);
+        }
 
         if ($sanitizer->plainText($safeHtml) === '') {
             return back()->withInput()->withErrors([

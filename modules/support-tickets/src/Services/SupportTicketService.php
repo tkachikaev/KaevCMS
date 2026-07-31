@@ -18,6 +18,7 @@ final class SupportTicketService
     public function __construct(
         private readonly AuditLogger $auditLogger,
         private readonly SupportTicketSettings $settings,
+        private readonly SupportTicketAttentionCounter $attentionCounter,
     ) {}
 
     public function create(
@@ -66,6 +67,7 @@ final class SupportTicketService
             return $ticket;
         }, 3);
 
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.created',
@@ -114,6 +116,7 @@ final class SupportTicketService
             return $message;
         }, 3);
 
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.player_replied',
@@ -154,6 +157,7 @@ final class SupportTicketService
             return $message;
         }, 3);
 
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.staff_replied',
@@ -196,15 +200,30 @@ final class SupportTicketService
 
     public function assignTo(SupportTicket $ticket, Admin $admin): void
     {
-        DB::transaction(function () use ($ticket, $admin): void {
+        $changed = DB::transaction(function () use ($ticket, $admin): bool {
             $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
-            $updates = ['assigned_admin_id' => $admin->id];
+            $updates = [];
+
+            if ($locked->assigned_admin_id !== $admin->id) {
+                $updates['assigned_admin_id'] = $admin->id;
+            }
             if ($locked->status === SupportTicketStatus::New) {
                 $updates['status'] = SupportTicketStatus::InProgress;
             }
+            if ($updates === []) {
+                return false;
+            }
+
             $locked->update($updates);
+
+            return true;
         }, 3);
 
+        if (! $changed) {
+            return;
+        }
+
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.assigned',
@@ -216,20 +235,28 @@ final class SupportTicketService
 
     public function closeByPlayer(SupportTicket $ticket, User $user): void
     {
-        DB::transaction(function () use ($ticket, $user): void {
+        $changed = DB::transaction(function () use ($ticket, $user): bool {
             $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
             abort_unless($locked->user_id === $user->id, 404);
             if ($locked->isClosed()) {
-                return;
+                return false;
             }
+
             $locked->update([
                 'status' => SupportTicketStatus::Closed,
                 'closed_at' => now(),
                 'closed_by_user_id' => $user->id,
                 'closed_by_admin_id' => null,
             ]);
+
+            return true;
         }, 3);
 
+        if (! $changed) {
+            return;
+        }
+
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.closed_by_player',
@@ -241,15 +268,27 @@ final class SupportTicketService
 
     public function closeByStaff(SupportTicket $ticket, Admin $admin): void
     {
-        DB::transaction(function () use ($ticket, $admin): void {
-            SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id)->update([
+        $changed = DB::transaction(function () use ($ticket, $admin): bool {
+            $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
+            if ($locked->isClosed()) {
+                return false;
+            }
+
+            $locked->update([
                 'status' => SupportTicketStatus::Closed,
                 'closed_at' => now(),
                 'closed_by_admin_id' => $admin->id,
                 'closed_by_user_id' => null,
             ]);
+
+            return true;
         }, 3);
 
+        if (! $changed) {
+            return;
+        }
+
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.closed_by_staff',
@@ -278,6 +317,7 @@ final class SupportTicketService
             ]);
         }, 3);
 
+        $this->attentionCounter->forget();
         $this->auditLogger->success(
             category: 'module',
             action: 'support_ticket.reopened',
@@ -289,11 +329,20 @@ final class SupportTicketService
 
     public function setRetentionProtected(SupportTicket $ticket, Admin $admin, bool $protected): void
     {
-        DB::transaction(function () use ($ticket, $protected): void {
-            SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id)->update([
-                'retention_protected' => $protected,
-            ]);
+        $changed = DB::transaction(function () use ($ticket, $protected): bool {
+            $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
+            if ($locked->retention_protected === $protected) {
+                return false;
+            }
+
+            $locked->update(['retention_protected' => $protected]);
+
+            return true;
         }, 3);
+
+        if (! $changed) {
+            return;
+        }
 
         $this->auditLogger->success(
             category: 'module',

@@ -62,6 +62,7 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString('public_route(\'characters.index\')', $navigation);
         $this->assertStringNotContainsString('public_route(\'profile.edit\')', $navigation);
         $this->assertStringContainsString('wire:navigate.hover', $navigation);
+        $this->assertStringContainsString('data-account-module-id', $navigation);
         $this->assertStringContainsString('wire:current.exact="active"', $navigation);
         $this->assertStringContainsString('livewire:navigate', $script);
         $this->assertStringContainsString('livewire:navigated', $script);

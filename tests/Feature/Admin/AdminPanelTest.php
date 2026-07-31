@@ -386,6 +386,9 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
         $this->assertStringContainsString('a.admin-menu-item.active:hover', $styles);
         $this->assertStringContainsString('a.admin-menu-item[data-current]:hover', $styles);
+        $this->assertStringContainsString('.admin-menu-group[open] { grid-column: 1 / -1; }', $styles);
+        $this->assertStringContainsString('details.admin-menu-group:not([open]) > .admin-menu-group-items { display: none; }', $styles);
+        $this->assertStringContainsString('@media (max-width: 430px)', $styles);
     }
 
     public function test_settings_fields_use_the_shared_thin_control_border(): void

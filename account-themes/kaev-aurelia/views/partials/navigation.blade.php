@@ -30,7 +30,7 @@
     </a>
 
     @foreach(app(\App\Support\Modules\ModuleNavigationRegistry::class)->accountLinks() as $moduleLink)
-        <a wire:navigate.hover wire:current="active" href="{{ route($moduleLink['route']) }}">
+        <a wire:navigate data-account-module-id="{{ $moduleLink['module_id'] }}" wire:current="active" href="{{ route($moduleLink['route']) }}">
             <span class="account-nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 4h10l3 4-8 12L4 8z"></path><path d="m7 4 5 16 5-16M4 8h16"></path></svg>
             </span>

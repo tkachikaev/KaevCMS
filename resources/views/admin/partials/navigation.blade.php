@@ -108,7 +108,15 @@
                         class="admin-menu-item"
                         href="{{ route($moduleLink['route'], ['adminPath' => request()->route('adminPath')]) }}"
                         title="{{ __($moduleLink['description_key']) }}"
-                    ><span>{{ __($moduleLink['label_key']) }}</span></a>
+                    ><span>{{ __($moduleLink['label_key']) }}</span>
+                        @if($moduleLink['badge_enabled'] ?? false)
+                            <livewire:admin.module-navigation-badge
+                                :module-id="$moduleLink['module_id']"
+                                :initial-count="$moduleLink['badge']"
+                                :key="'admin-module-badge-'.$moduleLink['module_id']"
+                            />
+                        @endif
+                    </a>
                 @endforeach
             </div>
         </details>

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use LengthException;
 
 final class PageController extends Controller
 {
@@ -249,7 +250,10 @@ final class PageController extends Controller
             $input = is_array($inputTranslations[$locale] ?? null) ? $inputTranslations[$locale] : [];
             $title = trim((string) ($input['title'] ?? ''));
             $requestedSlug = trim((string) ($input['slug'] ?? ''));
-            $body = $this->sanitizer->sanitize(trim((string) ($input['body'] ?? '')));
+            $body = $this->sanitizeBody(
+                trim((string) ($input['body'] ?? '')),
+                'translations.'.$locale.'.body',
+            );
             $seoTitle = trim((string) ($input['seo_title'] ?? ''));
             $seoDescription = trim((string) ($input['seo_description'] ?? ''));
 
@@ -297,6 +301,17 @@ final class PageController extends Controller
             'show_in_footer' => $request->boolean('show_in_footer'),
             'sort_order' => (int) ($validated['sort_order'] ?? 100),
         ];
+    }
+
+    private function sanitizeBody(string $html, string $field): string
+    {
+        try {
+            return $this->sanitizer->sanitize($html);
+        } catch (LengthException) {
+            throw ValidationException::withMessages([
+                $field => __('The formatted content is too large. Reduce the text, tables, or images and try again.'),
+            ]);
+        }
     }
 
     /** @param array<string,array{title:string,slug:string,body:string,seo_title:string,seo_description:string}> $translations */

@@ -4,6 +4,7 @@
     data-required="{{ $required ? '1' : '0' }}"
     data-editor-label="{{ $label }}"
     data-empty-message="{{ __('Add text in the default language.') }}"
+    data-too-large-message="{{ __('The formatted content is too large. Reduce the text, tables, or images and try again.') }}"
     data-uploading-message="{{ __('Uploading image…') }}"
     data-upload-failed-message="{{ __('Could not upload the image.') }}"
     data-image-uploaded-message="{{ __('Image uploaded. Add a description.') }}"

@@ -67,7 +67,12 @@ final class AdminSupportTicketSettingsController extends Controller
 
     public function previewCleanup(Request $request): RedirectResponse
     {
-        $result = $this->cleanup->preview($this->settings->retentionMonths());
+        $configuration = $this->settings->cleanupConfiguration();
+        if ($configuration === null) {
+            return $this->cleanupConfigurationError();
+        }
+
+        $result = $this->cleanup->preview($configuration['retention_months']);
 
         return $this->backToSettings('cleanup')->with('support_cleanup_preview', $result);
     }
@@ -75,7 +80,12 @@ final class AdminSupportTicketSettingsController extends Controller
     public function runCleanup(Request $request): RedirectResponse
     {
         $admin = $this->admin($request);
-        $result = $this->cleanup->cleanup($this->settings->retentionMonths());
+        $configuration = $this->settings->cleanupConfiguration();
+        if ($configuration === null) {
+            return $this->cleanupConfigurationError();
+        }
+
+        $result = $this->cleanup->cleanup($configuration['retention_months']);
 
         $this->auditLogger->success(
             category: 'module',
@@ -88,6 +98,13 @@ final class AdminSupportTicketSettingsController extends Controller
         return $this->backToSettings('cleanup')
             ->with('support_cleanup_result', $result)
             ->with('status', __('module-support-tickets::messages.cleanup_completed'));
+    }
+
+    private function cleanupConfigurationError(): RedirectResponse
+    {
+        return $this->backToSettings('cleanup')->withErrors([
+            'cleanup' => __('Support ticket cleanup was not started because its settings could not be read.'),
+        ]);
     }
 
     private function admin(Request $request): Admin

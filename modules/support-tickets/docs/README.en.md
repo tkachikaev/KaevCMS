@@ -32,7 +32,7 @@ Staff can edit only their own replies or notes. The previous body, editor and ed
 
 ## Status labels
 
-Players see New, In progress, Awaiting your reply and Closed. In the administration panel, `in_progress` is rendered as “Awaiting your reply” so staff can identify tickets that require action. After a staff reply, the player sees “Awaiting your reply” while staff sees “Awaiting player reply”.
+Players see New, In progress, Awaiting your reply and Closed. In the administration panel, `in_progress` is rendered as “Awaiting your reply”. A red badge next to “Technical Support” counts new tickets and conversations requiring staff action; it is hidden at zero and displays `99+` above 99. After a staff reply, the player sees “Awaiting your reply” while staff sees “Awaiting player reply”.
 
 ## Limits
 
@@ -85,6 +85,7 @@ Cleanup:
 - preserves tickets marked “Keep indefinitely”;
 - deletes in batches of 100 tickets;
 - cascades to messages, internal notes and revisions;
+- stops without deleting data when settings cannot be read;
 - can run automatically once per day;
 - provides a dry-run preview.
 
@@ -106,7 +107,7 @@ Normal deletes make pages reusable but may not immediately shrink the SQLite fil
 
 ## Installation and updates
 
-Module version 1.4.2 requires KaevCMS 0.44.26 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.4.2 adds no new migration and moves the shared Livewire authorization trait behind the core ModuleAdminComponent contract for complete PHPStan analysis.
+Module version 1.5.1 requires KaevCMS 0.44.28 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.5.1 adds no migration; the existing 1.5.0 migration still safely creates a missing settings row and never overwrites Owner changes.
 
 The module is bundled with KaevCMS. Module migrations are applied with SHA256 tracking. Applied migrations must not be modified or removed. Disabling the module hides routes and navigation without deleting data.
 

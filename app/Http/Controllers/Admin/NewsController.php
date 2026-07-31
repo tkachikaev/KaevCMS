@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use LengthException;
 use Throwable;
 
 class NewsController extends Controller
@@ -337,7 +338,10 @@ class NewsController extends Controller
                 $input = is_array($inputTranslations[$locale] ?? null) ? $inputTranslations[$locale] : [];
                 $title = trim((string) ($input['title'] ?? ''));
                 $excerpt = trim((string) ($input['excerpt'] ?? ''));
-                $body = $this->sanitizer->sanitize(trim((string) ($input['body'] ?? '')));
+                $body = $this->sanitizeBody(
+                    trim((string) ($input['body'] ?? '')),
+                    'translations.'.$locale.'.body',
+                );
 
                 if ($locale !== $this->languages->default() && $title === '' && $excerpt === '' && $this->sanitizer->plainText($body) === '') {
                     continue;
@@ -351,7 +355,7 @@ class NewsController extends Controller
                 $locale,
                 trim((string) ($validated['title'] ?? '')),
                 trim((string) ($validated['excerpt'] ?? '')),
-                $this->sanitizer->sanitize(trim((string) ($validated['body'] ?? ''))),
+                $this->sanitizeBody(trim((string) ($validated['body'] ?? '')), 'body'),
             );
         }
 
@@ -372,6 +376,17 @@ class NewsController extends Controller
             'published_at' => $publishedAt,
             'is_published' => $isPublished,
         ];
+    }
+
+    private function sanitizeBody(string $html, string $field): string
+    {
+        try {
+            return $this->sanitizer->sanitize($html);
+        } catch (LengthException) {
+            throw ValidationException::withMessages([
+                $field => __('The formatted content is too large. Reduce the text, tables, or images and try again.'),
+            ]);
+        }
     }
 
     /** @return array{title:string,excerpt:string,body:string} */

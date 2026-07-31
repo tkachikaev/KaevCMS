@@ -28,13 +28,20 @@ final class CleanupSupportTicketsCommand extends Command
             return self::SUCCESS;
         }
 
-        if ($this->option('scheduled') && ! $settings->automaticCleanupEnabled()) {
+        $configuration = $settings->cleanupConfiguration();
+        if ($configuration === null) {
+            $this->error('Support ticket cleanup was skipped because its settings could not be read.');
+
+            return self::FAILURE;
+        }
+
+        if ($this->option('scheduled') && ! $configuration['automatic_cleanup_enabled']) {
             $this->info('Automatic support ticket cleanup is disabled.');
 
             return self::SUCCESS;
         }
 
-        $retentionMonths = $settings->retentionMonths();
+        $retentionMonths = $configuration['retention_months'];
         $dryRun = (bool) $this->option('dry-run');
         $batchSize = max(1, (int) $this->option('batch'));
         $result = $dryRun

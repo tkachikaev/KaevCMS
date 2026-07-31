@@ -4,8 +4,10 @@ namespace App\Support\Modules;
 
 use App\Auth\AdminPermission;
 use App\Models\Admin;
+use Closure;
 use Illuminate\Support\Facades\Route;
 use InvalidArgumentException;
+use Throwable;
 
 final class ModuleNavigationRegistry
 {
@@ -14,6 +16,9 @@ final class ModuleNavigationRegistry
 
     /** @var array<string, array<string, mixed>> */
     private array $adminLinks = [];
+
+    /** @var array<string, Closure(Admin): int> */
+    private array $adminBadgeResolvers = [];
 
     public function registerAccountLink(
         string $moduleId,
@@ -32,12 +37,14 @@ final class ModuleNavigationRegistry
         );
     }
 
+    /** @param Closure(Admin): int|null $badgeResolver */
     public function registerAdminLink(
         string $moduleId,
         string $routeName,
         string $labelKey,
         string $descriptionKey,
         int $sortOrder = 100,
+        ?Closure $badgeResolver = null,
     ): void {
         $this->adminLinks[$moduleId] = $this->validatedLink(
             moduleId: $moduleId,
@@ -47,6 +54,12 @@ final class ModuleNavigationRegistry
             sortOrder: $sortOrder,
             routePrefix: 'admin.module-pages.'.$moduleId.'.',
         );
+
+        if ($badgeResolver === null) {
+            unset($this->adminBadgeResolvers[$moduleId]);
+        } else {
+            $this->adminBadgeResolvers[$moduleId] = $badgeResolver;
+        }
     }
 
     /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
@@ -61,10 +74,10 @@ final class ModuleNavigationRegistry
         return $this->availableLinks($this->adminLinks);
     }
 
-    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int,badge:int,badge_enabled:bool}> */
     public function availableAdminLinks(Admin $admin, ModuleAdminAccessRegistry $access): array
     {
-        return array_values(array_filter(
+        $links = array_values(array_filter(
             $this->adminLinks(),
             static function (array $link) use ($access, $admin): bool {
                 $routeName = (string) $link['route'];
@@ -74,6 +87,15 @@ final class ModuleNavigationRegistry
                     : $admin->hasPermission(AdminPermission::ModulesView);
             },
         ));
+
+        return array_map(function (array $link) use ($admin): array {
+            $moduleId = (string) $link['module_id'];
+            $link['badge_enabled'] = isset($this->adminBadgeResolvers[$moduleId]);
+            $link['badge'] = $this->adminBadgeFor($moduleId, $admin);
+
+            /** @var array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int,badge:int,badge_enabled:bool} $link */
+            return $link;
+        }, $links);
     }
 
     /**
@@ -97,6 +119,22 @@ final class ModuleNavigationRegistry
 
         /** @var list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> $resolved */
         return $resolved;
+    }
+
+    public function adminBadgeFor(string $moduleId, Admin $admin): int
+    {
+        $resolver = $this->adminBadgeResolvers[$moduleId] ?? null;
+        if (! $resolver instanceof Closure) {
+            return 0;
+        }
+
+        try {
+            return min(999999, max(0, (int) $resolver($admin)));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return 0;
+        }
     }
 
     /** @return array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int} */

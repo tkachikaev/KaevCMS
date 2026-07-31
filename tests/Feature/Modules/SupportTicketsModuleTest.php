@@ -67,7 +67,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.4.2',
+            'version' => '1.5.1',
             'enabled' => true,
         ]);
 
@@ -1030,7 +1030,12 @@ class SupportTicketsModuleTest extends TestCase
                 'message_max_length',
             ]);
 
-        $this->assertDatabaseMissing('module_support_ticket_settings', ['id' => 1]);
+        $this->assertDatabaseHas('module_support_ticket_settings', [
+            'id' => 1,
+            'max_tickets_per_day' => 10,
+            'max_player_messages_per_day' => 100,
+            'max_messages_per_ticket' => 300,
+        ]);
     }
 
     private function updateSettings(

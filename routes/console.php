@@ -29,3 +29,15 @@ Schedule::command('kaevcms:queue-clean')
 Schedule::command('kaevcms:rewards-reconcile --limit=50 --older-than=300')
     ->everyFiveMinutes()
     ->withoutOverlapping(5);
+
+Schedule::command('kaevcms:cache-clean --batch=2000')
+    ->dailyAt('03:55')
+    ->withoutOverlapping();
+
+Schedule::command('kaevcms:news-media-clean --hours=24')
+    ->dailyAt('04:15')
+    ->withoutOverlapping();
+
+Schedule::command('kaevcms:page-media-clean --hours=24')
+    ->dailyAt('04:20')
+    ->withoutOverlapping();

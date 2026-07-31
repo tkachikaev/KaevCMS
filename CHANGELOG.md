@@ -1,3 +1,30 @@
+## 0.44.29 - 2026-07-31
+
+- Reworked the administration navigation below 760 px: group headings remain visible, native expand/collapse works on touch devices, the active group opens automatically and nested links are visually separated instead of merging into one horizontal list.
+- Stabilized player-account module navigation by removing hover-prefetch from dynamic module links, adding stable module identifiers and strengthening the Daily Rewards browser regression around the real navigation link.
+- Kept browser-test server-monitor snapshots fresh for the full suite, preventing the intentionally unsupported test drivers from repeatedly filling the test log with expected database-monitoring warnings.
+- Added mobile Playwright and PHPUnit contracts for grouped navigation, module-link routing and the test-only monitoring interval. No database migration, module update or dependency change was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.29 package supports direct updates from 0.42.4 through 0.44.28.
+
+## 0.44.28 - 2026-07-31
+
+- Updated bundled `support-tickets` to 1.5.1 and moved its administration attention badge into a persistent Livewire component: staff replies, closing and reopening refresh it immediately, while 30-second polling discovers tickets changed in other sessions without reloading the page.
+- Made `kaevcms:cache-clean` use the configured database-cache connection, table, lock connection and lock table instead of hard-coded defaults; command output now identifies the actual connection and table being maintained.
+- Strengthened fail-closed retention cleanup by validating raw `retention_months` and `automatic_cleanup_enabled` values before any preview or deletion. Unknown values now stop cleanup instead of falling back to defaults.
+- Added PHPUnit and Playwright regressions for persisted badge updates, custom cache storage and malformed retention settings. No database migration, Composer dependency or npm dependency was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.28 package supports direct updates from 0.42.4 through 0.44.27.
+
+## 0.44.27 - 2026-07-30
+
+- Updated bundled `support-tickets` to 1.5.0 and added a red administration-menu badge that counts New and In-progress tickets requiring a staff response, hides at zero, displays `99+` above 99 and refreshes immediately after ticket actions.
+- Made retention cleanup fail closed: scheduled and manual destructive cleanup now stop with an explicit error when module settings cannot be read; a new immutable migration seeds the default settings row without overwriting owner changes.
+- Re-applied active-account and configured email-verification checks to subsequent player Livewire requests, added close throttling, restricted retention protection to Owner/Administrator and made repeated assign/close/protection actions idempotent.
+- Decoupled ticket-history reading from the current write limit, added stable list ordering and preserved the bounded 2,000-message safety ceiling.
+- Replaced unsafe byte truncation in the shared HTML sanitizer with a validation error, and added the matching UTF-8 byte-size check to the Tiptap source and compiled bundle.
+- Added indexed scheduled cleanup for expired database cache/rate-limiter rows and daily orphan-media cleanup for news and pages.
+- Added focused regressions for UTF-8 boundaries, cache maintenance, fail-closed retention, Livewire account-state revocation, historical messages, idempotent transitions and the support attention badge.
+- The cumulative update line remains based on `0.42.4`; the 0.44.27 package supports direct updates from 0.42.4 through 0.44.26.
+
 ## 0.44.26 - 2026-07-30
 
 - Added the core `ModuleAdminComponent` base class for administrative Livewire modules. It inherits `Livewire\Component` and uses `AuthorizesModuleAdminAccess` inside the PHPStan analysed `app` tree.

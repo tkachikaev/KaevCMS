@@ -65,7 +65,7 @@ final class AdminSupportTicketController extends Controller
         }
 
         return view('module-support-tickets::admin.index', [
-            'tickets' => $query->latest('last_message_at')->paginate(25)->withQueryString(),
+            'tickets' => $query->orderByDesc('last_message_at')->orderByDesc('id')->paginate(25)->withQueryString(),
             'categories' => SupportTicketCategory::cases(),
             'statuses' => SupportTicketStatus::cases(),
             'filters' => $validated,

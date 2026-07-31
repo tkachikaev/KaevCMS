@@ -172,7 +172,9 @@ test('player activates a promo code into the server-bound web inventory', async 
 test('player claims the current daily reward into web inventory', async ({ page }) => {
     await signIn(page);
 
-    await page.locator('.account-nav').getByRole('link', { name: 'Ежедневные награды' }).click();
+    const dailyRewardsLink = page.locator('[data-account-module-id="daily-rewards"]');
+    await expect(dailyRewardsLink).toHaveAttribute('href', /\/modules\/daily-rewards$/);
+    await dailyRewardsLink.click();
     await expect(page).toHaveURL(/\/modules\/daily-rewards$/);
     await expect(page.getByText('Доступно сегодня', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Получить награду', exact: true }).click();

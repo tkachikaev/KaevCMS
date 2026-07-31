@@ -3,6 +3,7 @@
 namespace KaevCMS\Modules\SupportTickets\Livewire;
 
 use App\Models\User;
+use App\Services\RegistrationSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
@@ -20,6 +21,7 @@ final class AccountTicketConversation extends Component
 
     public string $body = '';
 
+    #[Locked]
     public int $visibleMessages = SupportTicket::MESSAGES_PER_PAGE;
 
     public ?string $notice = null;
@@ -38,7 +40,7 @@ final class AccountTicketConversation extends Component
     public function loadPrevious(): void
     {
         $this->visibleMessages = min(
-            app(SupportTicketSettings::class)->maxMessagesPerTicket(),
+            SupportTicketSettings::MAX_MAX_MESSAGES_PER_TICKET,
             $this->visibleMessages + SupportTicket::MESSAGES_PER_PAGE,
         );
     }
@@ -73,7 +75,18 @@ final class AccountTicketConversation extends Component
 
     public function closeTicket(SupportTicketService $tickets): void
     {
-        $tickets->closeByPlayer($this->ticket(), $this->user());
+        $user = $this->user();
+        $rateLimitKey = 'support-ticket-player-close:'.$user->getAuthIdentifier();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            $this->addError('close', __('module-support-tickets::messages.rate_limit_retry', [
+                'seconds' => RateLimiter::availableIn($rateLimitKey),
+            ]));
+
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
+        $tickets->closeByPlayer($this->ticket(), $user);
         $this->notice = __('module-support-tickets::messages.ticket_closed');
     }
 
@@ -82,7 +95,7 @@ final class AccountTicketConversation extends Component
         $messageMaxLength = app(SupportTicketSettings::class)->messageMaxLength();
         $ticket = $this->ticket()->load('assignedAdmin');
         $this->visibleMessages = min(
-            app(SupportTicketSettings::class)->maxMessagesPerTicket(),
+            SupportTicketSettings::MAX_MAX_MESSAGES_PER_TICKET,
             max(SupportTicket::MESSAGES_PER_PAGE, $this->visibleMessages),
         );
         $query = SupportTicketMessage::query()
@@ -117,6 +130,12 @@ final class AccountTicketConversation extends Component
     {
         $user = auth()->user();
         abort_unless($user instanceof User, 401);
+        $user->refresh();
+        abort_unless($user->is_active, 403);
+        abort_if(
+            app(RegistrationSettings::class)->emailVerificationRequired() && ! $user->hasVerifiedEmail(),
+            403,
+        );
 
         return $user;
     }

@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Auth\Passwords\UtcPasswordBrokerManager;
+use App\Http\Middleware\RequireActiveSiteUser;
 use App\Http\Middleware\RequireAdminAuthentication;
+use App\Http\Middleware\RequireConfiguredEmailVerification;
 use App\Services\Account\AccountAvatarCatalog;
 use App\Services\Admin\AdminPathSettings;
 use App\Services\AdminLoginService;
@@ -101,6 +103,8 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::addPersistentMiddleware([
             RequireAdminAuthentication::class,
+            RequireActiveSiteUser::class,
+            RequireConfiguredEmailVerification::class,
         ]);
 
         Queue::before(static function (JobProcessing $event) use ($runtimeDiagnostics): void {

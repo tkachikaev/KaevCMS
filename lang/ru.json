@@ -2380,5 +2380,9 @@
     "Fuchsia": "Фуксия",
     "Slate": "Грифельный",
     "Zinc": "Цинковый",
-    "Muted": "Приглушённый"
+    "Muted": "Приглушённый",
+    "The formatted content is too large. Reduce the text, tables, or images and try again.": "Форматированный материал слишком большой. Уменьшите объём текста, таблиц или изображений и повторите попытку.",
+    "Requires support response": "Требуется ответ технической поддержки",
+    "Requires support response: :count": "Требуется ответ технической поддержки: :count",
+    "Support ticket cleanup was not started because its settings could not be read.": "Очистка обращений не была запущена, потому что настройки модуля не удалось прочитать."
 }
