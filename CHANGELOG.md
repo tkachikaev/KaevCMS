@@ -1,3 +1,12 @@
+## 0.44.30 - 2026-07-31
+
+- Added a shared module PSR-4 autoloader used by both runtime boot and database migrations. Pending migrations can now safely reference constants, models or services shipped by the incoming module version without activating its bootstrap or routes first.
+- Fixed the Support Tickets 1.5.1 update path from 1.4.2: the unchanged `2026_07_30_230000_seed_support_ticket_settings.php` migration can now load `SupportTicketSettings` and complete normally after the CMS update.
+- Replaced the mobile administration menu with an accessible off-canvas drawer: a compact sticky toolbar opens it above the page, while close button, backdrop, Escape and navigation links close it without affecting the desktop sidebar.
+- Preserved accordion group state, automatic opening of the active group, the live Support Tickets badge, body scroll locking and reduced-motion behavior inside the new drawer.
+- Added PHPUnit and Playwright regressions for module-class autoload during migrations and the complete mobile drawer lifecycle. No database migration, module version or dependency change was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.30 package supports direct updates from 0.42.4 through 0.44.29.
+
 ## 0.44.29 - 2026-07-31
 
 - Reworked the administration navigation below 760 px: group headings remain visible, native expand/collapse works on touch devices, the active group opens automatically and nested links are visually separated instead of merging into one horizontal list.

@@ -18,6 +18,7 @@ final class ModuleMigrationManager
     public function __construct(
         private readonly int $lockSeconds,
         private readonly Filesystem $files,
+        private readonly ModuleAutoloader $autoloader,
     ) {}
 
     /**
@@ -169,6 +170,7 @@ final class ModuleMigrationManager
 
                 $currentName = $migrationName;
                 $migrationChecksum = $this->checksum($migrationPath);
+                $this->autoloader->register($module);
                 $current = $this->loadMigration($migrationPath);
                 $this->invokeMigration($current, 'up');
 

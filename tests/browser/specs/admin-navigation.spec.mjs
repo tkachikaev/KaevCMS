@@ -191,11 +191,26 @@ test('persisted sidebar keeps group state during navigation and history changes'
     await expect(appearanceGroup).toHaveAttribute('open', '');
 });
 
-test('mobile administration keeps grouped navigation visible and distinct', async ({ page }) => {
+test('mobile administration uses an accessible off-canvas navigation drawer', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
 
-    const usersGroup = page.locator('[data-admin-menu-group="users"]');
-    const modulesGroup = page.locator('[data-admin-menu-group="modules"]');
+    const toggle = page.locator('[data-admin-menu-open]');
+    const sidebar = page.locator('[data-admin-sidebar]');
+    const backdrop = page.locator('.admin-sidebar-backdrop');
+    const usersGroup = sidebar.locator('[data-admin-menu-group="users"]');
+    const modulesGroup = sidebar.locator('[data-admin-menu-group="modules"]');
+
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(sidebar).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('html')).not.toHaveClass(/admin-mobile-menu-open/);
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(sidebar).toHaveAttribute('aria-hidden', 'false');
+    await expect(page.locator('html')).toHaveClass(/admin-mobile-menu-open/);
+    await expect(backdrop).toHaveAttribute('aria-hidden', 'false');
+    await expect(sidebar.locator('[data-admin-menu-close]')).toBeFocused();
 
     await expect(usersGroup.locator('summary')).toBeVisible();
     await expect(modulesGroup.locator('summary')).toBeVisible();
@@ -210,29 +225,37 @@ test('mobile administration keeps grouped navigation visible and distinct', asyn
     await expect(modulesGroup).toHaveAttribute('open', '');
     await expect(modulesGroup.getByRole('link', { name: 'Техническая поддержка', exact: true })).toBeVisible();
 
-    const visualSeparation = await modulesGroup.evaluate((group) => {
-        const summary = group.querySelector('summary');
-        const child = group.querySelector('.admin-menu-group-items .admin-menu-item');
-        const groupStyles = getComputedStyle(group);
-        const summaryStyles = summary ? getComputedStyle(summary) : null;
-        const childStyles = child ? getComputedStyle(child) : null;
+    const drawerGeometry = await sidebar.evaluate((element) => {
+        const rectangle = element.getBoundingClientRect();
+        const styles = getComputedStyle(element);
 
         return {
-            groupBorderWidth: groupStyles.borderTopWidth,
-            summaryDisplay: summaryStyles?.display ?? '',
-            childBackground: childStyles?.backgroundColor ?? '',
+            left: Math.round(rectangle.left),
+            width: Math.round(rectangle.width),
+            position: styles.position,
         };
     });
 
-    expect(visualSeparation.groupBorderWidth).not.toBe('0px');
-    expect(visualSeparation.summaryDisplay).toBe('flex');
-    expect(visualSeparation.childBackground).not.toBe('rgba(0, 0, 0, 0)');
-    await expectNoDocumentHorizontalOverflow(page, 'mobile grouped administration navigation');
+    expect(drawerGeometry.left).toBe(0);
+    expect(drawerGeometry.width).toBeLessThanOrEqual(380);
+    expect(drawerGeometry.position).toBe('fixed');
+    await expectNoDocumentHorizontalOverflow(page, 'mobile off-canvas administration navigation');
 
-    await modulesGroup.locator('summary').click();
-    await expect(modulesGroup).not.toHaveAttribute('open', '');
-    await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
+    await page.keyboard.press('Escape');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(sidebar).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('html')).not.toHaveClass(/admin-mobile-menu-open/);
+
+    await toggle.click();
+    await modulesGroup.getByRole('link', { name: 'Техническая поддержка', exact: true }).click();
+    await expect(page).toHaveURL(/\/admin\/extensions\/support-tickets$/);
+    await expect(page.locator('html')).not.toHaveClass(/admin-mobile-menu-open/);
+    await expect(page.locator('[data-admin-sidebar]')).toHaveAttribute('aria-hidden', 'true');
+
+    await toggle.click();
     await expect(page.locator('[data-admin-menu-group="modules"]')).toHaveAttribute('open', '');
+    await backdrop.click({ position: { x: 380, y: 400 } });
+    await expect(page.locator('html')).not.toHaveClass(/admin-mobile-menu-open/);
 });
 
 test('active sidebar item keeps its selected color while hovered', async ({ page }) => {

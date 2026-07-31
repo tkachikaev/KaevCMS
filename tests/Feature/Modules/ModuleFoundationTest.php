@@ -637,6 +637,75 @@ PHP);
         $this->assertTrue(Schema::hasTable($secondTable));
     }
 
+    public function test_module_autoload_is_registered_before_a_pending_migration_is_loaded(): void
+    {
+        $id = 'migration-autoload-fixture';
+        $root = $this->createModule($id, [
+            'name' => 'Migration Autoload Fixture',
+            'namespace' => 'KaevCMS\\Tests\\MigrationAutoloadFixture\\',
+            'autoload' => 'src',
+            'migrations' => 'database/migrations',
+        ]);
+        $table = 'module_migration_autoload_fixture';
+        $files = new Filesystem;
+        $files->ensureDirectoryExists($root.'/src/Support');
+        $files->put($root.'/src/Support/MigrationDefaults.php', <<<'PHP'
+<?php
+
+namespace KaevCMS\Tests\MigrationAutoloadFixture\Support;
+
+final class MigrationDefaults
+{
+    public const VALUE = 'autoloaded-before-migration';
+}
+PHP);
+        $files->ensureDirectoryExists($root.'/database/migrations');
+        $files->put(
+            $root.'/database/migrations/2026_07_21_000001_use_module_class.php',
+            str_replace('__TABLE__', $table, <<<'PHP'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use KaevCMS\Tests\MigrationAutoloadFixture\Support\MigrationDefaults;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('__TABLE__', function (Blueprint $table): void {
+            $table->id();
+            $table->string('value');
+        });
+
+        DB::table('__TABLE__')->insert(['value' => MigrationDefaults::VALUE]);
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('__TABLE__');
+    }
+};
+PHP),
+        );
+        $this->createdTables[] = $table;
+
+        $this->assertFalse(class_exists(
+            \KaevCMS\Tests\MigrationAutoloadFixture\Support\MigrationDefaults::class,
+            false,
+        ));
+
+        $modules = app(ModuleManager::class);
+        $modules->refresh();
+        $enabled = $modules->enable($id);
+
+        $this->assertSame('enabled', $enabled['status']);
+        $this->assertSame(1, $enabled['migration_result']['applied_count']);
+        $this->assertSame('autoloaded-before-migration', DB::table($table)->value('value'));
+    }
+
     public function test_failed_module_migration_rolls_back_current_batch_and_keeps_module_inactive(): void
     {
         $id = 'migration-failure-fixture';

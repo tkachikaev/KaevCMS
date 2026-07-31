@@ -353,6 +353,10 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString("@persist('admin-sidebar')", $panel);
         $this->assertStringContainsString('wire:navigate:scroll', $panel);
         $this->assertStringContainsString('data-admin-sidebar', $panel);
+        $this->assertStringContainsString('id="admin-sidebar"', $panel);
+        $this->assertStringContainsString('data-admin-menu-open', $panel);
+        $this->assertStringContainsString('data-admin-menu-close', $panel);
+        $this->assertStringContainsString('admin-sidebar-backdrop', $panel);
         $this->assertStringContainsString('data-admin-read-only-role', $panel);
         $this->assertStringContainsString('wire:navigate.hover', $navigation);
         $this->assertStringContainsString('wire:current.exact="active"', $navigation);
@@ -381,12 +385,17 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('synchronizeSettingsLink(sidebar)', $navigation);
         $this->assertStringContainsString("['mail', 'game-server', 'login-server']", $navigation);
         $this->assertStringContainsString('admin-is-navigating', $navigation);
+        $this->assertStringContainsString('admin-mobile-menu-open', $navigation);
+        $this->assertStringContainsString('closeMobileMenu', $navigation);
+        $this->assertStringContainsString("event.key === 'Escape'", $navigation);
         $this->assertStringContainsString('scrollbar-gutter: stable', $styles);
         $this->assertStringContainsString('html.admin-is-navigating .admin-main', $styles);
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
         $this->assertStringContainsString('a.admin-menu-item.active:hover', $styles);
         $this->assertStringContainsString('a.admin-menu-item[data-current]:hover', $styles);
-        $this->assertStringContainsString('.admin-menu-group[open] { grid-column: 1 / -1; }', $styles);
+        $this->assertStringContainsString('html.admin-mobile-menu-open .admin-sidebar {', $styles);
+        $this->assertStringContainsString('.admin-sidebar-backdrop {', $styles);
+        $this->assertStringContainsString('width: min(90vw, 380px);', $styles);
         $this->assertStringContainsString('details.admin-menu-group:not([open]) > .admin-menu-group-items { display: none; }', $styles);
         $this->assertStringContainsString('@media (max-width: 430px)', $styles);
     }

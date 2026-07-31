@@ -1,10 +1,24 @@
 @extends('admin.layouts.app')
 
 @section('body')
-<div class="admin-shell">
+<div class="admin-shell" data-admin-shell>
     @persist('admin-sidebar')
-        <aside class="admin-sidebar" data-admin-sidebar wire:navigate:scroll>
-            <a wire:navigate.hover class="admin-brand" href="{{ route('admin.dashboard') }}">
+        <aside
+            id="admin-sidebar"
+            class="admin-sidebar"
+            data-admin-sidebar
+            aria-label="{{ __('Administrator menu') }}"
+            aria-hidden="false"
+            wire:navigate:scroll
+        >
+            <button
+                type="button"
+                class="admin-sidebar-close"
+                data-admin-menu-close
+                aria-label="{{ __('Close menu') }}"
+            ><span aria-hidden="true">×</span></button>
+
+            <a wire:navigate.hover class="admin-brand" data-admin-menu-link href="{{ route('admin.dashboard') }}">
                 <span class="admin-brand-mark">L2</span>
                 <span>
                     <strong>{{ config('app.name') }}</strong>
@@ -21,7 +35,35 @@
         </aside>
     @endpersist
 
+    <button
+        type="button"
+        class="admin-sidebar-backdrop"
+        data-admin-menu-close
+        aria-label="{{ __('Close menu') }}"
+        aria-hidden="true"
+        tabindex="-1"
+    ></button>
+
     <main class="admin-main">
+        <div class="admin-mobile-toolbar" data-admin-mobile-toolbar>
+            <button
+                type="button"
+                class="admin-mobile-menu-toggle"
+                data-admin-menu-open
+                aria-controls="admin-sidebar"
+                aria-expanded="false"
+                aria-label="{{ __('Open menu') }}"
+            >
+                <span class="admin-mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+            </button>
+            <a wire:navigate class="admin-mobile-brand" href="{{ route('admin.dashboard') }}">
+                <span class="admin-mobile-brand-mark">L2</span>
+                <span>
+                    <strong>{{ config('app.name') }}</strong>
+                    <small>{{ __('Control panel') }}</small>
+                </span>
+            </a>
+        </div>
         <header class="admin-header">
             <div>
                 <h1>@yield('title', __('Control panel'))</h1>

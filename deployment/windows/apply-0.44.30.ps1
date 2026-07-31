@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release repairs grouped mobile administration navigation, stabilizes account module links and keeps browser monitoring fixtures quiet.'
+Write-Host 'This release repairs module migration autoloading and replaces the mobile administration menu with an off-canvas drawer.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

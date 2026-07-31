@@ -3,7 +3,6 @@
 namespace App\Support\Modules;
 
 use App\Models\ModuleState;
-use Composer\Autoload\ClassLoader;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
@@ -17,14 +16,12 @@ use Throwable;
 final class ModuleRuntime
 {
     /** @var array<string, true> */
-    private array $autoloaded = [];
-
-    /** @var array<string, true> */
     private array $booted = [];
 
     public function __construct(
         private readonly Application $app,
         private readonly Filesystem $files,
+        private readonly ModuleAutoloader $autoloader,
     ) {}
 
     public function bootEnabled(ModuleManager $modules): void
@@ -59,7 +56,7 @@ final class ModuleRuntime
             throw new RuntimeException("Module [$id] is not ready for runtime loading.");
         }
 
-        $this->registerAutoload($module);
+        $this->autoloader->register($module);
         $context = new ModuleContext($id, (string) $module['path'], (array) $module['manifest']);
 
         $bootstrapPath = $module['bootstrap_path'] ?? null;
@@ -129,36 +126,6 @@ final class ModuleRuntime
         $arguments = array_map('strval', (array) ($_SERVER['argv'] ?? []));
 
         return array_intersect(['route:cache', 'optimize'], $arguments) === [];
-    }
-
-    /** @param array<string, mixed> $module */
-    private function registerAutoload(array $module): void
-    {
-        $id = (string) $module['id'];
-        if (isset($this->autoloaded[$id])) {
-            return;
-        }
-
-        $namespace = $module['namespace'] ?? null;
-        $autoloadPath = $module['autoload_path'] ?? null;
-        if (! is_string($namespace) || ! is_string($autoloadPath)) {
-            $this->autoloaded[$id] = true;
-
-            return;
-        }
-
-        if (! $this->files->isDirectory($autoloadPath)) {
-            throw new RuntimeException("Module [$id] autoload directory is unavailable.");
-        }
-
-        $loaders = ClassLoader::getRegisteredLoaders();
-        $loader = reset($loaders);
-        if (($loader instanceof ClassLoader) === false) {
-            throw new RuntimeException('Composer PSR-4 autoloader is unavailable.');
-        }
-
-        $loader->addPsr4($namespace, $autoloadPath, true);
-        $this->autoloaded[$id] = true;
     }
 
     /** @param array<string, mixed> $module */

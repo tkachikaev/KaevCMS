@@ -1,27 +1,30 @@
 {
     "schema": 1,
-    "version": "0.44.29",
-    "previous_version": "0.44.28",
+    "version": "0.44.30",
+    "previous_version": "0.44.29",
     "released_at": "2026-07-31",
     "recovery_floor_version": "0.42.4",
     "cumulative_base_version": "0.42.4",
-    "apply_script": "deployment/windows/apply-0.44.29.ps1",
+    "apply_script": "deployment/windows/apply-0.44.30.ps1",
     "update_script": "deployment/windows/update.ps1",
-    "previous_apply_script": "deployment/windows/apply-0.44.28.ps1",
-    "previous_apply_sha256": "2da74f01a429ad22913365a3bd21590f0370084b6c16090e892302c117b60b43",
+    "previous_apply_script": "deployment/windows/apply-0.44.29.ps1",
+    "previous_apply_sha256": "c82e7dc73bc6643c98171a53e25bf522153ce36d18c0d4e9b7d65766f13c3d81",
     "composer_lock": {
         "previous_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7",
         "current_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7"
     },
     "repair_files": [
-        "account-themes/kaev-aurelia/views/partials/navigation.blade.php",
-        "account-themes/luxury/views/partials/navigation.blade.php",
+        "app/Providers/ModuleServiceProvider.php",
+        "app/Support/Modules/ModuleAutoloader.php",
+        "app/Support/Modules/ModuleMigrationManager.php",
+        "app/Support/Modules/ModuleRuntime.php",
         "public/assets/admin/css/layout.css",
-        "tests/Feature/Account/AccountNavigationTest.php",
+        "public/assets/admin/js/navigation.js",
+        "resources/views/admin/layouts/panel.blade.php",
+        "resources/views/admin/partials/navigation.blade.php",
         "tests/Feature/Admin/AdminPanelTest.php",
+        "tests/Feature/Modules/ModuleFoundationTest.php",
         "tests/Feature/ReleaseMetadataTest.php",
-        "tests/browser/run.mjs",
-        "tests/browser/specs/admin-navigation.spec.mjs",
-        "tests/browser/specs/player-character-directory.spec.mjs"
+        "tests/browser/specs/admin-navigation.spec.mjs"
     ]
 }

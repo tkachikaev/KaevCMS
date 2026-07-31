@@ -30,15 +30,18 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'account-themes/kaev-aurelia/views/partials/navigation.blade.php',
-            'account-themes/luxury/views/partials/navigation.blade.php',
+            'app/Providers/ModuleServiceProvider.php',
+            'app/Support/Modules/ModuleAutoloader.php',
+            'app/Support/Modules/ModuleMigrationManager.php',
+            'app/Support/Modules/ModuleRuntime.php',
             'public/assets/admin/css/layout.css',
-            'tests/Feature/Account/AccountNavigationTest.php',
+            'public/assets/admin/js/navigation.js',
+            'resources/views/admin/layouts/panel.blade.php',
+            'resources/views/admin/partials/navigation.blade.php',
             'tests/Feature/Admin/AdminPanelTest.php',
+            'tests/Feature/Modules/ModuleFoundationTest.php',
             'tests/Feature/ReleaseMetadataTest.php',
-            'tests/browser/run.mjs',
             'tests/browser/specs/admin-navigation.spec.mjs',
-            'tests/browser/specs/player-character-directory.spec.mjs',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
@@ -276,6 +279,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(app_path('Http/Middleware/EnsureModuleEnabled.php'));
         $this->assertFileExists(app_path('Models/ModuleMigration.php'));
         $this->assertFileExists(app_path('Support/Modules/ModuleManager.php'));
+        $this->assertFileExists(app_path('Support/Modules/ModuleAutoloader.php'));
         $this->assertFileExists(app_path('Support/Modules/ModuleMigrationManager.php'));
         $this->assertFileExists(app_path('Support/Modules/ModuleRuntime.php'));
         $this->assertFileExists(app_path('Support/Modules/ModuleValidator.php'));
@@ -306,6 +310,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('Cache::lock', $migrationManager);
         $this->assertStringContainsString('hash_file(\'sha256\'', $migrationManager);
         $this->assertStringContainsString('rollbackCurrentRun', $migrationManager);
+        $this->assertStringContainsString('$this->autoloader->register($module)', $migrationManager);
 
         $moduleManager = $this->readReleaseFile('app/Support/Modules/ModuleManager.php');
         $this->assertStringContainsString('\'migration_pending\'', $moduleManager);
@@ -314,6 +319,7 @@ class ReleaseMetadataTest extends TestCase
 
         $runtime = $this->readReleaseFile('app/Support/Modules/ModuleRuntime.php');
         $this->assertStringContainsString('array_intersect([\'route:cache\', \'optimize\'], $arguments)', $runtime);
+        $this->assertStringContainsString('$this->autoloader->register($module)', $runtime);
 
         $aureliaCss = $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css');
         $this->assertStringContainsString('display: grid; place-items: center;', $aureliaCss);
@@ -438,6 +444,11 @@ class ReleaseMetadataTest extends TestCase
 
         $navigation = $this->readReleaseFile('resources/views/admin/partials/navigation.blade.php');
         $this->assertStringContainsString('livewire:admin.module-navigation-badge', $navigation);
+        $panel = $this->readReleaseFile('resources/views/admin/layouts/panel.blade.php');
+        $this->assertStringContainsString('data-admin-menu-open', $panel);
+        $this->assertStringContainsString('admin-sidebar-backdrop', $panel);
+        $adminNavigationScript = $this->readReleaseFile('public/assets/admin/js/navigation.js');
+        $this->assertStringContainsString('admin-mobile-menu-open', $adminNavigationScript);
         $badge = $this->readReleaseFile('resources/views/livewire/admin/module-navigation-badge.blade.php');
         $this->assertStringContainsString('wire:poll.30s="refreshBadge"', $badge);
         $this->assertStringContainsString('admin-menu-badge', $badge);

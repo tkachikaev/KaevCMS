@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleAdminAuthorizer;
+use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleMigrationManager;
@@ -19,9 +20,11 @@ class ModuleServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ModuleValidator::class);
+        $this->app->singleton(ModuleAutoloader::class);
         $this->app->singleton(ModuleMigrationManager::class, fn (Application $app): ModuleMigrationManager => new ModuleMigrationManager(
             lockSeconds: max(30, (int) config('cms.modules.migration_lock_seconds', 300)),
             files: $app->make(Filesystem::class),
+            autoloader: $app->make(ModuleAutoloader::class),
         ));
         $this->app->singleton(ModuleManager::class, fn (Application $app): ModuleManager => new ModuleManager(
             modulesPath: (string) config('cms.modules_path'),

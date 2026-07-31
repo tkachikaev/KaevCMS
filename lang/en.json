@@ -2384,5 +2384,7 @@
     "The formatted content is too large. Reduce the text, tables, or images and try again.": "The formatted content is too large. Reduce the text, tables, or images and try again.",
     "Requires support response": "Requires support response",
     "Requires support response: :count": "Requires support response: :count",
-    "Support ticket cleanup was not started because its settings could not be read.": "Support ticket cleanup was not started because its settings could not be read."
+    "Support ticket cleanup was not started because its settings could not be read.": "Support ticket cleanup was not started because its settings could not be read.",
+    "Open menu": "Open menu",
+    "Close menu": "Close menu"
 }
