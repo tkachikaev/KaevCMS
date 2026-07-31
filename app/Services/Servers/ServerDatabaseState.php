@@ -37,6 +37,23 @@ final class ServerDatabaseState
         return $configured;
     }
 
+    public function markNotConfigured(
+        LoginServer|GameServer $server,
+        string $error = 'configuration_missing',
+    ): void {
+        $server->forceFill([
+            'database_status' => 'not_configured',
+            'database_error' => $error,
+            'database_checked_at' => now(),
+            'database_last_error_class' => null,
+            'database_last_error_at' => null,
+            'database_latency_ms' => null,
+            'database_schema_profile' => null,
+            'database_capabilities' => null,
+            'database_table_checks' => null,
+        ])->save();
+    }
+
     public function markUnknown(
         LoginServer|GameServer $server,
         ?string $error = null,

@@ -91,6 +91,7 @@ test('player and administrator complete the support ticket conversation flow wit
 
     const staffReplyForm = page.locator('[data-testid="staff-reply-form"]');
     await expect(staffReplyForm.locator('textarea[name="body"]')).toHaveCSS('border-radius', '12px');
+    await expect(staffReplyForm.locator('textarea[name="body"]')).toHaveCSS('resize', 'vertical');
     const originalStaffReply = 'Уточните, пожалуйста, когда появилась проблема.';
     const correctedStaffReply = 'Уточните, пожалуйста, когда именно появилась проблема.';
     await staffReplyForm.locator('textarea[name="body"]').fill(originalStaffReply);
@@ -104,7 +105,13 @@ test('player and administrator complete the support ticket conversation flow wit
     const staffMessageId = await staffMessageByBody.getAttribute('data-message-id');
     expect(staffMessageId).not.toBeNull();
     const staffMessage = page.locator(`.support-message[data-message-id="${staffMessageId}"]`);
-    await staffMessage.getByText('Изменить сообщение', { exact: true }).click();
+    const editMessageButton = staffMessage.getByRole('button', { name: 'Изменить сообщение', exact: true });
+    await expect(editMessageButton).toBeVisible();
+    await expect(editMessageButton).toHaveText('');
+    const editButtonBox = await editMessageButton.boundingBox();
+    expect(editButtonBox).not.toBeNull();
+    expect(editButtonBox.width).toBeLessThanOrEqual(32);
+    await editMessageButton.click();
     await staffMessage.locator('textarea[name="body"]').fill(correctedStaffReply);
     await staffMessage.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
     await expect(staffMessage.locator('.support-message-body')).toHaveText(correctedStaffReply);

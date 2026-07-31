@@ -3,7 +3,6 @@
 namespace App\Support\Modules;
 
 use App\Models\ModuleState;
-use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +19,6 @@ final class ModuleRuntime
 
     public function __construct(
         private readonly Application $app,
-        private readonly Filesystem $files,
         private readonly ModuleAutoloader $autoloader,
     ) {}
 

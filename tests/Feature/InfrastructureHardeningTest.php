@@ -118,9 +118,9 @@ final class InfrastructureHardeningTest extends TestCase
 
         $this->assertContains('cache_expiration_index', $cacheIndexes);
         $this->assertContains('cache_locks_expiration_index', $lockIndexes);
-        $this->assertStringContainsString("kaevcms:cache-clean --batch=2000", $schedule);
-        $this->assertStringContainsString("kaevcms:news-media-clean --hours=24", $schedule);
-        $this->assertStringContainsString("kaevcms:page-media-clean --hours=24", $schedule);
+        $this->assertStringContainsString('kaevcms:cache-clean --batch=2000', $schedule);
+        $this->assertStringContainsString('kaevcms:news-media-clean --hours=24', $schedule);
+        $this->assertStringContainsString('kaevcms:page-media-clean --hours=24', $schedule);
     }
 
     public function test_editor_source_and_bundle_check_sanitized_html_byte_length(): void

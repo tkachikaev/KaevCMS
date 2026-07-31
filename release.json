@@ -1,30 +1,26 @@
 {
     "schema": 1,
-    "version": "0.44.30",
-    "previous_version": "0.44.29",
+    "version": "0.44.33",
+    "previous_version": "0.44.32",
     "released_at": "2026-07-31",
     "recovery_floor_version": "0.42.4",
     "cumulative_base_version": "0.42.4",
-    "apply_script": "deployment/windows/apply-0.44.30.ps1",
+    "apply_script": "deployment/windows/apply-0.44.33.ps1",
     "update_script": "deployment/windows/update.ps1",
-    "previous_apply_script": "deployment/windows/apply-0.44.29.ps1",
-    "previous_apply_sha256": "c82e7dc73bc6643c98171a53e25bf522153ce36d18c0d4e9b7d65766f13c3d81",
+    "previous_apply_script": "deployment/windows/apply-0.44.32.ps1",
+    "previous_apply_sha256": "7de793550d1347aa41e98a06cfff0db3f901b667a07ef476633bb135ff4e963b",
     "composer_lock": {
         "previous_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7",
         "current_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7"
     },
     "repair_files": [
-        "app/Providers/ModuleServiceProvider.php",
-        "app/Support/Modules/ModuleAutoloader.php",
-        "app/Support/Modules/ModuleMigrationManager.php",
-        "app/Support/Modules/ModuleRuntime.php",
-        "public/assets/admin/css/layout.css",
-        "public/assets/admin/js/navigation.js",
-        "resources/views/admin/layouts/panel.blade.php",
-        "resources/views/admin/partials/navigation.blade.php",
-        "tests/Feature/Admin/AdminPanelTest.php",
+        "app/Services/Html/SafeHtmlSanitizer.php",
+        "tests/Feature/InfrastructureHardeningTest.php",
         "tests/Feature/Modules/ModuleFoundationTest.php",
+        "tests/Feature/Modules/SupportTicketsHardeningTest.php",
         "tests/Feature/ReleaseMetadataTest.php",
+        "tests/Feature/RuntimeCacheConfigurationTest.php",
+        "tests/browser/run.mjs",
         "tests/browser/specs/admin-navigation.spec.mjs"
     ]
 }

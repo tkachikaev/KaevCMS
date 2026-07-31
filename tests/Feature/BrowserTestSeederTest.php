@@ -6,6 +6,7 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Services\Servers\ServerMonitorCoordinator;
 use Database\Seeders\BrowserTestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,7 @@ class BrowserTestSeederTest extends TestCase
         $this->assertNotNull($player->email_verified_at);
         $this->assertTrue(Hash::check('ConfiguredBrowserPlayerPassword123!', $player->password));
         $this->assertTrue(UserGameAccount::query()->where('user_id', $player->id)->where('game_login', 'BrowserGame')->exists());
+        $this->assertFalse(app(ServerMonitorCoordinator::class)->isDue());
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
             'enabled' => true,

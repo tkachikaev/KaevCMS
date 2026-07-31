@@ -95,6 +95,9 @@ $delete = filterActiveDeletions(
     cumulativeDeletions($deletionHistory, $minimum, $target),
     $targetLogicalPaths,
 );
+$delete[] = 'public/install';
+$delete = array_values(array_unique($delete));
+sort($delete, SORT_STRING);
 $changelog = readStringList((string) ($options['changelog-file'] ?? ''));
 if (count($changelog) > 200) {
     throw new RuntimeException('The update changelog cannot contain more than 200 entries.');
@@ -288,6 +291,7 @@ function excluded(string $path): bool
         'storage/',
         'dist/',
         'public/uploads/',
+        'public/install/',
         'bootstrap/cache/',
     ] as $prefix) {
         if (str_starts_with($path, $prefix)) {

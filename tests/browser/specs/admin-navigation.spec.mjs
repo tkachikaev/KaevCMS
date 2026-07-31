@@ -254,7 +254,15 @@ test('mobile administration uses an accessible off-canvas navigation drawer', as
 
     await toggle.click();
     await expect(page.locator('[data-admin-menu-group="modules"]')).toHaveAttribute('open', '');
-    await backdrop.click({ position: { x: 380, y: 400 } });
+    const backdropGeometry = await backdrop.boundingBox();
+    expect(backdropGeometry).not.toBeNull();
+    expect(backdropGeometry.width).toBeGreaterThan(drawerGeometry.width);
+    await backdrop.click({
+        position: {
+            x: backdropGeometry.width - 1,
+            y: Math.min(400, backdropGeometry.height - 1),
+        },
+    });
     await expect(page.locator('html')).not.toHaveClass(/admin-mobile-menu-open/);
 });
 

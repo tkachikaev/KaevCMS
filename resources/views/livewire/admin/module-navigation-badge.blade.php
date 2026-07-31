@@ -2,6 +2,9 @@
     wire:poll.30s="refreshBadge"
     class="admin-menu-badge"
     data-module-admin-badge="{{ $moduleId }}"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
     @if($count === 0) hidden @endif
     title="{{ __('Requires support response') }}"
     aria-label="{{ __('Requires support response: :count', ['count' => $count]) }}"

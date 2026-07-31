@@ -43,7 +43,14 @@
                                 <header>
                                     <strong>{{ $message->author_name_snapshot }}</strong>
                                     <span>{{ $message->is_internal ? __('module-support-tickets::messages.internal_note') : ($message->author_type === 'player' ? __('module-support-tickets::messages.player') : __('module-support-tickets::messages.support_staff')) }}</span>
-                                    <time datetime="{{ $message->created_at->toIso8601String() }}">{{ $message->created_at->format('d.m.Y H:i') }}</time>
+                                    <div class="support-message-header-actions">
+                                        <time datetime="{{ $message->created_at->toIso8601String() }}">{{ $message->created_at->format('d.m.Y H:i') }}</time>
+                                        @if($canEditMessage && $message->isStaffMessage() && $message->admin_id === $admin->id && $editingMessageId !== $message->id)
+                                            <button class="support-message-edit-button" type="button" wire:click="startEditing({{ $message->id }})" aria-label="{{ __('module-support-tickets::messages.edit_message') }}" title="{{ __('module-support-tickets::messages.edit_message') }}">
+                                                <svg class="support-message-edit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 16.5V20h3.5L18.2 9.3l-3.5-3.5L4 16.5Zm16.7-9.7a1 1 0 0 0 0-1.4l-2.1-2.1a1 1 0 0 0-1.4 0l-1.6 1.6 3.5 3.5 1.6-1.6Z"/></svg>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </header>
 
                                 @if($editingMessageId === $message->id)
@@ -59,9 +66,6 @@
                                 @else
                                     <div class="support-message-body">{!! nl2br(e($message->body)) !!}</div>
                                     @if($message->edited_at)<small class="support-message-edited">{{ __('module-support-tickets::messages.edited_at', ['date' => $message->edited_at->format('d.m.Y H:i')]) }}</small>@endif
-                                    @if($canEditMessage && $message->isStaffMessage() && $message->admin_id === $admin->id)
-                                        <button class="support-message-edit-button" type="button" wire:click="startEditing({{ $message->id }})">{{ __('module-support-tickets::messages.edit_message') }}</button>
-                                    @endif
                                 @endif
 
                                 @if($canEditMessage && $message->revisions->isNotEmpty())

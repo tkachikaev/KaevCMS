@@ -1,4 +1,4 @@
-# KaevCMS 0.44.30
+# KaevCMS 0.44.33
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.30 replaces the mobile administration menu with an accessible off-canvas drawer and fixes module updates whose migrations reference classes from the incoming module version. The desktop sidebar is unchanged, Support Tickets remains at 1.5.1, and its pending settings migration can now be approved normally after updating the CMS. The cumulative update baseline remains 0.42.4.
+Version 0.44.33 completes the browser and quality-test stabilization: the isolated Laravel test server now preserves the runner environment on Windows, the mobile administration backdrop test uses real geometry, and Support Tickets hardening tests issue exactly one protected request after access is revoked. Support Tickets remains at 1.5.2. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -20,7 +20,7 @@ Public entry points show a readable Russian/English PHP-version page on unsuppor
 
 ### Installation
 
-For a VDS or hosting with a configurable Document Root, point the domain to `public/` and open `/install/`. After the installation succeeds, remove the public `/install` directory.
+For a VDS or hosting with a configurable Document Root, point the domain to `public/` and open `/install/`. After the installation succeeds, remove the public `/install` directory. Update packages never restore it and explicitly remove a leftover installer from an installed CMS.
 
 For shared hosting, build a production package on Windows:
 
@@ -95,7 +95,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.30 заменяет мобильное меню админки на выезжающую панель и исправляет обновление модулей, миграции которых используют классы новой версии модуля. Компьютерное меню не изменено, Support Tickets остаётся на версии 1.5.1, а его ожидающую миграцию настроек теперь можно подтвердить после обновления CMS. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.44.33 завершает стабилизацию browser- и quality-тестов: изолированный тестовый сервер Laravel теперь сохраняет окружение runner-а в Windows, тест фона мобильного меню использует реальную геометрию, а hardening-тесты Support Tickets выполняют ровно один защищённый запрос после отзыва доступа. Support Tickets остаётся на версии 1.5.2. Кумулятивная база остаётся на версии 0.42.4.
 
 ### Требования
 
@@ -109,7 +109,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 ### Установка
 
-На VDS или хостинге с настраиваемым Document Root направьте домен на `public/` и откройте `/install/`. После успешной установки удалите публичную папку `/install`.
+На VDS или хостинге с настраиваемым Document Root направьте домен на `public/` и откройте `/install/`. После успешной установки удалите публичную папку `/install`. Пакеты обновления больше не восстанавливают её и удаляют оставшийся установщик из уже развёрнутой CMS.
 
 Для обычного хостинга соберите production-пакет в Windows:
 

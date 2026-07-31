@@ -17,6 +17,7 @@ use App\Services\Servers\ServerStatusOverview;
 use App\Services\SiteSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Tests\Concerns\InteractsWithServerFixtures;
 use Tests\Fakes\FakeExternalDatabaseConnectionTester;
 use Tests\Fakes\FakeGameServerOnlineCounter;
@@ -35,6 +36,26 @@ class ServerMonitoringTest extends TestCase
 
         $this->databases = new FakeExternalDatabaseConnectionTester;
         $this->app->instance(ExternalDatabaseConnectionTester::class, $this->databases);
+    }
+
+    public function test_monitor_skips_the_unconfigured_default_game_server_without_warning_spam(): void
+    {
+        $gameServer = GameServer::query()->firstOrFail();
+        $this->assertNull($gameServer->driver);
+        $this->assertNull($gameServer->login_server_id);
+        Log::spy();
+
+        app(ServerMonitor::class)->run();
+
+        Log::shouldNotHaveReceived('warning');
+        $gameServer->refresh();
+        $this->assertSame('not_configured', $gameServer->database_status);
+        $this->assertSame('configuration_missing', $gameServer->database_error);
+        $this->assertSame('unknown', $gameServer->monitor_status);
+        $this->assertSame(0, $gameServer->monitor_failures);
+        $this->assertNull($gameServer->online_players);
+        $this->assertNotNull($gameServer->database_checked_at);
+        $this->assertNotNull($gameServer->monitor_checked_at);
     }
 
     public function test_monitor_records_live_services_and_online_players(): void

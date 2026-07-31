@@ -6,6 +6,7 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\ModuleState;
 use App\Support\KaevCMS;
+use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Database\Schema\Blueprint;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use KaevCMS\Tests\MigrationAutoloadFixture\Support\MigrationDefaults;
 use Mockery;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
@@ -413,7 +415,7 @@ PHP);
         $_SERVER['argv'] = ['artisan', 'route:cache'];
 
         try {
-            (new ModuleRuntime($application, $files))->bootModule($module);
+            (new ModuleRuntime($application, app(ModuleAutoloader::class)))->bootModule($module);
         } finally {
             if ($previousArguments === null) {
                 unset($_SERVER['argv']);
@@ -693,7 +695,7 @@ PHP),
         $this->createdTables[] = $table;
 
         $this->assertFalse(class_exists(
-            \KaevCMS\Tests\MigrationAutoloadFixture\Support\MigrationDefaults::class,
+            MigrationDefaults::class,
             false,
         ));
 

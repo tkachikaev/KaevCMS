@@ -30,17 +30,13 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'app/Providers/ModuleServiceProvider.php',
-            'app/Support/Modules/ModuleAutoloader.php',
-            'app/Support/Modules/ModuleMigrationManager.php',
-            'app/Support/Modules/ModuleRuntime.php',
-            'public/assets/admin/css/layout.css',
-            'public/assets/admin/js/navigation.js',
-            'resources/views/admin/layouts/panel.blade.php',
-            'resources/views/admin/partials/navigation.blade.php',
-            'tests/Feature/Admin/AdminPanelTest.php',
+            'app/Services/Html/SafeHtmlSanitizer.php',
+            'tests/Feature/InfrastructureHardeningTest.php',
             'tests/Feature/Modules/ModuleFoundationTest.php',
+            'tests/Feature/Modules/SupportTicketsHardeningTest.php',
             'tests/Feature/ReleaseMetadataTest.php',
+            'tests/Feature/RuntimeCacheConfigurationTest.php',
+            'tests/browser/run.mjs',
             'tests/browser/specs/admin-navigation.spec.mjs',
         ], $release['repair_files']);
         $this->assertSame(
@@ -320,6 +316,7 @@ class ReleaseMetadataTest extends TestCase
         $runtime = $this->readReleaseFile('app/Support/Modules/ModuleRuntime.php');
         $this->assertStringContainsString('array_intersect([\'route:cache\', \'optimize\'], $arguments)', $runtime);
         $this->assertStringContainsString('$this->autoloader->register($module)', $runtime);
+        $this->assertStringNotContainsString('private readonly Filesystem $files', $runtime);
 
         $aureliaCss = $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css');
         $this->assertStringContainsString('display: grid; place-items: center;', $aureliaCss);
@@ -396,7 +393,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.5.1', $manifest['version']);
+        $this->assertSame('1.5.2', $manifest['version']);
         $this->assertSame('0.44.28', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
@@ -444,6 +441,7 @@ class ReleaseMetadataTest extends TestCase
 
         $navigation = $this->readReleaseFile('resources/views/admin/partials/navigation.blade.php');
         $this->assertStringContainsString('livewire:admin.module-navigation-badge', $navigation);
+        $this->assertStringContainsString('aria-label="{{ __($moduleLink[\'label_key\']) }}"', $navigation);
         $panel = $this->readReleaseFile('resources/views/admin/layouts/panel.blade.php');
         $this->assertStringContainsString('data-admin-menu-open', $panel);
         $this->assertStringContainsString('admin-sidebar-backdrop', $panel);
@@ -452,7 +450,11 @@ class ReleaseMetadataTest extends TestCase
         $badge = $this->readReleaseFile('resources/views/livewire/admin/module-navigation-badge.blade.php');
         $this->assertStringContainsString('wire:poll.30s="refreshBadge"', $badge);
         $this->assertStringContainsString('admin-menu-badge', $badge);
+        $this->assertStringContainsString('role="status"', $badge);
+        $this->assertStringContainsString('aria-live="polite"', $badge);
         $this->assertStringContainsString('99+', $badge);
+        $layoutCss = $this->readReleaseFile('public/assets/admin/css/layout.css');
+        $this->assertStringContainsString('.admin-menu-badge[hidden]', $layoutCss);
 
         $settingsView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/settings.blade.php');
         $this->assertStringContainsString('admin-tabs settings-section-tabs support-settings-tabs', $settingsView);
@@ -467,6 +469,10 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('data-testid="support-admin-ticket-layout"', $conversationView);
         $this->assertStringContainsString('support-admin-ticket-side', $conversationView);
         $this->assertStringContainsString('support-ticket-detail-list', $conversationView);
+        $this->assertStringContainsString('support-message-edit-icon', $conversationView);
+        $supportCss = $this->readReleaseFile('public/assets/modules/support-tickets.css');
+        $this->assertStringContainsString('resize: vertical', $supportCss);
+        $this->assertStringContainsString('max-width: 100%', $supportCss);
 
         $this->assertFileExists(base_path('modules/support-tickets/assets/module.webp'));
         $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/support-tickets/assets/module.webp')), 0, 2));

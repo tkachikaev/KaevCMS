@@ -108,6 +108,7 @@
                         class="admin-menu-item" data-admin-menu-link
                         href="{{ route($moduleLink['route'], ['adminPath' => request()->route('adminPath')]) }}"
                         title="{{ __($moduleLink['description_key']) }}"
+                        aria-label="{{ __($moduleLink['label_key']) }}"
                     ><span>{{ __($moduleLink['label_key']) }}</span>
                         @if($moduleLink['badge_enabled'] ?? false)
                             <livewire:admin.module-navigation-badge

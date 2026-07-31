@@ -171,7 +171,7 @@ try {
     run('php', ['artisan', 'migrate:fresh', '--force']);
     run('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\BrowserTestSeeder', '--force']);
 
-    server = spawn('php', ['artisan', 'serve', '--host=127.0.0.1', `--port=${browserPort}`], {
+    server = spawn('php', ['artisan', 'serve', '--no-reload', '--host=127.0.0.1', `--port=${browserPort}`], {
         cwd: root,
         env: environment,
         stdio: ['ignore', 'pipe', 'pipe'],

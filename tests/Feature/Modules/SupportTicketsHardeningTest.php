@@ -158,6 +158,39 @@ final class SupportTicketsHardeningTest extends TestCase
             ->assertSet('count', 1);
     }
 
+    public function test_attention_badge_is_visually_hidden_when_the_count_is_zero(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $this->actingAs($owner, 'admin');
+
+        Livewire::test(ModuleNavigationBadge::class, [
+            'moduleId' => 'support-tickets',
+            'initialCount' => 0,
+        ])
+            ->assertSet('count', 0)
+            ->assertSee('hidden', false);
+
+        $layoutCss = (string) file_get_contents(public_path('assets/admin/css/layout.css'));
+        $this->assertStringContainsString('.admin-menu-badge[hidden]', $layoutCss);
+        $this->assertMatchesRegularExpression('/\.admin-menu-badge\[hidden\]\s*\{\s*display:\s*none;\s*\}/', $layoutCss);
+    }
+
+    public function test_attention_badge_does_not_change_the_navigation_link_accessible_name(): void
+    {
+        $user = User::factory()->create();
+        $this->ticket($user, SupportTicketStatus::New, 'Requires staff response');
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $response = $this->actingAs($owner, 'admin')->get('/admin');
+
+        $response
+            ->assertOk()
+            ->assertSee('aria-label="'.__('module-support-tickets::messages.admin_navigation_label').'"', false)
+            ->assertSee('data-module-admin-badge="support-tickets"', false)
+            ->assertSee('role="status"', false)
+            ->assertSee('aria-live="polite"', false);
+    }
+
     public function test_attention_badge_respects_staff_access_and_caps_visual_value(): void
     {
         $user = User::factory()->create();
@@ -192,12 +225,13 @@ final class SupportTicketsHardeningTest extends TestCase
         $user = User::factory()->create();
         $ticket = $this->ticket($user, SupportTicketStatus::AwaitingPlayer);
         $this->actingAs($user);
-        $component = Livewire::test(AccountTicketConversation::class, ['ticketId' => $ticket->id]);
+        $component = Livewire::test(AccountTicketConversation::class, ['ticketId' => $ticket->id])
+            ->set('body', 'Ответ после блокировки');
 
-        $user->update(['is_active' => false]);
+        User::query()->whereKey($user->id)->update(['is_active' => false]);
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'is_active' => false]);
 
         $component
-            ->set('body', 'Ответ после блокировки')
             ->call('reply')
             ->assertForbidden();
 
@@ -213,12 +247,13 @@ final class SupportTicketsHardeningTest extends TestCase
         $user = User::factory()->create();
         $ticket = $this->ticket($user, SupportTicketStatus::AwaitingPlayer);
         $this->actingAs($user);
-        $component = Livewire::test(AccountTicketConversation::class, ['ticketId' => $ticket->id]);
+        $component = Livewire::test(AccountTicketConversation::class, ['ticketId' => $ticket->id])
+            ->set('body', 'Ответ после отзыва подтверждения');
 
-        $user->update(['email_verified_at' => null]);
+        User::query()->whereKey($user->id)->update(['email_verified_at' => null]);
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'email_verified_at' => null]);
 
         $component
-            ->set('body', 'Ответ после отзыва подтверждения')
             ->call('reply')
             ->assertForbidden();
     }

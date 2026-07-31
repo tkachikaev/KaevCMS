@@ -189,6 +189,14 @@ class BrowserTestSeeder extends Seeder
             ],
         );
 
+        // The initial schema migration creates a legacy game server without a
+        // monitor timestamp. Keep every browser fixture fresh so the first
+        // dashboard visit cannot run external probes and replace the seeded
+        // deterministic database diagnostics.
+        $monitorCheckedAt = now();
+        LoginServer::query()->update(['monitor_checked_at' => $monitorCheckedAt]);
+        GameServer::query()->update(['monitor_checked_at' => $monitorCheckedAt]);
+
         GameServerFeature::query()->updateOrCreate(
             [
                 'game_server_id' => $gameServer->id,

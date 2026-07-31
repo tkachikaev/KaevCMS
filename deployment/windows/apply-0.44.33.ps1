@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release repairs module migration autoloading and replaces the mobile administration menu with an off-canvas drawer.'
+Write-Host 'This release completes Windows browser-runner and quality-test stabilization without changing production authorization behavior.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
@@ -38,6 +38,6 @@ Write-Host ''
 Write-Host "KaevCMS $toVersion is ready." -ForegroundColor Green
 Write-Host 'Windows setup: .\deployment\windows\setup.ps1'
 Write-Host 'Windows quality: .\deployment\windows\quality.ps1'
-Write-Host 'Web installer: /install/'
+Write-Host 'Fresh installation only: /install/'
 Write-Host 'Shared hosting updater: Administrator panel -> Settings -> System information -> Updates'
 Write-Host 'Shared hosting package: .\deployment\windows\build-shared-hosting-package.ps1'

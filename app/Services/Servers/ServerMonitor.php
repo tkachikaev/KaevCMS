@@ -7,6 +7,7 @@ use App\Contracts\ServicePortProbe;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Throwable;
 
 final class ServerMonitor
@@ -40,6 +41,12 @@ final class ServerMonitor
 
     public function monitorLoginServer(LoginServer $loginServer): void
     {
+        if (! $this->loginServerIsConfigured($loginServer)) {
+            $this->markUnconfigured($loginServer);
+
+            return;
+        }
+
         $this->checkLoginDatabase($loginServer);
         $driver = $this->drivers->loginDriver($loginServer->driver);
         $host = $this->serviceHost($loginServer->service_host, $loginServer->database_host);
@@ -53,6 +60,12 @@ final class ServerMonitor
 
     public function monitorGameServer(GameServer $gameServer): void
     {
+        if (! $this->gameServerIsConfigured($gameServer)) {
+            $this->markUnconfigured($gameServer);
+
+            return;
+        }
+
         $databaseConfigured = $this->checkGameDatabase($gameServer);
         $driver = $this->drivers->gameDriver((string) $gameServer->driver);
         $fallbackHost = $gameServer->use_login_server_connection
@@ -98,6 +111,10 @@ final class ServerMonitor
     {
         try {
             return $this->databaseState->apply($server, $this->connections->testLoginServer($server));
+        } catch (InvalidArgumentException) {
+            $this->databaseState->markNotConfigured($server);
+
+            return false;
         } catch (Throwable $exception) {
             Log::warning('LoginServer database monitoring failed.', [
                 'login_server_id' => $server->id,
@@ -115,6 +132,10 @@ final class ServerMonitor
     {
         try {
             return $this->databaseState->apply($server, $this->connections->testGameServer($server));
+        } catch (InvalidArgumentException) {
+            $this->databaseState->markNotConfigured($server);
+
+            return false;
         } catch (Throwable $exception) {
             Log::warning('GameServer database monitoring failed.', [
                 'game_server_id' => $server->id,
@@ -126,6 +147,47 @@ final class ServerMonitor
 
             return false;
         }
+    }
+
+    private function loginServerIsConfigured(LoginServer $server): bool
+    {
+        return $this->drivers->loginDriver((string) $server->driver) !== null
+            && trim((string) $server->database_host) !== ''
+            && trim((string) $server->database_name) !== ''
+            && trim((string) $server->database_username) !== '';
+    }
+
+    private function gameServerIsConfigured(GameServer $server): bool
+    {
+        if ($this->drivers->gameDriver((string) $server->driver) === null
+            || ! ($server->loginServer instanceof LoginServer)) {
+            return false;
+        }
+
+        if ($server->use_login_server_connection) {
+            return $this->loginServerIsConfigured($server->loginServer);
+        }
+
+        return trim((string) $server->database_host) !== ''
+            && trim((string) $server->database_name) !== ''
+            && trim((string) $server->database_username) !== '';
+    }
+
+    private function markUnconfigured(LoginServer|GameServer $server): void
+    {
+        $this->databaseState->markNotConfigured($server);
+        $values = [
+            'monitor_status' => 'unknown',
+            'monitor_failures' => 0,
+            'monitor_checked_at' => now(),
+        ];
+
+        if ($server instanceof GameServer) {
+            $values['online_players'] = null;
+            $values['online_checked_at'] = now();
+        }
+
+        $server->forceFill($values)->save();
     }
 
     private function updateServiceState(LoginServer|GameServer $server, bool $online): void

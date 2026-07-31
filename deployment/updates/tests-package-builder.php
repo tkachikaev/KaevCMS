@@ -72,6 +72,7 @@ try {
         'release.json' => json_encode(['schema' => 1, 'version' => '9.9.9', 'released_at' => '2026-07-28'], JSON_THROW_ON_ERROR)."\n",
         'app/example.php' => "<?php\n",
         'public/index.php' => "<?php\n",
+        'public/install/index.php' => "<?php echo 'installer';\n",
         '.env' => "APP_KEY=secret\n",
         'storage/logs/private.log' => "secret\n",
         'public/uploads/account-avatars/avatar.webp' => "owner-data\n",
@@ -160,8 +161,11 @@ try {
         if ($targets !== ['core/VERSION', 'core/app/example.php', 'core/release.json', 'public/index.php']) {
             throw new RuntimeException('Generated package included protected runtime or owner-data files.');
         }
-        if (($manifest['delete'] ?? []) !== ['core/app/obsolete.php']) {
-            throw new RuntimeException('Automatic deletion detection did not preserve the expected obsolete path.');
+        if (($manifest['delete'] ?? []) !== ['core/app/obsolete.php', 'public/install']) {
+            throw new RuntimeException('Automatic deletion detection or installer cleanup did not preserve the expected paths.');
+        }
+        if ($zip->locateName('payload/public/install/index.php') !== false) {
+            throw new RuntimeException('The installed Web Updater package must never restore the public installer.');
         }
 
         foreach ($manifest['files'] as $file) {

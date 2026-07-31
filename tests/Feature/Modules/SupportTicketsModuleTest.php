@@ -67,7 +67,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.5.1',
+            'version' => '1.5.2',
             'enabled' => true,
         ]);
 
@@ -84,7 +84,13 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertStringContainsString('support-ticket-admin-heading-center', $adminConversation);
         $this->assertStringContainsString('support-ticket-admin-heading-actions', $adminConversation);
         $this->assertStringContainsString('.support-chat-composer textarea', $supportCss);
+        $this->assertStringContainsString('resize: vertical', $supportCss);
+        $this->assertStringContainsString('min-width: 100%', $supportCss);
+        $this->assertStringContainsString('max-width: 100%', $supportCss);
         $this->assertStringContainsString('border-radius: 12px', $supportCss);
+        $this->assertStringContainsString('support-message-edit-icon', $adminConversation);
+        $this->assertStringContainsString('aria-label="{{ __(\'module-support-tickets::messages.edit_message\') }}"', $adminConversation);
+        $this->assertStringNotContainsString(">{{ __('module-support-tickets::messages.edit_message') }}</button>", $adminConversation);
     }
 
     public function test_public_categories_and_status_values_match_the_approved_contract(): void

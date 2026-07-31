@@ -51,6 +51,7 @@
 .admin-menu-group-items { display: grid; gap: 4px; padding: 4px 0 5px 8px; }
 .admin-menu-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; padding: 0 11px; border-radius: 7px; color: var(--sidebar-text); }
 .admin-menu-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+.admin-menu-badge[hidden] { display: none; }
 
 a.admin-menu-item:hover { background: var(--sidebar-hover); color: #fff; }
 .admin-menu-item.active, .admin-menu-item[data-current] { background: var(--accent); color: #fff; }

@@ -42,6 +42,8 @@ class WebUpdaterReleaseTest extends TestCase
             "'.env.example'",
             "'public/uploads/.gitignore'",
             "'public/uploads/.htaccess'",
+            "'public/install/'",
+            "\$delete[] = 'public/install';",
             "'public/kaevcms-path.php'",
             'legacyWebUpdaterAcceptsTarget',
             'oldest supported Web Updater',

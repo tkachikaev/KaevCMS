@@ -360,7 +360,6 @@ final class SafeHtmlSanitizer
             return '';
         }
 
-
         $previous = libxml_use_internal_errors(true);
 
         try {

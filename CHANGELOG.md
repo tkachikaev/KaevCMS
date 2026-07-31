@@ -1,3 +1,33 @@
+## 0.44.33 - 2026-07-31
+
+### Fixed
+
+- Started the isolated Playwright HTTP server with `artisan serve --no-reload`, preserving the runner-provided SQLite database, application key, test credentials and rate-limit environment on Windows instead of allowing the reload child process to fall back to the normal `.env`.
+- Made the mobile administration backdrop regression use the actual element bounds, avoiding an out-of-range fixed coordinate when a Windows scrollbar reduces the viewport width.
+- Corrected Support Tickets hardening regressions so reply text is prepared before access is revoked and exactly one subsequent Livewire action is required to return 403 without creating a message.
+- Applied the project Pint formatting to `SafeHtmlSanitizer` and the affected infrastructure/module tests without changing sanitizer behavior or weakening any assertion.
+- Added release and runtime contracts for the no-reload browser server. Support Tickets remains at 1.5.2 and no database migration or dependency update was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.33 package supports direct updates from 0.42.4 through 0.44.32.
+
+## 0.44.32 - 2026-07-31
+
+### Fixed
+
+- Stabilized the accessible name of administrator module links when a live attention badge is present; the badge remains an independent polite status region for assistive technologies.
+- Kept all LoginServer and GameServer browser fixtures fresh after seeding so the first dashboard visit cannot replace deterministic `17 ms` and `23 ms` diagnostics with unsupported-driver results.
+- Removed the unused `Filesystem` dependency from `ModuleRuntime`, resolving the PHPStan `property.onlyWritten` failure without suppressions.
+- Corrected Support Tickets hardening tests so guarded user activation and email-verification columns are actually changed before asserting that an open Livewire conversation is forbidden.
+- The cumulative update line remains based on `0.42.4`; the 0.44.32 package supports direct updates from 0.42.4 through 0.44.31.
+
+## 0.44.31 - 2026-07-31
+
+- Stopped scheduled server monitoring from logging `GameServer database monitoring failed` for the intentionally incomplete default GameServer placeholder. Missing drivers, LoginServer selection or database credentials now produce a quiet `not_configured` snapshot with zero failures instead of a recurring warning.
+- Hardened cumulative updates around the public installer: `public/install` is excluded from payload files and added to the update deletion list, so updating an installed CMS removes a leftover installer and never restores `/install/`.
+- Updated bundled Support Tickets to 1.5.2 without a database migration. Its administration badge now remains visually hidden at zero even with the menu badge display rule.
+- Restricted support reply, note and edit text areas to vertical resizing with fixed container width, preventing action buttons from being pushed outside the ticket card.
+- Replaced the large “Edit message” text action with a compact accessible pencil button in the message header and updated PHPUnit, package-builder and Playwright regressions for all five fixes.
+- The cumulative update line remains based on `0.42.4`; the 0.44.31 package supports direct updates from 0.42.4 through 0.44.30.
+
 ## 0.44.30 - 2026-07-31
 
 - Added a shared module PSR-4 autoloader used by both runtime boot and database migrations. Pending migrations can now safely reference constants, models or services shipped by the incoming module version without activating its bootstrap or routes first.
