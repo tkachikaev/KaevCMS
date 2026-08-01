@@ -951,6 +951,8 @@
 .system-overview p { margin: 5px 0 0; color: #4b5563; }
 .system-overview code { padding: 2px 5px; border-radius: 4px; background: rgba(255,255,255,.8); }
 .system-overview-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.system-diagnostic-download { display: grid; align-self: start; gap: 5px; margin: 0; }
+.system-diagnostic-rate-limit { display: block; max-width: 260px; color: var(--admin-danger); font-size: 11px; line-height: 1.4; }
 .system-information-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
 .system-monitor-settings-card { margin-bottom: 16px; }
 .system-monitor-settings-card form { display: grid; gap: 16px; }

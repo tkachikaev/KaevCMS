@@ -8,6 +8,7 @@ use App\Services\Diagnostics\DiagnosticPackageBuilder;
 use App\Services\Servers\ExternalDatabaseDiagnostics;
 use App\Services\SystemInformation;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
@@ -26,6 +27,18 @@ final class SystemSettingsController extends Controller
         DiagnosticPackageBuilder $builder,
         AuditLogger $audit,
     ): BinaryFileResponse|RedirectResponse {
+        $rateLimitKey = 'admin:diagnostic-package:'.(string) auth('admin')->id();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            return redirect()
+                ->route('admin.settings.system')
+                ->with('diagnostics_rate_limited', __('The diagnostic download limit has been reached. Please wait :seconds seconds and try again.', [
+                    'seconds' => max(1, RateLimiter::availableIn($rateLimitKey)),
+                ]));
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
+
         try {
             $package = $builder->build();
         } catch (Throwable $exception) {

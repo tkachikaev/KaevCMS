@@ -55,7 +55,7 @@ const environment = {
     DB_CONNECTION: 'sqlite',
     DB_DATABASE: databasePath,
     CACHE_STORE: 'array',
-    CACHE_LIMITER: 'array',
+    CACHE_LIMITER: 'database',
     BROWSER_TEST_LOGIN_LIMIT: '1000',
     SERVER_MONITOR_REFRESH_INTERVAL_SECONDS: '300',
     SESSION_DRIVER: 'file',

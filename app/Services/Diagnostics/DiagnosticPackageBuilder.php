@@ -326,13 +326,15 @@ final class DiagnosticPackageBuilder
         $paths = $this->files->glob(storage_path('logs/laravel*.log')) ?: [];
         usort($paths, static fn (string $left, string $right): int => ((int) @filemtime($right)) <=> ((int) @filemtime($left)));
         $paths = array_slice($paths, 0, self::MAX_LOG_FILES);
+        usort($paths, static fn (string $left, string $right): int => ((int) @filemtime($left)) <=> ((int) @filemtime($right)));
 
         if ($paths === []) {
             return '  No Laravel log files found.';
         }
 
-        $output = [];
-        $eventsWritten = 0;
+        /** @var array<string, array{first_time: string, last_time: string, level: string, exception_class: string, fingerprint: string, occurrences: int, order: int}> $signatures */
+        $signatures = [];
+        $eventOrder = 0;
 
         foreach ($paths as $path) {
             $contents = $this->tail($path, self::MAX_LOG_BYTES);
@@ -372,33 +374,58 @@ final class DiagnosticPackageBuilder
                 $events[] = $current;
             }
 
-            if ($events === []) {
-                continue;
-            }
-
-            $output[] = '--- '.basename($path).' ---';
-
-            foreach (array_slice($events, -100) as $event) {
+            foreach ($events as $event) {
                 $raw = implode(PHP_EOL, (array) $event['lines']);
                 $safe = $this->redactor->text($raw);
-                $output[] = sprintf(
-                    '%s | %s | %s | fingerprint=%s',
-                    (string) $event['time'],
-                    (string) $event['level'],
-                    $this->exceptionClass($raw) ?? 'UNKNOWN',
-                    substr(hash('sha256', $safe), 0, 16),
-                );
-                $eventsWritten++;
+                $exceptionClass = $this->exceptionClass($raw) ?? 'UNKNOWN';
+                $fingerprint = substr(hash('sha256', $safe), 0, 16);
+                $signature = implode('|', [(string) $event['level'], $exceptionClass, $fingerprint]);
+                $eventOrder++;
 
-                if ($eventsWritten >= 100) {
-                    break 2;
+                if (! isset($signatures[$signature])) {
+                    $signatures[$signature] = [
+                        'first_time' => (string) $event['time'],
+                        'last_time' => (string) $event['time'],
+                        'level' => (string) $event['level'],
+                        'exception_class' => $exceptionClass,
+                        'fingerprint' => $fingerprint,
+                        'occurrences' => 1,
+                        'order' => $eventOrder,
+                    ];
+
+                    continue;
                 }
+
+                $signatures[$signature]['last_time'] = (string) $event['time'];
+                $signatures[$signature]['occurrences']++;
+                $signatures[$signature]['order'] = $eventOrder;
             }
         }
 
-        return $output === []
-            ? '  No recent warning or error entries found.'
-            : implode(PHP_EOL, $output);
+        if ($signatures === []) {
+            return '  No recent warning or error entries found.';
+        }
+
+        $summaries = array_values($signatures);
+        usort($summaries, static fn (array $left, array $right): int => ((int) $right['order']) <=> ((int) $left['order']));
+
+        $output = [];
+        foreach (array_slice($summaries, 0, 100) as $summary) {
+            $time = $summary['first_time'] === $summary['last_time']
+                ? $summary['last_time']
+                : $summary['first_time'].' .. '.$summary['last_time'];
+
+            $output[] = sprintf(
+                '%s | %s | %s | fingerprint=%s | occurrences=%d',
+                $time,
+                $summary['level'],
+                $summary['exception_class'],
+                $summary['fingerprint'],
+                $summary['occurrences'],
+            );
+        }
+
+        return implode(PHP_EOL, $output);
     }
 
     private function exceptionClass(string $value): ?string
@@ -544,7 +571,7 @@ final class DiagnosticPackageBuilder
             '',
             'This archive contains technical diagnostics prepared for support.',
             'It does not copy .env, APP_KEY, passwords, tokens, cookies, database credentials, user records or raw database files.',
-            'Recent logs are reduced to timestamps, severity, exception classes and fingerprints; raw messages are not included.',
+            'Recent logs are grouped by signature and reduced to first/last timestamps, severity, exception class, fingerprint and occurrence count; raw messages are not included.',
             '',
             'Files:',
             '- diagnostic-report.txt — readable summary',

@@ -121,12 +121,38 @@ final class DiagnosticRedactor
         $text = (string) preg_replace('~\bbase64:[A-Za-z0-9+/=]{16,}~', self::REDACTED, $text);
         $text = (string) preg_replace('~\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b~', self::REDACTED, $text);
         $text = (string) preg_replace('~\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b~i', '[EMAIL]', $text);
-        $text = (string) preg_replace('~(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])~', '[IP]', $text);
-        $text = (string) preg_replace('~(?<![A-F0-9:])(?:[A-F0-9]{1,4}:){2,7}[A-F0-9]{1,4}(?![A-F0-9:])~i', '[IP]', $text);
+        $text = $this->redactIpAddresses($text);
         $text = (string) preg_replace('~(?<![A-Za-z0-9])[A-Za-z]:\\\\[^\s"\']+~', '[PATH]', $text);
         $text = (string) preg_replace('~(?<![:/])/(?:home|var|srv|opt|tmp|mnt|Users)/[^\s"\']+~', '[PATH]', $text);
 
         return $text;
+    }
+
+    private function redactIpAddresses(string $text): string
+    {
+        $text = (string) preg_replace_callback(
+            '~(?<![A-Za-z0-9_.-])(?:\d{1,3}\.){3}\d{1,3}(?![A-Za-z0-9_.-])~',
+            static function (array $matches): string {
+                $candidate = $matches[0];
+
+                return filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
+                    ? '[IP]'
+                    : $candidate;
+            },
+            $text,
+        );
+
+        return (string) preg_replace_callback(
+            '~(?<![A-Za-z0-9:])(?:[A-Fa-f0-9]{0,4}:){2,8}[A-Fa-f0-9]{0,4}(?![A-Za-z0-9:])~',
+            static function (array $matches): string {
+                $candidate = $matches[0];
+
+                return filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+                    ? '[IP]'
+                    : $candidate;
+            },
+            $text,
+        );
     }
 
     private function sensitiveKey(string $key): bool

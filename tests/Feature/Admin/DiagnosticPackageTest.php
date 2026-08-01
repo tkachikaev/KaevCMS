@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
 use ZipArchive;
@@ -154,6 +155,82 @@ class DiagnosticPackageTest extends TestCase
         $this->actingAs($editor, 'admin')
             ->get(route('admin.settings.system.diagnostics.download'))
             ->assertForbidden();
+    }
+
+    public function test_repeated_log_signatures_are_collapsed_without_corrupting_timestamps(): void
+    {
+        $backups = [];
+        foreach (File::glob(storage_path('logs/laravel*.log')) ?: [] as $path) {
+            $backups[$path] = File::get($path);
+            File::delete($path);
+        }
+
+        $logPath = storage_path('logs/laravel-2026-08-01.log');
+        File::ensureDirectoryExists(dirname($logPath));
+        File::put($logPath, implode(PHP_EOL, [
+            '[2026-08-01 15:40:01] production.WARNING: InvalidArgumentException: duplicate-safe-message',
+            '[2026-08-01 15:40:02] production.WARNING: InvalidArgumentException: duplicate-safe-message',
+            '[2026-08-01 15:40:03] production.WARNING: InvalidArgumentException: duplicate-safe-message',
+            '[2026-08-01 15:40:04] production.ERROR: RuntimeException: another-safe-message',
+        ]).PHP_EOL);
+
+        $package = null;
+
+        try {
+            $package = app(DiagnosticPackageBuilder::class)->build();
+            $zip = new ZipArchive;
+            $this->assertTrue($zip->open($package->path, ZipArchive::RDONLY));
+            $errors = $zip->getFromName('recent-errors.log');
+            $this->assertIsString($errors);
+            $zip->close();
+
+            $this->assertSame(1, substr_count($errors, 'InvalidArgumentException'));
+            $this->assertStringContainsString('occurrences=3', $errors);
+            $this->assertStringContainsString('2026-08-01 15:40:01 .. 2026-08-01 15:40:03', $errors);
+            $this->assertStringContainsString('2026-08-01 15:40:04', $errors);
+            $this->assertStringNotContainsString('2026-08-01 [IP]', $errors);
+        } finally {
+            if ($package !== null && is_file($package->path)) {
+                @unlink($package->path);
+            }
+
+            File::delete($logPath);
+            foreach ($backups as $path => $contents) {
+                File::put($path, $contents);
+            }
+        }
+    }
+
+    public function test_download_limit_redirects_back_with_a_clear_inline_message_instead_of_http_429(): void
+    {
+        $owner = $this->admin('diagnostic-rate-limit@example.com', AdminRole::Owner);
+        $key = 'admin:diagnostic-package:'.$owner->id;
+        RateLimiter::clear($key);
+
+        try {
+            for ($attempt = 1; $attempt <= 3; $attempt++) {
+                $response = $this->actingAs($owner, 'admin')
+                    ->get(route('admin.settings.system.diagnostics.download'))
+                    ->assertOk();
+
+                $file = $response->baseResponse->getFile()->getPathname();
+                if (is_file($file)) {
+                    @unlink($file);
+                }
+            }
+
+            $limited = $this->actingAs($owner, 'admin')
+                ->get(route('admin.settings.system.diagnostics.download'))
+                ->assertRedirect(route('admin.settings.system'))
+                ->assertSessionHas('diagnostics_rate_limited');
+
+            $this->get(route('admin.settings.system'))
+                ->assertOk()
+                ->assertSee('Лимит скачиваний достигнут')
+                ->assertSee('diagnostic-rate-limit-message', false);
+        } finally {
+            RateLimiter::clear($key);
+        }
     }
 
     private function admin(string $email, AdminRole $role): Admin

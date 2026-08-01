@@ -37,4 +37,23 @@ class DiagnosticRedactorTest extends TestCase
         $this->assertStringNotContainsString('owner@example.com', $result['message']);
         $this->assertStringNotContainsString(base_path(), $result['message']);
     }
+
+    public function test_real_ips_are_redacted_without_corrupting_times_or_software_versions(): void
+    {
+        $redactor = new DiagnosticRedactor;
+        $result = $redactor->text(implode(' | ', [
+            '2026-08-01T15:49:48+03:00',
+            'Linux 7.0.0-28-generic',
+            'MySQL 8.4.10-0ubuntu0.26.04.1',
+            'IPv4 192.0.2.25',
+            'IPv6 2001:db8::25',
+        ]));
+
+        $this->assertStringContainsString('2026-08-01T15:49:48+03:00', $result);
+        $this->assertStringContainsString('Linux 7.0.0-28-generic', $result);
+        $this->assertStringContainsString('MySQL 8.4.10-0ubuntu0.26.04.1', $result);
+        $this->assertSame(2, substr_count($result, '[IP]'));
+        $this->assertStringNotContainsString('192.0.2.25', $result);
+        $this->assertStringNotContainsString('2001:db8::25', $result);
+    }
 }

@@ -37,14 +37,15 @@ class SystemUpdateAdminTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_owner_sees_the_update_entry_below_the_system_version(): void
+    public function test_system_information_uses_the_updates_tab_without_a_duplicate_action_button(): void
     {
         $owner = Admin::factory()->create();
 
         $this->actingAs($owner, 'admin')
             ->get('/admin/settings/system')
             ->assertOk()
-            ->assertSee('Управление обновлениями')
+            ->assertDontSee('Управление обновлениями')
+            ->assertSee('Обновления системы')
             ->assertSee('/admin/settings/system/updates', false);
     }
 

@@ -523,6 +523,26 @@ test('system information reports APP_KEY encryption health without exposing secr
     await expect(page.getByText('APP_KEY encryption')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Скачать диагностический пакет', exact: true })).toBeVisible();
     await expect(page.getByTestId('diagnostic-package-form')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Управление обновлениями', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Обновления системы', exact: true })).toBeVisible();
+});
+
+test('diagnostic download limit shows an inline wait message instead of HTTP 429', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/system');
+
+    const downloadButton = page.getByRole('button', { name: 'Скачать диагностический пакет', exact: true });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+        const downloadPromise = page.waitForEvent('download');
+        await downloadButton.click();
+        const download = await downloadPromise;
+        await download.delete();
+    }
+
+    await downloadButton.click();
+
+    await expect(page).toHaveURL(/\/admin\/settings\/system$/);
+    await expect(page.getByTestId('diagnostic-rate-limit-message')).toContainText('Лимит скачиваний достигнут');
+    await expect(page.getByText('Too Many Requests', { exact: true })).toHaveCount(0);
 });
 
 test('system information shows safe external database diagnostics on mobile', async ({ page }) => {

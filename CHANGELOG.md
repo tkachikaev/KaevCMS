@@ -1,3 +1,23 @@
+## 0.45.5 - 2026-08-01
+
+### Fixed
+
+- Switched the isolated Playwright rate-limiter store from transient `array` cache to the per-run temporary SQLite database while keeping the ordinary browser cache in memory. Repeated HTTP requests now exercise the real three-diagnostic-downloads-per-minute contract without sharing state across runs.
+- Synchronized the runtime cache PHPUnit contract with the isolated database limiter and retained the Windows SQLite cleanup regression.
+- Removed unreachable null-coalescing fallbacks from mandatory regex callback matches, resolving the PHPStan `nullCoalesce.offset` findings without changing IPv4/IPv6 redaction behavior.
+- Added no migration, dependency, bundled-module or user-facing behavior change. The cumulative update line remains based on `0.42.4`; the 0.45.5 package supports direct updates from 0.42.4 through 0.45.4.
+
+## 0.45.4 - 2026-08-01
+
+### Fixed
+
+- Collapsed identical recent Laravel warning/error signatures in diagnostic packages into one line with occurrence count and first/last timestamps, preventing one repeated problem from flooding `recent-errors.log`.
+- Replaced over-broad IP regular expressions with validated IPv4/IPv6 redaction, preserving ISO timestamps and package/operating-system/database version strings while still removing real addresses.
+- Replaced the diagnostics route HTTP 429 page with a per-administrator three-downloads-per-minute guard that redirects back and shows a small localized wait message under the download button.
+- Removed the duplicate **Manage updates** action from System information because the existing **System updates** tab already provides the same navigation.
+- Added PHPUnit and Playwright regressions for signature aggregation, IP-safe timestamps/versions, friendly throttling, and removal of the duplicate update action.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.45.4 package supports direct updates from 0.42.4 through 0.45.3.
+
 ## 0.45.3 - 2026-08-01
 
 ### Fixed

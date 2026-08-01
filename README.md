@@ -1,4 +1,4 @@
-# KaevCMS 0.45.3
+# KaevCMS 0.45.5
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.45.3 is a release-metadata hotfix. It synchronizes `ReleaseMetadataTest` with the current `release.json` repair-file contract after 0.45.2, removing a stale expectation inherited from 0.45.1. Application runtime behavior, the notification center, Support Tickets 1.6.0 and the sanitized diagnostic package remain unchanged, and the cumulative update baseline remains 0.42.4.
+Version 0.45.5 stabilizes the quality and browser gates for the diagnostic download limit. The Playwright runtime now keeps ordinary cache data in memory while persisting rate-limiter counters in its own temporary SQLite database, so repeated HTTP requests exercise the real three-downloads-per-minute behavior without leaking state between runs. PHPStan-safe IP redaction callbacks are also included. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -96,7 +96,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.45.3 — исправляющий релиз метаданных. `ReleaseMetadataTest` синхронизирован с актуальным списком `repair_files` из `release.json` после выпуска 0.45.2; устаревшее ожидание от 0.45.1 удалено. Рабочая логика CMS, центр уведомлений, Support Tickets 1.6.0 и безопасный диагностический пакет не менялись, кумулятивная база остаётся 0.42.4.
+Версия 0.45.5 стабилизирует quality- и browser-проверки ограничения диагностических загрузок. Playwright по-прежнему хранит обычный кеш в памяти, но счётчики rate limiter теперь записываются в отдельную временную SQLite-базу текущего запуска: последовательные HTTP-запросы проверяют реальное ограничение в три скачивания за минуту, а состояние не пересекается между запусками. Также включено совместимое с PHPStan исправление callback-функций маскирования IP. Кумулятивная база остаётся 0.42.4.
 
 ### Требования
 

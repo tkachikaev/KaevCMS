@@ -12,9 +12,6 @@
         <span class="system-eyebrow">KaevCMS</span>
         <strong>{{ __('Version :version', ['version' => $system['cms']['version']]) }}</strong>
         <p>{!! __('The version is read from the <code>VERSION</code> file in the project root.') !!}</p>
-        @if(auth('admin')->user()?->hasPermission(\App\Auth\AdminPermission::SystemUpdatesView) === true)
-            <a wire:navigate class="button button-primary system-version-update-button" href="{{ route('admin.settings.system.updates.index') }}">{{ __('Manage updates') }}</a>
-        @endif
     </div>
     <div class="system-overview-actions">
         <a wire:navigate class="button button-secondary" href="{{ route('admin.settings.system') }}">{{ __('Refresh information') }}</a>
@@ -25,13 +22,16 @@
             data-copy-success="{{ __('Report copied.') }}"
             data-copy-error="{{ __('Could not copy the report.') }}"
         >{{ __('Copy report') }}</button>
-        <form method="GET" action="{{ route('admin.settings.system.diagnostics.download') }}" data-testid="diagnostic-package-form">
+        <form class="system-diagnostic-download" method="GET" action="{{ route('admin.settings.system.diagnostics.download') }}" data-testid="diagnostic-package-form">
             <button
                 class="button button-primary"
                 type="submit"
                 @disabled(! $diagnosticPackageAvailable)
                 @if(! $diagnosticPackageAvailable) title="{{ __('The PHP zip extension is required to create a diagnostic package.') }}" @endif
             >{{ __('Download diagnostic package') }}</button>
+            @if(session('diagnostics_rate_limited'))
+                <small class="system-diagnostic-rate-limit" data-testid="diagnostic-rate-limit-message">{{ session('diagnostics_rate_limited') }}</small>
+            @endif
         </form>
     </div>
 </section>

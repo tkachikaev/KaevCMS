@@ -1927,6 +1927,7 @@
     "The default language requires a title and text. Empty translations use the fallback language on the website.": "The default language requires a title and text. Empty translations use the fallback language on the website.",
     "The default language title is required.": "The default language title is required.",
     "The deletion impact changed. Review the updated account count and confirm again.": "The deletion impact changed. Review the updated account count and confirm again.",
+    "The diagnostic download limit has been reached. Please wait :seconds seconds and try again.": "The diagnostic download limit has been reached. Please wait :seconds seconds and try again.",
     "The diagnostic package directory is not writable.": "The diagnostic package directory is not writable.",
     "The diagnostic package directory is unsafe.": "The diagnostic package directory is unsafe.",
     "The diagnostic package is unavailable because the PHP zip extension is not installed.": "The diagnostic package is unavailable because the PHP zip extension is not installed.",

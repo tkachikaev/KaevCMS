@@ -18,12 +18,12 @@ final class RuntimeCacheConfigurationTest extends TestCase
         $this->assertStringContainsString("env('CACHE_LIMITER', 'database')", $configuration);
     }
 
-    public function test_browser_runner_isolates_rate_limits_and_retries_windows_sqlite_cleanup(): void
+    public function test_browser_runner_uses_its_isolated_database_for_rate_limits_and_retries_windows_sqlite_cleanup(): void
     {
         $runner = File::get(base_path('tests/browser/run.mjs'));
 
         $this->assertStringContainsString("CACHE_STORE: 'array'", $runner);
-        $this->assertStringContainsString("CACHE_LIMITER: 'array'", $runner);
+        $this->assertStringContainsString("CACHE_LIMITER: 'database'", $runner);
         $this->assertStringContainsString("BROWSER_TEST_LOGIN_LIMIT: '1000'", $runner);
         $this->assertStringContainsString("SERVER_MONITOR_REFRESH_INTERVAL_SECONDS: '300'", $runner);
         $this->assertStringContainsString("'serve', '--no-reload'", $runner);

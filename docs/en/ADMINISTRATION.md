@@ -31,7 +31,9 @@ Open **Settings → System information** and select **Download diagnostic packag
 
 The package never copies `.env`, `APP_KEY`, passwords, tokens, cookies, database credentials, user records, raw databases, or complete Laravel logs. Recent log entries are reduced to timestamp, severity, exception class, and a stable fingerprint. Email addresses, IP addresses, credentials, and absolute filesystem paths are redacted before anything is written to the ZIP.
 
-The archive is generated in a temporary directory under `storage/app/kaevcms/diagnostics`, downloaded immediately, and deleted after the response. Abandoned packages older than 24 hours are removed automatically the next time a package is created. The PHP `zip` extension and write access to `storage` are required.
+The archive is generated in a temporary directory under `storage/app/kaevcms/diagnostics`, downloaded immediately, and deleted after the response. Abandoned packages older than 24 hours are removed automatically the next time a package is created. The PHP `zip` extension and write access to `storage` are required. Identical recent warning/error signatures are grouped with an occurrence count and first/last timestamps so repeated application errors do not flood the archive.
+
+An administrator can download up to three packages per minute. Further clicks return to System information and show a small inline wait message instead of an HTTP 429 error page.
 
 An owner, administrator, or auditor with system-information access can download the package. Creating the archive is recorded in the audit log. Inspect the files before sending them to support.
 

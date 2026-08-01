@@ -1927,6 +1927,7 @@
     "The default language requires a title and text. Empty translations use the fallback language on the website.": "Для языка по умолчанию обязательны заголовок и текст. Для пустых переводов на сайте используется резервный язык.",
     "The default language title is required.": "Заголовок на языке по умолчанию обязателен.",
     "The deletion impact changed. Review the updated account count and confirm again.": "Последствия удаления изменились. Проверьте обновлённое количество аккаунтов и подтвердите действие ещё раз.",
+    "The diagnostic download limit has been reached. Please wait :seconds seconds and try again.": "Лимит скачиваний достигнут. Подождите :seconds сек. и попробуйте снова.",
     "The diagnostic package directory is not writable.": "Каталог диагностических пакетов недоступен для записи.",
     "The diagnostic package directory is unsafe.": "Каталог диагностических пакетов небезопасен.",
     "The diagnostic package is unavailable because the PHP zip extension is not installed.": "Диагностический пакет недоступен, потому что расширение PHP zip не установлено.",

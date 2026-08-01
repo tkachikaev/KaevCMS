@@ -228,7 +228,6 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.admin-panel.admin-path.update');
         Route::get('/settings/system', [AdminSystemSettingsController::class, 'system'])->name('settings.system');
         Route::get('/settings/system/diagnostics/download', [AdminSystemSettingsController::class, 'downloadDiagnostics'])
-            ->middleware('throttle:3,1')
             ->name('settings.system.diagnostics.download');
         Route::post('/settings/system/external-databases/refresh', [AdminSystemSettingsController::class, 'refreshExternalDatabases'])
             ->middleware('throttle:2,1')
