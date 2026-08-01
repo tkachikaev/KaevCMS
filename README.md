@@ -1,4 +1,4 @@
-# KaevCMS 0.45.5
+# KaevCMS 0.46.0
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.45.5 stabilizes the quality and browser gates for the diagnostic download limit. The Playwright runtime now keeps ordinary cache data in memory while persisting rate-limiter counters in its own temporary SQLite database, so repeated HTTP requests exercise the real three-downloads-per-minute behavior without leaking state between runs. PHPStan-safe IP redaction callbacks are also included. The cumulative update baseline remains 0.42.4.
+Version 0.46.0 adds **Settings → Notifications**. Owners and administrators can enable or disable clear groups of actionable events, configure automatic cleanup and choose a 30/60/90/180-day retention period. Every type uses the existing administration switch and help-tooltip components, and the bell dropdown now has a settings gear beside **All / Unread**. Existing notifications are not deleted when a type is disabled, and diagnostics continue to show the real system state. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -96,7 +96,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.45.5 стабилизирует quality- и browser-проверки ограничения диагностических загрузок. Playwright по-прежнему хранит обычный кеш в памяти, но счётчики rate limiter теперь записываются в отдельную временную SQLite-базу текущего запуска: последовательные HTTP-запросы проверяют реальное ограничение в три скачивания за минуту, а состояние не пересекается между запусками. Также включено совместимое с PHPStan исправление callback-функций маскирования IP. Кумулятивная база остаётся 0.42.4.
+Версия 0.46.0 добавляет вкладку **Настройки → Уведомления**. Владелец и администратор могут отдельно включать понятные группы событий, настраивать автоматическую очистку и выбирать срок хранения 30/60/90/180 дней. Для всех типов используются существующие переключатели и подсказки админки, а справа от **Все / Непрочитанные** в колокольчике появилась шестерёнка быстрого перехода. Отключение типа не удаляет существующие уведомления и не скрывает фактическое состояние диагностики. Кумулятивная база остаётся 0.42.4.
 
 ### Требования
 

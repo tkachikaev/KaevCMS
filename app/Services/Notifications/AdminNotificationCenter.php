@@ -18,6 +18,8 @@ use Throwable;
 
 final class AdminNotificationCenter
 {
+    public function __construct(private readonly AdminNotificationSettings $settings) {}
+
     public function available(): bool
     {
         try {
@@ -36,7 +38,7 @@ final class AdminNotificationCenter
         ?AdminPermission $permission = null,
         ?Closure $recipientFilter = null,
     ): int {
-        if (! $this->available()) {
+        if (! $this->available() || ! $this->settings->enabledFor($data)) {
             return 0;
         }
 
@@ -90,8 +92,14 @@ final class AdminNotificationCenter
         }
 
         try {
-            $payload = $this->payload($data);
             $deduplicationKey = $this->key($deduplicationKey, 'deduplication key');
+            if (! $this->settings->enabledFor($data)) {
+                $this->resolveProblem($deduplicationKey);
+
+                return 0;
+            }
+
+            $payload = $this->payload($data);
             $recipients = $this->recipients($permission, $recipientFilter);
         } catch (Throwable) {
             return 0;
@@ -290,7 +298,11 @@ final class AdminNotificationCenter
             return 0;
         }
 
-        $days = max(7, min(3650, $retentionDays ?? (int) config('cms.admin_notifications.retention_days', 90)));
+        if ($retentionDays === null && ! $this->settings->autoCleanupEnabled()) {
+            return 0;
+        }
+
+        $days = max(7, min(3650, $retentionDays ?? $this->settings->retentionDays()));
 
         try {
             return AdminNotification::query()

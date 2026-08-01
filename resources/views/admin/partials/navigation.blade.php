@@ -72,7 +72,7 @@
             wire:current.exact="active"
             class="admin-menu-item" data-admin-menu-link
             data-admin-settings-link
-            @if (request()->routeIs('admin.settings.general*', 'admin.settings.admin-panel*', 'admin.settings.registration*', 'admin.settings.game-accounts*', 'admin.settings.languages*', 'admin.settings.security*', 'admin.settings.system*')) data-current @endif
+            @if (request()->routeIs('admin.settings.general*', 'admin.settings.admin-panel*', 'admin.settings.notifications*', 'admin.settings.registration*', 'admin.settings.game-accounts*', 'admin.settings.languages*', 'admin.settings.security*', 'admin.settings.system*')) data-current @endif
             href="{{ route('admin.settings.general') }}"
         ><span>{{ __('Settings') }}</span></a>
     @endif

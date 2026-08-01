@@ -23,6 +23,16 @@ final class AdminRouteAccessRegistry
             $this->exact('admin.settings.admin-panel.admin-path.update', AdminPermission::AdminPathManage),
             $this->exact('admin.settings.admin-panel.monitoring.update', AdminPermission::SettingsManage),
             $this->exact(
+                'admin.settings.notifications',
+                AdminPermission::SettingsView,
+                AdminPermission::SettingsManage,
+            ),
+            $this->exact(
+                'admin.settings.notifications.update',
+                AdminPermission::SettingsView,
+                AdminPermission::SettingsManage,
+            ),
+            $this->exact(
                 'admin.settings.system',
                 AdminPermission::SystemView,
                 AdminPermission::SettingsManage,

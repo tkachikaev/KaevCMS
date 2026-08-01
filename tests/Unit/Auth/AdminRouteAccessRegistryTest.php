@@ -130,6 +130,18 @@ class AdminRouteAccessRegistryTest extends TestCase
                 AdminPermission::SecurityManage,
                 null,
             ],
+            'notification settings read-only' => [
+                'admin.settings.notifications',
+                'GET',
+                AdminPermission::SettingsView,
+                AdminPermission::SettingsManage,
+            ],
+            'notification settings manage' => [
+                'admin.settings.notifications.update',
+                'PUT',
+                AdminPermission::SettingsManage,
+                null,
+            ],
             'external database diagnostics view' => [
                 'admin.settings.system',
                 'GET',

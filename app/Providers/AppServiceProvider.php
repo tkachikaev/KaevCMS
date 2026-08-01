@@ -30,6 +30,7 @@ use App\Services\News\NewsHtmlSanitizer;
 use App\Services\News\NewsImageStorage;
 use App\Services\Notifications\AdminNotificationCenter;
 use App\Services\Notifications\AdminNotificationSourceScanner;
+use App\Services\Notifications\AdminNotificationSettings;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Services\Pages\PageImageStorage;
 use App\Services\Pages\PageNavigation;
@@ -61,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(AccountAvatarCatalog::class);
         $this->app->singleton(AdminPathSettings::class);
         $this->app->singleton(AdminLoginService::class);
+        $this->app->singleton(AdminNotificationSettings::class);
         $this->app->singleton(AdminNotificationCenter::class);
         $this->app->singleton(AdminNotificationSourceScanner::class);
         $this->app->singleton(AdminTwoFactorAuthentication::class);

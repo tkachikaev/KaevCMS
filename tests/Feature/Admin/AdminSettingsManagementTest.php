@@ -55,6 +55,7 @@ class AdminSettingsManagementTest extends TestCase
             ->assertSeeInOrder([
                 'Сайт',
                 'Панель администратора',
+                'Уведомления',
                 'Регистрация',
                 'Игровые аккаунты',
                 'Языки',

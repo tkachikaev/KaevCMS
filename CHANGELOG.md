@@ -1,3 +1,15 @@
+## 0.46.0 - 2026-08-01
+
+### Added
+
+- Added **Settings → Notifications** with the existing administration switch component for grouped actionable sources: Technical Support, module updates, KaevCMS updates, background tasks, LoginServer availability, GameServer availability, low disk space, leftover installer and critical system diagnostics.
+- Added the existing accessible `?` tooltip component beside every source, with short Russian and English explanations that avoid internal migration, queue and Scheduler terminology in the visible labels.
+- Added a settings gear to the right of **All / Unread** in the notification dropdown. It is available to roles with settings access, remains responsive on mobile and opens the notification settings tab directly.
+- Added configurable automatic cleanup and 30/60/90/180-day retention. Disabling automatic cleanup does not affect the manual `kaevcms:notifications-clean --days=<number>` command.
+- Disabled sources no longer create one-time notifications. Recurring problems are resolved in the notification lifecycle without deleting existing list entries, so re-enabling a still-active source creates a fresh event on the next scan while diagnostics continue to show the real state.
+- Added PHPUnit and Playwright regressions for saving preferences, access control, grouped Support Ticket events, separate LoginServer/GameServer switches, recurring-problem reactivation, cleanup behavior, tooltip interaction, gear navigation and mobile overflow.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.46.0 package supports direct updates from 0.42.4 through 0.45.5.
+
 ## 0.45.5 - 2026-08-01
 
 ### Fixed

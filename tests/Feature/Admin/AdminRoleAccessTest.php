@@ -200,6 +200,7 @@ class AdminRoleAccessTest extends TestCase
             '/admin/reward-deliveries',
             '/admin/settings',
             '/admin/settings/admin-panel',
+            '/admin/settings/notifications',
             '/admin/settings/registration',
             '/admin/settings/game-accounts',
             '/admin/settings/languages',

@@ -24,19 +24,36 @@
                     <strong>{{ __('Notifications') }}</strong>
                     <small>{{ trans_choice(':count unread notification|:count unread notifications', $unreadCount, ['count' => $unreadCount]) }}</small>
                 </div>
-                <div class="admin-notification-filters" role="group" aria-label="{{ __('Notification filter') }}">
-                    <button
-                        type="button"
-                        @class(['active' => $filter === 'all'])
-                        wire:click="setFilter('all')"
-                        aria-pressed="{{ $filter === 'all' ? 'true' : 'false' }}"
-                    >{{ __('All') }}</button>
-                    <button
-                        type="button"
-                        @class(['active' => $filter === 'unread'])
-                        wire:click="setFilter('unread')"
-                        aria-pressed="{{ $filter === 'unread' ? 'true' : 'false' }}"
-                    >{{ __('Unread') }}</button>
+                <div class="admin-notification-heading-tools">
+                    <div class="admin-notification-filters" role="group" aria-label="{{ __('Notification filter') }}">
+                        <button
+                            type="button"
+                            @class(['active' => $filter === 'all'])
+                            wire:click="setFilter('all')"
+                            aria-pressed="{{ $filter === 'all' ? 'true' : 'false' }}"
+                        >{{ __('All') }}</button>
+                        <button
+                            type="button"
+                            @class(['active' => $filter === 'unread'])
+                            wire:click="setFilter('unread')"
+                            aria-pressed="{{ $filter === 'unread' ? 'true' : 'false' }}"
+                        >{{ __('Unread') }}</button>
+                    </div>
+                    @if(auth('admin')->user()?->hasPermission(\App\Auth\AdminPermission::SettingsView))
+                        <a
+                            wire:navigate
+                            class="admin-notification-settings-link"
+                            href="{{ route('admin.settings.notifications') }}"
+                            aria-label="{{ __('Notification settings') }}"
+                            title="{{ __('Notification settings') }}"
+                            data-testid="notification-settings-link"
+                        >
+                            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20.3h-3v-.08a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 15a1.7 1.7 0 0 0-1.56-1.03H5.3v-3h.14A1.7 1.7 0 0 0 7 9.94a1.7 1.7 0 0 0-.34-1.88L6.6 8l2.12-2.12.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 11.7 4.7V4.6h3v.1a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 8l-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.03h.14v3h-.14A1.7 1.7 0 0 0 19.4 15Z"></path>
+                            </svg>
+                        </a>
+                    @endif
                 </div>
             </div>
 

@@ -11,6 +11,9 @@
         </a>
     @endif
     @if($settingsAdmin->hasPermission(\App\Auth\AdminPermission::SettingsView))
+        <a wire:navigate @class(['admin-tab', 'settings-section-tab', 'active' => request()->routeIs('admin.settings.notifications*')]) href="{{ route('admin.settings.notifications') }}" @if(request()->routeIs('admin.settings.notifications*')) aria-current="page" @endif>
+            {{ __('Notifications') }}
+        </a>
         <a wire:navigate @class(['admin-tab', 'settings-section-tab', 'active' => request()->routeIs('admin.settings.registration*')]) href="{{ route('admin.settings.registration') }}" @if(request()->routeIs('admin.settings.registration*')) aria-current="page" @endif>
             {{ __('Registration') }}
         </a>

@@ -30,10 +30,14 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'app/Services/Diagnostics/DiagnosticRedactor.php',
-            'tests/Feature/ReleaseMetadataTest.php',
-            'tests/Feature/RuntimeCacheConfigurationTest.php',
-            'tests/browser/run.mjs',
+            'app/Http/Controllers/Admin/NotificationSettingsController.php',
+            'app/Http/Requests/Admin/SaveAdminNotificationSettingsRequest.php',
+            'app/Services/Notifications/AdminNotificationCenter.php',
+            'app/Services/Notifications/AdminNotificationSettings.php',
+            'resources/views/admin/settings/notifications.blade.php',
+            'resources/views/livewire/admin/notification-center.blade.php',
+            'tests/Feature/Admin/AdminNotificationSettingsTest.php',
+            'tests/browser/specs/notification-settings.spec.mjs',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),

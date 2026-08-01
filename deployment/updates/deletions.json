@@ -417,5 +417,8 @@
     ],
     "0.45.5": [
         "core/deployment/windows/apply-0.45.4.ps1"
+    ],
+    "0.46.0": [
+        "core/deployment/windows/apply-0.45.5.ps1"
     ]
 }

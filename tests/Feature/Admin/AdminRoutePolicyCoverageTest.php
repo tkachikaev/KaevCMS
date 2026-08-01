@@ -49,5 +49,7 @@ class AdminRoutePolicyCoverageTest extends TestCase
         $this->assertContains('admin.dashboard', $classified);
         $this->assertContains('admin.login', $classified);
         $this->assertContains('admin.settings.system', $classified);
+        $this->assertContains('admin.settings.notifications', $classified);
+        $this->assertContains('admin.settings.notifications.update', $classified);
     }
 }

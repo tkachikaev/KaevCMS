@@ -938,7 +938,7 @@ a.admin-data-card:hover {
 }
 
 
-/* Administrator notification center 0.45.1 */
+/* Administrator notification center 0.46.0 */
 .admin-notification-center {
     position: relative;
     flex: 0 0 auto;
@@ -1041,12 +1041,42 @@ a.admin-data-card:hover {
     color: var(--admin-text-muted);
     font-size: 11px;
 }
+.admin-notification-heading-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
 .admin-notification-filters {
     display: inline-flex;
     gap: 3px;
     padding: 3px;
     border-radius: 9px;
     background: #f1f5f9;
+}
+.admin-notification-settings-link {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 1px solid #dbe3ed;
+    border-radius: 9px;
+    background: #fff;
+    color: #64748b;
+    transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+.admin-notification-settings-link:hover {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: var(--admin-primary);
+}
+.admin-notification-settings-link:focus-visible {
+    outline: 3px solid var(--admin-focus-ring);
+    outline-offset: 1px;
+}
+.admin-notification-settings-link svg {
+    width: 18px;
+    height: 18px;
 }
 .admin-notification-filters button {
     min-height: 28px;
@@ -1224,6 +1254,7 @@ a.admin-data-card:hover {
 
 @media (max-width: 430px) {
     .admin-notification-heading { display: grid; }
+    .admin-notification-heading-tools { justify-content: space-between; }
     .admin-notification-filters { justify-self: start; }
     .admin-notification-actions { grid-template-columns: 1fr; }
     .admin-notification-actions button { min-height: 38px; }
