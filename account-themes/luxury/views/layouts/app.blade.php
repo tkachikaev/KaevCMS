@@ -43,6 +43,8 @@
         </aside>
     @endpersist
 
+    <x-account-sidebar-backdrop />
+
     <main class="account-main">
         @persist('account-topbar')
             <header class="account-topbar" data-account-topbar>

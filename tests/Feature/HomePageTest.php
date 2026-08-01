@@ -38,8 +38,8 @@ class HomePageTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('/themes/default/assets/css/app.css?v=0.8.1', false)
-            ->assertSee('/themes/default/assets/js/app.js?v=0.8.1', false);
+            ->assertSee('/themes/default/assets/css/app.css?v=0.8.2', false)
+            ->assertSee('/themes/default/assets/js/app.js?v=0.8.2', false);
     }
 
     public function test_home_page_is_available(): void

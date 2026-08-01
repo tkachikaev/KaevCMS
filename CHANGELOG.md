@@ -1,3 +1,58 @@
+## 0.46.5 - 2026-08-01
+
+### Fixed
+
+- Replaced the dashboard disk fill element and CSP-blocked inline width with a native accessible `<progress>` control, preserving normal, warning and danger colors in Chromium, WebKit and Firefox.
+- Kept the Kaev Aurelia Account mobile backdrop outside the 286 px sidebar area so blur and pointer handling never cover the open navigation panel.
+- Removed case-insensitive duplicate `players` translation keys and tightened `DashboardPlayerOverview` typed-array access for PHPStan.
+- Contained footer grids, social links and long content inside mobile viewports for both bundled public themes; Kaev Aurelia now collapses its footer to one column at the existing mobile breakpoint.
+- Updated L2 Dark Classic to `0.8.2`, Kaev Aurelia to `1.0.9` and Kaev Aurelia Account to `1.6.4`; added PHPUnit and Playwright regressions for strict-CSP disk rendering, menu/backdrop geometry and public-theme footer overflow.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.46.5 package supports direct updates from 0.42.4 through 0.46.4.
+
+## 0.46.4 - 2026-08-01
+
+### Added
+
+- Added a compact **Players** card below Storage in the wide dashboard column with registered KaevCMS users, active game accounts, available character totals and the Support Tickets attention badge when that module is enabled and accessible to the administrator.
+- Character totals are cached briefly, count only normal non-deleted characters across currently configured game databases and degrade to a partial or unavailable note instead of breaking the dashboard when an external database is offline.
+
+### Fixed
+
+- Replaced the mobile account-menu `html::after` overlay with an explicit shared backdrop component. The backdrop now sits below the sidebar, receives close clicks and owns the blur, while the menu remains sharp, above the overlay and fully interactive in both bundled account themes.
+- Updated L2 Obsidian Luxury and Kaev Aurelia Account to `1.6.3` and added PHPUnit and Playwright regressions for dashboard permissions/counts, module-aware support metrics, backdrop layering, direct backdrop closing, menu-link clicks and responsive placement.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.46.4 package supports direct updates from 0.42.4 through 0.46.3.
+
+## 0.46.3 - 2026-08-01
+
+### Fixed
+
+- Replaced the oversized aggregate online card with compact last-updated text and the existing **Check now** action, while retaining per-GameServer online counts in each server row.
+- Moved the GameServer card into the right dashboard column above LoginServer, leaving the storage overview in the wider left column and keeping system operations full-width below.
+- Rendered disk usage with a direct inline percentage on the fill element instead of a nested CSS `min()`/`max()` custom-property expression. The filled segment now paints immediately after page load without requiring a browser repaint.
+- Added PHPUnit and Playwright regressions for removal of the aggregate counter, per-server online visibility, desktop card placement, compact refresh controls, initial disk-bar width and a visibly distinct fill color.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.46.3 package supports direct updates from 0.42.4 through 0.46.2.
+
+## 0.46.2 - 2026-08-01
+
+### Added
+
+- Added a **Storage** dashboard card in the wider left column with server-disk totals, used/free capacity, percentage state and a compact administration-style progress bar.
+- Added safe KaevCMS database storage details for MySQL, MariaDB and SQLite: engine/version, total size, data, indexes and table count where the active database and hosting permissions expose those values.
+- Kept database names, hosts, usernames, passwords, DSNs and SQLite paths out of dashboard output; unavailable hosting statistics degrade to a clear non-fatal message.
+- Reused existing dashboard cards, status badges, spacing and typography without adding a chart dependency, migration or bundled-module change.
+- Added PHPUnit and Playwright regressions for database engines, restricted statistics, permissions, accessibility, responsive layouts and horizontal overflow.
+- The cumulative update line remains based on `0.42.4`; the 0.46.2 package supports direct updates from 0.42.4 through 0.46.1.
+
+## 0.46.1 - 2026-08-01
+
+### Fixed
+
+- Expanded the existing administration switch checkbox over the complete 46×26 control, restoring normal direct pointer clicks while preserving the current visual component, keyboard focus and label behavior.
+- Limited notification-settings help-tooltip width below 520 px so hidden absolute tooltip content cannot enlarge the mobile document horizontally.
+- Sorted notification service imports in `AppServiceProvider` according to Laravel Pint.
+- Added a Playwright regression that verifies the checkbox itself exposes the full clickable target and toggles through real pointer clicks; the existing mobile test continues to guard tooltip overflow.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.46.1 package supports direct updates from 0.42.4 through 0.46.0.
+
 ## 0.46.0 - 2026-08-01
 
 ### Added

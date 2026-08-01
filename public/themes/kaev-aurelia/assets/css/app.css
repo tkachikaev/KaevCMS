@@ -1116,7 +1116,10 @@ body.kaev-aurelia::before {
     .kaev-aurelia .footer-cta { top: -24px; grid-template-columns: 1fr; padding: 28px 22px; text-align: center; }
     .kaev-aurelia .footer-cta-mark { margin: auto; }
     .kaev-aurelia .footer-cta-actions { flex-direction: column; }
-    .kaev-aurelia .footer-grid { padding-top: 20px; }
+    .kaev-aurelia .footer-grid { grid-template-columns: minmax(0, 1fr); padding-top: 20px; }
+    .kaev-aurelia .footer-grid > *,
+    .kaev-aurelia .footer-bottom > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+    .kaev-aurelia .socials { min-width: 0; flex-wrap: wrap; }
     .kaev-aurelia .page-hero { background-position: 68% center; }
 }
 

@@ -265,3 +265,54 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
     await expect(page.locator('.reward-inventory-shell')).toBeVisible();
     await expect(page.locator('.reward-view-tabs').getByRole('link').first()).toBeVisible();
 });
+
+test('mobile account sidebar stays sharp and clickable above its backdrop', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page);
+
+    const toggle = page.locator('[data-account-sidebar-toggle]');
+    const sidebar = page.locator('[data-account-sidebar]');
+    const backdrop = page.locator('[data-account-sidebar-backdrop]');
+
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    await expect(page.locator('html')).toHaveClass(/account-sidebar-open/);
+    await expect(sidebar).toBeVisible();
+    await expect(backdrop).toBeVisible();
+
+    const layers = await page.evaluate(() => {
+        const sidebarElement = document.querySelector('[data-account-sidebar]');
+        const backdropElement = document.querySelector('[data-account-sidebar-backdrop]');
+        if (!(sidebarElement instanceof HTMLElement) || !(backdropElement instanceof HTMLElement)) {
+            return null;
+        }
+
+        const sidebarStyle = getComputedStyle(sidebarElement);
+        const backdropStyle = getComputedStyle(backdropElement);
+
+        return {
+            sidebarZ: Number.parseInt(sidebarStyle.zIndex || '0', 10),
+            backdropZ: Number.parseInt(backdropStyle.zIndex || '0', 10),
+            sidebarRight: sidebarElement.getBoundingClientRect().right,
+            backdropLeft: backdropElement.getBoundingClientRect().left,
+            sidebarFilter: sidebarStyle.filter,
+            sidebarBackdropFilter: sidebarStyle.backdropFilter || sidebarStyle.webkitBackdropFilter || 'none',
+            backdropPointerEvents: backdropStyle.pointerEvents,
+        };
+    });
+
+    expect(layers).not.toBeNull();
+    expect(layers.sidebarZ).toBeGreaterThan(layers.backdropZ);
+    expect(layers.backdropLeft).toBeGreaterThanOrEqual(layers.sidebarRight - 1);
+    expect(layers.sidebarFilter).toBe('none');
+    expect(layers.sidebarBackdropFilter).toBe('none');
+    expect(layers.backdropPointerEvents).toBe('auto');
+
+    await backdrop.click();
+    await expect(page.locator('html')).not.toHaveClass(/account-sidebar-open/);
+
+    await toggle.click();
+    await sidebar.getByRole('link', { name: 'Игровые аккаунты' }).click();
+    await expect(page).toHaveURL(/\/account\/game-accounts$/);
+    await expect(page.locator('html')).not.toHaveClass(/account-sidebar-open/);
+});

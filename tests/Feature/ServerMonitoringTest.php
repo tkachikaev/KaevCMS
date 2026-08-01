@@ -149,8 +149,8 @@ class ServerMonitoringTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('Всего онлайн')
-            ->assertSee('37')
+            ->assertDontSee('Всего онлайн')
+            ->assertSee('37 онлайн')
             ->assertSee('Interlude')
             ->assertSee('Основной LoginServer')
             ->assertSee('Работает');

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Auth\AdminPermission;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\Infrastructure\DashboardPlayerOverview;
 use App\Services\Infrastructure\RuntimeDiagnostics;
+use App\Services\Infrastructure\StorageOverview;
 use App\Services\Mail\MailDeliveryMonitor;
 use App\Services\MailSettings;
 use App\Services\Servers\ServerMonitorCoordinator;
@@ -24,6 +26,8 @@ class DashboardController extends Controller
         MailSettings $mailSettings,
         MailDeliveryMonitor $mailDeliveries,
         RuntimeDiagnostics $runtimeDiagnostics,
+        StorageOverview $storageOverview,
+        DashboardPlayerOverview $playerOverview,
     ): View {
         $admin = Auth::guard('admin')->user();
 
@@ -35,6 +39,12 @@ class DashboardController extends Controller
             'mailDelivery' => $mailDeliveries->overview(),
             'runtime' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::SystemView)
                 ? $runtimeDiagnostics->overview()
+                : null,
+            'storageOverview' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::SystemView)
+                ? $storageOverview->collect()
+                : null,
+            'playerOverview' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::UsersView)
+                ? $playerOverview->forAdmin($admin)
                 : null,
         ]);
     }

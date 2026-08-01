@@ -30,14 +30,25 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'app/Http/Controllers/Admin/NotificationSettingsController.php',
-            'app/Http/Requests/Admin/SaveAdminNotificationSettingsRequest.php',
-            'app/Services/Notifications/AdminNotificationCenter.php',
-            'app/Services/Notifications/AdminNotificationSettings.php',
-            'resources/views/admin/settings/notifications.blade.php',
-            'resources/views/livewire/admin/notification-center.blade.php',
-            'tests/Feature/Admin/AdminNotificationSettingsTest.php',
-            'tests/browser/specs/notification-settings.spec.mjs',
+            'account-themes/kaev-aurelia/theme.json',
+            'app/Services/Infrastructure/DashboardPlayerOverview.php',
+            'lang/en.json',
+            'lang/ru.json',
+            'public/account-themes/kaev-aurelia/assets/css/app.css',
+            'public/assets/admin/css/infrastructure.css',
+            'public/themes/default/assets/css/app.css',
+            'public/themes/kaev-aurelia/assets/css/app.css',
+            'resources/views/admin/dashboard.blade.php',
+            'tests/Feature/Admin/DashboardPlayerOverviewTest.php',
+            'tests/Feature/Admin/DashboardStorageOverviewTest.php',
+            'tests/Feature/BundledAureliaThemesTest.php',
+            'tests/Feature/HomePageTest.php',
+            'tests/Feature/ReleaseMetadataTest.php',
+            'tests/browser/specs/admin-navigation.spec.mjs',
+            'tests/browser/specs/dashboard-storage.spec.mjs',
+            'tests/browser/specs/player-character-directory.spec.mjs',
+            'themes/default/theme.json',
+            'themes/kaev-aurelia/theme.json',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
@@ -634,13 +645,21 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('assets/account/js/navigation.js', $accountLayout);
             $this->assertStringNotContainsString("account_theme_asset('assets/js/navigation.js')", $accountLayout);
         }
+        $this->assertFileExists(resource_path('views/components/account-sidebar-backdrop.blade.php'));
+        $accountNavigationRuntime = $this->readReleaseFile('public/assets/account/js/navigation.js');
+        $this->assertStringContainsString('data-account-sidebar-backdrop', $accountNavigationRuntime);
         foreach (['luxury', 'kaev-aurelia'] as $accountTheme) {
+            $accountThemeCss = $this->readReleaseFile('public/account-themes/'.$accountTheme.'/assets/css/app.css');
+            $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
+            $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
+        }
+        foreach (['luxury' => '1.6.3', 'kaev-aurelia' => '1.6.4'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
                 flags: JSON_THROW_ON_ERROR,
             );
-            $this->assertSame('1.6.2', $accountThemeManifest['version']);
+            $this->assertSame($expectedVersion, $accountThemeManifest['version']);
             $this->assertSame('0.37.0', $accountThemeManifest['cms_min']);
         }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');

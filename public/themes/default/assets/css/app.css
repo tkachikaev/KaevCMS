@@ -340,3 +340,10 @@
     :where(.news-prose,.cms-page-prose) figure[data-size="medium"],
     :where(.news-prose,.cms-page-prose) figure[data-size="wide"] { width: 100%; }
 }
+
+/* Mobile footer containment */
+@media(max-width:780px){
+    .footer-grid > *,
+    .footer-bottom > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+    .socials { min-width: 0; flex-wrap: wrap; }
+}

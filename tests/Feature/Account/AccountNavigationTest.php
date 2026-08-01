@@ -227,6 +227,30 @@ class AccountNavigationTest extends TestCase
         }
     }
 
+    public function test_mobile_sidebar_uses_a_separate_clickable_backdrop_in_both_account_themes(): void
+    {
+        $runtime = file_get_contents(public_path('assets/account/js/navigation.js'));
+        $backdrop = file_get_contents(resource_path('views/components/account-sidebar-backdrop.blade.php'));
+
+        $this->assertIsString($runtime);
+        $this->assertIsString($backdrop);
+        $this->assertStringContainsString('data-account-sidebar-backdrop', $runtime);
+        $this->assertStringContainsString("backdrop.addEventListener('click', closeMobileSidebar)", $runtime);
+        $this->assertStringContainsString('data-account-sidebar-backdrop', $backdrop);
+
+        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+            $layout = file_get_contents(base_path("account-themes/{$theme}/views/layouts/app.blade.php"));
+            $css = file_get_contents(public_path("account-themes/{$theme}/assets/css/app.css"));
+
+            $this->assertIsString($layout);
+            $this->assertIsString($css);
+            $this->assertStringContainsString('<x-account-sidebar-backdrop />', $layout);
+            $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $css);
+            $this->assertStringContainsString('pointer-events: auto', $css);
+            $this->assertStringNotContainsString('.account-sidebar-open::after', $css);
+        }
+    }
+
     public function test_legacy_core_account_views_are_not_used_and_shared_runtime_is_present(): void
     {
         $this->assertDirectoryDoesNotExist(resource_path('views/account'));

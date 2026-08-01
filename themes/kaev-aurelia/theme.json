@@ -1,9 +1,9 @@
 {
-    "name": "Kaev Aurelia",
-    "slug": "kaev-aurelia",
-    "version": "1.0.8",
-    "author": "KaevCMS",
-    "cms_min": "0.23.6",
-    "description": "Светлая премиальная тема KaevCMS в эльфийской эстетике: динамическая локализация, Livewire-навигация и частичное переключение статистики без перезагрузки страницы.",
-    "preview": "assets/images/preview.webp"
+  "name": "Kaev Aurelia",
+  "slug": "kaev-aurelia",
+  "version": "1.0.9",
+  "author": "KaevCMS",
+  "cms_min": "0.23.6",
+  "description": "Светлая премиальная тема KaevCMS в эльфийской эстетике: динамическая локализация, Livewire-навигация и частичное переключение статистики без перезагрузки страницы.",
+  "preview": "assets/images/preview.webp"
 }

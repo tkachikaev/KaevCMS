@@ -189,6 +189,7 @@
     const initializeShell = () => {
         const sidebar = document.querySelector('[data-account-sidebar]');
         const toggle = document.querySelector('[data-account-sidebar-toggle]');
+        const backdrop = document.querySelector('[data-account-sidebar-backdrop]');
 
         if (toggle && !toggle.hasAttribute(readyAttribute)) {
             toggle.setAttribute(readyAttribute, '');
@@ -206,6 +207,11 @@
                     closeMobileSidebar();
                 }
             });
+        }
+
+        if (backdrop && !backdrop.hasAttribute(readyAttribute)) {
+            backdrop.setAttribute(readyAttribute, '');
+            backdrop.addEventListener('click', closeMobileSidebar);
         }
 
         closeProfileMenus();
@@ -294,7 +300,7 @@
             return;
         }
 
-        if (event.target instanceof Element && !event.target.closest('[data-account-sidebar], [data-account-sidebar-toggle]')) {
+        if (event.target instanceof Element && !event.target.closest('[data-account-sidebar], [data-account-sidebar-toggle], [data-account-sidebar-backdrop]')) {
             closeMobileSidebar();
         }
     });

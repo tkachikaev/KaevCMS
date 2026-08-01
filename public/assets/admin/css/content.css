@@ -741,7 +741,16 @@
 .settings-toggle-row strong { color: #1f2937; font-size: 14px; }
 .settings-toggle-row small { max-width: 650px; margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 400; }
 .switch-control { position: relative; flex: 0 0 46px; width: 46px; height: 26px; }
-.switch-control input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.switch-control input[type="checkbox"] {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
 .switch-control span {
     position: absolute;
     inset: 0;
@@ -996,6 +1005,13 @@
 .field-help-tooltip:hover .field-help-tooltip-content,
 .field-help-tooltip:focus .field-help-tooltip-content,
 .field-help-tooltip:focus-within .field-help-tooltip-content { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 520px) {
+    .settings-toggle-row .field-help-tooltip-content {
+        width: min(240px, calc(100vw - 40px));
+    }
+}
+
 .system-card { min-width: 0; }
 .system-definition-list { margin: 0; }
 .system-definition-list > div { display: grid; grid-template-columns: minmax(125px, .8fr) minmax(0, 1.2fr); gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }

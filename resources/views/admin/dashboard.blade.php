@@ -27,6 +27,9 @@
     $canViewServers = $adminUser->hasPermission(\App\Auth\AdminPermission::ServersView);
     $canViewMail = $adminUser->hasPermission(\App\Auth\AdminPermission::MailView);
     $canViewSystem = $adminUser->hasPermission(\App\Auth\AdminPermission::SystemView);
+    $canViewUsers = $adminUser->hasPermission(\App\Auth\AdminPermission::UsersView);
+    $hasDashboardMain = ($canViewSystem && $storageOverview !== null) || ($canViewUsers && $playerOverview !== null);
+    $hasDashboardSide = $canViewServers || $canViewMail;
 @endphp
 
 <div
@@ -35,31 +38,157 @@
     data-refresh-url="{{ route('admin.server-monitor.status') }}"
     data-auto-refresh="{{ $monitorRefreshDue && ! $adminUser->isReadOnly() ? '1' : '0' }}"
 >
-    <section class="admin-overview dashboard-monitor-summary">
-        <div>
-            <span>{{ __('Total online') }}</span>
-            <strong data-monitor-total-online>{{ number_format($monitor['total_online'], 0, '.', ' ') }}</strong>
-            <small data-monitor-partial @if(! $monitor['partial']) hidden @endif>{{ __('Partial data') }}</small>
-        </div>
-        <div class="dashboard-monitor-summary-meta">
-            <span data-monitor-updated>
-                {{ $monitor['checked_at']
-                    ? __('Updated :time', ['time' => $monitor['checked_at']->diffForHumans()])
-                    : __('Not checked yet') }}
-            </span>
-            @if($canRefreshMonitor)
-                <form method="POST" action="{{ route('admin.server-monitor.refresh') }}">
-                    @csrf
-                    <button class="button button-secondary button-compact" type="submit">{{ __('Check now') }}</button>
-                </form>
+    <div class="dashboard-monitor-toolbar" data-testid="dashboard-monitor-toolbar">
+        <small data-monitor-partial @if(! $monitor['partial']) hidden @endif>{{ __('Partial data') }}</small>
+        <span data-monitor-updated>
+            {{ $monitor['checked_at']
+                ? __('Updated :time', ['time' => $monitor['checked_at']->diffForHumans()])
+                : __('Not checked yet') }}
+        </span>
+        @if($canRefreshMonitor)
+            <form method="POST" action="{{ route('admin.server-monitor.refresh') }}">
+                @csrf
+                <button class="button button-secondary button-compact" type="submit">{{ __('Check now') }}</button>
+            </form>
+        @endif
+    </div>
+
+    @if($hasDashboardMain || $hasDashboardSide)
+    <div class="dashboard-monitor-grid {{ ! $hasDashboardMain || ! $hasDashboardSide ? 'dashboard-monitor-grid-single' : '' }}">
+        @if($hasDashboardMain)
+        <div class="dashboard-monitor-main">
+            @if($canViewSystem && $storageOverview !== null)
+            @php
+                $disk = $storageOverview['disk'];
+                $databaseStorage = $storageOverview['database'];
+                $diskPercent = $disk['used_percent'] !== null
+                    ? number_format($disk['used_percent'], 1, app()->getLocale() === 'ru' ? ',' : '.', '')
+                    : null;
+                $diskPercentCss = $disk['used_percent'] !== null
+                    ? number_format($disk['used_percent'], 1, '.', '')
+                    : '0';
+            @endphp
+            <section class="admin-data-card dashboard-monitor-card dashboard-storage-card" data-testid="dashboard-storage-card">
+                <header>
+                    <h2>{{ __('Storage') }}</h2>
+                    <a wire:navigate href="{{ route('admin.settings.system') }}">{{ __('System information') }}</a>
+                </header>
+
+                <div class="dashboard-storage-body">
+                    <article class="dashboard-storage-section" data-testid="dashboard-disk-storage">
+                        <div class="dashboard-storage-heading">
+                            <div>
+                                <strong>{{ __('Server disk') }}</strong>
+                                <small>{{ __('Space used by KaevCMS files, logs, backups and other data on this filesystem.') }}</small>
+                            </div>
+                            @if($disk['available'])
+                                <span class="status-badge status-badge-{{ $disk['state'] === 'danger' ? 'danger' : ($disk['state'] === 'warning' ? 'warning' : 'success') }}">{{ $diskPercent }}%</span>
+                            @else
+                                <span class="status-badge status-badge-muted">{{ __('Unavailable') }}</span>
+                            @endif
+                        </div>
+
+                        @if($disk['available'])
+                            <progress
+                                class="dashboard-storage-progress dashboard-storage-progress-{{ $disk['state'] }}"
+                                data-testid="dashboard-disk-progress"
+                                role="progressbar"
+                                aria-label="{{ __('Server disk usage') }}"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                aria-valuenow="{{ $diskPercentCss }}"
+                                max="100"
+                                value="{{ $diskPercentCss }}"
+                            >{{ $diskPercent }}%</progress>
+                            <div class="dashboard-storage-summary">
+                                <span>{{ __('Used :used of :total', ['used' => $disk['used'], 'total' => $disk['total']]) }}</span>
+                                <strong>{{ __('Free: :free', ['free' => $disk['free']]) }}</strong>
+                            </div>
+                        @else
+                            <p class="dashboard-storage-unavailable">{{ __('Disk space statistics are unavailable on this server.') }}</p>
+                        @endif
+                    </article>
+
+                    <article class="dashboard-storage-section" data-testid="dashboard-database-storage">
+                        <div class="dashboard-storage-heading">
+                            <div>
+                                <strong>{{ __('KaevCMS database') }}</strong>
+                                <small>
+                                    {{ $databaseStorage['driver_label'] }}
+                                    @if($databaseStorage['version'])
+                                        · {{ __('Version :version', ['version' => $databaseStorage['version']]) }}
+                                    @endif
+                                </small>
+                            </div>
+                            <span class="status-badge {{ $databaseStorage['connected'] ? 'status-badge-success' : 'status-badge-danger' }}">
+                                {{ $databaseStorage['connected'] ? __('Connected') : __('Connection failed') }}
+                            </span>
+                        </div>
+
+                        @if($databaseStorage['connected'] && $databaseStorage['statistics_available'])
+                            <div class="dashboard-storage-metrics">
+                                <div><span>{{ __('Total size') }}</span><strong>{{ $databaseStorage['total'] ?? '—' }}</strong></div>
+                                <div><span>{{ __('Data') }}</span><strong>{{ $databaseStorage['data'] ?? '—' }}</strong></div>
+                                <div><span>{{ __('Indexes') }}</span><strong>{{ $databaseStorage['indexes'] ?? '—' }}</strong></div>
+                                <div><span>{{ __('Tables') }}</span><strong>{{ $databaseStorage['table_count'] !== null ? number_format($databaseStorage['table_count'], 0, '.', ' ') : '—' }}</strong></div>
+                            </div>
+                            @if($databaseStorage['driver'] === 'sqlite' && ($databaseStorage['data'] === null || $databaseStorage['indexes'] === null))
+                                <p class="dashboard-storage-note">{{ __('Separate data and index sizes are not available for this SQLite build.') }}</p>
+                            @endif
+                        @elseif($databaseStorage['connected'])
+                            <p class="dashboard-storage-unavailable">{{ __('Database size statistics are unavailable with the current hosting permissions.') }}</p>
+                        @else
+                            <p class="dashboard-storage-unavailable dashboard-storage-unavailable-danger">{{ __('Could not read database storage statistics because the CMS database is unavailable.') }}</p>
+                        @endif
+                    </article>
+                </div>
+            </section>
+            @endif
+
+            @if($canViewUsers && $playerOverview !== null)
+            <section class="admin-data-card dashboard-monitor-card dashboard-players-card" data-testid="dashboard-players-card">
+                <header>
+                    <h2>{{ __('Players') }}</h2>
+                    <a wire:navigate href="{{ route('admin.users.index') }}">{{ __('Users') }}</a>
+                </header>
+
+                <div class="dashboard-storage-section">
+                    <div class="dashboard-storage-metrics dashboard-player-metrics">
+                        <div>
+                            <span>{{ __('Registered users') }}</span>
+                            <strong>{{ number_format($playerOverview['registered_users'], 0, '.', ' ') }}</strong>
+                        </div>
+                        <div>
+                            <span>{{ __('Game accounts') }}</span>
+                            <strong>{{ number_format($playerOverview['game_accounts'], 0, '.', ' ') }}</strong>
+                        </div>
+                        <div>
+                            <span>{{ __('Characters') }}</span>
+                            <strong>{{ $playerOverview['characters'] !== null ? number_format($playerOverview['characters'], 0, '.', ' ') : '—' }}</strong>
+                        </div>
+                        @if($playerOverview['support_attention'] !== null && $playerOverview['support_route'])
+                            <a wire:navigate class="dashboard-player-metric-link" href="{{ route($playerOverview['support_route']) }}">
+                                <span>{{ __('Support requests requiring attention') }}</span>
+                                <strong>{{ number_format($playerOverview['support_attention'], 0, '.', ' ') }}</strong>
+                            </a>
+                        @endif
+                    </div>
+
+                    @if($playerOverview['characters_partial'])
+                        <p class="dashboard-storage-note">{{ __('Character count is shown only for game databases currently available to KaevCMS.') }}</p>
+                    @elseif($playerOverview['characters'] === null)
+                        <p class="dashboard-storage-note">{{ __('Character statistics will appear after a game database is configured and available.') }}</p>
+                    @endif
+                </div>
+            </section>
             @endif
         </div>
-    </section>
+        @endif
 
-    @if($canViewServers || $canViewMail)
-    <div class="dashboard-monitor-grid">
+        @if($hasDashboardSide)
+        <div class="dashboard-monitor-side">
         @if($canViewServers)
-        <section class="admin-data-card dashboard-monitor-card">
+        <section class="admin-data-card dashboard-monitor-card" data-testid="dashboard-game-servers-card">
             <header>
                 <h2>{{ __('Game servers') }}</h2>
                 <a wire:navigate href="{{ route('admin.settings.game-server') }}">{{ __('Settings') }}</a>
@@ -82,11 +211,8 @@
                 @endforelse
             </div>
         </section>
-        @endif
 
-        <div class="dashboard-monitor-side">
-        @if($canViewServers)
-        <section class="admin-data-card dashboard-monitor-card">
+        <section class="admin-data-card dashboard-monitor-card" data-testid="dashboard-login-servers-card">
             <header>
                 <h2>{{ __('Login servers') }}</h2>
                 <a wire:navigate href="{{ route('admin.settings.login-server') }}">{{ __('Settings') }}</a>
@@ -145,6 +271,7 @@
         </section>
         @endif
         </div>
+        @endif
     </div>
     @endif
 

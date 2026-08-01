@@ -48,13 +48,9 @@
                     return;
                 }
 
-                const total = dashboard.querySelector('[data-monitor-total-online]');
                 const partial = dashboard.querySelector('[data-monitor-partial]');
                 const updated = dashboard.querySelector('[data-monitor-updated]');
 
-                if (total) {
-                    total.textContent = payload.total_online_formatted;
-                }
 
                 if (partial) {
                     partial.hidden = !payload.partial;

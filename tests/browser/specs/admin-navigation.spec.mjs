@@ -395,6 +395,30 @@ test('theme catalogues expose semantic single-column catalogues', async ({ page 
     await expect(accountThemes.first().locator('.admin-catalog-side')).toBeVisible();
 });
 
+test('bundled public themes keep their footers inside the mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    for (const [name, slug] of [
+        ['L2 Dark Classic', 'default'],
+        ['Kaev Aurelia', 'kaev-aurelia'],
+    ]) {
+        await gotoWithLocalNetworkRetry(page, '/admin/themes');
+        const card = page.getByTestId('public-theme-card').filter({ hasText: name });
+        await expect(card).toHaveCount(1);
+
+        const activate = card.getByRole('button', { name: 'Активировать' });
+        if (await activate.count()) {
+            await activate.click();
+            await expect(page).toHaveURL(/\/admin\/themes$/);
+        }
+
+        await gotoWithLocalNetworkRetry(page, '/');
+        await expect(page.locator(`link[href*="/themes/${slug}/assets/css/app.css"]`)).toHaveCount(1);
+        await expect(page.locator('.site-footer')).toBeVisible();
+        await expectNoDocumentHorizontalOverflow(page, `${name} mobile footer`);
+    }
+});
+
 test('login server settings keep network fields on a separate tab and actions available after connection test', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/login-server');
     await page.getByRole('button', { name: 'Настроить' }).first().click();

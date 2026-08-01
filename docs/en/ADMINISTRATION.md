@@ -4,7 +4,7 @@ The owner has full access, administrators manage operational settings without ow
 
 Main areas:
 
-- Dashboard, runtime diagnostics, and the safe external-database health snapshot.
+- Dashboard with server availability, mail/runtime diagnostics, a server-disk usage bar, safe KaevCMS database size statistics, and the external-database health snapshot.
 - Administrators, roles, two-factor authentication, and sign-in history.
 - CMS users, account status, verification, and password-reset mail.
 - General settings, languages, themes, registration, and security.
