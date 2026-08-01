@@ -14,6 +14,10 @@ Schedule::command('kaevcms:servers-monitor')
     ->everyMinute()
     ->withoutOverlapping();
 
+Schedule::command('kaevcms:notifications-scan')
+    ->everyMinute()
+    ->withoutOverlapping(2);
+
 Schedule::command('kaevcms:logs-clean')
     ->dailyAt('03:30')
     ->withoutOverlapping();
@@ -24,6 +28,10 @@ Schedule::command('kaevcms:queue-drain')
 
 Schedule::command('kaevcms:queue-clean')
     ->dailyAt('03:45')
+    ->withoutOverlapping();
+
+Schedule::command('kaevcms:notifications-clean')
+    ->dailyAt('03:50')
     ->withoutOverlapping();
 
 Schedule::command('kaevcms:rewards-reconcile --limit=50 --older-than=300')

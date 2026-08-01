@@ -205,15 +205,47 @@ SESSION_SECURE_COOKIE=true
     assertInstaller($securityChecks[2]['status'] === 'ok', 'APP_DEBUG=false must pass the post-install debug check.');
     assertInstaller($securityChecks[3]['status'] === 'ok', 'HTTPS and secure cookies must pass the post-install transport check.');
     assertInstaller(str_contains(securityReviewBody($text, $securityChecks), 'Installation security review'), 'The final page must render the security review.');
-    assertInstaller(str_contains(completeBody($text, [
+    $completedBody = completeBody($text, [
         'complete' => [
             'email' => 'owner@example.test',
             'admin_url' => 'https://example.test/admin',
             'site_url' => 'https://example.test/',
             'security_checks' => $securityChecks,
+            'installer_removed' => true,
         ],
-    ]), '/install'), 'The completed installer must instruct the owner to remove the public install directory.');
-    assertInstaller(str_contains(installedBody($text, $securityChecks), '/install'), 'The locked installer page must repeat the install-directory cleanup instruction.');
+    ]);
+    assertInstaller(str_contains($completedBody, $text['installer_removed']), 'A successful cleanup must be confirmed on the completed installer page.');
+    assertInstaller(! str_contains($completedBody, $text['remove_install_directory']), 'A successful cleanup must not request manual installer removal.');
+
+    $fallbackBody = completeBody($text, [
+        'complete' => [
+            'email' => 'owner@example.test',
+            'admin_url' => 'https://example.test/admin',
+            'site_url' => 'https://example.test/',
+            'security_checks' => $securityChecks,
+            'installer_removed' => false,
+        ],
+    ]);
+    assertInstaller(str_contains($fallbackBody, $text['remove_install_directory']), 'A failed cleanup must show the manual removal fallback.');
+    assertInstaller(str_contains(installedBody($text, $securityChecks), $text['remove_install_directory']), 'The locked installer page must repeat the install-directory cleanup fallback.');
+
+    $cleanupPublicRoot = $temp.'/cleanup-public';
+    mkdir($cleanupPublicRoot.'/install/nested', 0775, true);
+    file_put_contents($cleanupPublicRoot.'/install/index.php', '<?php echo 1;');
+    file_put_contents($cleanupPublicRoot.'/install/nested/file.txt', 'installer');
+    file_put_contents($cleanupPublicRoot.'/keep.txt', 'runtime');
+    assertInstaller(removePublicInstallerDirectory($cleanupPublicRoot), 'The completed installer must remove its public directory recursively.');
+    assertInstaller(! file_exists($cleanupPublicRoot.'/install'), 'The public installer directory must be absent after successful cleanup.');
+    assertInstaller(file_get_contents($cleanupPublicRoot.'/keep.txt') === 'runtime', 'Installer cleanup must not touch public siblings.');
+    assertInstaller(removePublicInstallerDirectory($cleanupPublicRoot), 'Installer cleanup must be idempotent when the directory is already absent.');
+
+    file_put_contents($cleanupPublicRoot.'/install', 'unexpected file');
+    assertInstaller(! removePublicInstallerDirectory($cleanupPublicRoot), 'Installer cleanup must fail closed when /install is not a directory.');
+    unlink($cleanupPublicRoot.'/install');
+
+    $performPosition = strpos($installerSource, '$installedOwnerEmail = performInstallation(');
+    $cleanupPosition = strpos($installerSource, '$installerRemoved = removePublicInstallerDirectory($publicRoot);');
+    assertInstaller(is_int($performPosition) && is_int($cleanupPosition) && $cleanupPosition > $performPosition, 'The public installer must only be removed after installation completes successfully.');
 
     $legacyCompatibleEntries = [
         dirname(__DIR__, 4).'/public/index.php',

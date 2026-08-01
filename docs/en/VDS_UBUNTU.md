@@ -376,7 +376,7 @@ http://192.168.50.111/install/
 
 Replace the example with the actual IP. Enter the database credentials created above and use the empty `kaevcms` database. The HTTP warning does not block the database check or final installation.
 
-After installation, remove the public `/install` directory, then sign in to the administrator panel and review the final security report.
+After installation, verify that Web Installer removed the public `/install` directory automatically, then sign in to the administrator panel. If the final page reports a cleanup failure, remove the directory manually.
 
 ## 12. Remove temporary write access
 

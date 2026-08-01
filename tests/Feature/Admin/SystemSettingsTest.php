@@ -50,6 +50,8 @@ class SystemSettingsTest extends TestCase
             ->assertSee('Зашифрованные секреты')
             ->assertSee($hashLabel)
             ->assertSee('Разделы настроек')
+            ->assertSee('Скачать диагностический пакет')
+            ->assertSee('diagnostic-package-form', false)
             ->assertDontSee('THIS_MUST_NOT_BE_RENDERED_IN_SYSTEM_INFORMATION')
             ->assertDontSee('Адрес панели управления')
             ->assertDontSee('Мониторинг серверов');

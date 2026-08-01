@@ -2,13 +2,13 @@
 
 ## English
 
-The system page reports version, scheduler, queues, encryption health, database safety, proxy configuration, and redacted LoginServer/GameServer diagnostics. External diagnostics include availability, last success, safe error class, SELECT 1 latency, schema profile, capabilities, and required/optional table state.
+The system page reports version, scheduler, queues, encryption health, database safety, proxy configuration, and redacted LoginServer/GameServer diagnostics. External diagnostics include availability, last success, safe error class, SELECT 1 latency, schema profile, capabilities, and required/optional table state. It can also download a sanitized ZIP with environment, permissions, database, queue, cron, module, migration, update, disk, installer, and recent error-signature information.
 
 Read the current guide: [ADMINISTRATION.md](en/ADMINISTRATION.md).
 
 ## Русский
 
-Системная страница показывает версию, планировщик, очереди, шифрование, безопасность базы, proxy и обезличенную диагностику LoginServer/GameServer: доступность, последнее успешное подключение, безопасный класс ошибки, задержку SELECT 1, профиль схемы, возможности драйвера и состояние обязательных/необязательных таблиц.
+Системная страница показывает версию, планировщик, очереди, шифрование, безопасность базы, proxy и обезличенную диагностику LoginServer/GameServer: доступность, последнее успешное подключение, безопасный класс ошибки, задержку SELECT 1, профиль схемы, возможности драйвера и состояние обязательных/необязательных таблиц. Здесь же можно скачать безопасный ZIP с окружением, правами, базами, очередью, cron, модулями, миграциями, обновлениями, диском, состоянием installer и сигнатурами последних ошибок.
 
 Актуальная инструкция: [ADMINISTRATION.md](ru/ADMINISTRATION.md).
 

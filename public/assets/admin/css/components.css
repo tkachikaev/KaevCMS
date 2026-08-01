@@ -937,3 +937,294 @@ a.admin-data-card:hover {
     }
 }
 
+
+/* Administrator notification center 0.45.1 */
+.admin-notification-center {
+    position: relative;
+    flex: 0 0 auto;
+    text-align: left !important;
+}
+
+.admin-notification-menu {
+    position: relative;
+}
+
+.admin-notification-menu > summary {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #64748b;
+    cursor: pointer;
+    list-style: none;
+    transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.admin-notification-menu > summary::-webkit-details-marker { display: none; }
+.admin-notification-menu > summary::marker { content: ''; }
+.admin-notification-menu > summary:hover,
+.admin-notification-menu[open] > summary {
+    border-color: #dbeafe;
+    background: #eff6ff;
+    color: var(--admin-primary);
+}
+.admin-notification-menu > summary:focus-visible {
+    outline: 3px solid var(--admin-focus-ring);
+    outline-offset: 2px;
+}
+.admin-notification-trigger > svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+}
+.admin-notification-count {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    max-width: none !important;
+    padding: 0 5px;
+    overflow: visible !important;
+    border: 2px solid var(--admin-page-bg);
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff !important;
+    font-size: 10px !important;
+    font-weight: 800;
+    line-height: 1;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+}
+
+.admin-notification-dropdown {
+    position: absolute;
+    z-index: 80;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(390px, calc(100vw - 32px));
+    overflow: hidden;
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    background: var(--admin-surface);
+    box-shadow: 0 22px 55px rgba(15, 23, 42, .18);
+}
+.admin-notification-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--admin-border);
+}
+.admin-notification-heading strong,
+.admin-notification-heading small {
+    display: block;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+.admin-notification-heading strong {
+    color: var(--admin-text);
+    font-size: 15px;
+}
+.admin-notification-heading small {
+    margin-top: 3px;
+    color: var(--admin-text-muted);
+    font-size: 11px;
+}
+.admin-notification-filters {
+    display: inline-flex;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 9px;
+    background: #f1f5f9;
+}
+.admin-notification-filters button {
+    min-height: 28px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+}
+.admin-notification-filters button.active {
+    background: #fff;
+    color: var(--admin-primary);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, .1);
+}
+.admin-notification-filters button:focus-visible,
+.admin-notification-actions button:focus-visible,
+.admin-notification-item:focus-visible {
+    outline: 3px solid var(--admin-focus-ring);
+    outline-offset: -1px;
+}
+.admin-notification-notice {
+    margin: 0;
+    padding: 9px 16px;
+    border-bottom: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 11px;
+}
+.admin-notification-list {
+    max-height: min(430px, calc(100vh - 230px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.admin-notification-item {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 11px;
+    width: 100%;
+    padding: 13px 16px;
+    border: 0;
+    border-bottom: 1px solid #eef2f7;
+    background: #fff;
+    color: var(--admin-text);
+    cursor: pointer;
+    text-align: left;
+}
+.admin-notification-item:hover { background: #f8fafc; }
+.admin-notification-item.unread { background: #f8fbff; }
+.admin-notification-item.unread:hover { background: #f1f7ff; }
+.admin-notification-icon {
+    display: grid !important;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    max-width: none !important;
+    overflow: visible !important;
+    border-radius: 10px;
+    background: #dbeafe;
+    color: #2563eb !important;
+}
+.admin-notification-icon svg { width: 18px; height: 18px; }
+.admin-notification-item.severity-warning .admin-notification-icon { background: #fef3c7; color: #b45309 !important; }
+.admin-notification-item.severity-error .admin-notification-icon { background: #fee2e2; color: #dc2626 !important; }
+.admin-notification-item.severity-success .admin-notification-icon { background: #dcfce7; color: #15803d !important; }
+.admin-notification-copy,
+.admin-notification-title-row,
+.admin-notification-title-row strong,
+.admin-notification-message,
+.admin-notification-meta,
+.admin-notification-meta span {
+    display: block;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+.admin-notification-copy { min-width: 0; }
+.admin-notification-title-row {
+    position: relative;
+    padding-right: 14px;
+}
+.admin-notification-title-row strong {
+    color: var(--admin-text);
+    font-size: 12px;
+    line-height: 1.4;
+}
+.admin-notification-unread-dot {
+    position: absolute;
+    top: 5px;
+    right: 0;
+    width: 7px;
+    height: 7px;
+    max-width: none !important;
+    overflow: visible !important;
+    border-radius: 999px;
+    background: #2563eb;
+}
+.admin-notification-message {
+    margin-top: 4px;
+    color: var(--admin-text-muted) !important;
+    font-size: 11px !important;
+    line-height: 1.45;
+}
+.admin-notification-meta {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    margin-top: 7px;
+    color: #94a3b8 !important;
+    font-size: 10px !important;
+}
+.admin-notification-meta time { white-space: nowrap; }
+.admin-notification-empty {
+    display: grid;
+    gap: 5px;
+    padding: 34px 22px;
+    color: var(--admin-text-muted);
+    text-align: center;
+}
+.admin-notification-empty strong,
+.admin-notification-empty span {
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+.admin-notification-empty strong { color: var(--admin-text); font-size: 13px; }
+.admin-notification-empty span { font-size: 11px; }
+.admin-notification-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    padding: 11px;
+    border-top: 1px solid var(--admin-border);
+    background: #f8fafc;
+}
+.admin-notification-actions button {
+    min-height: 34px;
+    padding: 5px 7px;
+    border: 1px solid #dbe3ed;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+.admin-notification-actions button:hover:not(:disabled) { border-color: #bfdbfe; color: var(--admin-primary); }
+.admin-notification-actions button.danger:hover:not(:disabled) { border-color: #fecaca; color: #dc2626; }
+.admin-notification-actions button:disabled { cursor: default; opacity: .45; }
+
+[dir="rtl"] .admin-notification-dropdown { right: auto; left: 0; }
+[dir="rtl"] .admin-notification-count { right: auto; left: -7px; }
+[dir="rtl"] .admin-notification-item { text-align: right; }
+[dir="rtl"] .admin-notification-title-row { padding-right: 0; padding-left: 14px; }
+[dir="rtl"] .admin-notification-unread-dot { right: auto; left: 0; }
+
+@media (max-width: 760px) {
+    .admin-user > .admin-notification-center { display: block; }
+    .admin-notification-dropdown {
+        position: fixed;
+        top: 76px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-height: calc(100vh - 88px);
+    }
+    [dir="rtl"] .admin-notification-dropdown { right: 12px; left: 12px; }
+    .admin-notification-list { max-height: calc(100vh - 260px); }
+}
+
+@media (max-width: 430px) {
+    .admin-notification-heading { display: grid; }
+    .admin-notification-filters { justify-self: start; }
+    .admin-notification-actions { grid-template-columns: 1fr; }
+    .admin-notification-actions button { min-height: 38px; }
+}

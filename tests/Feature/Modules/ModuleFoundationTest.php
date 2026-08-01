@@ -9,6 +9,7 @@ use App\Support\KaevCMS;
 use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
+use Composer\Autoload\ClassLoader;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
@@ -384,6 +385,42 @@ PHP);
         $this->actingAs($owner, 'admin')
             ->get('/admin/extensions/runtime-fixture/status')
             ->assertNotFound();
+    }
+
+    public function test_module_autoload_is_registered_on_the_project_composer_loader(): void
+    {
+        $namespace = 'KaevCMS\\Tests\\ProjectLoaderFixture\\';
+        $root = base_path('modules/project-loader-fixture/src');
+        (new Filesystem)->ensureDirectoryExists($root);
+        $this->createdModules[] = 'project-loader-fixture';
+
+        $foreignLoader = new ClassLoader;
+        $foreignLoader->register(prepend: true);
+
+        try {
+            app(ModuleAutoloader::class)->register([
+                'id' => 'project-loader-fixture',
+                'namespace' => $namespace,
+                'autoload_path' => $root,
+            ]);
+
+            $projectLoader = null;
+            $currentFile = realpath(app_path('Support/Modules/ModuleAutoloader.php'));
+            foreach (ClassLoader::getRegisteredLoaders() as $candidate) {
+                $candidateFile = $candidate->findFile(ModuleAutoloader::class);
+                if (is_string($candidateFile) && realpath($candidateFile) === $currentFile) {
+                    $projectLoader = $candidate;
+
+                    break;
+                }
+            }
+
+            $this->assertInstanceOf(ClassLoader::class, $projectLoader);
+            $this->assertArrayHasKey($namespace, $projectLoader->getPrefixesPsr4());
+            $this->assertArrayNotHasKey($namespace, $foreignLoader->getPrefixesPsr4());
+        } finally {
+            $foreignLoader->unregister();
+        }
     }
 
     public function test_module_routes_are_excluded_from_core_route_cache_builds(): void

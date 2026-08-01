@@ -30,14 +30,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'app/Services/Html/SafeHtmlSanitizer.php',
-            'tests/Feature/InfrastructureHardeningTest.php',
-            'tests/Feature/Modules/ModuleFoundationTest.php',
-            'tests/Feature/Modules/SupportTicketsHardeningTest.php',
             'tests/Feature/ReleaseMetadataTest.php',
-            'tests/Feature/RuntimeCacheConfigurationTest.php',
-            'tests/browser/run.mjs',
-            'tests/browser/specs/admin-navigation.spec.mjs',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
@@ -393,8 +386,8 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.5.2', $manifest['version']);
-        $this->assertSame('0.44.28', $manifest['cms_min']);
+        $this->assertSame('1.6.0', $manifest['version']);
+        $this->assertSame('0.45.1', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
         $service = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketService.php');
@@ -407,6 +400,10 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('SupportTicketStatus::AwaitingPlayer', $service);
         $this->assertStringContainsString('SupportTicketStatus::InProgress', $service);
         $this->assertStringNotContainsString("details: ['body'", $service);
+        $this->assertStringContainsString('AdminNotificationType::SupportTicketCreated', $service);
+        $this->assertStringContainsString('AdminNotificationType::SupportTicketPlayerReply', $service);
+        $this->assertStringContainsString("parameters: ['number' => \$ticket->number()]", $service);
+        $this->assertStringNotContainsString("parameters: ['subject'", $service);
 
         $model = $this->readReleaseFile('modules/support-tickets/src/Models/SupportTicket.php');
         $this->assertStringContainsString('public const SUBJECT_MAX = 120;', $model);

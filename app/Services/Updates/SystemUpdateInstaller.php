@@ -2,10 +2,15 @@
 
 namespace App\Services\Updates;
 
+use App\Auth\AdminPermission;
 use App\Models\SystemUpdate;
 use App\Services\AuditLogger;
 use App\Services\Infrastructure\RuntimeDirectoryManager;
+use App\Services\Notifications\AdminNotificationCenter;
 use App\Services\Releases\InstalledVersion;
+use App\Support\Notifications\AdminNotificationData;
+use App\Support\Notifications\AdminNotificationSeverity;
+use App\Support\Notifications\AdminNotificationType;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
@@ -23,6 +28,7 @@ final class SystemUpdateInstaller
         private readonly UpdateLock $updateLock,
         private readonly AuditLogger $auditLogger,
         private readonly RuntimeDirectoryManager $runtimeDirectories,
+        private readonly AdminNotificationCenter $notifications,
         private readonly Application $application,
     ) {}
 
@@ -236,6 +242,20 @@ final class SystemUpdateInstaller
             }
 
             $this->recordFailureAudit($update, $currentVersion, $rollbackErrors, $log);
+
+            $this->notifications->notifyOnce(
+                new AdminNotificationData(
+                    type: AdminNotificationType::SystemUpdateFailed,
+                    severity: AdminNotificationSeverity::Error,
+                    titleKey: 'KaevCMS update failed',
+                    messageKey: 'Update to version :version did not complete successfully.',
+                    parameters: ['version' => $update->target_version],
+                    routeName: 'admin.settings.system.updates.show',
+                    routeParameters: ['systemUpdate' => $update->id],
+                ),
+                "system-update-failed:{$update->uuid}",
+                AdminPermission::SystemUpdatesView,
+            );
 
             throw new RuntimeException($summary, previous: $exception);
         } finally {

@@ -69,6 +69,15 @@ test('player and administrator complete the support ticket conversation flow wit
 
     await context.clearCookies();
     await signInAdmin(page);
+    const notificationCenter = page.locator('[data-admin-notification-center]');
+    await expect(notificationCenter.locator('[data-testid="notification-unread-count"]')).toHaveText('1');
+    await notificationCenter.locator('[data-admin-notification-menu] > summary').click();
+    await expect(notificationCenter.locator('[data-testid="notification-list"]')).toContainText('Новое обращение');
+    await notificationCenter.getByRole('button', { name: 'Отметить всё прочитанным', exact: true }).click();
+    await expect(notificationCenter.locator('[data-testid="notification-unread-count"]')).toHaveCount(0);
+    await expect(notificationCenter.locator('.admin-notification-unread-dot')).toHaveCount(0);
+    await notificationCenter.getByRole('button', { name: 'Очистить прочитанные', exact: true }).click();
+    await expect(notificationCenter.getByText('Нет уведомлений', { exact: true })).toBeVisible();
     await expect(page.locator('a[href$="/admin/extensions/support-tickets"] .admin-menu-badge')).toHaveText('2');
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
     await expect(page.locator('[data-testid="support-ticket-filters"]')).toHaveCSS('display', 'grid');
@@ -136,13 +145,24 @@ test('player and administrator complete the support ticket conversation flow wit
 
     await context.clearCookies();
     await signInAdmin(page);
-    await gotoWithLocalNetworkRetry(page, `/admin/extensions/support-tickets/${ticketPath.split('/').pop()}`);
+    const replyNotificationCenter = page.locator('[data-admin-notification-center]');
+    await expect(replyNotificationCenter.locator('[data-testid="notification-unread-count"]')).toHaveText('1');
+    await replyNotificationCenter.locator('[data-admin-notification-menu] > summary').click();
+    const replyNotification = replyNotificationCenter.locator('.admin-notification-item').filter({ hasText: 'Новый ответ игрока' });
+    await expect(replyNotification).toHaveCount(1);
+    await replyNotification.click();
+    await expect(page).toHaveURL(new RegExp(`/admin/extensions/support-tickets/${ticketPath.split('/').pop()}$`));
     await expect(page.getByText('Ожидает вашего ответа', { exact: true })).toBeVisible();
     page.once('dialog', (dialog) => dialog.accept());
     const closeMarker = await setNoReloadMarker(page);
     await page.getByRole('button', { name: 'Закрыть обращение', exact: true }).click();
     await expect(page.getByText('Закрыто', { exact: true })).toBeVisible();
     await expectNoReload(page, closeMarker);
+
+    await replyNotificationCenter.locator('[data-admin-notification-menu] > summary').click();
+    page.once('dialog', (dialog) => dialog.accept());
+    await replyNotificationCenter.getByRole('button', { name: 'Очистить всё', exact: true }).click();
+    await expect(replyNotificationCenter.getByText('Нет уведомлений', { exact: true })).toBeVisible();
 
     await context.clearCookies();
     await signInPlayer(page);

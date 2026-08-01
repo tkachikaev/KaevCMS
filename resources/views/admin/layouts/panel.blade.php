@@ -73,6 +73,7 @@
             </div>
 
             <div class="admin-user">
+                <livewire:admin.notification-center />
                 @include('admin.partials.language-switcher')
                 <details class="admin-account-menu">
                     <summary>

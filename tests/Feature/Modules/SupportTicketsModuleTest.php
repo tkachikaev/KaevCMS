@@ -4,12 +4,14 @@ namespace Tests\Feature\Modules;
 
 use App\Auth\AdminRole;
 use App\Models\Admin;
+use App\Models\AdminNotification;
 use App\Models\User;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleAdminComponent;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\Notifications\AdminNotificationType;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +69,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.5.2',
+            'version' => '1.6.0',
             'enabled' => true,
         ]);
 
@@ -152,6 +154,70 @@ class SupportTicketsModuleTest extends TestCase
             ])
             ->assertRedirect('/modules/support-tickets')
             ->assertSessionHasErrors('category');
+    }
+
+    public function test_new_ticket_and_player_reply_notify_only_eligible_staff_without_personal_text(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $administrator = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        $auditor = Admin::factory()->create(['role' => AdminRole::Auditor]);
+        $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
+        $inactive = Admin::factory()->inactive()->create(['role' => AdminRole::Owner]);
+        $user = User::factory()->create([
+            'name' => 'Private Player Name',
+            'email' => 'private-player@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->post('/modules/support-tickets', [
+                'category' => SupportTicketCategory::TechnicalProblem->value,
+                'subject' => 'Private subject that must not enter the notification',
+                'body' => 'Private support message that must not enter the notification',
+            ])
+            ->assertRedirect();
+
+        $ticket = SupportTicket::query()->firstOrFail();
+        $created = AdminNotification::query()
+            ->where('type', AdminNotificationType::SupportTicketCreated->value)
+            ->get();
+
+        $this->assertCount(3, $created);
+        $this->assertEqualsCanonicalizing(
+            [$owner->id, $administrator->id, $auditor->id],
+            $created->pluck('admin_id')->all(),
+        );
+        $this->assertNotContains($editor->id, $created->pluck('admin_id')->all());
+        $this->assertNotContains($inactive->id, $created->pluck('admin_id')->all());
+
+        foreach ($created as $notification) {
+            $this->assertSame(['number' => $ticket->number()], $notification->parameters);
+            $this->assertSame(['ticket' => $ticket->id], $notification->route_parameters);
+            $payload = json_encode($notification->toArray(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $this->assertStringNotContainsString('Private subject', $payload);
+            $this->assertStringNotContainsString('Private support message', $payload);
+            $this->assertStringNotContainsString('private-player@example.test', $payload);
+            $this->assertStringNotContainsString('Private Player Name', $payload);
+        }
+
+        $this->actingAs($user)
+            ->post('/modules/support-tickets/'.$ticket->id.'/reply', [
+                'body' => 'Another private reply that must not enter the notification',
+            ])
+            ->assertRedirect();
+
+        $replies = AdminNotification::query()
+            ->where('type', AdminNotificationType::SupportTicketPlayerReply->value)
+            ->get();
+        $this->assertCount(3, $replies);
+        $this->assertEqualsCanonicalizing(
+            [$owner->id, $administrator->id, $auditor->id],
+            $replies->pluck('admin_id')->all(),
+        );
+        $this->assertSame(6, AdminNotification::query()->count());
+        $this->assertStringNotContainsString(
+            'Another private reply',
+            json_encode($replies->toArray(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        );
     }
 
     public function test_player_and_staff_message_limits_are_enforced_server_side(): void

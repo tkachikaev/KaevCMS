@@ -25,7 +25,7 @@ composer install --no-dev --optimize-autoloader
 
 4. Open `/install/` through the available address. Over HTTP the installer shows a warning but still allows the database check and installation. Configure HTTPS before opening a public website to users.
 5. Use a new empty database. The installer refuses to reuse an existing KaevCMS owner account.
-6. After a successful installation, remove the public `/install` directory, then review the final security report before opening the website to users.
+6. After a successful installation, Web Installer removes the public `/install` directory automatically. If the final page reports a cleanup failure, remove it manually before opening the website to users.
 
 ## Windows development installation
 

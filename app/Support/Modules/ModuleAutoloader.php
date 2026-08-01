@@ -35,9 +35,18 @@ final class ModuleAutoloader
             throw new RuntimeException("Module [$id] autoload directory is unavailable.");
         }
 
-        $loaders = ClassLoader::getRegisteredLoaders();
-        $loader = reset($loaders);
-        if (($loader instanceof ClassLoader) === false) {
+        $loader = null;
+        $currentFile = realpath(__FILE__);
+        foreach (ClassLoader::getRegisteredLoaders() as $candidate) {
+            $candidateFile = $candidate->findFile(self::class);
+            if (is_string($candidateFile) && realpath($candidateFile) === $currentFile) {
+                $loader = $candidate;
+
+                break;
+            }
+        }
+
+        if (! $loader instanceof ClassLoader) {
             throw new RuntimeException('Composer PSR-4 autoloader is unavailable.');
         }
 

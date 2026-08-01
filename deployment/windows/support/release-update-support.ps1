@@ -222,7 +222,7 @@ function Get-KaevCmsObsoleteReleaseArtifacts {
     $history = Read-KaevCmsJsonFile `
         -Path (Join-Path $ProjectRoot 'deployment/updates/deletions.json') `
         -Label 'Update deletion history'
-    $paths = @()
+    $paths = @(ConvertTo-KaevCmsPlatformPath -Path 'public/install')
     foreach ($property in $history.PSObject.Properties) {
         if ($property.Name -notmatch '^\d+\.\d+\.\d+$' -or [version]$property.Name -gt [version]$CurrentVersion) {
             continue

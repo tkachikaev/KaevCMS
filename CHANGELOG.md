@@ -1,3 +1,57 @@
+## 0.45.3 - 2026-08-01
+
+### Fixed
+
+- Synchronized `ReleaseMetadataTest` with the 0.45.2 `release.json` repair contract. The test still expected the older 0.45.1 notification-center file list, causing the otherwise valid 0.45.2 release metadata gate to fail.
+- Kept the correction limited to release metadata verification. No application runtime, database migration, dependency, bundled-module version or user-facing behavior changed.
+- The cumulative update line remains based on `0.42.4`; the 0.45.3 package supports direct updates from 0.42.4 through 0.45.2.
+
+## 0.45.2 - 2026-08-01
+
+### Fixed
+
+- Selected the Composer `ClassLoader` that actually owns the KaevCMS core classes when registering module namespaces, instead of mutating an arbitrary first loader such as the PHPStan PHAR loader.
+- Corrected nullable notification model metadata and strict PHPStan contracts for diagnostic redaction, notification payload normalization, runtime diagnostics, encryption health and disk-space probes.
+- Corrected three PHPUnit regressions: missing notification targets now resolve to no action URL, and literal `$ticket` / `$installerRemoved` source assertions no longer interpolate test variables.
+- Stacked the system overview actions below 900 px so the diagnostics page no longer expands a 768 px viewport horizontally.
+- Added a regression proving module namespaces are registered on the project Composer loader even when another loader is prepended to the process.
+- No migration, dependency or bundled-module version change was added. The cumulative update line remains based on `0.42.4`; the 0.45.2 package supports direct updates from 0.42.4 through 0.45.1.
+
+## 0.45.1 - 2026-08-01
+
+### Added
+
+- Added a personal administrator notification center in the top panel with a neutral bell, red unread counter capped at `99+`, compact All/Unread filters, severity icons, direct links and responsive desktop/mobile behavior.
+- Added per-administrator read state and list cleanup: mark all as read, clear read notifications, and clear all with confirmation. Reading or dismissing an event never changes the underlying diagnostic/server/queue state.
+- Added deduplicated actionable sources for new Support Tickets and player replies, bundled-module updates and pending migrations, pending CMS migrations, failed CMS updates, queue/Scheduler problems, unavailable configured LoginServer/GameServer connections, low disk space, a leftover installer and critical encryption diagnostics.
+- Added recurring-problem lifecycle tracking so an unresolved failure updates one record without recreating its badge after dismissal, while a resolved problem that later returns creates a new notification.
+- Added scheduled scanning every minute and physical retention cleanup, with safe behavior before the notification migration is applied and no notification failure allowed to break the source operation.
+- Updated bundled Support Tickets to `1.6.0` for KaevCMS `0.45.1+`; ticket subjects, bodies, player names and email addresses are never copied into notification payloads. No module migration or dependency change was added.
+- Added PHPUnit and Playwright regressions for recipient permissions, administrator isolation, idempotency, recurring problem resolution, route allowlists, `99+`, filters, bulk actions, installer detection, ticket privacy, direct navigation, confirmation and responsive integration.
+- The cumulative update line remains based on `0.42.4`; the 0.45.1 package supports direct updates from 0.42.4 through 0.45.0.
+
+## 0.45.0 - 2026-08-01
+
+### Added
+
+- Added an administrator diagnostic package under **Settings → System information** with a readable report and separate sanitized snapshots for versions, environment, permissions, CMS and external databases, scheduler, queue, disk space, modules, module/core migrations, recent CMS updates and recent error signatures.
+- Added layered secret and personal-data redaction for structured values and text, covering `APP_KEY`, passwords, tokens, authorization data, cookies, database/mail credentials, email addresses, IP addresses, DSNs, credential-bearing URLs and absolute project paths.
+- Reduced Laravel warnings and errors to timestamp, severity, exception class and a short SHA-256 fingerprint; raw log messages, `.env`, user rows, database files and complete logs are never copied into the archive.
+- Added temporary package cleanup, download auditing, a three-downloads-per-minute limit and explicit access for owners, administrators and trusted auditors with system-information permission.
+- Added RU/EN administration documentation plus unit, feature, permission, UI and secret-leakage regression contracts. No database migration, module update or dependency change was added.
+- The cumulative update line remains based on `0.42.4`; the 0.45.0 package supports direct updates from 0.42.4 through 0.44.34.
+
+## 0.44.34 - 2026-07-31
+
+### Security
+
+- Removed the public `/install` directory automatically only after the database, owner, release marker and `installed.lock` are created successfully; interrupted or failed installations retain the installer for safe resume.
+- Rendered the final installation result in the successful POST response so cleanup can happen before `/install/` becomes unavailable, with an explicit manual fallback when filesystem permissions prevent deletion.
+- Added symlink-safe, idempotent recursive cleanup limited to the fixed public installer directory without touching sibling runtime files.
+- Kept full releases installable while ensuring cumulative Web Updates never include the installer, and made installed Windows update cleanup remove any leftover `public/install` directory.
+- Updated RU/EN installation and shared-hosting documentation plus standalone installer, PHPUnit and Windows workflow regression contracts. No database migration, module update or dependency change was added.
+- The cumulative update line remains based on `0.42.4`; the 0.44.34 package supports direct updates from 0.42.4 through 0.44.33.
+
 ## 0.44.33 - 2026-07-31
 
 ### Fixed

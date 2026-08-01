@@ -104,6 +104,7 @@ Assert-Equal -Actual @($baselineRecoveryLineage.SupersededPendingTargets).Count 
 $obsoleteArtifacts = Get-KaevCmsObsoleteReleaseArtifacts -ProjectRoot $ProjectRoot -CurrentVersion ([string]$release.version)
 Assert-True ($obsoleteArtifacts -contains (ConvertTo-KaevCmsPlatformPath -Path ([string]$release.previous_apply_script))) 'The previous apply script is not scheduled for cleanup.'
 Assert-True ($obsoleteArtifacts -contains (ConvertTo-KaevCmsPlatformPath -Path 'public/assets/admin/css/app.css')) 'The obsolete monolithic administration stylesheet is not scheduled for cleanup.'
+Assert-True ($obsoleteArtifacts -contains (ConvertTo-KaevCmsPlatformPath -Path 'public/install')) 'The public installer is not scheduled for cleanup on installed Windows updates.'
 Assert-True ($obsoleteArtifacts -notcontains (ConvertTo-KaevCmsPlatformPath -Path 'public/assets/account')) 'The shared account runtime directory is incorrectly scheduled for cleanup.'
 
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('kaevcms-update-test-' + [guid]::NewGuid().ToString('N'))

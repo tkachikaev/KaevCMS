@@ -15,7 +15,7 @@ Promo Codes and Daily Rewards use the shared account operation dialog for succes
 
 Browser ZIP installation, automatic remote updates, and sandbox isolation are intentionally not provided yet.
 
-The bundled `support-tickets` module adds private player tickets. Owners and administrators can reply, auditors are read-only, and Editor access is enabled separately in the module settings. Documentation is stored at `modules/support-tickets/docs/README.en.md`.
+The bundled `support-tickets` module adds private player tickets. Owners and administrators can reply, auditors are read-only, and Editor access is enabled separately in the module settings. New tickets and player replies also create personal administrator notification-center events without copying private message text. Documentation is stored at `modules/support-tickets/docs/README.en.md`.
 ## Administration Livewire authorization
 
 Registering an administration route in `ModuleAdminAccessRegistry` protects the normal HTTP route, but does not automatically transfer that access decision to the shared `/livewire/update` endpoint. A module administration Livewire component must use `AuthorizesModuleAdminAccess` and authorize the registered route name before every public action.

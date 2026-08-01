@@ -105,6 +105,12 @@ return [
         'retention_days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 90),
     ],
 
+    'admin_notifications' => [
+        'retention_days' => (int) env('ADMIN_NOTIFICATION_RETENTION_DAYS', 90),
+        'minimum_free_bytes' => (int) env('ADMIN_NOTIFICATION_MINIMUM_FREE_BYTES', 1073741824),
+        'minimum_free_percent' => (float) env('ADMIN_NOTIFICATION_MINIMUM_FREE_PERCENT', 5),
+    ],
+
     'queue' => [
         'mail_delivery_retention_days' => 30,
         'failed_job_retention_days' => 90,

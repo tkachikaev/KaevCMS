@@ -1066,6 +1066,13 @@
 }
 
 @media (max-width: 900px) {
+    .system-overview { align-items: stretch; flex-direction: column; }
+    .system-overview-actions {
+        display: grid;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
     .system-page .system-information-grid,
     .system-page .system-extension-grid,
     .system-external-database-details,

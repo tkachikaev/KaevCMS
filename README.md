@@ -1,4 +1,4 @@
-# KaevCMS 0.44.33
+# KaevCMS 0.45.3
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
 
-Version 0.44.33 completes the browser and quality-test stabilization: the isolated Laravel test server now preserves the runner environment on Windows, the mobile administration backdrop test uses real geometry, and Support Tickets hardening tests issue exactly one protected request after access is revoked. Support Tickets remains at 1.5.2. The cumulative update baseline remains 0.42.4.
+Version 0.45.3 is a release-metadata hotfix. It synchronizes `ReleaseMetadataTest` with the current `release.json` repair-file contract after 0.45.2, removing a stale expectation inherited from 0.45.1. Application runtime behavior, the notification center, Support Tickets 1.6.0 and the sanitized diagnostic package remain unchanged, and the cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -20,7 +20,7 @@ Public entry points show a readable Russian/English PHP-version page on unsuppor
 
 ### Installation
 
-For a VDS or hosting with a configurable Document Root, point the domain to `public/` and open `/install/`. After the installation succeeds, remove the public `/install` directory. Update packages never restore it and explicitly remove a leftover installer from an installed CMS.
+For a VDS or hosting with a configurable Document Root, point the domain to `public/` and open `/install/`. After a successful installation, Web Installer removes the public `/install` directory automatically. If filesystem permissions block deletion, the final page shows the manual fallback. Update packages never restore it and explicitly remove a leftover installer from an installed CMS.
 
 For shared hosting, build a production package on Windows:
 
@@ -54,6 +54,7 @@ Documentation:
 - [Character rescue](docs/en/CHARACTER_RESCUE.md)
 - [Security and permissions](docs/en/SECURITY.md)
 - [Operations runbook](docs/en/OPERATIONS.md)
+- [Administration and diagnostic package](docs/en/ADMINISTRATION.md)
 
 ### Security model
 
@@ -67,7 +68,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Persistent Livewire navigation for administration and player account pages.
 - Multilingual news, pages, settings, mail templates, and localized routes.
 - Owner, administrator, editor, and trusted Auditor roles; two-factor authentication and recovery codes.
-- Encrypted infrastructure credentials and redacted audit logs.
+- Encrypted infrastructure credentials, redacted audit logs, a downloadable sanitized diagnostic package, and personal actionable administrator notifications.
 - One L2JMobius game driver with compatible schema profiles.
 - Player game-account creation, password management, and configurable offline character rescue.
 - Public game statistics with caching and failure cooldowns.
@@ -95,7 +96,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
 
-Версия 0.44.33 завершает стабилизацию browser- и quality-тестов: изолированный тестовый сервер Laravel теперь сохраняет окружение runner-а в Windows, тест фона мобильного меню использует реальную геометрию, а hardening-тесты Support Tickets выполняют ровно один защищённый запрос после отзыва доступа. Support Tickets остаётся на версии 1.5.2. Кумулятивная база остаётся на версии 0.42.4.
+Версия 0.45.3 — исправляющий релиз метаданных. `ReleaseMetadataTest` синхронизирован с актуальным списком `repair_files` из `release.json` после выпуска 0.45.2; устаревшее ожидание от 0.45.1 удалено. Рабочая логика CMS, центр уведомлений, Support Tickets 1.6.0 и безопасный диагностический пакет не менялись, кумулятивная база остаётся 0.42.4.
 
 ### Требования
 
@@ -109,7 +110,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 ### Установка
 
-На VDS или хостинге с настраиваемым Document Root направьте домен на `public/` и откройте `/install/`. После успешной установки удалите публичную папку `/install`. Пакеты обновления больше не восстанавливают её и удаляют оставшийся установщик из уже развёрнутой CMS.
+На VDS или хостинге с настраиваемым Document Root направьте домен на `public/` и откройте `/install/`. После успешной установки Web Installer автоматически удаляет публичную папку `/install`. Если права файловой системы не позволяют удалить её, итоговая страница показывает ручное действие. Пакеты обновления больше не восстанавливают installer и удаляют его остатки из уже развёрнутой CMS.
 
 Для обычного хостинга соберите production-пакет в Windows:
 
@@ -143,6 +144,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - [Возврат персонажа в город](docs/ru/CHARACTER_RESCUE.md)
 - [Безопасность и права](docs/ru/SECURITY.md)
 - [Эксплуатационные инструкции](docs/ru/OPERATIONS.md)
+- [Администрирование и диагностический пакет](docs/ru/ADMINISTRATION.md)
 
 ### Модель безопасности
 
@@ -156,7 +158,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Постоянная Livewire-навигация в административной панели и кабинете игрока.
 - Многоязычные новости, страницы, настройки, почтовые шаблоны и маршруты.
 - Роли владельца, администратора, редактора, доверенного аудитора и ограниченной демонстрации; двухфакторная защита и recovery codes.
-- Шифрование инфраструктурных реквизитов и очистка аудита от секретов.
+- Шифрование инфраструктурных реквизитов, очистка аудита от секретов и скачиваемый обезличенный диагностический пакет.
 - Один драйвер L2JMobius с совместимыми профилями схем.
 - Создание игровых аккаунтов и изменение игровых паролей.
 - Публичная статистика с кешем и cooldown при сбоях.

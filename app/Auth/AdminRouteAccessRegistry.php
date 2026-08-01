@@ -28,6 +28,10 @@ final class AdminRouteAccessRegistry
                 AdminPermission::SettingsManage,
             ),
             $this->exact(
+                'admin.settings.system.diagnostics.download',
+                AdminPermission::SystemView,
+            ),
+            $this->exact(
                 'admin.settings.system.external-databases.refresh',
                 AdminPermission::SettingsManage,
             ),

@@ -6,6 +6,7 @@ use App\Auth\AdminPermission;
 use App\Auth\AdminRole;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -63,6 +64,12 @@ class Admin extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'session_version' => 'integer',
         ];
+    }
+
+    /** @return HasMany<AdminNotification, $this> */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(AdminNotification::class);
     }
 
     public function hasPermission(AdminPermission|string $permission): bool

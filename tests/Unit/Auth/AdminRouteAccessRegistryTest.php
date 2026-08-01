@@ -136,6 +136,12 @@ class AdminRouteAccessRegistryTest extends TestCase
                 AdminPermission::SystemView,
                 AdminPermission::SettingsManage,
             ],
+            'diagnostic package download' => [
+                'admin.settings.system.diagnostics.download',
+                'GET',
+                AdminPermission::SystemView,
+                null,
+            ],
             'external database diagnostics refresh' => [
                 'admin.settings.system.external-databases.refresh',
                 'POST',

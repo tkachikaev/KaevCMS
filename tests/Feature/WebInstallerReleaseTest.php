@@ -59,6 +59,8 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString('buildEnvironmentContent', $installer);
         $this->assertStringContainsString('publicInstallerError', $installer);
         $this->assertStringContainsString('postInstallSecurityChecks', $installer);
+        $this->assertStringContainsString('removePublicInstallerDirectory($publicRoot)', $installer);
+        $this->assertStringContainsString("'installer_removed' => \$installerRemoved", $installer);
         $this->assertStringContainsString('securityReviewBody', $installer);
         $this->assertStringContainsString('installerSensitivePermissionsAreBroad', $installer);
         $this->assertStringContainsString('Installation data is transmitted without encryption.', $installer);
@@ -96,7 +98,8 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString("'deployment/hosting/web-installer/tests'", $builder);
         $this->assertStringContainsString("'deployment/hosting/shared-hosting/tests'", $builder);
         $this->assertStringContainsString("'deployment/updates/tests-package-builder.php'", $builder);
-        $this->assertStringContainsString('remove the public /install directory', $installer);
+        $this->assertStringContainsString('was removed automatically', $installer);
+        $this->assertStringContainsString('could not be removed automatically', $installer);
         $this->assertStringContainsString('Symbolic links are not allowed', $builder);
         $this->assertStringContainsString('$application->usePublicPath(__DIR__)', $splitEntry);
     }

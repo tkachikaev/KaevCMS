@@ -21,6 +21,7 @@
     <script src="{{ asset('assets/admin/js/page-lifecycle.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     <script src="{{ asset('assets/admin/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     <script src="{{ asset('assets/admin/js/read-only.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
+    <script src="{{ asset('assets/admin/js/notifications.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
 </head>

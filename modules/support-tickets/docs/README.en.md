@@ -107,7 +107,7 @@ Normal deletes make pages reusable but may not immediately shrink the SQLite fil
 
 ## Installation and updates
 
-Module version 1.5.2 requires KaevCMS 0.44.28 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.5.2 adds no migration. It hides the administration badge at zero, restricts support text areas to vertical resizing, and replaces the large edit link with a compact accessible pencil button. The existing 1.5.0 migration still safely creates a missing settings row and never overwrites Owner changes.
+Module version 1.6.0 requires KaevCMS 0.45.1 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.6.0 adds no module migration. New tickets and player replies create personal notification-center events for eligible owners, administrators, auditors and explicitly permitted editors. Notification payloads contain only the ticket number and internal route ID; subjects, messages, player names and email addresses are not copied. The existing migrations remain unchanged.
 
 The module is bundled with KaevCMS. Module migrations are applied with SHA256 tracking. Applied migrations must not be modified or removed. Disabling the module hides routes and navigation without deleting data.
 

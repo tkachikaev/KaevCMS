@@ -19,14 +19,28 @@
     <div class="system-overview-actions">
         <a wire:navigate class="button button-secondary" href="{{ route('admin.settings.system') }}">{{ __('Refresh information') }}</a>
         <button
-            class="button button-primary"
+            class="button button-secondary"
             type="button"
             data-copy-system-report
             data-copy-success="{{ __('Report copied.') }}"
             data-copy-error="{{ __('Could not copy the report.') }}"
         >{{ __('Copy report') }}</button>
+        <form method="GET" action="{{ route('admin.settings.system.diagnostics.download') }}" data-testid="diagnostic-package-form">
+            <button
+                class="button button-primary"
+                type="submit"
+                @disabled(! $diagnosticPackageAvailable)
+                @if(! $diagnosticPackageAvailable) title="{{ __('The PHP zip extension is required to create a diagnostic package.') }}" @endif
+            >{{ __('Download diagnostic package') }}</button>
+        </form>
     </div>
 </section>
+
+@if(! $diagnosticPackageAvailable)
+    <div class="notice notice-warning system-diagnostic-warning">
+        <p>{{ __('The diagnostic package is unavailable because the PHP zip extension is not installed.') }}</p>
+    </div>
+@endif
 
 <div class="system-information-grid">
     <section class="form-card system-card">

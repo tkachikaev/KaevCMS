@@ -2,9 +2,14 @@
 
 namespace KaevCMS\Modules\SupportTickets\Services;
 
+use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Notifications\AdminNotificationCenter;
+use App\Support\Notifications\AdminNotificationData;
+use App\Support\Notifications\AdminNotificationSeverity;
+use App\Support\Notifications\AdminNotificationType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\SupportTickets\Enums\SupportTicketCategory;
@@ -19,6 +24,7 @@ final class SupportTicketService
         private readonly AuditLogger $auditLogger,
         private readonly SupportTicketSettings $settings,
         private readonly SupportTicketAttentionCounter $attentionCounter,
+        private readonly AdminNotificationCenter $notifications,
     ) {}
 
     public function create(
@@ -79,6 +85,13 @@ final class SupportTicketService
                 'status' => SupportTicketStatus::New->value,
             ],
         );
+        $this->notifyStaff(
+            type: AdminNotificationType::SupportTicketCreated,
+            externalKey: "support-ticket-created:{$ticket->id}",
+            titleKey: 'module-support-tickets::messages.notification_new_ticket_title',
+            messageKey: 'module-support-tickets::messages.notification_new_ticket_message',
+            ticket: $ticket,
+        );
 
         return $ticket;
     }
@@ -123,6 +136,13 @@ final class SupportTicketService
             actor: $user,
             target: $ticket,
             details: ['ticket_id' => $ticket->id, 'message_id' => $message->id],
+        );
+        $this->notifyStaff(
+            type: AdminNotificationType::SupportTicketPlayerReply,
+            externalKey: "support-ticket-player-reply:{$message->id}",
+            titleKey: 'module-support-tickets::messages.notification_player_reply_title',
+            messageKey: 'module-support-tickets::messages.notification_player_reply_message',
+            ticket: $ticket,
         );
 
         return $message;
@@ -395,6 +415,32 @@ final class SupportTicketService
             actor: $admin,
             target: $message->ticket,
             details: ['ticket_id' => $message->ticket_id, 'message_id' => $message->id],
+        );
+    }
+
+    private function notifyStaff(
+        AdminNotificationType $type,
+        string $externalKey,
+        string $titleKey,
+        string $messageKey,
+        SupportTicket $ticket,
+    ): void {
+        $this->notifications->notifyOnce(
+            new AdminNotificationData(
+                type: $type,
+                severity: AdminNotificationSeverity::Info,
+                titleKey: $titleKey,
+                messageKey: $messageKey,
+                parameters: ['number' => $ticket->number()],
+                routeName: 'admin.module-pages.support-tickets.show',
+                routeParameters: ['ticket' => $ticket->id],
+            ),
+            $externalKey,
+            recipientFilter: fn (Admin $admin): bool => in_array($admin->role, [
+                AdminRole::Owner,
+                AdminRole::Administrator,
+                AdminRole::Auditor,
+            ], true) || ($admin->role === AdminRole::Editor && $this->settings->editorCanView()),
         );
     }
 

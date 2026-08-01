@@ -128,6 +128,7 @@ class AuditLog extends Model
             'mail.password_changed_failed' => __('Password change notification failed'),
             'audit.cleaned' => __('Audit log cleaned'),
             'security.logs_cleaned' => __('Expired security logs cleaned'),
+            'system.diagnostics_downloaded' => __('Diagnostic package downloaded'),
             default => str((string) $this->action)->replace(['.', '_', '-'], ' ')->headline()->toString(),
         };
     }

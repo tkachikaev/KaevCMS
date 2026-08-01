@@ -521,6 +521,8 @@ test('system information reports APP_KEY encryption health without exposing secr
     await expect(encryptionCard.getByText('Зашифрованные значения', { exact: true })).toBeVisible();
     await expect(encryptionCard.getByText('Недоступные значения', { exact: true })).toBeVisible();
     await expect(page.getByText('APP_KEY encryption')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Скачать диагностический пакет', exact: true })).toBeVisible();
+    await expect(page.getByTestId('diagnostic-package-form')).toBeVisible();
 });
 
 test('system information shows safe external database diagnostics on mobile', async ({ page }) => {

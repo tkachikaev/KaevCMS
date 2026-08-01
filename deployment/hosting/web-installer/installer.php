@@ -172,6 +172,9 @@ function runWebInstaller(): void
                     installToken: (string) $state['install_token'],
                 );
 
+                $securityChecks = postInstallSecurityChecks($root, $publicRoot, $envPath, $lockPath, $text);
+                $installerRemoved = removePublicInstallerDirectory($publicRoot);
+
                 session_regenerate_id(true);
                 $_SESSION[KAEVCMS_INSTALL_SESSION] = [
                     'initialized' => true,
@@ -182,10 +185,19 @@ function runWebInstaller(): void
                         'email' => $installedOwnerEmail,
                         'admin_url' => rtrim($siteUrl, '/').'/admin',
                         'site_url' => rtrim($siteUrl, '/').'/',
-                        'security_checks' => postInstallSecurityChecks($root, $publicRoot, $envPath, $lockPath, $text),
+                        'security_checks' => $securityChecks,
+                        'installer_removed' => $installerRemoved,
                     ],
                 ];
-                redirectTo('complete', $language);
+
+                renderPage(
+                    $text['complete_title'],
+                    completeBody($text, $_SESSION[KAEVCMS_INSTALL_SESSION]),
+                    $language,
+                    $version,
+                );
+
+                return;
             }
 
             throw new InstallerValidationException($text['invalid_action']);
@@ -276,8 +288,9 @@ function installerTranslations(string $language): array
         'complete_text' => 'База подготовлена, владелец создан, повторный запуск установщика заблокирован.',
         'admin_panel' => 'Административная панель',
         'owner' => 'Владелец',
-        'finish_note' => 'Следующий шаг — удалить публичную папку /install, войти в админку, подключить LoginServer/GameServer и настроить почту.',
-        'remove_install_directory' => 'После успешной установки удалите публичную папку /install через файловый менеджер или SSH.',
+        'finish_note' => 'Следующий шаг — войти в админку, подключить LoginServer/GameServer и настроить почту.',
+        'installer_removed' => 'Публичная папка /install автоматически удалена.',
+        'remove_install_directory' => 'Автоматически удалить публичную папку /install не удалось. Удалите её через файловый менеджер или SSH.',
         'security_review_title' => 'Проверка безопасности установки',
         'security_review_text' => 'Критические ошибки необходимо исправить сразу. Предупреждения не блокируют сайт, но показывают рекомендуемые настройки хостинга.',
         'security_review_ok' => 'Защищено',
@@ -382,8 +395,9 @@ function installerTranslations(string $language): array
         'complete_text' => 'The database is ready, the owner was created, and the installer is now locked.',
         'admin_panel' => 'Administration panel',
         'owner' => 'Owner',
-        'finish_note' => 'Next, remove the public /install directory, sign in to the administration panel, connect LoginServer/GameServer, and configure email.',
-        'remove_install_directory' => 'After a successful installation, remove the public /install directory through the file manager or SSH.',
+        'finish_note' => 'Next, sign in to the administration panel, connect LoginServer/GameServer, and configure email.',
+        'installer_removed' => 'The public /install directory was removed automatically.',
+        'remove_install_directory' => 'The public /install directory could not be removed automatically. Delete it through the file manager or SSH.',
         'security_review_title' => 'Installation security review',
         'security_review_text' => 'Fix critical errors immediately. Warnings do not block the website, but identify recommended hosting settings.',
         'security_review_ok' => 'Protected',
@@ -956,6 +970,51 @@ function performInstallation(string $root, string $publicRoot, string $envExampl
             @unlink($installingPath);
         }
     }
+}
+
+function removePublicInstallerDirectory(string $publicRoot): bool
+{
+    $publicRoot = rtrim($publicRoot, '/\\');
+    if ($publicRoot === '') {
+        return false;
+    }
+
+    $installerPath = $publicRoot.'/install';
+    if (is_link($installerPath)) {
+        return @unlink($installerPath);
+    }
+    if (! file_exists($installerPath)) {
+        return true;
+    }
+    if (! is_dir($installerPath)) {
+        return false;
+    }
+
+    try {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($installerPath, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($iterator as $item) {
+            $path = $item->getPathname();
+            if ($item->isLink() || $item->isFile()) {
+                if (! @unlink($path)) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (! @rmdir($path)) {
+                return false;
+            }
+        }
+    } catch (UnexpectedValueException) {
+        return false;
+    }
+
+    return @rmdir($installerPath);
 }
 
 /** @param array<string, mixed> $arguments */
@@ -1573,11 +1632,15 @@ function completeBody(array $text, array $state): string
 {
     $complete = $state['complete'];
     $securityChecks = is_array($complete['security_checks'] ?? null) ? $complete['security_checks'] : [];
+    $installerRemoved = ($complete['installer_removed'] ?? false) === true;
+    $installerNotice = $installerRemoved
+        ? '<div class="alert alert-success">'.e($text['installer_removed']).'</div>'
+        : '<div class="alert alert-warning">'.e($text['remove_install_directory']).'</div>';
 
     return '<section class="hero"><span class="success-mark">✓</span><h1>'.e($text['complete_title']).'</h1><p>'.e($text['complete_text']).'</p></section>'
         .'<dl class="summary"><div><dt>'.e($text['admin_panel']).'</dt><dd><a href="'.e($complete['admin_url']).'">'.e($complete['admin_url']).'</a></dd></div><div><dt>'.e($text['owner']).'</dt><dd>'.e($complete['email']).'</dd></div></dl>'
         .securityReviewBody($text, $securityChecks)
-        .'<div class="alert alert-warning">'.e($text['remove_install_directory']).'</div>'
+        .$installerNotice
         .'<p class="muted">'.e($text['finish_note']).'</p><div class="actions"><a class="button primary" href="'.e($complete['admin_url']).'">'.e($text['admin_panel']).'</a><a class="button" href="'.e($complete['site_url']).'">'.e($text['open_site']).'</a></div>';
 }
 

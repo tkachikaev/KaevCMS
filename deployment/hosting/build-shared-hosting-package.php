@@ -80,7 +80,7 @@ KaevCMS {$version} — shared-hosting package
 3. Домен должен быть направлен только на {$publicDirectory}/.
 4. Включите PHP 8.3+, необходимые расширения и HTTPS.
 5. Откройте домен и завершите установку через /install/.
-6. После успешной установки удалите публичную папку /install и проверьте итоговый отчёт безопасности. Не назначайте 0777 всему проекту.
+6. После успешной установки Web Installer автоматически удалит публичную папку /install. Если хостинг запретит удаление, удалите её вручную по предупреждению на итоговой странице. Не назначайте 0777 всему проекту.
 
 Примеры сборки в PowerShell:
 - Beget/cPanel с public_html:
@@ -98,7 +98,7 @@ ENGLISH
 3. The domain must point only to {$publicDirectory}/.
 4. Enable PHP 8.3+, required extensions, and HTTPS.
 5. Open the domain and complete /install/.
-6. After a successful installation, remove the public /install directory and review the final security report. Do not assign 0777 to the whole project.
+6. After a successful installation, Web Installer removes the public /install directory automatically. If the host blocks deletion, remove it manually as instructed on the final page. Do not assign 0777 to the whole project.
 
 PowerShell build examples:
 - Beget/cPanel with public_html:

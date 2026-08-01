@@ -60,6 +60,29 @@ For `failed`:
 
 Use the CMS operation UUID, reward-grant operation UUID, GameServer ID, inventory grant ID, and item composition to correlate the reward journals with the audit log. Preserve application logs and the external consumer log. Never include database passwords or raw connection strings in a support report.
 
+
+## Administrator notifications
+
+The scheduled scan normally runs every minute. To run it manually after fixing Scheduler or while validating a deployment:
+
+```bash
+php artisan kaevcms:notifications-scan
+```
+
+To remove records older than the configured retention period:
+
+```bash
+php artisan kaevcms:notifications-clean
+```
+
+A temporary override is available for maintenance, with a protected minimum of seven days:
+
+```bash
+php artisan kaevcms:notifications-clean --days=90
+```
+
+Clearing a notification list is not a repair action. Verify the current state in server diagnostics, queue health, module status or system information.
+
 ## Information to preserve for support
 
 - KaevCMS version and update package filename;

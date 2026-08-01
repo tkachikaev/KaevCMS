@@ -3,9 +3,9 @@
 - Русская документация: [`docs/README.ru.md`](docs/README.ru.md)
 - English documentation: [`docs/README.en.md`](docs/README.en.md)
 
-Bundled version: **1.5.2** for KaevCMS **0.44.28+**. Usage and text limits are configured by Owner in the module settings and retain safe defaults.
+Bundled version: **1.6.0** for KaevCMS **0.45.1+**. Usage and text limits are configured by Owner in the module settings and retain safe defaults.
 
-Встроенная версия: **1.5.2** для KaevCMS **0.44.28+**. Лимиты обращений и длины текста настраиваются владельцем в настройках модуля; безопасные значения по умолчанию сохранены.
+Встроенная версия: **1.6.0** для KaevCMS **0.45.1+**. Лимиты обращений и длины текста настраиваются владельцем в настройках модуля; безопасные значения по умолчанию сохранены.
 
 The bundled 512×512 WebP module artwork is stored at `assets/module.webp` and is discovered automatically by KaevCMS.
 
