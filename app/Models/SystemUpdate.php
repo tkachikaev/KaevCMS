@@ -17,8 +17,10 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property string|null $phase
  * @property string $installation_type
+ * @property string $execution_mode
  * @property string $package_path
  * @property string|null $package_sha256
+ * @property string|null $maintenance_secret
  * @property string|null $backup_path
  * @property string|null $log_path
  * @property int $file_count
@@ -26,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed> $manifest
  * @property string|null $error_summary
  * @property Carbon|null $started_at
+ * @property Carbon|null $agent_requested_at
+ * @property Carbon|null $agent_seen_at
  * @property Carbon|null $completed_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -54,6 +58,10 @@ class SystemUpdate extends Model
 
     public const PHASE_COMPLETED = 'completed';
 
+    public const EXECUTION_WEB = 'web';
+
+    public const EXECUTION_VDS_AGENT = 'vds_agent';
+
     protected $fillable = [
         'uuid',
         'admin_id',
@@ -63,8 +71,10 @@ class SystemUpdate extends Model
         'status',
         'phase',
         'installation_type',
+        'execution_mode',
         'package_path',
         'package_sha256',
+        'maintenance_secret',
         'backup_path',
         'log_path',
         'file_count',
@@ -72,6 +82,8 @@ class SystemUpdate extends Model
         'manifest',
         'error_summary',
         'started_at',
+        'agent_requested_at',
+        'agent_seen_at',
         'completed_at',
     ];
 
@@ -82,6 +94,9 @@ class SystemUpdate extends Model
             'file_count' => 'integer',
             'delete_count' => 'integer',
             'started_at' => 'datetime',
+            'agent_requested_at' => 'datetime',
+            'agent_seen_at' => 'datetime',
+            'maintenance_secret' => 'encrypted',
             'completed_at' => 'datetime',
         ];
     }
@@ -96,10 +111,22 @@ class SystemUpdate extends Model
         return $this->status === self::STATUS_STAGED;
     }
 
+    public function isQueuedForAgent(): bool
+    {
+        return $this->isStaged()
+            && $this->execution_mode === self::EXECUTION_VDS_AGENT
+            && $this->agent_requested_at !== null;
+    }
+
+    public function isAgentExecution(): bool
+    {
+        return $this->execution_mode === self::EXECUTION_VDS_AGENT;
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
-            self::STATUS_STAGED => __('Ready for verification'),
+            self::STATUS_STAGED => $this->isQueuedForAgent() ? __('Waiting for VDS agent') : __('Ready for verification'),
             self::STATUS_APPLYING => __('Updating'),
             self::STATUS_SUCCEEDED => __('Installed'),
             self::STATUS_FAILED => __('Failed'),

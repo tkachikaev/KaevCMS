@@ -41,6 +41,7 @@ use App\Services\SecuritySettings;
 use App\Services\Servers\ServerMonitorSettings;
 use App\Services\Settings\SettingsImageStorage;
 use App\Services\SiteSettings;
+use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
@@ -94,6 +95,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ServerMonitorSettings::class);
         $this->app->singleton(SettingsImageStorage::class);
         $this->app->singleton(SiteSettings::class);
+        $this->app->singleton(VdsUpdateAgent::class);
     }
 
     public function boot(

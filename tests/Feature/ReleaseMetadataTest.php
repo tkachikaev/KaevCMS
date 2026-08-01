@@ -30,25 +30,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
         $this->assertSame([
-            'account-themes/kaev-aurelia/theme.json',
-            'app/Services/Infrastructure/DashboardPlayerOverview.php',
-            'lang/en.json',
-            'lang/ru.json',
-            'public/account-themes/kaev-aurelia/assets/css/app.css',
-            'public/assets/admin/css/infrastructure.css',
-            'public/themes/default/assets/css/app.css',
-            'public/themes/kaev-aurelia/assets/css/app.css',
-            'resources/views/admin/dashboard.blade.php',
-            'tests/Feature/Admin/DashboardPlayerOverviewTest.php',
-            'tests/Feature/Admin/DashboardStorageOverviewTest.php',
-            'tests/Feature/BundledAureliaThemesTest.php',
-            'tests/Feature/HomePageTest.php',
             'tests/Feature/ReleaseMetadataTest.php',
-            'tests/browser/specs/admin-navigation.spec.mjs',
-            'tests/browser/specs/dashboard-storage.spec.mjs',
-            'tests/browser/specs/player-character-directory.spec.mjs',
-            'themes/default/theme.json',
-            'themes/kaev-aurelia/theme.json',
         ], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),

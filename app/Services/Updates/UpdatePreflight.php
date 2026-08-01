@@ -17,7 +17,7 @@ final class UpdatePreflight
     /**
      * @return list<array{label: string, passed: bool, detail: string}>
      */
-    public function inspect(InspectedUpdatePackage $package): array
+    public function inspect(InspectedUpdatePackage $package, bool $delegateFilesystemChecks = false): array
     {
         $checks = [
             $this->check(
@@ -32,13 +32,17 @@ final class UpdatePreflight
             ),
             $this->check(
                 __('Application root'),
-                is_dir($this->layout->coreRoot()) && is_writable($this->layout->coreRoot()),
-                $this->layout->coreRoot(),
+                $delegateFilesystemChecks || (is_dir($this->layout->coreRoot()) && is_writable($this->layout->coreRoot())),
+                $delegateFilesystemChecks
+                    ? __('The VDS agent will verify application file permissions as the deployment owner.')
+                    : $this->layout->coreRoot(),
             ),
             $this->check(
                 __('Public directory'),
-                is_dir($this->layout->publicRoot()) && is_writable($this->layout->publicRoot()),
-                $this->layout->publicRoot(),
+                $delegateFilesystemChecks || (is_dir($this->layout->publicRoot()) && is_writable($this->layout->publicRoot())),
+                $delegateFilesystemChecks
+                    ? __('The VDS agent will verify public file permissions as the deployment owner.')
+                    : $this->layout->publicRoot(),
             ),
         ];
 
@@ -70,10 +74,12 @@ final class UpdatePreflight
 
         $checks[] = $this->check(
             __('Update targets'),
-            $unwritableTargets === [],
-            $unwritableTargets === []
-                ? __('All update targets are writable.')
-                : __('Unwritable paths: :paths', ['paths' => implode(', ', array_slice($unwritableTargets, 0, 5))]),
+            $delegateFilesystemChecks || $unwritableTargets === [],
+            $delegateFilesystemChecks
+                ? __('The VDS agent will verify every update target before changing files.')
+                : ($unwritableTargets === []
+                    ? __('All update targets are writable.')
+                    : __('Unwritable paths: :paths', ['paths' => implode(', ', array_slice($unwritableTargets, 0, 5))])),
         );
 
         $payloadBytes = 0;

@@ -13,6 +13,8 @@ return [
         'maximum_upload_kilobytes' => 524288,
         'maximum_archive_files' => 20000,
         'maximum_uncompressed_bytes' => 1073741824,
+        'vds_agent_supported' => null,
+        'vds_agent_recommended' => null,
     ],
 
     'modules' => [

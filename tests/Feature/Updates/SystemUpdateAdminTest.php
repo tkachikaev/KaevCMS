@@ -5,6 +5,7 @@ namespace Tests\Feature\Updates;
 use App\Models\Admin;
 use App\Models\SystemUpdate;
 use App\Services\Releases\InstalledVersion;
+use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -16,6 +17,9 @@ class SystemUpdateAdminTest extends TestCase
     use RefreshDatabase;
 
     private string $installedVersionMarker;
+
+    /** @var list<string> */
+    private array $temporaryDirectories = [];
 
     protected function setUp(): void
     {
@@ -32,6 +36,10 @@ class SystemUpdateAdminTest extends TestCase
     {
         if (isset($this->installedVersionMarker) && is_file($this->installedVersionMarker)) {
             @unlink($this->installedVersionMarker);
+        }
+
+        foreach ($this->temporaryDirectories as $directory) {
+            $this->removeDirectory($directory);
         }
 
         parent::tearDown();
@@ -92,6 +100,92 @@ class SystemUpdateAdminTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_vds_owner_sees_the_agent_install_command_when_the_agent_is_missing(): void
+    {
+        $owner = Admin::factory()->create();
+        $agent = $this->bindVdsAgent(false);
+
+        $response = $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates');
+
+        $response
+            ->assertOk()
+            ->assertSee('Агент обновлений VDS')
+            ->assertSee('Агент обновлений VDS не установлен')
+            ->assertSee($agent->installCommand())
+            ->assertSee('Копировать команду')
+            ->assertSee('Используйте пакеты обновлений только из доверенного источника.');
+    }
+
+    public function test_installation_requires_confirmation_that_the_archive_source_is_trusted(): void
+    {
+        $owner = Admin::factory()->create();
+        $update = SystemUpdate::query()->create([
+            'uuid' => '1a79f394-5ba0-4862-a9c1-717959d193f0',
+            'admin_id' => $owner->id,
+            'package_id' => 'kaevcms-trust-confirmation',
+            'from_version' => cms_version(),
+            'target_version' => '99.0.0',
+            'status' => SystemUpdate::STATUS_STAGED,
+            'installation_type' => 'standard',
+            'package_path' => 'kaevcms/updates/packages/missing.zip',
+            'file_count' => 1,
+            'delete_count' => 0,
+            'manifest' => ['schema' => 1],
+        ]);
+
+        $this->actingAs($owner, 'admin')
+            ->from('/admin/settings/system/updates/'.$update->id)
+            ->post('/admin/settings/system/updates/'.$update->id.'/apply', [
+                'current_password' => 'CorrectPassword123',
+                'confirmation' => '1',
+            ])
+            ->assertRedirect('/admin/settings/system/updates/'.$update->id)
+            ->assertSessionHasErrors('trusted_source');
+
+        $this->assertFalse($update->fresh()?->isQueuedForAgent());
+    }
+
+    #[RequiresPhpExtension('zip')]
+    public function test_ready_vds_agent_queues_a_verified_update_instead_of_running_it_in_php_fpm(): void
+    {
+        $owner = Admin::factory()->create();
+        $agent = $this->bindVdsAgent(true);
+        $currentVersion = cms_version();
+        $targetVersion = $this->nextPatchVersion($currentVersion);
+        $archive = $this->createUpdatePackage(
+            targetVersion: $targetVersion,
+            minimumVersion: $currentVersion,
+            maximumVersion: $currentVersion,
+        );
+
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/settings/system/updates', [
+                'package' => new UploadedFile($archive, 'KaevCMS-update-to-'.$targetVersion.'.zip', 'application/zip', null, true),
+            ]);
+
+        $update = SystemUpdate::query()->firstOrFail();
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates/'.$update->id)
+            ->assertOk()
+            ->assertSee('Этот пакет установит агент обновлений VDS.');
+
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/settings/system/updates/'.$update->id.'/apply', [
+                'current_password' => 'CorrectPassword123',
+                'trusted_source' => '1',
+                'confirmation' => '1',
+            ])
+            ->assertRedirect('/admin/settings/system/updates/'.$update->id)
+            ->assertSessionHas('status');
+
+        $fresh = $update->fresh();
+        $this->assertTrue($fresh?->isQueuedForAgent());
+        $this->assertSame(SystemUpdate::STATUS_STAGED, $fresh?->status);
+        $this->assertCount(1, $agent->pendingRequests());
+    }
+
     public function test_installation_requires_the_current_owner_password(): void
     {
         $owner = Admin::factory()->create();
@@ -113,6 +207,7 @@ class SystemUpdateAdminTest extends TestCase
             ->from('/admin/settings/system/updates/'.$update->id)
             ->post('/admin/settings/system/updates/'.$update->id.'/apply', [
                 'current_password' => 'incorrect-password',
+                'trusted_source' => '1',
                 'confirmation' => '1',
             ])
             ->assertRedirect('/admin/settings/system/updates/'.$update->id)
@@ -145,6 +240,7 @@ class SystemUpdateAdminTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->post('/admin/settings/system/updates/'.$update->id.'/apply', [
                 'current_password' => 'CorrectPassword123',
+                'trusted_source' => '1',
                 'confirmation' => '1',
             ])
             ->assertRedirect('/admin/settings/system/updates/'.$update->id)
@@ -321,6 +417,7 @@ class SystemUpdateAdminTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->post('/admin/settings/system/updates/'.$update->id.'/apply', [
                 'current_password' => 'CorrectPassword123',
+                'trusted_source' => '1',
                 'confirmation' => '1',
             ])
             ->assertRedirect('/admin/settings/system/updates/'.$update->id)
@@ -331,11 +428,58 @@ class SystemUpdateAdminTest extends TestCase
         $this->assertNull($fresh?->phase);
     }
 
+    private function bindVdsAgent(bool $ready): VdsUpdateAgent
+    {
+        config([
+            'cms.updates.vds_agent_supported' => true,
+            'cms.updates.vds_agent_recommended' => true,
+        ]);
+
+        $directory = storage_path('framework/testing/system-update-agent-'.bin2hex(random_bytes(8)));
+        mkdir($directory, 0777, true);
+        $this->temporaryDirectories[] = $directory;
+
+        $agent = new VdsUpdateAgent(
+            markerPathOverride: $directory.'/agent.json',
+            requestDirectoryOverride: $directory.'/requests',
+            projectRootOverride: base_path(),
+        );
+        if ($ready) {
+            $agent->register([]);
+        }
+
+        $this->app->instance(VdsUpdateAgent::class, $agent);
+
+        return $agent;
+    }
+
     private function nextPatchVersion(string $version): string
     {
         [$major, $minor, $patch] = array_map('intval', explode('.', $version));
 
         return $major.'.'.$minor.'.'.($patch + 1);
+    }
+
+    private function removeDirectory(string $path): void
+    {
+        if (! is_dir($path)) {
+            return;
+        }
+
+        foreach (scandir($path) ?: [] as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $child = $path.DIRECTORY_SEPARATOR.$item;
+            if (is_dir($child) && ! is_link($child)) {
+                $this->removeDirectory($child);
+            } else {
+                @unlink($child);
+            }
+        }
+
+        @rmdir($path);
     }
 
     private function createUpdatePackage(

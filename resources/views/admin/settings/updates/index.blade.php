@@ -24,6 +24,45 @@
     </div>
 @endif
 
+@if($agentRecommended || $agentStatus->isInstalled())
+<section class="form-card update-agent-card" data-vds-agent-status="{{ $agentStatus->state }}">
+    <div class="system-section-heading">
+        <div>
+            <h2>{{ __('VDS update agent') }}</h2>
+            <p>{{ $agentStatus->message }}</p>
+        </div>
+        <span @class([
+            'status-badge',
+            'status-badge-success' => $agentStatus->isReady(),
+            'status-badge-danger' => $agentStatus->state === 'invalid',
+            'status-badge-warning' => ! $agentStatus->isReady() && $agentStatus->state !== 'invalid',
+        ])>{{ $agentStatus->isReady() ? __('Ready') : ($agentStatus->state === 'invalid' ? __('Needs repair') : __('Not installed')) }}</span>
+    </div>
+
+    @if(! $agentStatus->isReady())
+        <div class="notice notice-warning" role="alert">
+            <strong>{{ __('Browser updates on a VDS require the local update agent.') }}</strong>
+            <span>{{ __('Run this command once through SSH, then reload this page. Manual CLI updates remain available without the agent.') }}</span>
+        </div>
+        <div class="update-agent-command">
+            <code id="vds-agent-install-command">{{ $agentInstallCommand }}</code>
+            <button class="button button-secondary" type="button" data-copy-command data-copy-target="vds-agent-install-command" data-copy-success="{{ __('Command copied.') }}" data-copy-error="{{ __('Could not copy the command.') }}">{{ __('Copy command') }}</button>
+        </div>
+        <small class="update-command-state" data-copy-state aria-live="polite"></small>
+    @else
+        <div class="update-agent-meta">
+            <span>{{ __('Agent version: :version', ['version' => $agentStatus->metadata['agent_version'] ?? 1]) }}</span>
+            <span>{{ __('Update requests are executed locally as the deployment owner.') }}</span>
+        </div>
+    @endif
+</section>
+@endif
+
+<div class="notice notice-warning update-trust-warning" role="alert">
+    <strong>{{ __('Use update packages only from a source you trust.') }}</strong>
+    <span>{{ __('An update archive can replace KaevCMS program files. The website owner is responsible for the package selected for installation.') }}</span>
+</div>
+
 <section class="form-card update-upload-card">
     <div class="system-section-heading">
         <div>
@@ -111,3 +150,7 @@
     @endif
 </section>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('assets/admin/js/system-updates.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+@endpush

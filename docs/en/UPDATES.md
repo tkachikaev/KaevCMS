@@ -36,20 +36,42 @@ In split/shared-hosting layouts, the actual public directory is read from the ge
 
 ## Ubuntu VDS
 
-On a VDS, source files belong to the SSH/deployment user while PHP-FPM may write only to runtime directories. Apply the package through the CLI as the project owner:
+On a VDS, source files belong to the SSH/deployment user while PHP-FPM may write only to runtime directories.
+
+For the first upgrade from a release older than `0.47.0`, use the manual CLI Updater because older releases do not contain the agent. After installing `0.47.0`, install the agent once and future compatible updates can be started from the panel.
+
+Install the local agent once to start verified packages from the administration panel:
+
+```bash
+cd /var/www/kaevcms
+sudo bash deployment/vds/install-update-agent.sh
+```
+
+The Web Updater continues to upload and inspect the ZIP, while installation is delegated to a one-shot systemd agent running as the project owner. When the agent is absent, the page displays the exact command and blocks installation without blocking package upload and verification.
+
+The owner must explicitly confirm trust in the ZIP source. KaevCMS validates the manifest and checksums, but the site owner remains responsible for the selected archive.
+
+Verify or remove the agent with:
+
+```bash
+php artisan kaevcms:update-agent:status
+sudo bash deployment/vds/remove-update-agent.sh
+```
+
+The manual CLI path remains available without the agent:
 
 ```bash
 cd /var/www/kaevcms
 php artisan kaevcms:update /tmp/KaevCMS-update.zip
 ```
 
-The command displays its checks and asks for confirmation. For automation after independently verifying the package:
+For automation after independently verifying the package:
 
 ```bash
 php artisan kaevcms:update /tmp/KaevCMS-update.zip --yes
 ```
 
-Do not run the command as `www-data` and do not grant PHP-FPM write access to all source files.
+Do not run the CLI Updater as `www-data` and do not grant PHP-FPM write access to all source files.
 
 ## Dependency changes
 

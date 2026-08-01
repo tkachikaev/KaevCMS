@@ -1,12 +1,12 @@
-# KaevCMS 0.46.5
+# KaevCMS 0.47.2
 
 [English](#english) · [Русский](#русский)
 
 ## English
 
-KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, and a VDS CLI updater.
+KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.46.5 hardens the 0.46.4 dashboard and bundled themes: disk usage now uses a native CSP-safe progress element, Kaev Aurelia Account keeps the mobile backdrop outside the sidebar area, and both public themes contain their footers on narrow screens. L2 Dark Classic is updated to 0.8.2, Kaev Aurelia to 1.0.9 and Kaev Aurelia Account to 1.6.4. The cumulative update baseline remains 0.42.4.
+Version 0.47.2 is a maintenance release for the Ubuntu VDS Web Updater. It synchronizes ReleaseMetadataTest with the actual 0.47.2 repair contract so the release metadata quality gate passes. Runtime behavior, migrations, dependencies, modules and themes are unchanged from 0.47.1. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -50,6 +50,7 @@ Documentation:
 
 - [Installation](docs/en/INSTALLATION.md)
 - [Ubuntu VDS](docs/en/VDS_UBUNTU.md)
+- [Updates](docs/en/UPDATES.md)
 - [Shared hosting](docs/en/SHARED_HOSTING.md)
 - [Character rescue](docs/en/CHARACTER_RESCUE.md)
 - [Security and permissions](docs/en/SECURITY.md)
@@ -76,7 +77,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Trusted modules with strict manifests and immutable migration tracking.
 - Bundled Promo Codes, Daily Rewards and Support Tickets modules.
 - Versioned chronicle item catalogs with localized manual overrides and one owner-managed icon pool under `public/uploads/game-assets`.
-- Cumulative Web Updater for shared hosting and a deployment-user CLI updater for VDS, with hashes, backups, recovery, and path policy.
+- Cumulative Web Updater for shared hosting, a local VDS update agent for browser-started deployments, and a deployment-user CLI fallback, with hashes, backups, recovery, and path policy.
 
 ### Development and quality
 
@@ -94,9 +95,9 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 ## Русский
 
-KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting и CLI-обновление для VDS.
+KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.46.5 укрепляет изменения 0.46.4: заполнение диска теперь отображается нативным CSP-безопасным индикатором, фон мобильного меню Kaev Aurelia Account не перекрывает боковую панель, а подвалы обеих публичных тем не выходят за ширину узкого экрана. L2 Dark Classic обновлена до 0.8.2, Kaev Aurelia — до 1.0.9, Kaev Aurelia Account — до 1.6.4. Кумулятивная база остаётся 0.42.4.
+Версия 0.47.2 — техническое обновление Web Updater для Ubuntu VDS. Проверка ReleaseMetadataTest синхронизирована с фактическим repair-контрактом 0.47.2, поэтому release metadata quality gate снова проходит. Поведение системы, миграции, зависимости, модули и темы не изменились относительно 0.47.1. Кумулятивная база остаётся 0.42.4.
 
 ### Требования
 
@@ -140,6 +141,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 - [Установка](docs/ru/INSTALLATION.md)
 - [Ubuntu VDS](docs/ru/VDS_UBUNTU.md)
+- [Обновления](docs/ru/UPDATES.md)
 - [Обычный хостинг](docs/ru/SHARED_HOSTING.md)
 - [Возврат персонажа в город](docs/ru/CHARACTER_RESCUE.md)
 - [Безопасность и права](docs/ru/SECURITY.md)
@@ -166,7 +168,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Доверенные модули со строгим manifest и неизменяемой историей миграций.
 - Встроенные модули Promo Codes, Daily Rewards и технической поддержки.
 - Версионируемые каталоги предметов по хроникам с ручными переводами и единым внешним пулом иконок под исходными именами.
-- Кумулятивный Web Updater для shared-hosting и CLI updater от deployment-пользователя для VDS с хешами, резервными копиями, восстановлением и политикой путей.
+- Кумулятивный Web Updater для shared-hosting, локальный агент для запуска обновлений VDS из браузера и резервный CLI-способ от deployment-пользователя с хешами, резервными копиями, восстановлением и политикой путей.
 
 ### Разработка и проверки
 

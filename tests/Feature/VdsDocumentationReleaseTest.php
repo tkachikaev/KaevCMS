@@ -40,11 +40,19 @@ class VdsDocumentationReleaseTest extends TestCase
                 'public/uploads/settings',
                 'public/uploads/game-assets',
                 'chmod -R 777 /var/www/kaevcms',
+                'kaevcms_db',
+                'kaevcms_user',
+                'sudo bash deployment/vds/install-update-agent.sh',
+                'php artisan kaevcms:update-agent:status',
+                'sudo bash deployment/vds/remove-update-agent.sh',
             ] as $required) {
                 $this->assertStringContainsString($required, $guide);
             }
 
             $this->assertStringNotContainsString('root /var/www/kaevcms;', $guide);
+            $this->assertStringNotContainsString('CREATE DATABASE kaevcms\n', $guide);
+            $this->assertStringNotContainsString("CREATE USER 'kaevcms'@'localhost'", $guide);
+            $this->assertStringNotContainsString('mysql -u kaevcms -p -h 127.0.0.1 kaevcms', $guide);
         }
 
         $this->assertStringContainsString('Ubuntu 26.04 LTS ships PHP 8.5', $english);

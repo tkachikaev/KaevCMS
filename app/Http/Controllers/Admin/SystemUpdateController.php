@@ -17,6 +17,7 @@ use App\Services\Updates\SystemUpdateRecovery;
 use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
 use App\Services\Updates\UpdatePreflight;
+use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -32,8 +33,10 @@ final class SystemUpdateController extends Controller
         InstalledVersion $installedVersion,
         UpdateInstallationLayout $layout,
         UpdatePackageInspector $inspector,
+        VdsUpdateAgent $vdsAgent,
     ): View {
         $admin = $this->viewer();
+        $agentStatus = $vdsAgent->status();
 
         return view('admin.settings.updates.index', [
             'currentVersion' => $this->currentVersion($installedVersion),
@@ -49,6 +52,10 @@ final class SystemUpdateController extends Controller
                 ->limit(30)
                 ->get(),
             'admin' => $admin,
+            'agentStatus' => $agentStatus,
+            'agentRecommended' => $vdsAgent->recommended(),
+            'agentInstallCommand' => $vdsAgent->installCommand(),
+            'agentDiagnosticsCommand' => $vdsAgent->diagnosticsCommand(),
         ]);
     }
 
@@ -85,6 +92,7 @@ final class SystemUpdateController extends Controller
                 'status' => SystemUpdate::STATUS_STAGED,
                 'phase' => null,
                 'installation_type' => $package->installationType,
+                'execution_mode' => SystemUpdate::EXECUTION_WEB,
                 'package_path' => 'kaevcms/updates/packages/'.$uuid.'.zip',
                 'package_sha256' => $package->archiveSha256,
                 'file_count' => count($package->files),
@@ -128,11 +136,14 @@ final class SystemUpdateController extends Controller
         InstalledVersion $installedVersion,
         UpdatePackageInspector $inspector,
         UpdatePreflight $preflight,
+        VdsUpdateAgent $vdsAgent,
     ): View {
         $admin = $this->viewer();
         $package = null;
         $checks = [];
         $inspectionError = null;
+        $agentStatus = $vdsAgent->status();
+        $useVdsAgent = $agentStatus->isReady();
 
         if ($systemUpdate->isStaged()) {
             try {
@@ -140,10 +151,14 @@ final class SystemUpdateController extends Controller
                     $this->absolutePackagePath($systemUpdate),
                     $this->currentVersion($installedVersion),
                 );
-                $checks = $preflight->inspect($package);
+                $checks = $preflight->inspect($package, $useVdsAgent);
             } catch (Throwable $exception) {
                 $inspectionError = $exception->getMessage();
             }
+        }
+
+        if (! $systemUpdate->isStaged() && $systemUpdate->status !== SystemUpdate::STATUS_APPLYING) {
+            request()->session()->forget($this->maintenanceSessionKey($systemUpdate));
         }
 
         $maintenanceSecret = null;
@@ -161,6 +176,11 @@ final class SystemUpdateController extends Controller
                 'inspectionError' => $inspectionError,
                 'logTail' => $this->logTail($systemUpdate),
                 'recoveryUrl' => $maintenanceSecret !== null ? url('/'.$maintenanceSecret) : null,
+                'agentStatus' => $agentStatus,
+                'agentRecommended' => $vdsAgent->recommended(),
+                'agentInstallCommand' => $vdsAgent->installCommand(),
+                'agentDiagnosticsCommand' => $vdsAgent->diagnosticsCommand(),
+                'useVdsAgent' => $useVdsAgent,
             ]);
         } finally {
             if ($package instanceof InspectedUpdatePackage) {
@@ -172,23 +192,59 @@ final class SystemUpdateController extends Controller
     public function apply(
         ApplySystemUpdateRequest $request,
         SystemUpdate $systemUpdate,
+        InstalledVersion $installedVersion,
+        UpdatePackageInspector $inspector,
+        UpdatePreflight $preflight,
         SystemUpdateInstaller $installer,
+        VdsUpdateAgent $vdsAgent,
     ): RedirectResponse {
         $this->owner();
 
-        $maintenanceSecret = request()->session()->get($this->maintenanceSessionKey($systemUpdate));
+        $maintenanceSecret = $request->session()->get($this->maintenanceSessionKey($systemUpdate));
         if (! is_string($maintenanceSecret) || $maintenanceSecret === '') {
             return redirect()
                 ->route('admin.settings.system.updates.show', $systemUpdate)
                 ->withErrors(['update' => __('The update recovery secret is missing. Reload the page and try again.')]);
         }
 
+        $package = null;
+
         try {
+            $package = $inspector->inspect(
+                $this->absolutePackagePath($systemUpdate),
+                $this->currentVersion($installedVersion),
+            );
+            $agentStatus = $vdsAgent->status();
+
+            if ($agentStatus->isReady()) {
+                $checks = $preflight->inspect($package, true);
+                if (! $preflight->passes($checks)) {
+                    throw new RuntimeException(__('The update preflight checks did not pass.'));
+                }
+
+                $vdsAgent->queue($systemUpdate, $maintenanceSecret);
+
+                return redirect()
+                    ->route('admin.settings.system.updates.show', $systemUpdate)
+                    ->with('status', __('The update was queued for the VDS agent. Installation will start automatically.'));
+            }
+
+            $checks = $preflight->inspect($package);
+            if (! $preflight->passes($checks)) {
+                if ($vdsAgent->recommended()) {
+                    throw new RuntimeException(__('The VDS update agent is not ready. Install it using the command shown on this page.'));
+                }
+
+                throw new RuntimeException(__('The update preflight checks did not pass.'));
+            }
+
             $installer->apply($systemUpdate, $maintenanceSecret);
         } catch (Throwable $exception) {
             $fresh = $systemUpdate->fresh();
             if (! $fresh instanceof SystemUpdate || $fresh->status !== SystemUpdate::STATUS_APPLYING) {
-                request()->session()->forget($this->maintenanceSessionKey($systemUpdate));
+                if (! $fresh instanceof SystemUpdate || ! $fresh->isQueuedForAgent()) {
+                    $request->session()->forget($this->maintenanceSessionKey($systemUpdate));
+                }
             }
 
             return redirect()
@@ -196,9 +252,13 @@ final class SystemUpdateController extends Controller
                 ->withErrors([
                     'update' => __('The update failed: :message', ['message' => $exception->getMessage()]),
                 ]);
+        } finally {
+            if ($package instanceof InspectedUpdatePackage) {
+                $this->removeDirectory($package->stagingPath);
+            }
         }
 
-        request()->session()->forget($this->maintenanceSessionKey($systemUpdate));
+        $request->session()->forget($this->maintenanceSessionKey($systemUpdate));
 
         return redirect()
             ->route('admin.settings.system.updates.show', $systemUpdate)
@@ -232,7 +292,7 @@ final class SystemUpdateController extends Controller
     public function destroy(SystemUpdate $systemUpdate): RedirectResponse
     {
         $this->owner();
-        abort_unless($systemUpdate->isStaged(), 409);
+        abort_unless($systemUpdate->isStaged() && ! $systemUpdate->isQueuedForAgent(), 409);
 
         $path = $this->absolutePackagePath($systemUpdate, false);
         if (is_file($path)) {
@@ -359,6 +419,15 @@ final class SystemUpdateController extends Controller
     {
         $key = $this->maintenanceSessionKey($update);
         $secret = request()->session()->get($key);
+
+        if ($update->isQueuedForAgent()) {
+            $queuedSecret = $update->maintenance_secret;
+            if (is_string($queuedSecret) && preg_match('/\A[a-zA-Z0-9]{32,128}\z/', $queuedSecret) === 1) {
+                $secret = $queuedSecret;
+                request()->session()->put($key, $secret);
+            }
+        }
+
         if (! is_string($secret) || preg_match('/\A[a-zA-Z0-9]{32,128}\z/', $secret) !== 1) {
             $secret = Str::random(48);
             request()->session()->put($key, $secret);

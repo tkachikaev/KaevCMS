@@ -25,6 +25,17 @@ class WebUpdaterReleaseTest extends TestCase
             resource_path('views/admin/settings/updates/show.blade.php'),
             database_path('migrations/2026_07_23_000000_create_system_updates_table.php'),
             database_path('migrations/2026_07_23_010000_add_execution_state_to_system_updates_table.php'),
+            database_path('migrations/2026_08_01_100000_add_vds_agent_state_to_system_updates.php'),
+            app_path('Services/Updates/VdsUpdateAgent.php'),
+            app_path('Services/Updates/VdsUpdateAgentStatus.php'),
+            app_path('Console/Commands/RegisterVdsUpdateAgentCommand.php'),
+            app_path('Console/Commands/RunVdsUpdateAgentCommand.php'),
+            app_path('Console/Commands/VdsUpdateAgentStatusCommand.php'),
+            public_path('assets/admin/js/system-updates.js'),
+            base_path('deployment/vds/install-update-agent.sh'),
+            base_path('deployment/vds/remove-update-agent.sh'),
+            base_path('tests/Feature/Updates/VdsUpdateAgentTest.php'),
+            base_path('tests/browser/specs/system-updates.spec.mjs'),
             base_path('deployment/updates/build-package.php'),
             base_path('deployment/updates/README.md'),
             base_path('deployment/hosting/shared-hosting/tests/update-entrypoint-regression.php'),
@@ -124,5 +135,34 @@ class WebUpdaterReleaseTest extends TestCase
         ] as $required) {
             $this->assertStringContainsString($required, $recovery);
         }
+
+        $agent = File::get(app_path('Services/Updates/VdsUpdateAgent.php'));
+        foreach ([
+            'execution_mode',
+            'maintenance_secret',
+            'agent_requested_at',
+            'writeJsonAtomically',
+            'package_sha256',
+            'Another update is already running or waiting for the VDS agent.',
+        ] as $required) {
+            $this->assertStringContainsString($required, $agent);
+        }
+
+        $installerScript = File::get(base_path('deployment/vds/install-update-agent.sh'));
+        foreach ([
+            'DirectoryNotEmpty=',
+            'Type=oneshot',
+            'NoNewPrivileges=true',
+            'ProtectSystem=full',
+            'kaevcms:update-agent:register',
+            'kaevcms:update-agent:run',
+        ] as $required) {
+            $this->assertStringContainsString($required, $installerScript);
+        }
+        $this->assertStringNotContainsString('ListenStream=', $installerScript);
+        $this->assertStringNotContainsString('User=root', $installerScript);
+
+        $request = File::get(app_path('Http/Requests/Admin/ApplySystemUpdateRequest.php'));
+        $this->assertStringContainsString("'trusted_source' => ['accepted']", $request);
     }
 }

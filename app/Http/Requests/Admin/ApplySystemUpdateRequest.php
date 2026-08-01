@@ -16,6 +16,7 @@ class ApplySystemUpdateRequest extends FormRequest
     {
         return [
             'current_password' => ['required', 'string', 'current_password:admin'],
+            'trusted_source' => ['accepted'],
             'confirmation' => ['accepted'],
         ];
     }

@@ -1,3 +1,35 @@
+## 0.47.2 - 2026-08-02
+
+### Fixed
+
+- Synchronized `ReleaseMetadataTest` with the actual 0.47.2 `release.json` repair contract. The 0.47.1 package still expected the complete 0.47.0 VDS updater file list, while its metadata correctly contained only the two test repairs.
+- Kept the correction limited to release metadata verification. No application runtime, database migration, Composer dependency, bundled-module version or theme version changed.
+- The cumulative update line remains based on `0.42.4`; the 0.47.2 package supports direct updates from 0.42.4 through 0.47.1.
+
+## 0.47.1 - 2026-08-02
+
+### Fixed
+
+- Removed an extra blank line from `WebUpdaterReleaseTest` so Laravel Pint no longer fails the VDS updater release gate.
+- Aligned the exact Playwright assertion with the complete trusted-source warning rendered by the system update page without weakening the warning coverage.
+- No runtime behavior, migration, Composer dependency, bundled-module or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.1 package supports direct updates from 0.42.4 through 0.47.0.
+
+## 0.47.0 - 2026-08-02
+
+### Added
+
+- Added a manually installed Ubuntu VDS update agent based on per-installation `systemd.path` and one-shot `systemd.service` units. Verified Web Update requests are queued in protected runtime storage and executed as the project deployment owner without granting PHP-FPM write access to application source files or opening a network port.
+- Integrated the agent with the existing Web Updater pipeline: package inspection remains in the administration panel, while the agent rechecks the archive hash and real file permissions before using the established backups, maintenance mode, filesystem transaction, migrations, cache cleanup, queue restart, logging and rollback flow.
+- Added agent registration, status and worker Artisan commands, encrypted temporary recovery-secret storage, one-request concurrency protection, atomic request files and recovery-safe status tracking.
+- Added clear agent setup, diagnostics and removal instructions in RU/EN VDS and update documentation. Existing installations below 0.47.0 use the CLI Updater once, then install the agent for future browser-started updates.
+
+### Changed
+
+- Added an explicit trusted-source confirmation before any system update can start. The interface explains that update archives can replace program files and that the site owner is responsible for selecting a trusted source.
+- Changed Ubuntu/MySQL documentation examples to use `kaevcms_db` for the database and `kaevcms_user` for the database account, including SQL, connection verification and Web Installer fields.
+- Added PHPUnit, release-contract and Playwright regressions for agent registration, encrypted queue state, archive revalidation, missing-agent guidance, trusted-source validation, shipped systemd units, documentation and mobile updater layout.
+- Added one CMS migration for VDS-agent execution state. No Composer dependency, bundled-module or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.0 package supports direct updates from 0.42.4 through 0.46.5.
+
 ## 0.46.5 - 2026-08-01
 
 ### Fixed

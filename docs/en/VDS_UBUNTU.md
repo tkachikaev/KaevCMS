@@ -110,15 +110,15 @@ sudo mysql
 Run:
 
 ```sql
-CREATE DATABASE kaevcms
+CREATE DATABASE kaevcms_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-CREATE USER 'kaevcms'@'localhost'
+CREATE USER 'kaevcms_user'@'localhost'
     IDENTIFIED BY 'KaevCmsDbPasswordHere';
 
-GRANT ALL PRIVILEGES ON kaevcms.*
-    TO 'kaevcms'@'localhost';
+GRANT ALL PRIVILEGES ON kaevcms_db.*
+    TO 'kaevcms_user'@'localhost';
 
 FLUSH PRIVILEGES;
 EXIT;
@@ -127,7 +127,7 @@ EXIT;
 Verify the dedicated account:
 
 ```bash
-mysql -u kaevcms -p -h 127.0.0.1 kaevcms
+mysql -u kaevcms_user -p -h 127.0.0.1 kaevcms_db
 ```
 
 Exit with `EXIT;` after a successful connection.
@@ -137,8 +137,8 @@ Use these Web Installer values:
 ```text
 Host:      127.0.0.1
 Port:      3306
-Database:  kaevcms
-Username:  kaevcms
+Database:  kaevcms_db
+Username:  kaevcms_user
 Password:  the password created above
 ```
 
@@ -476,7 +476,38 @@ sudo -u www-data /usr/bin/php8.3 /var/www/kaevcms/artisan queue:restart
 sudo systemctl restart kaevcms-queue
 ```
 
-## 15. Final verification
+## 15. Install the VDS update agent
+
+This step is required only for starting updates from the administration panel. The agent is not installed automatically and is not required for manual SSH updates.
+
+Run once from an account with `sudo` access:
+
+```bash
+cd /var/www/kaevcms
+sudo bash deployment/vds/install-update-agent.sh
+```
+
+The script detects the project owner, PHP-FPM group, and PHP CLI binary, then creates dedicated `systemd.path` and `systemd.service` units for this installation. The agent opens no network port and does not grant `www-data` write access to application source code.
+
+Verify the registration:
+
+```bash
+cd /var/www/kaevcms
+php artisan kaevcms:update-agent:status
+```
+
+Expected output includes `State: ready` and `Ready: yes`. Running the installer again safely refreshes the units and registration.
+
+To remove the agent:
+
+```bash
+cd /var/www/kaevcms
+sudo bash deployment/vds/remove-update-agent.sh
+```
+
+Removal is blocked while a queued update request remains in the agent directory.
+
+## 16. Final verification
 
 ```bash
 cd /var/www/kaevcms
@@ -504,9 +535,40 @@ Check in the browser:
 
 ## Updating KaevCMS on a VDS
 
-Use the cumulative CLI Updater as the SSH user that owns `/var/www/kaevcms`. Safe permissions intentionally prevent PHP-FPM (`www-data`) from modifying application source code, so browser-based application of an update on a VDS should fail its write preflight instead of granting the web process access to the whole project.
+### Updating from the administration panel
 
-Transfer one current cumulative update ZIP to the server, for example to `/tmp/KaevCMS-update.zip`, then run:
+For the first upgrade from a release older than `0.47.0`, use the manual CLI Updater because older releases do not contain the agent. After installing `0.47.0`, install the agent once and future compatible updates can be started from the panel.
+
+This method requires the agent from step 15. When the agent is absent, KaevCMS displays **“VDS update agent is not installed”** with the exact installation command. A ZIP may still be uploaded and verified, but installation remains unavailable until the agent is ready.
+
+1. Open **Settings → System → System updates**.
+2. Upload the current cumulative Update ZIP.
+3. Review the target version, manifest, SHA256, and preflight checks.
+4. Confirm that you trust the archive source. The site owner is responsible for the selected package because an update can replace KaevCMS program files.
+5. Enter the current owner password and select **Send to VDS agent**.
+
+The website writes a local request to protected runtime storage. `systemd.path` starts a one-shot agent as the project file owner. The agent verifies the archive and permissions again, backs up application files and the database, enables maintenance mode, applies files and migrations, clears caches, and restarts the queue. Existing automatic rollback is used when installation fails.
+
+The update page refreshes automatically while the request is waiting for the agent. After the agent starts, maintenance mode and the update log record preparation, file replacement, migrations, completion, or failure. Do not remove the ZIP or start another update until the current request finishes.
+
+Agent diagnostics:
+
+```bash
+cd /var/www/kaevcms
+php artisan kaevcms:update-agent:status --json
+sudo journalctl -u 'kaevcms-update-agent-*.service' -n 100 --no-pager
+```
+
+If registration is invalid or the units were removed, reinstall them:
+
+```bash
+cd /var/www/kaevcms
+sudo bash deployment/vds/install-update-agent.sh
+```
+
+### Fallback update through SSH
+
+The manual CLI Updater remains available without the agent. Run it as the SSH/deployment user that owns `/var/www/kaevcms`, never as `www-data`:
 
 ```bash
 sudo systemctl stop kaevcms-queue

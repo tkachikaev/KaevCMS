@@ -34,6 +34,31 @@
     </div>
 @endif
 
+@if(($agentRecommended || $agentStatus->isInstalled()) && $update->isStaged())
+    @if($agentStatus->isReady())
+        <div class="notice notice-info" role="status" data-vds-agent-ready>
+            <strong>{{ __('The VDS update agent will install this package.') }}</strong>
+            <span>{{ __('File permission checks are repeated by the agent as the deployment owner immediately before installation.') }}</span>
+        </div>
+    @else
+        <section class="form-card update-agent-card" data-vds-agent-missing>
+            <div class="system-section-heading">
+                <div>
+                    <h2>{{ $agentStatus->state === 'invalid' ? __('VDS update agent needs repair') : __('VDS update agent is not installed') }}</h2>
+                    <p>{{ __('Install the local agent once through SSH to start this verified package from the browser.') }}</p>
+                </div>
+                <span class="status-badge status-badge-warning">{{ __('Required') }}</span>
+            </div>
+            <div class="update-agent-command">
+                <code id="vds-agent-install-command">{{ $agentInstallCommand }}</code>
+                <button class="button button-secondary" type="button" data-copy-command data-copy-target="vds-agent-install-command" data-copy-success="{{ __('Command copied.') }}" data-copy-error="{{ __('Could not copy the command.') }}">{{ __('Copy command') }}</button>
+            </div>
+            <small class="update-command-state" data-copy-state aria-live="polite"></small>
+            <a class="button button-secondary update-agent-recheck" href="{{ route('admin.settings.system.updates.show', $update) }}">{{ __('Check agent again') }}</a>
+        </section>
+    @endif
+@endif
+
 @if($package)
     <div class="update-summary-grid">
         <section class="form-card update-summary-card">
@@ -94,7 +119,25 @@
         </section>
     @endif
 
-    @if($update->isStaged())
+    @if($update->isQueuedForAgent())
+        <section class="form-card update-agent-waiting" data-vds-agent-poll data-update-status="queued">
+            <div class="system-section-heading">
+                <div>
+                    <h2>{{ __('Waiting for VDS update agent') }}</h2>
+                    <p>{{ __('The request was accepted. The local agent will verify permissions again, create backups and start installation automatically.') }}</p>
+                </div>
+                <span class="status-badge status-badge-warning">{{ __('Queued') }}</span>
+            </div>
+            <p>{{ __('You may keep this page open. It refreshes automatically while the agent starts the update.') }}</p>
+            @if($recoveryUrl)
+                <div class="notice notice-warning update-emergency-access" role="alert">
+                    <strong>{{ __('Emergency access link') }}</strong>
+                    <span>{{ __('Keep this link open or copy it before the agent enables maintenance mode.') }}</span>
+                    <a href="{{ $recoveryUrl }}" target="_blank" rel="noopener noreferrer"><code>{{ $recoveryUrl }}</code></a>
+                </div>
+            @endif
+        </section>
+    @elseif($update->isStaged())
         <section class="form-card update-confirm-card">
             <div class="system-section-heading">
                 <div>
@@ -117,11 +160,19 @@
                     <span>{{ __('Current administrator password') }}</span>
                     <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
                 </label>
+                <div class="notice notice-warning update-trust-warning" role="alert">
+                    <strong>{{ __('Confirm the package source before continuing.') }}</strong>
+                    <span>{{ __('An update can replace application files. KaevCMS cannot determine whether the person or website that supplied this archive is trustworthy.') }}</span>
+                </div>
+                <label class="settings-checkbox update-confirm-checkbox">
+                    <input name="trusted_source" type="checkbox" value="1" required>
+                    <span>{{ __('I confirm that I trust the source of this update archive and accept responsibility for installing it.') }}</span>
+                </label>
                 <label class="settings-checkbox update-confirm-checkbox">
                     <input name="confirmation" type="checkbox" value="1" required>
-                    <span>{{ __('I understand that the website will briefly enter maintenance mode and confirm installation of this trusted package.') }}</span>
+                    <span>{{ __('I understand that the website will briefly enter maintenance mode and confirm installation of this package.') }}</span>
                 </label>
-                <button class="button button-primary" type="submit" @disabled(! $checksPassed)>{{ __('Start update') }}</button>
+                <button class="button button-primary" type="submit" @disabled(! $checksPassed)>{{ $useVdsAgent ? __('Send to VDS agent') : __('Start update') }}</button>
             </form>
 
             <form method="POST" action="{{ route('admin.settings.system.updates.destroy', $update) }}" class="update-discard-form">
@@ -134,7 +185,7 @@
 @endif
 
 @if($update->status === \App\Models\SystemUpdate::STATUS_APPLYING)
-    <section class="form-card update-recovery-card">
+    <section class="form-card update-recovery-card" data-update-status="applying">
         <div class="system-section-heading">
             <div>
                 <h2>{{ __('Interrupted update recovery') }}</h2>
@@ -189,3 +240,7 @@
 </section>
 @endif
 @endsection
+
+@push('scripts')
+<script src="{{ asset('assets/admin/js/system-updates.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+@endpush
