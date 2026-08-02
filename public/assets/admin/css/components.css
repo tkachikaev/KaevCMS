@@ -55,6 +55,7 @@ a.admin-menu-item[data-current]:hover {
     background: var(--admin-primary);
 }
 
+.admin-card,
 .form-card,
 .admin-section-card,
 .settings-actions,
@@ -68,6 +69,7 @@ a.admin-menu-item[data-current]:hover {
     box-shadow: var(--admin-shadow-card);
 }
 
+.admin-card h2,
 .form-card h2,
 .settings-card-heading h2,
 .system-section-heading h2,
@@ -90,36 +92,6 @@ a.admin-menu-item[data-current]:hover {
     line-height: 1.55;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select,
-.settings-field input,
-.settings-field select,
-.settings-field textarea {
-    border: 1px solid var(--admin-border-strong);
-    border-radius: var(--admin-radius-control);
-    background: var(--admin-surface);
-}
-
-.form-group input:hover,
-.form-group textarea:hover,
-.form-group select:hover,
-.settings-field input:hover,
-.settings-field select:hover,
-.settings-field textarea:hover {
-    border-color: #aebaca;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus,
-.settings-field input:focus,
-.settings-field select:focus,
-.settings-field textarea:focus {
-    border-color: var(--admin-primary);
-    box-shadow: 0 0 0 3px var(--admin-focus-ring);
-}
-
 .button {
     border-radius: var(--admin-radius-control);
     transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease, color .15s ease, transform .15s ease;
@@ -137,6 +109,17 @@ a.admin-menu-item[data-current]:hover {
 .button-secondary:hover:not(:disabled) {
     border-color: var(--admin-border-strong);
     background: var(--admin-surface-subtle);
+}
+
+.button:focus-visible {
+    outline: 3px solid var(--admin-focus-ring);
+    outline-offset: 2px;
+}
+
+.button.disabled,
+.button[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: .55;
 }
 
 /* Shared top-level tabs for Settings and Mail. */
@@ -306,37 +289,6 @@ a.admin-menu-item[data-current]:hover {
     justify-self: start;
 }
 
-.settings-field {
-    display: grid;
-    min-width: 0;
-    gap: 7px;
-}
-
-.settings-field > span {
-    display: block;
-    color: var(--admin-text);
-    font-weight: 700;
-}
-
-.settings-field > input,
-.settings-field > select,
-.settings-field > textarea {
-    width: 100%;
-    min-height: 42px;
-    padding: 10px 12px;
-    outline: none;
-    color: var(--admin-text);
-    font: inherit;
-}
-
-.settings-field > small {
-    display: block;
-    color: var(--admin-text-muted);
-    font-size: 11px;
-    font-weight: 400;
-    line-height: 1.55;
-}
-
 .settings-grid.two-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -474,6 +426,15 @@ a.admin-data-card:hover {
     line-height: 1.55;
 }
 
+.admin-card-heading-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.admin-card > h2:first-child,
 .form-card > h2:first-child {
     margin-bottom: 18px;
     padding-bottom: 14px;
@@ -481,10 +442,24 @@ a.admin-data-card:hover {
 }
 
 .admin-filter-bar {
-    border-color: var(--admin-border) !important;
+    display: grid;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--admin-border) !important;
     border-radius: var(--admin-radius-card) !important;
     background: var(--admin-surface) !important;
     box-shadow: var(--admin-shadow-card);
+}
+
+.admin-filter-bar > div:not(.admin-row-actions) {
+    display: grid;
+    gap: 6px;
+}
+
+.admin-filter-bar .admin-row-actions {
+    align-items: center;
 }
 
 .admin-filter-bar label {
@@ -511,6 +486,10 @@ a.admin-data-card:hover {
 .admin-filter-bar select:focus {
     border-color: var(--admin-primary) !important;
     box-shadow: 0 0 0 3px var(--admin-focus-ring) !important;
+}
+
+.daily-reward-claim-filters {
+    grid-template-columns: minmax(260px, 1fr) auto;
 }
 
 .admin-subtabs {
@@ -793,6 +772,15 @@ a.admin-data-card:hover {
     .audit-details-heading,
     .administrator-security-heading {
         flex-direction: column;
+    }
+
+    .admin-card-heading-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .daily-reward-claim-filters {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1259,3 +1247,186 @@ a.admin-data-card:hover {
     .admin-notification-actions { grid-template-columns: 1fr; }
     .admin-notification-actions button { min-height: 38px; }
 }
+
+/* Unified administration form controls. */
+.admin-field,
+.form-group,
+.settings-field {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+}
+
+.form-group + .form-group {
+    margin-top: 20px;
+}
+
+.admin-field-label,
+.form-group > label,
+.settings-field > span:first-child {
+    display: block;
+    color: var(--admin-text);
+    font-weight: 700;
+}
+
+.admin-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.admin-field > select,
+.admin-field > textarea,
+.form-group > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.form-group > select,
+.form-group > textarea,
+.settings-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.settings-field > select,
+.settings-field > textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--admin-border-strong);
+    border-radius: var(--admin-radius-control);
+    outline: none;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    font: inherit;
+}
+
+.admin-field > textarea,
+.form-group > textarea,
+.settings-field > textarea {
+    resize: vertical;
+    line-height: 1.55;
+}
+
+.admin-field > input:hover,
+.admin-field > select:hover,
+.admin-field > textarea:hover,
+.form-group > input:hover,
+.form-group > select:hover,
+.form-group > textarea:hover,
+.settings-field > input:hover,
+.settings-field > select:hover,
+.settings-field > textarea:hover {
+    border-color: #aebaca;
+}
+
+.admin-field > input:focus,
+.admin-field > select:focus,
+.admin-field > textarea:focus,
+.form-group > input:focus,
+.form-group > select:focus,
+.form-group > textarea:focus,
+.settings-field > input:focus,
+.settings-field > select:focus,
+.settings-field > textarea:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px var(--admin-focus-ring);
+}
+
+.admin-field.has-error > input,
+.admin-field.has-error > select,
+.admin-field.has-error > textarea,
+.form-group.has-error > input,
+.form-group.has-error > select,
+.form-group.has-error > textarea,
+.form-group:has(> .admin-field-error) > input,
+.form-group:has(> .admin-field-error) > select,
+.form-group:has(> .admin-field-error) > textarea {
+    border-color: var(--danger);
+}
+
+.admin-field.has-error > input:focus,
+.admin-field.has-error > select:focus,
+.admin-field.has-error > textarea:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, .12);
+}
+
+.admin-field-help,
+.admin-field-error,
+.form-group > small,
+.settings-field > small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+.admin-field-help,
+.form-group > small:not(.admin-field-error):not(.field-error):not(.form-error),
+.settings-field > small:not(.admin-field-error):not(.field-error):not(.form-error) {
+    color: var(--admin-text-muted);
+}
+
+.admin-field-error,
+small.field-error,
+p.field-error,
+.form-error {
+    margin: 0;
+    color: var(--danger) !important;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.admin-field-compact,
+.form-group.compact { margin-top: 20px; }
+
+.admin-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    padding: 20px 0;
+    border-top: 1px solid var(--admin-border);
+    cursor: pointer;
+}
+
+.admin-toggle-row-compact {
+    gap: 16px;
+    padding: 12px 0 0;
+    border-top: 0;
+}
+
+.admin-toggle-row.is-disabled { cursor: not-allowed; opacity: .64; }
+.admin-toggle-copy { min-width: 0; }
+.admin-toggle-copy strong,
+.admin-toggle-copy small { display: block; }
+.admin-toggle-copy strong { color: var(--admin-text); font-size: 14px; }
+.admin-toggle-copy small { max-width: 650px; margin-top: 4px; color: var(--admin-text-muted); font-size: 11px; font-weight: 400; line-height: 1.55; }
+
+.admin-switch-control { position: relative; flex: 0 0 46px; width: 46px; height: 26px; }
+.admin-switch-control input[type="checkbox"] {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.admin-switch-control input[type="checkbox"]:disabled { cursor: not-allowed; }
+.admin-switch-control > span {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #d1d5db;
+    transition: background-color .2s ease;
+}
+.admin-switch-control > span::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, .28);
+    transition: transform .2s ease;
+}
+.admin-switch-control input:checked + span { background: var(--admin-primary); }
+.admin-switch-control input:checked + span::after { transform: translateX(20px); }
+.admin-switch-control input:focus-visible + span { outline: 3px solid var(--admin-focus-ring); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+    .admin-toggle-row { gap: 18px; }
+}
+

@@ -177,14 +177,15 @@
 
         <section class="form-card">
             <h2>{{ __('module-promo-codes::messages.state') }}</h2>
-            <input type="hidden" name="enabled" value="0">
-            <label class="switch-row" for="enabled">
-                <input id="enabled" name="enabled" type="checkbox" value="1" @checked((bool) old('enabled', $promoCode->enabled ?? true)) @disabled(! $canManage)>
-                <span>
-                    <strong>{{ __('module-promo-codes::messages.enabled_switch') }}</strong>
-                    <small>{{ __('module-promo-codes::messages.enabled_help') }}</small>
-                </span>
-            </label>
+            <x-admin.toggle
+                id="enabled"
+                name="enabled"
+                :label="__('module-promo-codes::messages.enabled_switch')"
+                :hint="__('module-promo-codes::messages.enabled_help')"
+                :checked="(bool) old('enabled', $promoCode->enabled ?? true)"
+                :disabled="! $canManage"
+                compact
+            />
         </section>
 
         @if($promoCode->exists)

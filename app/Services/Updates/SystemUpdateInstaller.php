@@ -28,6 +28,7 @@ final class SystemUpdateInstaller
         private readonly UpdateLock $updateLock,
         private readonly AuditLogger $auditLogger,
         private readonly RuntimeDirectoryManager $runtimeDirectories,
+        private readonly VdsUpdateAgent $vdsUpdateAgent,
         private readonly AdminNotificationCenter $notifications,
         private readonly Application $application,
     ) {}
@@ -53,6 +54,7 @@ final class SystemUpdateInstaller
         $package = null;
         $fileBackup = null;
         $databaseBackup = null;
+        $deploymentPermissions = null;
         $wasDown = $this->application->isDownForMaintenance();
         $maintenanceActivated = false;
         $installationStarted = false;
@@ -85,6 +87,13 @@ final class SystemUpdateInstaller
                 throw new RuntimeException(__('The update preflight checks did not pass.'));
             }
 
+            if ($update->isAgentExecution()) {
+                $deploymentPermissions = $this->vdsUpdateAgent->deploymentPermissions();
+                if ($deploymentPermissions === null) {
+                    throw new RuntimeException(__('The VDS update agent deployment identity is invalid. Reinstall the agent.'));
+                }
+            }
+
             $update->forceFill([
                 'status' => SystemUpdate::STATUS_APPLYING,
                 'phase' => SystemUpdate::PHASE_PREPARING,
@@ -112,7 +121,13 @@ final class SystemUpdateInstaller
 
             $this->setPhase($update, SystemUpdate::PHASE_FILES, $log);
             $filesMayHaveChanged = true;
-            $this->filesystem->apply($package->files, $package->delete, $package->stagingPath, $log);
+            $this->filesystem->apply(
+                $package->files,
+                $package->delete,
+                $package->stagingPath,
+                $log,
+                $deploymentPermissions,
+            );
 
             if ($package->migrate) {
                 $this->setPhase($update, SystemUpdate::PHASE_MIGRATIONS, $log);
@@ -203,7 +218,7 @@ final class SystemUpdateInstaller
 
                 if ($filesMayHaveChanged && is_array($fileBackup)) {
                     try {
-                        $this->filesystem->rollback($fileBackup, $log);
+                        $this->filesystem->rollback($fileBackup, $log, $deploymentPermissions);
                     } catch (Throwable $rollbackException) {
                         $rollbackMessage = 'File rollback: '.$rollbackException->getMessage();
                         $rollbackErrors[] = $rollbackMessage;

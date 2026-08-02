@@ -480,14 +480,36 @@ sudo systemctl restart kaevcms-queue
 
 This step is required only for starting updates from the administration panel. The agent is not installed automatically and is not required for manual SSH updates.
 
-Run once from an account with `sudo` access:
+Run one command:
 
 ```bash
 cd /var/www/kaevcms
-sudo bash deployment/vds/install-update-agent.sh
+bash deployment/vds/install-update-agent.sh
 ```
 
-The script detects the project owner, PHP-FPM group, and PHP CLI binary, then creates dedicated `systemd.path` and `systemd.service` units for this installation. The agent opens no network port and does not grant `www-data` write access to application source code.
+No deployment choice is required. The script automatically:
+
+- requests `sudo` when the current account needs elevated rights;
+- detects the project owner;
+- detects the PHP-FPM user and group;
+- configures the systemd service as the project owner;
+- repairs safe application and runtime permissions;
+- verifies that PHP-FPM can read the application and write update packages.
+
+When the project is owned by `root`, the agent runs as `root` and prints a warning that the applied package receives full access. When the project is owned by a regular account, the service runs as that account. A separate agent account is not required.
+
+Only non-standard installations need explicit overrides:
+
+```bash
+bash deployment/vds/install-update-agent.sh \
+    --project-user kaevcms \
+    --web-user www-data \
+    --web-group www-data
+```
+
+`KAEVCMS_DEPLOY_USER`, `KAEVCMS_WEB_USER`, `KAEVCMS_WEB_GROUP`, and `KAEVCMS_PHP_BINARY` remain supported.
+
+The script records numeric UID/GID values, keeps application source read-only for PHP-FPM, creates group-writable runtime paths, and keeps database backups owner-only. The agent opens no network port.
 
 Verify the registration:
 
@@ -496,7 +518,7 @@ cd /var/www/kaevcms
 php artisan kaevcms:update-agent:status
 ```
 
-Expected output includes `State: ready` and `Ready: yes`. Running the installer again safely refreshes the units and registration.
+Expected output includes `State: ready` and `Ready: yes`. Running the same command again safely refreshes units, registration, and permissions. Agent contract version 3 is expected after this release.
 
 To remove the agent:
 
@@ -563,8 +585,10 @@ If registration is invalid or the units were removed, reinstall them:
 
 ```bash
 cd /var/www/kaevcms
-sudo bash deployment/vds/install-update-agent.sh
+bash deployment/vds/install-update-agent.sh
 ```
+
+> Re-run `bash deployment/vds/install-update-agent.sh` after changing the project owner or PHP-FPM group. The installer repairs both the protected Web Update runtime paths and group-readable application files without granting PHP-FPM write access to source code.
 
 ### Fallback update through SSH
 
@@ -787,3 +811,4 @@ sudo journalctl -u kaevcms-queue -n 100 --no-pager
 - [Laravel deployment](https://laravel.com/docs/11.x/deployment) — serve only `public/index.php`.
 - [Composer install command](https://getcomposer.org/doc/03-cli.md#install-i).
 - [Certbot nginx instructions](https://certbot.eff.org/instructions?ws=nginx&os=snap).
+

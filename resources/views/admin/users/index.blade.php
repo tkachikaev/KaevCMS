@@ -9,15 +9,15 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('Unverified') }}</span><strong>{{ $unverifiedCount }}</strong></div>
     <p class="admin-overview-copy">{{ __('This section manages CMS users only. It does not create or modify Login Server accounts.') }}</p>
 </div>
-<form class="admin-filter-bar users-filters" method="GET" action="{{ route('admin.users.index') }}">
+<x-admin.filter-bar :action="route('admin.users.index')" class="users-filters">
     <div class="users-search-field"><label for="users-search">{{ __('Search') }}</label><input id="users-search" type="search" name="q" value="{{ $search }}" maxlength="100" placeholder="{{ __('Username or email') }}"></div>
     <div><label for="users-status">{{ __('Status') }}</label><select id="users-status" name="status"><option value="">{{ __('All') }}</option><option value="active" @selected($activeStatus === 'active')>{{ __('Active') }}</option><option value="inactive" @selected($activeStatus === 'inactive')>{{ __('Disabled') }}</option></select></div>
     <div><label for="users-verification">Email</label><select id="users-verification" name="verification"><option value="">{{ __('Any status') }}</option><option value="verified" @selected($activeVerification === 'verified')>{{ __('Verified') }}</option><option value="unverified" @selected($activeVerification === 'unverified')>{{ __('Not verified') }}</option></select></div>
-    <button class="button button-primary" type="submit">{{ __('Apply') }}</button>
-    @if ($search !== '' || $activeStatus !== '' || $activeVerification !== '')<a wire:navigate class="button button-secondary" href="{{ route('admin.users.index') }}">{{ __('Reset') }}</a>@endif
-</form>
+    <x-admin.button type="submit" variant="primary">{{ __('Apply') }}</x-admin.button>
+    @if ($search !== '' || $activeStatus !== '' || $activeVerification !== '')<x-admin.button wire:navigate :href="route('admin.users.index')">{{ __('Reset') }}</x-admin.button>@endif
+</x-admin.filter-bar>
 @if ($users->isEmpty())
-    <div class="admin-empty-state empty-state"><div class="empty-state-mark" aria-hidden="true">U</div><h2>{{ __('No users found') }}</h2><p>{{ __('Change the filters or wait for the first website registration.') }}</p>@if($search !== '' || $activeStatus !== '' || $activeVerification !== '')<a wire:navigate class="button button-secondary" href="{{ route('admin.users.index') }}">{{ __('Show all') }}</a>@endif</div>
+    <div class="admin-empty-state empty-state"><div class="empty-state-mark" aria-hidden="true">U</div><h2>{{ __('No users found') }}</h2><p>{{ __('Change the filters or wait for the first website registration.') }}</p>@if($search !== '' || $activeStatus !== '' || $activeVerification !== '')<x-admin.button wire:navigate :href="route('admin.users.index')">{{ __('Show all') }}</x-admin.button>@endif</div>
 @else
     <div class="admin-card-list users-list">
         <div class="admin-card-list-header user-row user-row-header"><span>{{ __('User') }}</span><span>Email</span><span>{{ __('Registered') }}</span><span>{{ __('Last sign in') }}</span><span>{{ __('Status') }}</span><span></span></div>

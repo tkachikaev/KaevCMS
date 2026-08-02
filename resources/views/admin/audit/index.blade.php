@@ -3,13 +3,17 @@
 @section('description', __('Administrator, user, mail and CMS system events.'))
 @section('content')
 <div class="admin-overview audit-summary"><div class="admin-overview-stat"><span>{{ __('Total records') }}</span><strong>{{ $totalCount }}</strong></div><p class="admin-overview-copy">{{ __('Records are retained for :days days. Passwords, tokens and other secrets are never written to the log.', ['days' => $retentionDays]) }}</p></div>
-<nav class="admin-subtabs audit-tabs" aria-label="{{ __('Audit categories') }}">
-    <a wire:navigate @class(['active' => $activeCategory === null]) href="{{ route('admin.logs.index') }}">{{ __('All') }} <span>{{ $totalCount }}</span></a>
+<x-admin.tabs :label="__('Audit categories')" subtle class="audit-tabs">
+    <x-admin.tab wire:navigate :href="route('admin.logs.index')" :active="$activeCategory === null">
+        {{ __('All') }} <span>{{ $totalCount }}</span>
+    </x-admin.tab>
     @foreach($categories as $category)
         @php($categoryLabel = \App\Models\AuditLog::categoryLabelFor($category))
-        <a wire:navigate @class(['active' => $activeCategory === $category]) href="{{ route('admin.logs.index', ['category'=>$category]) }}">{{ $categoryLabel }} <span>{{ (int)($counts[$category]??0) }}</span></a>
+        <x-admin.tab wire:navigate :href="route('admin.logs.index', ['category' => $category])" :active="$activeCategory === $category">
+            {{ $categoryLabel }} <span>{{ (int) ($counts[$category] ?? 0) }}</span>
+        </x-admin.tab>
     @endforeach
-</nav>
+</x-admin.tabs>
 @if($logs->isEmpty())
     <div class="admin-empty-state empty-state"><div class="empty-state-mark" aria-hidden="true">J</div><h2>{{ __('No records yet') }}</h2><p>{{ __('New events appear here after sign-ins, content changes or system operations.') }}</p></div>
 @else

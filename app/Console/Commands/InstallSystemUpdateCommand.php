@@ -45,13 +45,15 @@ final class InstallSystemUpdateCommand extends Command
         }
 
         $uuid = (string) Str::uuid();
-        $packageDirectory = storage_path('app/kaevcms/updates/packages');
+        $updatesDirectory = storage_path('app/kaevcms/updates');
+        $packageDirectory = $updatesDirectory.DIRECTORY_SEPARATOR.'packages';
         $storedPath = $packageDirectory.DIRECTORY_SEPARATOR.$uuid.'.zip';
         $package = null;
         $update = null;
 
         try {
-            $this->preparePrivateDirectory($packageDirectory);
+            $this->prepareSharedDirectory($updatesDirectory);
+            $this->prepareSharedDirectory($packageDirectory);
             if (! copy($sourcePath, $storedPath)) {
                 throw new RuntimeException('Unable to copy the update package into protected storage.');
             }
@@ -165,20 +167,20 @@ final class InstallSystemUpdateCommand extends Command
             || preg_match('/\A[A-Za-z]:[\\\\\/]/', $path) === 1;
     }
 
-    private function preparePrivateDirectory(string $path): void
+    private function prepareSharedDirectory(string $path): void
     {
-        if (! is_dir($path) && ! mkdir($path, 0700, true) && ! is_dir($path)) {
+        if (! is_dir($path) && ! mkdir($path, 0770, true) && ! is_dir($path)) {
             throw new RuntimeException('Unable to create the protected update package directory.');
         }
 
-        if (PHP_OS_FAMILY !== 'Windows' && ! @chmod($path, 0700)) {
+        if (PHP_OS_FAMILY !== 'Windows' && ! @chmod($path, 02770)) {
             throw new RuntimeException('Unable to secure the update package directory.');
         }
     }
 
     private function protectFile(string $path): void
     {
-        if (PHP_OS_FAMILY !== 'Windows' && ! @chmod($path, 0600)) {
+        if (PHP_OS_FAMILY !== 'Windows' && ! @chmod($path, 0660)) {
             throw new RuntimeException('Unable to secure the copied update package.');
         }
     }

@@ -31,14 +31,18 @@
 
     <section class="form-card daily-reward-settings-card">
         <div class="form-grid">
-            <div class="form-group">
-                <label>{{ __('module-daily-rewards::messages.state') }}</label>
-                <input type="hidden" name="enabled" value="0">
-                <label class="switch-row" for="calendar_enabled">
-                    <input id="calendar_enabled" name="enabled" type="checkbox" value="1" @checked((bool) old('enabled', $calendar->enabled)) @disabled(! $canManage)>
-                    <span><strong>{{ __('module-daily-rewards::messages.enabled_switch') }}</strong><small>{{ __('module-daily-rewards::messages.enabled_help') }}</small></span>
-                </label>
-                @error('enabled')<small class="form-error">{{ $message }}</small>@enderror
+            <div class="admin-field @error('enabled') has-error @enderror">
+                <span class="admin-field-label">{{ __('module-daily-rewards::messages.state') }}</span>
+                <x-admin.toggle
+                    id="calendar_enabled"
+                    name="enabled"
+                    :label="__('module-daily-rewards::messages.enabled_switch')"
+                    :hint="__('module-daily-rewards::messages.enabled_help')"
+                    :checked="(bool) old('enabled', $calendar->enabled)"
+                    :disabled="! $canManage"
+                    compact
+                />
+                @error('enabled')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
             </div>
         </div>
         <p class="form-help">{{ __('module-daily-rewards::messages.reward_editor_modal_help') }}</p>
@@ -135,12 +139,15 @@
                     @else
                         <input type="hidden" name="days[{{ $day->day_number }}][enabled]" value="0">
                     @endif
-                    <label class="switch-row daily-reward-day-toggle">
-                        <input @if(! $locked) name="days[{{ $day->day_number }}][enabled]" @endif type="checkbox" value="1" @checked($dayEnabled) @disabled(! $canManage || $locked) data-daily-day-enabled>
-                        <span><strong>{{ __('module-daily-rewards::messages.day_enabled') }}</strong><small>{{ __('module-daily-rewards::messages.day_enabled_modal_help') }}</small></span>
+                    <label class="admin-toggle-row admin-toggle-row-compact daily-reward-day-toggle">
+                        <span class="admin-toggle-copy"><strong>{{ __('module-daily-rewards::messages.day_enabled') }}</strong><small>{{ __('module-daily-rewards::messages.day_enabled_modal_help') }}</small></span>
+                        <span class="admin-switch-control">
+                            <input @if(! $locked) name="days[{{ $day->day_number }}][enabled]" @endif type="checkbox" value="1" @checked($dayEnabled) @disabled(! $canManage || $locked) data-daily-day-enabled>
+                            <span aria-hidden="true"></span>
+                        </span>
                     </label>
-                    @error('days.'.$day->day_number)<small class="form-error">{{ $message }}</small>@enderror
-                    @error('days.'.$day->day_number.'.rewards')<small class="form-error">{{ $message }}</small>@enderror
+                    @error('days.'.$day->day_number)<small class="admin-field-error">{{ $message }}</small>@enderror
+                    @error('days.'.$day->day_number.'.rewards')<small class="admin-field-error">{{ $message }}</small>@enderror
 
                     <div class="daily-reward-item-list" data-daily-item-list>
                         @foreach($rows as $index => $row)
@@ -158,13 +165,13 @@
                                     @if($locked)<input type="hidden" name="days[{{ $day->day_number }}][rewards][{{ $index }}][item_id]" value="{{ is_array($row) ? ($row['item_id'] ?? '') : '' }}">@endif
                                     <input @if(! $locked) name="days[{{ $day->day_number }}][rewards][{{ $index }}][item_id]" @endif data-daily-item-id type="number" min="1" step="1" inputmode="numeric" value="{{ is_array($row) ? ($row['item_id'] ?? '') : '' }}" @disabled(! $canManage || $locked)>
                                     <small data-daily-item-name>{{ $previewItemId > 0 ? ($gameItemCatalog->knownName($calendar->gameServer, $previewItemId) ?? __('module-daily-rewards::messages.unknown_item')) : __('module-daily-rewards::messages.enter_item_id') }}</small>
-                                    @error('days.'.$day->day_number.'.rewards.'.$index.'.item_id')<small class="form-error">{{ $message }}</small>@enderror
+                                    @error('days.'.$day->day_number.'.rewards.'.$index.'.item_id')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label>{{ __('module-daily-rewards::messages.amount') }}</label>
                                     @if($locked)<input type="hidden" name="days[{{ $day->day_number }}][rewards][{{ $index }}][amount]" value="{{ is_array($row) ? ($row['amount'] ?? '') : '' }}">@endif
                                     <input @if(! $locked) name="days[{{ $day->day_number }}][rewards][{{ $index }}][amount]" @endif data-daily-item-amount type="number" min="1" step="1" inputmode="numeric" value="{{ is_array($row) ? ($row['amount'] ?? '') : '' }}" @disabled(! $canManage || $locked)>
-                                    @error('days.'.$day->day_number.'.rewards.'.$index.'.amount')<small class="form-error">{{ $message }}</small>@enderror
+                                    @error('days.'.$day->day_number.'.rewards.'.$index.'.amount')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 @if($canManage && ! $locked)
                                     <button class="button button-secondary daily-reward-item-remove" type="button" data-daily-item-remove aria-label="{{ __('module-daily-rewards::messages.remove_reward') }}">×</button>

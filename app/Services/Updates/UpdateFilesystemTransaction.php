@@ -116,9 +116,16 @@ final class UpdateFilesystemTransaction
     /**
      * @param  list<array{source: string, target: string, sha256: string, size: int}>  $files
      * @param  list<string>  $delete
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}|null  $deploymentPermissions
      */
-    public function apply(array $files, array $delete, string $stagingPath, UpdateLog $log): void
-    {
+    public function apply(
+        array $files,
+        array $delete,
+        string $stagingPath,
+        UpdateLog $log,
+        ?array $deploymentPermissions = null,
+    ): void {
+        $this->assertDeploymentPermissions($deploymentPermissions);
         foreach ($delete as $target) {
             $this->removePath($this->layout->resolveTarget($target));
             $log->write("Removed obsolete path: {$target}");
@@ -168,9 +175,16 @@ final class UpdateFilesystemTransaction
 
                 throw new RuntimeException(__('Unable to activate update target: :target', ['target' => $file['target']]));
             }
+
+            if ($deploymentPermissions !== null) {
+                $this->secureUpdatedTarget($destination, $file['target'], $deploymentPermissions);
+            }
         }
 
         $log->write('Application files were replaced successfully.');
+        if ($deploymentPermissions !== null) {
+            $log->write('VDS application ownership, group access and file modes were verified.');
+        }
     }
 
     /** @param array{backup_root: string, entries: list<array{target: string, existed: bool, sha256: string|null}>} $backup */
@@ -190,9 +204,13 @@ final class UpdateFilesystemTransaction
         }
     }
 
-    /** @param array{backup_root: string, entries: list<array{target: string, existed: bool, sha256: string|null}>} $backup */
-    public function rollback(array $backup, UpdateLog $log): void
+    /**
+     * @param  array{backup_root: string, entries: list<array{target: string, existed: bool, sha256: string|null}>}  $backup
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}|null  $deploymentPermissions
+     */
+    public function rollback(array $backup, UpdateLog $log, ?array $deploymentPermissions = null): void
     {
+        $this->assertDeploymentPermissions($deploymentPermissions);
         $this->verifyBackup($backup);
 
         foreach ($backup['entries'] as $entry) {
@@ -212,10 +230,190 @@ final class UpdateFilesystemTransaction
 
             if ($entry['existed']) {
                 $this->copyPath($backupPath, $absolute);
+                if ($deploymentPermissions !== null) {
+                    $this->secureRestoredTarget($absolute, $target, $deploymentPermissions);
+                }
             }
         }
 
         $log->write('Application files were restored from the update backup.', 'WARN');
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $permissions
+     */
+    private function assertDeploymentPermissions(?array $permissions): void
+    {
+        if ($permissions === null || PHP_OS_FAMILY === 'Windows') {
+            return;
+        }
+
+        $deploymentUser = $permissions['deployment_user'] ?? null;
+        $deploymentUid = $permissions['deployment_uid'] ?? null;
+        $webGroup = $permissions['web_group'] ?? null;
+        $webGid = $permissions['web_gid'] ?? null;
+
+        if (! is_string($deploymentUser)
+            || trim($deploymentUser) === ''
+            || ! is_int($deploymentUid)
+            || $deploymentUid < 0
+            || ! is_string($webGroup)
+            || trim($webGroup) === ''
+            || ! is_int($webGid)
+            || $webGid < 0) {
+            throw new RuntimeException(__('The VDS update agent deployment identity is invalid. Reinstall the agent.'));
+        }
+    }
+
+    /**
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}  $permissions
+     */
+    private function secureUpdatedTarget(string $absolute, string $logicalTarget, array $permissions): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            return;
+        }
+
+        $root = str_starts_with($logicalTarget, 'public/')
+            ? $this->layout->publicRoot()
+            : $this->layout->coreRoot();
+        $this->secureDirectoryChain(dirname($absolute), $root, $logicalTarget, $permissions);
+        $this->securePath($absolute, false, $logicalTarget, $permissions);
+    }
+
+    /**
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}  $permissions
+     */
+    private function secureRestoredTarget(string $absolute, string $logicalTarget, array $permissions): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            return;
+        }
+
+        $root = str_starts_with($logicalTarget, 'public/')
+            ? $this->layout->publicRoot()
+            : $this->layout->coreRoot();
+        $this->secureDirectoryChain(dirname($absolute), $root, $logicalTarget, $permissions);
+        $this->securePathRecursively($absolute, $logicalTarget, $permissions);
+    }
+
+    /**
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}  $permissions
+     */
+    private function secureDirectoryChain(string $directory, string $root, string $logicalTarget, array $permissions): void
+    {
+        $root = rtrim($root, '/\\');
+        $cursor = rtrim($directory, '/\\');
+        $directories = [];
+
+        while ($cursor !== '' && $cursor !== dirname($cursor)) {
+            if ($cursor === $root) {
+                $directories[] = $cursor;
+                break;
+            }
+
+            if (! str_starts_with(str_replace('\\', '/', $cursor).'/', str_replace('\\', '/', $root).'/')) {
+                throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+            }
+
+            $directories[] = $cursor;
+            $cursor = dirname($cursor);
+        }
+
+        foreach (array_reverse($directories) as $path) {
+            $this->securePath($path, true, $logicalTarget, $permissions);
+        }
+    }
+
+    /**
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}  $permissions
+     */
+    private function securePathRecursively(string $path, string $logicalTarget, array $permissions): void
+    {
+        if (is_file($path)) {
+            $this->securePath($path, false, $logicalTarget, $permissions);
+
+            return;
+        }
+
+        if (! is_dir($path) || is_link($path)) {
+            return;
+        }
+
+        $this->securePath($path, true, $logicalTarget, $permissions);
+        $items = scandir($path);
+        if (! is_array($items)) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $this->securePathRecursively($path.DIRECTORY_SEPARATOR.$item, $logicalTarget, $permissions);
+        }
+    }
+
+    /**
+     * @param  array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}  $permissions
+     */
+    private function securePath(string $path, bool $directory, string $logicalTarget, array $permissions): void
+    {
+        clearstatcache(true, $path);
+        if (($directory && ! is_dir($path)) || (! $directory && ! is_file($path)) || is_link($path)) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+
+        $owner = fileowner($path);
+        if (! is_int($owner)) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+        if ($owner !== $permissions['deployment_uid'] && ! @chown($path, $permissions['deployment_uid'])) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+
+        $group = filegroup($path);
+        if (! is_int($group)) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+        if ($group !== $permissions['web_gid'] && ! @chgrp($path, $permissions['web_gid'])) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+
+        $mode = $directory ? 02750 : ($this->shouldRemainExecutable($path) ? 0750 : 0640);
+        if (! @chmod($path, $mode)) {
+            throw new RuntimeException(__('Unable to apply secure VDS update permissions to: :target', ['target' => $logicalTarget]));
+        }
+
+        clearstatcache(true, $path);
+        $finalOwner = fileowner($path);
+        $finalGroup = filegroup($path);
+        $finalPermissions = fileperms($path);
+        if ($finalOwner !== $permissions['deployment_uid']
+            || $finalGroup !== $permissions['web_gid']
+            || ! is_int($finalPermissions)
+            || ($finalPermissions & 07777) !== $mode) {
+            throw new RuntimeException(__('The updated application file is not readable by the configured PHP-FPM group: :target', ['target' => $logicalTarget]));
+        }
+    }
+
+    private function shouldRemainExecutable(string $path): bool
+    {
+        $permissions = fileperms($path);
+        if (is_int($permissions) && ($permissions & 0111) !== 0) {
+            return true;
+        }
+
+        $stream = @fopen($path, 'rb');
+        if (! is_resource($stream)) {
+            return false;
+        }
+
+        $prefix = fread($stream, 2);
+        fclose($stream);
+
+        return $prefix === '#!';
     }
 
     /**

@@ -540,7 +540,7 @@ test('queue management opens from dashboard diagnostics', async ({ page }) => {
 test('system information reports APP_KEY encryption health without exposing secrets', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/system');
 
-    const encryptionCard = page.getByRole('heading', { name: 'Шифрование APP_KEY' }).locator('..');
+    const encryptionCard = page.getByTestId('system-app-key-card');
     await expect(encryptionCard).toBeVisible();
     await expect(encryptionCard.getByText('Зашифрованные значения', { exact: true })).toBeVisible();
     await expect(encryptionCard.getByText('Недоступные значения', { exact: true })).toBeVisible();
@@ -569,52 +569,59 @@ test('diagnostic download limit shows an inline wait message instead of HTTP 429
     await expect(page.getByText('Too Many Requests', { exact: true })).toHaveCount(0);
 });
 
-test('system information shows safe external database diagnostics on mobile', async ({ page }) => {
+test('system information shows compact APP_KEY, LoginServer and GameServer cards', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/system');
 
     const diagnostics = page.getByTestId('external-database-diagnostics');
     await expect(diagnostics).toBeVisible();
-    await expect(diagnostics.getByRole('heading', { name: 'Диагностика внешних баз', exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('Browser LoginServer', { exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('Browser World', { exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('17 мс', { exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('Mobius legacy', { exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('Создание аккаунтов', { exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('characters', { exact: true })).toBeVisible();
-    await expect(diagnostics.getByRole('button', { name: 'Проверить внешние базы', exact: true })).toBeVisible();
-    await expect(page.getByText('browser_test', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('browser_test_unsupported', { exact: true })).toHaveCount(0);
+    await expect(diagnostics.getByRole('heading', { name: 'Ключ и игровые подключения', exact: true })).toBeVisible();
+    await expect(page.getByTestId('system-app-key-card')).toBeVisible();
 
-    await page.getByRole('button', { name: 'EN', exact: true }).click();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
-    await expect(page.getByText('optional_character_services_with_extended_identifier', { exact: true })).toBeVisible();
+    const loginCard = page.getByTestId('system-connection-card').filter({ has: page.getByRole('heading', { name: 'LoginServer', exact: true }) });
+    const gameCard = page.getByTestId('system-connection-card').filter({ has: page.getByRole('heading', { name: 'GameServer', exact: true }) });
+    await expect(loginCard).toBeVisible();
+    await expect(gameCard).toBeVisible();
+    await expect(diagnostics.getByRole('button', { name: 'Проверить внешние базы', exact: true })).toBeVisible();
+    await expect(diagnostics.getByText('Browser LoginServer', { exact: true })).toHaveCount(0);
+    await expect(diagnostics.getByText('Browser World', { exact: true })).toHaveCount(0);
+    await expect(diagnostics.getByText('characters', { exact: true })).toHaveCount(0);
+    await expect(diagnostics.getByText('Создание аккаунтов', { exact: true })).toHaveCount(0);
+
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const desktopCards = page.locator('.system-compact-card-grid > .system-compact-card');
+    await expect(desktopCards).toHaveCount(3);
+    const desktopBoxes = await desktopCards.evaluateAll((cards) => cards.map((card) => {
+        const box = card.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width };
+    }));
+    expect(Math.max(...desktopBoxes.map((box) => box.y)) - Math.min(...desktopBoxes.map((box) => box.y))).toBeLessThan(2);
+    expect(new Set(desktopBoxes.map((box) => Math.round(box.x))).size).toBe(3);
+    expect(desktopBoxes.every((box) => box.width > 200)).toBe(true);
 
     const viewportMatrix = [
         { width: 390, height: 844 },
         { width: 768, height: 900 },
-        { width: 800, height: 900 },
         { width: 1024, height: 900 },
         { width: 1440, height: 1000 },
     ];
 
     for (const viewport of viewportMatrix) {
-        await test.step(`system diagnostics fit ${viewport.width}px viewport`, async () => {
+        await test.step(`compact system cards fit ${viewport.width}px viewport`, async () => {
             await page.setViewportSize(viewport);
-            await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
-            await expect(page.getByText('optional_character_services_with_extended_identifier', { exact: true })).toBeVisible();
-            await expectNoDocumentHorizontalOverflow(page, `${viewport.width}px system diagnostics`);
+            await expect(page.getByTestId('system-app-key-card')).toBeVisible();
+            await expect(loginCard).toBeVisible();
+            await expect(gameCard).toBeVisible();
+            await expectNoDocumentHorizontalOverflow(page, `${viewport.width}px compact system cards`);
         });
     }
 
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.locator('.admin-account-copy')).toBeHidden();
-    await expect(page.locator('.admin-account-chevron')).toBeHidden();
+    await page.getByRole('button', { name: 'EN', exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('heading', { name: 'Key and game connections', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'APP_KEY encryption', exact: true })).toBeVisible();
 
-    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.getByRole('button', { name: 'RU', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-    await expect(page.getByTestId('external-database-diagnostics')).toBeVisible();
 });
 
 test('removed legacy dashboard endpoint returns not found', async ({ page }) => {

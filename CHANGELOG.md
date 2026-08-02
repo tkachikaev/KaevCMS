@@ -1,3 +1,126 @@
+## 0.47.14 - 2026-08-02
+
+### Fixed
+
+- Fixed the PHPStan `if.alwaysFalse` regression in `UpdatePackageInspector` introduced by the repeated staging symbolic-link race-condition guard.
+- Preserved both runtime checks before and after staging-directory creation by routing them through a dedicated assertion method instead of removing the second security check.
+- Added a Unix regression confirming that a symbolic-link staging root is rejected.
+- Kept Web Update behavior and VDS update-agent contract version 3 unchanged; no agent reinstall, migration, Composer dependency, bundled-module version, or theme version change is required. The cumulative 0.47.14 package supports updates from 0.42.4 through 0.47.13.
+
+## 0.47.13 - 2026-08-02
+
+### Fixed
+
+- Fixed Web Update package inspection on root-owned VDS installations where `storage/app/kaevcms/updates/staging` correctly belongs to the deployment owner and PHP-FPM group with mode `2770`.
+- Stopped requiring PHP-FPM to run `chmod` on an existing secure staging directory that is already writable through its group; Linux permits only the owner or root to change that mode.
+- Preserved staging security checks: symbolic links are rejected, newly created or world-accessible directories are normalized when possible, and unsafe or non-writable directories still fail closed.
+- Added a regression that forces `chmod` failure and confirms an existing secure group-writable staging directory remains usable.
+- Kept VDS update-agent contract version 3 unchanged; no agent reinstall, migration, Composer dependency, bundled-module version, or theme version change is required. The cumulative 0.47.13 package supports updates from 0.42.4 through 0.47.12.
+
+## 0.47.12 - 2026-08-02
+
+### Fixed
+
+- Fixed Pint formatting in the VDS update filesystem transaction and Web Updater release regression.
+- Resolved PHPStan always-true type checks without removing runtime validation: malformed deployment user, UID, web group or GID metadata still fails before any application file is changed.
+- Added regressions for root-owned and regular-user-owned systemd service identities, mandatory reinstall of legacy agent v2 registrations, a clean no-request agent run, and malformed deployment identity metadata.
+- Kept VDS update-agent contract version 3 and the existing systemd/ownership model unchanged; an already ready v3 agent does not require reinstallation.
+- No database migration, Composer dependency, bundled-module version, or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.12 package supports direct updates from 0.42.4 through 0.47.11.
+
+## 0.47.11 - 2026-08-02
+
+### Fixed
+
+- Moved GNU `find` global `-mindepth` options before path expressions in the VDS update-agent installer, removing the warnings shown during installation or reinstallation.
+- Added a release regression that requires the warning-free option order in both protected public-path and KaevCMS runtime scans.
+- Kept agent contract version 3 and the existing root/regular-user ownership model unchanged; no agent reinstall is required solely for this maintenance update.
+- No database migration, Composer dependency, bundled-module version, or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.11 package supports direct updates from 0.42.4 through 0.47.10.
+
+## 0.47.10 - 2026-08-02
+
+### Fixed
+
+- Reworked the VDS agent installer into a single-command flow that requests sudo automatically when required and works from both root and regular administrative shells.
+- Added automatic project-owner and PHP-FPM identity detection, with explicit `--project-user`, `--web-user`, and `--web-group` overrides for non-standard servers.
+- Repaired application ownership and group-readable modes during agent installation while keeping PHP-FPM without source-code write access.
+- Repaired Web Update request, package, staging, cache, log, upload, and KaevCMS runtime paths with protected group-write inheritance.
+- Normalized ownership, group, and modes for every application file replaced by the VDS agent and for files restored during rollback, preventing selective HTTP 500 permission failures.
+- Added access probes for PHP-FPM reads and Web Update writes, agent contract version 3 metadata, RU/EN documentation, and permission regressions.
+- No database migration, Composer dependency, bundled-module version, or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.10 package supports direct updates from 0.42.4 through 0.47.9.
+
+## 0.47.9 - 2026-08-02
+
+### Fixed
+
+- Added an isolated test-only `APP_KEY` to PHPUnit so clean release trees do not depend on a server `.env` key.
+- Synchronized shared administration tab expectations and the visual active-tab contract with the current generated class order and computed `display: flex` value.
+- Made the isolated Support Tickets UI test explicitly enable and boot its module before checking module routes.
+- Updated CLI updater and VDS agent tests for the protected group-write contract introduced in 0.47.8.
+- Made the browser runner create and remove a temporary `.env` marker only when a clean release tree has no physical file.
+- Added a regression for the mail category on the administration audit log.
+- Application runtime behavior, migrations, Composer dependencies, bundled-module versions and theme versions are unchanged. The cumulative update line remains based on `0.42.4`; the 0.47.9 package supports direct updates from 0.42.4 through 0.47.8.
+
+## 0.47.8 - 2026-08-02
+
+### Fixed
+
+- Fixed VDS browser-update uploads on root-owned installations where `storage/app/kaevcms/updates/packages` or `staging` had been created with owner-only permissions.
+- Updated the VDS agent installer to create and repair request, package and staging directories as deployment-owner/PHP-FPM-group runtime paths with setgid group inheritance, without granting PHP-FPM write access to application source files.
+- Changed the CLI updater to preserve protected group access (`2770` directories and `0660` package files) instead of locking the Web Updater out with `0700`/`0600` permissions.
+- Bumped the local agent contract to version 2. Older registrations are shown as needing repair and can be fixed by rerunning the existing installer command.
+- Added clear upload/staging permission errors, RU/EN documentation and PHPUnit/release regressions for the shared runtime-directory contract.
+- No migration, Composer dependency, bundled-module version or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.8 package supports direct updates from 0.42.4 through 0.47.7.
+
+## 0.47.7 - 2026-08-02
+
+### Changed
+
+- Added shared Blade components for administration cards, card headings, buttons, top-level and contextual tabs, and filter bars while preserving the established light visual style and existing compatibility classes.
+- Migrated Settings, Mail, Audit, Users, Daily Rewards and Support Tickets reference screens to the shared UI contracts; removed duplicate legacy styling for audit tabs and user filters.
+- Fixed the Support Tickets editor-permission regression introduced by the form unification: toggle titles and hints render as separate block lines again, so dependent controls remain readable and the Playwright contract passes.
+- Added PHPUnit and Playwright regressions for the shared card/button/tab/filter system, responsive layouts and the editor-permission label contract.
+- No migration, Composer dependency, bundled-module version or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.7 package supports direct updates from 0.42.4 through 0.47.6.
+
+## 0.47.6 - 2026-08-02
+
+- Added shared `x-admin.field` and `x-admin.toggle` Blade components for standard administration forms.
+- Standardized field height, thin borders, focus states, hints and validation errors around the established Security settings appearance.
+- Replaced legacy publication and module checkboxes with the modern administration switch used by Registration and Game Accounts.
+- Unified validation error classes across system settings, GameServer/LoginServer management and bundled modules, including accessible `role="alert"` output and `aria-invalid` on migrated fields.
+- Removed obsolete duplicate field and switch CSS while retaining visual compatibility for existing `form-group` markup.
+- Added PHPUnit and Playwright regressions for shared form components, desktop dimensions, mobile overflow and switch interaction.
+- No database migration, Composer dependency or bundled-theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.6 package supports direct updates from 0.42.4 through 0.47.5.
+
+## 0.47.5 - 2026-08-02
+
+### Fixed
+
+- Added the missing literal `GameServer` key to RU/EN JSON localization so the compact external-database diagnostic card no longer depends on fallback rendering.
+- Updated the Web Updater feature expectation to the final compact trusted-package warning introduced in 0.47.4.
+- Updated the APP_KEY Playwright regression to use the stable `system-app-key-card` test id instead of the heading wrapper changed by the compact-card layout.
+- Corrected the stale Russian release paragraph in README and synchronized release metadata regressions for this maintenance package.
+- No application runtime behavior, migration, Composer dependency, bundled-module or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.5 package supports direct updates from 0.42.4 through 0.47.4.
+
+## 0.47.4 - 2026-08-02
+
+### Changed
+
+- Replaced the large LoginServer and GameServer diagnostic sections on **System information** with three compact cards for APP_KEY, LoginServer and GameServer. The connection cards show only aggregate configured/available counts, current state, last check and a direct settings link.
+- Retained safe external-database refresh and support-report diagnostics without showing server names, schema tables, capabilities, database credentials or other verbose details on the page.
+- Removed the separate trusted-source warning above the Web Updater upload card. The existing upload description is now one compact red warning that explains official-source use, program-file replacement, pre-install verification and owner responsibility.
+- Added PHPUnit and Playwright regressions for aggregate connection states, three-card desktop layout, responsive overflow, hidden detailed server data and the single compact update warning.
+- No migration, Composer dependency, bundled-module or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.4 package supports direct updates from 0.42.4 through 0.47.3.
+
+## 0.47.3 - 2026-08-02
+
+### Fixed
+
+- Allowed `deployment/vds/install-update-agent.sh` to install the VDS update agent when the KaevCMS project is intentionally owned by `root` instead of rejecting that deployment model.
+- Added an explicit root-privilege warning: a selected update package is applied with root access and must come from a trusted source. PHP-FPM still receives access only to the dedicated request directory.
+- Improved PHP-FPM group detection for root-owned projects by falling back to the standard `www-data` group when `storage` is still owned by `root`; non-standard pools can use `KAEVCMS_WEB_GROUP`.
+- Documented root and non-root installation, reinstallation and diagnostics in RU/EN and added release regressions for the original root-owner failure.
+- No migration, Composer dependency, bundled-module or theme version changed. The cumulative update line remains based on `0.42.4`; the 0.47.3 package supports direct updates from 0.42.4 through 0.47.2.
+
 ## 0.47.2 - 2026-08-02
 
 ### Fixed

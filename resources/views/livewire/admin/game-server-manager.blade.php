@@ -11,7 +11,7 @@
         <div class="server-manager-toolbar-actions">
             <label class="server-manager-online-toggle" for="show_public_online">
                 <span>{{ __('Show online on public website') }}</span>
-                <span class="switch-control">
+                <span class="admin-switch-control">
                     <input id="show_public_online" type="checkbox" @checked($showPublicOnline) wire:change="setShowPublicOnline($event.target.checked)">
                     <span aria-hidden="true"></span>
                 </span>
@@ -197,7 +197,7 @@
                                             @if($code === $defaultLocale)<span class="compact-default-badge">{{ __('Default locale marker') }}</span>@endif
                                         </label>
                                         <input id="live_game_name_{{ $code }}" type="text" maxlength="100" wire:model="translations.{{ $code }}" @if($code === $defaultLocale) required @endif>
-                                        @error('translations.'.$code)<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('translations.'.$code)<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                 @endforeach
                             </div>
@@ -206,17 +206,17 @@
                                 <div class="form-group">
                                     <label for="live_game_rates">{{ __('Server rates') }}</label>
                                     <input id="live_game_rates" type="text" maxlength="100" wire:model="serverRates" placeholder="x5">
-                                    @error('serverRates')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('serverRates')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="live_game_chronicle">{{ __('Chronicle') }}</label>
                                     <input id="live_game_chronicle" type="text" maxlength="100" wire:model="serverChronicle" placeholder="Interlude">
-                                    @error('serverChronicle')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('serverChronicle')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="live_game_mode">{{ __('Mode') }}</label>
                                     <input id="live_game_mode" type="text" maxlength="100" wire:model="serverMode" placeholder="PvP, PvE, Craft">
-                                    @error('serverMode')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('serverMode')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                             </div>
                         </section>
@@ -227,7 +227,7 @@
                                     <strong>{{ __('Database connection') }}</strong>
                                     <small>{{ __('Connect this game world to an external GameServer database.') }}</small>
                                 </span>
-                                <span class="switch-control">
+                                <span class="admin-switch-control">
                                     <input type="checkbox" wire:model.live="connectionEnabled">
                                     <span></span>
                                 </span>
@@ -249,7 +249,7 @@
                                                     <option value="{{ $loginServer->id }}">{{ $loginServer->name }}</option>
                                                 @endforeach
                                             </select>
-                                            @error('loginServerId')<small class="field-error">{{ $message }}</small>@enderror
+                                            @error('loginServerId')<small class="admin-field-error">{{ $message }}</small>@enderror
                                         </div>
                                         <div class="form-group">
                                             <label for="live_game_driver">{{ __('GameServer driver') }}</label>
@@ -258,7 +258,7 @@
                                                     <option value="{{ $key }}">{{ $driverOption['label'] }}@if(!$driverOption['ready']) — {{ __('placeholder') }}@endif</option>
                                                 @endforeach
                                             </select>
-                                            @error('driver')<small class="field-error">{{ $message }}</small>@enderror
+                                            @error('driver')<small class="admin-field-error">{{ $message }}</small>@enderror
                                         </div>
                                     </div>
 
@@ -275,28 +275,28 @@
                                             <div class="form-group">
                                                 <label for="live_game_host">{{ __('Database host') }}</label>
                                                 <input id="live_game_host" type="text" maxlength="255" wire:model="databaseHost">
-                                                @error('databaseHost')<small class="field-error">{{ $message }}</small>@enderror
+                                                @error('databaseHost')<small class="admin-field-error">{{ $message }}</small>@enderror
                                             </div>
                                             <div class="form-group server-form-port">
                                                 <label for="live_game_port">{{ __('Database port') }}</label>
                                                 <input id="live_game_port" type="number" min="1" max="65535" wire:model="databasePort">
-                                                @error('databasePort')<small class="field-error">{{ $message }}</small>@enderror
+                                                @error('databasePort')<small class="admin-field-error">{{ $message }}</small>@enderror
                                             </div>
                                             <div class="form-group">
                                                 <label for="live_game_database">{{ __('Database name') }}</label>
                                                 <input id="live_game_database" type="text" maxlength="64" wire:model="databaseName">
-                                                @error('databaseName')<small class="field-error">{{ $message }}</small>@enderror
+                                                @error('databaseName')<small class="admin-field-error">{{ $message }}</small>@enderror
                                             </div>
                                             <div class="form-group">
                                                 <label for="live_game_username">{{ __('Database username') }}</label>
                                                 <input id="live_game_username" type="text" maxlength="128" autocomplete="off" wire:model="databaseUsername">
-                                                @error('databaseUsername')<small class="field-error">{{ $message }}</small>@enderror
+                                                @error('databaseUsername')<small class="admin-field-error">{{ $message }}</small>@enderror
                                             </div>
                                             <div class="form-group">
                                                 <label for="live_game_password">{{ __('Database password') }}</label>
                                                 <input id="live_game_password" type="password" maxlength="1024" autocomplete="new-password" wire:model="databasePassword">
                                                 <small>{{ $editingId !== null ? __('Leave empty to keep the saved database password.') : __('The password is encrypted with APP_KEY before it is stored.') }}</small>
-                                                @error('databasePassword')<small class="field-error">{{ $message }}</small>@enderror
+                                                @error('databasePassword')<small class="admin-field-error">{{ $message }}</small>@enderror
                                             </div>
                                             <div class="form-group server-form-charset">
                                                 <label for="live_game_charset">{{ __('Database charset') }}</label>
@@ -305,7 +305,7 @@
                                                         <option value="{{ $charset }}">{{ $charset }}</option>
                                                     @endforeach
                                                 </select>
-                                                @error('databaseCharset')<small class="field-error">{{ $message }}</small>@enderror
+                                                @error('databaseCharset')<small class="admin-field-error">{{ $message }}</small>@enderror
                                             </div>
                                         </div>
                                     @endif
@@ -324,12 +324,12 @@
                                         <strong>{{ __('Public statistics') }}</strong>
                                         <small>{{ __('Show read-only character rankings, current heroes and castle owners on the public website.') }}</small>
                                     </span>
-                                    <span class="switch-control">
+                                    <span class="admin-switch-control">
                                         <input type="checkbox" wire:model.live="statisticsEnabled">
                                         <span></span>
                                     </span>
                                 </label>
-                                @error('statisticsEnabled')<small class="field-error">{{ $message }}</small>@enderror
+                                @error('statisticsEnabled')<small class="admin-field-error">{{ $message }}</small>@enderror
 
                                 <div @class(['server-statistics-disabled' => ! $statisticsEnabled])>
                                     <div class="server-statistics-group">
@@ -349,7 +349,7 @@
                                                 </label>
                                                 <div class="server-statistics-quantity">
                                                     <input aria-label="{{ __('Level ranking limit') }}" type="number" min="1" max="100" wire:model="statisticsLevelLimit" @disabled(!$statisticsEnabled || !$statisticsLevelEnabled)>
-                                                    @error('statisticsLevelLimit')<small class="field-error">{{ $message }}</small>@enderror
+                                                    @error('statisticsLevelLimit')<small class="admin-field-error">{{ $message }}</small>@enderror
                                                 </div>
                                             </div>
                                             <div class="server-statistics-row">
@@ -359,7 +359,7 @@
                                                 </label>
                                                 <div class="server-statistics-quantity">
                                                     <input aria-label="{{ __('PvP ranking limit') }}" type="number" min="1" max="100" wire:model="statisticsPvpLimit" @disabled(!$statisticsEnabled || !$statisticsPvpEnabled)>
-                                                    @error('statisticsPvpLimit')<small class="field-error">{{ $message }}</small>@enderror
+                                                    @error('statisticsPvpLimit')<small class="admin-field-error">{{ $message }}</small>@enderror
                                                 </div>
                                             </div>
                                             <div class="server-statistics-row">
@@ -369,7 +369,7 @@
                                                 </label>
                                                 <div class="server-statistics-quantity">
                                                     <input aria-label="{{ __('PK ranking limit') }}" type="number" min="1" max="100" wire:model="statisticsPkLimit" @disabled(!$statisticsEnabled || !$statisticsPkEnabled)>
-                                                    @error('statisticsPkLimit')<small class="field-error">{{ $message }}</small>@enderror
+                                                    @error('statisticsPkLimit')<small class="admin-field-error">{{ $message }}</small>@enderror
                                                 </div>
                                             </div>
                                             <div class="server-statistics-row">
@@ -379,7 +379,7 @@
                                                 </label>
                                                 <div class="server-statistics-quantity">
                                                     <input aria-label="{{ __('Play time ranking limit') }}" type="number" min="1" max="100" wire:model="statisticsPlayTimeLimit" @disabled(!$statisticsEnabled || !$statisticsPlayTimeEnabled)>
-                                                    @error('statisticsPlayTimeLimit')<small class="field-error">{{ $message }}</small>@enderror
+                                                    @error('statisticsPlayTimeLimit')<small class="admin-field-error">{{ $message }}</small>@enderror
                                                 </div>
                                             </div>
                                             <div class="server-statistics-row">
@@ -437,7 +437,7 @@
                                     <strong>{{ __('Maintenance mode') }}</strong>
                                     <small>{{ __('The public website will show an orange maintenance status. Database and service monitoring will continue.') }}</small>
                                 </span>
-                                <span class="switch-control">
+                                <span class="admin-switch-control">
                                     <input type="checkbox" @checked($maintenanceEnabled) wire:change="setMaintenanceEnabled($event.target.checked)">
                                     <span></span>
                                 </span>
@@ -452,7 +452,7 @@
                                                 @if($code === $defaultLocale)<span class="compact-default-badge">{{ __('Default locale marker') }}</span>@endif
                                             </label>
                                             <input id="live_game_maintenance_message_{{ $code }}" type="text" maxlength="255" wire:model="maintenanceMessages.{{ $code }}" placeholder="{{ __('Installing an update') }}">
-                                            @error('maintenanceMessages.'.$code)<small class="field-error">{{ $message }}</small>@enderror
+                                            @error('maintenanceMessages.'.$code)<small class="admin-field-error">{{ $message }}</small>@enderror
                                         </div>
                                     @endforeach
                                 </div>
@@ -471,12 +471,12 @@
                                     <div class="form-group">
                                         <label for="live_game_service_host">{{ __('Service host') }}</label>
                                         <input id="live_game_service_host" type="text" maxlength="255" wire:model="serviceHost" placeholder="127.0.0.1">
-                                        @error('serviceHost')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('serviceHost')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                     <div class="form-group server-form-port">
                                         <label for="live_game_service_port">{{ __('Service port') }}</label>
                                         <input id="live_game_service_port" type="number" min="1" max="65535" wire:model="servicePort">
-                                        @error('servicePort')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('servicePort')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             @else
@@ -494,7 +494,7 @@
                                     <strong>{{ __('Return character to city') }}</strong>
                                     <small>{{ __('Players will see the action in an offline character card. The operation updates only the saved coordinates.') }}</small>
                                 </span>
-                                <span class="switch-control">
+                                <span class="admin-switch-control">
                                     <input
                                         type="checkbox"
                                         @checked($characterRescueEnabled)
@@ -518,7 +518,7 @@
                                 </div>
                             @endif
 
-                            @error('characterRescueEnabled')<small class="field-error">{{ $message }}</small>@enderror
+                            @error('characterRescueEnabled')<small class="admin-field-error">{{ $message }}</small>@enderror
 
                             @if($characterRescueEnabled)
                                 <div class="server-form-grid server-form-grid-three" data-testid="character-rescue-fields">
@@ -526,19 +526,19 @@
                                         <label for="live_game_rescue_location">{{ __('Location name') }}</label>
                                         <input id="live_game_rescue_location" type="text" maxlength="100" wire:model="characterRescueLocationName">
                                         <small>{{ __('Shown to the player in the confirmation window.') }}</small>
-                                        @error('characterRescueLocationName')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('characterRescueLocationName')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                     <div class="form-group">
                                         <label for="live_game_rescue_offline_delay">{{ __('Minimum offline time') }}</label>
                                         <input id="live_game_rescue_offline_delay" type="number" min="0" max="1440" wire:model="characterRescueOfflineDelayMinutes">
                                         <small>{{ __('Minutes after the last game session before rescue is allowed.') }}</small>
-                                        @error('characterRescueOfflineDelayMinutes')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('characterRescueOfflineDelayMinutes')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                     <div class="form-group">
                                         <label for="live_game_rescue_cooldown">{{ __('Reuse cooldown') }}</label>
                                         <input id="live_game_rescue_cooldown" type="number" min="0" max="720" wire:model="characterRescueCooldownHours">
                                         <small>{{ __('Hours between successful rescues of the same character. Use 0 to disable cooldown.') }}</small>
-                                        @error('characterRescueCooldownHours')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('characterRescueCooldownHours')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
 
@@ -546,17 +546,17 @@
                                     <div class="form-group">
                                         <label for="live_game_rescue_x">{{ __('Coordinate X') }}</label>
                                         <input id="live_game_rescue_x" type="number" wire:model="characterRescueX">
-                                        @error('characterRescueX')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('characterRescueX')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                     <div class="form-group">
                                         <label for="live_game_rescue_y">{{ __('Coordinate Y') }}</label>
                                         <input id="live_game_rescue_y" type="number" wire:model="characterRescueY">
-                                        @error('characterRescueY')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('characterRescueY')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                     <div class="form-group">
                                         <label for="live_game_rescue_z">{{ __('Coordinate Z') }}</label>
                                         <input id="live_game_rescue_z" type="number" wire:model="characterRescueZ">
-                                        @error('characterRescueZ')<small class="field-error">{{ $message }}</small>@enderror
+                                        @error('characterRescueZ')<small class="admin-field-error">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             @endif

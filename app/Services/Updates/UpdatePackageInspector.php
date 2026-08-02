@@ -2,6 +2,7 @@
 
 namespace App\Services\Updates;
 
+use Closure;
 use RuntimeException;
 use Throwable;
 use ZipArchive;
@@ -11,6 +12,8 @@ final class UpdatePackageInspector
     public function __construct(
         private readonly UpdateInstallationLayout $layout,
         private readonly UpdatePathPolicy $pathPolicy,
+        private readonly ?string $stagingRootOverride = null,
+        private readonly ?Closure $chmodOverride = null,
     ) {}
 
     public function available(): bool
@@ -43,7 +46,9 @@ final class UpdatePackageInspector
             throw new RuntimeException(__('The uploaded file is not a readable ZIP archive.'));
         }
 
-        $stagingPath = storage_path('app/kaevcms/updates/staging/'.bin2hex(random_bytes(16)));
+        $stagingRoot = $this->stagingRoot();
+        $this->prepareStagingRoot($stagingRoot);
+        $stagingPath = $stagingRoot.DIRECTORY_SEPARATOR.bin2hex(random_bytes(16));
         try {
             $this->validateArchiveEnvelope($zip);
             $manifest = $this->decodeManifest($zip);
@@ -76,6 +81,66 @@ final class UpdatePackageInspector
             archiveSha256: $archiveSha256,
             stagingPath: $stagingPath,
         );
+    }
+
+    private function stagingRoot(): string
+    {
+        return $this->stagingRootOverride ?? storage_path('app/kaevcms/updates/staging');
+    }
+
+    private function prepareStagingRoot(string $stagingRoot): void
+    {
+        $this->assertStagingRootIsNotSymbolicLink($stagingRoot);
+
+        $created = false;
+        if (! is_dir($stagingRoot)) {
+            if (! mkdir($stagingRoot, 0770, true) && ! is_dir($stagingRoot)) {
+                throw new RuntimeException(__('Unable to create the update staging directory.'));
+            }
+
+            $created = true;
+        }
+
+        $this->assertStagingRootIsNotSymbolicLink($stagingRoot);
+
+        if (PHP_OS_FAMILY !== 'Windows') {
+            clearstatcache(true, $stagingRoot);
+            $permissions = fileperms($stagingRoot);
+            if (! is_int($permissions)) {
+                throw new RuntimeException(__('Unable to secure the update staging directory.'));
+            }
+
+            $needsNormalization = $created || (($permissions & 0007) !== 0);
+            if ($needsNormalization && ! $this->changePermissions($stagingRoot, 02770)) {
+                clearstatcache(true, $stagingRoot);
+                $permissions = fileperms($stagingRoot);
+                if (! is_int($permissions) || (($permissions & 0007) !== 0)) {
+                    throw new RuntimeException(__('Unable to secure the update staging directory.'));
+                }
+            }
+        }
+
+        if (! is_writable($stagingRoot)) {
+            throw new RuntimeException(__('The update staging directory is not writable by PHP-FPM.'));
+        }
+    }
+
+    private function assertStagingRootIsNotSymbolicLink(string $stagingRoot): void
+    {
+        clearstatcache(true, $stagingRoot);
+
+        if (is_link($stagingRoot)) {
+            throw new RuntimeException(__('Unable to secure the update staging directory.'));
+        }
+    }
+
+    private function changePermissions(string $path, int $permissions): bool
+    {
+        if ($this->chmodOverride !== null) {
+            return (bool) ($this->chmodOverride)($path, $permissions);
+        }
+
+        return @chmod($path, $permissions);
     }
 
     private function validateArchiveEnvelope(ZipArchive $zip): void
@@ -390,14 +455,14 @@ final class UpdatePackageInspector
      */
     private function extractPayload(ZipArchive $zip, array $files, string $stagingPath): void
     {
-        if (! is_dir($stagingPath) && ! mkdir($stagingPath, 0775, true) && ! is_dir($stagingPath)) {
+        if (! is_dir($stagingPath) && ! mkdir($stagingPath, 0770, true) && ! is_dir($stagingPath)) {
             throw new RuntimeException(__('Unable to create the update staging directory.'));
         }
 
         foreach ($files as $file) {
             $destination = $stagingPath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file['source']);
             $directory = dirname($destination);
-            if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
+            if (! is_dir($directory) && ! mkdir($directory, 0770, true) && ! is_dir($directory)) {
                 throw new RuntimeException(__('Unable to create an update staging subdirectory.'));
             }
 

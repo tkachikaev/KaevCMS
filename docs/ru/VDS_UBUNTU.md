@@ -480,14 +480,36 @@ sudo systemctl restart kaevcms-queue
 
 Этот шаг нужен только для запуска обновлений из административной панели. Агент не устанавливается автоматически и не требуется для ручного обновления через SSH.
 
-Выполните один раз от пользователя с `sudo`:
+Выполните одну команду:
 
 ```bash
 cd /var/www/kaevcms
-sudo bash deployment/vds/install-update-agent.sh
+bash deployment/vds/install-update-agent.sh
 ```
 
-Скрипт определяет владельца проекта, группу PHP-FPM и PHP CLI, затем создаёт отдельные `systemd.path` и `systemd.service` для этой установки. Агент не открывает сетевой порт и не даёт `www-data` права записи на исходный код.
+Больше выбирать ничего не требуется. Скрипт сам:
+
+- запросит `sudo`, если текущей учётной записи не хватает прав;
+- определит владельца проекта;
+- определит пользователя и группу PHP-FPM;
+- настроит systemd-службу от владельца проекта;
+- восстановит безопасные права программных и runtime-файлов;
+- проверит, что PHP-FPM читает приложение и может записывать пакеты обновлений.
+
+Если проект принадлежит `root`, агент будет работать от `root` и покажет предупреждение о полном доступе устанавливаемого пакета. Если проект принадлежит обычному пользователю, служба будет работать от этого пользователя. Создавать отдельную учётную запись для агента не нужно.
+
+Только для нестандартной конфигурации значения можно указать вручную:
+
+```bash
+bash deployment/vds/install-update-agent.sh \
+    --project-user kaevcms \
+    --web-user www-data \
+    --web-group www-data
+```
+
+Переменные `KAEVCMS_DEPLOY_USER`, `KAEVCMS_WEB_USER`, `KAEVCMS_WEB_GROUP` и `KAEVCMS_PHP_BINARY` также поддерживаются.
+
+Скрипт записывает числовые UID/GID, оставляет исходный код доступным PHP-FPM только на чтение, создаёт групповые runtime-каталоги с правами записи и сохраняет резервные копии базы доступными только владельцу. Агент не открывает сетевой порт.
 
 Проверьте состояние:
 
@@ -496,7 +518,7 @@ cd /var/www/kaevcms
 php artisan kaevcms:update-agent:status
 ```
 
-Ожидаемый результат: `State: ready` и `Ready: yes`. Повторный запуск установочного скрипта безопасно обновляет unit-файлы и регистрацию агента.
+Ожидаемый результат: `State: ready` и `Ready: yes`. Повторный запуск той же команды безопасно обновляет unit-файлы, регистрацию и права. После этого релиза ожидается версия контракта агента 3.
 
 Для удаления агента:
 
@@ -563,8 +585,10 @@ sudo journalctl -u 'kaevcms-update-agent-*.service' -n 100 --no-pager
 
 ```bash
 cd /var/www/kaevcms
-sudo bash deployment/vds/install-update-agent.sh
+bash deployment/vds/install-update-agent.sh
 ```
+
+> После изменения владельца проекта или группы PHP-FPM повторно выполните `bash deployment/vds/install-update-agent.sh`. Установщик восстанавливает как runtime-каталоги Web Update, так и чтение файлов приложения группой веб-сервера, не предоставляя PHP-FPM права записи на исходный код.
 
 ### Резервное обновление через SSH
 
@@ -787,3 +811,4 @@ sudo journalctl -u kaevcms-queue -n 100 --no-pager
 - [Развёртывание Laravel](https://laravel.com/docs/11.x/deployment) — наружу должен смотреть только `public/index.php`.
 - [Команда Composer install](https://getcomposer.org/doc/03-cli.md#install-i).
 - [Инструкция Certbot для nginx](https://certbot.eff.org/instructions?ws=nginx&os=snap).
+

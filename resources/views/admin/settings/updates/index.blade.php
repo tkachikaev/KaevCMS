@@ -58,27 +58,25 @@
 </section>
 @endif
 
-<div class="notice notice-warning update-trust-warning" role="alert">
-    <strong>{{ __('Use update packages only from a source you trust.') }}</strong>
-    <span>{{ __('An update archive can replace KaevCMS program files. The website owner is responsible for the package selected for installation.') }}</span>
-</div>
-
 <section class="form-card update-upload-card">
     <div class="system-section-heading">
         <div>
             <h2>{{ __('Upload update package') }}</h2>
-            <p>{{ __('Only upload a package obtained from an official KaevCMS release. The package is checked before any files are changed.') }}</p>
+            <p class="update-upload-warning" role="alert">{{ __('Only upload a package obtained from an official KaevCMS release. An update archive can replace KaevCMS program files. The package is checked before any files are changed. The website owner is responsible for the package selected for installation.') }}</p>
         </div>
         <span class="status-badge status-badge-muted">ZIP</span>
     </div>
 
     <form method="POST" action="{{ route('admin.settings.system.updates.store') }}" enctype="multipart/form-data" class="update-upload-form">
         @csrf
-        <label class="settings-field" for="update_package">
-            <span>{{ __('Update package') }}</span>
-            <input id="update_package" name="package" type="file" accept=".zip,application/zip" required @disabled(! $zipAvailable)>
-            <small>{{ __('The package must contain a release manifest and per-file SHA256 checksums.') }}</small>
-        </label>
+        <x-admin.field
+            for="update_package"
+            name="package"
+            :label="__('Update package')"
+            :hint="__('The package must contain a release manifest and per-file SHA256 checksums.')"
+        >
+            <input id="update_package" name="package" type="file" accept=".zip,application/zip" required @disabled(! $zipAvailable) @if($errors->has('package')) aria-invalid="true" @endif>
+        </x-admin.field>
         <button class="button button-primary" type="submit" @disabled(! $zipAvailable)>{{ __('Upload and verify') }}</button>
     </form>
 </section>

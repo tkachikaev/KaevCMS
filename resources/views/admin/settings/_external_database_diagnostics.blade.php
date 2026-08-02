@@ -1,8 +1,12 @@
-<section class="form-card system-external-databases-card" data-testid="external-database-diagnostics">
-    <div class="system-section-heading">
+@php
+    $externalDatabaseSummaries = $system['external_databases']['summaries'];
+@endphp
+
+<section class="system-compact-connections" data-testid="external-database-diagnostics">
+    <div class="system-section-heading system-compact-connections-heading">
         <div>
-            <h2>{{ __('external_databases.title') }}</h2>
-            <p>{{ __('external_databases.description') }}</p>
+            <h2>{{ __('external_databases.summary_title') }}</h2>
+            <p>{{ __('external_databases.summary_description') }}</p>
         </div>
         @if(! request()->attributes->get('admin_read_only'))
             <form method="POST" action="{{ route('admin.settings.system.external-databases.refresh') }}">
@@ -12,111 +16,53 @@
         @endif
     </div>
 
-    <p class="system-external-databases-hint">{{ __('external_databases.refresh_hint') }}</p>
+    <div class="system-compact-card-grid">
+        <article class="form-card system-card system-compact-card" data-testid="system-app-key-card">
+            <header class="system-compact-card-header">
+                <h2>{{ __('APP_KEY encryption') }}</h2>
+                <span class="status-badge status-badge-{{ $system['security']['encryption']['state'] === 'success' ? 'success' : 'danger' }}">{{ $system['security']['encryption']['status'] }}</span>
+            </header>
+            <div class="system-compact-card-metrics">
+                <div><strong>{{ $system['security']['encryption']['encrypted_values_total'] }}</strong><span>{{ __('Encrypted values') }}</span></div>
+                <div><strong>{{ $system['security']['encryption']['invalid_values_total'] }}</strong><span>{{ __('Unavailable values') }}</span></div>
+            </div>
+            <p>{{ $system['security']['encryption']['details'] }}</p>
+        </article>
 
-    @foreach([
-        __('external_databases.login_servers') => $system['external_databases']['login_servers'],
-        __('external_databases.game_servers') => $system['external_databases']['game_servers'],
-    ] as $groupLabel => $servers)
-        <div class="system-external-database-group">
-            <h3>{{ $groupLabel }}</h3>
-
-            @if($servers === [])
-                <div class="admin-empty-state compact-empty-state">
-                    <p>{{ __('external_databases.none_configured') }}</p>
+        @foreach([
+            'login' => [
+                'label' => __('LoginServer'),
+                'summary' => $externalDatabaseSummaries['login'],
+                'route' => route('admin.settings.login-server'),
+            ],
+            'game' => [
+                'label' => __('GameServer'),
+                'summary' => $externalDatabaseSummaries['game'],
+                'route' => route('admin.settings.game-server'),
+            ],
+        ] as $type => $connection)
+            <article
+                class="form-card system-card system-compact-card system-connection-summary-card"
+                data-testid="system-connection-card"
+                data-server-type="{{ $type }}"
+                data-connection-state="{{ $connection['summary']['state'] }}"
+            >
+                <header class="system-compact-card-header">
+                    <h2>{{ $connection['label'] }}</h2>
+                    <span class="status-badge status-badge-{{ $connection['summary']['badge'] }}">{{ $connection['summary']['status'] }}</span>
+                </header>
+                <div class="system-compact-card-metrics">
+                    <div><strong>{{ $connection['summary']['total'] }}</strong><span>{{ __('external_databases.summary.configured') }}</span></div>
+                    <div><strong>{{ $connection['summary']['available'] }}</strong><span>{{ __('external_databases.summary.available') }}</span></div>
                 </div>
-            @else
-                <div class="system-external-database-list">
-                    @foreach($servers as $server)
-                        <article
-                            class="system-external-database"
-                            data-testid="external-database-row"
-                            data-server-type="{{ $server['type'] }}"
-                            data-database-status="{{ $server['status'] }}"
-                        >
-                            <header class="system-external-database-header">
-                                <div>
-                                    <strong>{{ $server['name'] }}</strong>
-                                    <small>{{ $server['driver_label'] }}</small>
-                                </div>
-                                <span class="status-badge status-badge-{{ $server['status_state'] === 'success' ? 'success' : ($server['status_state'] === 'danger' ? 'danger' : 'muted') }}">
-                                    {{ $server['status_label'] }}
-                                </span>
-                            </header>
-
-                            <dl class="system-definition-list system-external-database-details">
-                                <div>
-                                    <dt>{{ __('external_databases.service_status') }}</dt>
-                                    <dd>
-                                        <span class="status-badge status-badge-{{ $server['service_state'] === 'success' ? 'success' : ($server['service_state'] === 'danger' ? 'danger' : 'muted') }}">{{ $server['service_label'] }}</span>
-                                    </dd>
-                                </div>
-                                <div><dt>{{ __('external_databases.last_check') }}</dt><dd>{{ $server['checked_at']?->format('d.m.Y H:i:s') ?? __('external_databases.not_checked') }}</dd></div>
-                                <div><dt>{{ __('external_databases.last_success') }}</dt><dd>{{ $server['last_success_at']?->format('d.m.Y H:i:s') ?? __('external_databases.never') }}</dd></div>
-                                <div><dt>{{ __('external_databases.query_latency') }}</dt><dd>{{ $server['latency_ms'] !== null ? __('external_databases.milliseconds', ['value' => $server['latency_ms']]) : __('external_databases.not_available') }}</dd></div>
-                                <div><dt>{{ __('external_databases.schema_profile') }}</dt><dd>{{ $server['profile_label'] ?? __('external_databases.not_available') }}</dd></div>
-                                @if($server['type'] === 'game')
-                                    <div>
-                                        <dt>{{ __('external_databases.connection_source') }}</dt>
-                                        <dd>{{ $server['uses_login_connection'] ? __('external_databases.uses_login_connection') : __('external_databases.uses_own_connection') }}</dd>
-                                    </div>
-                                @endif
-                                @if($server['last_error_class'])
-                                    <div>
-                                        <dt>{{ __('external_databases.last_error') }}</dt>
-                                        <dd>
-                                            <code>{{ $server['last_error_class'] }}</code>
-                                            @if($server['last_error_at'])
-                                                <small class="system-definition-note">{{ $server['last_error_at']->format('d.m.Y H:i:s') }}</small>
-                                            @endif
-                                            @if($server['error_label'])
-                                                <small class="system-definition-note">{{ $server['error_label'] }}</small>
-                                            @endif
-                                        </dd>
-                                    </div>
-                                @endif
-                            </dl>
-
-                            <div class="system-external-database-section">
-                                <strong>{{ __('external_databases.capabilities') }}</strong>
-                                @if($server['capability_labels'] === [])
-                                    <span class="system-external-database-empty">{{ __('external_databases.not_available') }}</span>
-                                @else
-                                    <div class="system-external-database-tags">
-                                        @foreach($server['capability_labels'] as $capability)
-                                            <span class="status-badge status-badge-muted">{{ $capability }}</span>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-
-                            <div class="system-external-database-section">
-                                <strong>{{ __('external_databases.tables') }}</strong>
-                                @if($server['tables'] === [])
-                                    <span class="system-external-database-empty">{{ __('external_databases.not_available') }}</span>
-                                @else
-                                    <div class="system-external-database-tables">
-                                        @foreach($server['tables'] as $table)
-                                            <div class="system-external-database-table">
-                                                <div>
-                                                    <code>{{ $table['name'] }}</code>
-                                                    <small>{{ $table['required'] ? __('external_databases.required') : __('external_databases.optional') }}</small>
-                                                    @if($table['missing_columns'] !== [])
-                                                        <small>{{ __('external_databases.missing_columns', ['columns' => implode(', ', $table['missing_columns'])]) }}</small>
-                                                    @endif
-                                                </div>
-                                                <span class="status-badge status-badge-{{ $table['state'] === 'success' ? 'success' : ($table['state'] === 'danger' ? 'danger' : 'muted') }}">{{ $table['status'] }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-    @endforeach
+                <p>{{ $connection['summary']['details'] }}</p>
+                <footer class="system-compact-card-footer">
+                    <small>{{ __('external_databases.summary.last_check', ['value' => $connection['summary']['checked_at']?->format('d.m.Y H:i') ?? __('external_databases.not_checked')]) }}</small>
+                    <a wire:navigate href="{{ $connection['route'] }}">{{ __('Settings') }} →</a>
+                </footer>
+            </article>
+        @endforeach
+    </div>
 
     <p class="system-external-databases-boundary">{{ __('external_databases.safe_boundary') }}</p>
 </section>

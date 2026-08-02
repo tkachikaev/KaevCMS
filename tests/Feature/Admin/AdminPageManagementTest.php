@@ -182,8 +182,9 @@ class AdminPageManagementTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get('/admin/pages/create')
             ->assertOk()
-            ->assertSee('switch-row switch-row-spaced', false)
-            ->assertDontSee('switch-row form-group compact', false);
+            ->assertSee('admin-toggle-row admin-toggle-row-compact', false)
+            ->assertSee('admin-switch-control', false)
+            ->assertDontSee('class="switch-row', false);
     }
 
     public function test_draft_page_is_not_public_and_is_not_shown_in_navigation(): void

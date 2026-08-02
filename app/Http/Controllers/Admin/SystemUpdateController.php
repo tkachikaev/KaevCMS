@@ -66,9 +66,15 @@ final class SystemUpdateController extends Controller
     ): RedirectResponse {
         $admin = $this->owner();
         $currentVersion = $this->currentVersion($installedVersion);
-        $directory = storage_path('app/kaevcms/updates/packages');
-        if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
-            return back()->withErrors(['package' => __('Unable to create the update package directory.')]);
+        $updatesDirectory = storage_path('app/kaevcms/updates');
+        $directory = $updatesDirectory.DIRECTORY_SEPARATOR.'packages';
+        foreach ([$updatesDirectory, $directory] as $runtimeDirectory) {
+            if (! is_dir($runtimeDirectory) && ! mkdir($runtimeDirectory, 0770, true) && ! is_dir($runtimeDirectory)) {
+                return back()->withErrors(['package' => __('Unable to create the update package directory.')]);
+            }
+        }
+        if (! is_writable($directory)) {
+            return back()->withErrors(['package' => __('The update package directory is not writable by PHP-FPM.')]);
         }
 
         $uuid = (string) Str::uuid();
@@ -82,6 +88,9 @@ final class SystemUpdateController extends Controller
 
         try {
             $uploaded->move($directory, $uuid.'.zip');
+            if (PHP_OS_FAMILY !== 'Windows' && ! @chmod($archivePath, 0660)) {
+                throw new RuntimeException(__('Unable to secure the uploaded update package.'));
+            }
             $package = $inspector->inspect($archivePath, $currentVersion);
             $update = SystemUpdate::query()->create([
                 'uuid' => $uuid,

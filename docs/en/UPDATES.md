@@ -44,8 +44,10 @@ Install the local agent once to start verified packages from the administration 
 
 ```bash
 cd /var/www/kaevcms
-sudo bash deployment/vds/install-update-agent.sh
+bash deployment/vds/install-update-agent.sh
 ```
+
+The script requests `sudo` when needed, detects the project owner and PHP-FPM identity, repairs permissions, and configures the service. The same command works for root-owned and regular-user-owned projects. Non-standard installations can use `--project-user`, `--web-user`, and `--web-group`.
 
 The Web Updater continues to upload and inspect the ZIP, while installation is delegated to a one-shot systemd agent running as the project owner. When the agent is absent, the page displays the exact command and blocks installation without blocking package upload and verification.
 

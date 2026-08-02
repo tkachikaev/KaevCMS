@@ -18,13 +18,19 @@ const signIn = async (page) => {
     await expect(page).toHaveURL(/\/admin$/);
 };
 
-test('system updater clearly warns about trusted package sources', async ({ page }) => {
+test('system updater keeps one compact red package warning beside upload', async ({ page }) => {
     await signIn(page);
     await gotoWithLocalNetworkRetry(page, '/admin/settings/system/updates');
 
     await expect(page.getByRole('heading', { name: 'Обновления системы', exact: true })).toBeVisible();
-    await expect(page.getByText('Используйте пакеты обновлений только из доверенного источника.', { exact: true })).toBeVisible();
-    await expect(page.getByText('Архив обновления может заменять программные файлы KaevCMS. Ответственность за выбранный пакет несёт владелец сайта.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Используйте пакеты обновлений только из доверенного источника.', { exact: true })).toHaveCount(0);
+    await expect(page.locator('.update-trust-warning')).toHaveCount(0);
+
+    const uploadCard = page.locator('.update-upload-card');
+    const warning = uploadCard.locator('.update-upload-warning');
+    await expect(warning).toHaveText('Загружайте только пакет из официального релиза KaevCMS. Архив обновления может заменять программные файлы KaevCMS. До изменения файлов пакет будет проверен. Ответственность за выбранный пакет несёт владелец сайта.');
+    const warningColor = await warning.evaluate((element) => getComputedStyle(element).color);
+    expect(warningColor).toMatch(/^rgb\((?:1[5-9]\d|2\d\d),\s*(?:0|[1-9]\d?),\s*(?:0|[1-9]\d?)\)$/);
     await expect(page.locator('#update_package')).toBeVisible();
 });
 

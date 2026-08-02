@@ -66,13 +66,13 @@ class AdminPanelTest extends TestCase
             ->get('/admin/settings')
             ->assertOk()
             ->assertSee('class="admin-tabs settings-section-tabs"', false)
-            ->assertSee('class="admin-tab settings-section-tab active"', false);
+            ->assertSee('class="admin-tab active settings-section-tab"', false);
 
         $this->actingAs($admin, 'admin')
             ->get('/admin/settings/mail')
             ->assertOk()
             ->assertSee('class="admin-tabs mail-template-tabs"', false)
-            ->assertSee('class="admin-tab mail-template-tab active"', false);
+            ->assertSee('class="admin-tab active mail-template-tab"', false);
     }
 
     public function test_admin_catalogues_use_shared_enterprise_components(): void
@@ -147,7 +147,7 @@ class AdminPanelTest extends TestCase
             ->get('/admin/logs')
             ->assertOk()
             ->assertSee('class="admin-overview audit-summary"', false)
-            ->assertSee('class="admin-subtabs audit-tabs"', false);
+            ->assertSee('class="admin-tabs admin-subtabs audit-tabs"', false);
     }
 
     public function test_settings_actions_and_help_text_use_separate_rows(): void
@@ -162,7 +162,7 @@ class AdminPanelTest extends TestCase
             ".admin-path-settings-controls > .button,\n.system-monitor-settings-controls > .button {",
             $css,
         );
-        $this->assertStringContainsString(".settings-field {\n    display: grid;", $css);
+        $this->assertStringContainsString(".admin-field,\n.form-group,\n.settings-field {", $css);
         $this->assertStringContainsString(
             '.settings-grid.two-columns {',
             $css,
@@ -405,7 +405,7 @@ class AdminPanelTest extends TestCase
         $components = file_get_contents(public_path('assets/admin/css/components.css'));
 
         $this->assertIsString($components);
-        $this->assertStringContainsString('.settings-field input,', $components);
+        $this->assertStringContainsString('.admin-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),', $components);
         $this->assertStringContainsString('border: 1px solid var(--admin-border-strong);', $components);
     }
 

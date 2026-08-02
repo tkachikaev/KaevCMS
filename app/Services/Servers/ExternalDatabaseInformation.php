@@ -11,7 +11,7 @@ final class ExternalDatabaseInformation
 {
     public function __construct(private readonly ServerDriverRegistry $drivers) {}
 
-    /** @return array{login_servers:list<array<string,mixed>>,game_servers:list<array<string,mixed>>,total:int} */
+    /** @return array{login_servers:list<array<string,mixed>>,game_servers:list<array<string,mixed>>,summaries:array{login:array<string,mixed>,game:array<string,mixed>},total:int} */
     public function collect(): array
     {
         $loginServers = LoginServer::query()
@@ -32,11 +32,94 @@ final class ExternalDatabaseInformation
         return [
             'login_servers' => $loginServers,
             'game_servers' => $gameServers,
+            'summaries' => [
+                'login' => $this->summary($loginServers),
+                'game' => $this->summary($gameServers),
+            ],
             'total' => count($loginServers) + count($gameServers),
         ];
     }
 
-    /** @param array{login_servers:list<array<string,mixed>>,game_servers:list<array<string,mixed>>,total:int} $information @return list<string> */
+    /**
+     * @param  list<array<string,mixed>>  $servers
+     * @return array{total:int,available:int,attention:int,state:string,badge:string,status:string,details:string,checked_at:?CarbonInterface}
+     */
+    private function summary(array $servers): array
+    {
+        $total = count($servers);
+        $available = 0;
+        $attention = 0;
+        $checkedAt = null;
+
+        foreach ($servers as $server) {
+            if (($server['status'] ?? null) === 'configured') {
+                $available++;
+            } elseif (($server['status'] ?? null) === 'not_configured') {
+                $attention++;
+            }
+
+            $serverCheckedAt = $server['checked_at'] ?? null;
+            if (
+                $serverCheckedAt instanceof CarbonInterface
+                && ($checkedAt === null || $serverCheckedAt->greaterThan($checkedAt))
+            ) {
+                $checkedAt = $serverCheckedAt;
+            }
+        }
+
+        if ($total === 0) {
+            return [
+                'total' => 0,
+                'available' => 0,
+                'attention' => 0,
+                'state' => 'none',
+                'badge' => 'muted',
+                'status' => (string) __('external_databases.summary.state.none'),
+                'details' => (string) __('external_databases.summary.details.none'),
+                'checked_at' => null,
+            ];
+        }
+
+        if ($attention > 0) {
+            $state = 'attention';
+            $badge = 'danger';
+            $status = (string) __('external_databases.summary.state.attention');
+            $details = (string) __('external_databases.summary.details.attention', [
+                'available' => $available,
+                'total' => $total,
+                'attention' => $attention,
+            ]);
+        } elseif ($available === $total) {
+            $state = 'available';
+            $badge = 'success';
+            $status = (string) __('external_databases.summary.state.available');
+            $details = (string) __('external_databases.summary.details.available', [
+                'available' => $available,
+                'total' => $total,
+            ]);
+        } else {
+            $state = 'pending';
+            $badge = 'warning';
+            $status = (string) __('external_databases.summary.state.pending');
+            $details = (string) __('external_databases.summary.details.pending', [
+                'available' => $available,
+                'total' => $total,
+            ]);
+        }
+
+        return [
+            'total' => $total,
+            'available' => $available,
+            'attention' => $attention,
+            'state' => $state,
+            'badge' => $badge,
+            'status' => $status,
+            'details' => $details,
+            'checked_at' => $checkedAt,
+        ];
+    }
+
+    /** @param array{login_servers:list<array<string,mixed>>,game_servers:list<array<string,mixed>>,summaries:array{login:array<string,mixed>,game:array<string,mixed>},total:int} $information @return list<string> */
     public function reportLines(array $information): array
     {
         $lines = [(string) __('external_databases.report_heading')];

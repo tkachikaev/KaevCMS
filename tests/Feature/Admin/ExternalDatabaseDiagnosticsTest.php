@@ -98,18 +98,25 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
         $this->assertContains('heroes', $gameServer->database_capabilities ?? []);
         $this->assertNotContains('castles', $gameServer->database_capabilities ?? []);
 
+        $information = app(ExternalDatabaseInformation::class)->collect();
+        $this->assertSame('available', $information['summaries']['login']['state']);
+        $this->assertSame(1, $information['summaries']['login']['total']);
+        $this->assertSame(1, $information['summaries']['login']['available']);
+        $this->assertSame('available', $information['summaries']['game']['state']);
+        $this->assertSame(1, $information['summaries']['game']['total']);
+        $this->assertSame(1, $information['summaries']['game']['available']);
+
         $this->actingAs($admin, 'admin')
             ->get(route('admin.settings.system'))
             ->assertOk()
-            ->assertSee('Диагностика внешних баз')
-            ->assertSee('Diagnostics Login')
-            ->assertSee('Diagnostics Game')
-            ->assertSee('Mobius modern')
-            ->assertSee('17 мс')
-            ->assertSee('characters')
-            ->assertSee('Необязательная таблица отсутствует')
-            ->assertSee('Создание аккаунтов')
-            ->assertSee('Герои')
+            ->assertSee('Ключ и игровые подключения')
+            ->assertSee('Шифрование APP_KEY')
+            ->assertSee('LoginServer')
+            ->assertSee('GameServer')
+            ->assertSee('Доступно 1 из 1.')
+            ->assertSee('Проверить внешние базы')
+            ->assertDontSee('system-external-database-list', false)
+            ->assertDontSee('external-database-row', false)
             ->assertDontSee('secret-db.internal.example')
             ->assertDontSee('secret_login_database')
             ->assertDontSee('secret_database_user')
@@ -119,6 +126,32 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
             'action' => 'external_databases.diagnostics_refreshed',
             'result' => 'success',
         ]);
+    }
+
+    public function test_compact_connection_summaries_report_attention_and_empty_groups(): void
+    {
+        GameServer::query()->delete();
+        LoginServer::query()->delete();
+
+        LoginServer::factory()->create([
+            'database_status' => 'configured',
+            'database_checked_at' => now()->subMinute(),
+        ]);
+        LoginServer::factory()->create([
+            'database_status' => 'not_configured',
+            'database_checked_at' => now(),
+        ]);
+
+        $information = app(ExternalDatabaseInformation::class)->collect();
+
+        $this->assertSame(2, $information['summaries']['login']['total']);
+        $this->assertSame(1, $information['summaries']['login']['available']);
+        $this->assertSame(1, $information['summaries']['login']['attention']);
+        $this->assertSame('attention', $information['summaries']['login']['state']);
+        $this->assertSame('danger', $information['summaries']['login']['badge']);
+        $this->assertSame('none', $information['summaries']['game']['state']);
+        $this->assertSame(0, $information['summaries']['game']['total']);
+        $this->assertNull($information['summaries']['game']['checked_at']);
     }
 
     public function test_diagnostics_deduplicate_identical_physical_probes_only_within_one_refresh(): void

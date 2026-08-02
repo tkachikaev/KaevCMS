@@ -156,10 +156,9 @@
 
             <form method="POST" action="{{ route('admin.settings.system.updates.apply', $update) }}" class="update-confirm-form">
                 @csrf
-                <label class="settings-field" for="current_password">
-                    <span>{{ __('Current administrator password') }}</span>
-                    <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
-                </label>
+                <x-admin.field for="current_password" name="current_password" :label="__('Current administrator password')">
+                    <input id="current_password" name="current_password" type="password" autocomplete="current-password" required @if($errors->has('current_password')) aria-invalid="true" @endif>
+                </x-admin.field>
                 <div class="notice notice-warning update-trust-warning" role="alert">
                     <strong>{{ __('Confirm the package source before continuing.') }}</strong>
                     <span>{{ __('An update can replace application files. KaevCMS cannot determine whether the person or website that supplied this archive is trustworthy.') }}</span>
@@ -204,10 +203,9 @@
 
         <form method="POST" action="{{ route('admin.settings.system.updates.recover', $update) }}" class="update-confirm-form">
             @csrf
-            <label class="settings-field" for="recovery_current_password">
-                <span>{{ __('Current administrator password') }}</span>
-                <input id="recovery_current_password" name="current_password" type="password" autocomplete="current-password" required>
-            </label>
+            <x-admin.field for="recovery_current_password" name="current_password" :label="__('Current administrator password')">
+                <input id="recovery_current_password" name="current_password" type="password" autocomplete="current-password" required @if($errors->has('current_password')) aria-invalid="true" @endif>
+            </x-admin.field>
             <label class="settings-checkbox update-confirm-checkbox">
                 <input name="confirmation" type="checkbox" value="1" required>
                 <span>{{ __('I confirm that the original update request is no longer running and want to restore the saved files and CMS database.') }}</span>

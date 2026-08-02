@@ -19,7 +19,7 @@
         </div>
 
         @foreach($notificationTypes as $type)
-            <div class="settings-toggle-row">
+            <div class="admin-toggle-row">
                 <span>
                     <span class="field-label-with-help">
                         <label for="{{ $type['field'] }}"><strong>{{ $type['label'] }}</strong></label>
@@ -29,7 +29,7 @@
                         </span>
                     </span>
                 </span>
-                <label class="switch-control" for="{{ $type['field'] }}">
+                <label class="admin-switch-control" for="{{ $type['field'] }}">
                     <input name="{{ $type['field'] }}" type="hidden" value="0">
                     <input
                         id="{{ $type['field'] }}"
@@ -52,29 +52,32 @@
             </div>
         </div>
 
-        <label class="settings-toggle-row" for="notification_auto_cleanup">
+        <label class="admin-toggle-row" for="notification_auto_cleanup">
             <span>
                 <strong>{{ __('Automatically delete old notifications') }}</strong>
                 <small>{{ __('The scheduled cleanup runs daily when the server scheduler is configured.') }}</small>
             </span>
-            <span class="switch-control">
+            <span class="admin-switch-control">
                 <input name="notification_auto_cleanup" type="hidden" value="0">
                 <input id="notification_auto_cleanup" name="notification_auto_cleanup" type="checkbox" value="1" @checked(old('notification_auto_cleanup', $settings['auto_cleanup']))>
                 <span aria-hidden="true"></span>
             </span>
         </label>
 
-        <div class="form-group">
-            <label for="notification_retention_days">{{ __('Keep notifications for') }}</label>
-            <select id="notification_retention_days" name="notification_retention_days" required>
+        <x-admin.field
+            for="notification_retention_days"
+            name="notification_retention_days"
+            :label="__('Keep notifications for')"
+            :hint="__('The period is used only when automatic cleanup is enabled.')"
+        >
+            <select id="notification_retention_days" name="notification_retention_days" required @if($errors->has('notification_retention_days')) aria-invalid="true" @endif>
                 @foreach($retentionOptions as $days)
                     <option value="{{ $days }}" @selected((int) old('notification_retention_days', $settings['retention_days']) === $days)>
                         {{ trans_choice(':count day|:count days', $days, ['count' => $days]) }}
                     </option>
                 @endforeach
             </select>
-            <small>{{ __('The period is used only when automatic cleanup is enabled.') }}</small>
-        </div>
+        </x-admin.field>
     </section>
 
     <div class="admin-actions-panel settings-actions settings-actions-narrow">

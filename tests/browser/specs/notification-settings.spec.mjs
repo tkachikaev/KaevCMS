@@ -29,7 +29,7 @@ test('notification gear opens settings and existing switches save preferences', 
 
     await expect(page).toHaveURL(/\/admin\/settings\/notifications$/);
     await expect(page.getByRole('heading', { name: 'Уведомления', exact: true })).toBeVisible();
-    await expect(page.locator('.settings-toggle-row .switch-control').first()).toBeVisible();
+    await expect(page.locator('.admin-toggle-row .admin-switch-control').first()).toBeVisible();
     const firstTooltip = page.locator('.field-help-tooltip').first();
     await expect(firstTooltip).toBeVisible();
     await firstTooltip.hover();

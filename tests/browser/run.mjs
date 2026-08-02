@@ -8,6 +8,7 @@ import process from 'node:process';
 const root = resolve(import.meta.dirname, '../..');
 const runtimeDirectory = resolve(root, 'storage/framework/testing/browser');
 const databasePath = resolve(runtimeDirectory, `kaevcms-browser-${process.pid}.sqlite`);
+const environmentPath = resolve(root, '.env');
 const avatarDirectory = resolve(root, 'public/uploads/account-avatars');
 const browserAvatarPath = resolve(avatarDirectory, 'browser-avatar.png');
 const findAvailablePort = async () => new Promise((resolvePromise, rejectPromise) => {
@@ -162,10 +163,16 @@ const waitForServer = async () => {
 let server = null;
 let primaryError = null;
 let cleanupError = null;
+let temporaryEnvironmentCreated = false;
 
 try {
     if (!existsSync(resolve(root, 'vendor/autoload.php'))) {
         throw new Error('Composer dependencies are missing. Run composer install first.');
+    }
+
+    if (!existsSync(environmentPath)) {
+        writeFileSync(environmentPath, '# Temporary marker for the isolated browser test runtime.\n');
+        temporaryEnvironmentCreated = true;
     }
 
     run('php', ['artisan', 'migrate:fresh', '--force']);
@@ -193,6 +200,9 @@ try {
     try {
         await removeFileWithRetry(databasePath);
         await removeFileWithRetry(browserAvatarPath);
+        if (temporaryEnvironmentCreated) {
+            await removeFileWithRetry(environmentPath);
+        }
     } catch (error) {
         cleanupError = error;
     }

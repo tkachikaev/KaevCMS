@@ -2,7 +2,10 @@
 
 namespace Tests\Unit\Updates;
 
+use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
+use App\Services\Updates\UpdatePathPolicy;
+use Closure;
 use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use RuntimeException;
@@ -15,13 +18,70 @@ class UpdatePackageInspectorTest extends TestCase
     /** @var list<string> */
     private array $temporaryArchives = [];
 
+    /** @var list<string> */
+    private array $temporaryDirectories = [];
+
     protected function tearDown(): void
     {
         foreach ($this->temporaryArchives as $archive) {
             @unlink($archive);
         }
 
+        foreach ($this->temporaryDirectories as $directory) {
+            File::deleteDirectory($directory);
+        }
+
         parent::tearDown();
+    }
+
+    public function test_existing_secure_staging_directory_does_not_require_owner_chmod(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->markTestSkipped('Unix directory permissions are not available on Windows.');
+        }
+
+        $stagingRoot = storage_path('framework/testing/update-staging-'.bin2hex(random_bytes(8)));
+        $this->temporaryDirectories[] = $stagingRoot;
+        $this->assertTrue(mkdir($stagingRoot, 0770, true));
+        $this->assertTrue(chmod($stagingRoot, 02770));
+
+        $archive = $this->package();
+        $chmodCalls = 0;
+        $chmod = static function (string $path, int $permissions) use (&$chmodCalls): bool {
+            $chmodCalls++;
+
+            return false;
+        };
+        $package = $this->inspector($stagingRoot, $chmod)->inspect($archive, '0.32.4');
+
+        try {
+            $this->assertSame('0.33.0', $package->targetVersion);
+            $this->assertDirectoryExists($package->stagingPath);
+            $this->assertSame(0, $chmodCalls);
+        } finally {
+            File::deleteDirectory($package->stagingPath);
+        }
+    }
+
+    public function test_symbolic_link_staging_root_is_rejected(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->markTestSkipped('Symbolic-link staging validation is covered on Unix systems.');
+        }
+
+        $target = storage_path('framework/testing/update-staging-target-'.bin2hex(random_bytes(8)));
+        $stagingRoot = storage_path('framework/testing/update-staging-link-'.bin2hex(random_bytes(8)));
+        $this->temporaryDirectories[] = $target;
+        $this->temporaryArchives[] = $stagingRoot;
+        $this->assertTrue(mkdir($target, 0770, true));
+        $this->assertTrue(symlink($target, $stagingRoot));
+
+        $archive = $this->package();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(__('Unable to secure the update staging directory.'));
+
+        $this->inspector($stagingRoot)->inspect($archive, '0.32.4');
     }
 
     public function test_cumulative_package_accepts_an_intermediate_supported_version(): void
@@ -92,9 +152,14 @@ class UpdatePackageInspectorTest extends TestCase
         $this->inspector()->inspect($archive, '0.31.12');
     }
 
-    private function inspector(): UpdatePackageInspector
+    private function inspector(?string $stagingRoot = null, ?Closure $chmod = null): UpdatePackageInspector
     {
-        return $this->app->make(UpdatePackageInspector::class);
+        return new UpdatePackageInspector(
+            $this->app->make(UpdateInstallationLayout::class),
+            $this->app->make(UpdatePathPolicy::class),
+            $stagingRoot,
+            $chmod,
+        );
     }
 
     /**

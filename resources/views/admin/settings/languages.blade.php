@@ -44,8 +44,8 @@
         @endforeach
     </div>
 
-    @error('enabled_locales')<p class="field-error">{{ $message }}</p>@enderror
-    @error('enabled_locales.*')<p class="field-error">{{ $message }}</p>@enderror
+    @error('enabled_locales')<p class="admin-field-error">{{ $message }}</p>@enderror
+    @error('enabled_locales.*')<p class="admin-field-error">{{ $message }}</p>@enderror
 
     <div class="form-grid two-columns language-selectors">
         <div>
@@ -58,7 +58,7 @@
                 @endforeach
             </select>
             <small>{{ __('Used for old links, new users and content fallback.') }}</small>
-            @error('default_locale')<p class="field-error">{{ $message }}</p>@enderror
+            @error('default_locale')<p class="admin-field-error">{{ $message }}</p>@enderror
         </div>
 
         <div>
@@ -71,7 +71,7 @@
                 @endforeach
             </select>
             <small>{{ __('Used when a page, news item or mail template has no translation.') }}</small>
-            @error('fallback_locale')<p class="field-error">{{ $message }}</p>@enderror
+            @error('fallback_locale')<p class="admin-field-error">{{ $message }}</p>@enderror
         </div>
     </div>
 

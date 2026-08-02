@@ -47,7 +47,7 @@
             <p>{{ __('When an asynchronous mode is selected for the first time, KaevCMS runs a real capability test before enabling it.') }}</p>
         </div>
 
-        @error('delivery_mode')<p class="form-error">{{ $message }}</p>@enderror
+        @error('delivery_mode')<p class="admin-field-error">{{ $message }}</p>@enderror
         <button class="button button-primary" type="submit">{{ __('Save delivery mode') }}</button>
     </form>
 

@@ -32,8 +32,8 @@ final class AdminNotificationSettingsTest extends TestCase
             ->assertSee(__('Technical Support module'))
             ->assertSee(__('Background tasks'))
             ->assertSee(__('Low disk space'))
-            ->assertSee('settings-toggle-row', false)
-            ->assertSee('switch-control', false)
+            ->assertSee('admin-toggle-row', false)
+            ->assertSee('admin-switch-control', false)
             ->assertSee('field-help-tooltip', false)
             ->assertSee('notification_retention_days', false)
             ->assertSee('data-testid="notification-settings-link"', false);

@@ -396,7 +396,8 @@
 
 /* KaevCMS 0.44.7 — configurable public registration policy. */
 .registration-policy-single-field{grid-template-columns:minmax(0,1fr)}
-.registration-policy-single-field .form-group{max-width:360px}
+.registration-policy-single-field .admin-field,
+.registration-policy-single-field .form-group { max-width: 360px; }
 .update-agent-card, .update-agent-waiting { display: grid; gap: 16px; }
 .update-agent-command { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .update-agent-command code { min-width: 0; padding: 12px 14px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface-muted); overflow-wrap: anywhere; user-select: all; }
@@ -405,6 +406,7 @@
 .update-agent-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--admin-text-muted); }
 .update-agent-recheck { width: fit-content; }
 .update-trust-warning { margin: 0; }
+.update-upload-card .update-upload-warning { margin: 0; color: var(--admin-danger); font-size: 12px; font-weight: 700; line-height: 1.5; }
 @media (max-width: 680px) {
     .update-agent-command { grid-template-columns: 1fr; }
     .update-agent-command .button, .update-agent-recheck { width: 100%; }

@@ -1,26 +1,24 @@
-<nav class="admin-tabs mail-template-tabs" aria-label="{{ __('Mail sections') }}">
-    <a wire:navigate @class(['admin-tab', 'mail-template-tab', 'active' => request()->routeIs('admin.settings.mail')]) href="{{ route('admin.settings.mail') }}">
+<x-admin.tabs :label="__('Mail sections')" class="mail-template-tabs">
+    <x-admin.tab wire:navigate :href="route('admin.settings.mail')" :active="request()->routeIs('admin.settings.mail')" class="mail-template-tab">
         {{ __('Connection') }}
-    </a>
+    </x-admin.tab>
 
-    <a wire:navigate @class(['admin-tab', 'mail-template-tab', 'active' => request()->routeIs('admin.settings.mail.delivery')]) href="{{ route('admin.settings.mail.delivery') }}">
+    <x-admin.tab wire:navigate :href="route('admin.settings.mail.delivery')" :active="request()->routeIs('admin.settings.mail.delivery')" class="mail-template-tab">
         {{ __('Delivery') }}
-    </a>
+    </x-admin.tab>
 
     @foreach ($mailTemplates as $templateKey => $item)
-        <a wire:navigate
-            @class([
-                'admin-tab',
-                'mail-template-tab',
-                'active' => request()->routeIs('admin.settings.mail.template') && request()->route('template') === $templateKey,
-            ])
-            href="{{ route('admin.settings.mail.template', ['template' => $templateKey, 'locale' => $templateLocale ?? app()->getLocale()]) }}"
+        <x-admin.tab
+            wire:navigate
+            :href="route('admin.settings.mail.template', ['template' => $templateKey, 'locale' => $templateLocale ?? app()->getLocale()])"
+            :active="request()->routeIs('admin.settings.mail.template') && request()->route('template') === $templateKey"
+            class="mail-template-tab"
         >
             {{ $item['title'] }}
-        </a>
+        </x-admin.tab>
     @endforeach
 
-    <a wire:navigate @class(['admin-tab', 'mail-template-tab', 'active' => request()->routeIs('admin.settings.mail.custom') || request()->routeIs('admin.settings.mail.custom.send')]) href="{{ route('admin.settings.mail.custom') }}">
+    <x-admin.tab wire:navigate :href="route('admin.settings.mail.custom')" :active="request()->routeIs('admin.settings.mail.custom') || request()->routeIs('admin.settings.mail.custom.send')" class="mail-template-tab">
         {{ __('Send email') }}
-    </a>
-</nav>
+    </x-admin.tab>
+</x-admin.tabs>

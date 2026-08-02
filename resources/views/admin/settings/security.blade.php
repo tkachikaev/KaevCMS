@@ -24,26 +24,18 @@
             </div>
 
             <div class="security-field-grid">
-                <div class="form-group">
-                    <label for="login_ip_per_minute">{{ __('Requests from one IP per minute') }}</label>
-                    <input id="login_ip_per_minute" name="login_ip_per_minute" type="number" min="5" max="60" required value="{{ old('login_ip_per_minute', $settings['login_ip_per_minute']) }}">
-                    <small>{{ __('Allowed range: 5 to 60. Default: 10.') }}</small>
-                </div>
-                <div class="form-group">
-                    <label for="login_ip_per_hour">{{ __('Requests from one IP per hour') }}</label>
-                    <input id="login_ip_per_hour" name="login_ip_per_hour" type="number" min="30" max="1000" required value="{{ old('login_ip_per_hour', $settings['login_ip_per_hour']) }}">
-                    <small>{{ __('Allowed range: 30 to 1000. Default: 100.') }}</small>
-                </div>
-                <div class="form-group">
-                    <label for="login_max_attempts">{{ __('Attempts for one email and IP') }}</label>
-                    <input id="login_max_attempts" name="login_max_attempts" type="number" min="3" max="20" required value="{{ old('login_max_attempts', $settings['login_max_attempts']) }}">
-                    <small>{{ __('Allowed range: 3 to 20. Default: 5.') }}</small>
-                </div>
-                <div class="form-group">
-                    <label for="login_decay_minutes">{{ __('Account attempt block duration, minutes') }}</label>
-                    <input id="login_decay_minutes" name="login_decay_minutes" type="number" min="1" max="60" required value="{{ old('login_decay_minutes', $settings['login_decay_minutes']) }}">
-                    <small>{{ __('Allowed range: 1 to 60 minutes. Default: 1 minute.') }}</small>
-                </div>
+                <x-admin.field for="login_ip_per_minute" name="login_ip_per_minute" :label="__('Requests from one IP per minute')" :hint="__('Allowed range: 5 to 60. Default: 10.')">
+                    <input id="login_ip_per_minute" name="login_ip_per_minute" type="number" min="5" max="60" required value="{{ old('login_ip_per_minute', $settings['login_ip_per_minute']) }}" @if($errors->has('login_ip_per_minute')) aria-invalid="true" @endif>
+                </x-admin.field>
+                <x-admin.field for="login_ip_per_hour" name="login_ip_per_hour" :label="__('Requests from one IP per hour')" :hint="__('Allowed range: 30 to 1000. Default: 100.')">
+                    <input id="login_ip_per_hour" name="login_ip_per_hour" type="number" min="30" max="1000" required value="{{ old('login_ip_per_hour', $settings['login_ip_per_hour']) }}" @if($errors->has('login_ip_per_hour')) aria-invalid="true" @endif>
+                </x-admin.field>
+                <x-admin.field for="login_max_attempts" name="login_max_attempts" :label="__('Attempts for one email and IP')" :hint="__('Allowed range: 3 to 20. Default: 5.')">
+                    <input id="login_max_attempts" name="login_max_attempts" type="number" min="3" max="20" required value="{{ old('login_max_attempts', $settings['login_max_attempts']) }}" @if($errors->has('login_max_attempts')) aria-invalid="true" @endif>
+                </x-admin.field>
+                <x-admin.field for="login_decay_minutes" name="login_decay_minutes" :label="__('Account attempt block duration, minutes')" :hint="__('Allowed range: 1 to 60 minutes. Default: 1 minute.')">
+                    <input id="login_decay_minutes" name="login_decay_minutes" type="number" min="1" max="60" required value="{{ old('login_decay_minutes', $settings['login_decay_minutes']) }}" @if($errors->has('login_decay_minutes')) aria-invalid="true" @endif>
+                </x-admin.field>
             </div>
         </section>
 
@@ -56,16 +48,12 @@
             </div>
 
             <div class="security-field-grid">
-                <div class="form-group">
-                    <label for="audit_retention_days">{{ __('Audit log retention, days') }}</label>
-                    <input id="audit_retention_days" name="audit_retention_days" type="number" min="30" max="730" required value="{{ old('audit_retention_days', $settings['audit_retention_days']) }}">
-                    <small>{{ __('Allowed range: 30 to 730 days. Default: 90.') }}</small>
-                </div>
-                <div class="form-group">
-                    <label for="admin_login_retention_days">{{ __('Administrator login log retention, days') }}</label>
-                    <input id="admin_login_retention_days" name="admin_login_retention_days" type="number" min="7" max="365" required value="{{ old('admin_login_retention_days', $settings['admin_login_retention_days']) }}">
-                    <small>{{ __('Allowed range: 7 to 365 days. Default: 30.') }}</small>
-                </div>
+                <x-admin.field for="audit_retention_days" name="audit_retention_days" :label="__('Audit log retention, days')" :hint="__('Allowed range: 30 to 730 days. Default: 90.')">
+                    <input id="audit_retention_days" name="audit_retention_days" type="number" min="30" max="730" required value="{{ old('audit_retention_days', $settings['audit_retention_days']) }}" @if($errors->has('audit_retention_days')) aria-invalid="true" @endif>
+                </x-admin.field>
+                <x-admin.field for="admin_login_retention_days" name="admin_login_retention_days" :label="__('Administrator login log retention, days')" :hint="__('Allowed range: 7 to 365 days. Default: 30.')">
+                    <input id="admin_login_retention_days" name="admin_login_retention_days" type="number" min="7" max="365" required value="{{ old('admin_login_retention_days', $settings['admin_login_retention_days']) }}" @if($errors->has('admin_login_retention_days')) aria-invalid="true" @endif>
+                </x-admin.field>
             </div>
         </section>
 

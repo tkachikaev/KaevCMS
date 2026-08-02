@@ -18,29 +18,21 @@
             </div>
         </div>
 
-        <label class="settings-toggle-row" for="registration_enabled">
-            <span>
-                <strong>{{ __('Allow new user registration') }}</strong>
-                <small>{{ __('Shows the registration button and opens the website account creation page.') }}</small>
-            </span>
-            <span class="switch-control">
-                <input name="registration_enabled" type="hidden" value="0">
-                <input id="registration_enabled" name="registration_enabled" type="checkbox" value="1" @checked(old('registration_enabled', $settings['enabled']))>
-                <span aria-hidden="true"></span>
-            </span>
-        </label>
+        <x-admin.toggle
+            id="registration_enabled"
+            name="registration_enabled"
+            :label="__('Allow new user registration')"
+            :hint="__('Shows the registration button and opens the website account creation page.')"
+            :checked="(bool) old('registration_enabled', $settings['enabled'])"
+        />
 
-        <label class="settings-toggle-row" for="email_verification_required">
-            <span>
-                <strong>{{ __('Require email verification') }}</strong>
-                <small>{{ __('The user can access the account area only after opening the link from the email.') }}</small>
-            </span>
-            <span class="switch-control">
-                <input name="email_verification_required" type="hidden" value="0">
-                <input id="email_verification_required" name="email_verification_required" type="checkbox" value="1" @checked(old('email_verification_required', $settings['email_verification_required']))>
-                <span aria-hidden="true"></span>
-            </span>
-        </label>
+        <x-admin.toggle
+            id="email_verification_required"
+            name="email_verification_required"
+            :label="__('Require email verification')"
+            :hint="__('The user can access the account area only after opening the link from the email.')"
+            :checked="(bool) old('email_verification_required', $settings['email_verification_required'])"
+        />
 
         @if($mailReady)
             <div class="notice notice-success settings-inline-notice">
@@ -63,30 +55,19 @@
         </div>
 
         <div class="security-field-grid">
-            <div class="form-group">
-                <label for="username_min">{{ __('Minimum length') }}</label>
-                <input id="username_min" name="username_min" type="number" min="3" max="32" required value="{{ old('username_min', $settings['username_min']) }}">
-                <small>{{ __('Allowed range: 3 to 32.') }}</small>
-            </div>
-            <div class="form-group">
-                <label for="username_max">{{ __('Maximum length') }}</label>
-                <input id="username_max" name="username_max" type="number" min="3" max="64" required value="{{ old('username_max', $settings['username_max']) }}">
-                <small>{{ __('Allowed range: 3 to 64. Must not be less than the minimum.') }}</small>
-            </div>
+            <x-admin.field for="username_min" name="username_min" :label="__('Minimum length')" :hint="__('Allowed range: 3 to 32.')">
+                <input id="username_min" name="username_min" type="number" min="3" max="32" required value="{{ old('username_min', $settings['username_min']) }}" @if($errors->has('username_min')) aria-invalid="true" @endif>
+            </x-admin.field>
+            <x-admin.field for="username_max" name="username_max" :label="__('Maximum length')" :hint="__('Allowed range: 3 to 64. Must not be less than the minimum.')">
+                <input id="username_max" name="username_max" type="number" min="3" max="64" required value="{{ old('username_max', $settings['username_max']) }}" @if($errors->has('username_max')) aria-invalid="true" @endif>
+            </x-admin.field>
         </div>
 
         @foreach([
             'username_allow_hyphen' => [__('Allow hyphen'), __('Users may include the - character in the website username.')],
             'username_allow_underscore' => [__('Allow underscore'), __('Users may include the _ character in the website username.')],
         ] as $field => [$label, $help])
-            <label class="settings-toggle-row" for="{{ $field }}">
-                <span><strong>{{ $label }}</strong><small>{{ $help }}</small></span>
-                <span class="switch-control">
-                    <input name="{{ $field }}" type="hidden" value="0">
-                    <input id="{{ $field }}" name="{{ $field }}" type="checkbox" value="1" @checked(old($field, $settings[$field]))>
-                    <span aria-hidden="true"></span>
-                </span>
-            </label>
+            <x-admin.toggle :id="$field" :name="$field" :label="$label" :hint="$help" :checked="(bool) old($field, $settings[$field])" />
         @endforeach
     </section>
 
@@ -99,11 +80,9 @@
         </div>
 
         <div class="security-field-grid registration-policy-single-field">
-            <div class="form-group">
-                <label for="password_min">{{ __('Minimum length') }}</label>
-                <input id="password_min" name="password_min" type="number" min="8" max="64" required value="{{ old('password_min', $settings['password_min']) }}">
-                <small>{{ __('Allowed range: 8 to 64.') }}</small>
-            </div>
+            <x-admin.field for="password_min" name="password_min" :label="__('Minimum length')" :hint="__('Allowed range: 8 to 64.')">
+                <input id="password_min" name="password_min" type="number" min="8" max="64" required value="{{ old('password_min', $settings['password_min']) }}" @if($errors->has('password_min')) aria-invalid="true" @endif>
+            </x-admin.field>
         </div>
 
         @foreach([
@@ -112,14 +91,7 @@
             'password_numbers' => [__('Require a digit'), __('The password must contain at least one digit.')],
             'password_symbols' => [__('Require a symbol'), __('The password must contain at least one symbol.')],
         ] as $field => [$label, $help])
-            <label class="settings-toggle-row" for="{{ $field }}">
-                <span><strong>{{ $label }}</strong><small>{{ $help }}</small></span>
-                <span class="switch-control">
-                    <input name="{{ $field }}" type="hidden" value="0">
-                    <input id="{{ $field }}" name="{{ $field }}" type="checkbox" value="1" @checked(old($field, $settings[$field]))>
-                    <span aria-hidden="true"></span>
-                </span>
-            </label>
+            <x-admin.toggle :id="$field" :name="$field" :label="$label" :hint="$help" :checked="(bool) old($field, $settings[$field])" />
         @endforeach
     </section>
 

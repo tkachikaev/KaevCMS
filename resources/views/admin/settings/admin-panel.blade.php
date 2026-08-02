@@ -60,7 +60,7 @@
                     >
                 </div>
                 <small>{{ __('Use 3 to 40 lowercase Latin letters, numbers, and single hyphens. Leave the suffix empty to use /admin.') }}</small>
-                @error('admin_path_suffix')<p class="field-error">{{ $message }}</p>@enderror
+                @error('admin_path_suffix')<p class="admin-field-error">{{ $message }}</p>@enderror
             </div>
 
             <button class="button button-primary" type="submit">{{ __('Change address') }}</button>
@@ -128,7 +128,7 @@
                     @endforeach
                 </select>
                 <small>{{ __('Minimum: 30 seconds. Default: 1 minute.') }}</small>
-                @error('refresh_interval_seconds')<p class="field-error">{{ $message }}</p>@enderror
+                @error('refresh_interval_seconds')<p class="admin-field-error">{{ $message }}</p>@enderror
             </div>
 
             <button class="button button-primary" type="submit">{{ __('Save monitoring settings') }}</button>

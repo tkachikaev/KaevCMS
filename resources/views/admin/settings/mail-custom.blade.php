@@ -28,20 +28,20 @@
             <div class="form-group">
                 <label for="recipient">{{ __('Recipient address') }}</label>
                 <input id="recipient" name="recipient" type="email" maxlength="255" required value="{{ old('recipient') }}" placeholder="player@example.com">
-                @error('recipient')<p class="error-text">{{ $message }}</p>@enderror
+                @error('recipient')<p class="admin-field-error">{{ $message }}</p>@enderror
             </div>
 
             <div class="form-group">
                 <label for="custom_subject">{{ __('Email subject') }}</label>
                 <input id="custom_subject" name="subject" type="text" maxlength="200" required value="{{ old('subject') }}" placeholder="{{ __('Server announcement') }}">
-                @error('subject')<p class="error-text">{{ $message }}</p>@enderror
+                @error('subject')<p class="admin-field-error">{{ $message }}</p>@enderror
             </div>
 
             <div class="form-group">
                 <label for="custom_html">{{ __('HTML code') }}</label>
                 <textarea id="custom_html" name="html" rows="28" maxlength="200000" required spellcheck="false" data-custom-mail-html>{{ old('html', $exampleHtml) }}</textarea>
                 <small>{{ __('Complete HTML documents, tables, images, links and inline CSS are supported. Scripts, forms, PHP, Blade and JavaScript event attributes are blocked.') }}</small>
-                @error('html')<p class="error-text">{{ $message }}</p>@enderror
+                @error('html')<p class="admin-field-error">{{ $message }}</p>@enderror
             </div>
 
             <div class="custom-mail-actions">

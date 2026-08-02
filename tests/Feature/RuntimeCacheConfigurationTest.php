@@ -27,6 +27,8 @@ final class RuntimeCacheConfigurationTest extends TestCase
         $this->assertStringContainsString("BROWSER_TEST_LOGIN_LIMIT: '1000'", $runner);
         $this->assertStringContainsString("SERVER_MONITOR_REFRESH_INTERVAL_SECONDS: '300'", $runner);
         $this->assertStringContainsString("'serve', '--no-reload'", $runner);
+        $this->assertStringContainsString("const environmentPath = resolve(root, '.env')", $runner);
+        $this->assertStringContainsString('temporaryEnvironmentCreated', $runner);
         $this->assertStringContainsString('removeFileWithRetry', $runner);
         $this->assertStringContainsString("['EBUSY', 'EACCES', 'EPERM']", $runner);
         $this->assertStringContainsString('await stopProcessTree(server)', $runner);

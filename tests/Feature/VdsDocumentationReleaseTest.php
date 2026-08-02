@@ -42,7 +42,12 @@ class VdsDocumentationReleaseTest extends TestCase
                 'chmod -R 777 /var/www/kaevcms',
                 'kaevcms_db',
                 'kaevcms_user',
-                'sudo bash deployment/vds/install-update-agent.sh',
+                'bash deployment/vds/install-update-agent.sh',
+                'root',
+                'KAEVCMS_WEB_GROUP',
+                '--project-user kaevcms',
+                '--web-user www-data',
+                '--web-group www-data',
                 'php artisan kaevcms:update-agent:status',
                 'sudo bash deployment/vds/remove-update-agent.sh',
             ] as $required) {
@@ -60,7 +65,9 @@ class VdsDocumentationReleaseTest extends TestCase
         $this->assertStringContainsString('http://192.168.50.111/install/', $english);
         $this->assertStringContainsString('http://192.168.50.111/install/', $russian);
         $this->assertStringContainsString('The HTTP warning does not block the database check or final installation.', $english);
+        $this->assertStringContainsString('requests `sudo` when the current account needs elevated rights', $english);
         $this->assertStringContainsString('Предупреждение об HTTP не блокирует проверку базы или завершение установки.', $russian);
+        $this->assertStringContainsString('запросит `sudo`, если текущей учётной записи не хватает прав', $russian);
     }
 
     private function readReleaseFile(string $path): string

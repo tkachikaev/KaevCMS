@@ -156,11 +156,51 @@ class WebUpdaterReleaseTest extends TestCase
             'ProtectSystem=full',
             'kaevcms:update-agent:register',
             'kaevcms:update-agent:run',
+            'UPDATE_ROOT=',
+            'PACKAGE_DIR=',
+            'STAGING_DIR=',
+            '-m 2770',
+            '--project-user',
+            '--web-group',
+            '--web-user',
+            'requesting sudo',
+            'php-fpm: pool',
+            'repair_kaevcms_runtime',
+            'UMask=0027',
+            '--deployment-user=',
+            '--web-gid=',
         ] as $required) {
             $this->assertStringContainsString($required, $installerScript);
         }
         $this->assertStringNotContainsString('ListenStream=', $installerScript);
-        $this->assertStringNotContainsString('User=root', $installerScript);
+        $this->assertStringNotContainsString('the project is owned by root. Set the correct owner', $installerScript);
+        $this->assertStringContainsString('the KaevCMS update agent will run as root', $installerScript);
+        $this->assertStringContainsString('An applied package receives root-level access', $installerScript);
+        $this->assertStringContainsString('KAEVCMS_WEB_GROUP', $installerScript);
+        $this->assertStringContainsString('id www-data', $installerScript);
+        $this->assertStringContainsString('Web upload directories:', $installerScript);
+        $this->assertStringContainsString('find "${public_root}" -mindepth 1', $installerScript);
+        $this->assertStringContainsString('find "${root}" -mindepth 1 -path "${root}/update-backups"', $installerScript);
+        $this->assertStringNotContainsString('-prune -o \\
+        -mindepth 1', $installerScript);
+        $this->assertStringNotContainsString('-prune -o -mindepth 1', $installerScript);
+        $this->assertStringContainsString('public const AGENT_VERSION = 3;', $agent);
+        $this->assertStringContainsString('packageDirectory()', $agent);
+        $this->assertStringContainsString('stagingDirectory()', $agent);
+        $this->assertStringContainsString('deploymentPermissions()', $agent);
+        $this->assertStringContainsString('secureUpdatedTarget', File::get(app_path('Services/Updates/UpdateFilesystemTransaction.php')));
+
+        $cliUpdater = File::get(app_path('Console/Commands/InstallSystemUpdateCommand.php'));
+        $this->assertStringContainsString('prepareSharedDirectory', $cliUpdater);
+        $this->assertStringContainsString('chmod($path, 02770)', $cliUpdater);
+        $this->assertStringContainsString('chmod($path, 0660)', $cliUpdater);
+        $this->assertStringNotContainsString('chmod($path, 0700)', $cliUpdater);
+
+        $updatesIndex = File::get(resource_path('views/admin/settings/updates/index.blade.php'));
+        $this->assertStringContainsString('update-upload-warning', $updatesIndex);
+        $this->assertStringContainsString('An update archive can replace KaevCMS program files.', $updatesIndex);
+        $this->assertStringContainsString('The website owner is responsible for the package selected for installation.', $updatesIndex);
+        $this->assertStringNotContainsString('Use update packages only from a source you trust.', $updatesIndex);
 
         $request = File::get(app_path('Http/Requests/Admin/ApplySystemUpdateRequest.php'));
         $this->assertStringContainsString("'trusted_source' => ['accepted']", $request);

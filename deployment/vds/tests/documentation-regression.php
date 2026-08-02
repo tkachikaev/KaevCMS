@@ -44,6 +44,9 @@ foreach ($guides as $language => $path) {
         'CACHE_LIMITER=database',
         'sudo -u www-data php artisan kaevcms:runtime-directories --probe',
         'storage/framework/cache/data',
+        '--project-user kaevcms',
+        '--web-user www-data',
+        '--web-group www-data',
     ] as $required) {
         if (! str_contains($contents, $required)) {
             throw new RuntimeException("{$language} VDS guide is missing: {$required}");
@@ -71,6 +74,14 @@ foreach ($guides as $language => $path) {
 
 $english = (string) file_get_contents($guides['English']);
 $russian = (string) file_get_contents($guides['Russian']);
+
+if (! str_contains($english, 'requests `sudo` when the current account needs elevated rights')) {
+    throw new RuntimeException('English VDS guide does not document automatic privilege elevation.');
+}
+
+if (! str_contains($russian, 'запросит `sudo`, если текущей учётной записи не хватает прав')) {
+    throw new RuntimeException('Russian VDS guide does not document automatic privilege elevation.');
+}
 
 if (! str_contains($english, 'Ubuntu 26.04 LTS ships PHP 8.5')) {
     throw new RuntimeException('English VDS guide does not explain the Ubuntu 26.04 compatibility boundary.');

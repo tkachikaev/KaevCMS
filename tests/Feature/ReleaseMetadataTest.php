@@ -29,9 +29,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['previous_apply_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
-        $this->assertSame([
-            'tests/Feature/ReleaseMetadataTest.php',
-        ], $release['repair_files']);
+        $this->assertSame([], $release['repair_files']);
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
             $release['composer_lock']['current_sha256'],
@@ -454,12 +452,14 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('.admin-menu-badge[hidden]', $layoutCss);
 
         $settingsView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/settings.blade.php');
-        $this->assertStringContainsString('admin-tabs settings-section-tabs support-settings-tabs', $settingsView);
+        $this->assertStringContainsString('<x-admin.tabs', $settingsView);
+        $this->assertStringContainsString('class="settings-section-tabs support-settings-tabs"', $settingsView);
         $this->assertStringContainsString('data-testid="support-cleanup-panel"', $settingsView);
         $this->assertStringContainsString('support-settings-actions', $settingsView);
 
         $indexView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/index.blade.php');
-        $this->assertStringContainsString('admin-filter-bar support-ticket-filters', $indexView);
+        $this->assertStringContainsString('<x-admin.filter-bar', $indexView);
+        $this->assertStringContainsString('class="support-ticket-filters"', $indexView);
         $this->assertStringNotContainsString("<h2>{{ __('module-support-tickets::messages.filters') }}</h2>", $indexView);
 
         $conversationView = $this->readReleaseFile('modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php');

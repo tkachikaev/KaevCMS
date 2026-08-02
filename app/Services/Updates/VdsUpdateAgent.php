@@ -15,11 +15,13 @@ final class VdsUpdateAgent
         private readonly ?string $markerPathOverride = null,
         private readonly ?string $requestDirectoryOverride = null,
         private readonly ?string $projectRootOverride = null,
+        private readonly ?string $packageDirectoryOverride = null,
+        private readonly ?string $stagingDirectoryOverride = null,
     ) {}
 
     public const SCHEMA = 1;
 
-    public const AGENT_VERSION = 1;
+    public const AGENT_VERSION = 3;
 
     public function status(): VdsUpdateAgentStatus
     {
@@ -51,8 +53,7 @@ final class VdsUpdateAgent
             || ! is_string($registeredRoot)
             || $registeredRoot !== $projectRoot
             || $schema !== self::SCHEMA
-            || ! is_int($version)
-            || $version < 1) {
+            || ! is_int($version)) {
             return new VdsUpdateAgentStatus(
                 'invalid',
                 __('The VDS update agent registration does not match this KaevCMS installation.'),
@@ -60,13 +61,40 @@ final class VdsUpdateAgent
             );
         }
 
-        $directory = $this->requestDirectory();
-        if (! is_dir($directory) || ! is_writable($directory)) {
+        if ($version < self::AGENT_VERSION) {
             return new VdsUpdateAgentStatus(
                 'invalid',
-                __('The VDS update agent request directory is unavailable or not writable by PHP-FPM.'),
+                __('The VDS update agent must be reinstalled to repair application and Web Update permissions.'),
                 $marker,
             );
+        }
+
+        if ($this->deploymentPermissionsFromMarker($marker) === null) {
+            return new VdsUpdateAgentStatus(
+                'invalid',
+                __('The VDS update agent deployment identity is invalid. Reinstall the agent.'),
+                $marker,
+            );
+        }
+
+        foreach ([$this->requestDirectory(), $this->packageDirectory(), $this->stagingDirectory()] as $directory) {
+            if (! is_dir($directory) || ! is_writable($directory)) {
+                return new VdsUpdateAgentStatus(
+                    'invalid',
+                    __('The VDS update agent runtime directories are unavailable or not writable by PHP-FPM.'),
+                    $marker,
+                );
+            }
+        }
+
+        foreach ($this->programProbePaths() as $path) {
+            if (! is_file($path) || ! is_readable($path)) {
+                return new VdsUpdateAgentStatus(
+                    'invalid',
+                    __('The VDS update agent application files are not readable by PHP-FPM. Reinstall the agent.'),
+                    $marker,
+                );
+            }
         }
 
         return new VdsUpdateAgentStatus(
@@ -99,7 +127,7 @@ final class VdsUpdateAgent
 
     public function installCommand(): string
     {
-        return 'cd '.escapeshellarg($this->projectRoot()).' && sudo bash deployment/vds/install-update-agent.sh';
+        return 'cd '.escapeshellarg($this->projectRoot()).' && bash deployment/vds/install-update-agent.sh';
     }
 
     public function diagnosticsCommand(): string
@@ -117,6 +145,30 @@ final class VdsUpdateAgent
         return $this->markerPathOverride ?? storage_path('app/kaevcms/update-agent/agent.json');
     }
 
+    public function packageDirectory(): string
+    {
+        return $this->packageDirectoryOverride ?? storage_path('app/kaevcms/updates/packages');
+    }
+
+    public function stagingDirectory(): string
+    {
+        return $this->stagingDirectoryOverride ?? storage_path('app/kaevcms/updates/staging');
+    }
+
+    /**
+     * @return array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}|null
+     */
+    public function deploymentPermissions(): ?array
+    {
+        $marker = $this->readMarker();
+        $version = is_array($marker) ? ($marker['agent_version'] ?? null) : null;
+        if (! is_array($marker) || ! is_int($version) || $version < self::AGENT_VERSION) {
+            return null;
+        }
+
+        return $this->deploymentPermissionsFromMarker($marker);
+    }
+
     /**
      * @param  array<string, mixed>  $metadata
      */
@@ -128,8 +180,17 @@ final class VdsUpdateAgent
         }
 
         $directory = dirname($this->markerPath());
-        $this->ensureDirectory($directory, 0770);
-        $this->ensureDirectory($this->requestDirectory(), 0770);
+        $this->ensureDirectory($directory, 02770);
+        $this->ensureDirectory($this->requestDirectory(), 02770);
+        $this->ensureDirectory(dirname($this->packageDirectory()), 02770);
+        $this->ensureDirectory($this->packageDirectory(), 02770);
+        $this->ensureDirectory($this->stagingDirectory(), 02770);
+
+        $deploymentUid = $this->safeMetadataInteger($metadata, 'deployment_uid') ?? fileowner($this->projectRoot().DIRECTORY_SEPARATOR.'artisan');
+        $webGid = $this->safeMetadataInteger($metadata, 'web_gid') ?? filegroup($this->requestDirectory());
+        if (! is_int($deploymentUid) || $deploymentUid < 0 || ! is_int($webGid) || $webGid < 0) {
+            throw new RuntimeException('Unable to determine the VDS update agent deployment identity.');
+        }
 
         $payload = [
             'schema' => self::SCHEMA,
@@ -138,6 +199,10 @@ final class VdsUpdateAgent
             'service_name' => $this->safeMetadataString($metadata, 'service_name'),
             'path_unit' => $this->safeMetadataString($metadata, 'path_unit'),
             'php_binary' => $this->safeMetadataString($metadata, 'php_binary'),
+            'deployment_user' => $this->safeMetadataString($metadata, 'deployment_user') ?? 'uid-'.$deploymentUid,
+            'deployment_uid' => $deploymentUid,
+            'web_group' => $this->safeMetadataString($metadata, 'web_group') ?? 'gid-'.$webGid,
+            'web_gid' => $webGid,
             'installed_at' => $this->safeMetadataString($metadata, 'installed_at') ?? now()->utc()->toIso8601String(),
             'last_seen_at' => now()->utc()->toIso8601String(),
         ];
@@ -373,7 +438,7 @@ final class VdsUpdateAgent
     private function writeJsonAtomically(string $path, array $payload, int $mode): void
     {
         $directory = dirname($path);
-        $this->ensureDirectory($directory, 0770);
+        $this->ensureDirectory($directory, 02770);
 
         $encoded = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n";
         $temporary = $directory.'/.'.basename($path).'.'.bin2hex(random_bytes(8)).'.tmp';
@@ -393,6 +458,64 @@ final class VdsUpdateAgent
                 @unlink($temporary);
             }
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $marker
+     * @return array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int}|null
+     */
+    private function deploymentPermissionsFromMarker(array $marker): ?array
+    {
+        $deploymentUser = $marker['deployment_user'] ?? null;
+        $deploymentUid = $marker['deployment_uid'] ?? null;
+        $webGroup = $marker['web_group'] ?? null;
+        $webGid = $marker['web_gid'] ?? null;
+
+        if (! is_string($deploymentUser) || trim($deploymentUser) === ''
+            || ! is_int($deploymentUid) || $deploymentUid < 0
+            || ! is_string($webGroup) || trim($webGroup) === ''
+            || ! is_int($webGid) || $webGid < 0) {
+            return null;
+        }
+
+        $artisanOwner = fileowner($this->projectRoot().DIRECTORY_SEPARATOR.'artisan');
+        if (is_int($artisanOwner) && $artisanOwner !== $deploymentUid) {
+            return null;
+        }
+
+        return [
+            'deployment_user' => trim($deploymentUser),
+            'deployment_uid' => $deploymentUid,
+            'web_group' => trim($webGroup),
+            'web_gid' => $webGid,
+        ];
+    }
+
+    /** @return list<string> */
+    private function programProbePaths(): array
+    {
+        return array_values(array_filter([
+            $this->projectRoot().DIRECTORY_SEPARATOR.'artisan',
+            $this->projectRoot().DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'Providers'.DIRECTORY_SEPARATOR.'AppServiceProvider.php',
+            $this->projectRoot().DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'views'.DIRECTORY_SEPARATOR.'admin'.DIRECTORY_SEPARATOR.'layouts'.DIRECTORY_SEPARATOR.'app.blade.php',
+        ], static fn (string $path): bool => is_file($path)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function safeMetadataInteger(array $metadata, string $key): ?int
+    {
+        $value = $metadata[$key] ?? null;
+        if (is_int($value) && $value >= 0) {
+            return $value;
+        }
+
+        if (is_string($value) && preg_match('/\A\d+\z/', $value) === 1) {
+            return (int) $value;
+        }
+
+        return null;
     }
 
     private function projectRoot(): string

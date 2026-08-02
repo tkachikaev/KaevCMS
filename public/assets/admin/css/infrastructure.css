@@ -559,7 +559,7 @@
     line-height: 1.2;
     text-transform: uppercase;
 }
-.field-error { display: block; margin-top: 5px; color: #b91c1c !important; }
+small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c1c !important; }
 .database-test-details-toggle {
     margin-top: 10px;
     padding: 0;

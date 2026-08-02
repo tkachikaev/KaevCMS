@@ -114,7 +114,7 @@ class SystemUpdateAdminTest extends TestCase
             ->assertSee('Агент обновлений VDS не установлен')
             ->assertSee($agent->installCommand())
             ->assertSee('Копировать команду')
-            ->assertSee('Используйте пакеты обновлений только из доверенного источника.');
+            ->assertSee('Загружайте только пакет из официального релиза KaevCMS. Архив обновления может заменять программные файлы KaevCMS. До изменения файлов пакет будет проверен. Ответственность за выбранный пакет несёт владелец сайта.');
     }
 
     public function test_installation_requires_confirmation_that_the_archive_source_is_trusted(): void

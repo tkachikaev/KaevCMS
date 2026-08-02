@@ -37,6 +37,54 @@ class VdsUpdateAgentTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_install_command_is_the_same_for_root_and_sudo_users(): void
+    {
+        $command = $this->agent()->installCommand();
+
+        $this->assertStringContainsString('bash deployment/vds/install-update-agent.sh', $command);
+        $this->assertStringNotContainsString('sudo bash', $command);
+    }
+
+    public function test_installer_uses_the_project_owner_for_root_and_regular_user_services(): void
+    {
+        $script = file_get_contents(base_path('deployment/vds/install-update-agent.sh'));
+        $this->assertIsString($script);
+
+        foreach ([
+            'if [[ "${EUID}" -ne 0 ]]',
+            'exec sudo env "${ELEVATED_ENV[@]}" bash "${SELF_PATH}" "$@"',
+            '$(stat -c \'%U\' "${ARTISAN}")',
+            'if [[ "${DEPLOY_USER}" == "root" ]]',
+            'User=${DEPLOY_USER}',
+            'Group=${WEB_GROUP}',
+            'runuser -u "${DEPLOY_USER}" -g "${WEB_GROUP}"',
+        ] as $required) {
+            $this->assertStringContainsString($required, $script);
+        }
+    }
+
+    public function test_legacy_v2_registration_requires_reinstallation(): void
+    {
+        $agent = $this->agent();
+        $agent->register([]);
+
+        $marker = json_decode((string) file_get_contents($agent->markerPath()), true, 32, JSON_THROW_ON_ERROR);
+        $this->assertIsArray($marker);
+        $marker['agent_version'] = 2;
+        file_put_contents(
+            $agent->markerPath(),
+            json_encode($marker, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n",
+        );
+
+        $status = $agent->status();
+
+        $this->assertSame('invalid', $status->state);
+        $this->assertSame(
+            __('The VDS update agent must be reinstalled to repair application and Web Update permissions.'),
+            $status->message,
+        );
+    }
+
     public function test_agent_registration_is_bound_to_the_current_project_and_request_directory(): void
     {
         $agent = $this->agent();
@@ -51,12 +99,47 @@ class VdsUpdateAgentTest extends TestCase
 
         $status = $agent->status();
         $this->assertTrue($status->isReady());
-        $this->assertSame(1, $status->metadata['agent_version']);
+        $this->assertSame(VdsUpdateAgent::AGENT_VERSION, $status->metadata['agent_version']);
         $this->assertSame(realpath(base_path()), $status->metadata['project_root']);
+        $this->assertIsInt($status->metadata['deployment_uid']);
+        $this->assertIsInt($status->metadata['web_gid']);
+        $this->assertNotNull($agent->deploymentPermissions());
         $this->assertDirectoryExists($agent->requestDirectory());
+        $this->assertDirectoryExists($agent->packageDirectory());
+        $this->assertDirectoryExists($agent->stagingDirectory());
 
         $agent->unregister();
         $this->assertSame('missing', $agent->status()->state);
+    }
+
+    public function test_registered_agent_command_starts_cleanly_without_a_queued_request(): void
+    {
+        $agent = $this->agent();
+        $agent->register([]);
+        $this->app->instance(VdsUpdateAgent::class, $agent);
+
+        $this->artisan('kaevcms:update-agent:run')
+            ->expectsOutput('No queued KaevCMS update requests.')
+            ->assertSuccessful();
+
+        $this->assertSame([], $agent->pendingRequests());
+        $this->assertSame('ready', $agent->status()->state);
+    }
+
+    public function test_agent_status_requires_web_update_runtime_directories(): void
+    {
+        $agent = $this->agent();
+        $agent->register([]);
+
+        $this->removeDirectory($agent->packageDirectory());
+
+        $status = $agent->status();
+
+        $this->assertSame('invalid', $status->state);
+        $this->assertSame(
+            __('The VDS update agent runtime directories are unavailable or not writable by PHP-FPM.'),
+            $status->message,
+        );
     }
 
     public function test_verified_update_is_queued_with_an_encrypted_secret_and_atomic_request_file(): void
@@ -155,6 +238,8 @@ class VdsUpdateAgentTest extends TestCase
             markerPathOverride: $this->runtimeDirectory.'/agent.json',
             requestDirectoryOverride: $this->runtimeDirectory.'/requests',
             projectRootOverride: base_path(),
+            packageDirectoryOverride: $this->runtimeDirectory.'/updates/packages',
+            stagingDirectoryOverride: $this->runtimeDirectory.'/updates/staging',
         );
     }
 

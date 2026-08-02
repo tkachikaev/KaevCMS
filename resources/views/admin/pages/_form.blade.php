@@ -34,41 +34,39 @@
     <aside class="editor-sidebar">
         <section class="form-card">
             <h2>{{ __('Publication') }}</h2>
-            <input type="hidden" name="is_published" value="0">
-            <label class="switch-row" for="is_published">
-                <input id="is_published" name="is_published" type="checkbox" value="1" @checked((bool) old('is_published', $pageItem->is_published))>
-                <span>
-                    <strong>{{ __('Publish page') }}</strong>
-                    <small>{{ __('Without this option the page is saved as a draft and is unavailable to visitors.') }}</small>
-                </span>
-            </label>
+            <x-admin.toggle
+                id="is_published"
+                name="is_published"
+                :label="__('Publish page')"
+                :hint="__('Without this option the page is saved as a draft and is unavailable to visitors.')"
+                :checked="(bool) old('is_published', $pageItem->is_published)"
+                compact
+            />
         </section>
 
         <section class="form-card">
             <h2>{{ __('Navigation') }}</h2>
-            <input type="hidden" name="show_in_header" value="0">
-            <label class="switch-row" for="show_in_header">
-                <input id="show_in_header" name="show_in_header" type="checkbox" value="1" @checked((bool) old('show_in_header', $pageItem->show_in_header))>
-                <span>
-                    <strong>{{ __('Show in header') }}</strong>
-                    <small>{{ __('Add the page to the main website navigation.') }}</small>
-                </span>
-            </label>
+            <x-admin.toggle
+                id="show_in_header"
+                name="show_in_header"
+                :label="__('Show in header')"
+                :hint="__('Add the page to the main website navigation.')"
+                :checked="(bool) old('show_in_header', $pageItem->show_in_header)"
+                compact
+            />
 
-            <input type="hidden" name="show_in_footer" value="0">
-            <label class="switch-row switch-row-spaced" for="show_in_footer">
-                <input id="show_in_footer" name="show_in_footer" type="checkbox" value="1" @checked((bool) old('show_in_footer', $pageItem->show_in_footer))>
-                <span>
-                    <strong>{{ __('Show in footer') }}</strong>
-                    <small>{{ __('Add the page to the documents section in the footer.') }}</small>
-                </span>
-            </label>
+            <x-admin.toggle
+                id="show_in_footer"
+                name="show_in_footer"
+                :label="__('Show in footer')"
+                :hint="__('Add the page to the documents section in the footer.')"
+                :checked="(bool) old('show_in_footer', $pageItem->show_in_footer)"
+                compact
+            />
 
-            <div class="form-group compact">
-                <label for="sort_order">{{ __('Page sort order') }}</label>
-                <input id="sort_order" name="sort_order" type="number" min="0" max="100000" value="{{ old('sort_order', $pageItem->sort_order ?? 100) }}" required>
-                <small>{{ __('Pages with a lower number are displayed first.') }}</small>
-            </div>
+            <x-admin.field for="sort_order" name="sort_order" :label="__('Page sort order')" :hint="__('Pages with a lower number are displayed first.')" compact>
+                <input id="sort_order" name="sort_order" type="number" min="0" max="100000" value="{{ old('sort_order', $pageItem->sort_order ?? 100) }}" required @if($errors->has('sort_order')) aria-invalid="true" @endif>
+            </x-admin.field>
         </section>
 
         @if ($pageItem->exists)

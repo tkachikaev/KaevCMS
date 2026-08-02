@@ -47,6 +47,28 @@ class AuditLogTest extends TestCase
             ->assertSee('ok');
     }
 
+    public function test_admin_can_filter_the_audit_log_to_mail_actions(): void
+    {
+        $admin = $this->createAdmin();
+        app(AuditLogger::class)->success(
+            category: 'mail',
+            action: 'mail.test_sent',
+            actor: $admin,
+            target: 'recipient@example.test',
+        );
+        app(AuditLogger::class)->success(
+            category: 'admin',
+            action: 'settings.registration_updated',
+            actor: $admin,
+        );
+
+        $this->actingAs($admin, 'admin')
+            ->get('/admin/logs?category=mail')
+            ->assertOk()
+            ->assertSee('mail.test_sent')
+            ->assertDontSee('settings.registration_updated');
+    }
+
     public function test_audit_logger_hides_sensitive_values_recursively(): void
     {
         $log = app(AuditLogger::class)->success(

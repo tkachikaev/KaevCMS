@@ -126,24 +126,6 @@
         @endif
     </section>
 
-    <section class="form-card system-card">
-        <h2>{{ __('APP_KEY encryption') }}</h2>
-        <dl class="system-definition-list">
-            <div>
-                <dt>{{ __('Status') }}</dt>
-                <dd><span class="status-badge status-badge-{{ $system['security']['encryption']['state'] === 'success' ? 'success' : 'danger' }}">{{ $system['security']['encryption']['status'] }}</span></dd>
-            </div>
-            <div><dt>{{ __('Encrypted values') }}</dt><dd>{{ $system['security']['encryption']['encrypted_values_total'] }}</dd></div>
-            <div><dt>{{ __('Unavailable values') }}</dt><dd>{{ $system['security']['encryption']['invalid_values_total'] }}</dd></div>
-            @foreach($system['security']['encryption']['categories'] as $category)
-                <div>
-                    <dt>{{ $category['label'] }}</dt>
-                    <dd>{{ __(':saved saved, :invalid unavailable', ['saved' => $category['saved'], 'invalid' => $category['invalid']]) }}</dd>
-                </div>
-            @endforeach
-        </dl>
-        <p class="system-definition-note">{{ $system['security']['encryption']['details'] }}</p>
-    </section>
 </div>
 
 @include('admin.settings._external_database_diagnostics')

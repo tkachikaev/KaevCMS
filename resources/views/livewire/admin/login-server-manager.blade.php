@@ -133,7 +133,7 @@
                                 <div class="form-group">
                                     <label for="live_login_name">{{ __('Name') }}</label>
                                     <input id="live_login_name" type="text" maxlength="100" wire:model="name" required>
-                                    @error('name')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('name')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="live_login_driver">{{ __('LoginServer driver') }}</label>
@@ -142,7 +142,7 @@
                                             <option value="{{ $key }}">{{ $driverOption['label'] }}@if(!$driverOption['ready']) — {{ __('placeholder') }}@endif</option>
                                         @endforeach
                                     </select>
-                                    @error('driver')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('driver')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                             </div>
                         </section>
@@ -156,28 +156,28 @@
                                 <div class="form-group">
                                     <label for="live_login_host">{{ __('Database host') }}</label>
                                     <input id="live_login_host" type="text" maxlength="255" wire:model="databaseHost" placeholder="127.0.0.1">
-                                    @error('databaseHost')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('databaseHost')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group server-form-port">
                                     <label for="live_login_port">{{ __('Database port') }}</label>
                                     <input id="live_login_port" type="number" min="1" max="65535" wire:model="databasePort">
-                                    @error('databasePort')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('databasePort')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="live_login_database">{{ __('Database name') }}</label>
                                     <input id="live_login_database" type="text" maxlength="64" wire:model="databaseName">
-                                    @error('databaseName')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('databaseName')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="live_login_username">{{ __('Database username') }}</label>
                                     <input id="live_login_username" type="text" maxlength="128" autocomplete="off" wire:model="databaseUsername">
-                                    @error('databaseUsername')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('databaseUsername')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="live_login_password">{{ __('Database password') }}</label>
                                     <input id="live_login_password" type="password" maxlength="1024" autocomplete="new-password" wire:model="databasePassword">
                                     <small>{{ $editingId !== null ? __('Leave empty to keep the saved database password.') : __('The password is encrypted with APP_KEY before it is stored.') }}</small>
-                                    @error('databasePassword')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('databasePassword')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group server-form-charset">
                                     <label for="live_login_charset">{{ __('Database charset') }}</label>
@@ -186,7 +186,7 @@
                                             <option value="{{ $charset }}">{{ $charset }}</option>
                                         @endforeach
                                     </select>
-                                    @error('databaseCharset')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('databaseCharset')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                             </div>
                         </section>
@@ -202,12 +202,12 @@
                                 <div class="form-group">
                                     <label for="live_login_service_host">{{ __('Service host') }}</label>
                                     <input id="live_login_service_host" type="text" maxlength="255" wire:model="serviceHost" placeholder="{{ $databaseHost }}">
-                                    @error('serviceHost')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('serviceHost')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                                 <div class="form-group server-form-port">
                                     <label for="live_login_service_port">{{ __('Service port') }}</label>
                                     <input id="live_login_service_port" type="number" min="1" max="65535" wire:model="servicePort">
-                                    @error('servicePort')<small class="field-error">{{ $message }}</small>@enderror
+                                    @error('servicePort')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
                             </div>
                         </section>

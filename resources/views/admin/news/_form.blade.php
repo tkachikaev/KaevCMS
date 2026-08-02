@@ -57,19 +57,17 @@
 
         <section class="form-card">
             <h2>{{ __('Publication') }}</h2>
-            <input type="hidden" name="is_published" value="0">
-            <label class="switch-row" for="is_published">
-                <input id="is_published" name="is_published" type="checkbox" value="1" @checked((bool) old('is_published', $newsItem->is_published))>
-                <span>
-                    <strong>{{ __('Publish news') }}</strong>
-                    <small>{{ __('Without this option the news will be saved as a draft.') }}</small>
-                </span>
-            </label>
-            <div class="form-group compact">
-                <label for="published_at">{{ __('Date and time') }}</label>
-                <input id="published_at" name="published_at" type="datetime-local" value="{{ old('published_at', $newsItem->published_at?->format('Y-m-d\TH:i')) }}">
-                <small>{{ __('A future date creates a scheduled publication.') }}</small>
-            </div>
+            <x-admin.toggle
+                id="is_published"
+                name="is_published"
+                :label="__('Publish news')"
+                :hint="__('Without this option the news will be saved as a draft.')"
+                :checked="(bool) old('is_published', $newsItem->is_published)"
+                compact
+            />
+            <x-admin.field for="published_at" name="published_at" :label="__('Date and time')" :hint="__('A future date creates a scheduled publication.')" compact>
+                <input id="published_at" name="published_at" type="datetime-local" value="{{ old('published_at', $newsItem->published_at?->format('Y-m-d\TH:i')) }}" @if($errors->has('published_at')) aria-invalid="true" @endif>
+            </x-admin.field>
         </section>
 
         @if ($newsItem->exists)

@@ -13,7 +13,7 @@
     @endif
 </div>
 
-<form class="admin-filter-bar support-ticket-filters" method="GET" action="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}" data-testid="support-ticket-filters">
+<x-admin.filter-bar :action="route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath])" class="support-ticket-filters" data-testid="support-ticket-filters">
     <div class="support-ticket-search-field">
         <label for="support-ticket-search">{{ __('module-support-tickets::messages.search') }}</label>
         <input id="support-ticket-search" name="q" type="search" maxlength="120" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('module-support-tickets::messages.search_placeholder') }}">
@@ -44,14 +44,14 @@
             <option value="unassigned" @selected(($filters['assigned'] ?? '') === 'unassigned')>{{ __('module-support-tickets::messages.unassigned') }}</option>
         </select>
     </div>
-    <button class="button button-primary" type="submit">{{ __('module-support-tickets::messages.apply_filters') }}</button>
+    <x-admin.button type="submit" variant="primary">{{ __('module-support-tickets::messages.apply_filters') }}</x-admin.button>
     @if($hasFilters)
-        <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">{{ __('module-support-tickets::messages.reset_filters') }}</a>
+        <x-admin.button wire:navigate :href="route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath])">{{ __('module-support-tickets::messages.reset_filters') }}</x-admin.button>
     @endif
-</form>
+</x-admin.filter-bar>
 
 @if($tickets->isEmpty())
-    <div class="admin-empty-state empty-state"><div class="empty-state-mark">?</div><h2>{{ __('module-support-tickets::messages.no_admin_tickets_title') }}</h2><p>{{ __('module-support-tickets::messages.no_admin_tickets_description') }}</p>@if($hasFilters)<a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">{{ __('module-support-tickets::messages.reset_filters') }}</a>@endif</div>
+    <div class="admin-empty-state empty-state"><div class="empty-state-mark">?</div><h2>{{ __('module-support-tickets::messages.no_admin_tickets_title') }}</h2><p>{{ __('module-support-tickets::messages.no_admin_tickets_description') }}</p>@if($hasFilters)<x-admin.button wire:navigate :href="route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath])">{{ __('module-support-tickets::messages.reset_filters') }}</x-admin.button>@endif</div>
 @else
     <div class="admin-card-list content-list support-admin-ticket-list">
         @foreach($tickets as $ticket)
