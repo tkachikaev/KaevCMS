@@ -21,6 +21,9 @@ class SystemUpdateAdminTest extends TestCase
     /** @var list<string> */
     private array $temporaryDirectories = [];
 
+    /** @var list<string> */
+    private array $temporaryFiles = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -40,6 +43,12 @@ class SystemUpdateAdminTest extends TestCase
 
         foreach ($this->temporaryDirectories as $directory) {
             $this->removeDirectory($directory);
+        }
+
+        foreach ($this->temporaryFiles as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
         }
 
         parent::tearDown();
@@ -273,6 +282,58 @@ class SystemUpdateAdminTest extends TestCase
             ->assertOk()
             ->assertSee('Восстановление прерванного обновления')
             ->assertSee('/admin/settings/system/updates/'.$update->id.'/recover', false);
+    }
+
+    public function test_active_update_exposes_polling_status_and_progress_dialog(): void
+    {
+        $owner = Admin::factory()->create();
+        $relativeLogPath = 'storage/logs/system-update-progress-'.bin2hex(random_bytes(8)).'.log';
+        $absoluteLogPath = base_path($relativeLogPath);
+        $this->assertNotFalse(file_put_contents($absoluteLogPath, "Update progress fixture\n"));
+        $this->temporaryFiles[] = $absoluteLogPath;
+
+        $update = SystemUpdate::query()->create([
+            'uuid' => '73a8e0bf-e702-46ee-9992-24419ef6d572',
+            'admin_id' => $owner->id,
+            'package_id' => 'kaevcms-progress-test',
+            'from_version' => cms_version(),
+            'target_version' => '99.0.0',
+            'status' => SystemUpdate::STATUS_APPLYING,
+            'phase' => SystemUpdate::PHASE_FILES,
+            'installation_type' => 'standard',
+            'package_path' => 'kaevcms/updates/packages/missing.zip',
+            'log_path' => $relativeLogPath,
+            'file_count' => 3,
+            'delete_count' => 1,
+            'manifest' => ['schema' => 1],
+            'started_at' => now(),
+        ]);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates/'.$update->id)
+            ->assertOk()
+            ->assertSee('data-update-progress-dialog', false)
+            ->assertSee('data-update-auto-open="1"', false)
+            ->assertSee('data-update-progress-message', false)
+            ->assertSee('Показать подробности')
+            ->assertSee('Update progress fixture');
+
+        $statusResponse = $this->actingAs($owner, 'admin')
+            ->getJson('/admin/settings/system/updates/'.$update->id.'/status');
+
+        $statusResponse
+            ->assertOk()
+            ->assertJson([
+                'status' => SystemUpdate::STATUS_APPLYING,
+                'phase' => SystemUpdate::PHASE_FILES,
+                'queued' => false,
+                'completed' => false,
+                'succeeded' => false,
+                'target_version' => '99.0.0',
+            ]);
+
+        $this->assertTrue($statusResponse->headers->hasCacheControlDirective('no-store'));
+        $this->assertTrue($statusResponse->headers->hasCacheControlDirective('private'));
     }
 
     public function test_recovery_requires_the_current_owner_password(): void

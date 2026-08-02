@@ -2574,5 +2574,22 @@
     "The transfer form has expired. Refresh the page and try again.": "Форма передачи устарела. Обновите страницу и повторите попытку.",
     "Reward transfer": "Передача наград",
     "Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.": "Выберите награды и персонажа. После подтверждения награды будут переданы для обработки. Это может занять некоторое время.",
-    "Transfer selected rewards": "Передать выбранные награды"
+    "Transfer selected rewards": "Передать выбранные награды",
+    "The mode check is already running. It will be enabled automatically after a successful test.": "Проверка режима уже выполняется. После успешного теста он включится автоматически.",
+    "The mode check is already running. The page will update automatically.": "Проверка режима уже выполняется. Страница обновится автоматически.",
+    "The update request was sent to the VDS agent. Waiting for installation to start.": "Запрос обновления отправлен агенту VDS. Ожидается начало установки.",
+    "Update in progress: :phase": "Выполняется обновление: :phase",
+    "The update failed. Open the details to review the recovery information.": "Обновление завершилось ошибкой. Откройте подробности и проверьте информацию о восстановлении.",
+    "The update is ready to start.": "Обновление готово к запуску.",
+    "Show details": "Показать подробности",
+    "Updating KaevCMS": "Обновление KaevCMS",
+    "Checking the package and preparing the update...": "Проверка пакета и подготовка обновления...",
+    "Update progress": "Ход обновления",
+    "Checking package": "Проверка пакета",
+    "Sending request to VDS agent": "Отправка запроса агенту VDS",
+    "Preparing installation": "Подготовка установки",
+    "Installing application files": "Установка файлов приложения",
+    "Do not close this page or start another update until the operation finishes.": "Не закрывайте эту страницу и не запускайте другое обновление до завершения операции.",
+    "Checking the package before sending it to the VDS agent...": "Проверка пакета перед отправкой агенту VDS...",
+    "Checking the package and applying the update...": "Проверка пакета и установка обновления..."
 }

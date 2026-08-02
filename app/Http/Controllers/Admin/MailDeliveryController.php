@@ -106,6 +106,16 @@ class MailDeliveryController extends Controller
         MailSettings $mailSettings,
         AuditLogger $auditLogger,
     ): RedirectResponse {
+        if ($mailSettings->probeInProgress($mode)) {
+            if ($activateOnSuccess) {
+                $mailSettings->requestProbeActivation($mode);
+            }
+
+            return back()->with('status', $activateOnSuccess
+                ? __('The mode check is already running. It will be enabled automatically after a successful test.')
+                : __('The mode check is already running. The page will update automatically.'));
+        }
+
         $token = $mailSettings->beginProbe($mode, $activateOnSuccess);
 
         try {

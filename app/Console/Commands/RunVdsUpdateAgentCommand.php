@@ -6,6 +6,7 @@ use App\Models\SystemUpdate;
 use App\Services\Updates\SystemUpdateInstaller;
 use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -19,6 +20,8 @@ final class RunVdsUpdateAgentCommand extends Command
 
     public function handle(VdsUpdateAgent $agent, SystemUpdateInstaller $installer): int
     {
+        App::setLocale('en');
+
         $status = $agent->status();
         if (! $status->isReady()) {
             $this->error($status->message);

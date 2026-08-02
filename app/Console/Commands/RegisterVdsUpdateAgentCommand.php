@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Throwable;
 
 final class RegisterVdsUpdateAgentCommand extends Command
@@ -22,6 +23,8 @@ final class RegisterVdsUpdateAgentCommand extends Command
 
     public function handle(VdsUpdateAgent $agent): int
     {
+        App::setLocale('en');
+
         try {
             $agent->register([
                 'service_name' => $this->optionString('service-name'),

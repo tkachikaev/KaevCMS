@@ -196,7 +196,6 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::put('/settings/mail/delivery-mode', [AdminMailDeliveryController::class, 'update'])
             ->name('settings.mail.delivery-mode.update');
         Route::post('/settings/mail/delivery-probe', [AdminMailDeliveryController::class, 'probe'])
-            ->middleware('throttle:4,1')
             ->name('settings.mail.delivery-probe');
         Route::get('/settings/mail/delivery-probe/status', [AdminMailDeliveryController::class, 'probeStatus'])
             ->name('settings.mail.delivery-probe.status');
@@ -240,18 +239,17 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::get('/settings/system/updates', [AdminSystemUpdateController::class, 'index'])
             ->name('settings.system.updates.index');
         Route::post('/settings/system/updates', [AdminSystemUpdateController::class, 'store'])
-            ->middleware('throttle:3,1')
             ->name('settings.system.updates.store');
         Route::get('/settings/system/updates/{systemUpdate}', [AdminSystemUpdateController::class, 'show'])
             ->name('settings.system.updates.show');
         Route::post('/settings/system/updates/{systemUpdate}/apply', [AdminSystemUpdateController::class, 'apply'])
-            ->middleware('throttle:2,10')
             ->name('settings.system.updates.apply');
         Route::post('/settings/system/updates/{systemUpdate}/recover', [AdminSystemUpdateController::class, 'recover'])
-            ->middleware('throttle:2,10')
             ->name('settings.system.updates.recover');
         Route::delete('/settings/system/updates/{systemUpdate}', [AdminSystemUpdateController::class, 'destroy'])
             ->name('settings.system.updates.destroy');
+        Route::get('/settings/system/updates/{systemUpdate}/status', [AdminSystemUpdateController::class, 'status'])
+            ->name('settings.system.updates.status');
         Route::get('/settings/system/updates/{systemUpdate}/log', [AdminSystemUpdateController::class, 'log'])
             ->name('settings.system.updates.log');
         Route::get('/settings/system/queue', [AdminQueueOperationsController::class, 'index'])

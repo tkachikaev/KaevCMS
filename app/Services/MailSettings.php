@@ -237,6 +237,31 @@ final class MailSettings
         return (string) ($this->settings->get($this->probeKeys($mode)['status'], 'not_tested') ?? 'not_tested') === 'passed';
     }
 
+    public function probeInProgress(string $mode): bool
+    {
+        $mode = $this->normalizeProbeMode($mode);
+        $this->expireProbeIfNeeded($mode);
+
+        return (string) ($this->settings->get($this->probeKeys($mode)['status'], 'not_tested') ?? 'not_tested') === 'pending';
+    }
+
+    public function requestProbeActivation(string $mode): void
+    {
+        $mode = $this->normalizeProbeMode($mode);
+        $keys = $this->probeKeys($mode);
+
+        if (! $this->probeInProgress($mode)) {
+            return;
+        }
+
+        $this->settings->setMany([
+            $keys['activate'] => '1',
+            $mode === self::MODE_BACKGROUND
+                ? self::KEY_DATABASE_PROBE_ACTIVATE
+                : self::KEY_BACKGROUND_PROBE_ACTIVATE => '0',
+        ]);
+    }
+
     public function beginProbe(string $mode, bool $activateOnSuccess = false): string
     {
         $mode = $this->normalizeProbeMode($mode);

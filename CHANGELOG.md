@@ -1,3 +1,23 @@
+## 0.47.19 - 2026-08-02
+
+### Fixed
+
+- Corrected the system-update progress regression to create and clean up a real temporary log fixture before asserting that the details panel is visible.
+- Changed the update status response test to verify the effective `no-store` and `private` cache-control directives after administration middleware normalization instead of requiring one exact header string and order.
+- Fixed the remaining Laravel Pint `single_quote` violation in `WebUpdaterReleaseTest`.
+- No application runtime file, database migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative 0.47.19 package supports updates from 0.42.4 through 0.47.18.
+
+## 0.47.18 - 2026-08-02
+
+### Fixed
+
+- Removed shared generic HTTP throttles from update upload/apply/recovery and mail delivery-mode probes; duplicate operations are handled by update/probe state instead of returning a raw HTTP 429 page.
+- Added an immediate system-update progress dialog, duplicate-submit protection, VDS status polling and automatic state recovery after reloading the update page.
+- Collapsed the update log preview behind “Show details” and changed obsolete-path logging to list only paths that were actually removed plus one checked/removed/already-absent summary.
+- Forced VDS update-agent register, run and status commands, including status JSON messages, to stable English output without changing localized administration messages or agent contract 3.
+- Updated bundled Support Tickets to `1.7.1`; its administrator search field now uses the shared `x-admin.field` design and browser regression coverage.
+- No database migration, Composer dependency, bundled-theme version or VDS update-agent contract change is included. The cumulative 0.47.18 package supports updates from 0.42.4 through 0.47.17.
+
 ## 0.47.17 - 2026-08-02
 
 ### Fixed

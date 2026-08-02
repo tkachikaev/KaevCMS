@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 final class VdsUpdateAgentStatusCommand extends Command
 {
@@ -13,6 +14,8 @@ final class VdsUpdateAgentStatusCommand extends Command
 
     public function handle(VdsUpdateAgent $agent): int
     {
+        App::setLocale('en');
+
         $status = $agent->status();
 
         if ($this->option('json')) {

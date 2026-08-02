@@ -3,10 +3,31 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class WebUpdaterReleaseTest extends TestCase
 {
+    public function test_update_and_mail_probe_actions_do_not_use_shared_generic_throttles(): void
+    {
+        foreach ([
+            'admin.settings.system.updates.store',
+            'admin.settings.system.updates.apply',
+            'admin.settings.system.updates.recover',
+            'admin.settings.mail.delivery-probe',
+        ] as $routeName) {
+            $route = Route::getRoutes()->getByName($routeName);
+            if ($route === null) {
+                $this->fail($routeName.' route is missing.');
+            }
+
+            $this->assertSame([], array_values(array_filter(
+                $route->gatherMiddleware(),
+                static fn (string $middleware): bool => str_starts_with($middleware, 'throttle:'),
+            )), $routeName.' must rely on operation state instead of a shared HTTP 429 limiter.');
+        }
+    }
+
     public function test_release_contains_the_manual_web_updater_foundation(): void
     {
         foreach ([
@@ -47,6 +68,12 @@ class WebUpdaterReleaseTest extends TestCase
         $this->assertStringContainsString('/settings/system/updates', $routes);
         $this->assertStringContainsString('settings.system.updates.apply', $routes);
         $this->assertStringContainsString('settings.system.updates.recover', $routes);
+        $this->assertStringContainsString('settings.system.updates.status', $routes);
+
+        $updatesScript = File::get(public_path('assets/admin/js/system-updates.js'));
+        $this->assertStringContainsString('HTMLFormElement.prototype.submit.call(form)', $updatesScript);
+        $this->assertStringContainsString('button[type="submit"], input[type="submit"]', $updatesScript);
+        $this->assertStringNotContainsString('button, input, select, textarea', $updatesScript);
 
         $builder = File::get(base_path('deployment/updates/build-package.php'));
         foreach ([

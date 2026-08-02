@@ -69,7 +69,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.7.0',
+            'version' => '1.7.1',
             'enabled' => true,
         ]);
 
@@ -1063,6 +1063,7 @@ class SupportTicketsModuleTest extends TestCase
             ->assertOk()
             ->assertSee('admin-filter-bar support-ticket-filters', false)
             ->assertSee('data-testid="support-ticket-filters"', false)
+            ->assertSee('admin-field support-ticket-search-field', false)
             ->assertDontSee('<h2>Фильтры</h2>', false);
 
         $this->actingAs($owner, 'admin')

@@ -154,7 +154,15 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('admin.settings.system.updates.apply', $update) }}" class="update-confirm-form">
+            <form
+                method="POST"
+                action="{{ route('admin.settings.system.updates.apply', $update) }}"
+                class="update-confirm-form"
+                data-update-progress-form
+                data-update-progress-mode="{{ $useVdsAgent ? 'agent' : 'web' }}"
+                data-update-progress-agent-message="{{ __('Checking the package before sending it to the VDS agent...') }}"
+                data-update-progress-web-message="{{ __('Checking the package and applying the update...') }}"
+            >
                 @csrf
                 <x-admin.field for="current_password" name="current_password" :label="__('Current administrator password')">
                     <input id="current_password" name="current_password" type="password" autocomplete="current-password" required @if($errors->has('current_password')) aria-invalid="true" @endif>
@@ -233,10 +241,52 @@
         </dd></div>
     </dl>
     @if($logTail)
-        <pre class="update-log-preview">{{ $logTail }}</pre>
+        <details class="update-log-details">
+            <summary>{{ __('Show details') }}</summary>
+            <pre class="update-log-preview">{{ $logTail }}</pre>
+        </details>
     @endif
 </section>
 @endif
+@php($updateOperationActive = $update->isQueuedForAgent() || $update->status === \App\Models\SystemUpdate::STATUS_APPLYING)
+@php($progressUsesAgent = $update->isAgentExecution())
+<dialog
+    class="update-progress-dialog"
+    data-update-progress-dialog
+    data-update-status-url="{{ route('admin.settings.system.updates.status', $update) }}"
+    data-update-auto-open="{{ $updateOperationActive ? '1' : '0' }}"
+    data-update-current-status="{{ $update->isQueuedForAgent() ? 'queued' : $update->status }}"
+    aria-labelledby="update-progress-title"
+>
+    <div class="update-progress-card">
+        <div class="update-progress-heading">
+            <span class="update-progress-spinner" aria-hidden="true"></span>
+            <div>
+                <span class="system-eyebrow">KaevCMS {{ $update->target_version }}</span>
+                <h2 id="update-progress-title">{{ __('Updating KaevCMS') }}</h2>
+            </div>
+        </div>
+        <p data-update-progress-message>
+            @if($update->isQueuedForAgent())
+                {{ __('The update request was sent to the VDS agent. Waiting for installation to start.') }}
+            @elseif($update->status === \App\Models\SystemUpdate::STATUS_APPLYING)
+                {{ __('Update in progress: :phase', ['phase' => $update->phaseLabel()]) }}
+            @else
+                {{ __('Checking the package and preparing the update...') }}
+            @endif
+        </p>
+        <ol class="update-progress-steps" aria-label="{{ __('Update progress') }}">
+            <li data-update-step="verify">{{ __('Checking package') }}</li>
+            <li data-update-step="queue">{{ $progressUsesAgent ? __('Sending request to VDS agent') : __('Preparing installation') }}</li>
+            <li data-update-step="install">{{ __('Installing application files') }}</li>
+            <li data-update-step="finalize">{{ __('Finalizing update') }}</li>
+        </ol>
+        <div class="notice notice-warning update-progress-warning" role="status">
+            <span>{{ __('Do not close this page or start another update until the operation finishes.') }}</span>
+        </div>
+    </div>
+</dialog>
+
 @endsection
 
 @push('scripts')

@@ -2574,5 +2574,22 @@
     "The transfer form has expired. Refresh the page and try again.": "The transfer form has expired. Refresh the page and try again.",
     "Reward transfer": "Reward transfer",
     "Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.": "Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.",
-    "Transfer selected rewards": "Transfer selected rewards"
+    "Transfer selected rewards": "Transfer selected rewards",
+    "The mode check is already running. It will be enabled automatically after a successful test.": "The mode check is already running. It will be enabled automatically after a successful test.",
+    "The mode check is already running. The page will update automatically.": "The mode check is already running. The page will update automatically.",
+    "The update request was sent to the VDS agent. Waiting for installation to start.": "The update request was sent to the VDS agent. Waiting for installation to start.",
+    "Update in progress: :phase": "Update in progress: :phase",
+    "The update failed. Open the details to review the recovery information.": "The update failed. Open the details to review the recovery information.",
+    "The update is ready to start.": "The update is ready to start.",
+    "Show details": "Show details",
+    "Updating KaevCMS": "Updating KaevCMS",
+    "Checking the package and preparing the update...": "Checking the package and preparing the update...",
+    "Update progress": "Update progress",
+    "Checking package": "Checking package",
+    "Sending request to VDS agent": "Sending request to VDS agent",
+    "Preparing installation": "Preparing installation",
+    "Installing application files": "Installing application files",
+    "Do not close this page or start another update until the operation finishes.": "Do not close this page or start another update until the operation finishes.",
+    "Checking the package before sending it to the VDS agent...": "Checking the package before sending it to the VDS agent...",
+    "Checking the package and applying the update...": "Checking the package and applying the update..."
 }

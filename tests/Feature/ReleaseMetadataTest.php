@@ -384,7 +384,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.7.0', $manifest['version']);
+        $this->assertSame('1.7.1', $manifest['version']);
         $this->assertSame('0.45.1', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 

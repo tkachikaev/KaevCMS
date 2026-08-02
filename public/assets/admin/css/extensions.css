@@ -411,3 +411,26 @@
     .update-agent-command { grid-template-columns: 1fr; }
     .update-agent-command .button, .update-agent-recheck { width: 100%; }
 }
+
+
+.update-log-details { margin-top: 16px; }
+.update-log-details > summary { width: fit-content; cursor: pointer; color: var(--admin-primary); font-weight: 750; }
+.update-log-details[open] > summary { margin-bottom: 12px; }
+.update-progress-dialog { width: min(560px, calc(100vw - 28px)); max-width: none; padding: 0; border: 0; border-radius: var(--admin-radius-card); background: transparent; }
+.update-progress-dialog::backdrop { background: rgba(15, 23, 42, .66); backdrop-filter: blur(3px); }
+.update-progress-card { display: grid; gap: 18px; padding: 26px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); background: var(--admin-surface); box-shadow: 0 24px 70px rgba(15, 23, 42, .28); }
+.update-progress-heading { display: flex; align-items: center; gap: 14px; }
+.update-progress-heading h2 { margin: 3px 0 0; font-size: 22px; }
+.update-progress-spinner { width: 38px; height: 38px; flex: 0 0 38px; border: 4px solid var(--admin-border); border-top-color: var(--admin-primary); border-radius: 50%; animation: update-progress-spin .8s linear infinite; }
+.update-progress-card > p { margin: 0; color: var(--admin-text-muted); line-height: 1.55; }
+.update-progress-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.update-progress-steps li { position: relative; padding: 10px 12px 10px 38px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); color: var(--admin-text-muted); }
+.update-progress-steps li::before { position: absolute; top: 50%; left: 13px; width: 14px; height: 14px; border: 2px solid var(--admin-border-strong); border-radius: 50%; content: ''; transform: translateY(-50%); }
+.update-progress-steps li.is-current { border-color: var(--admin-primary); background: var(--admin-primary-soft); color: var(--admin-text); font-weight: 750; }
+.update-progress-steps li.is-current::before { border-color: var(--admin-primary); box-shadow: inset 0 0 0 3px var(--admin-surface); background: var(--admin-primary); }
+.update-progress-steps li.is-complete { color: var(--admin-text); }
+.update-progress-steps li.is-complete::before { border-color: var(--admin-success); background: var(--admin-success); }
+.update-progress-warning { margin: 0; }
+@keyframes update-progress-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .update-progress-spinner { animation-duration: 1.8s; } }
+@media (max-width: 560px) { .update-progress-card { padding: 20px; } }

@@ -224,6 +224,55 @@ class MailDeliveryModeTest extends TestCase
         $this->assertSame(MailSettings::MODE_SYNC, app(MailSettings::class)->deliveryMode());
     }
 
+    public function test_repeated_manual_probe_reuses_the_pending_operation_without_http_429(): void
+    {
+        Queue::fake();
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')->post('/admin/settings/mail/delivery-probe', [
+            'delivery_mode' => MailSettings::MODE_BACKGROUND,
+        ])->assertRedirect();
+
+        $this->actingAs($admin, 'admin')
+            ->post('/admin/settings/mail/delivery-probe', [
+                'delivery_mode' => MailSettings::MODE_BACKGROUND,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas(
+                'status',
+                __('The mode check is already running. The page will update automatically.'),
+            );
+
+        Queue::assertPushed(MailDeliveryModeProbe::class, 1);
+    }
+
+    public function test_selecting_a_mode_during_its_manual_probe_enables_it_after_that_probe_succeeds(): void
+    {
+        Queue::fake();
+        $admin = $this->createAdmin();
+        $mailSettings = app(MailSettings::class);
+
+        $this->actingAs($admin, 'admin')->post('/admin/settings/mail/delivery-probe', [
+            'delivery_mode' => MailSettings::MODE_BACKGROUND,
+        ]);
+        $token = (string) app(CmsSettings::class)->get(MailSettings::KEY_BACKGROUND_PROBE_TOKEN, '');
+
+        $this->actingAs($admin, 'admin')
+            ->put('/admin/settings/mail/delivery-mode', [
+                'delivery_mode' => MailSettings::MODE_BACKGROUND,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas(
+                'status',
+                __('The mode check is already running. It will be enabled automatically after a successful test.'),
+            );
+
+        Queue::assertPushed(MailDeliveryModeProbe::class, 1);
+        (new MailDeliveryModeProbe(MailSettings::MODE_BACKGROUND, $token))->handle($mailSettings);
+
+        $this->assertSame(MailSettings::MODE_BACKGROUND, $mailSettings->deliveryMode());
+    }
+
     public function test_timed_out_asynchronous_probe_keeps_or_restores_synchronous_mode(): void
     {
         $mailSettings = app(MailSettings::class);

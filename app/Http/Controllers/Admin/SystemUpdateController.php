@@ -18,6 +18,7 @@ use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
 use App\Services\Updates\UpdatePreflight;
 use App\Services\Updates\VdsUpdateAgent;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -329,6 +330,40 @@ final class SystemUpdateController extends Controller
         return redirect()
             ->route('admin.settings.system.updates.index')
             ->with('status', __('The staged update package was discarded.'));
+    }
+
+    public function status(SystemUpdate $systemUpdate): JsonResponse
+    {
+        $this->viewer();
+        $systemUpdate->refresh();
+
+        $message = match (true) {
+            $systemUpdate->isQueuedForAgent() => __('The update request was sent to the VDS agent. Waiting for installation to start.'),
+            $systemUpdate->status === SystemUpdate::STATUS_APPLYING => __('Update in progress: :phase', [
+                'phase' => $systemUpdate->phaseLabel(),
+            ]),
+            $systemUpdate->status === SystemUpdate::STATUS_SUCCEEDED => __('KaevCMS was updated successfully.'),
+            $systemUpdate->status === SystemUpdate::STATUS_FAILED => __('The update failed. Open the details to review the recovery information.'),
+            default => __('The update is ready to start.'),
+        };
+
+        return response()
+            ->json([
+                'status' => $systemUpdate->status,
+                'status_label' => $systemUpdate->statusLabel(),
+                'phase' => $systemUpdate->phase,
+                'phase_label' => $systemUpdate->phaseLabel(),
+                'queued' => $systemUpdate->isQueuedForAgent(),
+                'completed' => in_array($systemUpdate->status, [
+                    SystemUpdate::STATUS_SUCCEEDED,
+                    SystemUpdate::STATUS_FAILED,
+                ], true),
+                'succeeded' => $systemUpdate->status === SystemUpdate::STATUS_SUCCEEDED,
+                'message' => $message,
+                'target_version' => $systemUpdate->target_version,
+                'details_url' => route('admin.settings.system.updates.show', $systemUpdate),
+            ])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
 
     public function log(SystemUpdate $systemUpdate): Response

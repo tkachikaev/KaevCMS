@@ -14,10 +14,9 @@
 </div>
 
 <x-admin.filter-bar :action="route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath])" class="support-ticket-filters" data-testid="support-ticket-filters">
-    <div class="support-ticket-search-field">
-        <label for="support-ticket-search">{{ __('module-support-tickets::messages.search') }}</label>
+    <x-admin.field for="support-ticket-search" name="q" :label="__('module-support-tickets::messages.search')" class="support-ticket-search-field">
         <input id="support-ticket-search" name="q" type="search" maxlength="120" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('module-support-tickets::messages.search_placeholder') }}">
-    </div>
+    </x-admin.field>
     <div>
         <label for="support-ticket-status">{{ __('module-support-tickets::messages.status') }}</label>
         <select id="support-ticket-status" name="status">

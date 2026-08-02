@@ -126,10 +126,26 @@ final class UpdateFilesystemTransaction
         ?array $deploymentPermissions = null,
     ): void {
         $this->assertDeploymentPermissions($deploymentPermissions);
+        $removedPaths = [];
         foreach ($delete as $target) {
-            $this->removePath($this->layout->resolveTarget($target));
+            $absolute = $this->layout->resolveTarget($target);
+            if (! file_exists($absolute) && ! is_link($absolute)) {
+                continue;
+            }
+
+            $this->removePath($absolute);
+            $removedPaths[] = $target;
+        }
+
+        foreach ($removedPaths as $target) {
             $log->write("Removed obsolete path: {$target}");
         }
+        $log->write(sprintf(
+            'Obsolete paths checked: %d; removed: %d; already absent: %d.',
+            count($delete),
+            count($removedPaths),
+            count($delete) - count($removedPaths),
+        ));
 
         foreach ($files as $file) {
             $source = $stagingPath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file['source']);

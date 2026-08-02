@@ -112,6 +112,21 @@ class VdsUpdateAgentTest extends TestCase
         $this->assertSame('missing', $agent->status()->state);
     }
 
+    public function test_status_command_uses_stable_english_output_when_the_site_locale_is_russian(): void
+    {
+        $agent = $this->agent();
+        $agent->register([]);
+        $this->app->instance(VdsUpdateAgent::class, $agent);
+        app()->setLocale('ru');
+
+        $this->artisan('kaevcms:update-agent:status')
+            ->expectsOutput('State: ready')
+            ->expectsOutput('Ready: yes')
+            ->expectsOutput('Message: The VDS update agent is ready.')
+            ->expectsOutput('Requests: '.$agent->requestDirectory())
+            ->assertSuccessful();
+    }
+
     public function test_registered_agent_command_starts_cleanly_without_a_queued_request(): void
     {
         $agent = $this->agent();

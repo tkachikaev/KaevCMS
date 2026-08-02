@@ -60,6 +60,25 @@ class UpdateFilesystemTransactionTest extends TestCase
         $this->assertSame('obsolete', file_get_contents($publicRoot.'/obsolete.txt'));
     }
 
+    public function test_deletion_log_lists_only_removed_paths_and_summarizes_already_absent_entries(): void
+    {
+        [$coreRoot, $publicRoot] = $this->createLayout(false);
+        file_put_contents($publicRoot.'/obsolete.txt', 'obsolete');
+        $log = new UpdateLog('filesystem-test-'.bin2hex(random_bytes(4)));
+
+        $this->transaction($coreRoot, $publicRoot)->apply(
+            [],
+            ['public/obsolete.txt', 'core/already-absent.txt'],
+            $this->root.'/staging',
+            $log,
+        );
+
+        $contents = (string) file_get_contents($log->path());
+        $this->assertStringContainsString('Removed obsolete path: public/obsolete.txt', $contents);
+        $this->assertStringNotContainsString('Removed obsolete path: core/already-absent.txt', $contents);
+        $this->assertStringContainsString('Obsolete paths checked: 2; removed: 1; already absent: 1.', $contents);
+    }
+
     public function test_vds_agent_normalizes_new_program_files_under_a_restrictive_umask(): void
     {
         if (PHP_OS_FAMILY === 'Windows') {

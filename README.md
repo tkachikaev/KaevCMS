@@ -1,4 +1,4 @@
-# KaevCMS 0.47.17
+# KaevCMS 0.47.19
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.17 is a maintenance hotfix for the Windows quality gate: the Promo Codes release regression now follows the project single-quote formatting contract. Application behavior from 0.47.16 is unchanged. No migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative update baseline remains 0.42.4.
+Version 0.47.19 corrects the update-progress test fixture, validates effective cache-control directives after middleware normalization, and fixes the remaining Pint formatting issue. Application runtime behavior is unchanged from 0.47.18. No migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.17 — технический hotfix проверки качества Windows: release regression для Promo Codes приведён к принятому в проекте стилю одинарных кавычек. Поведение приложения из 0.47.16 не менялось. Новых миграций, Composer-зависимостей, версий встроенных модулей и тем или изменений контракта VDS update-agent нет. Базовая версия кумулятивных обновлений остаётся 0.42.4.
+Версия 0.47.19 исправляет тестовую фикстуру окна обновления, проверяет фактические директивы кеширования после обработки middleware и устраняет оставшееся замечание Pint. Рабочее поведение приложения не меняется относительно 0.47.18. Новых миграций, Composer-зависимостей, версий модулей, тем и изменений контракта VDS update-agent нет. Базовая версия кумулятивных обновлений остаётся 0.42.4.
 
 ### Требования
 
