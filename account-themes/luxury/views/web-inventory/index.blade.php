@@ -24,7 +24,7 @@
         <div class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('Your web inventory is empty') }}</h2><p>{{ __('Rewards will appear here after they are granted by promo codes, donations or other modules.') }}</p></div>
     @elseif($activeView === 'history')
         @if($deliveries->isEmpty())
-            <div class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">↗</span><h2>{{ __('No transfers yet') }}</h2><p>{{ __('Transfers written to the GameServer queue, confirmed failures and uncertain writes will be shown here.') }}</p></div>
+            <div class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">↗</span><h2>{{ __('No transfers yet') }}</h2><p>{{ __('Transfer operations will appear here after players send rewards to characters.') }}</p></div>
         @else
             <div class="reward-history-list">
                 @foreach($deliveries as $delivery)
@@ -74,9 +74,9 @@
             </div>
 
             <div class="reward-transfer-panel">
-                <div><span class="account-eyebrow">{{ __('Transfer to GameServer queue') }}</span><h2>{{ __('Choose a character') }}</h2><p>{{ __('Only characters belonging to your game accounts on :server are shown.', ['server' => $selectedServer->nameFor()]) }}</p><p>{{ __('KaevCMS writes the selected data to kaev_reward_queue. Actual item delivery is handled by the GameServer administrator.') }}</p></div>
-                <label class="reward-character-select"><span>{{ __('Character') }}</span><select name="character_id" @disabled(! $capabilities->supported || $characters === [])><option value="">{{ __('Select character') }}</option>@foreach($characters as $character)<option value="{{ $character['id'] }}" data-avatar-url="{{ $character['avatar_url'] ?? '' }}" data-character-race="{{ $character['race_key'] ?? 'unknown' }}" data-character-gender="{{ $character['gender_key'] ?? 'neutral' }}" data-character-archetype="{{ $character['archetype'] ?? 'default' }}" @selected((int) old('character_id') === $character['id'])>{{ $character['name'] }} — {{ __('Level :level', ['level' => $character['level']]) }}{{ $character['online'] ? ' · '.__('Online') : '' }}</option>@endforeach</select></label>
-                <button class="account-button primary" type="submit" @disabled(! $capabilities->supported || $characters === [])>{{ __('Send selected rewards to queue') }}</button>
+                <div><span class="account-eyebrow">{{ __('Reward transfer') }}</span><h2>{{ __('Choose a character') }}</h2><p>{{ __('Only characters belonging to your game accounts on :server are shown.', ['server' => $selectedServer->nameFor()]) }}</p><p>{{ __('Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.') }}</p></div>
+                <label class="reward-character-select"><span>{{ __('Character') }}</span><select name="character_id" required @disabled(! $capabilities->supported || $characters === [])><option value="">{{ __('Select character') }}</option>@foreach($characters as $character)<option value="{{ $character['id'] }}" data-avatar-url="{{ $character['avatar_url'] ?? '' }}" data-character-race="{{ $character['race_key'] ?? 'unknown' }}" data-character-gender="{{ $character['gender_key'] ?? 'neutral' }}" data-character-archetype="{{ $character['archetype'] ?? 'default' }}" @selected((int) old('character_id') === $character['id'])>{{ $character['name'] }} — {{ __('Level :level', ['level' => $character['level']]) }}{{ $character['online'] ? ' · '.__('Online') : '' }}</option>@endforeach</select></label>
+                <button class="account-button primary" type="submit" @disabled(! $capabilities->supported || $characters === [])>{{ __('Transfer selected rewards') }}</button>
             </div>
         </form>
     @endif

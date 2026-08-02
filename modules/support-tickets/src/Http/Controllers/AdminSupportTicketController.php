@@ -6,6 +6,7 @@ use App\Auth\AdminRole;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Services\Admin\AdminPathSettings;
+use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ use KaevCMS\Modules\SupportTickets\Enums\SupportTicketStatus;
 use KaevCMS\Modules\SupportTickets\Http\Requests\AdminSupportTicketMessageRequest;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessage;
+use KaevCMS\Modules\SupportTickets\Services\SupportTicketCleanupService;
 use KaevCMS\Modules\SupportTickets\Services\SupportTicketService;
 use KaevCMS\Modules\SupportTickets\Services\SupportTicketSettings;
 
@@ -23,7 +25,9 @@ final class AdminSupportTicketController extends Controller
 {
     public function __construct(
         private readonly SupportTicketService $tickets,
+        private readonly SupportTicketCleanupService $cleanup,
         private readonly SupportTicketSettings $settings,
+        private readonly AuditLogger $auditLogger,
         private readonly AdminPathSettings $adminPathSettings,
     ) {}
 
@@ -134,6 +138,26 @@ final class AdminSupportTicketController extends Controller
         $this->tickets->setRetentionProtected($ticket, $this->admin($request), (bool) $validated['protected']);
 
         return $this->backToTicket($ticket)->with('status', __('module-support-tickets::messages.retention_protection_updated'));
+    }
+
+    public function destroy(Request $request, SupportTicket $ticket): RedirectResponse
+    {
+        $admin = $this->admin($request);
+        abort_unless($admin->role === AdminRole::Owner, 403);
+        $number = $ticket->number();
+        $result = $this->cleanup->deleteClosedTicket($ticket);
+
+        $this->auditLogger->success(
+            category: 'module',
+            action: 'support_ticket.deleted',
+            actor: $admin,
+            target: $ticket,
+            details: $result,
+        );
+
+        return redirect()->route('admin.module-pages.support-tickets.index', [
+            'adminPath' => $this->adminPathSettings->path(),
+        ])->with('status', __('module-support-tickets::messages.ticket_deleted', ['number' => $number]));
     }
 
     public function editMessage(

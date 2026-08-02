@@ -26,6 +26,9 @@ Route::patch('/{ticket}/reopen', [AdminSupportTicketController::class, 'reopen']
 Route::patch('/{ticket}/retention-protection', [AdminSupportTicketController::class, 'protection'])
     ->whereNumber('ticket')
     ->name('retention-protection');
+Route::delete('/{ticket}', [AdminSupportTicketController::class, 'destroy'])
+    ->whereNumber('ticket')
+    ->name('destroy');
 Route::put('/{ticket}/messages/{message}', [AdminSupportTicketController::class, 'editMessage'])
     ->whereNumber(['ticket', 'message'])
     ->name('messages.update');

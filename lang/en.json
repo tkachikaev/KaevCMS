@@ -2565,5 +2565,14 @@
     "Your role cannot manage this account.": "Your role cannot manage this account.",
     "Your web inventory is empty": "Your web inventory is empty",
     "Zinc": "Zinc",
-    "ZIP support": "ZIP support"
+    "ZIP support": "ZIP support",
+    "The selected game server is unavailable. Refresh the page and try again.": "The selected game server is unavailable. Refresh the page and try again.",
+    "Select a character.": "Select a character.",
+    "Select at least one reward.": "Select at least one reward.",
+    "Select no more than 50 rewards.": "Select no more than 50 rewards.",
+    "The selected rewards are invalid. Refresh the page and try again.": "The selected rewards are invalid. Refresh the page and try again.",
+    "The transfer form has expired. Refresh the page and try again.": "The transfer form has expired. Refresh the page and try again.",
+    "Reward transfer": "Reward transfer",
+    "Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.": "Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.",
+    "Transfer selected rewards": "Transfer selected rewards"
 }

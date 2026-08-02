@@ -30,6 +30,8 @@ final class AdminTicketConversation extends ModuleAdminComponent
 
     private const ROUTE_RETENTION_PROTECTION = 'admin.module-pages.support-tickets.retention-protection';
 
+    private const ROUTE_DESTROY = 'admin.module-pages.support-tickets.destroy';
+
     private const ROUTE_MESSAGE_UPDATE = 'admin.module-pages.support-tickets.messages.update';
 
     #[Locked]
@@ -222,6 +224,7 @@ final class AdminTicketConversation extends ModuleAdminComponent
             'canReply' => $this->canReply($admin),
             'canAddInternalNote' => $this->canAddInternalNote($admin),
             'canManageRetention' => $this->canUseModuleAdminRoute(self::ROUTE_RETENTION_PROTECTION, 'PATCH', $admin),
+            'canDelete' => $this->canUseModuleAdminRoute(self::ROUTE_DESTROY, 'DELETE', $admin),
             'messageMaxLength' => $messageMaxLength,
         ]);
     }

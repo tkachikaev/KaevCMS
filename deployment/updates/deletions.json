@@ -480,5 +480,14 @@
     ],
     "0.47.14": [
         "core/deployment/windows/apply-0.47.13.ps1"
+    ],
+    "0.47.15": [
+        "core/deployment/windows/apply-0.47.14.ps1"
+    ],
+    "0.47.16": [
+        "core/deployment/windows/apply-0.47.15.ps1"
+    ],
+    "0.47.17": [
+        "core/deployment/windows/apply-0.47.16.ps1"
     ]
 }

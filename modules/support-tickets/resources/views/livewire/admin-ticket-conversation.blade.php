@@ -21,6 +21,17 @@
                     <button class="button button-danger" type="button" wire:click="closeTicket" wire:confirm="{{ __('module-support-tickets::messages.close_ticket_confirm') }}" wire:loading.attr="disabled" wire:target="closeTicket">{{ __('module-support-tickets::messages.close_ticket') }}</button>
                 @endif
             @endif
+            @if($canDelete && $ticket->isClosed())
+                <form
+                    method="POST"
+                    action="{{ route('admin.module-pages.support-tickets.destroy', ['adminPath' => $adminPath, 'ticket' => $ticket]) }}"
+                    data-confirm="{{ __('module-support-tickets::messages.delete_ticket_confirm', ['number' => $ticket->number()]) }}"
+                >
+                    @csrf
+                    @method('DELETE')
+                    <button class="button button-danger" type="submit" @disabled($ticket->retention_protected)>{{ __('module-support-tickets::messages.delete_ticket') }}</button>
+                </form>
+            @endif
         </div>
     </div>
 

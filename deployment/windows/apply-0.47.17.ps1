@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This maintenance release resolves the PHPStan staging symlink guard regression without changing Web Update behavior or agent contract version 3.'
+Write-Host 'This maintenance release fixes Pint formatting in the release metadata regression without changing application behavior.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

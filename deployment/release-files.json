@@ -150,7 +150,7 @@
         "deployment/vds/install-update-agent.sh",
         "deployment/vds/remove-update-agent.sh",
         "deployment/vds/tests/documentation-regression.php",
-        "deployment/windows/apply-0.47.14.ps1",
+        "deployment/windows/apply-0.47.17.ps1",
         "deployment/windows/build-release.ps1",
         "deployment/windows/build-shared-hosting-package.ps1",
         "deployment/windows/build-web-update-package.ps1",

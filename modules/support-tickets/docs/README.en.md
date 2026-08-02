@@ -107,7 +107,7 @@ Normal deletes make pages reusable but may not immediately shrink the SQLite fil
 
 ## Installation and updates
 
-Module version 1.6.0 requires KaevCMS 0.45.1 or newer. After updating the CMS, approve the module update from the administration Modules section. Version 1.6.0 adds no module migration. New tickets and player replies create personal notification-center events for eligible owners, administrators, auditors and explicitly permitted editors. Notification payloads contain only the ticket number and internal route ID; subjects, messages, player names and email addresses are not copied. The existing migrations remain unchanged.
+Module version 1.7.0 requires KaevCMS 0.45.1 or newer. After updating the CMS, approve the module update from the administration Modules section. No module migration is added. Owner can delete a specific closed ticket together with messages, internal notes and revision history. Open or retention-protected tickets cannot be deleted, and Administrator, Editor and Auditor do not receive deletion access. Existing batched retention cleanup remains available. Notifications still exclude ticket subjects, messages, player names and email addresses.
 
 The module is bundled with KaevCMS. Module migrations are applied with SHA256 tracking. Applied migrations must not be modified or removed. Disabling the module hides routes and navigation without deleting data.
 

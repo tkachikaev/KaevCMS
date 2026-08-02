@@ -109,6 +109,13 @@ return static function (Application $app, ModuleContext $module): void {
 
     $access->registerExact(
         moduleId: $module->id,
+        routeName: 'admin.module-pages.support-tickets.destroy',
+        viewRoles: [],
+        manageRoles: [AdminRole::Owner],
+    );
+
+    $access->registerExact(
+        moduleId: $module->id,
         routeName: 'admin.module-pages.support-tickets.note',
         viewRoles: [],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],

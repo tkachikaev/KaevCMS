@@ -1,7 +1,7 @@
 {
   "name": "Kaev Aurelia Account",
   "slug": "kaev-aurelia",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "author": "KaevCMS",
   "cms_min": "0.37.0",
   "description": "Light premium account theme with a compact rounded dashboard, character directory, configurable rescue actions, avatar picker, and persistent Livewire shell.",

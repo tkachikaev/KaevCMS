@@ -1,4 +1,4 @@
-# KaevCMS 0.47.14
+# KaevCMS 0.47.17
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.14 fixes the PHPStan regression in the Web Update staging-directory safety checks. The repeated symbolic-link guard remains active before and after directory creation, but is now isolated in a dedicated runtime assertion so static analysis no longer treats the second race-condition check as unreachable. Web Update behavior, agent contract version 3, systemd units, migrations, Composer dependencies, bundled-module versions, and theme versions are unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.17 is a maintenance hotfix for the Windows quality gate: the Promo Codes release regression now follows the project single-quote formatting contract. Application behavior from 0.47.16 is unchanged. No migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.14 исправляет регрессию PHPStan в проверках безопасности временного каталога Web Update. Повторная защита от символической ссылки до и после создания каталога сохранена, но вынесена в отдельную runtime-проверку, поэтому статический анализ больше не считает вторую проверку недостижимой. Поведение Web Update, контракт агента версии 3, systemd-службы, миграции, Composer-зависимости, версии встроенных модулей и тем не изменялись. Базовая версия кумулятивных обновлений остаётся 0.42.4.
+Версия 0.47.17 — технический hotfix проверки качества Windows: release regression для Promo Codes приведён к принятому в проекте стилю одинарных кавычек. Поведение приложения из 0.47.16 не менялось. Новых миграций, Composer-зависимостей, версий встроенных модулей и тем или изменений контракта VDS update-agent нет. Базовая версия кумулятивных обновлений остаётся 0.42.4.
 
 ### Требования
 

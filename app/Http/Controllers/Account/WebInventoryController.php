@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\Rewards\RewardCharacterDirectory;
 use App\Support\Rewards\RewardQueueCapabilities;
-use App\Support\Rewards\RewardTransferFailure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -100,13 +99,8 @@ class WebInventoryController extends Controller
             'deliveries' => $deliveries,
             'characters' => $characterRows,
             'capabilities' => $capabilities,
-            'deliveryUnavailableMessage' => $this->deliveryUnavailableMessage($capabilities),
+            'deliveryUnavailableMessage' => __('rewards.transfer.temporarily_unavailable'),
             'requestToken' => (string) Str::uuid(),
         ]);
-    }
-
-    private function deliveryUnavailableMessage(RewardQueueCapabilities $capabilities): string
-    {
-        return __(RewardTransferFailure::fromQueueReason($capabilities->reasonCode)->translationKey());
     }
 }

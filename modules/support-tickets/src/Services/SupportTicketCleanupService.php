@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\SupportTickets\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\SupportTickets\Enums\SupportTicketStatus;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicket;
 use KaevCMS\Modules\SupportTickets\Models\SupportTicketMessage;
@@ -38,6 +39,40 @@ final class SupportTicketCleanupService
             'oldest_closed_at' => is_string($oldestClosedAt) ? $oldestClosedAt : null,
             'newest_closed_at' => is_string($newestClosedAt) ? $newestClosedAt : null,
         ];
+    }
+
+    /** @return array{ticket_id: int, messages: int, revisions: int} */
+    public function deleteClosedTicket(SupportTicket $ticket): array
+    {
+        return DB::transaction(function () use ($ticket): array {
+            $locked = SupportTicket::query()->lockForUpdate()->findOrFail($ticket->id);
+            if (! $locked->isClosed()) {
+                throw ValidationException::withMessages([
+                    'ticket' => __('module-support-tickets::messages.delete_closed_only'),
+                ]);
+            }
+            if ($locked->retention_protected) {
+                throw ValidationException::withMessages([
+                    'ticket' => __('module-support-tickets::messages.delete_protected_ticket'),
+                ]);
+            }
+
+            $messageIds = SupportTicketMessage::query()
+                ->where('ticket_id', $locked->id)
+                ->pluck('id');
+            $revisionCount = $messageIds->isEmpty()
+                ? 0
+                : SupportTicketMessageRevision::query()->whereIn('message_id', $messageIds->all())->count();
+            $result = [
+                'ticket_id' => $locked->id,
+                'messages' => $messageIds->count(),
+                'revisions' => $revisionCount,
+            ];
+
+            $locked->delete();
+
+            return $result;
+        }, 3);
     }
 
     /** @return array{retention_months: int, cutoff: string|null, tickets: int, messages: int, revisions: int, oldest_closed_at: string|null, newest_closed_at: string|null} */

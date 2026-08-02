@@ -69,7 +69,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.6.0',
+            'version' => '1.7.0',
             'enabled' => true,
         ]);
 
@@ -716,6 +716,71 @@ class SupportTicketsModuleTest extends TestCase
             ->post('/admin/extensions/support-tickets/settings/cleanup-preview')
             ->assertRedirect()
             ->assertSessionHas('support_cleanup_preview');
+    }
+
+    public function test_only_owner_can_delete_closed_unprotected_ticket_with_its_history(): void
+    {
+        $user = User::factory()->create();
+        $ticket = $this->ticket($user, SupportTicketStatus::Closed, 'Удаляемое обращение');
+        $message = $ticket->messages()->firstOrFail();
+        $revision = SupportTicketMessageRevision::query()->create([
+            'message_id' => $message->id,
+            'editor_name_snapshot' => 'Support',
+            'previous_body' => 'Старая версия',
+            'edited_at' => now(),
+        ]);
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $administrator = Admin::factory()->create(['role' => AdminRole::Administrator]);
+
+        $this->actingAs($administrator, 'admin')
+            ->delete('/admin/extensions/support-tickets/'.$ticket->id)
+            ->assertForbidden();
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets/'.$ticket->id)
+            ->assertOk()
+            ->assertSee('/admin/extensions/support-tickets/'.$ticket->id, false)
+            ->assertSee(__('module-support-tickets::messages.delete_ticket'));
+
+        $this->actingAs($owner, 'admin')
+            ->delete('/admin/extensions/support-tickets/'.$ticket->id)
+            ->assertRedirect('/admin/extensions/support-tickets')
+            ->assertSessionHas('status', __('module-support-tickets::messages.ticket_deleted', [
+                'number' => $ticket->number(),
+            ]));
+
+        $this->assertDatabaseMissing('module_support_tickets', ['id' => $ticket->id]);
+        $this->assertDatabaseMissing('module_support_ticket_messages', ['id' => $message->id]);
+        $this->assertDatabaseMissing('module_support_ticket_message_revisions', ['id' => $revision->id]);
+        $this->assertDatabaseHas('audit_logs', [
+            'category' => 'module',
+            'action' => 'support_ticket.deleted',
+            'target_id' => (string) $ticket->id,
+        ]);
+    }
+
+    public function test_owner_cannot_delete_open_or_retention_protected_ticket(): void
+    {
+        $user = User::factory()->create();
+        $open = $this->ticket($user, SupportTicketStatus::InProgress, 'Открытое обращение');
+        $protected = $this->ticket($user, SupportTicketStatus::Closed, 'Защищённое обращение');
+        $protected->update(['retention_protected' => true]);
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->from('/admin/extensions/support-tickets/'.$open->id)
+            ->delete('/admin/extensions/support-tickets/'.$open->id)
+            ->assertRedirect('/admin/extensions/support-tickets/'.$open->id)
+            ->assertSessionHasErrors('ticket');
+
+        $this->actingAs($owner, 'admin')
+            ->from('/admin/extensions/support-tickets/'.$protected->id)
+            ->delete('/admin/extensions/support-tickets/'.$protected->id)
+            ->assertRedirect('/admin/extensions/support-tickets/'.$protected->id)
+            ->assertSessionHasErrors('ticket');
+
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $open->id]);
+        $this->assertDatabaseHas('module_support_tickets', ['id' => $protected->id]);
     }
 
     public function test_support_ticket_indexes_cover_lists_assignments_and_retention(): void

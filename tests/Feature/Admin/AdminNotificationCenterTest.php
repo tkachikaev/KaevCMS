@@ -260,7 +260,7 @@ class AdminNotificationCenterTest extends TestCase
             'type' => AdminNotificationType::ModuleMigrationPending->value,
         ]);
 
-        DB::table('cms_modules')->where('id', 'support-tickets')->update(['version' => '1.6.0']);
+        DB::table('cms_modules')->where('id', 'support-tickets')->update(['version' => '1.7.0']);
         $modules->refresh();
         $this->assertSame(0, $scanner->scanModules());
         $this->assertNotNull($notification->fresh()->resolved_at);

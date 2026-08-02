@@ -48,7 +48,7 @@ class PromoCodesModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_promo_codes', 'deleted_at'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
-            'version' => '1.3.1',
+            'version' => '1.4.0',
             'enabled' => true,
         ]);
 
@@ -526,17 +526,23 @@ class PromoCodesModuleTest extends TestCase
         }
     }
 
-    public function test_owner_can_delete_promo_code_without_losing_activation_history_or_granted_rewards(): void
+    public function test_owner_archives_used_promo_code_and_can_restore_it_disabled(): void
     {
         $server = GameServer::factory()->create();
         $user = User::factory()->create();
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         $administrator = Admin::factory()->administrator()->create();
         $promoCode = $this->createPromoCode($server, [['item_id' => 57, 'amount' => 100]], [
-            'code' => 'DELETE-ME',
+            'code' => 'ARCHIVE-ME',
         ]);
 
         $this->activate($user, $promoCode, (string) Str::uuid())->assertSessionHas('status');
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/promo-codes/'.$promoCode->id.'/edit')
+            ->assertOk()
+            ->assertSee(__('module-promo-codes::messages.archive_action'))
+            ->assertSee(__('module-promo-codes::messages.archive_confirm', ['code' => $promoCode->code]), false);
 
         $this->actingAs($administrator, 'admin')
             ->delete('/admin/extensions/promo-codes/'.$promoCode->id)
@@ -547,6 +553,10 @@ class PromoCodesModuleTest extends TestCase
             ->assertRedirect('/admin/extensions/promo-codes');
 
         $this->assertSoftDeleted('module_promo_codes', ['id' => $promoCode->id]);
+        $this->assertDatabaseHas('module_promo_codes', [
+            'id' => $promoCode->id,
+            'enabled' => false,
+        ]);
         $this->assertSame(1, PromoCodeActivation::query()->count());
         $this->assertSame(1, RewardInventoryGrant::query()->count());
         $this->assertSame(1, RewardInventoryItem::query()->count());
@@ -557,7 +567,7 @@ class PromoCodesModuleTest extends TestCase
         ]);
         $this->assertDatabaseHas('audit_logs', [
             'category' => 'module',
-            'action' => 'promo_code.deleted',
+            'action' => 'promo_code.archived',
             'target_id' => (string) $promoCode->id,
         ]);
 
@@ -567,13 +577,31 @@ class PromoCodesModuleTest extends TestCase
             ->assertDontSee('/admin/extensions/promo-codes/'.$promoCode->id.'/edit', false);
 
         $this->actingAs($owner, 'admin')
-            ->get('/admin/extensions/promo-codes/activations')
+            ->get('/admin/extensions/promo-codes?scope=archived')
             ->assertOk()
-            ->assertSee('DELETE-ME')
-            ->assertSee('Адена')
-            ->assertSee('ID 57 · × 100');
+            ->assertSee('ARCHIVE-ME')
+            ->assertSee('/admin/extensions/promo-codes/'.$promoCode->id.'/restore', false)
+            ->assertSee(__('module-promo-codes::messages.status_archived'));
 
-        $this->activate($user, $promoCode, (string) Str::uuid())
+        $this->actingAs($owner, 'admin')
+            ->patch('/admin/extensions/promo-codes/'.$promoCode->id.'/restore')
+            ->assertRedirect('/admin/extensions/promo-codes?scope=archived');
+
+        $restored = PromoCode::query()->findOrFail($promoCode->id);
+        $this->assertFalse($restored->enabled);
+        $this->assertDatabaseHas('audit_logs', [
+            'category' => 'module',
+            'action' => 'promo_code.restored',
+            'target_id' => (string) $promoCode->id,
+        ]);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/promo-codes?scope=all')
+            ->assertOk()
+            ->assertSee('ARCHIVE-ME')
+            ->assertSee(__('module-promo-codes::messages.status_disabled'));
+
+        $this->activate($user, $restored, (string) Str::uuid())
             ->assertSessionHasErrors('code');
     }
 
@@ -586,6 +614,13 @@ class PromoCodesModuleTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->delete('/admin/extensions/promo-codes/'.$promoCode->id)
             ->assertRedirect('/admin/extensions/promo-codes');
+
+        $this->assertDatabaseMissing('module_promo_codes', ['id' => $promoCode->id]);
+        $this->assertDatabaseHas('audit_logs', [
+            'category' => 'module',
+            'action' => 'promo_code.deleted',
+            'target_id' => (string) $promoCode->id,
+        ]);
 
         app(GameServerSettings::class)->delete($server);
 

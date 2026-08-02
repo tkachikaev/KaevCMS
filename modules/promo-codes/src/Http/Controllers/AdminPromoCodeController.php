@@ -29,12 +29,26 @@ final class AdminPromoCodeController extends Controller
         private readonly GameItemCatalog $items,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $promoCodes = PromoCode::query()
+        $validated = validator($request->query(), [
+            'scope' => ['nullable', 'in:active,archived,all'],
+        ])->validate();
+        $scope = (string) ($validated['scope'] ?? 'active');
+
+        $query = PromoCode::query();
+        if ($scope === 'archived') {
+            $query->onlyTrashed();
+        } elseif ($scope === 'all') {
+            $query->withTrashed();
+        }
+
+        $promoCodes = $query
             ->with(['gameServer.translations', 'rewards'])
+            ->withExists('activations')
             ->latest('id')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $iconUrls = [];
         foreach ($promoCodes as $promoCode) {
@@ -49,12 +63,15 @@ final class AdminPromoCodeController extends Controller
         return view('module-promo-codes::admin.index', [
             'promoCodes' => $promoCodes,
             'iconUrls' => $iconUrls,
-            'totalCount' => PromoCode::query()->count(),
+            'totalCount' => PromoCode::withTrashed()->count(),
+            'activeCount' => PromoCode::query()->count(),
+            'archivedCount' => PromoCode::onlyTrashed()->count(),
             'enabledCount' => PromoCode::query()->where('enabled', true)->count(),
             'disabledCount' => PromoCode::query()->where('enabled', false)->count(),
             'activationsCount' => PromoCodeActivation::query()->count(),
             'canManage' => $this->canManage(),
             'canViewJournal' => $this->canViewJournal(),
+            'scope' => $scope,
         ]);
     }
 
@@ -124,6 +141,7 @@ final class AdminPromoCodeController extends Controller
             'gameServers' => $this->gameServers(),
             'rewardRows' => $rows !== [] ? $rows : $this->emptyRewardRows(),
             'canManage' => $this->canManage(),
+            'hasActivations' => $promoCode->activations()->exists(),
         ]);
     }
 
@@ -220,28 +238,79 @@ final class AdminPromoCodeController extends Controller
         );
     }
 
-    public function destroy(PromoCode $promoCode): RedirectResponse
+    public function destroy(Request $request, PromoCode $promoCode): RedirectResponse
     {
-        $details = $this->auditDetails($promoCode->load(['gameServer.translations', 'rewards']));
+        abort_unless($this->canManage(), 403);
+        $admin = $request->user('admin');
+        /** @var array{promo_code: PromoCode, details: array<string, mixed>, history_preserved: bool} $result */
+        $result = DB::transaction(function () use ($promoCode, $admin): array {
+            $locked = PromoCode::query()->lockForUpdate()->findOrFail($promoCode->id);
+            $locked->load(['gameServer.translations', 'rewards']);
+            $details = $this->auditDetails($locked);
+            $hasActivations = $locked->activations()->exists();
 
-        $hasActivations = $promoCode->activations()->exists();
-        if ($hasActivations) {
-            $promoCode->delete();
-        } else {
-            $promoCode->forceDelete();
-        }
+            if ($hasActivations) {
+                $locked->update([
+                    'enabled' => false,
+                    'updated_by_admin_id' => $admin instanceof Admin ? $admin->id : null,
+                ]);
+                $locked->delete();
+            } else {
+                $locked->forceDelete();
+            }
 
+            return [
+                'promo_code' => $locked,
+                'details' => $details,
+                'history_preserved' => $hasActivations,
+            ];
+        }, 3);
+
+        $archived = $result['history_preserved'];
+        $target = $result['promo_code'];
         $this->auditLogger->success(
             category: 'module',
-            action: 'promo_code.deleted',
-            target: $promoCode,
-            details: array_merge($details, [
-                'history_preserved' => $hasActivations,
+            action: $archived ? 'promo_code.archived' : 'promo_code.deleted',
+            target: $target,
+            details: array_merge($result['details'], [
+                'history_preserved' => $archived,
             ]),
         );
 
-        return $this->redirectTo('index')
-            ->with('status', __('module-promo-codes::messages.deleted', ['code' => $promoCode->code]));
+        return $this->redirectTo('index')->with(
+            'status',
+            $archived
+                ? __('module-promo-codes::messages.archived', ['code' => $target->code])
+                : __('module-promo-codes::messages.deleted', ['code' => $target->code]),
+        );
+    }
+
+    public function restore(Request $request, int $promoCode): RedirectResponse
+    {
+        abort_unless($this->canManage(), 403);
+        $admin = $request->user('admin');
+        $restored = DB::transaction(function () use ($promoCode, $admin): PromoCode {
+            $locked = PromoCode::onlyTrashed()->lockForUpdate()->findOrFail($promoCode);
+            $locked->restore();
+            $locked->update([
+                'enabled' => false,
+                'updated_by_admin_id' => $admin instanceof Admin ? $admin->id : null,
+            ]);
+
+            return $locked->load(['gameServer.translations', 'rewards']);
+        }, 3);
+
+        $this->auditLogger->success(
+            category: 'module',
+            action: 'promo_code.restored',
+            target: $restored,
+            details: array_merge($this->auditDetails($restored), [
+                'restored_disabled' => true,
+            ]),
+        );
+
+        return $this->redirectTo('index', ['scope' => 'archived'])
+            ->with('status', __('module-promo-codes::messages.restored', ['code' => $restored->code]));
     }
 
     /** @return Collection<int, GameServer> */

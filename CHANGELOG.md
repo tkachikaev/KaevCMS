@@ -1,3 +1,37 @@
+## 0.47.17 - 2026-08-02
+
+### Fixed
+
+- Fixed the Pint `single_quote` failure in `tests/Feature/ReleaseMetadataTest.php` introduced by the Promo Codes archive regression assertions.
+- Kept Promo Codes 1.4.0, Support Tickets 1.7.0 and all application runtime behavior unchanged.
+- No database migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative 0.47.17 package supports updates from 0.42.4 through 0.47.16.
+
+## 0.47.16 - 2026-08-02
+
+### Added
+
+- Updated bundled Promo Codes to `1.4.0` with separate Current, Archive and All views, archive restoration and explicit archive counts.
+- Updated bundled Support Tickets to `1.7.0` with Owner-only deletion of individual closed, unprotected tickets together with their messages, internal notes and revision history.
+
+### Changed
+
+- Promo codes with no activations are now permanently deleted, while used promo codes are disabled and soft-deleted into the archive so activation and granted-reward history remains intact.
+- Restored promo codes remain disabled to prevent accidental reactivation and every archive, restore and permanent-delete action is audited.
+- Promo-code deletion now locks the row shared with activation processing, preventing a concurrent activation from racing a permanent delete.
+- Open or retention-protected support tickets fail closed during manual deletion; Administrator, Editor and Auditor roles do not receive deletion access. Existing scheduled and manual retention cleanup remains unchanged.
+- Added positive and negative regressions for promo-code archive/restore, unused-code deletion, ticket deletion cascades, role access, open-ticket rejection and retention-protection rejection.
+- No database migration, Composer dependency, bundled-theme version or VDS update-agent contract change is included. The cumulative 0.47.16 package supports updates from 0.42.4 through 0.47.15.
+
+## 0.47.15 - 2026-08-02
+
+### Changed
+
+- Replaced player-facing GameServer queue terminology in Web Inventory with concise transfer wording and the completed status `Transferred` / `Передано`.
+- Added explicit validation messages for character, reward selection, server and request-form failures so Laravel no longer exposes internal field names such as `character id` or `inventory item ids`.
+- Made unavailable reward delivery fail closed with one generic player message while preserving exact `kaev_reward_queue` diagnostics and remediation in the administration reward journal.
+- Updated both bundled account themes to describe reward transfer without mentioning KaevCMS internals or the external queue implementation; Kaev Aurelia Account is now `1.6.5` and L2 Obsidian Luxury is now `1.6.4`.
+- Added regressions for missing queue capability, player-safe validation text and bundled-template boundary enforcement. No migration, Composer dependency, bundled-module version or VDS update-agent contract changed. The cumulative 0.47.15 package supports updates from 0.42.4 through 0.47.14.
+
 ## 0.47.14 - 2026-08-02
 
 ### Fixed

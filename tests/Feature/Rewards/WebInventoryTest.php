@@ -211,7 +211,7 @@ class WebInventoryTest extends TestCase
             ->assertDontSee('ID 57');
     }
 
-    public function test_missing_gameserver_queue_disables_transfer_with_clear_message(): void
+    public function test_missing_gameserver_queue_disables_transfer_without_exposing_internals(): void
     {
         $this->rewardQueue->supported = false;
         $this->rewardQueue->unsupportedReason = 'reward_queue_not_installed';
@@ -227,7 +227,51 @@ class WebInventoryTest extends TestCase
         $this->actingAs($user)
             ->get('/account/web-inventory')
             ->assertOk()
-            ->assertSee(__('rewards.transfer.reward_queue_not_installed'));
+            ->assertSee(__('rewards.transfer.temporarily_unavailable'))
+            ->assertDontSee('kaev_reward_queue')
+            ->assertDontSee('GameServer administrator');
+    }
+
+    public function test_transfer_validation_uses_player_facing_messages_without_internal_field_names(): void
+    {
+        [$user, $server] = $this->userWithCharacter();
+
+        $response = $this->actingAs($user)
+            ->from('/account/web-inventory')
+            ->post('/account/web-inventory/transfers', [
+                'game_server_id' => $server->id,
+                'request_token' => '7a1ca476-8eaa-4aef-8f1d-3dd0938bc577',
+            ]);
+
+        $response
+            ->assertRedirect('/account/web-inventory')
+            ->assertSessionHasErrors([
+                'character_id' => __('Select a character.'),
+                'inventory_item_ids' => __('Select at least one reward.'),
+            ]);
+
+        $this->actingAs($user)
+            ->get('/account/web-inventory')
+            ->assertOk()
+            ->assertSee(__('Select a character.'))
+            ->assertSee(__('Select at least one reward.'))
+            ->assertDontSee('character id')
+            ->assertDontSee('inventory item ids');
+    }
+
+    public function test_bundled_web_inventory_templates_do_not_expose_reward_queue_implementation(): void
+    {
+        foreach (['luxury', 'kaev-aurelia'] as $theme) {
+            $template = file_get_contents(base_path('account-themes/'.$theme.'/views/web-inventory/index.blade.php'));
+            if (! is_string($template)) {
+                $this->fail('Unable to read the bundled Web Inventory template for '.$theme.'.');
+            }
+
+            $this->assertStringNotContainsString('kaev_reward_queue', $template);
+            $this->assertStringNotContainsString('GameServer administrator', $template);
+            $this->assertStringNotContainsString('Send selected rewards to queue', $template);
+            $this->assertStringContainsString('Transfer selected rewards', $template);
+        }
     }
 
     public function test_transfer_writes_one_idempotent_queue_payload_and_allows_online_character(): void

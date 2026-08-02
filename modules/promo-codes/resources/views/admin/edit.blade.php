@@ -11,7 +11,9 @@
         method="POST"
         action="{{ route('admin.module-pages.promo-codes.destroy', ['adminPath' => request()->route('adminPath'), 'promoCode' => $promoCode]) }}"
         data-promo-delete-form
-        data-confirm-message="{{ __('module-promo-codes::messages.delete_confirm', ['code' => $promoCode->code]) }}"
+        data-confirm-message="{{ $hasActivations
+            ? __('module-promo-codes::messages.archive_confirm', ['code' => $promoCode->code])
+            : __('module-promo-codes::messages.delete_unused_confirm', ['code' => $promoCode->code]) }}"
     >
         @csrf
         @method('DELETE')

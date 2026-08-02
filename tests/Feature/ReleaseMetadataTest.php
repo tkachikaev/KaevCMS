@@ -384,7 +384,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.6.0', $manifest['version']);
+        $this->assertSame('1.7.0', $manifest['version']);
         $this->assertSame('0.45.1', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
@@ -395,6 +395,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('maxMessagesPerTicket()', $service);
         $this->assertStringContainsString('maxRevisionsPerMessage()', $service);
         $this->assertStringContainsString('SupportTicketMessageRevision::query()->create', $service);
+        $cleanupService = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketCleanupService.php');
+        $this->assertStringContainsString('deleteClosedTicket', $cleanupService);
+        $this->assertStringContainsString('delete_protected_ticket', $cleanupService);
         $this->assertStringContainsString('SupportTicketStatus::AwaitingPlayer', $service);
         $this->assertStringContainsString('SupportTicketStatus::InProgress', $service);
         $this->assertStringNotContainsString("details: ['body'", $service);
@@ -635,7 +638,7 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.3', 'kaev-aurelia' => '1.6.4'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.4', 'kaev-aurelia' => '1.6.5'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
@@ -669,7 +672,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.3.1', $manifest['version']);
+        $this->assertSame('1.4.0', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 
@@ -681,6 +684,11 @@ class ReleaseMetadataTest extends TestCase
 
         $promoCodeModel = $this->readReleaseFile('modules/promo-codes/src/Models/PromoCode.php');
         $this->assertStringContainsString('use SoftDeletes;', $promoCodeModel);
+
+        $promoCodeController = $this->readReleaseFile('modules/promo-codes/src/Http/Controllers/AdminPromoCodeController.php');
+        $this->assertStringContainsString('promo_code.archived', $promoCodeController);
+        $this->assertStringContainsString('promo_code.restored', $promoCodeController);
+        $this->assertStringContainsString('onlyTrashed()', $promoCodeController);
 
         $promoAccountView = $this->readReleaseFile('modules/promo-codes/resources/views/account/index.blade.php');
         $this->assertStringContainsString('data-testid="promo-code-input"', $promoAccountView);

@@ -25,6 +25,29 @@ class RewardQueueStatusContractTest extends TestCase
         $this->assertSame([], RewardDelivery::ALLOWED_TRANSITIONS[RewardDelivery::STATUS_FAILED]);
     }
 
+    public function test_player_reward_copy_hides_queue_internals_while_admin_diagnostics_remain_specific(): void
+    {
+        $english = require base_path('lang/en/rewards.php');
+        $russian = require base_path('lang/ru/rewards.php');
+
+        $this->assertSame('Transferred', data_get($english, 'status.queued.label'));
+        $this->assertSame('Передано', data_get($russian, 'status.queued.label'));
+
+        foreach (['reward_queue_not_installed', 'reward_queue_schema_invalid', 'reward_queue_unavailable'] as $failure) {
+            $this->assertStringNotContainsString('kaev_reward_queue', (string) data_get($english, 'transfer.'.$failure));
+            $this->assertStringNotContainsString('kaev_reward_queue', (string) data_get($russian, 'transfer.'.$failure));
+        }
+
+        $this->assertStringContainsString(
+            'kaev_reward_queue',
+            (string) data_get($english, 'queue.diagnostics.reward_queue_not_installed.message'),
+        );
+        $this->assertStringContainsString(
+            'kaev_reward_queue',
+            (string) data_get($russian, 'queue.diagnostics.reward_queue_not_installed.message'),
+        );
+    }
+
     public function test_gameserver_consumer_statuses_have_explicit_terminal_transitions(): void
     {
         $this->assertTrue(RewardQueueRowStatus::Pending->canTransitionTo(RewardQueueRowStatus::Processing));

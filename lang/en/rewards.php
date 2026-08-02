@@ -2,25 +2,26 @@
 
 return [
     'transfer' => [
-        'queued' => 'Rewards were transferred to the GameServer queue.',
-        'review' => 'The queue write result is uncertain. The rewards are locked for administrator review.',
-        'reward_queue_not_installed' => 'The kaev_reward_queue table is not installed in this GameServer database.',
-        'reward_queue_schema_invalid' => 'The kaev_reward_queue table has an unsupported structure.',
-        'reward_queue_unavailable' => 'The GameServer reward queue is unavailable. Check the database connection.',
+        'temporarily_unavailable' => 'Reward transfer is temporarily unavailable. Try again later.',
+        'queued' => 'Rewards were transferred.',
+        'review' => 'The transfer is being checked. The rewards are protected from duplicate submission.',
+        'reward_queue_not_installed' => 'Reward transfer is temporarily unavailable. Try again later.',
+        'reward_queue_schema_invalid' => 'Reward transfer is temporarily unavailable. Try again later.',
+        'reward_queue_unavailable' => 'Reward transfer is temporarily unavailable. Try again later.',
         'character_not_owned' => 'The selected character does not belong to your account on this server.',
         'invalid_selection' => 'Select between 1 and 50 rewards for one transfer.',
         'request_token_conflict' => 'This transfer request identifier is already used by another operation. Refresh the page and try again.',
         'items_unavailable' => 'One or more selected rewards are unavailable. Refresh the page and try again.',
-        'reward_queue_write_failed' => 'The reward could not be written to the GameServer queue. It remains available in your web inventory.',
+        'reward_queue_write_failed' => 'The transfer was not completed. The rewards remain available in your web inventory.',
     ],
     'status' => [
         'pending' => [
-            'label' => 'Preparing transfer',
-            'description' => 'KaevCMS reserved the rewards and is checking whether the queue write completed.',
+            'label' => 'Transfer in progress',
+            'description' => 'The rewards are reserved while the operation is being completed.',
         ],
         'queued' => [
-            'label' => 'Written to GameServer queue',
-            'description' => 'The complete payload exists in kaev_reward_queue. This does not confirm delivery by the GameServer consumer.',
+            'label' => 'Transferred',
+            'description' => 'The rewards were transferred for further processing.',
         ],
         'review' => [
             'label' => 'Needs review',
@@ -28,7 +29,7 @@ return [
         ],
         'failed' => [
             'label' => 'Failed safely',
-            'description' => 'KaevCMS confirmed that the queue operation was not created and returned the rewards to the web inventory.',
+            'description' => 'The transfer was not completed, so the rewards were returned to the web inventory.',
         ],
         'unknown' => [
             'label' => 'Unknown',

@@ -201,7 +201,7 @@
 <div class="admin-actions-panel editor-actions">
     <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.promo-codes.index', ['adminPath' => $adminPath]) }}">{{ __('module-promo-codes::messages.cancel') }}</a>
     @if($canManage && $promoCode->exists)
-        <button class="button button-danger" type="submit" form="delete-promo-code-form">{{ __('module-promo-codes::messages.delete') }}</button>
+        <button class="button button-danger" type="submit" form="delete-promo-code-form">{{ $hasActivations ? __('module-promo-codes::messages.archive_action') : __('module-promo-codes::messages.delete') }}</button>
     @endif
     @if($canManage)
         <button class="button button-primary" type="submit">{{ $promoCode->exists ? __('module-promo-codes::messages.save') : __('module-promo-codes::messages.create') }}</button>
