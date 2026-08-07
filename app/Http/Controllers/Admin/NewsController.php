@@ -489,7 +489,11 @@ class NewsController extends Controller
         return array_values(array_unique($paths));
     }
 
-    /** @param array<string, mixed> $before @param array<string, mixed> $after @return array<string, array{old: mixed, new: mixed}> */
+    /**
+     * @param  array<string, mixed>  $before
+     * @param  array<string, mixed>  $after
+     * @return array<string, array{old: mixed, new: mixed}>
+     */
     private function auditChanges(array $before, array $after): array
     {
         $changes = [];

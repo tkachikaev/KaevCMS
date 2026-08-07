@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
 use App\Services\Mail\MailDeliveryDispatcher;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +15,10 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory;
+
+    use Notifiable;
 
     protected $fillable = ['name', 'email', 'password', 'game_account', 'locale', 'avatar_filename'];
 

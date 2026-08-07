@@ -1,4 +1,4 @@
-# KaevCMS 0.47.22
+# KaevCMS 0.47.28
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.22 fixes the Windows local update workflow so release quality tests keep the public installer source available, and repairs `public/install/index.php` on trees affected by the interrupted 0.47.21 update. The 0.47.21 GameServerManager refactor remains behavior-compatible. Production VDS/shared-hosting updates continue to remove `/install` after installation/update as intended. No migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative update baseline remains 0.42.4.
+Version 0.47.28 aligns the PHPStan level 6 type annotations with the locked Laravel Pint 1.29.3 style rules without changing runtime behavior. Bundled Daily Rewards remains 1.3.2, Promo Codes 1.4.1 and Support Tickets 1.7.2. Published migrations, theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.22 исправляет Windows local update workflow: release quality-тесты больше не теряют исходник публичного installer, а `public/install/index.php` автоматически восстанавливается на деревьях, затронутых прерванным обновлением 0.47.21. Рефакторинг GameServerManager из 0.47.21 остаётся без изменения поведения. На production VDS/shared-hosting каталог `/install` по-прежнему удаляется после установки/обновления. Миграций, изменений Composer-зависимостей, версий встроенных модулей, тем или контракта VDS update-agent нет. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.28 приводит аннотации типов PHPStan уровня 6 к правилам форматирования зафиксированного Laravel Pint 1.29.3 без изменения поведения CMS. Daily Rewards остаётся 1.3.2, Promo Codes 1.4.1, Support Tickets 1.7.2. Опубликованные миграции, версии тем, Composer-зависимости и контракт VDS update-agent 3 не менялись. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 

@@ -171,7 +171,10 @@ final class MailTemplateSettings
         $this->settings->setMany($values);
     }
 
-    /** @param array<string, string> $values @return array<string, array<int, string>> */
+    /**
+     * @param  array<string, string>  $values
+     * @return array<string, list<string>>
+     */
     public function unknownVariables(string $key, array $values, ?string $locale = null): array
     {
         $allowed = array_fill_keys($this->values($key, $locale)['variables'], true);
@@ -197,7 +200,10 @@ final class MailTemplateSettings
         return $unknown;
     }
 
-    /** @param array<string, string> $values @return array<int, string> */
+    /**
+     * @param  array<string, string>  $values
+     * @return list<string>
+     */
     public function fieldsContainingHtml(array $values): array
     {
         $fields = [];
@@ -211,7 +217,10 @@ final class MailTemplateSettings
         return $fields;
     }
 
-    /** @param array<string, string> $variables @return array{subject: string, header: string, heading: string, body: string, action_text: string, footer: string} */
+    /**
+     * @param  array<string, string>  $variables
+     * @return array{subject: string, header: string, heading: string, body: string, action_text: string, footer: string}
+     */
     public function render(string $key, array $variables, ?string $locale = null): array
     {
         $values = $this->values($key, $locale);
@@ -264,7 +273,10 @@ final class MailTemplateSettings
         }
     }
 
-    /** @return array<string, string> */
+    /**
+     * @param  array<string, string>  $additional
+     * @return array<string, string>
+     */
     public function userVariables(object $user, array $additional = [], ?string $locale = null): array
     {
         $locale = $this->normalizeLocale($locale ?? (string) ($user->locale ?? ''));
@@ -328,7 +340,10 @@ final class MailTemplateSettings
         return is_array($templates) ? $templates : [];
     }
 
-    /** @param array<string,mixed> $base @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $base
+     * @return array<string, mixed>
+     */
     private function localizedDefaults(array $base, string $locale): array
     {
         $locales = is_array($base['locales'] ?? null) ? $base['locales'] : [];

@@ -22,7 +22,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $reward_date
  * @property string $user_email
  * @property string $game_account_login
- * @property list<array{item_id:int,amount:int,name:?string}> $items_snapshot
+ * @property array<int, mixed> $items_snapshot
  * @property Carbon $claimed_at
  * @property-read DailyRewardCalendar $calendar
  * @property-read DailyRewardDay $day

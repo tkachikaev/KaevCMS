@@ -21,7 +21,10 @@ final class SupportTicketController extends Controller
     {
         $user = $this->user($request);
 
-        return view('module-support-tickets::account.index', ['user' => $user]);
+        /** @var view-string $view */
+        $view = 'module-support-tickets::account.index';
+
+        return view($view, ['user' => $user]);
     }
 
     public function store(CreateSupportTicketRequest $request): RedirectResponse
@@ -43,7 +46,10 @@ final class SupportTicketController extends Controller
         $user = $this->user($request);
         $this->assertOwner($ticket, $user);
 
-        return view('module-support-tickets::account.show', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::account.show';
+
+        return view($view, [
             'ticket' => $ticket,
             'user' => $user,
         ]);

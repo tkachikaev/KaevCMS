@@ -98,7 +98,7 @@ final class UpdateDailyRewardCalendarRequest extends AdminFormRequest
                         'days.'.$dayNumber.'.rewards',
                         __('module-daily-rewards::messages.validation_enabled_day_rewards'),
                     );
-                } elseif ((bool) ($day['enabled'] ?? false) && $rewards !== []) {
+                } elseif ((bool) ($day['enabled'] ?? false)) {
                     $hasEnabledRewardDay = true;
                 }
 

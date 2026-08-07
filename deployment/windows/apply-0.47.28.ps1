@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix preserves release source files during Windows update tests and repairs the public installer entry point when needed.'
+Write-Host 'This release fixes Pint formatting compatibility for the PHPStan level 6 type annotations.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

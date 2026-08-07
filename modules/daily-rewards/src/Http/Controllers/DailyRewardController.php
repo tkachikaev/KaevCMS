@@ -107,7 +107,10 @@ final class DailyRewardController extends Controller
             ->limit(10)
             ->get();
 
-        return view('module-daily-rewards::account.index', [
+        /** @var view-string $view */
+        $view = 'module-daily-rewards::account.index';
+
+        return view($view, [
             'user' => $user,
             'calendars' => $calendars,
             'calendar' => $calendar,
@@ -158,7 +161,7 @@ final class DailyRewardController extends Controller
         }
 
         $items = [];
-        foreach ($claim->rewardGrant?->items ?? [] as $reward) {
+        foreach ($claim->rewardGrant->items as $reward) {
             $items[] = [
                 'item_id' => $reward->item_id,
                 'name' => $reward->displayName($claim->game_server_id),

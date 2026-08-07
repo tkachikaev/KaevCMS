@@ -436,11 +436,10 @@ final class SupportTicketService
                 routeParameters: ['ticket' => $ticket->id],
             ),
             $externalKey,
-            recipientFilter: fn (Admin $admin): bool => in_array($admin->role, [
-                AdminRole::Owner,
-                AdminRole::Administrator,
-                AdminRole::Auditor,
-            ], true) || ($admin->role === AdminRole::Editor && $this->settings->editorCanView()),
+            recipientFilter: fn (Admin $admin): bool => match ($admin->role) {
+                AdminRole::Owner, AdminRole::Administrator, AdminRole::Auditor => true,
+                AdminRole::Editor => $this->settings->editorCanView(),
+            },
         );
     }
 

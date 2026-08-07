@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "support-tickets",
     "name": "Support Tickets",
-    "version": "1.7.1",
+    "version": "1.7.2",
     "author": "KaevCMS",
     "description": "Private player support tickets with Livewire conversations, staff attention badges, administrator notifications, configurable limits, retention cleanup and owner-only deletion of closed tickets.",
     "cms_min": "0.45.1",

@@ -1,19 +1,17 @@
 {
   "schema": 1,
-  "version": "0.47.22",
-  "previous_version": "0.47.21",
+  "version": "0.47.28",
+  "previous_version": "0.47.27",
   "released_at": "2026-08-07",
   "recovery_floor_version": "0.42.4",
   "cumulative_base_version": "0.42.4",
-  "apply_script": "deployment/windows/apply-0.47.22.ps1",
+  "apply_script": "deployment/windows/apply-0.47.28.ps1",
   "update_script": "deployment/windows/update.ps1",
-  "previous_apply_script": "deployment/windows/apply-0.47.21.ps1",
-  "previous_apply_sha256": "abf22b4408fb682d30626bbbbd7a4746ac56aebd944348fcddb54fdcfecdf8f6",
+  "previous_apply_script": "deployment/windows/apply-0.47.27.ps1",
+  "previous_apply_sha256": "87339bf544d788d35cd713e6d388ffd28eb4576a0a2ca779c5b8eaf46e0e1a44",
   "composer_lock": {
     "previous_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7",
     "current_sha256": "6d0a659f3cc20eb5fd87a6efa9a2c047d38678e975706eb9894da7bf5640cfc7"
   },
-  "repair_files": [
-    "public/install/index.php"
-  ]
+  "repair_files": []
 }

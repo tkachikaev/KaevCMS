@@ -163,6 +163,7 @@ final class RuntimeDiagnostics
         }
     }
 
+    /** @param array<string, int> $statistics */
     public function recordQueueMaintenance(array $statistics): void
     {
         $this->touch(self::QUEUE_MAINTENANCE, [

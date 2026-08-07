@@ -7,7 +7,16 @@ parameters:
         - app
         - routes
         - database
+        - modules/daily-rewards/src
+        - modules/promo-codes/src
+        - modules/support-tickets/src
 
-    level: 5
+    level: 6
     tmpDir: storage/framework/cache/phpstan
+    # Published migration is immutable; keep the historical signature unchanged.
+    ignoreErrors:
+        -
+            identifier: missingType.parameter
+            path: database/migrations/2026_07_12_000500_create_game_servers_table.php
+
     reportUnmatchedIgnoredErrors: true

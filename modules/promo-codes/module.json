@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "promo-codes",
     "name": "Promo Codes",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "author": "KaevCMS",
     "description": "Server-bound promo codes with active, archived and restorable administration states that grant rewards to the KaevCMS web inventory.",
     "cms_min": "0.36.2",

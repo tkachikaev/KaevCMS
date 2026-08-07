@@ -96,7 +96,10 @@ final class DiagnosticPackageBuilder
         return new DiagnosticPackageFile($path, $filename);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $information
+     * @return array<string, mixed>
+     */
     private function safeSystemInformation(array $information): array
     {
         $security = (array) ($information['security'] ?? []);
@@ -474,7 +477,13 @@ final class DiagnosticPackageBuilder
         ];
     }
 
-    /** @param array<string, mixed> $system @param array<string, mixed> $modules @param array<string, mixed> $migrations @param array<string, mixed> $updates @param array<string, mixed> $errors */
+    /**
+     * @param  array<string, mixed>  $system
+     * @param  array<string, mixed>  $modules
+     * @param  array<string, mixed>  $migrations
+     * @param  array<string, mixed>  $updates
+     * @param  array<string, mixed>  $errors
+     */
     private function report(Carbon $generatedAt, array $system, array $modules, array $migrations, array $updates, array $errors): string
     {
         $lines = [

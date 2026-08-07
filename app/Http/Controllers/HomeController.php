@@ -20,7 +20,9 @@ final class HomeController
     ): View {
         $news = News::query()->with('translations')->published()->latest('published_at')->limit(3)->get();
         $monitor = $statuses->get();
-        $statusById = collect($monitor['game_servers'])->keyBy('id');
+        /** @var list<array<string, mixed>> $gameServerStatuses */
+        $gameServerStatuses = is_array($monitor['game_servers'] ?? null) ? $monitor['game_servers'] : [];
+        $statusById = collect($gameServerStatuses)->keyBy('id');
         $servers = array_map(
             static function (array $server) use ($statusById): array {
                 $status = $statusById->get($server['id']);

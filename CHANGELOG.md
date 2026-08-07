@@ -1,3 +1,51 @@
+## 0.47.28 - 2026-08-07
+
+- Aligned the PHPStan level 6 annotations introduced in 0.47.27 with the locked Laravel Pint 1.29.3 rules.
+- Imported the concrete Eloquent factory classes used by `HasFactory` generics instead of fully-qualified names inside PHPDoc.
+- Removed the superfluous native `mixed` parameter annotation in the character directory while retaining its useful `list<int>` return type.
+- Runtime behavior, database migrations, bundled module versions, themes, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.28 package supports updates from 0.42.4 through 0.47.27.
+
+## 0.47.27 - 2026-08-07
+
+- Resolved the PHPStan level 6 findings reported after enabling the stricter analysis gate across the application and bundled modules.
+- Added explicit iterable value types, Eloquent relation/factory generics and typed diagnostics/form helper contracts without changing runtime behavior.
+- Kept the published `2026_07_12_000500_create_game_servers_table.php` migration byte-for-byte unchanged; PHPStan contains one narrowly scoped historical exception for its legacy untyped helper parameter.
+- Strengthened the release regression so the PHPStan configuration cannot silently fall back to broad exclusions or `treatPhpDocTypesAsCertain: false`.
+- Bundled module versions, database migrations, themes, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.27 package supports updates from 0.42.4 through 0.47.26.
+
+## 0.47.26 - 2026-08-07
+
+### Changed
+
+- Raised the project PHPStan static-analysis gate from level 5 to level 6 for the application, routes, database code and all bundled module source directories.
+- Extended the release regression so the configured PHPStan level cannot silently fall back below 6 while bundled-module coverage remains required.
+- No application runtime behavior, database migration, bundled-module version, theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.26 package supports updates from 0.42.4 through 0.47.25.
+
+## 0.47.25 - 2026-08-07
+
+### Fixed
+
+- Corrected Laravel Pint formatting in the Support Tickets settings controller introduced while adding PHPStan `view-string` typing in 0.47.24.
+- No runtime behavior, module version, migration, theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.25 package supports updates from 0.42.4 through 0.47.24.
+
+## 0.47.24 - 2026-08-07
+
+### Fixed
+
+- Resolved the PHPStan level 5 findings exposed after bundled module source analysis was enabled in 0.47.23, without weakening `phpstan.neon` or disabling PHPDoc certainty checks.
+- Added explicit `view-string` assertions for runtime-registered module view namespaces, corrected defensive Daily Rewards snapshot typing, simplified statically redundant reward checks and removed unnecessary nullsafe relation access where the successful operation contract guarantees a reward grant.
+- Fixed Support Tickets numeric ticket-number search to use an explicit primary-key OR condition instead of the unavailable `orWhereKey()` builder call, with a regression covering `SUP-xxxxxx` searches.
+- Added complete Eloquent property metadata for Support Ticket settings and simplified role notification filtering with an exhaustive enum match.
+- Updated bundled Daily Rewards to `1.3.2`, Promo Codes to `1.4.1` and Support Tickets to `1.7.2`. No module migration, theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.24 package supports updates from 0.42.4 through 0.47.23.
+
+## 0.47.23 - 2026-08-07
+
+### Changed
+
+- Extended the existing PHPStan level 5 analysis to all bundled module source directories: Daily Rewards, Promo Codes and Support Tickets.
+- Added a release regression that derives every bundled module source path from its `module.json` autoload contract and requires that path to remain present in `phpstan.neon`, preventing future bundled modules from silently escaping static analysis.
+- No application runtime behavior, database migration, bundled-module version, theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.23 package supports updates from 0.42.4 through 0.47.22.
+
 ## 0.47.22 - 2026-08-07
 
 ### Fixed

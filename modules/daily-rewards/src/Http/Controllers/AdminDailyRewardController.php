@@ -41,7 +41,10 @@ final class AdminDailyRewardController extends Controller
             ->orderByDesc('id')
             ->paginate(20);
 
-        return view('module-daily-rewards::admin.index', [
+        /** @var view-string $view */
+        $view = 'module-daily-rewards::admin.index';
+
+        return view($view, [
             'calendars' => $calendars,
             'totalCount' => DailyRewardCalendar::query()->count(),
             'enabledCount' => DailyRewardCalendar::query()->where('enabled', true)->count(),
@@ -57,7 +60,10 @@ final class AdminDailyRewardController extends Controller
 
         $now = now();
 
-        return view('module-daily-rewards::admin.create', [
+        /** @var view-string $view */
+        $view = 'module-daily-rewards::admin.create';
+
+        return view($view, [
             'calendar' => new DailyRewardCalendar([
                 'year' => (int) $now->year,
                 'month' => (int) $now->month,
@@ -119,7 +125,10 @@ final class AdminDailyRewardController extends Controller
             }
         }
 
-        return view('module-daily-rewards::admin.edit', [
+        /** @var view-string $view */
+        $view = 'module-daily-rewards::admin.edit';
+
+        return view($view, [
             'calendar' => $calendar,
             'iconUrls' => $iconUrls,
             'canManage' => $this->canManage(),
@@ -253,7 +262,10 @@ final class AdminDailyRewardController extends Controller
             ->get();
     }
 
-    /** @param array<int, mixed> $rewards @return list<array{item_id:int,amount:int}> */
+    /**
+     * @param  array<int, mixed>  $rewards
+     * @return list<array{item_id: int, amount: int}>
+     */
     private function normalizedRewards(array $rewards): array
     {
         $normalized = [];

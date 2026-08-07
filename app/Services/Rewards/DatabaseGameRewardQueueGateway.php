@@ -183,7 +183,10 @@ final class DatabaseGameRewardQueueGateway implements GameRewardQueueGateway
         return RewardQueueWriteResult::queued();
     }
 
-    /** @param array<string,mixed> $expected */
+    /**
+     * @param  array<string, mixed>  $actual
+     * @param  array<string, mixed>  $expected
+     */
     private function rowMatches(array $actual, array $expected): bool
     {
         return (string) ($actual['request_uuid'] ?? '') === (string) $expected['request_uuid']

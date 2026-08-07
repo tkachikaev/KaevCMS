@@ -96,7 +96,10 @@ final class AccountTicketIndex extends Component
         $user = $this->user();
         $settings = app(SupportTicketSettings::class);
 
-        return view('module-support-tickets::livewire.account-ticket-index', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::livewire.account-ticket-index';
+
+        return view($view, [
             'tickets' => SupportTicket::query()
                 ->where('user_id', $user->id)
                 ->orderByDesc('last_message_at')

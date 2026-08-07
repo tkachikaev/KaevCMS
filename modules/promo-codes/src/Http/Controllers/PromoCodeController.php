@@ -34,7 +34,11 @@ final class PromoCodeController extends Controller
 
         $iconUrls = [];
         foreach ($activations as $activation) {
-            foreach ($activation->rewardGrant?->items ?? [] as $reward) {
+            if ($activation->reward_inventory_grant_id === null) {
+                continue;
+            }
+
+            foreach ($activation->rewardGrant->items as $reward) {
                 $iconUrls[$activation->id][$reward->item_id] = $this->assets->itemIcon(
                     $activation->gameServer,
                     $reward->item_id,
@@ -42,7 +46,10 @@ final class PromoCodeController extends Controller
             }
         }
 
-        return view('module-promo-codes::account.index', [
+        /** @var view-string $view */
+        $view = 'module-promo-codes::account.index';
+
+        return view($view, [
             'user' => $user,
             'activations' => $activations,
             'iconUrls' => $iconUrls,
@@ -80,7 +87,7 @@ final class PromoCodeController extends Controller
         }
 
         $items = [];
-        foreach ($activation->rewardGrant?->items ?? [] as $reward) {
+        foreach ($activation->rewardGrant->items as $reward) {
             $items[] = [
                 'item_id' => $reward->item_id,
                 'name' => $reward->displayName($activation->game_server_id),

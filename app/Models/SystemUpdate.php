@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +37,7 @@ use Illuminate\Support\Carbon;
  */
 class SystemUpdate extends Model
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     public const STATUS_STAGED = 'staged';
@@ -101,6 +103,7 @@ class SystemUpdate extends Model
         ];
     }
 
+    /** @return BelongsTo<Admin, $this> */
     public function administrator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'admin_id');

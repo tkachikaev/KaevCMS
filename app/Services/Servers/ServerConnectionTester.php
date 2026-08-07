@@ -47,7 +47,10 @@ final class ServerConnectionTester
         }
     }
 
-    /** @param array<string, mixed> $values */
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
     public function testLoginValues(array $values): array
     {
         $driverKey = (string) ($values['driver'] ?? '');
@@ -67,6 +70,7 @@ final class ServerConnectionTester
         );
     }
 
+    /** @return array<string, mixed> */
     public function testLoginServer(LoginServer $server): array
     {
         return $this->testLoginValues([
@@ -80,7 +84,10 @@ final class ServerConnectionTester
         ]);
     }
 
-    /** @param array<string, mixed> $values */
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
     public function testGameValues(array $values, LoginServer $loginServer): array
     {
         $driverKey = (string) ($values['driver'] ?? '');
@@ -112,6 +119,7 @@ final class ServerConnectionTester
         );
     }
 
+    /** @return array<string, mixed> */
     public function testGameServer(GameServer $server): array
     {
         $loginServer = $server->loginServer;

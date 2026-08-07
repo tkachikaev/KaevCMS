@@ -110,7 +110,10 @@ final class AccountTicketConversation extends Component
             ->reverse()
             ->values();
 
-        return view('module-support-tickets::livewire.account-ticket-conversation', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::livewire.account-ticket-conversation';
+
+        return view($view, [
             'ticket' => $ticket,
             'messages' => $messages,
             'hasPreviousMessages' => $totalMessages > $messages->count(),

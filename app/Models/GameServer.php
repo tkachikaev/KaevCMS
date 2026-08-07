@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
+use Database\Factories\GameServerFactory;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -65,6 +66,7 @@ use Throwable;
  */
 class GameServer extends Model
 {
+    /** @use HasFactory<GameServerFactory> */
     use HasFactory;
 
     protected $fillable = [

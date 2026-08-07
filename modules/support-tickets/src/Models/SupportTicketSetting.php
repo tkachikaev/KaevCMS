@@ -6,6 +6,25 @@ use App\Models\Admin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property bool $allow_editor_management
+ * @property bool $allow_editor_view
+ * @property bool $allow_editor_reply
+ * @property bool $allow_editor_internal_notes
+ * @property int $retention_months
+ * @property bool $automatic_cleanup_enabled
+ * @property int $max_tickets_per_day
+ * @property int $max_player_messages_per_day
+ * @property int $max_messages_per_ticket
+ * @property int $max_revisions_per_message
+ * @property int $max_open_tickets_per_user
+ * @property int $subject_max_length
+ * @property int $initial_message_max_length
+ * @property int $message_max_length
+ * @property int|null $updated_by_admin_id
+ * @property-read Admin|null $updater
+ */
 final class SupportTicketSetting extends Model
 {
     protected $table = 'module_support_ticket_settings';

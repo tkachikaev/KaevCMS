@@ -476,7 +476,10 @@ class GameServerManager extends Component
         ]);
     }
 
-    /** @param array<string,mixed> $report @return array{state:string,message:string} */
+    /**
+     * @param  array<string, mixed>  $report
+     * @return array{state: string, message: string}
+     */
     private function cardTestResult(array $report): array
     {
         if (! ($report['connected'] ?? false)) {

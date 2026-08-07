@@ -84,6 +84,7 @@ final class GameServerSettings
         }
     }
 
+    /** @return array<string, mixed>|null */
     public function primary(?string $locale = null): ?array
     {
         return $this->all($locale)[0] ?? null;
@@ -247,6 +248,7 @@ final class GameServerSettings
             ->update(['registration_game_server_id' => $server->id]);
     }
 
+    /** @return array<string, mixed> */
     private function normalize(GameServer $server, ?string $locale): array
     {
         $rates = trim((string) $server->rates);

@@ -20,7 +20,13 @@ final class AdminPromoCodeActivationController extends Controller
         $activationItems = [];
 
         foreach ($activations as $activation) {
-            $activationItems[$activation->id] = ($activation->rewardGrant?->items ?? collect())
+            if ($activation->reward_inventory_grant_id === null) {
+                $activationItems[$activation->id] = [];
+
+                continue;
+            }
+
+            $activationItems[$activation->id] = $activation->rewardGrant->items
                 ->map(static fn (RewardInventoryItem $item): array => [
                     'item_id' => $item->item_id,
                     'amount' => $item->amount,
@@ -32,7 +38,10 @@ final class AdminPromoCodeActivationController extends Controller
                 ->all();
         }
 
-        return view('module-promo-codes::admin.activations', [
+        /** @var view-string $view */
+        $view = 'module-promo-codes::admin.activations';
+
+        return view($view, [
             'activations' => $activations,
             'activationItems' => $activationItems,
         ]);

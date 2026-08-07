@@ -137,7 +137,10 @@ final class GameServerFormSchema
         ];
     }
 
-    /** @param array<string,mixed> $validated @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
     public function generalValues(array $validated, string $driver): array
     {
         $translations = [];
@@ -189,7 +192,10 @@ final class GameServerFormSchema
         ];
     }
 
-    /** @param array<string,mixed> $validated @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
     public function connectionValues(array $validated): array
     {
         return [

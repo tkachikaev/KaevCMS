@@ -60,7 +60,10 @@ final class AdminPromoCodeController extends Controller
             }
         }
 
-        return view('module-promo-codes::admin.index', [
+        /** @var view-string $view */
+        $view = 'module-promo-codes::admin.index';
+
+        return view($view, [
             'promoCodes' => $promoCodes,
             'iconUrls' => $iconUrls,
             'totalCount' => PromoCode::withTrashed()->count(),
@@ -79,7 +82,10 @@ final class AdminPromoCodeController extends Controller
     {
         abort_unless($this->canManage(), 403);
 
-        return view('module-promo-codes::admin.create', [
+        /** @var view-string $view */
+        $view = 'module-promo-codes::admin.create';
+
+        return view($view, [
             'promoCode' => new PromoCode([
                 'enabled' => true,
                 'total_limit' => 0,
@@ -136,7 +142,10 @@ final class AdminPromoCodeController extends Controller
             ])
             ->all();
 
-        return view('module-promo-codes::admin.edit', [
+        /** @var view-string $view */
+        $view = 'module-promo-codes::admin.edit';
+
+        return view($view, [
             'promoCode' => $promoCode,
             'gameServers' => $this->gameServers(),
             'rewardRows' => $rows !== [] ? $rows : $this->emptyRewardRows(),

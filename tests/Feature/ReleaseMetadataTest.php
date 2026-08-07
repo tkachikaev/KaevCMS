@@ -103,6 +103,34 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
     }
 
+    public function test_phpstan_analyzes_every_bundled_module_source_directory(): void
+    {
+        $configuration = $this->normalized($this->readReleaseFile('phpstan.neon'));
+        $moduleManifests = glob(base_path('modules/*/module.json')) ?: [];
+
+        $this->assertStringContainsString("    level: 6\n", $configuration);
+        $this->assertStringNotContainsString('treatPhpDocTypesAsCertain', $configuration);
+        $this->assertStringNotContainsString('excludePaths:', $configuration);
+        $this->assertStringContainsString("            identifier: missingType.parameter\n", $configuration);
+        $this->assertStringContainsString("            path: database/migrations/2026_07_12_000500_create_game_servers_table.php\n", $configuration);
+        $this->assertNotEmpty($moduleManifests);
+
+        foreach ($moduleManifests as $manifestPath) {
+            $projectRoot = str_replace('\\', '/', base_path());
+            $moduleDirectory = str_replace('\\', '/', dirname($manifestPath));
+            $relativeModuleDirectory = ltrim(str_replace($projectRoot, '', $moduleDirectory), '/');
+            $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+
+            $this->assertIsArray($manifest);
+            $autoload = trim((string) ($manifest['autoload'] ?? ''));
+            $this->assertNotSame('', $autoload);
+
+            $sourcePath = $relativeModuleDirectory.'/'.trim(str_replace('\\', '/', $autoload), '/');
+            $this->assertDirectoryExists(base_path($sourcePath));
+            $this->assertStringContainsString("        - {$sourcePath}\n", $configuration);
+        }
+    }
+
     public function test_security_fixed_http_client_versions_are_locked(): void
     {
         $lock = $this->jsonReleaseFile('composer.lock');
@@ -398,7 +426,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.7.1', $manifest['version']);
+        $this->assertSame('1.7.2', $manifest['version']);
         $this->assertSame('0.45.1', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
@@ -678,7 +706,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
-        $this->assertSame('1.3.1', $dailyRewardsManifest['version']);
+        $this->assertSame('1.3.2', $dailyRewardsManifest['version']);
 
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),
@@ -686,7 +714,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.4.0', $manifest['version']);
+        $this->assertSame('1.4.1', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 

@@ -216,7 +216,10 @@ final class AdminTicketConversation extends ModuleAdminComponent
             ->reverse()
             ->values();
 
-        return view('module-support-tickets::livewire.admin-ticket-conversation', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::livewire.admin-ticket-conversation';
+
+        return view($view, [
             'ticket' => $ticket,
             'messages' => $messages,
             'admin' => $admin,

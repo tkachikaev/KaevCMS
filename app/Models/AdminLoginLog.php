@@ -23,6 +23,7 @@ class AdminLoginLog extends Model
         ];
     }
 
+    /** @return BelongsTo<Admin, $this> */
     public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);

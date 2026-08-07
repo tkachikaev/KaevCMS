@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 class UploadPageImageRequest extends AdminFormRequest
 {
+    /** @return array<string, list<string>> */
     public function rules(): array
     {
         return [

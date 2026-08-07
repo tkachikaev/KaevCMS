@@ -290,7 +290,10 @@ final class SiteSettings
         return $base.'.'.$locale;
     }
 
-    /** @param array<string, string|null> $values @param array<int, string> $candidates */
+    /**
+     * @param  array<string, string|null>  $values
+     * @param  list<string>  $candidates
+     */
     private function localizedValue(array $values, string $base, array $candidates, string $fallback, bool $required = false): string
     {
         foreach ($candidates as $locale) {

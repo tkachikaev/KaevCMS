@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\Notifications\AdminNotificationSeverity;
 use App\Support\Notifications\AdminNotificationType;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,7 @@ use Throwable;
  */
 class AdminNotification extends Model
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     protected $fillable = [

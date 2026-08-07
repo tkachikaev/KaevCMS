@@ -119,7 +119,10 @@ final class ExternalDatabaseInformation
         ];
     }
 
-    /** @param array{login_servers:list<array<string,mixed>>,game_servers:list<array<string,mixed>>,summaries:array{login:array<string,mixed>,game:array<string,mixed>},total:int} $information @return list<string> */
+    /**
+     * @param  array{login_servers: list<array<string, mixed>>, game_servers: list<array<string, mixed>>, summaries: array{login: array<string, mixed>, game: array<string, mixed>}, total: int}  $information
+     * @return list<string>
+     */
     public function reportLines(array $information): array
     {
         $lines = [(string) __('external_databases.report_heading')];
@@ -352,7 +355,10 @@ final class ExternalDatabaseInformation
         return $errorClass !== '' ? class_basename($errorClass) : null;
     }
 
-    /** @param list<string>|null $values @return list<string> */
+    /**
+     * @param  list<string>|null  $values
+     * @return list<string>
+     */
     private function capabilities(?array $values): array
     {
         if ($values === null) {
@@ -365,7 +371,10 @@ final class ExternalDatabaseInformation
         ))));
     }
 
-    /** @param list<array<string,mixed>>|null $checks @return list<array<string,mixed>> */
+    /**
+     * @param  list<array<string, mixed>>|null  $checks
+     * @return list<array<string, mixed>>
+     */
     private function tables(?array $checks): array
     {
         if ($checks === null) {

@@ -59,7 +59,10 @@ final class AdminDailyRewardClaimController extends Controller
                 ->all();
         }
 
-        return view('module-daily-rewards::admin.claims', [
+        /** @var view-string $view */
+        $view = 'module-daily-rewards::admin.claims';
+
+        return view($view, [
             'claims' => $claims,
             'claimItems' => $claimItems,
             'search' => $search,

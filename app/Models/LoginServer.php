@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\LoginServerFactory;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
  */
 class LoginServer extends Model
 {
+    /** @use HasFactory<LoginServerFactory> */
     use HasFactory;
 
     protected $fillable = [

@@ -63,12 +63,15 @@ final class AdminSupportTicketController extends Controller
                     ->orWhere('user_name_snapshot', 'like', '%'.$search.'%')
                     ->orWhere('user_email_snapshot', 'like', '%'.$search.'%');
                 if ($numeric !== '') {
-                    $builder->orWhereKey((int) $numeric);
+                    $builder->orWhere('id', (int) $numeric);
                 }
             });
         }
 
-        return view('module-support-tickets::admin.index', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::admin.index';
+
+        return view($view, [
             'tickets' => $query->orderByDesc('last_message_at')->orderByDesc('id')->paginate(25)->withQueryString(),
             'categories' => SupportTicketCategory::cases(),
             'statuses' => SupportTicketStatus::cases(),
@@ -87,7 +90,10 @@ final class AdminSupportTicketController extends Controller
     {
         $this->admin($request);
 
-        return view('module-support-tickets::admin.show', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::admin.show';
+
+        return view($view, [
             'ticket' => $ticket,
             'adminPath' => $this->adminPathSettings->path(),
         ]);

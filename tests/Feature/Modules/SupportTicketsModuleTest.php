@@ -69,7 +69,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.7.1',
+            'version' => '1.7.2',
             'enabled' => true,
         ]);
 
@@ -1050,6 +1050,27 @@ class SupportTicketsModuleTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->post('/admin/extensions/support-tickets/settings/cleanup-preview')
             ->assertRedirect('/admin/extensions/support-tickets/settings?tab=cleanup');
+    }
+
+    public function test_support_admin_can_search_ticket_by_display_number(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $targetUser = User::factory()->create([
+            'name' => 'Search Alpha',
+            'email' => 'search-alpha@example.test',
+        ]);
+        $otherUser = User::factory()->create([
+            'name' => 'Search Beta',
+            'email' => 'search-beta@example.test',
+        ]);
+        $target = $this->ticket($targetUser, subject: 'Нужное обращение');
+        $other = $this->ticket($otherUser, subject: 'Другое обращение');
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/support-tickets?q='.urlencode($target->number()))
+            ->assertOk()
+            ->assertSee($target->subject)
+            ->assertDontSee($other->subject);
     }
 
     public function test_support_admin_list_and_ticket_page_use_shared_compact_layouts(): void

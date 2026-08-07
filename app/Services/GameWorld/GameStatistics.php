@@ -165,7 +165,10 @@ final class GameStatistics
         return min(max((int) $value, 1), 100);
     }
 
-    /** @param array<string,mixed> $row @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
     private function normalizeCharacter(array $row, GameServer $server): array
     {
         $seconds = max(0, (int) ($row['play_time_seconds'] ?? 0));
@@ -184,7 +187,10 @@ final class GameStatistics
         ]);
     }
 
-    /** @param array<string,mixed> $row @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
     private function normalizeCastle(array $row): array
     {
         return [

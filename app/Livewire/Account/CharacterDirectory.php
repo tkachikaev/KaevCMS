@@ -284,7 +284,10 @@ class CharacterDirectory extends Component
         return $rows;
     }
 
-    /** @param array<string,mixed> $left @param array<string,mixed> $right */
+    /**
+     * @param  array<string, mixed>  $left
+     * @param  array<string, mixed>  $right
+     */
     private function compareCharacters(array $left, array $right): int
     {
         if ($this->sortMode === 'name') {
@@ -416,7 +419,7 @@ class CharacterDirectory extends Component
         return $user;
     }
 
-    /** @param mixed $values @return list<int> */
+    /** @return list<int> */
     private function integerList(mixed $values): array
     {
         if (! is_array($values)) {
@@ -429,19 +432,28 @@ class CharacterDirectory extends Component
         return array_values(array_unique($ids));
     }
 
-    /** @param list<int> $values @return list<int> */
+    /**
+     * @param  list<int>  $values
+     * @return list<int>
+     */
     private function appendId(array $values, int $id): array
     {
         return $this->integerList([...$values, $id]);
     }
 
-    /** @param list<int> $values @return list<int> */
+    /**
+     * @param  list<int>  $values
+     * @return list<int>
+     */
     private function removeId(array $values, int $id): array
     {
         return array_values(array_filter($values, static fn (int $value): bool => $value !== $id));
     }
 
-    /** @param list<int> $values @return list<int> */
+    /**
+     * @param  list<int>  $values
+     * @return list<int>
+     */
     private function toggleId(array $values, int $id): array
     {
         return in_array($id, $values, true)

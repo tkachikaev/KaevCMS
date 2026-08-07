@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Auth\AdminPermission;
 use App\Auth\AdminRole;
+use Database\Factories\AdminFactory;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,7 +27,10 @@ use Illuminate\Support\Carbon;
  */
 class Admin extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    /** @use HasFactory<AdminFactory> */
+    use HasFactory;
+
+    use Notifiable;
 
     protected $attributes = [
         'role' => AdminRole::Owner->value,

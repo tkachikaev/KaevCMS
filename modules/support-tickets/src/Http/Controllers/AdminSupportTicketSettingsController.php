@@ -24,7 +24,10 @@ final class AdminSupportTicketSettingsController extends Controller
 
     public function edit(): View
     {
-        return view('module-support-tickets::admin.settings', [
+        /** @var view-string $view */
+        $view = 'module-support-tickets::admin.settings';
+
+        return view($view, [
             'settings' => $this->settings->values(),
             'cleanupPreview' => session('support_cleanup_preview'),
             'cleanupResult' => session('support_cleanup_result'),
