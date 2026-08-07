@@ -46,6 +46,7 @@ function kaevReleaseBuild(array $options): array
     $version = kaevReleaseRequireVersion($release['version'] ?? null, 'version');
     $previousVersion = kaevReleaseRequireVersion($release['previous_version'] ?? null, 'previous_version');
     $cumulativeBase = kaevReleaseRequireVersion($release['cumulative_base_version'] ?? null, 'cumulative_base_version');
+    $recoveryFloor = kaevReleaseRequireVersion($release['recovery_floor_version'] ?? null, 'recovery_floor_version');
     $releasedAt = trim((string) ($release['released_at'] ?? ''));
     $releaseTimestamp = strtotime($releasedAt.' 12:00:00 UTC');
 
@@ -58,8 +59,11 @@ function kaevReleaseBuild(array $options): array
     if (version_compare($previousVersion, $version, '>=')) {
         throw new RuntimeException('The direct previous version must be older than the target version.');
     }
-    if (version_compare($cumulativeBase, $previousVersion, '>')) {
-        throw new RuntimeException('The cumulative base cannot be newer than the direct previous version.');
+    if (version_compare($cumulativeBase, $recoveryFloor, '>')) {
+        throw new RuntimeException('The cumulative base cannot be newer than the recovery floor.');
+    }
+    if (version_compare($recoveryFloor, $previousVersion, '>')) {
+        throw new RuntimeException('The recovery floor cannot be newer than the direct previous version.');
     }
 
     $outputDirectory = $outputOption !== ''
@@ -83,6 +87,7 @@ function kaevReleaseBuild(array $options): array
 
         $currentFiles = kaevReleaseCollectFiles($root, [$outputDirectory]);
         $previousFiles = kaevReleaseCollectFiles($previousRoot);
+        kaevReleaseAssertMetadataMatchesTrees($root, $release, $version, $previousVersion, $previousRoot, $currentFiles, $previousFiles);
         kaevReleaseAssertRequiredFiles($root, $currentFiles);
 
         $fullPath = $outputDirectory.'/KaevCMS-'.$version.'-full.zip';
@@ -95,6 +100,7 @@ function kaevReleaseBuild(array $options): array
 
         $changedFiles = kaevReleaseChangedFiles($root, $currentFiles, $previousRoot, $previousFiles);
         $repairFiles = kaevReleaseRepairFiles($release['repair_files'] ?? [], $currentFiles);
+        kaevReleaseAssertRepairFilesAreExceptional($repairFiles, $changedFiles);
         $changedFiles = array_values(array_unique(array_merge($changedFiles, $repairFiles)));
         sort($changedFiles, SORT_STRING);
         $removedFiles = array_values(array_diff($previousFiles, $currentFiles));
@@ -151,6 +157,98 @@ function kaevReleaseBuild(array $options): array
         ];
     } finally {
         kaevReleaseRemoveTree($temporaryRoot);
+    }
+}
+
+/**
+ * @param  array<string, mixed>  $release
+ * @param  list<string>  $currentFiles
+ * @param  list<string>  $previousFiles
+ */
+function kaevReleaseAssertMetadataMatchesTrees(
+    string $root,
+    array $release,
+    string $version,
+    string $previousVersion,
+    string $previousRoot,
+    array $currentFiles,
+    array $previousFiles,
+): void {
+    if (($release['schema'] ?? null) !== 1) {
+        throw new RuntimeException('release.json schema must be 1.');
+    }
+
+    $expectedApplyScript = 'deployment/windows/apply-'.$version.'.ps1';
+    if (($release['apply_script'] ?? null) !== $expectedApplyScript) {
+        throw new RuntimeException('release.json apply_script does not match the target version.');
+    }
+    if (! in_array($expectedApplyScript, $currentFiles, true)) {
+        throw new RuntimeException('The target apply script is missing from the release tree.');
+    }
+
+    $applyScripts = array_values(array_filter(
+        $currentFiles,
+        static fn (string $path): bool => preg_match('#^deployment/windows/apply-\d+\.\d+\.\d+\.ps1$#', $path) === 1,
+    ));
+    if ($applyScripts !== [$expectedApplyScript]) {
+        throw new RuntimeException('The target release tree must contain exactly one versioned apply script.');
+    }
+
+    $expectedPreviousApplyScript = 'deployment/windows/apply-'.$previousVersion.'.ps1';
+    if (($release['previous_apply_script'] ?? null) !== $expectedPreviousApplyScript) {
+        throw new RuntimeException('release.json previous_apply_script does not match previous_version.');
+    }
+    if (! in_array($expectedPreviousApplyScript, $previousFiles, true)) {
+        throw new RuntimeException('The previous full archive is missing its apply script.');
+    }
+
+    $previousApplyPath = $previousRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $expectedPreviousApplyScript);
+    $expectedPreviousApplyHash = kaevReleaseRequireSha256($release['previous_apply_sha256'] ?? null, 'previous_apply_sha256');
+    $actualPreviousApplyHash = hash_file('sha256', $previousApplyPath);
+    if (! is_string($actualPreviousApplyHash) || ! hash_equals($expectedPreviousApplyHash, $actualPreviousApplyHash)) {
+        throw new RuntimeException('release.json previous_apply_sha256 does not match the previous full archive.');
+    }
+
+    $previousRelease = kaevReleaseReadJson($previousRoot.'/release.json');
+    if (kaevReleaseRequireVersion($previousRelease['version'] ?? null, 'previous archive version') !== $previousVersion) {
+        throw new RuntimeException('The previous full archive release.json does not match previous_version.');
+    }
+    if (($previousRelease['apply_script'] ?? null) !== $expectedPreviousApplyScript) {
+        throw new RuntimeException('The previous full archive apply_script is inconsistent.');
+    }
+
+    $composer = $release['composer_lock'] ?? null;
+    if (! is_array($composer)) {
+        throw new RuntimeException('release.json composer_lock must be an object.');
+    }
+    $expectedPreviousComposerHash = kaevReleaseRequireSha256($composer['previous_sha256'] ?? null, 'composer_lock.previous_sha256');
+    $expectedCurrentComposerHash = kaevReleaseRequireSha256($composer['current_sha256'] ?? null, 'composer_lock.current_sha256');
+    $previousComposerPath = $previousRoot.'/composer.lock';
+    $currentComposerPath = $root.'/composer.lock';
+    if (! is_file($previousComposerPath) || ! is_file($currentComposerPath)) {
+        throw new RuntimeException('composer.lock must exist in both previous and target release trees.');
+    }
+    $actualPreviousComposerHash = hash_file('sha256', $previousComposerPath);
+    $actualCurrentComposerHash = hash_file('sha256', $currentComposerPath);
+    if (! is_string($actualPreviousComposerHash) || ! hash_equals($expectedPreviousComposerHash, $actualPreviousComposerHash)) {
+        throw new RuntimeException('release.json composer_lock.previous_sha256 does not match the previous full archive.');
+    }
+    if (! is_string($actualCurrentComposerHash) || ! hash_equals($expectedCurrentComposerHash, $actualCurrentComposerHash)) {
+        throw new RuntimeException('release.json composer_lock.current_sha256 does not match the target release tree.');
+    }
+}
+
+/**
+ * @param  list<string>  $repairFiles
+ * @param  list<string>  $changedFiles
+ */
+function kaevReleaseAssertRepairFilesAreExceptional(array $repairFiles, array $changedFiles): void
+{
+    $changedLookup = array_fill_keys($changedFiles, true);
+    foreach ($repairFiles as $repairFile) {
+        if (isset($changedLookup[$repairFile])) {
+            throw new RuntimeException('repair_files contains a file already changed by this release: '.$repairFile);
+        }
     }
 }
 
@@ -636,6 +734,15 @@ function kaevReleaseReadJson(string $path): array
     }
 
     return $decoded;
+}
+
+function kaevReleaseRequireSha256(mixed $value, string $field): string
+{
+    if (! is_string($value) || preg_match('/^[a-f0-9]{64}$/', $value) !== 1) {
+        throw new RuntimeException('release.json contains an invalid '.$field.'.');
+    }
+
+    return $value;
 }
 
 function kaevReleaseRequireVersion(mixed $value, string $field): string

@@ -1,4 +1,4 @@
-# KaevCMS 0.47.19
+# KaevCMS 0.47.20
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.19 corrects the update-progress test fixture, validates effective cache-control directives after middleware normalization, and fixes the remaining Pint formatting issue. Application runtime behavior is unchanged from 0.47.18. No migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative update baseline remains 0.42.4.
+Version 0.47.20 strengthens the unified release builder: apply-script metadata, current and previous Composer lock hashes, and exceptional repair-file declarations are verified against the actual target and direct previous release trees. Application runtime behavior is unchanged from 0.47.19. No migration, Composer dependency, bundled-module version, theme version or VDS update-agent contract change is included. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.19 исправляет тестовую фикстуру окна обновления, проверяет фактические директивы кеширования после обработки middleware и устраняет оставшееся замечание Pint. Рабочее поведение приложения не меняется относительно 0.47.18. Новых миграций, Composer-зависимостей, версий модулей, тем и изменений контракта VDS update-agent нет. Базовая версия кумулятивных обновлений остаётся 0.42.4.
+Версия 0.47.20 усиливает единый сборщик релизов: metadata apply-скриптов, SHA256 текущего и предыдущего Composer lock и исключительные repair-файлы теперь проверяются по фактическим деревьям целевой и прямой предыдущей версии. Поведение приложения не изменилось относительно 0.47.19. Миграций, изменений Composer-зависимостей, версий встроенных модулей, тем или контракта VDS update-agent нет. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 

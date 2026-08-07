@@ -15,8 +15,9 @@ It builds and verifies:
 - the cumulative Web Update from the `release.json` baseline through the direct previous version;
 - the SHA256 checksum file.
 
-The build stops when metadata is inconsistent, a required file is missing, an unsafe ZIP path or symbolic link is found, runtime-owned data would enter the release, a removed file is absent from `deletions.json`, or previous full plus patch does not exactly match the target release tree. ZIP timestamps are derived from `released_at` so repeated builds from the same source are deterministic.
- Files listed in `release.json.repair_files` are always included in the direct patch, even when they match the previous reference archive, so a repair release can overwrite files left stale by an incomplete earlier update.
+The build stops when metadata is inconsistent, a required file is missing, an unsafe ZIP path or symbolic link is found, runtime-owned data would enter the release, a removed file is absent from `deletions.json`, or previous full plus patch does not exactly match the target release tree. It also verifies the target and previous apply-script contract plus the current and previous `composer.lock` hashes against the actual trees. ZIP timestamps are derived from `released_at` so repeated builds from the same source are deterministic.
+
+Files changed between the previous full archive and the target tree are discovered automatically. `release.json.repair_files` is reserved only for exceptional forced replacement of files that are unchanged between those canonical trees; listing an already changed file as a repair file is rejected as stale metadata.
 
 ---
 
@@ -35,5 +36,6 @@ The build stops when metadata is inconsistent, a required file is missing, an un
 - cumulative Web Update от baseline из `release.json` до прямой предыдущей версии;
 - файл контрольных сумм SHA256.
 
-Сборка останавливается при противоречивых metadata, отсутствии обязательного файла, небезопасном ZIP-пути или symlink, попадании runtime-данных, незаявленном удалении либо несовпадении результата «предыдущий full + patch» с целевым деревом. Время ZIP-записей берётся из `released_at`, поэтому повторная сборка одного исходного дерева детерминирована.
- Файлы из `release.json.repair_files` всегда включаются в прямой patch, даже если совпадают с эталонным предыдущим архивом. Это позволяет ремонтному релизу заменить файлы, оставшиеся старыми после неполного обновления.
+Сборка останавливается при противоречивых metadata, отсутствии обязательного файла, небезопасном ZIP-пути или symlink, попадании runtime-данных, незаявленном удалении либо несовпадении результата «предыдущий full + patch» с целевым деревом. Дополнительно проверяются apply-скрипты текущей и предыдущей версии, а также SHA256 текущего и предыдущего `composer.lock` по фактическим деревьям. Время ZIP-записей берётся из `released_at`, поэтому повторная сборка одного исходного дерева детерминирована.
+
+Изменённые файлы определяются автоматически сравнением предыдущего full с целевым деревом. `release.json.repair_files` используется только для исключительного принудительного обновления файлов, которые не изменились между эталонными деревьями; если туда случайно попал уже изменённый файл, сборка отклоняет устаревшие metadata.

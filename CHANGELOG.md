@@ -1,3 +1,13 @@
+## 0.47.20 - 2026-08-07
+
+### Changed
+
+- Strengthened the unified release builder so target and previous apply-script metadata is verified against the actual source tree and direct previous full archive before any release artifact is accepted.
+- Added cross-tree SHA256 validation for both current and previous `composer.lock` metadata, preventing stale dependency hashes from silently entering a release.
+- Made `repair_files` data-driven in `ReleaseMetadataTest`: the test now validates structure and file existence instead of hard-coding the current list. The builder rejects repair entries that are already ordinary changed files.
+- Added release-builder regression fixtures for mismatched apply hashes, Composer hashes, apply-script metadata and stale repair entries. Application runtime behavior, database migrations, modules, themes and VDS update-agent contract 3 are unchanged.
+- The cumulative 0.47.20 package supports updates from 0.42.4 through 0.47.19.
+
 ## 0.47.19 - 2026-08-02
 
 ### Fixed

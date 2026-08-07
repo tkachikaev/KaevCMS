@@ -29,7 +29,21 @@ class ReleaseMetadataTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['previous_apply_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['previous_sha256']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $release['composer_lock']['current_sha256']);
-        $this->assertSame([], $release['repair_files']);
+
+        $repairFiles = $release['repair_files'] ?? null;
+        $this->assertIsArray($repairFiles);
+        $this->assertSame($repairFiles, array_values(array_unique($repairFiles)));
+        $sortedRepairFiles = $repairFiles;
+        sort($sortedRepairFiles);
+        $this->assertSame($sortedRepairFiles, $repairFiles);
+        foreach ($repairFiles as $repairFile) {
+            $this->assertIsString($repairFile);
+            $this->assertNotSame('', $repairFile);
+            $this->assertStringNotContainsString('..', $repairFile);
+            $this->assertStringNotContainsString('\\', $repairFile);
+            $this->assertFalse(str_starts_with($repairFile, '/'));
+            $this->assertFileExists(base_path($repairFile), 'Repair file is missing from the release tree: '.$repairFile);
+        }
         $this->assertSame(
             hash_file('sha256', base_path('composer.lock')),
             $release['composer_lock']['current_sha256'],

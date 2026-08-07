@@ -39,6 +39,16 @@ try {
         "#requires -Version 5.1\nWrite-Host 'Synthetic previous apply script.'\n",
     );
 
+    $previousApplyHash = hash_file(
+        'sha256',
+        $previousRoot.'/'.str_replace('/', DIRECTORY_SEPARATOR, $previousApply),
+    );
+    if (! is_string($previousApplyHash)) {
+        throw new RuntimeException('Unable to hash synthetic previous apply script.');
+    }
+    $targetRelease['previous_apply_sha256'] = $previousApplyHash;
+    writeFixtureJson($targetRoot.'/release.json', $targetRelease);
+
     $syntheticRelease = $targetRelease;
     $syntheticRelease['version'] = $previousVersion;
     $syntheticRelease['previous_version'] = syntheticOlderVersion($previousVersion);
@@ -103,6 +113,60 @@ try {
     $checksumLines = file($first['checksums'], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     assertFixture(is_array($checksumLines) && count($checksumLines) === 3, 'Checksum file must contain exactly three release artifacts.');
 
+    $validTargetRelease = readFixtureJson($targetRoot.'/release.json');
+
+    $invalidPreviousApplyHash = $validTargetRelease;
+    $invalidPreviousApplyHash['previous_apply_sha256'] = str_repeat('0', 64);
+    writeFixtureJson($targetRoot.'/release.json', $invalidPreviousApplyHash);
+    assertFixtureBuildFails(
+        $targetRoot,
+        $previousArchive,
+        $temporaryRoot.'/invalid-previous-apply-hash',
+        'previous_apply_sha256 does not match the previous full archive',
+    );
+
+    $invalidComposerHash = $validTargetRelease;
+    $invalidComposerHash['composer_lock']['current_sha256'] = str_repeat('0', 64);
+    writeFixtureJson($targetRoot.'/release.json', $invalidComposerHash);
+    assertFixtureBuildFails(
+        $targetRoot,
+        $previousArchive,
+        $temporaryRoot.'/invalid-current-composer-hash',
+        'composer_lock.current_sha256 does not match the target release tree',
+    );
+
+    $invalidPreviousComposerHash = $validTargetRelease;
+    $invalidPreviousComposerHash['composer_lock']['previous_sha256'] = str_repeat('0', 64);
+    writeFixtureJson($targetRoot.'/release.json', $invalidPreviousComposerHash);
+    assertFixtureBuildFails(
+        $targetRoot,
+        $previousArchive,
+        $temporaryRoot.'/invalid-previous-composer-hash',
+        'composer_lock.previous_sha256 does not match the previous full archive',
+    );
+
+    $invalidApplyScript = $validTargetRelease;
+    $invalidApplyScript['apply_script'] = 'deployment/windows/apply-0.0.0.ps1';
+    writeFixtureJson($targetRoot.'/release.json', $invalidApplyScript);
+    assertFixtureBuildFails(
+        $targetRoot,
+        $previousArchive,
+        $temporaryRoot.'/invalid-apply-script',
+        'apply_script does not match the target version',
+    );
+
+    $redundantRepairFile = $validTargetRelease;
+    $redundantRepairFile['repair_files'] = ['docs/release-builder-target-only.txt'];
+    writeFixtureJson($targetRoot.'/release.json', $redundantRepairFile);
+    assertFixtureBuildFails(
+        $targetRoot,
+        $previousArchive,
+        $temporaryRoot.'/redundant-repair-file',
+        'repair_files contains a file already changed by this release',
+    );
+
+    writeFixtureJson($targetRoot.'/release.json', $validTargetRelease);
+
     fwrite(STDOUT, "Unified release builder regression checks completed successfully.\n");
 } finally {
     kaevReleaseRemoveTree($temporaryRoot);
@@ -140,6 +204,30 @@ function buildFixtureRelease(string $root, string $previousArchive, string $outp
     }
 
     return $artifacts;
+}
+
+function assertFixtureBuildFails(
+    string $root,
+    string $previousArchive,
+    string $outputDirectory,
+    string $expectedMessage,
+): void {
+    try {
+        kaevReleaseBuild([
+            'root' => $root,
+            'previous' => $previousArchive,
+            'output-dir' => $outputDirectory,
+        ]);
+    } catch (RuntimeException $exception) {
+        assertFixture(
+            str_contains($exception->getMessage(), $expectedMessage),
+            'Unexpected release builder failure: '.$exception->getMessage(),
+        );
+
+        return;
+    }
+
+    throw new RuntimeException('Release builder accepted invalid metadata: '.$expectedMessage);
 }
 
 function fixtureCanonicalPath(string $path): string
