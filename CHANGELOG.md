@@ -1,3 +1,20 @@
+## 0.47.22 - 2026-08-07
+
+### Fixed
+
+- Fixed the Windows update workflow removing `public/install` before PHPUnit release checks, which caused `AdminNotificationCenterTest`, `ReleaseMetadataTest`, `WebInstallerReleaseTest` and `WebUpdaterReleaseTest` to fail during an otherwise valid update.
+- Windows local development updates now preserve the public installer source required by the release quality gates; production Web Update packages still remove `/install` on installed VDS/shared-hosting sites.
+- Added `public/install/index.php` as an exceptional repair file so installations interrupted by the 0.47.21 Windows test failure restore the missing entry point automatically when the hotfix patch is extracted.
+- No application runtime behavior, database migration, bundled-module version, theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.22 package supports updates from 0.42.4 through 0.47.21.
+
+## 0.47.21 - 2026-08-07
+
+### Changed
+
+- Reduced `GameServerManager` by moving form validation/schema responsibilities into `GameServerFormSchema` and editor load/reset state into `GameServerFormState`.
+- Preserved the existing Livewire public properties/actions, GameServer services, database schema, L2JMobius driver contracts and administration UI behavior.
+- No database migration, bundled-module version, theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.21 package supports updates from 0.42.4 through 0.47.20.
+
 ## 0.47.20 - 2026-08-07
 
 ### Changed

@@ -3,26 +3,24 @@
 namespace App\Livewire\Admin;
 
 use App\Auth\AdminPermission;
-use App\Contracts\CharacterRescueGateway;
 use App\Exceptions\GameServerDeletionConfirmationRequired;
 use App\Exceptions\GameServerHasRewardData;
 use App\Models\Admin;
 use App\Models\GameServer;
-use App\Models\GameServerTranslation;
 use App\Models\LoginServer;
 use App\Services\AuditLogger;
 use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
 use App\Services\Servers\GameServerAdministration;
+use App\Services\Servers\GameServerFormSchema;
+use App\Services\Servers\GameServerFormState;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Services\SiteSettings;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Throwable;
 
 class GameServerManager extends Component
 {
@@ -172,55 +170,9 @@ class GameServerManager extends Component
         $server = GameServer::query()
             ->with(['translations', 'loginServer', 'features'])
             ->findOrFail($serverId);
-        $languages = app(LanguageManager::class);
 
         $this->resetValidation();
-        $this->editingId = $server->id;
-        $this->translations = [];
-        $this->maintenanceMessages = [];
-        foreach ($languages->enabledCodes() as $locale) {
-            $translation = $server->translations->firstWhere('locale', $locale);
-            $this->translations[$locale] = $translation instanceof GameServerTranslation
-                ? trim((string) $translation->name)
-                : ($locale === $languages->default() ? trim((string) $server->name) : '');
-            $this->maintenanceMessages[$locale] = $translation instanceof GameServerTranslation
-                ? trim((string) $translation->maintenance_message)
-                : '';
-        }
-
-        $this->maintenanceEnabled = (bool) $server->maintenance_enabled;
-        $this->statisticsEnabled = (bool) $server->statistics_enabled;
-        $this->statisticsLevelEnabled = (bool) $server->statistics_level_enabled;
-        $this->statisticsPvpEnabled = (bool) $server->statistics_pvp_enabled;
-        $this->statisticsPkEnabled = (bool) $server->statistics_pk_enabled;
-        $this->statisticsPlayTimeEnabled = (bool) $server->statistics_play_time_enabled;
-        $this->statisticsHeroesEnabled = (bool) $server->statistics_heroes_enabled;
-        $this->statisticsCastlesEnabled = (bool) $server->statistics_castles_enabled;
-        $this->statisticsLevelLimit = (string) $server->statistics_level_limit;
-        $this->statisticsPvpLimit = (string) $server->statistics_pvp_limit;
-        $this->statisticsPkLimit = (string) $server->statistics_pk_limit;
-        $this->statisticsPlayTimeLimit = (string) $server->statistics_play_time_limit;
-        $this->serverRates = trim((string) $server->rates);
-        $this->serverChronicle = trim((string) $server->chronicle);
-        $this->serverMode = trim((string) $server->mode);
-        $this->connectionEnabled = $server->connectionConfigured();
-        $this->loginServerId = $server->login_server_id !== null ? (string) $server->login_server_id : '';
-        $this->driver = $server->driver ?? ServerDriverRegistry::MOBIUS_DRIVER;
-        $this->useLoginServerConnection = $server->connectionConfigured()
-            ? (bool) $server->use_login_server_connection
-            : true;
-        $this->databaseHost = trim((string) $server->database_host) !== '' ? trim((string) $server->database_host) : '127.0.0.1';
-        $this->databasePort = (string) ($server->database_port ?? 3306);
-        $this->databaseName = trim((string) $server->database_name);
-        $this->databaseUsername = trim((string) $server->database_username);
-        $this->databasePassword = '';
-        $this->databaseCharset = trim((string) $server->database_charset) !== '' ? trim((string) $server->database_charset) : 'utf8mb4';
-        $this->serviceHost = trim((string) $server->service_host);
-        $this->servicePort = (string) ($server->service_port ?? 7777);
-        $this->loadCharacterRescue($server);
-        $this->connectionReport = null;
-        $this->status = null;
-        $this->showChecks = false;
+        $this->fill(app(GameServerFormState::class)->fromServer($server));
         $this->clearDeleteConfirmation();
         $this->activeTab = 'general';
         $this->drawerOpen = true;
@@ -325,12 +277,17 @@ class GameServerManager extends Component
     {
         $this->ensureCanManage();
         $this->connectionEnabled = true;
-        $validated = $this->validate($this->connectionRules(), [], $this->connectionAttributes());
+        $schema = app(GameServerFormSchema::class);
+        $validated = $this->validate(
+            $schema->connectionRules($this->useLoginServerConnection),
+            [],
+            $schema->connectionAttributes(),
+        );
         $loginServer = LoginServer::query()->findOrFail((int) $validated['loginServerId']);
         $server = $this->editingId !== null
             ? GameServer::query()->findOrFail($this->editingId)
             : null;
-        $values = $this->connectionValues($validated);
+        $values = $schema->connectionValues($validated);
         $targetName = $this->translations[app(LanguageManager::class)->default()] ?? __('New game server');
 
         $this->connectionReport = app(GameServerAdministration::class)->test(
@@ -348,8 +305,14 @@ class GameServerManager extends Component
     {
         $this->ensureCanManage();
 
+        $schema = app(GameServerFormSchema::class);
+
         try {
-            $general = $this->validate($this->generalRules(), [], $this->generalAttributes());
+            $general = $this->validate(
+                $schema->generalRules(),
+                [],
+                $schema->generalAttributes(),
+            );
         } catch (ValidationException $exception) {
             $this->activateTabForErrors(array_keys($exception->errors()));
 
@@ -371,7 +334,11 @@ class GameServerManager extends Component
 
         if ($server instanceof GameServer) {
             try {
-                $feature = $this->validate($this->featureRules(), [], $this->featureAttributes());
+                $feature = $this->validate(
+                    $schema->featureRules(),
+                    [],
+                    $schema->featureAttributes(),
+                );
             } catch (ValidationException $exception) {
                 $this->activateTabForErrors(array_keys($exception->errors()));
 
@@ -379,7 +346,7 @@ class GameServerManager extends Component
             }
 
             $featureBefore = app(GameServerFeatureSettings::class)->characterRescue($server);
-            $featureAfter = $this->featureValues($feature);
+            $featureAfter = $schema->featureValues($feature);
 
             if ($featureAfter['enabled']
                 && ! $featureBefore['enabled']
@@ -393,7 +360,11 @@ class GameServerManager extends Component
 
         try {
             $connection = $this->connectionEnabled
-                ? $this->validate($this->connectionRules(), [], $this->connectionAttributes())
+                ? $this->validate(
+                    $schema->connectionRules($this->useLoginServerConnection),
+                    [],
+                    $schema->connectionAttributes(),
+                )
                 : null;
         } catch (ValidationException $exception) {
             $this->activateTabForErrors(array_keys($exception->errors()));
@@ -406,9 +377,9 @@ class GameServerManager extends Component
             : GameServerAdministration::CONNECTION_DISCONNECT;
         $result = app(GameServerAdministration::class)->save(
             $server,
-            $this->generalValues($general),
+            $schema->generalValues($general, $this->driver),
             $mode,
-            is_array($connection) ? $this->connectionValues($connection) : null,
+            is_array($connection) ? $schema->connectionValues($connection) : null,
         );
         $server = $result['server'];
 
@@ -505,205 +476,6 @@ class GameServerManager extends Component
         ]);
     }
 
-    /** @return array<string,mixed> */
-    private function generalRules(): array
-    {
-        $languages = app(LanguageManager::class);
-        $rules = [
-            'translations' => ['required', 'array'],
-            'serverRates' => ['nullable', 'string', 'max:100'],
-            'serverChronicle' => ['nullable', 'string', 'max:100'],
-            'serverMode' => ['nullable', 'string', 'max:100'],
-            'maintenanceEnabled' => ['required', 'boolean'],
-            'maintenanceMessages' => ['required', 'array'],
-            'statisticsEnabled' => ['required', 'boolean'],
-            'statisticsLevelEnabled' => ['required', 'boolean'],
-            'statisticsPvpEnabled' => ['required', 'boolean'],
-            'statisticsPkEnabled' => ['required', 'boolean'],
-            'statisticsPlayTimeEnabled' => ['required', 'boolean'],
-            'statisticsHeroesEnabled' => ['required', 'boolean'],
-            'statisticsCastlesEnabled' => ['required', 'boolean'],
-            'statisticsLevelLimit' => ['required', 'integer', 'between:1,100'],
-            'statisticsPvpLimit' => ['required', 'integer', 'between:1,100'],
-            'statisticsPkLimit' => ['required', 'integer', 'between:1,100'],
-            'statisticsPlayTimeLimit' => ['required', 'integer', 'between:1,100'],
-        ];
-
-        foreach ($languages->enabledCodes() as $locale) {
-            $rules['translations.'.$locale] = $locale === $languages->default()
-                ? ['required', 'string', 'max:100']
-                : ['nullable', 'string', 'max:100'];
-            $rules['maintenanceMessages.'.$locale] = ['nullable', 'string', 'max:255'];
-        }
-
-        return $rules;
-    }
-
-    /** @return array<string,mixed> */
-    private function connectionRules(): array
-    {
-        $rules = [
-            'loginServerId' => ['required', 'integer', 'exists:login_servers,id'],
-            'driver' => ['required', Rule::in(app(ServerDriverRegistry::class)->gameDriverKeys())],
-            'useLoginServerConnection' => ['required', 'boolean'],
-            'databasePassword' => ['nullable', 'string', 'max:1024'],
-            'serviceHost' => ['nullable', 'string', 'max:255'],
-            'servicePort' => ['required', 'integer', 'between:1,65535'],
-        ];
-
-        if (! $this->useLoginServerConnection) {
-            $rules += [
-                'databaseHost' => ['required', 'string', 'max:255'],
-                'databasePort' => ['required', 'integer', 'between:1,65535'],
-                'databaseName' => ['required', 'string', 'max:64'],
-                'databaseUsername' => ['required', 'string', 'max:128'],
-                'databaseCharset' => ['required', Rule::in(['utf8mb4', 'utf8', 'latin1', 'cp1251'])],
-            ];
-        }
-
-        return $rules;
-    }
-
-    /** @return array<string,mixed> */
-    private function featureRules(): array
-    {
-        return [
-            'characterRescueEnabled' => ['required', 'boolean'],
-            'characterRescueLocationName' => ['required', 'string', 'max:100'],
-            'characterRescueX' => ['required', 'integer', 'between:-2147483648,2147483647'],
-            'characterRescueY' => ['required', 'integer', 'between:-2147483648,2147483647'],
-            'characterRescueZ' => ['required', 'integer', 'between:-2147483648,2147483647'],
-            'characterRescueOfflineDelayMinutes' => ['required', 'integer', 'between:0,1440'],
-            'characterRescueCooldownHours' => ['required', 'integer', 'between:0,720'],
-        ];
-    }
-
-    /** @return array<string,string> */
-    private function featureAttributes(): array
-    {
-        return [
-            'characterRescueEnabled' => __('Enable character rescue'),
-            'characterRescueLocationName' => __('Location name'),
-            'characterRescueX' => __('Coordinate X'),
-            'characterRescueY' => __('Coordinate Y'),
-            'characterRescueZ' => __('Coordinate Z'),
-            'characterRescueOfflineDelayMinutes' => __('Minimum offline time'),
-            'characterRescueCooldownHours' => __('Reuse cooldown'),
-        ];
-    }
-
-    /** @return array<string,string> */
-    private function generalAttributes(): array
-    {
-        $attributes = [
-            'serverRates' => __('Server rates validation attribute'),
-            'serverChronicle' => __('Chronicle validation attribute'),
-            'serverMode' => __('server mode'),
-            'statisticsLevelLimit' => __('Level ranking limit'),
-            'statisticsPvpLimit' => __('PvP ranking limit'),
-            'statisticsPkLimit' => __('PK ranking limit'),
-            'statisticsPlayTimeLimit' => __('Play time ranking limit'),
-        ];
-
-        foreach (app(LanguageManager::class)->enabledCodes() as $locale) {
-            $attributes['translations.'.$locale] = __('Server name validation attribute');
-            $attributes['maintenanceMessages.'.$locale] = __('Maintenance message validation attribute');
-        }
-
-        return $attributes;
-    }
-
-    /** @return array<string,string> */
-    private function connectionAttributes(): array
-    {
-        return [
-            'loginServerId' => __('LoginServer'),
-            'driver' => __('GameServer driver'),
-            'useLoginServerConnection' => __('Use LoginServer database connection'),
-            'databaseHost' => __('Database host'),
-            'databasePort' => __('Database port'),
-            'databaseName' => __('Database name'),
-            'databaseUsername' => __('Database username'),
-            'databasePassword' => __('Database password'),
-            'databaseCharset' => __('Database charset'),
-            'serviceHost' => __('Service host'),
-            'servicePort' => __('Service port'),
-        ];
-    }
-
-    /** @param array<string,mixed> $validated @return array<string,mixed> */
-    private function generalValues(array $validated): array
-    {
-        $translations = [];
-        foreach ((array) $validated['translations'] as $locale => $name) {
-            $translations[(string) $locale] = trim((string) $name);
-        }
-
-        $maintenanceMessages = [];
-        foreach ((array) $validated['maintenanceMessages'] as $locale => $message) {
-            $maintenanceMessages[(string) $locale] = trim((string) $message);
-        }
-        $defaultLocale = app(LanguageManager::class)->default();
-
-        $statisticsSupported = $this->statisticsCapabilities() !== [];
-
-        return [
-            'name' => $translations[$defaultLocale] ?? '',
-            'rates' => trim((string) ($validated['serverRates'] ?? '')),
-            'chronicle' => trim((string) ($validated['serverChronicle'] ?? '')),
-            'mode' => trim((string) ($validated['serverMode'] ?? '')),
-            'translations' => $translations,
-            'maintenance_enabled' => (bool) $validated['maintenanceEnabled'],
-            'maintenance_messages' => $maintenanceMessages,
-            'statistics_enabled' => $statisticsSupported && (bool) $validated['statisticsEnabled'],
-            'statistics_level_enabled' => (bool) $validated['statisticsLevelEnabled'],
-            'statistics_pvp_enabled' => (bool) $validated['statisticsPvpEnabled'],
-            'statistics_pk_enabled' => (bool) $validated['statisticsPkEnabled'],
-            'statistics_play_time_enabled' => (bool) $validated['statisticsPlayTimeEnabled'],
-            'statistics_heroes_enabled' => (bool) $validated['statisticsHeroesEnabled'],
-            'statistics_castles_enabled' => (bool) $validated['statisticsCastlesEnabled'],
-            'statistics_level_limit' => (int) $validated['statisticsLevelLimit'],
-            'statistics_pvp_limit' => (int) $validated['statisticsPvpLimit'],
-            'statistics_pk_limit' => (int) $validated['statisticsPkLimit'],
-            'statistics_play_time_limit' => (int) $validated['statisticsPlayTimeLimit'],
-        ];
-    }
-
-    /**
-     * @param  array<string,mixed>  $validated
-     * @return array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int}
-     */
-    private function featureValues(array $validated): array
-    {
-        return [
-            'enabled' => (bool) $validated['characterRescueEnabled'],
-            'location_name' => trim((string) $validated['characterRescueLocationName']),
-            'x' => (int) $validated['characterRescueX'],
-            'y' => (int) $validated['characterRescueY'],
-            'z' => (int) $validated['characterRescueZ'],
-            'offline_delay_minutes' => (int) $validated['characterRescueOfflineDelayMinutes'],
-            'cooldown_hours' => (int) $validated['characterRescueCooldownHours'],
-        ];
-    }
-
-    /** @param array<string,mixed> $validated @return array<string,mixed> */
-    private function connectionValues(array $validated): array
-    {
-        return [
-            'login_server_id' => (int) $validated['loginServerId'],
-            'driver' => trim((string) $validated['driver']),
-            'use_login_server_connection' => (bool) $validated['useLoginServerConnection'],
-            'database_host' => trim((string) ($validated['databaseHost'] ?? '')),
-            'database_port' => (int) ($validated['databasePort'] ?? 3306),
-            'database_name' => trim((string) ($validated['databaseName'] ?? '')),
-            'database_username' => trim((string) ($validated['databaseUsername'] ?? '')),
-            'database_password' => (string) ($validated['databasePassword'] ?? ''),
-            'database_charset' => trim((string) ($validated['databaseCharset'] ?? 'utf8mb4')),
-            'service_host' => $this->nullableString($validated['serviceHost'] ?? null),
-            'service_port' => (int) ($validated['servicePort'] ?? 7777),
-        ];
-    }
-
     /** @param array<string,mixed> $report @return array{state:string,message:string} */
     private function cardTestResult(array $report): array
     {
@@ -764,108 +536,31 @@ class GameServerManager extends Component
     /** @return list<string> */
     private function statisticsCapabilities(): array
     {
-        $driver = app(ServerDriverRegistry::class)->gameDriver($this->driver);
-
-        return is_array($driver) ? ($driver['statistics'] ?? []) : [];
+        return app(GameServerFormSchema::class)->statisticsCapabilities($this->driver);
     }
 
     private function initializeTranslations(): void
     {
-        $this->translations = [];
-        $this->maintenanceMessages = [];
-        $this->syncEnabledLanguageFields();
+        [$this->translations, $this->maintenanceMessages] = app(GameServerFormState::class)->localizedFields([], []);
     }
 
     private function syncEnabledLanguageFields(): void
     {
-        $enabled = array_fill_keys(app(LanguageManager::class)->enabledCodes(), true);
-
-        $this->translations = array_intersect_key($this->translations, $enabled);
-        $this->maintenanceMessages = array_intersect_key($this->maintenanceMessages, $enabled);
-
-        foreach (array_keys($enabled) as $locale) {
-            $this->translations[$locale] ??= '';
-            $this->maintenanceMessages[$locale] ??= '';
-        }
+        [$this->translations, $this->maintenanceMessages] = app(GameServerFormState::class)->localizedFields(
+            $this->translations,
+            $this->maintenanceMessages,
+        );
     }
 
     private function loadCharacterRescue(GameServer $server): void
     {
-        $rescue = app(GameServerFeatureSettings::class)->characterRescue($server);
-        $this->characterRescueEnabled = $rescue['enabled'];
-        $this->characterRescueLocationName = $rescue['location_name'];
-        $this->characterRescueX = (string) $rescue['x'];
-        $this->characterRescueY = (string) $rescue['y'];
-        $this->characterRescueZ = (string) $rescue['z'];
-        $this->characterRescueOfflineDelayMinutes = (string) $rescue['offline_delay_minutes'];
-        $this->characterRescueCooldownHours = (string) $rescue['cooldown_hours'];
-        $this->inspectCharacterRescueCapability($server);
-    }
-
-    private function inspectCharacterRescueCapability(GameServer $server): void
-    {
-        $gateway = app(CharacterRescueGateway::class);
-        $this->characterRescueMissingColumns = [];
-
-        if (! $gateway->supports($server)) {
-            $this->characterRescueCapabilityState = 'unavailable';
-
-            return;
-        }
-
-        try {
-            $capabilities = $gateway->capabilities($server);
-            $this->characterRescueCapabilityState = $capabilities->supported ? 'supported' : 'unavailable';
-            $this->characterRescueMissingColumns = $capabilities->missingColumns;
-        } catch (Throwable) {
-            $this->characterRescueCapabilityState = 'error';
-        }
+        $this->fill(app(GameServerFormState::class)->characterRescueState($server));
     }
 
     private function resetForm(): void
     {
-        $this->editingId = null;
+        $this->fill(app(GameServerFormState::class)->defaults());
         $this->clearDeleteConfirmation();
-        $this->initializeTranslations();
-        $this->maintenanceEnabled = false;
-        $this->characterRescueEnabled = false;
-        $this->characterRescueLocationName = 'Giran';
-        $this->characterRescueX = '83400';
-        $this->characterRescueY = '148600';
-        $this->characterRescueZ = '-3400';
-        $this->characterRescueOfflineDelayMinutes = '5';
-        $this->characterRescueCooldownHours = '12';
-        $this->characterRescueCapabilityState = 'unavailable';
-        $this->characterRescueMissingColumns = [];
-        $this->statisticsEnabled = false;
-        $this->statisticsLevelEnabled = true;
-        $this->statisticsPvpEnabled = true;
-        $this->statisticsPkEnabled = true;
-        $this->statisticsPlayTimeEnabled = true;
-        $this->statisticsHeroesEnabled = true;
-        $this->statisticsCastlesEnabled = true;
-        $this->statisticsLevelLimit = '10';
-        $this->statisticsPvpLimit = '10';
-        $this->statisticsPkLimit = '10';
-        $this->statisticsPlayTimeLimit = '10';
-        $this->serverRates = '';
-        $this->serverChronicle = '';
-        $this->serverMode = '';
-        $this->connectionEnabled = false;
-        $this->loginServerId = '';
-        $this->driver = ServerDriverRegistry::MOBIUS_DRIVER;
-        $this->useLoginServerConnection = true;
-        $this->databaseHost = '127.0.0.1';
-        $this->databasePort = '3306';
-        $this->databaseName = '';
-        $this->databaseUsername = '';
-        $this->databasePassword = '';
-        $this->databaseCharset = 'utf8mb4';
-        $this->serviceHost = '';
-        $this->servicePort = '7777';
-        $this->connectionReport = null;
-        $this->status = null;
-        $this->showChecks = false;
     }
 
     /**
@@ -897,13 +592,6 @@ class GameServerManager extends Component
         $this->deleteImpactAccountCount = 0;
         $this->deleteImpactLoginServerName = null;
         $this->deleteImpactWarning = null;
-    }
-
-    private function nullableString(mixed $value): ?string
-    {
-        $value = trim((string) $value);
-
-        return $value !== '' ? $value : null;
     }
 
     private function ensureCanView(): void

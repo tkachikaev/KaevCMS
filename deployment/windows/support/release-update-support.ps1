@@ -1,4 +1,4 @@
-function Test-KaevCmsVersion {
+﻿function Test-KaevCmsVersion {
     param([Parameter(Mandatory = $true)][string]$Version)
 
     return $Version -match '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$'
@@ -222,7 +222,7 @@ function Get-KaevCmsObsoleteReleaseArtifacts {
     $history = Read-KaevCmsJsonFile `
         -Path (Join-Path $ProjectRoot 'deployment/updates/deletions.json') `
         -Label 'Update deletion history'
-    $paths = @(ConvertTo-KaevCmsPlatformPath -Path 'public/install')
+    $paths = @()
     foreach ($property in $history.PSObject.Properties) {
         if ($property.Name -notmatch '^\d+\.\d+\.\d+$' -or [version]$property.Name -gt [version]$CurrentVersion) {
             continue

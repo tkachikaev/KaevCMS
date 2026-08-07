@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$SkipTests
 )
 
@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This maintenance release strengthens release metadata validation without changing application runtime behavior.'
+Write-Host 'This hotfix preserves release source files during Windows update tests and repairs the public installer entry point when needed.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
