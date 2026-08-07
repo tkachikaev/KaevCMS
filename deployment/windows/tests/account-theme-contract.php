@@ -92,13 +92,27 @@ namespace {
         throw new RuntimeException('Account themes must validate only theme-owned CSS assets.');
     }
 
+    if (is_file($root.'/public/assets/account/css/components.css') === false) {
+        throw new RuntimeException('The shared account component stylesheet is missing.');
+    }
+
     if (is_file($root.'/public/assets/account/js/navigation.js') === false) {
         throw new RuntimeException('The shared account navigation runtime is missing.');
+    }
+
+    $sharedCss = file_get_contents($root.'/public/assets/account/css/components.css');
+    if (! is_string($sharedCss) || ! str_contains($sharedCss, '.account-operation-modal{')) {
+        throw new RuntimeException('The shared account component stylesheet does not contain the expected component contract.');
     }
 
     foreach (['luxury', 'kaev-aurelia'] as $theme) {
         if (is_file($root.'/public/account-themes/'.$theme.'/assets/js/navigation.js')) {
             throw new RuntimeException("Duplicated account navigation runtime remains in theme: {$theme}");
+        }
+
+        $layout = file_get_contents($root.'/account-themes/'.$theme.'/views/layouts/app.blade.php');
+        if (! is_string($layout) || ! str_contains($layout, 'assets/account/css/components.css')) {
+            throw new RuntimeException("Shared account component stylesheet is not loaded by theme: {$theme}");
         }
     }
 

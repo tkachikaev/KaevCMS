@@ -1,4 +1,4 @@
-# KaevCMS 0.47.28
+# KaevCMS 0.47.30
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.28 aligns the PHPStan level 6 type annotations with the locked Laravel Pint 1.29.3 style rules without changing runtime behavior. Bundled Daily Rewards remains 1.3.2, Promo Codes 1.4.1 and Support Tickets 1.7.2. Published migrations, theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.30 is a quality-gate hotfix for the shared player-account CSS extraction introduced in 0.47.29. Release tests now validate shared component selectors in `public/assets/account/css/components.css` instead of incorrectly requiring them inside each theme-owned `app.css`. Runtime behavior and visual styling are unchanged. Kaev Aurelia Account remains 1.6.6 and L2 Obsidian Luxury remains 1.6.5 with KaevCMS 0.47.29 as their minimum version. Bundled module versions, published migrations, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.28 приводит аннотации типов PHPStan уровня 6 к правилам форматирования зафиксированного Laravel Pint 1.29.3 без изменения поведения CMS. Daily Rewards остаётся 1.3.2, Promo Codes 1.4.1, Support Tickets 1.7.2. Опубликованные миграции, версии тем, Composer-зависимости и контракт VDS update-agent 3 не менялись. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.30 — hotfix quality-gate после выноса общего CSS личного кабинета в 0.47.29. Release-тесты теперь проверяют общие селекторы в `public/assets/account/css/components.css`, а не требуют их наличия внутри `app.css` каждой темы. Runtime-поведение и внешний вид не меняются. Kaev Aurelia Account остаётся 1.6.6, L2 Obsidian Luxury — 1.6.5; минимальная версия CMS для этих тем остаётся 0.47.29. Версии модулей, опубликованные миграции, Composer-зависимости и контракт VDS update-agent 3 не менялись. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 

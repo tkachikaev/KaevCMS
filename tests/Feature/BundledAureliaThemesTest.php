@@ -18,6 +18,7 @@ class BundledAureliaThemesTest extends TestCase
 
         $this->assertTrue($fallbackTheme['valid'], implode(PHP_EOL, $fallbackTheme['errors']));
         $this->assertTrue($fallbackTheme['compatible'], implode(PHP_EOL, $fallbackTheme['errors']));
+        $this->assertFileExists(public_path('assets/account/css/components.css'));
         $this->assertFileExists(public_path('assets/account/js/navigation.js'));
         $this->assertFileDoesNotExist(public_path('account-themes/luxury/assets/js/navigation.js'));
     }
@@ -36,7 +37,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertSame('Kaev Aurelia Account', $accountTheme['name']);
-        $this->assertSame('1.6.5', $accountTheme['version']);
+        $this->assertSame('1.6.6', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
         foreach ($this->publicThemeFiles() as $file) {
@@ -57,6 +58,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertFileExists(public_path('account-themes/kaev-aurelia/assets/images/hero.webp'));
 
         $accountCss = $this->readFile(public_path('account-themes/kaev-aurelia/assets/css/app.css'));
+        $sharedAccountCss = $this->readFile(public_path('assets/account/css/components.css'));
         $this->assertStringContainsString(
             '.account-character-avatar { width: 48px; height: 48px; position: relative; display: grid; place-items: center; flex-shrink: 0; overflow: hidden;',
             $accountCss,
@@ -69,13 +71,13 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertStringContainsString('border-radius: var(--account-radius-lg);', $accountCss);
         $this->assertStringContainsString('.account-form-aside {', $accountCss);
         $this->assertStringContainsString('position: relative;', $accountCss);
-        $this->assertStringContainsString('.reward-history-card {', $accountCss);
-        $this->assertStringContainsString('.account-avatar-grid {', $accountCss);
-        $this->assertStringContainsString('.account-avatar-modal {', $accountCss);
-        $this->assertStringContainsString('.account-operation-modal{', $accountCss);
-        $this->assertStringContainsString('.account-tool-grid {', $accountCss);
-        $this->assertStringContainsString('.account-detail-hero { padding: 28px 30px; }', $accountCss);
-        $this->assertStringContainsString('border-radius: var(--account-radius-sm);', $accountCss);
+        $this->assertStringContainsString('--account-shared-avatar-preview-background:', $accountCss);
+        $this->assertStringContainsString('.reward-history-card {', $sharedAccountCss);
+        $this->assertStringContainsString('.account-avatar-grid {', $sharedAccountCss);
+        $this->assertStringContainsString('.account-avatar-modal {', $sharedAccountCss);
+        $this->assertStringContainsString('.account-operation-modal{', $sharedAccountCss);
+        $this->assertStringContainsString('.account-tool-grid {', $sharedAccountCss);
+        $this->assertStringContainsString('.account-detail-hero { padding: 28px 30px; }', $sharedAccountCss);
     }
 
     public function test_public_aurelia_theme_can_be_activated_and_renders_its_own_shell(): void

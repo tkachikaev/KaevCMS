@@ -522,5 +522,11 @@
   ],
   "0.47.28": [
     "core/deployment/windows/apply-0.47.27.ps1"
+  ],
+  "0.47.29": [
+    "core/deployment/windows/apply-0.47.28.ps1"
+  ],
+  "0.47.30": [
+    "core/deployment/windows/apply-0.47.29.ps1"
   ]
 }

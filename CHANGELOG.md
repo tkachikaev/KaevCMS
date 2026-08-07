@@ -1,3 +1,20 @@
+## 0.47.30 - 2026-08-08
+
+### Fixed
+
+- Updated account CSS regression tests for the 0.47.29 shared stylesheet extraction so component selectors are validated in `public/assets/account/css/components.css` instead of being incorrectly required inside each theme-owned `app.css`.
+- Removed brittle assertions for historical Kaev Aurelia CSS version comments while retaining direct checks for the avatar, reward-history and operation-modal selectors those comments previously represented.
+- No runtime behavior, visual styling, database migration, bundled module/theme version, Composer dependency or VDS update-agent contract change is included. The cumulative 0.47.30 package supports updates from 0.42.4 through 0.47.29.
+
+## 0.47.29 - 2026-08-08
+
+### Changed
+
+- Extracted the shared player-account component layer to `public/assets/account/css/components.css`, covering Web Inventory, avatar/profile surfaces, account settings, operation-result modals and offline character rescue.
+- Kept bundled theme palette/decor differences in theme-owned `--account-shared-*` tokens so Kaev Aurelia Account and L2 Obsidian Luxury retain their existing visual treatment while no longer duplicating the shared component rules.
+- Added release and browser contracts requiring both bundled account layouts to load the shared stylesheet after their theme stylesheet.
+- Updated Kaev Aurelia Account to `1.6.6` and L2 Obsidian Luxury to `1.6.5`; both now declare KaevCMS `0.47.29` as their minimum because their layouts depend on the new shared core stylesheet. Bundled module versions, database migrations, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.29 package supports updates from 0.42.4 through 0.47.28.
+
 ## 0.47.28 - 2026-08-07
 
 - Aligned the PHPStan level 6 annotations introduced in 0.47.27 with the locked Laravel Pint 1.29.3 rules.

@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release fixes Pint formatting compatibility for the PHPStan level 6 type annotations.'
+Write-Host 'This hotfix aligns release tests with the shared player-account stylesheet introduced in 0.47.29; runtime behavior is unchanged.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

@@ -37,18 +37,22 @@ class AccountNavigationTest extends TestCase
         $navigation = file_get_contents($themePath.'/views/partials/navigation.blade.php');
         $accountMenu = file_get_contents($themePath.'/views/partials/account-menu.blade.php');
         $script = file_get_contents(public_path('assets/account/js/navigation.js'));
-        $styles = file_get_contents(public_path('account-themes/luxury/assets/css/app.css'));
+        $themeStyles = file_get_contents(public_path('account-themes/luxury/assets/css/app.css'));
+        $sharedStyles = file_get_contents(public_path('assets/account/css/components.css'));
 
         $this->assertIsString($layout);
         $this->assertIsString($navigation);
         $this->assertIsString($accountMenu);
         $this->assertIsString($script);
-        $this->assertIsString($styles);
+        $this->assertIsString($themeStyles);
+        $this->assertIsString($sharedStyles);
+        $styles = $themeStyles.PHP_EOL.$sharedStyles;
         $this->assertStringContainsString('@persist(\'account-sidebar\')', $layout);
         $this->assertStringContainsString('@persist(\'account-topbar\')', $layout);
         $this->assertStringContainsString('wire:navigate:scroll', $layout);
         $this->assertStringContainsString('account_theme_asset', $layout);
         $this->assertStringContainsString('assets/account/js/navigation.js', $layout);
+        $this->assertStringContainsString('assets/account/css/components.css', $layout);
         $this->assertStringNotContainsString('account_theme_asset(\'assets/js/navigation.js\')', $layout);
         $this->assertStringContainsString('<x-account-avatar-modal', $layout);
         $this->assertStringContainsString('<x-account-operation-modal', $layout);

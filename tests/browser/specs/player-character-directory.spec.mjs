@@ -72,6 +72,7 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
     await signIn(page);
 
     await expect(page.locator('link[href*="account-themes/luxury/assets/css/app.css"]')).toHaveCount(1);
+    await expect(page.locator('link[href*="assets/account/css/components.css"]')).toHaveCount(1);
     await expect(page.locator('script[src*="/assets/account/js/navigation.js"]')).toHaveCount(1);
     await expect(page.locator('script[src*="account-themes/luxury/assets/js/navigation.js"]')).toHaveCount(0);
     await expect(page.locator('.account-overview-header')).toBeVisible();
@@ -240,6 +241,7 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
     await context.clearCookies();
     await signIn(page);
     await expect(page.locator('link[href*="account-themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(1);
+    await expect(page.locator('link[href*="assets/account/css/components.css"]')).toHaveCount(1);
     await expect(page.locator('script[src*="/assets/account/js/navigation.js"]')).toHaveCount(1);
     await expect(page.locator('script[src*="account-themes/kaev-aurelia/assets/js/navigation.js"]')).toHaveCount(0);
 

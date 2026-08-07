@@ -352,16 +352,19 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringNotContainsString('private readonly Filesystem $files', $runtime);
 
         $aureliaCss = $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css');
+        $sharedAccountCss = $this->readReleaseFile('public/assets/account/css/components.css');
         $this->assertStringContainsString('display: grid; place-items: center;', $aureliaCss);
         $this->assertStringContainsString('.account-character-avatar > span', $aureliaCss);
         $this->assertStringContainsString('.account-surface {', $aureliaCss);
-        $this->assertStringContainsString('Kaev Aurelia Account 1.3.0', $aureliaCss);
         $this->assertStringContainsString('.promo-activation-surface {', $aureliaCss);
-        $this->assertStringContainsString('.reward-history-main p img {', $aureliaCss);
         $this->assertStringContainsString('Kaev Aurelia Account 1.3.1', $aureliaCss);
-        $this->assertStringContainsString('Kaev Aurelia Account 1.4.1', $aureliaCss);
         $this->assertStringContainsString('.account-dashboard-tools {', $aureliaCss);
         $this->assertStringContainsString('border-radius: 24px;', $aureliaCss);
+        $this->assertStringContainsString('.account-profile-preview {', $sharedAccountCss);
+        $this->assertStringContainsString('.account-avatar-modal {', $sharedAccountCss);
+        $this->assertStringContainsString('.reward-history-main p img {', $sharedAccountCss);
+        $this->assertStringContainsString('.account-operation-modal{', $sharedAccountCss);
+        $this->assertStringContainsString('.account-operation-reward{', $sharedAccountCss);
 
         $luxuryNavigation = $this->readReleaseFile('account-themes/luxury/views/partials/navigation.blade.php');
         $this->assertStringContainsString('data-account-module-id', $luxuryNavigation);
@@ -652,6 +655,7 @@ class ReleaseMetadataTest extends TestCase
             $this->assertFileExists(public_path('assets/admin/css/'.$stylesheet.'.css'));
         }
         $this->assertFileDoesNotExist(public_path('assets/admin/css/app.css'));
+        $this->assertFileExists(public_path('assets/account/css/components.css'));
         $this->assertFileExists(public_path('assets/account/js/navigation.js'));
         $this->assertFileDoesNotExist(public_path('account-themes/luxury/assets/js/navigation.js'));
         $this->assertFileDoesNotExist(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
@@ -669,6 +673,7 @@ class ReleaseMetadataTest extends TestCase
             'account-themes/kaev-aurelia/views/layouts/app.blade.php',
         ] as $accountLayoutPath) {
             $accountLayout = $this->readReleaseFile($accountLayoutPath);
+            $this->assertStringContainsString('assets/account/css/components.css', $accountLayout);
             $this->assertStringContainsString('assets/account/js/navigation.js', $accountLayout);
             $this->assertStringNotContainsString("account_theme_asset('assets/js/navigation.js')", $accountLayout);
         }
@@ -680,14 +685,14 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.4', 'kaev-aurelia' => '1.6.5'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.5', 'kaev-aurelia' => '1.6.6'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
                 flags: JSON_THROW_ON_ERROR,
             );
             $this->assertSame($expectedVersion, $accountThemeManifest['version']);
-            $this->assertSame('0.37.0', $accountThemeManifest['cms_min']);
+            $this->assertSame('0.47.29', $accountThemeManifest['cms_min']);
         }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');
         $dailyRewardsCss = $this->readReleaseFile('public/assets/modules/daily-rewards.css');
@@ -697,8 +702,23 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('addEventListener(\'pointerdown\'', $dailyRewardsScript);
         $this->assertStringContainsString('.daily-reward-item-preview,.daily-reward-item-remove {', $dailyRewardsCss);
         $this->assertStringContainsString('margin-top: 28px;', $dailyRewardsCss);
-        $this->assertStringContainsString('backdrop-filter:blur(22px)', $this->readReleaseFile('public/account-themes/luxury/assets/css/app.css'));
-        $this->assertStringContainsString('backdrop-filter:blur(22px)', $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css'));
+        $sharedAccountCss = $this->readReleaseFile('public/assets/account/css/components.css');
+        $this->assertStringContainsString('.reward-inventory-shell', $sharedAccountCss);
+        $this->assertStringContainsString('.account-avatar-grid', $sharedAccountCss);
+        $this->assertStringContainsString('.account-settings-card', $sharedAccountCss);
+        $this->assertStringContainsString('.account-operation-modal{', $sharedAccountCss);
+        $this->assertStringContainsString('.account-character-rescue-button', $sharedAccountCss);
+        $this->assertStringContainsString('backdrop-filter:blur(22px)', $sharedAccountCss);
+        preg_match_all('/var\((--account-shared-[a-z0-9-]+)\)/i', $sharedAccountCss, $sharedTokenMatches);
+        $sharedTokens = array_values(array_unique($sharedTokenMatches[1] ?? []));
+        $this->assertNotEmpty($sharedTokens);
+        foreach (['luxury', 'kaev-aurelia'] as $accountTheme) {
+            $accountThemeCss = $this->readReleaseFile('public/account-themes/'.$accountTheme.'/assets/css/app.css');
+            foreach ($sharedTokens as $sharedToken) {
+                $this->assertStringContainsString($sharedToken.':', $accountThemeCss);
+            }
+            $this->assertStringNotContainsString('.account-operation-modal{', $accountThemeCss);
+        }
 
         $dailyRewardsManifest = json_decode(
             $this->readReleaseFile('modules/daily-rewards/module.json'),
