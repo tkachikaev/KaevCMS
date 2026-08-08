@@ -57,33 +57,14 @@
         @endforeach
     </div>
 
-    @if ($news->hasPages())
-        @php
-            $firstPage = max(1, $news->currentPage() - 2);
-            $lastPage = min($news->lastPage(), $news->currentPage() + 2);
-        @endphp
-        <nav class="simple-pagination" aria-label="{{ __('Page navigation') }}">
-            @if ($news->onFirstPage())
-                <span class="button button-secondary disabled">← {{ __('Back') }}</span>
-            @else
-                <a wire:navigate class="button button-secondary" href="{{ $news->previousPageUrl() }}" rel="prev">← {{ __('Back') }}</a>
-            @endif
-            <div class="pagination-pages" aria-label="{{ __('Pages') }}">
-                @foreach ($news->getUrlRange($firstPage, $lastPage) as $page => $url)
-                    @if ($page === $news->currentPage())
-                        <span class="pagination-page active" aria-current="page">{{ $page }}</span>
-                    @else
-                        <a wire:navigate class="pagination-page" href="{{ $url }}">{{ $page }}</a>
-                    @endif
-                @endforeach
-            </div>
-            @if ($news->hasMorePages())
-                <a wire:navigate class="button button-secondary" href="{{ $news->nextPageUrl() }}" rel="next">{{ __('Next') }} →</a>
-            @else
-                <span class="button button-secondary disabled">{{ __('Next') }} →</span>
-            @endif
-        </nav>
-    @endif
+    <x-admin.pagination
+        :paginator="$news"
+        :aria-label="__('Page navigation')"
+        :pages-label="__('Pages')"
+        :previous-label="__('Back')"
+        :next-label="__('Next')"
+        numbered
+    />
 
     <dialog class="confirm-dialog" data-news-delete-dialog aria-labelledby="delete-news-title">
         <div class="confirm-dialog-card">

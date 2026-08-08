@@ -105,14 +105,13 @@
             </tbody>
         </table>
     </div>
-    @if($deliveries->hasPages())
-        @php($firstPage=max(1,$deliveries->currentPage()-2))
-        @php($lastPage=min($deliveries->lastPage(),$deliveries->currentPage()+2))
-        <nav class="simple-pagination" aria-label="{{ __('Reward queue page navigation') }}">
-            @if($deliveries->onFirstPage())<span class="button button-secondary disabled">← {{ __('Back') }}</span>@else<a wire:navigate class="button button-secondary" href="{{ $deliveries->previousPageUrl() }}">← {{ __('Back') }}</a>@endif
-            <div class="pagination-pages" aria-label="{{ __('Pages') }}">@foreach($deliveries->getUrlRange($firstPage,$lastPage) as $page=>$url) @if($page===$deliveries->currentPage())<span class="pagination-page active" aria-current="page">{{ $page }}</span>@else<a wire:navigate class="pagination-page" href="{{ $url }}">{{ $page }}</a>@endif @endforeach</div>
-            @if($deliveries->hasMorePages())<a wire:navigate class="button button-secondary" href="{{ $deliveries->nextPageUrl() }}">{{ __('Next') }} →</a>@else<span class="button button-secondary disabled">{{ __('Next') }} →</span>@endif
-        </nav>
-    @endif
+    <x-admin.pagination
+        :paginator="$deliveries"
+        :aria-label="__('Reward queue page navigation')"
+        :pages-label="__('Pages')"
+        :previous-label="__('Back')"
+        :next-label="__('Next')"
+        numbered
+    />
 @endif
 @endsection

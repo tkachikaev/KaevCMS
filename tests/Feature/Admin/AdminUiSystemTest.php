@@ -22,6 +22,7 @@ final class AdminUiSystemTest extends TestCase
         $tabs = File::get(resource_path('views/components/admin/tabs.blade.php'));
         $tab = File::get(resource_path('views/components/admin/tab.blade.php'));
         $filter = File::get(resource_path('views/components/admin/filter-bar.blade.php'));
+        $pagination = File::get(resource_path('views/components/admin/pagination.blade.php'));
         $css = File::get(public_path('assets/admin/css/components.css'));
 
         $this->assertStringContainsString("'admin-card'", $card);
@@ -32,6 +33,8 @@ final class AdminUiSystemTest extends TestCase
         $this->assertStringContainsString("'admin-subtabs' => \$subtle", $tabs);
         $this->assertStringContainsString("'admin-tab'", $tab);
         $this->assertStringContainsString("'admin-filter-bar'", $filter);
+        $this->assertStringContainsString("\$attributes->class('simple-pagination')", $pagination);
+        $this->assertStringContainsString('$paginator->getUrlRange', $pagination);
 
         $this->assertStringContainsString(".admin-card,\n.form-card,", $css);
         $this->assertStringContainsString('.button:focus-visible {', $css);
@@ -65,6 +68,25 @@ final class AdminUiSystemTest extends TestCase
             ->assertSee('class="admin-card-heading"', false)
             ->assertSee('class="admin-toggle-copy"', false)
             ->assertSee('data-editor-view-toggle', false);
+    }
+
+    public function test_core_admin_lists_use_the_shared_pagination_component(): void
+    {
+        foreach ([
+            'admin/administrators/index.blade.php',
+            'admin/audit/index.blade.php',
+            'admin/news/index.blade.php',
+            'admin/pages/index.blade.php',
+            'admin/rewards/index.blade.php',
+            'admin/settings/queue.blade.php',
+            'admin/settings/security.blade.php',
+            'admin/users/index.blade.php',
+        ] as $view) {
+            $contents = File::get(resource_path('views/'.$view));
+
+            $this->assertStringContainsString('<x-admin.pagination', $contents, $view);
+            $this->assertStringNotContainsString('<nav class="simple-pagination"', $contents, $view);
+        }
     }
 
     public function test_legacy_audit_and_daily_reward_views_use_the_shared_wrappers(): void

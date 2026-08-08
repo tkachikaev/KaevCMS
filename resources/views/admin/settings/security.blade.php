@@ -175,15 +175,15 @@
             </table>
         </div>
 
-        @if($loginAttempts->hasPages())
-            @php($firstPage = max(1, $loginAttempts->currentPage() - 2))
-            @php($lastPage = min($loginAttempts->lastPage(), $loginAttempts->currentPage() + 2))
-            <nav class="simple-pagination" aria-label="{{ __('Administrator sign-in page navigation') }}">
-                @if($loginAttempts->onFirstPage())<span class="button button-secondary disabled">← {{ __('Back') }}</span>@else<a wire:navigate class="button button-secondary" href="{{ $loginAttempts->previousPageUrl() }}#administrator-sign-ins" rel="prev">← {{ __('Back') }}</a>@endif
-                <div class="pagination-pages" aria-label="{{ __('Pages') }}">@foreach($loginAttempts->getUrlRange($firstPage, $lastPage) as $page => $url) @if($page === $loginAttempts->currentPage())<span class="pagination-page active" aria-current="page">{{ $page }}</span>@else<a wire:navigate class="pagination-page" href="{{ $url }}#administrator-sign-ins">{{ $page }}</a>@endif @endforeach</div>
-                @if($loginAttempts->hasMorePages())<a wire:navigate class="button button-secondary" href="{{ $loginAttempts->nextPageUrl() }}#administrator-sign-ins" rel="next">{{ __('Next') }} →</a>@else<span class="button button-secondary disabled">{{ __('Next') }} →</span>@endif
-            </nav>
-        @endif
+        <x-admin.pagination
+            :paginator="$loginAttempts"
+            :aria-label="__('Administrator sign-in page navigation')"
+            :pages-label="__('Pages')"
+            :previous-label="__('Back')"
+            :next-label="__('Next')"
+            fragment="administrator-sign-ins"
+            numbered
+        />
     @endif
 </section>
 

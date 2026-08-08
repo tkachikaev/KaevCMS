@@ -1,4 +1,4 @@
-# KaevCMS 0.47.30
+# KaevCMS 0.47.31
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.30 is a quality-gate hotfix for the shared player-account CSS extraction introduced in 0.47.29. Release tests now validate shared component selectors in `public/assets/account/css/components.css` instead of incorrectly requiring them inside each theme-owned `app.css`. Runtime behavior and visual styling are unchanged. Kaev Aurelia Account remains 1.6.6 and L2 Obsidian Luxury remains 1.6.5 with KaevCMS 0.47.29 as their minimum version. Bundled module versions, published migrations, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.31 is a maintenance cleanup release. Administrator copy actions now share one clipboard helper with a single secure-context/fallback implementation, and eight core administration lists use one reusable pagination component instead of duplicating navigation markup. Bundled module views remain independent to preserve their existing compatibility floors. User-facing behavior, database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.30 — hotfix quality-gate после выноса общего CSS личного кабинета в 0.47.29. Release-тесты теперь проверяют общие селекторы в `public/assets/account/css/components.css`, а не требуют их наличия внутри `app.css` каждой темы. Runtime-поведение и внешний вид не меняются. Kaev Aurelia Account остаётся 1.6.6, L2 Obsidian Luxury — 1.6.5; минимальная версия CMS для этих тем остаётся 0.47.29. Версии модулей, опубликованные миграции, Composer-зависимости и контракт VDS update-agent 3 не менялись. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.31 — техническая чистка без изменения пользовательского поведения. Действия копирования в админке теперь используют единый clipboard-helper с общей реализацией Clipboard API и fallback, а восемь основных списков админки используют один переиспользуемый компонент пагинации вместо дублирования разметки. Представления встроенных модулей оставлены независимыми, чтобы не поднимать их минимальную версию CMS ради внутренней чистки. Миграции, версии модулей и тем, Composer-зависимости и контракт VDS update-agent 3 не менялись. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 

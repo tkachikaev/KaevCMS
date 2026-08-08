@@ -173,13 +173,12 @@
             </table>
         </div>
 
-        @if($failedJobs->hasPages())
-            <nav class="simple-pagination" aria-label="{{ __('Pagination') }}">
-                <a wire:navigate @class(['button button-secondary', 'disabled' => $failedJobs->onFirstPage()]) href="{{ $failedJobs->previousPageUrl() ?? '#' }}">← {{ __('Previous') }}</a>
-                <span>{{ __('Page :current of :last', ['current' => $failedJobs->currentPage(), 'last' => $failedJobs->lastPage()]) }}</span>
-                <a wire:navigate @class(['button button-secondary', 'disabled' => ! $failedJobs->hasMorePages()]) href="{{ $failedJobs->nextPageUrl() ?? '#' }}">{{ __('Next') }} →</a>
-            </nav>
-        @endif
+        <x-admin.pagination
+            :paginator="$failedJobs"
+            :aria-label="__('Pagination')"
+            :previous-label="__('Previous')"
+            :next-label="__('Next')"
+        />
     @endif
 </section>
 

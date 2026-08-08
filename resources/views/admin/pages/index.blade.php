@@ -52,13 +52,12 @@
         @endforeach
     </div>
 
-    @if ($pages->hasPages())
-        <nav class="simple-pagination" aria-label="{{ __('Pagination') }}">
-            <a wire:navigate @class(['button button-secondary', 'disabled' => $pages->onFirstPage()]) href="{{ $pages->previousPageUrl() ?? '#' }}">← {{ __('Previous') }}</a>
-            <span>{{ __('Page :current of :last', ['current' => $pages->currentPage(), 'last' => $pages->lastPage()]) }}</span>
-            <a wire:navigate @class(['button button-secondary', 'disabled' => ! $pages->hasMorePages()]) href="{{ $pages->nextPageUrl() ?? '#' }}">{{ __('Next') }} →</a>
-        </nav>
-    @endif
+    <x-admin.pagination
+        :paginator="$pages"
+        :aria-label="__('Pagination')"
+        :previous-label="__('Previous')"
+        :next-label="__('Next')"
+    />
 @endif
 
 <dialog class="confirm-dialog" data-page-delete-dialog aria-labelledby="delete-page-title">

@@ -17,26 +17,13 @@
                 const value = target.textContent?.trim() ?? '';
                 if (value === '') return;
 
-                try {
-                    if (navigator.clipboard && window.isSecureContext) {
-                        await navigator.clipboard.writeText(value);
-                    } else {
-                        const selection = window.getSelection();
-                        const range = document.createRange();
-                        range.selectNodeContents(target);
-                        selection?.removeAllRanges();
-                        selection?.addRange(range);
-                        const copied = document.execCommand('copy');
-                        selection?.removeAllRanges();
-                        if (!copied) throw new Error('Copy failed.');
-                    }
+                const copied = await window.KaevCMSAdminClipboard?.copy(value) === true;
 
-                    if (state instanceof HTMLElement) {
+                if (state instanceof HTMLElement) {
+                    if (copied) {
                         delete state.dataset.type;
                         state.textContent = button.dataset.copySuccess || 'Command copied.';
-                    }
-                } catch {
-                    if (state instanceof HTMLElement) {
+                    } else {
                         state.textContent = button.dataset.copyError || 'Could not copy the command.';
                         state.dataset.type = 'error';
                     }

@@ -55,23 +55,6 @@
                 return source ? source.value : '';
             }
 
-            function copyText(value) {
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(value);
-                    return;
-                }
-
-                var textarea = document.createElement('textarea');
-                textarea.value = value;
-                textarea.setAttribute('readonly', '');
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                textarea.remove();
-            }
-
             document.querySelectorAll('[data-two-factor-qr]').forEach(renderQrCode);
 
             document.querySelectorAll('[data-copy-recovery-codes]').forEach(function (button) {
@@ -80,7 +63,7 @@
                     if (!card) {
                         return;
                     }
-                    copyText(recoveryText(card));
+                    void window.KaevCMSAdminClipboard?.copy(recoveryText(card));
                 });
             });
 

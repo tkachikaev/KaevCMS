@@ -19,6 +19,7 @@
         <link rel="stylesheet" href="{{ asset('assets/admin/css/'.$adminStylesheet.'.css') }}?v={{ cms_version() }}" data-navigate-track>
     @endforeach
     <script src="{{ asset('assets/admin/js/page-lifecycle.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
+    <script src="{{ asset('assets/admin/js/clipboard.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     <script src="{{ asset('assets/admin/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     <script src="{{ asset('assets/admin/js/read-only.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     <script src="{{ asset('assets/admin/js/notifications.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>

@@ -32,14 +32,13 @@
             </article>
         @endforeach
     </div>
-    @if ($users->hasPages())
-        @php($firstPage = max(1, $users->currentPage() - 2))
-        @php($lastPage = min($users->lastPage(), $users->currentPage() + 2))
-        <nav class="simple-pagination" aria-label="{{ __('User page navigation') }}">
-            @if($users->onFirstPage())<span class="button button-secondary disabled">← {{ __('Back') }}</span>@else<a wire:navigate class="button button-secondary" href="{{ $users->previousPageUrl() }}" rel="prev">← {{ __('Back') }}</a>@endif
-            <div class="pagination-pages" aria-label="{{ __('Pages') }}">@foreach($users->getUrlRange($firstPage,$lastPage) as $page=>$url) @if($page===$users->currentPage())<span class="pagination-page active" aria-current="page">{{ $page }}</span>@else<a wire:navigate class="pagination-page" href="{{ $url }}">{{ $page }}</a>@endif @endforeach</div>
-            @if($users->hasMorePages())<a wire:navigate class="button button-secondary" href="{{ $users->nextPageUrl() }}" rel="next">{{ __('Next') }} →</a>@else<span class="button button-secondary disabled">{{ __('Next') }} →</span>@endif
-        </nav>
-    @endif
+    <x-admin.pagination
+        :paginator="$users"
+        :aria-label="__('User page navigation')"
+        :pages-label="__('Pages')"
+        :previous-label="__('Back')"
+        :next-label="__('Next')"
+        numbered
+    />
 @endif
 @endsection

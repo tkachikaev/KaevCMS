@@ -14,27 +14,12 @@
                 state.dataset.type = type;
             };
 
-            const fallbackCopy = () => {
-                source.hidden = false;
-                source.focus();
-                source.select();
-
-                const copied = document.execCommand('copy');
-                source.hidden = true;
-
-                if (!copied) throw new Error('Copy command failed.');
-            };
-
             button.addEventListener('click', async () => {
-                try {
-                    if (navigator.clipboard && window.isSecureContext) {
-                        await navigator.clipboard.writeText(source.value);
-                    } else {
-                        fallbackCopy();
-                    }
+                const copied = await window.KaevCMSAdminClipboard?.copy(source.value) === true;
 
+                if (copied) {
                     setState(button.dataset.copySuccess || 'Report copied.');
-                } catch {
+                } else {
                     setState(button.dataset.copyError || 'Could not copy the report.', 'error');
                 }
             });

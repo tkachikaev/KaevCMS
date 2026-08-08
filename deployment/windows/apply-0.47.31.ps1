@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This hotfix aligns release tests with the shared player-account stylesheet introduced in 0.47.29; runtime behavior is unchanged.'
+Write-Host 'This maintenance release consolidates administrator clipboard and pagination helpers without changing user-facing behavior.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

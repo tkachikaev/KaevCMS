@@ -460,6 +460,27 @@ class AdminPanelTest extends TestCase
         }
     }
 
+    public function test_admin_copy_actions_use_the_shared_clipboard_helper(): void
+    {
+        $layout = file_get_contents(resource_path('views/admin/layouts/app.blade.php'));
+        $clipboard = file_get_contents(public_path('assets/admin/js/clipboard.js'));
+
+        $this->assertIsString($layout);
+        $this->assertIsString($clipboard);
+        $this->assertStringContainsString('assets/admin/js/clipboard.js', $layout);
+        $this->assertStringContainsString('window.KaevCMSAdminClipboard = Object.freeze({ copy })', $clipboard);
+        $this->assertStringContainsString("document.execCommand('copy')", $clipboard);
+
+        foreach (['system.js', 'system-updates.js', 'two-factor.js'] as $script) {
+            $contents = file_get_contents(public_path('assets/admin/js/'.$script));
+
+            $this->assertIsString($contents);
+            $this->assertStringContainsString('KaevCMSAdminClipboard', $contents, $script);
+            $this->assertStringNotContainsString('navigator.clipboard', $contents, $script);
+            $this->assertStringNotContainsString("document.execCommand('copy')", $contents, $script);
+        }
+    }
+
     public function test_old_dashboard_address_is_not_registered(): void
     {
         $admin = Admin::query()->create([

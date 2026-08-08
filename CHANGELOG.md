@@ -1,3 +1,12 @@
+## 0.47.31 - 2026-08-08
+
+### Changed
+
+- Consolidated administrator copy-to-clipboard behavior into `public/assets/admin/js/clipboard.js`; system information, system updates and two-factor recovery-code actions now use the same Clipboard API/fallback path instead of maintaining three implementations.
+- Added the shared `x-admin.pagination` component and replaced duplicated pagination markup across eight core administration lists, including numbered windows and anchored security-log navigation.
+- Kept bundled module pagination views unchanged so this internal cleanup does not raise their standalone KaevCMS compatibility floor or module versions.
+- Added regression coverage requiring the shared clipboard helper and pagination component to remain the canonical core implementations. Runtime behavior, database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.31 package supports updates from 0.42.4 through 0.47.30.
+
 ## 0.47.30 - 2026-08-08
 
 ### Fixed

@@ -47,11 +47,11 @@
         </article>
     @endforeach
 </div>
-@if ($administrators->hasPages())
-    <div class="simple-pagination">
-        @if($administrators->onFirstPage())<span class="button button-secondary disabled">← {{ __('Back') }}</span>@else<a wire:navigate class="button button-secondary" href="{{ $administrators->previousPageUrl() }}" rel="prev">← {{ __('Back') }}</a>@endif
-        <span class="administrator-page-state">{{ __('Page :current of :last', ['current' => $administrators->currentPage(), 'last' => $administrators->lastPage()]) }}</span>
-        @if($administrators->hasMorePages())<a wire:navigate class="button button-secondary" href="{{ $administrators->nextPageUrl() }}" rel="next">{{ __('Next') }} →</a>@else<span class="button button-secondary disabled">{{ __('Next') }} →</span>@endif
-    </div>
-@endif
+<x-admin.pagination
+    :paginator="$administrators"
+    :aria-label="__('Pagination')"
+    :previous-label="__('Back')"
+    :next-label="__('Next')"
+    state-class="administrator-page-state"
+/>
 @endsection

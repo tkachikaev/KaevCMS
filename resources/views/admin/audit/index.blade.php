@@ -26,14 +26,13 @@
             <td class="audit-monospace">{{ $log->ip_address ?: '—' }}</td><td class="audit-details-link"><a wire:navigate class="button button-secondary" href="{{ route('admin.logs.show', array_filter(['auditLog'=>$log,'category'=>$activeCategory])) }}">{{ __('Details') }}</a></td>
         </tr>@endforeach
     </tbody></table></div>
-    @if($logs->hasPages())
-        @php($firstPage=max(1,$logs->currentPage()-2))
-        @php($lastPage=min($logs->lastPage(),$logs->currentPage()+2))
-        <nav class="simple-pagination" aria-label="{{ __('Audit page navigation') }}">
-            @if($logs->onFirstPage())<span class="button button-secondary disabled">← {{ __('Back') }}</span>@else<a wire:navigate class="button button-secondary" href="{{ $logs->previousPageUrl() }}" rel="prev">← {{ __('Back') }}</a>@endif
-            <div class="pagination-pages" aria-label="{{ __('Pages') }}">@foreach($logs->getUrlRange($firstPage,$lastPage) as $page=>$url) @if($page===$logs->currentPage())<span class="pagination-page active" aria-current="page">{{ $page }}</span>@else<a wire:navigate class="pagination-page" href="{{ $url }}">{{ $page }}</a>@endif @endforeach</div>
-            @if($logs->hasMorePages())<a wire:navigate class="button button-secondary" href="{{ $logs->nextPageUrl() }}" rel="next">{{ __('Next') }} →</a>@else<span class="button button-secondary disabled">{{ __('Next') }} →</span>@endif
-        </nav>
-    @endif
+    <x-admin.pagination
+        :paginator="$logs"
+        :aria-label="__('Audit page navigation')"
+        :pages-label="__('Pages')"
+        :previous-label="__('Back')"
+        :next-label="__('Next')"
+        numbered
+    />
 @endif
 @endsection
