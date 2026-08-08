@@ -127,6 +127,29 @@ test('administrator appearance switches between light dark and system and surviv
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
 });
 
+test('audit category counters remain readable and spaced in dark mode', async ({ page }) => {
+    await page.locator('[data-admin-appearance-option="dark"]').click();
+    await gotoWithLocalNetworkRetry(page, '/admin/logs');
+
+    const inactiveBadge = page.locator('.audit-tabs .admin-tab:not(.active) span').first();
+    await expect(inactiveBadge).toBeVisible();
+
+    const styles = await inactiveBadge.evaluate((badge) => {
+        const badgeStyle = window.getComputedStyle(badge);
+        const tabStyle = window.getComputedStyle(badge.closest('.admin-tab'));
+
+        return {
+            backgroundColor: badgeStyle.backgroundColor,
+            color: badgeStyle.color,
+            gap: tabStyle.gap,
+        };
+    });
+
+    expect(styles.backgroundColor).toBe('rgb(51, 65, 85)');
+    expect(styles.color).toBe('rgb(226, 232, 240)');
+    expect(styles.gap).toBe('7px');
+});
+
 test('news editor initializes again after SPA navigation', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/news/create');
 

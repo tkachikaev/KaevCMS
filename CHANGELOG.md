@@ -1,3 +1,11 @@
+## 0.47.35 - 2026-08-08
+
+### Fixed
+
+- Fixed administrator audit-log category counters in dark mode so inactive badges no longer render light text on a light badge background and remain readable before a filter is selected.
+- Added explicit spacing between audit category labels and their count badges, avoiding merged labels such as `Administrators32`.
+- Added regression coverage for the scoped dark counter selectors and audit-tab spacing. Public/account themes, database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.35 package supports updates from 0.42.4 through 0.47.34.
+
 ## 0.47.34 - 2026-08-08
 
 ### Fixed

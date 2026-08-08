@@ -343,7 +343,6 @@ html[data-admin-color-scheme="dark"] .pagination-page,
 html[data-admin-color-scheme="dark"] .confirm-dialog-target,
 html[data-admin-color-scheme="dark"] .settings-remove-row,
 html[data-admin-color-scheme="dark"] .settings-help-list,
-html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab span,
 html[data-admin-color-scheme="dark"] .audit-table th,
 html[data-admin-color-scheme="dark"] .audit-table td code,
 html[data-admin-color-scheme="dark"] .audit-definition-list dd,
@@ -387,6 +386,19 @@ html[data-admin-color-scheme="dark"] .dashboard-storage-heading strong,
 html[data-admin-color-scheme="dark"] .dashboard-storage-summary strong,
 html[data-admin-color-scheme="dark"] .dashboard-storage-metrics strong {
     color: var(--admin-text);
+}
+
+
+html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab:not(.active) span {
+    border: 1px solid #475569;
+    background: #334155;
+    color: #e2e8f0;
+}
+
+html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab.active span {
+    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(255, 255, 255, .22);
+    color: #fff;
 }
 
 html[data-admin-color-scheme="dark"] .administrator-role-badge.role-owner {

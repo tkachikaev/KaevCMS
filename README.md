@@ -1,4 +1,4 @@
-# KaevCMS 0.47.34
+# KaevCMS 0.47.35
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.34 hardens the administrator-only Light, Dark and System appearance controls and responsive header/sidebar behavior. Appearance buttons now use a dedicated control attribute, and narrow/mobile layouts avoid horizontal overflow. The public website and player account themes remain unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.35 improves administrator audit-log filter counters in dark mode. Inactive counters now keep readable dark-theme contrast, active counters retain clear selected-state contrast, and a dedicated gap separates category labels from their counts. The public website and player account themes remain unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.34 исправляет переключатель Light, Dark и System только в админке и адаптивное поведение шапки/sidebar. Кнопки оформления теперь используют отдельный атрибут управления, а узкие и мобильные экраны не получают горизонтальное переполнение. Публичный сайт и темы личного кабинета не затрагиваются. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.35 улучшает счётчики фильтров журнала действий в тёмной теме админки. Неактивные счётчики теперь имеют читаемый контраст, активные сохраняют понятное выбранное состояние, а между названием категории и числом добавлен отдельный отступ. Публичный сайт и темы личного кабинета не затрагиваются. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 
