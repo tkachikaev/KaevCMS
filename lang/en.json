@@ -223,6 +223,8 @@
     "APP_KEY is missing": "APP_KEY is missing",
     "APP_URL does not match the address currently open in the browser.": "APP_URL does not match the address currently open in the browser.",
     "Appearance": "Appearance",
+    "Dark": "Dark",
+    "Light": "Light",
     "Application root": "Application root",
     "Applied migration modified": "Applied migration modified",
     "Applied migrations: :value": "Applied migrations: :value",

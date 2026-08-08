@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This maintenance release consolidates administrator clipboard and pagination helpers without changing user-facing behavior.'
+Write-Host 'This release fixes administrator appearance controls and responsive header/sidebar behavior without changing the public website or player account.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

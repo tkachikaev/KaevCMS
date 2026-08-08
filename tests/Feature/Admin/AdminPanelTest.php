@@ -348,9 +348,10 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('assets/admin/js/read-only.js', $layout);
         $this->assertStringContainsString("'base',", $layout);
         $this->assertStringContainsString("'catalogs',", $layout);
+        $this->assertStringContainsString("'appearance',", $layout);
         $this->assertStringNotContainsString('assets/admin/css/app.css', $layout);
         $this->assertStringContainsString('defer data-navigate-track data-navigate-once', $layout);
-        $this->assertStringContainsString("@persist('admin-sidebar')", $panel);
+        $this->assertStringContainsString('@persist(\'admin-sidebar\')', $panel);
         $this->assertStringContainsString('wire:navigate:scroll', $panel);
         $this->assertStringContainsString('data-admin-sidebar', $panel);
         $this->assertStringContainsString('id="admin-sidebar"', $panel);
@@ -460,6 +461,37 @@ class AdminPanelTest extends TestCase
         }
     }
 
+    public function test_admin_appearance_switcher_is_isolated_to_the_administrator_interface(): void
+    {
+        $layout = file_get_contents(resource_path('views/admin/layouts/app.blade.php'));
+        $panel = file_get_contents(resource_path('views/admin/layouts/panel.blade.php'));
+        $appearanceScript = file_get_contents(public_path('assets/admin/js/appearance.js'));
+        $appearanceStyles = file_get_contents(public_path('assets/admin/css/appearance.css'));
+
+        $this->assertIsString($layout);
+        $this->assertIsString($panel);
+        $this->assertIsString($appearanceScript);
+        $this->assertIsString($appearanceStyles);
+        $this->assertStringContainsString('assets/admin/js/appearance.js', $layout);
+        $this->assertStringContainsString("'appearance',", $layout);
+        $this->assertStringContainsString('data-admin-appearance-key=', $layout);
+        $this->assertStringContainsString('data-admin-appearance-option="light"', $panel);
+        $this->assertStringContainsString('data-admin-appearance-option="dark"', $panel);
+        $this->assertStringContainsString('data-admin-appearance-option="system"', $panel);
+        $this->assertStringContainsString('prefers-color-scheme: dark', $appearanceScript);
+        $this->assertStringContainsString('window.localStorage.setItem(storageKey, preference)', $appearanceScript);
+        $this->assertStringContainsString('data-admin-color-scheme="dark"', $appearanceStyles);
+        $this->assertStringContainsString('--admin-page-bg: #0b111a;', $appearanceStyles);
+
+        foreach (File::allFiles(base_path('account-themes')) as $file) {
+            $this->assertStringNotContainsString('data-admin-color-scheme', $file->getContents(), $file->getPathname());
+        }
+
+        foreach (File::allFiles(base_path('themes')) as $file) {
+            $this->assertStringNotContainsString('data-admin-color-scheme', $file->getContents(), $file->getPathname());
+        }
+    }
+
     public function test_admin_copy_actions_use_the_shared_clipboard_helper(): void
     {
         $layout = file_get_contents(resource_path('views/admin/layouts/app.blade.php'));
@@ -505,6 +537,7 @@ class AdminPanelTest extends TestCase
             'components',
             'extensions',
             'catalogs',
+            'appearance',
         ])->map(
             static fn (string $name): string => File::get(public_path('assets/admin/css/'.$name.'.css')),
         )->implode("\n");

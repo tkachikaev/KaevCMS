@@ -74,6 +74,17 @@
 
             <div class="admin-user">
                 <livewire:admin.notification-center />
+                <div class="admin-appearance-switcher" role="group" aria-label="{{ __('Appearance') }}" data-admin-appearance-switcher>
+                    <button type="button" data-admin-appearance-option="light" aria-pressed="false" title="{{ __('Light') }}" aria-label="{{ __('Light') }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>
+                    </button>
+                    <button type="button" data-admin-appearance-option="dark" aria-pressed="false" title="{{ __('Dark') }}" aria-label="{{ __('Dark') }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+                    </button>
+                    <button type="button" data-admin-appearance-option="system" aria-pressed="false" title="{{ __('System') }}" aria-label="{{ __('System') }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+                    </button>
+                </div>
                 @include('admin.partials.language-switcher')
                 <details class="admin-account-menu">
                     <summary>

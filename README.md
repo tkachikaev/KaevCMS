@@ -1,4 +1,4 @@
-# KaevCMS 0.47.31
+# KaevCMS 0.47.34
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.31 is a maintenance cleanup release. Administrator copy actions now share one clipboard helper with a single secure-context/fallback implementation, and eight core administration lists use one reusable pagination component instead of duplicating navigation markup. Bundled module views remain independent to preserve their existing compatibility floors. User-facing behavior, database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.34 hardens the administrator-only Light, Dark and System appearance controls and responsive header/sidebar behavior. Appearance buttons now use a dedicated control attribute, and narrow/mobile layouts avoid horizontal overflow. The public website and player account themes remain unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.31 — техническая чистка без изменения пользовательского поведения. Действия копирования в админке теперь используют единый clipboard-helper с общей реализацией Clipboard API и fallback, а восемь основных списков админки используют один переиспользуемый компонент пагинации вместо дублирования разметки. Представления встроенных модулей оставлены независимыми, чтобы не поднимать их минимальную версию CMS ради внутренней чистки. Миграции, версии модулей и тем, Composer-зависимости и контракт VDS update-agent 3 не менялись. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.34 исправляет переключатель Light, Dark и System только в админке и адаптивное поведение шапки/sidebar. Кнопки оформления теперь используют отдельный атрибут управления, а узкие и мобильные экраны не получают горизонтальное переполнение. Публичный сайт и темы личного кабинета не затрагиваются. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 

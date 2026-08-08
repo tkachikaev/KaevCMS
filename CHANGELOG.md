@@ -1,3 +1,28 @@
+## 0.47.34 - 2026-08-08
+
+### Fixed
+
+- Separated the administrator appearance preference stored on the root `<html>` element from the Light/Dark/System control-button attribute, preventing the document root from being treated as a switcher button or receiving `aria-pressed`.
+- Improved administrator header wrapping at narrow desktop/tablet widths and stacked the header controls safely on mobile so notifications, appearance controls and the profile menu cannot widen the document.
+- Removed the closed off-canvas sidebar transform transition at the mobile breakpoint to avoid transient horizontal overflow while switching from desktop to mobile widths.
+- Updated PHPUnit and Playwright regressions for the dedicated appearance-option attribute and root accessibility contract. Public/account themes, database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.34 package supports updates from 0.42.4 through 0.47.33.
+
+## 0.47.33 - 2026-08-08
+
+### Added
+
+- Added administrator-only Light, Dark and System appearance modes with a compact switcher in the administration header. The public website and player account themes are not affected.
+- Added a dedicated final `appearance.css` layer that overrides the existing administration design tokens and hard-coded legacy surfaces for dark mode while preserving the current light design.
+- Added `appearance.js` with pre-render theme application, per-administrator browser persistence and live `prefers-color-scheme` tracking while System mode is selected. Light remains the default for backward-compatible upgrades.
+- Added feature, release and Playwright regression coverage for stylesheet order, mode switching, SPA navigation persistence and isolation from public/account themes. Database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.33 package supports updates from 0.42.4 through 0.47.32.
+
+## 0.47.32 - 2026-08-08
+
+### Fixed
+
+- Sorted `deployment/release-files.json` after the 0.47.31 clipboard-helper and shared pagination additions so the release metadata contract remains deterministic and `ReleaseMetadataTest` accepts the manifest.
+- Runtime code, administrator behavior, database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.32 package supports updates from 0.42.4 through 0.47.31.
+
 ## 0.47.31 - 2026-08-08
 
 ### Changed

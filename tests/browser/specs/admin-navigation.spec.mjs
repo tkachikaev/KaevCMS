@@ -84,6 +84,7 @@ test('administration loads the split stylesheet stack once and in order', async 
         'components.css',
         'extensions.css',
         'catalogs.css',
+        'appearance.css',
     ];
     const stylesheetNames = async () => page.locator('link[data-navigate-track][href*="/assets/admin/css/"]').evaluateAll(
         (links) => links.map((link) => new URL(link.href).pathname.split('/').pop()),
@@ -94,6 +95,36 @@ test('administration loads the split stylesheet stack once and in order', async 
 
     await gotoWithLocalNetworkRetry(page, '/admin/news');
     expect(await stylesheetNames()).toEqual(expected);
+});
+
+test('administrator appearance switches between light dark and system and survives navigation', async ({ page }) => {
+    const root = page.locator('html');
+    const light = page.locator('[data-admin-appearance-option="light"]');
+    const dark = page.locator('[data-admin-appearance-option="dark"]');
+    const system = page.locator('[data-admin-appearance-option="system"]');
+
+    await expect(root).toHaveAttribute('data-admin-appearance', 'light');
+    await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
+    await expect(root).not.toHaveAttribute('aria-pressed');
+    await expect(light).toHaveAttribute('aria-pressed', 'true');
+
+    await dark.click();
+    await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
+    await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
+    await expect(dark).toHaveAttribute('aria-pressed', 'true');
+
+    await gotoWithLocalNetworkRetry(page, '/admin/news');
+    await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
+    await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
+
+    await system.click();
+    await expect(root).toHaveAttribute('data-admin-appearance', 'system');
+    await expect(system).toHaveAttribute('aria-pressed', 'true');
+
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
 });
 
 test('news editor initializes again after SPA navigation', async ({ page }) => {

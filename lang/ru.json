@@ -223,6 +223,8 @@
     "APP_KEY is missing": "APP_KEY отсутствует",
     "APP_URL does not match the address currently open in the browser.": "APP_URL не совпадает с адресом, открытым сейчас в браузере.",
     "Appearance": "Оформление",
+    "Dark": "Тёмная",
+    "Light": "Светлая",
     "Application root": "Корень приложения",
     "Applied migration modified": "Выполненная миграция изменена",
     "Applied migrations: :value": "Применено миграций: :value",

@@ -651,7 +651,7 @@ class ReleaseMetadataTest extends TestCase
         $uploadsIgnore = $this->readReleaseFile('public/uploads/.gitignore');
         $this->assertStringContainsString('!game-assets/**/.gitkeep', $uploadsIgnore);
         $this->assertFileExists(public_path('assets/admin/js/promo-codes.js'));
-        foreach (['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs'] as $stylesheet) {
+        foreach (['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs', 'appearance'] as $stylesheet) {
             $this->assertFileExists(public_path('assets/admin/css/'.$stylesheet.'.css'));
         }
         $this->assertFileDoesNotExist(public_path('assets/admin/css/app.css'));
@@ -666,6 +666,12 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(resource_path('views/components/account-operation-modal.blade.php'));
         $adminLayout = $this->readReleaseFile('resources/views/admin/layouts/app.blade.php');
         $this->assertStringContainsString('assets/admin/css/', $adminLayout);
+        $this->assertStringContainsString('assets/admin/js/appearance.js', $adminLayout);
+        $this->assertStringContainsString("'appearance',", $adminLayout);
+        $adminAppearance = $this->readReleaseFile('public/assets/admin/js/appearance.js');
+        $adminAppearanceCss = $this->readReleaseFile('public/assets/admin/css/appearance.css');
+        $this->assertStringContainsString('prefers-color-scheme: dark', $adminAppearance);
+        $this->assertStringContainsString('data-admin-color-scheme="dark"', $adminAppearanceCss);
         $this->assertStringContainsString('$adminStylesheet', $adminLayout);
         $this->assertStringNotContainsString('assets/admin/css/app.css', $adminLayout);
         foreach ([
@@ -761,7 +767,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('previewUrlTemplate', $promoScript);
         $this->assertStringContainsString('data-promo-delete-form', $promoScript);
 
-        $adminStyles = collect(['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs'])
+        $adminStyles = collect(['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs', 'appearance'])
             ->map(fn (string $stylesheet): string => $this->readReleaseFile('public/assets/admin/css/'.$stylesheet.'.css'))
             ->implode("\n");
         $this->assertStringContainsString('.promo-reward-row', $adminStyles);

@@ -1,0 +1,436 @@
+/* KaevCMS administrator-only light / dark / system appearance. */
+
+.admin-appearance-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--admin-border);
+    border-radius: 9px;
+    background: var(--admin-surface-muted);
+}
+
+.admin-appearance-switcher button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--admin-text-muted);
+    font: inherit;
+    line-height: 1;
+}
+
+.admin-appearance-switcher button:hover {
+    background: var(--admin-surface);
+    color: var(--admin-text);
+}
+
+.admin-appearance-switcher button.active {
+    background: var(--admin-surface);
+    color: var(--admin-primary);
+    box-shadow: var(--admin-shadow-card);
+}
+
+.admin-appearance-switcher button:focus-visible {
+    outline: 3px solid var(--admin-focus-ring);
+    outline-offset: 1px;
+}
+
+.admin-appearance-switcher svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+html[data-admin-color-scheme="dark"] {
+    color-scheme: dark;
+    --admin-page-bg: #0b111a;
+    --admin-surface: #111827;
+    --admin-surface-muted: #172131;
+    --admin-surface-subtle: #0f1724;
+    --admin-surface-strong: #1e293b;
+    --admin-border: #263244;
+    --admin-border-strong: #344258;
+    --admin-text: #e5eaf2;
+    --admin-text-muted: #94a3b8;
+    --admin-primary: #4f8cff;
+    --admin-primary-hover: #73a4ff;
+    --admin-primary-soft: #152747;
+    --admin-row-hover: #151f2e;
+    --admin-table-head: #141e2c;
+    --admin-success: #6ee7a0;
+    --admin-success-soft: #102a1d;
+    --admin-success-border: #1f5a39;
+    --admin-warning: #f4c56d;
+    --admin-warning-soft: #2a2110;
+    --admin-warning-border: #66501e;
+    --admin-danger: #f59a9a;
+    --admin-danger-soft: #301719;
+    --admin-danger-border: #6f2c31;
+    --admin-info: #8ab4ff;
+    --admin-info-soft: #12233e;
+    --admin-info-border: #294d82;
+    --admin-focus-ring: rgba(79, 140, 255, .25);
+    --admin-shadow-card: 0 1px 2px rgba(0, 0, 0, .22), 0 8px 24px rgba(0, 0, 0, .16);
+    --admin-shadow-raised: 0 14px 34px rgba(0, 0, 0, .34);
+    --admin-sidebar-bg: #080d14;
+    --admin-sidebar-hover: #152131;
+    --admin-sidebar-text: #d5dbe5;
+    --admin-sidebar-muted: #8290a5;
+    --success: var(--admin-success);
+    --success-bg: var(--admin-success-soft);
+    --danger: var(--admin-danger);
+    --danger-bg: var(--admin-danger-soft);
+}
+
+html[data-admin-color-scheme="dark"] .button-secondary,
+html[data-admin-color-scheme="dark"] .form-card-muted code,
+html[data-admin-color-scheme="dark"] .rich-editor,
+html[data-admin-color-scheme="dark"] .rich-editor-toolbar button,
+html[data-admin-color-scheme="dark"] .editor-select,
+html[data-admin-color-scheme="dark"] .editor-menu > summary,
+html[data-admin-color-scheme="dark"] .editor-palette,
+html[data-admin-color-scheme="dark"] .editor-menu-list,
+html[data-admin-color-scheme="dark"] .confirm-dialog-card,
+html[data-admin-color-scheme="dark"] .mail-preview-content,
+html[data-admin-color-scheme="dark"] .custom-mail-preview-frame,
+html[data-admin-color-scheme="dark"] .admin-notification-settings-link,
+html[data-admin-color-scheme="dark"] .admin-notification-filters button.active,
+html[data-admin-color-scheme="dark"] .admin-notification-item,
+html[data-admin-color-scheme="dark"] .admin-notification-actions button,
+html[data-admin-color-scheme="dark"] .server-connection-toggle,
+html[data-admin-color-scheme="dark"] .database-test-report,
+html[data-admin-color-scheme="dark"] .server-card-menu > summary,
+html[data-admin-color-scheme="dark"] .server-card-menu > button,
+html[data-admin-color-scheme="dark"] .server-drawer-header,
+html[data-admin-color-scheme="dark"] .server-drawer-section,
+html[data-admin-color-scheme="dark"] .server-drawer-footer,
+html[data-admin-color-scheme="dark"] .server-confirm-card,
+html[data-admin-color-scheme="dark"] .server-drawer-tabs,
+html[data-admin-color-scheme="dark"] .server-statistics-group,
+html[data-admin-color-scheme="dark"] .server-statistics-quantity input,
+html[data-admin-color-scheme="dark"] .mail-delivery-option,
+html[data-admin-color-scheme="dark"] .field-info,
+html[data-admin-color-scheme="dark"] .admin-path-input,
+html[data-admin-color-scheme="dark"] .recovery-code-grid code {
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+html[data-admin-color-scheme="dark"] .button-secondary:hover:not(:disabled),
+html[data-admin-color-scheme="dark"] .admin-notification-menu > summary:hover,
+html[data-admin-color-scheme="dark"] .admin-notification-menu[open] > summary,
+html[data-admin-color-scheme="dark"] .admin-notification-settings-link:hover,
+html[data-admin-color-scheme="dark"] .admin-notification-item:hover,
+html[data-admin-color-scheme="dark"] .admin-notification-item.unread,
+html[data-admin-color-scheme="dark"] .admin-notification-item.unread:hover,
+html[data-admin-color-scheme="dark"] .admin-account-dropdown > a:hover,
+html[data-admin-color-scheme="dark"] .admin-account-dropdown form button:hover,
+html[data-admin-color-scheme="dark"] .server-drawer-tab:hover,
+html[data-admin-color-scheme="dark"] .server-drawer-tab.active,
+html[data-admin-color-scheme="dark"] .dashboard-monitor-row:hover,
+html[data-admin-color-scheme="dark"] .dashboard-player-metric-link:hover,
+html[data-admin-color-scheme="dark"] .pagination-page:hover,
+html[data-admin-color-scheme="dark"] .rich-editor-toolbar button:hover,
+html[data-admin-color-scheme="dark"] .rich-editor-toolbar button.is-active,
+html[data-admin-color-scheme="dark"] .editor-select:hover,
+html[data-admin-color-scheme="dark"] .editor-menu > summary:hover,
+html[data-admin-color-scheme="dark"] .editor-menu[open] > summary {
+    background: var(--admin-row-hover);
+    color: var(--admin-text);
+    border-color: var(--admin-border-strong);
+}
+
+html[data-admin-color-scheme="dark"] .admin-section-card.planned,
+html[data-admin-color-scheme="dark"] .publication-state.draft,
+html[data-admin-color-scheme="dark"] .form-card-muted,
+html[data-admin-color-scheme="dark"] .content-row-preview,
+html[data-admin-color-scheme="dark"] .cover-preview,
+html[data-admin-color-scheme="dark"] .settings-placeholder-status,
+html[data-admin-color-scheme="dark"] .settings-coming-soon,
+html[data-admin-color-scheme="dark"] .settings-connection-placeholder,
+html[data-admin-color-scheme="dark"] .system-extension,
+html[data-admin-color-scheme="dark"] .administrator-metadata div,
+html[data-admin-color-scheme="dark"] .mail-template-form code,
+html[data-admin-color-scheme="dark"] .mail-preview-window,
+html[data-admin-color-scheme="dark"] .two-factor-manual-key code,
+html[data-admin-color-scheme="dark"] .two-factor-feature-list > div,
+html[data-admin-color-scheme="dark"] .server-manager-online-toggle,
+html[data-admin-color-scheme="dark"] .server-drawer,
+html[data-admin-color-scheme="dark"] .compact-toggle,
+html[data-admin-color-scheme="dark"] .server-statistics-heading,
+html[data-admin-color-scheme="dark"] .server-statistics-row.disabled,
+html[data-admin-color-scheme="dark"] .server-statistics-unavailable,
+html[data-admin-color-scheme="dark"] .mail-delivery-probe,
+html[data-admin-color-scheme="dark"] .dashboard-mail-metric,
+html[data-admin-color-scheme="dark"] .admin-path-input > span,
+html[data-admin-color-scheme="dark"] .dashboard-storage-metrics > div,
+html[data-admin-color-scheme="dark"] .dashboard-storage-metrics > a,
+html[data-admin-color-scheme="dark"] .security-stat-list > div,
+html[data-admin-color-scheme="dark"] .admin-notification-filters,
+html[data-admin-color-scheme="dark"] .admin-notification-actions,
+html[data-admin-color-scheme="dark"] .rich-editor-toolbar,
+html[data-admin-color-scheme="dark"] .rich-editor-footer,
+html[data-admin-color-scheme="dark"] .rich-editor-canvas code,
+html[data-admin-color-scheme="dark"] .rich-editor-canvas th,
+html[data-admin-color-scheme="dark"] .settings-image-preview,
+html[data-admin-color-scheme="dark"] .settings-disabled-fields input:disabled,
+html[data-admin-color-scheme="dark"] .settings-server-card-header,
+html[data-admin-color-scheme="dark"] .audit-table th,
+html[data-admin-color-scheme="dark"] .mail-template-variable,
+html[data-admin-color-scheme="dark"] .input-prefix-row {
+    background: var(--admin-surface-muted);
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+html[data-admin-color-scheme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+html[data-admin-color-scheme="dark"] textarea,
+html[data-admin-color-scheme="dark"] select {
+    background-color: #0d1521;
+    color: var(--admin-text);
+    border-color: var(--admin-border-strong);
+}
+
+html[data-admin-color-scheme="dark"] input::placeholder,
+html[data-admin-color-scheme="dark"] textarea::placeholder {
+    color: #718096;
+}
+
+html[data-admin-color-scheme="dark"] .admin-account-dropdown,
+html[data-admin-color-scheme="dark"] .admin-notification-dropdown,
+html[data-admin-color-scheme="dark"] .field-help-tooltip-content {
+    background: #111827;
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+    box-shadow: var(--admin-shadow-raised);
+}
+
+html[data-admin-color-scheme="dark"] .admin-account-menu > summary,
+html[data-admin-color-scheme="dark"] .admin-notification-menu > summary,
+html[data-admin-color-scheme="dark"] .admin-language-switcher {
+    border-color: var(--admin-border);
+    background: var(--admin-surface-subtle);
+}
+
+html[data-admin-color-scheme="dark"] .admin-account-avatar,
+html[data-admin-color-scheme="dark"] .admin-notification-icon,
+html[data-admin-color-scheme="dark"] .field-help-tooltip-icon,
+html[data-admin-color-scheme="dark"] .compact-default-badge,
+html[data-admin-color-scheme="dark"] .section-status,
+html[data-admin-color-scheme="dark"] .settings-placeholder-mark,
+html[data-admin-color-scheme="dark"] .settings-disabled-notice,
+html[data-admin-color-scheme="dark"] .system-overview,
+html[data-admin-color-scheme="dark"] .mail-delivery-description,
+html[data-admin-color-scheme="dark"] .dashboard-storage-note,
+html[data-admin-color-scheme="dark"] .dashboard-storage-unavailable,
+html[data-admin-color-scheme="dark"] .notice-info,
+html[data-admin-color-scheme="dark"] .admin-notification-notice,
+html[data-admin-color-scheme="dark"] .rich-editor-canvas blockquote {
+    background: var(--admin-info-soft);
+    color: var(--admin-info);
+    border-color: var(--admin-info-border);
+}
+
+html[data-admin-color-scheme="dark"] .notice-success,
+html[data-admin-color-scheme="dark"] .alert-success,
+html[data-admin-color-scheme="dark"] .publication-state.published,
+html[data-admin-color-scheme="dark"] .theme-state.active,
+html[data-admin-color-scheme="dark"] .status-badge-success,
+html[data-admin-color-scheme="dark"] .user-action-note,
+html[data-admin-color-scheme="dark"] .recovery-codes-card,
+html[data-admin-color-scheme="dark"] .database-test-report.success,
+html[data-admin-color-scheme="dark"] .server-card-test-result.success,
+html[data-admin-color-scheme="dark"] .dashboard-runtime-ok {
+    background: var(--admin-success-soft);
+    color: var(--admin-success);
+    border-color: var(--admin-success-border);
+}
+
+html[data-admin-color-scheme="dark"] .notice-warning,
+html[data-admin-color-scheme="dark"] .publication-state.scheduled,
+html[data-admin-color-scheme="dark"] .status-badge-warning,
+html[data-admin-color-scheme="dark"] .security-cleanup-estimate,
+html[data-admin-color-scheme="dark"] .server-connection-section .settings-disabled-notice,
+html[data-admin-color-scheme="dark"] .database-test-report.warning,
+html[data-admin-color-scheme="dark"] .dashboard-runtime-warnings {
+    background: var(--admin-warning-soft);
+    color: var(--admin-warning);
+    border-color: var(--admin-warning-border);
+}
+
+html[data-admin-color-scheme="dark"] .notice-error,
+html[data-admin-color-scheme="dark"] .alert-danger,
+html[data-admin-color-scheme="dark"] .theme-state.error,
+html[data-admin-color-scheme="dark"] .status-badge-danger,
+html[data-admin-color-scheme="dark"] .database-test-report.failed,
+html[data-admin-color-scheme="dark"] .server-card-test-result.failed,
+html[data-admin-color-scheme="dark"] .dashboard-mail-warning,
+html[data-admin-color-scheme="dark"] .admin-path-danger,
+html[data-admin-color-scheme="dark"] .dashboard-storage-unavailable-danger {
+    background: var(--admin-danger-soft);
+    color: var(--admin-danger);
+    border-color: var(--admin-danger-border);
+}
+
+html[data-admin-color-scheme="dark"] .login-shell {
+    background: #060b12;
+}
+
+html[data-admin-color-scheme="dark"] .login-panel {
+    background: var(--admin-surface);
+    color: var(--admin-text);
+}
+
+html[data-admin-color-scheme="dark"] .login-form label,
+html[data-admin-color-scheme="dark"] .button-secondary,
+html[data-admin-color-scheme="dark"] .game-account-card dd,
+html[data-admin-color-scheme="dark"] .rich-editor-canvas,
+html[data-admin-color-scheme="dark"] .mail-preview-subject {
+    color: var(--admin-text);
+}
+
+html[data-admin-color-scheme="dark"] .empty-state,
+html[data-admin-color-scheme="dark"] .account-read-only-scope,
+html[data-admin-color-scheme="dark"] .registration-rules-card {
+    background: var(--admin-surface);
+    border-color: var(--admin-border);
+}
+
+html[data-admin-color-scheme="dark"] .two-factor-qr,
+html[data-admin-color-scheme="dark"] .custom-mail-preview-frame {
+    box-shadow: inset 0 0 0 1px var(--admin-border);
+}
+
+html[data-admin-color-scheme="dark"] .two-factor-qr {
+    background: #fff;
+}
+
+html[data-admin-color-scheme="dark"] .admin-menu-badge,
+html[data-admin-color-scheme="dark"] .button-danger {
+    color: #fff;
+}
+
+@media (max-width: 760px) {
+    .admin-appearance-switcher {
+        gap: 1px;
+    }
+
+    .admin-appearance-switcher button {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-user > .admin-appearance-switcher { display: inline-flex; }
+}
+
+html[data-admin-color-scheme="dark"] .remove-cover-row,
+html[data-admin-color-scheme="dark"] .rich-editor-dialog,
+html[data-admin-color-scheme="dark"] .rich-editor-dialog label,
+html[data-admin-color-scheme="dark"] .rich-editor-dialog label > span,
+html[data-admin-color-scheme="dark"] .pagination-page,
+html[data-admin-color-scheme="dark"] .confirm-dialog-target,
+html[data-admin-color-scheme="dark"] .settings-remove-row,
+html[data-admin-color-scheme="dark"] .settings-help-list,
+html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab span,
+html[data-admin-color-scheme="dark"] .audit-table th,
+html[data-admin-color-scheme="dark"] .audit-table td code,
+html[data-admin-color-scheme="dark"] .audit-definition-list dd,
+html[data-admin-color-scheme="dark"] .audit-definition-list dd code,
+html[data-admin-color-scheme="dark"] .system-overview p,
+html[data-admin-color-scheme="dark"] .administrator-row time,
+html[data-admin-color-scheme="dark"] .user-row time,
+html[data-admin-color-scheme="dark"] .mail-preview-copy,
+html[data-admin-color-scheme="dark"] .mail-preview-footer,
+html[data-admin-color-scheme="dark"] .mail-preview-signature,
+html[data-admin-color-scheme="dark"] .translation-tab-default,
+html[data-admin-color-scheme="dark"] .admin-tab,
+html[data-admin-color-scheme="dark"] .admin-notification-menu > summary,
+html[data-admin-color-scheme="dark"] .admin-notification-settings-link,
+html[data-admin-color-scheme="dark"] .admin-notification-filters button,
+html[data-admin-color-scheme="dark"] .admin-notification-actions button,
+html[data-admin-color-scheme="dark"] .security-stat-list dt,
+html[data-admin-color-scheme="dark"] .security-stat-list dd,
+html[data-admin-color-scheme="dark"] .admin-account-dropdown > a,
+html[data-admin-color-scheme="dark"] .admin-account-dropdown form button,
+html[data-admin-color-scheme="dark"] .server-manager-online-toggle > span:first-child,
+html[data-admin-color-scheme="dark"] .server-summary-meta dd,
+html[data-admin-color-scheme="dark"] .server-card-menu > summary,
+html[data-admin-color-scheme="dark"] .server-drawer-close,
+html[data-admin-color-scheme="dark"] .dashboard-monitor-toolbar small,
+html[data-admin-color-scheme="dark"] .dashboard-monitor-name,
+html[data-admin-color-scheme="dark"] .dashboard-monitor-online,
+html[data-admin-color-scheme="dark"] .server-advanced-settings > summary,
+html[data-admin-color-scheme="dark"] .dashboard-monitor-name-wrap small,
+html[data-admin-color-scheme="dark"] .server-drawer-tab,
+html[data-admin-color-scheme="dark"] .server-statistics-quantity input,
+html[data-admin-color-scheme="dark"] .server-statistics-fixed-value,
+html[data-admin-color-scheme="dark"] .server-statistics-unavailable strong,
+html[data-admin-color-scheme="dark"] .server-statistics-unavailable p,
+html[data-admin-color-scheme="dark"] .mail-delivery-option strong,
+html[data-admin-color-scheme="dark"] .mail-delivery-probe-heading > strong,
+html[data-admin-color-scheme="dark"] .dashboard-mail-metric strong,
+html[data-admin-color-scheme="dark"] .admin-path-current code,
+html[data-admin-color-scheme="dark"] .admin-path-input > span,
+html[data-admin-color-scheme="dark"] .dashboard-storage-heading strong,
+html[data-admin-color-scheme="dark"] .dashboard-storage-summary strong,
+html[data-admin-color-scheme="dark"] .dashboard-storage-metrics strong {
+    color: var(--admin-text);
+}
+
+html[data-admin-color-scheme="dark"] .administrator-role-badge.role-owner {
+    background: #2b2140;
+    color: #c4b5fd;
+}
+
+html[data-admin-color-scheme="dark"] .administrator-role-badge.role-administrator {
+    background: #14284a;
+    color: #93c5fd;
+}
+
+html[data-admin-color-scheme="dark"] .administrator-role-badge.role-editor {
+    background: #302510;
+    color: #fcd34d;
+}
+
+html[data-admin-color-scheme="dark"] .administrator-role-badge.role-auditor {
+    background: #102b2a;
+    color: #5eead4;
+}
+
+html[data-admin-color-scheme="dark"] .theme-state.ready {
+    background: var(--admin-info-soft);
+    color: var(--admin-info);
+}
+
+html[data-admin-color-scheme="dark"] .admin-notification-item.severity-warning .admin-notification-icon {
+    background: var(--admin-warning-soft);
+    color: var(--admin-warning) !important;
+}
+
+html[data-admin-color-scheme="dark"] .admin-notification-item.severity-error .admin-notification-icon {
+    background: var(--admin-danger-soft);
+    color: var(--admin-danger) !important;
+}
+
+html[data-admin-color-scheme="dark"] .admin-notification-item.severity-success .admin-notification-icon {
+    background: var(--admin-success-soft);
+    color: var(--admin-success) !important;
+}
+
+html[data-admin-color-scheme="dark"] .support-ticket-status.new { color: #f4c56d; }
+html[data-admin-color-scheme="dark"] .support-ticket-status.in-progress { color: #79bfff; }
+html[data-admin-color-scheme="dark"] .support-ticket-status.awaiting-player { color: #d7a4f5; }
+html[data-admin-color-scheme="dark"] .support-ticket-status.closed { color: #a8b2c2; }
+html[data-admin-color-scheme="dark"] .support-ticket-priority-high { color: #f59a9a; }
