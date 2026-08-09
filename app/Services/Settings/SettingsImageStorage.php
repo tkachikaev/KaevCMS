@@ -2,19 +2,13 @@
 
 namespace App\Services\Settings;
 
+use App\Services\Images\PublicImageStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 final class SettingsImageStorage
 {
-    private const IMAGE_MIME_EXTENSIONS = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-    ];
-
     private const ICON_MIME_TYPES = [
         'image/x-icon',
         'image/vnd.microsoft.icon',
@@ -24,6 +18,8 @@ final class SettingsImageStorage
     ];
 
     private const PATH_PATTERN = '~^settings/(logo|favicon)/[a-f0-9-]+\.(?:jpg|png|webp|ico)$~i';
+
+    public function __construct(private readonly PublicImageStorage $storage) {}
 
     public function validateUpload(UploadedFile $file, string $kind): ?string
     {
@@ -47,13 +43,13 @@ final class SettingsImageStorage
             return null;
         }
 
-        if (! isset(self::IMAGE_MIME_EXTENSIONS[$mime])) {
+        if ($this->storage->extensionForMime($mime) === null) {
             return $kind === 'logo'
                 ? __('The logo must be a JPG, PNG or WebP image.')
                 : __('The favicon must be a PNG, WebP or ICO image.');
         }
 
-        $detectedExtension = self::IMAGE_MIME_EXTENSIONS[$mime];
+        $detectedExtension = $this->storage->extensionForMime($mime);
 
         if ($kind === 'favicon' && $detectedExtension === 'jpg') {
             return __('The favicon must be a PNG, WebP or ICO image.');
@@ -80,14 +76,13 @@ final class SettingsImageStorage
         }
 
         $extension = $this->resolvedExtension($file, $kind);
-        $relativeDirectory = 'settings/'.$kind;
-        $filename = Str::uuid()->toString().'.'.$extension;
-        $absoluteDirectory = $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relativeDirectory);
 
-        File::ensureDirectoryExists($absoluteDirectory, 0755, true);
-        $file->move($absoluteDirectory, $filename);
-
-        return $relativeDirectory.'/'.$filename;
+        return $this->storage->store(
+            $file,
+            $this->rootPath(),
+            'settings/'.$kind,
+            $extension,
+        );
     }
 
     public function delete(?string $path, string $kind): bool
@@ -97,29 +92,25 @@ final class SettingsImageStorage
             return false;
         }
 
-        return File::delete($this->absolutePath($path));
+        return File::delete($this->storage->absolutePath($this->rootPath(), $path));
     }
 
     public function publicUrl(?string $path): ?string
     {
         $path = $this->normalizePath($path);
 
-        return $path === null ? null : asset('uploads/'.$path);
+        return $path === null ? null : $this->storage->publicUrl($path);
     }
 
     public function normalizePath(?string $path, ?string $kind = null): ?string
     {
-        if (! is_string($path) || trim($path) === '') {
+        $path = $this->storage->normalizePath($path, self::PATH_PATTERN, trim: true);
+        if ($path === null) {
             return null;
         }
 
-        $path = ltrim(str_replace('\\', '/', trim($path)), '/');
-
-        if (str_contains($path, '..') || preg_match(self::PATH_PATTERN, $path, $matches) !== 1) {
-            return null;
-        }
-
-        if ($kind !== null && $matches[1] !== $kind) {
+        $segments = explode('/', $path, 3);
+        if ($kind !== null && ($segments[1] ?? null) !== $kind) {
             return null;
         }
 
@@ -131,11 +122,6 @@ final class SettingsImageStorage
         return rtrim((string) config('cms.settings.uploads_path', public_path('uploads')), '\\/');
     }
 
-    private function absolutePath(string $path): string
-    {
-        return $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path);
-    }
-
     private function resolvedExtension(UploadedFile $file, string $kind): string
     {
         $clientExtension = strtolower((string) $file->getClientOriginalExtension());
@@ -144,7 +130,7 @@ final class SettingsImageStorage
         }
 
         $mime = (string) File::mimeType($file->getRealPath());
-        $extension = self::IMAGE_MIME_EXTENSIONS[$mime] ?? null;
+        $extension = $this->storage->extensionForMime($mime);
 
         if ($extension === null || ($kind === 'favicon' && $extension === 'jpg')) {
             throw new RuntimeException('Unsupported settings image type.');

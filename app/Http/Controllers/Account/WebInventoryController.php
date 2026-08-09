@@ -12,6 +12,7 @@ use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\Rewards\RewardCharacterDirectory;
 use App\Support\Rewards\RewardQueueCapabilities;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -49,7 +50,16 @@ class WebInventoryController extends Controller
         $activeView = $request->query('view') === 'history' ? 'history' : 'available';
 
         $availableItems = collect();
-        $deliveries = RewardDelivery::query()->whereRaw('1 = 0')->paginate(20);
+        $deliveries = new LengthAwarePaginator(
+            items: [],
+            total: 0,
+            perPage: 20,
+            currentPage: 1,
+            options: [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
         $characterRows = [];
         $itemIconUrls = [];
         $deliveryItemIconUrls = [];

@@ -97,7 +97,7 @@
                         <span class="admin-account-chevron" aria-hidden="true">⌄</span>
                     </summary>
                     <div class="admin-account-dropdown">
-                        <a wire:navigate href="{{ route('admin.administrators.edit', auth('admin')->user()) }}">{{ __('My profile') }}</a>
+                        <a wire:navigate href="{{ route('admin.account.profile') }}">{{ __('My profile') }}</a>
                         <a wire:navigate href="{{ route('admin.account.security') }}">
                             {{ __('Account security') }}
                             <span @class(['account-menu-state', 'enabled' => auth('admin')->user()->twoFactorEnabled()])>

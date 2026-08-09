@@ -3,39 +3,33 @@
 namespace App\Services\Pages;
 
 use App\Models\PageTranslation;
+use App\Services\Images\PublicImageStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 final class PageImageStorage
 {
-    private const MIME_EXTENSIONS = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-    ];
-
     private const PAGE_PATH_PATTERN = '~^pages/content/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp)$~i';
 
     private const CONTENT_PATH_PATTERN = '~(?:^|["\'])/uploads/(pages/content/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp))(?:["\']|$)~i';
 
+    public function __construct(private readonly PublicImageStorage $storage) {}
+
     public function storeContent(UploadedFile $file): string
     {
         $mime = (string) $file->getMimeType();
-        $extension = self::MIME_EXTENSIONS[$mime] ?? null;
+        $extension = $this->storage->extensionForMime($mime);
         if ($extension === null) {
             throw new RuntimeException('Unsupported image MIME type.');
         }
 
-        $directory = 'pages/content/'.now()->format('Y/m');
-        $filename = Str::uuid()->toString().'.'.$extension;
-        $absoluteDirectory = $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $directory);
-
-        File::ensureDirectoryExists($absoluteDirectory, 0755, true);
-        $file->move($absoluteDirectory, $filename);
-
-        return $directory.'/'.$filename;
+        return $this->storage->store(
+            $file,
+            $this->rootPath(),
+            'pages/content/'.now()->format('Y/m'),
+            $extension,
+        );
     }
 
     public function deleteIfUnreferenced(?string $path): bool
@@ -45,14 +39,14 @@ final class PageImageStorage
             return false;
         }
 
-        $absolutePath = $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path);
+        $absolutePath = $this->storage->absolutePath($this->rootPath(), $path);
         if (! File::isFile($absolutePath)) {
             return false;
         }
 
         $deleted = File::delete($absolutePath);
         if ($deleted) {
-            $this->deleteEmptyParentDirectories(dirname($absolutePath));
+            $this->storage->deleteEmptyParentDirectories($this->rootPath(), 'pages', dirname($absolutePath));
         }
 
         return $deleted;
@@ -88,7 +82,7 @@ final class PageImageStorage
 
     public function publicPath(string $path): string
     {
-        return '/uploads/'.ltrim(str_replace('\\', '/', $path), '/');
+        return $this->storage->publicPath($path);
     }
 
     public function rootPath(): string
@@ -98,31 +92,6 @@ final class PageImageStorage
 
     public function normalizePath(?string $path): ?string
     {
-        if ($path === null || $path === '') {
-            return null;
-        }
-
-        $path = ltrim(str_replace('\\', '/', $path), '/');
-
-        if (str_contains($path, '..') || preg_match(self::PAGE_PATH_PATTERN, $path) !== 1) {
-            return null;
-        }
-
-        return $path;
-    }
-
-    private function deleteEmptyParentDirectories(string $directory): void
-    {
-        $pagesRoot = $this->rootPath().DIRECTORY_SEPARATOR.'pages';
-        $directory = rtrim($directory, '\\/');
-
-        while (str_starts_with($directory, $pagesRoot) && $directory !== $pagesRoot) {
-            if (! File::isDirectory($directory) || count(File::files($directory)) > 0 || count(File::directories($directory)) > 0) {
-                break;
-            }
-
-            File::deleteDirectory($directory);
-            $directory = dirname($directory);
-        }
+        return $this->storage->normalizePath($path, self::PAGE_PATH_PATTERN);
     }
 }

@@ -49,6 +49,65 @@ class AdministratorController extends Controller
         ]);
     }
 
+    public function profile(): View
+    {
+        return view('admin.account.profile', [
+            'administrator' => $this->currentAdmin(),
+        ]);
+    }
+
+    public function updateProfile(Request $request, AuditLogger $auditLogger): RedirectResponse
+    {
+        $administrator = $this->currentAdmin();
+        $validated = $this->validateProfile(
+            $request,
+            $administrator,
+            allowedRoles: [],
+            roleRequired: false,
+        );
+        $before = [
+            'name' => $administrator->name,
+            'email' => $administrator->email,
+        ];
+
+        $administrator->forceFill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        if ($administrator->isDirty()) {
+            $administrator->save();
+        }
+
+        $changes = $this->changedValues($before, $administrator, ['name', 'email']);
+        if ($changes === []) {
+            return redirect()
+                ->route('admin.account.profile')
+                ->with('status', __('No changes.'));
+        }
+
+        $auditLogger->success(
+            category: 'admin',
+            action: 'administrator.updated',
+            target: $administrator,
+            details: ['changes' => $changes],
+        );
+
+        return redirect()
+            ->route('admin.account.profile')
+            ->with('status', __('Administrator details saved.'));
+    }
+
+    public function updateProfilePassword(Request $request, AuditLogger $auditLogger): RedirectResponse
+    {
+        $administrator = $this->currentAdmin();
+        $this->changePassword($request, $administrator, $auditLogger, true);
+
+        return redirect()
+            ->route('admin.account.profile')
+            ->with('status', __('The administrator password was changed.'));
+    }
+
     public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
     {
         $currentAdmin = $this->currentAdmin();
@@ -203,59 +262,7 @@ class AdministratorController extends Controller
         $currentAdmin = $this->currentAdmin();
         $this->assertCanManageTarget($currentAdmin, $administrator);
         $isCurrentAdmin = $currentAdmin->is($administrator);
-
-        $validator = Validator::make(
-            [
-                'current_password' => (string) $request->input('current_password', ''),
-                'password' => (string) $request->input('password', ''),
-                'password_confirmation' => (string) $request->input('password_confirmation', ''),
-            ],
-            [
-                'current_password' => $isCurrentAdmin
-                    ? ['required', 'string', 'max:4096']
-                    : ['nullable', 'string', 'max:4096'],
-                'password' => [
-                    'required',
-                    'string',
-                    'confirmed',
-                    Password::min(12)->letters()->mixedCase()->numbers(),
-                    new PasswordWithinHasherLimit,
-                    'max:4096',
-                ],
-            ],
-            [],
-            [
-                'current_password' => __('Current password validation attribute'),
-                'password' => __('New password validation attribute'),
-                'password_confirmation' => __('new password confirmation'),
-            ],
-        );
-
-        $validated = $validator->validate();
-
-        if ($isCurrentAdmin && ! Hash::check($validated['current_password'], $currentAdmin->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => __('The current password is incorrect.'),
-            ]);
-        }
-
-        $administrator->forceFill([
-            'password' => Hash::make($validated['password']),
-            'remember_token' => Str::random(60),
-            'session_version' => $administrator->session_version + 1,
-        ])->save();
-
-        if ($isCurrentAdmin) {
-            $request->session()->regenerate();
-            $request->session()->put('admin_session_version', $administrator->session_version);
-        }
-
-        $auditLogger->success(
-            category: 'admin',
-            action: 'administrator.password_changed',
-            target: $administrator,
-            details: ['password_changed' => true],
-        );
+        $this->changePassword($request, $administrator, $auditLogger, $isCurrentAdmin);
 
         return redirect()
             ->route('admin.administrators.edit', $administrator)
@@ -399,6 +406,64 @@ class AdministratorController extends Controller
                 'role' => __('Role'),
             ],
         )->validate();
+    }
+
+    private function changePassword(
+        Request $request,
+        Admin $administrator,
+        AuditLogger $auditLogger,
+        bool $isCurrentAdmin,
+    ): void {
+        $validated = Validator::make(
+            [
+                'current_password' => (string) $request->input('current_password', ''),
+                'password' => (string) $request->input('password', ''),
+                'password_confirmation' => (string) $request->input('password_confirmation', ''),
+            ],
+            [
+                'current_password' => $isCurrentAdmin
+                    ? ['required', 'string', 'max:4096']
+                    : ['nullable', 'string', 'max:4096'],
+                'password' => [
+                    'required',
+                    'string',
+                    'confirmed',
+                    Password::min(12)->letters()->mixedCase()->numbers(),
+                    new PasswordWithinHasherLimit,
+                    'max:4096',
+                ],
+            ],
+            [],
+            [
+                'current_password' => __('Current password validation attribute'),
+                'password' => __('New password validation attribute'),
+                'password_confirmation' => __('new password confirmation'),
+            ],
+        )->validate();
+
+        if ($isCurrentAdmin && ! Hash::check($validated['current_password'], $this->currentAdmin()->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => __('The current password is incorrect.'),
+            ]);
+        }
+
+        $administrator->forceFill([
+            'password' => Hash::make($validated['password']),
+            'remember_token' => Str::random(60),
+            'session_version' => $administrator->session_version + 1,
+        ])->save();
+
+        if ($isCurrentAdmin) {
+            $request->session()->regenerate();
+            $request->session()->put('admin_session_version', $administrator->session_version);
+        }
+
+        $auditLogger->success(
+            category: 'admin',
+            action: 'administrator.password_changed',
+            target: $administrator,
+            details: ['password_changed' => true],
+        );
     }
 
     private function currentAdmin(): Admin

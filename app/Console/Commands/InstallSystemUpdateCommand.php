@@ -109,7 +109,9 @@ final class InstallSystemUpdateCommand extends Command
 
             $maintenanceSecret = Str::random(48);
             $this->warn('The website will briefly enter maintenance mode.');
-            $this->line('Temporary recovery URL: '.url('/'.$maintenanceSecret));
+            if (! $this->option('yes')) {
+                $this->line('Temporary recovery URL: '.url('/'.$maintenanceSecret));
+            }
             $this->line('Do not close this terminal until the command finishes.');
             $this->newLine();
 

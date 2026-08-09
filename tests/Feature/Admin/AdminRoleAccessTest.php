@@ -142,9 +142,17 @@ class AdminRoleAccessTest extends TestCase
         $this->assertServerCreateActionForbidden(app(LoginServerManager::class));
     }
 
-    public function test_editor_only_has_dashboard_content_and_own_profile_access(): void
+    public function test_editor_only_has_dashboard_content_and_dedicated_profile_access(): void
     {
-        $editor = $this->createAdmin(['role' => AdminRole::Editor]);
+        $owner = $this->createAdmin([
+            'name' => 'Hidden Owner',
+            'email' => 'hidden-owner@example.com',
+        ]);
+        $editor = $this->createAdmin([
+            'name' => 'Content Editor',
+            'email' => 'editor@example.com',
+            'role' => AdminRole::Editor,
+        ]);
 
         $this->actingAs($editor, 'admin')
             ->get('/admin')
@@ -164,7 +172,27 @@ class AdminRoleAccessTest extends TestCase
         $this->actingAs($editor, 'admin')->get('/admin/users')->assertForbidden();
         $this->actingAs($editor, 'admin')->get('/admin/settings')->assertForbidden();
         $this->actingAs($editor, 'admin')->get('/admin/settings/mail')->assertForbidden();
-        $this->actingAs($editor, 'admin')->get('/admin/administrators/'.$editor->id.'/edit')->assertOk();
+        $this->actingAs($editor, 'admin')->get('/admin/administrators')->assertForbidden();
+        $this->actingAs($editor, 'admin')->get('/admin/administrators/'.$editor->id.'/edit')->assertForbidden();
+
+        $this->actingAs($editor, 'admin')
+            ->get('/admin/account/profile')
+            ->assertOk()
+            ->assertSee($editor->email)
+            ->assertDontSee($owner->email);
+
+        $this->actingAs($editor, 'admin')
+            ->put('/admin/account/profile', [
+                'name' => 'Updated Editor',
+                'email' => 'UPDATED-EDITOR@EXAMPLE.COM',
+                'role' => AdminRole::Owner->value,
+            ])
+            ->assertRedirect(route('admin.account.profile'));
+
+        $editor->refresh();
+        $this->assertSame('Updated Editor', $editor->name);
+        $this->assertSame('updated-editor@example.com', $editor->email);
+        $this->assertSame(AdminRole::Editor, $editor->role);
     }
 
     public function test_auditor_can_view_trusted_sections_but_cannot_change_data(): void

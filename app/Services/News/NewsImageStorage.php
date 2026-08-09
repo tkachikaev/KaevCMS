@@ -4,22 +4,18 @@ namespace App\Services\News;
 
 use App\Models\News;
 use App\Models\NewsTranslation;
+use App\Services\Images\PublicImageStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 final class NewsImageStorage
 {
-    private const MIME_EXTENSIONS = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-    ];
-
     private const NEWS_PATH_PATTERN = '~^news/(?:covers|content)/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp)$~i';
 
     private const CONTENT_PATH_PATTERN = '~(?:^|["\'])/uploads/(news/content/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp))(?:["\']|$)~i';
+
+    public function __construct(private readonly PublicImageStorage $storage) {}
 
     public function storeCover(UploadedFile $file): string
     {
@@ -49,7 +45,7 @@ final class NewsImageStorage
             return false;
         }
 
-        $absolutePath = $this->absolutePath($path);
+        $absolutePath = $this->storage->absolutePath($this->rootPath(), $path);
 
         if (! File::isFile($absolutePath)) {
             return false;
@@ -58,7 +54,7 @@ final class NewsImageStorage
         $deleted = File::delete($absolutePath);
 
         if ($deleted) {
-            $this->deleteEmptyParentDirectories(dirname($absolutePath));
+            $this->storage->deleteEmptyParentDirectories($this->rootPath(), 'news', dirname($absolutePath));
         }
 
         return $deleted;
@@ -108,13 +104,7 @@ final class NewsImageStorage
     {
         $mime = (string) $file->getMimeType();
 
-        if (! isset(self::MIME_EXTENSIONS[$mime])) {
-            throw new RuntimeException('Unsupported image MIME type.');
-        }
-
-        $contents = File::get($file->getRealPath());
-
-        return 'data:'.$mime.';base64,'.base64_encode($contents);
+        return $this->storage->previewDataUrl($file, $mime);
     }
 
     public function publicUrl(?string $path): ?string
@@ -123,12 +113,12 @@ final class NewsImageStorage
             return null;
         }
 
-        return asset('uploads/'.ltrim(str_replace('\\', '/', $path), '/'));
+        return $this->storage->publicUrl($path);
     }
 
     public function publicPath(string $path): string
     {
-        return '/uploads/'.ltrim(str_replace('\\', '/', $path), '/');
+        return $this->storage->publicPath($path);
     }
 
     public function rootPath(): string
@@ -138,41 +128,24 @@ final class NewsImageStorage
 
     public function normalizeNewsPath(?string $path): ?string
     {
-        if ($path === null || $path === '') {
-            return null;
-        }
-
-        $path = ltrim(str_replace('\\', '/', $path), '/');
-
-        if (str_contains($path, '..') || preg_match(self::NEWS_PATH_PATTERN, $path) !== 1) {
-            return null;
-        }
-
-        return $path;
+        return $this->storage->normalizePath($path, self::NEWS_PATH_PATTERN);
     }
 
     private function store(UploadedFile $file, string $scope): string
     {
         $mime = (string) $file->getMimeType();
-        $extension = self::MIME_EXTENSIONS[$mime] ?? null;
+        $extension = $this->storage->extensionForMime($mime);
 
         if ($extension === null) {
             throw new RuntimeException('Unsupported image MIME type.');
         }
 
-        $directory = $scope.'/'.now()->format('Y/m');
-        $filename = Str::uuid()->toString().'.'.$extension;
-        $absoluteDirectory = $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $directory);
-
-        File::ensureDirectoryExists($absoluteDirectory, 0755, true);
-        $file->move($absoluteDirectory, $filename);
-
-        return $directory.'/'.$filename;
-    }
-
-    private function absolutePath(string $path): string
-    {
-        return $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path);
+        return $this->storage->store(
+            $file,
+            $this->rootPath(),
+            $scope.'/'.now()->format('Y/m'),
+            $extension,
+        );
     }
 
     private function delete(?string $path, string $requiredPrefix): void
@@ -183,25 +156,10 @@ final class NewsImageStorage
             return;
         }
 
-        $absolutePath = $this->absolutePath($path);
+        $absolutePath = $this->storage->absolutePath($this->rootPath(), $path);
 
         if (File::delete($absolutePath)) {
-            $this->deleteEmptyParentDirectories(dirname($absolutePath));
-        }
-    }
-
-    private function deleteEmptyParentDirectories(string $directory): void
-    {
-        $newsRoot = $this->rootPath().DIRECTORY_SEPARATOR.'news';
-        $directory = rtrim($directory, '\\/');
-
-        while (str_starts_with($directory, $newsRoot) && $directory !== $newsRoot) {
-            if (! File::isDirectory($directory) || count(File::files($directory)) > 0 || count(File::directories($directory)) > 0) {
-                break;
-            }
-
-            File::deleteDirectory($directory);
-            $directory = dirname($directory);
+            $this->storage->deleteEmptyParentDirectories($this->rootPath(), 'news', dirname($absolutePath));
         }
     }
 }

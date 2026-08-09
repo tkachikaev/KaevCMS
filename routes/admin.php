@@ -67,6 +67,12 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->middleware('throttle:6,1')
             ->name('server-monitor.refresh');
 
+        Route::get('/account/profile', [AdminAdministratorController::class, 'profile'])->name('account.profile');
+        Route::put('/account/profile', [AdminAdministratorController::class, 'updateProfile'])->name('account.profile.update');
+        Route::put('/account/profile/password', [AdminAdministratorController::class, 'updateProfilePassword'])
+            ->middleware('throttle:5,1')
+            ->name('account.profile.password');
+
         Route::get('/account/security', [AdminAccountSecurityController::class, 'show'])->name('account.security');
         Route::post('/account/security/two-factor/setup', [AdminAccountSecurityController::class, 'begin'])
             ->middleware('throttle:5,1')

@@ -1,4 +1,4 @@
-# KaevCMS 0.47.35
+# KaevCMS 0.47.36
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.35 improves administrator audit-log filter counters in dark mode. Inactive counters now keep readable dark-theme contrast, active counters retain clear selected-state contrast, and a dedicated gap separates category labels from their counts. The public website and player account themes remain unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.36 applies verified technical-audit hardening: administrator self-profile access now uses a dedicated ProfileManage route instead of bypassing administrator-management permissions, shared image upload safety logic is centralized, non-interactive CLI updates no longer print the maintenance recovery URL, and an explicit empty paginator replaces the Web Inventory false-query placeholder. The public website and player account themes remain unchanged. The cumulative update baseline remains 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.35 улучшает счётчики фильтров журнала действий в тёмной теме админки. Неактивные счётчики теперь имеют читаемый контраст, активные сохраняют понятное выбранное состояние, а между названием категории и числом добавлен отдельный отступ. Публичный сайт и темы личного кабинета не затрагиваются. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.36 включает подтверждённые исправления по техническому аудиту: собственный профиль администратора вынесен на отдельный маршрут ProfileManage без обхода прав раздела администраторов, общая безопасная логика загрузки изображений централизована, неинтерактивный CLI updater больше не выводит recovery URL maintenance-режима, а в Web Inventory используется явный пустой paginator вместо фиктивного SQL-запроса. Публичный сайт и темы личного кабинета не затрагиваются. Базовая версия cumulative update остаётся 0.42.4.
 
 ### Требования
 

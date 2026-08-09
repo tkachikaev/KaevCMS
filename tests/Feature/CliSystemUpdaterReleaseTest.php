@@ -30,6 +30,8 @@ class CliSystemUpdaterReleaseTest extends TestCase
         $this->assertStringContainsString("protected \$signature = 'kaevcms:update", $source);
         $this->assertStringContainsString('SystemUpdateInstaller $installer', $source);
         $this->assertStringContainsString('{--yes', $source);
+        $this->assertStringContainsString("if (! \$this->option('yes'))", $source);
+        $this->assertStringContainsString('Temporary recovery URL:', $source);
         $this->assertStringContainsString('chmod($path, 0660)', $source);
     }
 }

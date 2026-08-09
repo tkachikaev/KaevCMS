@@ -26,10 +26,6 @@ final class EnforceAdminAccess
             return $this->handleReadOnly($request, $next, $admin);
         }
 
-        if ($this->isOwnProfileRoute($request, $admin)) {
-            return $next($request);
-        }
-
         $moduleDecision = $this->moduleAccess->decision(
             (string) ($request->route()?->getName() ?? ''),
             $request->method(),
@@ -64,35 +60,16 @@ final class EnforceAdminAccess
 
         abort_unless(in_array(strtoupper($request->method()), ['GET', 'HEAD'], true), 403);
 
-        if (! $this->isOwnProfileRoute($request, $admin)) {
-            $moduleDecision = $this->moduleAccess->decision($routeName, $request->method(), $admin);
-            if ($moduleDecision !== null) {
-                abort_unless($moduleDecision->allowed, 403);
-            } else {
-                $decision = $this->policy->decide($request);
-                abort_unless($admin->hasPermission($decision->permission), 403);
-            }
+        $moduleDecision = $this->moduleAccess->decision($routeName, $request->method(), $admin);
+        if ($moduleDecision !== null) {
+            abort_unless($moduleDecision->allowed, 403);
+        } else {
+            $decision = $this->policy->decide($request);
+            abort_unless($admin->hasPermission($decision->permission), 403);
         }
 
         $request->attributes->set('admin_read_only', true);
 
         return $next($request);
-    }
-
-    private function isOwnProfileRoute(Request $request, Admin $admin): bool
-    {
-        $name = (string) ($request->route()?->getName() ?? '');
-
-        if (! in_array($name, [
-            'admin.administrators.edit',
-            'admin.administrators.update',
-            'admin.administrators.password',
-        ], true)) {
-            return false;
-        }
-
-        $administrator = $request->route('administrator');
-
-        return $administrator instanceof Admin && $administrator->is($admin);
     }
 }

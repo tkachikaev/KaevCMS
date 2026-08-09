@@ -543,5 +543,8 @@
   ],
   "0.47.35": [
     "core/deployment/windows/apply-0.47.34.ps1"
+  ],
+  "0.47.36": [
+    "core/deployment/windows/apply-0.47.35.ps1"
   ]
 }

@@ -1,3 +1,17 @@
+## 0.47.36 - 2026-08-09
+
+### Fixed
+
+- Replaced the administrator self-profile middleware bypass with a dedicated `admin.account.profile` surface protected by `ProfileManage`; editors can update only their own name/email/password and can no longer open the administrator-management route without `AdministratorsView`.
+- Kept administrator role/status/count management inside the protected Administrators section while preserving owner/administrator management and Auditor read-only access.
+- Suppressed the temporary maintenance recovery URL when the CLI updater runs with `--yes`, avoiding secret output in non-interactive logs while retaining the URL for manual interactive recovery. The VDS update agent already used a separate command and did not print this secret.
+- Replaced the fake `whereRaw('1 = 0')` Web Inventory query with an explicit empty `LengthAwarePaginator` when no GameServer is selected.
+
+### Changed
+
+- Consolidated shared raster MIME mapping, safe upload-path normalization, UUID storage, public-path helpers and empty-directory cleanup into `PublicImageStorage`, reused by News, Pages and Settings image services without changing their public paths or accepted formats.
+- Added regression coverage for editor self-profile isolation, non-interactive CLI recovery output and centralized image-path validation. Database migrations, bundled module/theme versions, Composer dependencies and VDS update-agent contract 3 are unchanged. The cumulative 0.47.36 package supports updates from 0.42.4 through 0.47.35.
+
 ## 0.47.35 - 2026-08-08
 
 ### Fixed
