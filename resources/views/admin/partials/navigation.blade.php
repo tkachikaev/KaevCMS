@@ -7,7 +7,7 @@
     </a>
 
     @if($admin->hasPermission(\App\Auth\AdminPermission::ContentView))
-        <details class="admin-menu-group" data-admin-menu-group="content" @if (request()->routeIs('admin.news.*', 'admin.pages.*')) open @endif>
+        <details class="admin-menu-group" data-admin-menu-group="content" @if (request()->routeIs('admin.news.*', 'admin.pages.*', 'admin.navigation.*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{{ __('Content') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
@@ -15,6 +15,7 @@
             <div class="admin-menu-group-items">
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.news.index') }}"><span>{{ __('News') }}</span></a>
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.pages.index') }}"><span>{{ __('Pages') }}</span></a>
+                <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.navigation.index') }}"><span>{{ __('Navigation') }}</span></a>
             </div>
         </details>
     @endif

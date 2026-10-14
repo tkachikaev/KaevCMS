@@ -22,6 +22,9 @@
             @foreach ($headerPages ?? [] as $menuPage)
                 <a wire:navigate.hover wire:current="active" href="{{ page_url($menuPage) }}">{{ $menuPage->titleFor() }}</a>
             @endforeach
+            @foreach ($headerCustomLinks ?? [] as $customLink)
+                <a href="{{ $customLink->url }}" @if ($customLink->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $customLink->titleFor() }}</a>
+            @endforeach
             @auth
                 <a wire:navigate.hover wire:current="active" class="mobile-account-link" href="{{ public_route('account') }}">{{ __('Account') }}</a>
             @else

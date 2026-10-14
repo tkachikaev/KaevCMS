@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\MailDeliveryController as AdminMailDeliveryContro
 use App\Http\Controllers\Admin\MailSettingsController as AdminMailSettingsController;
 use App\Http\Controllers\Admin\ModuleController as AdminModuleController;
 use App\Http\Controllers\Admin\NewsController as AdminNewsController;
+use App\Http\Controllers\Admin\NavigationLinkController as AdminNavigationLinkController;
 use App\Http\Controllers\Admin\NewsImageController as AdminNewsImageController;
 use App\Http\Controllers\Admin\NotificationSettingsController as AdminNotificationSettingsController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
@@ -99,6 +100,13 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::get('/news/{news}/edit', [AdminNewsController::class, 'edit'])->name('news.edit');
         Route::put('/news/{news}', [AdminNewsController::class, 'update'])->name('news.update');
         Route::delete('/news/{news}', [AdminNewsController::class, 'destroy'])->name('news.destroy');
+
+        Route::get('/navigation', [AdminNavigationLinkController::class, 'index'])->name('navigation.index');
+        Route::get('/navigation/create', [AdminNavigationLinkController::class, 'create'])->name('navigation.create');
+        Route::post('/navigation', [AdminNavigationLinkController::class, 'store'])->name('navigation.store');
+        Route::get('/navigation/{navigationLink}/edit', [AdminNavigationLinkController::class, 'edit'])->name('navigation.edit');
+        Route::put('/navigation/{navigationLink}', [AdminNavigationLinkController::class, 'update'])->name('navigation.update');
+        Route::delete('/navigation/{navigationLink}', [AdminNavigationLinkController::class, 'destroy'])->name('navigation.destroy');
 
         Route::get('/pages', [AdminPageController::class, 'index'])->name('pages.index');
         Route::get('/pages/create', [AdminPageController::class, 'create'])->name('pages.create');
