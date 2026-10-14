@@ -7,7 +7,6 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\ExternalGameAccountGateway;
 use App\Services\GameWorld\GameWorldDriverResolver;
-use App\Services\GameWorld\RusacisGameSchemaInspector;
 use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\ServerDriverRegistry;
@@ -135,63 +134,76 @@ class RusacisGameWorldTest extends TestCase
         app(GameWorldDriverResolver::class)->resolve($this->server)->ranking($this->server, 'items', 10);
     }
 
+    public function test_supplied_castle_schema_without_name_still_exposes_localized_castle_owners(): void
+    {
+        $this->assertFalse(Schema::connection('rusacis_world_test')->hasColumn('castle', 'name'));
+        $driver = app(GameWorldDriverResolver::class)->resolve($this->server);
+        $this->assertContains('castles', $driver->capabilities($this->server));
+        $this->assertSame(__('Gludio Castle'), $driver->castleOwners($this->server)[0]['castle_name']);
+        DB::connection('rusacis_world_test')->table('castle')->insert(['id' => 99]);
+        DB::connection('rusacis_world_test')->table('clan_data')->update(['hasCastle' => 99]);
+        $this->assertSame(__('Castle #:id', ['id' => 99]), $driver->castleOwners($this->server)[0]['castle_name']);
+    }
+
+    public function test_hero_badge_uses_current_olympiad_or_unexpired_temporary_status(): void
+    {
+        $database = DB::connection('rusacis_world_test');
+        $database->table('characters')->where('obj_Id', 101)->update(['herountil' => now()->addHour()->getTimestampMs()]);
+        $gateway = app(ExternalGameAccountGateway::class);
+        $characters = $gateway->characters($this->server, 'player1');
+        $this->assertTrue($characters[0]['hero']);
+        $this->assertTrue($characters[1]['hero']);
+        $database->table('heroes')->update(['played' => 0]);
+        $database->table('characters')->where('obj_Id', 101)->update(['herountil' => now()->subSecond()->getTimestampMs()]);
+        $characters = $gateway->characters($this->server, 'player1');
+        $this->assertFalse($characters[0]['hero']);
+        $this->assertFalse($characters[1]['hero']);
+        $this->assertSame([], app(GameWorldDriverResolver::class)->resolve($this->server)->heroes($this->server));
+    }
+
+    public function test_temporary_heroes_work_when_olympiad_table_is_absent(): void
+    {
+        Schema::connection('rusacis_world_test')->drop('heroes');
+        DB::connection('rusacis_world_test')->table('characters')->where('obj_Id', 101)->update(['herountil' => now()->addHour()->getTimestampMs()]);
+        $characters = app(ExternalGameAccountGateway::class)->characters($this->server, 'player1');
+        $this->assertFalse($characters[0]['hero']);
+        $this->assertTrue($characters[1]['hero']);
+    }
+
+    public function test_cabinet_character_limit_is_applied_in_the_database_query(): void
+    {
+        config()->set('cms.external_database.character_limit', 1);
+        $database = DB::connection('rusacis_world_test');
+        $database->enableQueryLog();
+        $this->assertCount(1, app(ExternalGameAccountGateway::class)->characters($this->server, 'player1'));
+        $queries = array_filter($database->getQueryLog(), static fn (array $query): bool => str_contains($query['query'], 'from "characters"'));
+        $this->assertNotEmpty($queries);
+        $this->assertStringContainsString('limit 1', strtolower(end($queries)['query']));
+    }
+
     private function createSchema(): void
     {
-        Schema::connection('rusacis_world_test')->create('characters', static function (Blueprint $t): void {
-            $t->string('account_name')->nullable();
-            $t->unsignedInteger('obj_Id')->primary();
-            $t->string('char_name');
-            $t->unsignedInteger('level');
-            $t->unsignedBigInteger('exp')->default(0);
-            $t->integer('classid');
-            $t->integer('race');
-            $t->integer('sex');
-            $t->string('title')->nullable();
-            $t->integer('online')->default(0);
-            $t->unsignedBigInteger('lastAccess')->default(0);
-            $t->unsignedInteger('onlinetime')->default(0);
-            $t->integer('pvpkills')->default(0);
-            $t->integer('pkkills')->default(0);
-            $t->integer('karma')->default(0);
-            $t->integer('nobless')->default(0);
-            $t->integer('hero')->default(0);
-            $t->integer('clanid')->nullable();
-            $t->integer('accesslevel')->default(0);
-            $t->unsignedBigInteger('deletetime')->nullable();
-        });
-        Schema::connection('rusacis_world_test')->create('clan_data', static function (Blueprint $t): void {
-            $t->integer('clan_id')->primary();
-            $t->string('clan_name');
-            $t->integer('clan_level')->default(0);
-            $t->integer('reputation_score')->default(0);
-            $t->integer('hasCastle')->default(0);
-            $t->integer('leader_id')->default(0);
-        });
-        Schema::connection('rusacis_world_test')->create('heroes', static function (Blueprint $t): void {
-            $t->integer('char_id')->primary();
-            $t->integer('class_id');
-            $t->integer('count');
-            $t->integer('played');
-            $t->integer('active');
-        });
-        Schema::connection('rusacis_world_test')->create('castle', static function (Blueprint $t): void {
-            $t->integer('id')->primary();
-            $t->string('name');
-        });
+        foreach (['characters', 'clan_data', 'heroes', 'castle'] as $table) {
+            $sql = file_get_contents(base_path('tests/Fixtures/rusacis/'.$table.'.sql'));
+            // Preserve the supplied schema; only adapt MySQL syntax for SQLite.
+            $sql = str_replace(["ENUM('true','false')", 'INSERT IGNORE'], ['TEXT', 'INSERT OR IGNORE'], $sql);
+            $sql = preg_replace('/^\s*KEY\s+[^\r\n]+\R?/m', '', $sql);
+            $sql = preg_replace('/,\s*\)/', ')', $sql);
+            DB::connection('rusacis_world_test')->unprepared($sql);
+        }
     }
 
     private function seedCharacters(): void
     {
         $db = DB::connection('rusacis_world_test');
         $db->table('clan_data')->insert(['clan_id' => 30, 'clan_name' => 'Test Clan', 'clan_level' => 6, 'reputation_score' => 55, 'hasCastle' => 1, 'leader_id' => 100]);
-        $db->table('castle')->insert(['id' => 1, 'name' => 'Gludio']);
         $db->table('heroes')->insert([
             ['char_id' => 100, 'class_id' => 88, 'count' => 2, 'played' => 1, 'active' => 1],
             ['char_id' => 101, 'class_id' => 88, 'count' => 1, 'played' => 1, 'active' => 0],
         ]);
         $base = ['account_name' => 'player1', 'level' => 60, 'exp' => 10000, 'classid' => 88, 'race' => 0, 'sex' => 1, 'title' => null, 'online' => 0, 'lastAccess' => 1700000000000, 'onlinetime' => 3600, 'pvpkills' => 0, 'pkkills' => 0, 'karma' => 0, 'nobless' => 0, 'hero' => 0, 'clanid' => null, 'accesslevel' => 0, 'deletetime' => null];
         $db->table('characters')->insert([
-            array_merge($base, ['obj_Id' => 100, 'char_name' => 'ActiveHero', 'level' => 80, 'exp' => 100000, 'online' => 1, 'onlinetime' => 7200, 'pvpkills' => 12, 'karma' => 15, 'nobless' => 1, 'hero' => 1, 'clanid' => 30]),
+            array_merge($base, ['obj_Id' => 100, 'char_name' => 'ActiveHero', 'level' => 80, 'exp' => 100000, 'online' => 1, 'onlinetime' => 7200, 'pvpkills' => 12, 'karma' => 15, 'nobless' => 1, 'hero' => 0, 'clanid' => 30]),
             array_merge($base, ['obj_Id' => 101, 'char_name' => 'NormalCharacter', 'deletetime' => 0, 'pkkills' => 3]),
             array_merge($base, ['obj_Id' => 102, 'char_name' => 'DeletedCharacter', 'deletetime' => 1700000000000]),
             array_merge($base, ['obj_Id' => 103, 'char_name' => 'GM', 'accesslevel' => 100]),

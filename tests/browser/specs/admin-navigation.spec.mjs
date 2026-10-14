@@ -880,17 +880,23 @@ test('navigation editor creates a header and footer link, then disables it', asy
 test('RUSaCis GameServer is selectable as a ready driver', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/game-server');
 
-    const edit = page.locator('[wire\:click^="edit("]').first();
+    const edit = page.getByRole('button', { name: 'Настроить' }).first();
     await expect(edit).toBeVisible();
     await edit.click();
 
-    const enableConnection = page.locator('input[wire\:model\.live="connectionEnabled"]');
+    const dialog = page.getByTestId('game-server-dialog');
+    await expect(dialog).toBeVisible();
+    const connectionLabel = dialog.locator('label.server-connection-enable');
+    const enableConnection = connectionLabel.getByRole('checkbox');
     if (!(await enableConnection.isChecked())) {
-        await enableConnection.check({ force: true });
+        await connectionLabel.click();
+        await expect(enableConnection).toBeChecked();
     }
 
     const driver = page.locator('#live_game_driver');
     await expect(driver).toBeVisible();
     await expect(driver.locator('option[value="rusacis"]')).toHaveText('RUSaCis');
     await expect(driver.locator('option[value="l2j_mobius"]')).toHaveText('L2J Mobius');
+    await driver.selectOption('rusacis');
+    await expect(driver).toHaveValue('rusacis');
 });

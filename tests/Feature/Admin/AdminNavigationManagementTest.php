@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\NavigationLink;
 use App\Services\Localization\LanguageManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AdminNavigationManagementTest extends TestCase
@@ -48,8 +49,8 @@ class AdminNavigationManagementTest extends TestCase
             'title' => 'Форум',
         ]);
 
-        $this->get('/ru')->assertOk()->assertSee('href="/forum/" target="_blank" rel="noopener noreferrer">Форум</a>', false);
-        $this->get('/en')->assertOk()->assertSee('href="/forum/" target="_blank" rel="noopener noreferrer">Forum</a>', false);
+        $this->assertNavigationAnchor('/ru', '/forum/', 'Форум', true);
+        $this->assertNavigationAnchor('/en', '/forum/', 'Forum', true);
 
         foreach (['default', 'kaev-aurelia'] as $theme) {
             $this->assertStringContainsString('headerCustomLinks', file_get_contents(base_path('themes/'.$theme.'/views/partials/header.blade.php')) ?: '');
@@ -99,7 +100,7 @@ class AdminNavigationManagementTest extends TestCase
         $payload['translations']['en']['title'] = '';
 
         $this->actingAs(Admin::factory()->create(), 'admin')->post('/admin/navigation', $payload)->assertRedirect();
-        $this->get('/en')->assertOk()->assertSee('href="https://discord.gg/example">Форум</a>', false);
+        $this->assertNavigationAnchor('/en', 'https://discord.gg/example', 'Форум', false);
     }
 
     public function test_unsafe_urls_and_missing_required_fields_are_rejected_without_writing_data(): void
@@ -130,14 +131,40 @@ class AdminNavigationManagementTest extends TestCase
 
     public function test_public_theme_can_render_before_new_tables_are_migrated(): void
     {
-        \Illuminate\Support\Facades\Schema::drop('navigation_link_translations');
-        \Illuminate\Support\Facades\Schema::drop('navigation_links');
+        Schema::drop('navigation_link_translations');
+        Schema::drop('navigation_links');
 
         $this->get('/ru')->assertOk();
     }
 
+    private function assertNavigationAnchor(string $page, string $url, string $title, bool $newTab): void
+    {
+        $response = $this->get($page)->assertOk();
+        $document = new \DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+        $matches = 0;
+        foreach ($document->getElementsByTagName('a') as $anchor) {
+            if ($anchor->getAttribute('href') !== $url) {
+                continue;
+            }
+            $matches++;
+            $this->assertSame($title, trim($anchor->textContent));
+            $this->assertSame($newTab ? '_blank' : '', $anchor->getAttribute('target'));
+            $this->assertSame($newTab ? 'noopener noreferrer' : '', $anchor->getAttribute('rel'));
+            $this->assertFalse($anchor->hasAttribute('wire:navigate'));
+            $this->assertFalse($anchor->hasAttribute('wire:navigate.hover'));
+        }
+        $this->assertGreaterThanOrEqual(2, $matches, 'Custom link must appear in both header and footer.');
+    }
+
     /** @param array<string, string> $overrides
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function payload(array $overrides = []): array
     {

@@ -52,9 +52,12 @@ final class GameAccountProvisioner
                 ? LoginServer::query()->lockForUpdate()->find($lockedGameServer->login_server_id)
                 : null;
 
+            $lockedGameServer->setRelation('loginServer', $lockedLoginServer);
+
             if (! $lockedLoginServer instanceof LoginServer
                 || ! $lockedGameServer->connectionConfigured()
-                || ! $this->gateway->supportsLoginServer($lockedLoginServer)) {
+                || ! $this->gateway->supportsLoginServer($lockedLoginServer)
+                || ! $this->gateway->supportsGameServer($lockedGameServer)) {
                 throw new GameAccountCreationException(GameAccountCreationFailure::ServerUnavailable);
             }
 

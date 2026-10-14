@@ -2619,5 +2619,16 @@
     "sort order": "порядок сортировки",
     "unsafe CSS expressions": "небезопасные CSS-выражения",
     "unsafe URL schemes": "небезопасные схемы URL",
-    "update files": "файлов обновления"
+    "update files": "файлов обновления",
+    "Aden Castle": "Замок Адена",
+    "Castle #:id": "Замок №:id",
+    "Create a separate LoginServer connection to change the driver while game accounts are linked.": "Чтобы сменить драйвер при наличии привязанных игровых аккаунтов, создайте отдельное подключение LoginServer.",
+    "Dion Castle": "Замок Диона",
+    "Giran Castle": "Замок Гирана",
+    "Gludio Castle": "Замок Глудио",
+    "Goddard Castle": "Замок Годдарда",
+    "Innadril Castle": "Замок Иннадрила",
+    "Oren Castle": "Замок Орена",
+    "Rune Castle": "Замок Руны",
+    "Schuttgart Castle": "Замок Шутгарта"
 }

@@ -11,7 +11,7 @@ final class RusacisGameSchemaInspector
     private const CHARACTER_COLUMNS = [
         'account_name', 'obj_Id', 'char_name', 'level', 'exp', 'classid', 'race',
         'sex', 'title', 'online', 'onlinetime', 'accesslevel', 'deletetime',
-        'pvpkills', 'pkkills', 'karma', 'nobless', 'hero', 'clanid', 'lastAccess',
+        'pvpkills', 'pkkills', 'karma', 'nobless', 'herountil', 'clanid', 'lastAccess',
     ];
 
     private const CLAN_COLUMNS = [
@@ -20,7 +20,7 @@ final class RusacisGameSchemaInspector
 
     private const HERO_COLUMNS = ['char_id', 'class_id', 'count', 'played', 'active'];
 
-    private const CASTLE_COLUMNS = ['id', 'name'];
+    private const CASTLE_COLUMNS = ['id'];
 
     /**
      * @return list<array{table:string,columns:list<string>,required:bool}>

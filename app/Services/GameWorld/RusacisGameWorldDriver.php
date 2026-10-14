@@ -16,6 +16,13 @@ final class RusacisGameWorldDriver implements GameWorldDriver
 
     private const SCHEMA_CACHE_MINUTES = 5;
 
+    // RUSaCis keeps these names in data/xml/castles.xml, not in the SQL table.
+    private const CASTLE_NAMES = [
+        1 => 'Gludio Castle', 2 => 'Dion Castle', 3 => 'Giran Castle',
+        4 => 'Oren Castle', 5 => 'Aden Castle', 6 => 'Innadril Castle',
+        7 => 'Goddard Castle', 8 => 'Rune Castle', 9 => 'Schuttgart Castle',
+    ];
+
     public function __construct(
         private readonly GameServerDatabaseGateway $database,
         private readonly RusacisGameSchemaInspector $schemas,
@@ -31,11 +38,11 @@ final class RusacisGameWorldDriver implements GameWorldDriver
         if (! in_array($section, self::RANKINGS, true)) {
             throw new InvalidArgumentException('Unsupported character ranking section.');
         }
-        $this->schemaProfile($server);
+        $profile = $this->schemaProfile($server);
 
         /** @var list<array<string,mixed>> $rows */
-        $rows = $this->database->run($server, function (Connection $connection) use ($section, $limit): array {
-            $query = $this->charactersQuery($connection);
+        $rows = $this->database->run($server, function (Connection $connection) use ($profile, $section, $limit): array {
+            $query = $this->charactersQuery($connection, $profile);
 
             match ($section) {
                 'level' => $query->orderByDesc('characters.level')->orderByDesc('characters.exp'),
@@ -54,14 +61,16 @@ final class RusacisGameWorldDriver implements GameWorldDriver
 
     public function heroes(GameServer $server): array
     {
-        if (! $this->schemaProfile($server)->heroesAvailable) {
+        $profile = $this->schemaProfile($server);
+        if (! $profile->heroesAvailable) {
             return [];
         }
 
         /** @var list<array<string,mixed>> $rows */
-        $rows = $this->database->run($server, function (Connection $connection): array {
-            return $this->charactersQuery($connection)
+        $rows = $this->database->run($server, function (Connection $connection) use ($profile): array {
+            return $this->charactersQuery($connection, $profile)
                 ->join('heroes', 'heroes.char_id', '=', 'characters.obj_Id')
+                ->where('heroes.played', 1)
                 ->where('heroes.active', 1)
                 ->addSelect([
                     'heroes.count as hero_count',
@@ -89,7 +98,6 @@ final class RusacisGameWorldDriver implements GameWorldDriver
                 ->where('clan_data.hasCastle', '>', 0)
                 ->select([
                     'castle.id as castle_id',
-                    'castle.name as castle_name',
                     'clan_data.clan_id',
                     'clan_data.clan_name',
                     'clan_data.clan_level',
@@ -100,26 +108,36 @@ final class RusacisGameWorldDriver implements GameWorldDriver
                 ->get()->map(static fn (object $row): array => (array) $row)->all();
         });
 
-        return $rows;
+        return array_map(static fn (array $row): array => array_merge($row, [
+            'castle_name' => isset(self::CASTLE_NAMES[(int) $row['castle_id']])
+                ? __(self::CASTLE_NAMES[(int) $row['castle_id']])
+                : __('Castle #:id', ['id' => (int) $row['castle_id']]),
+        ]), $rows);
     }
 
-    public function charactersForAccount(GameServer $server, string $accountName): array
+    public function charactersForAccount(GameServer $server, string $accountName, int $limit = 100): array
     {
-        $this->schemaProfile($server);
+        $profile = $this->schemaProfile($server);
 
         /** @var list<array<string,mixed>> $rows */
-        $rows = $this->database->run($server, function (Connection $connection) use ($accountName): array {
-            return $this->charactersQuery($connection)
+        $rows = $this->database->run($server, function (Connection $connection) use ($profile, $accountName, $limit): array {
+            return $this->charactersQuery($connection, $profile)
                 ->where('characters.account_name', $accountName)
                 ->orderByDesc('characters.level')->orderBy('characters.char_name')
+                ->limit(min(max($limit, 1), 100))
                 ->get()->map(static fn (object $row): array => (array) $row)->all();
         });
 
         return $rows;
     }
 
-    private function charactersQuery(Connection $connection): Builder
+    private function charactersQuery(Connection $connection, RusacisGameSchemaProfile $profile): Builder
     {
+        $heroExpression = 'characters.herountil > ?';
+        if ($profile->heroesAvailable) {
+            $heroExpression .= ' OR EXISTS (SELECT 1 FROM heroes WHERE heroes.char_id = characters.obj_Id AND heroes.played = 1 AND heroes.active = 1)';
+        }
+
         return $connection->table('characters')
             ->leftJoin('clan_data', 'clan_data.clan_id', '=', 'characters.clanid')
             ->where('characters.accesslevel', 0)
@@ -141,10 +159,10 @@ final class RusacisGameWorldDriver implements GameWorldDriver
                 'characters.pkkills as pk_kills',
                 'characters.karma as reputation',
                 'characters.nobless as noble',
-                'characters.hero as hero',
                 'characters.clanid as clan_id',
                 'clan_data.clan_name',
-            ]);
+            ])
+            ->selectRaw('(CASE WHEN '.$heroExpression.' THEN 1 ELSE 0 END) as hero', [now()->getTimestampMs()]);
     }
 
     private function schemaProfile(GameServer $server): RusacisGameSchemaProfile
@@ -153,7 +171,7 @@ final class RusacisGameWorldDriver implements GameWorldDriver
             return $this->inspectSchema($server);
         }
         $key = implode(':', [
-            'rusacis-game-schema-v1',
+            'rusacis-game-schema-v2',
             $server->id,
             $server->updated_at?->getTimestamp() ?? 0,
         ]);

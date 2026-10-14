@@ -19,8 +19,8 @@ use App\Http\Controllers\Admin\LoginServerController as AdminLoginServerControll
 use App\Http\Controllers\Admin\MailDeliveryController as AdminMailDeliveryController;
 use App\Http\Controllers\Admin\MailSettingsController as AdminMailSettingsController;
 use App\Http\Controllers\Admin\ModuleController as AdminModuleController;
-use App\Http\Controllers\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Admin\NavigationLinkController as AdminNavigationLinkController;
+use App\Http\Controllers\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Admin\NewsImageController as AdminNewsImageController;
 use App\Http\Controllers\Admin\NotificationSettingsController as AdminNotificationSettingsController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;

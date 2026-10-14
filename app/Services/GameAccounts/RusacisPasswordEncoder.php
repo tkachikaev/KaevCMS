@@ -14,7 +14,7 @@ final class RusacisPasswordEncoder
     public function encode(string $password): string
     {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
-        if (! is_string($hash) || ! str_starts_with($hash, '$2y$') || strlen($hash) !== 60) {
+        if (! str_starts_with($hash, '$2y$') || strlen($hash) !== 60) {
             throw new RuntimeException('Unable to prepare a RUSaCis BCrypt password hash.');
         }
 

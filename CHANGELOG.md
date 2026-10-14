@@ -1,3 +1,13 @@
+## 0.47.41 - 2026-10-15
+
+### Fixed
+
+- Corrected RUSaCis castle capabilities for the actual SQL table without a name column; castle names now come from the driver-owned ID catalogue with RU/EN labels.
+- Derived character hero status from current played/active Olympiad records and unexpired herountil, and excluded previous-period heroes from public statistics. Applied cabinet character limits inside SQL queries.
+- Split Mobius and RUSaCis LoginServer operations behind a common driver contract, preserving their password algorithms and SQL schemas. Rejected incompatible persisted credentials before external access, prevented driver changes with linked accounts and revalidated driver pairings after locking registration servers.
+- Added original RUSaCis SQL fixtures and regressions for account operations, hero periods, temporary hero expiry, castle ownership, query limits and driver changes. Corrected stale driver expectations, semantic navigation assertions and browser interactions with accessible controls without weakening checks.
+- No database migrations, Composer/npm dependency changes or game database schema modifications. Cumulative baseline remains 0.42.4. Actual RUSaCis BCrypt interoperability was verified against the supplied JAR; game-client login and live server smoke testing remain required before declaring the integration stable.
+
 ## 0.47.40 RC - 2026-10-14
 
 ### Added

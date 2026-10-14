@@ -3,9 +3,11 @@
 namespace Tests\Feature\Account;
 
 use App\Contracts\GameAccountGateway;
+use App\Models\LoginServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
 use App\Services\GameAccountSettings;
+use App\Support\GameAccounts\PreparedGameAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -92,11 +94,11 @@ class GameAccountCreationReliabilityTest extends TestCase
         {
             public int $prepareCalls = 0;
 
-            public function prepareAccount(\App\Models\LoginServer $loginServer, string $login, string $password, string $email): \App\Support\GameAccounts\PreparedGameAccount
+            public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount
             {
                 $this->prepareCalls++;
 
-                return new \App\Support\GameAccounts\PreparedGameAccount(
+                return new PreparedGameAccount(
                     $login,
                     password_hash($password, PASSWORD_BCRYPT),
                     $email,

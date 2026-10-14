@@ -5,8 +5,8 @@ namespace Tests\Unit;
 use App\Models\GameServer;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\GameWorld\MobiusGameWorldDriver;
-use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\GameWorld\RusacisGameSchemaInspector;
+use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\Servers\ServerDriverRegistry;
 use Tests\TestCase;
 
