@@ -347,3 +347,5 @@
     .footer-bottom > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
     .socials { min-width: 0; flex-wrap: wrap; }
 }
+/* Footer navigation: built-in and custom links share one presentation. */
+.footer-section-links a{display:block;margin:7px 0;color:#8e9495;font-size:13px;line-height:1.6}.footer-section-links a:hover{color:var(--gold2)}

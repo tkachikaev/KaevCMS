@@ -446,3 +446,6 @@ html[data-admin-color-scheme="dark"] .support-ticket-status.in-progress { color:
 html[data-admin-color-scheme="dark"] .support-ticket-status.awaiting-player { color: #d7a4f5; }
 html[data-admin-color-scheme="dark"] .support-ticket-status.closed { color: #a8b2c2; }
 html[data-admin-color-scheme="dark"] .support-ticket-priority-high { color: #f59a9a; }
+
+/* Custom navigation preview in the admin dark appearance. */
+html[data-admin-color-scheme="dark"] .navigation-link-preview { background: linear-gradient(135deg, #182d4c, #20365a); color: #93c5fd; border-color: var(--admin-border); }

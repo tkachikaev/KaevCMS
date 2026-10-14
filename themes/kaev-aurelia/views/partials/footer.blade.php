@@ -49,10 +49,16 @@
             </div>
         </div>
 
-        <div class="footer-community">
-            <h3>{{ __('Community') }}</h3>
-            <div class="socials"><a href="#">Discord</a><a href="#">Telegram</a><a href="#">VK</a></div>
-        </div>
+        @if (count($footerCustomLinks ?? []) > 0)
+            <div class="footer-community">
+                <h3>{{ __('Community') }}</h3>
+                <div class="footer-section-links footer-custom-links">
+                    @foreach ($footerCustomLinks as $customLink)
+                        <a href="{{ $customLink->url }}" @if ($customLink->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $customLink->titleFor() }}</a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div class="footer-decoration" aria-hidden="true"><img src="{{ theme_asset('images/kaev-mark.png') }}" alt=""></div>
     </div>

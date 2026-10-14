@@ -1700,3 +1700,8 @@
         white-space: normal;
     }
 }
+
+/* Custom navigation catalogue: consistent vector preview instead of placeholder glyph. */
+.navigation-link-preview { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #3157a4; }
+.navigation-link-preview-icon { width: 29px; height: 29px; display: block; flex: none; }
+.navigation-link-preview:hover .navigation-link-preview-icon { transform: translateY(-1px); }

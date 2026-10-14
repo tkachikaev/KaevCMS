@@ -22,7 +22,13 @@
                 @endforeach
             </div>
         </div>
-        <div><h3>{{ __('Community') }}</h3><div class="socials"><a href="#">VK</a><a href="#">Discord</a><a href="#">Telegram</a></div></div>
+        @if (count($footerCustomLinks ?? []) > 0)
+            <div><h3>{{ __('Community') }}</h3><div class="footer-section-links footer-custom-links">
+                @foreach ($footerCustomLinks as $customLink)
+                    <a href="{{ $customLink->url }}" @if ($customLink->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $customLink->titleFor() }}</a>
+                @endforeach
+            </div></div>
+        @endif
     </div>
     <div class="container footer-bottom">
         <span>{{ site_footer_text() }}</span>

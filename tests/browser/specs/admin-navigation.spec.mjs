@@ -828,3 +828,50 @@ test('auditor can browse every administration section without changing data', as
     await expect(page).toHaveURL(/\/admin\/extensions\/promo-codes\/activations$/);
     await expect(page.getByText('Режим просмотра').first()).toBeVisible();
 });
+
+test('navigation editor creates a header and footer link, then disables it', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/navigation');
+    await expect(page.getByRole('heading', { name: 'Навигация' })).toBeVisible();
+    await page.getByRole('link', { name: /Добавить ссылку/ }).first().click();
+
+    const unique = `forum-test-${Date.now()}`;
+    await page.locator('#title_ru').fill(unique);
+    await page.locator('#title_en').fill(unique);
+    await page.locator('#url').fill('/forum/');
+    await page.locator('#show_in_header').check();
+    await page.locator('#show_in_footer').check();
+    await page.locator('#open_new_tab').check();
+    await page.locator('button[type="submit"]').last().click();
+    await expect(page).toHaveURL(/\/admin\/navigation$/);
+    const preview = page.locator('article.content-row', { hasText: unique }).locator('.navigation-link-preview');
+    await expect(preview.locator('svg.navigation-link-preview-icon')).toBeVisible();
+
+    await gotoWithLocalNetworkRetry(page, '/ru');
+    await expect(page.locator('header nav a', { hasText: unique })).toHaveAttribute('href', '/forum/');
+    await expect(page.locator('header nav a', { hasText: unique })).toHaveAttribute('target', '_blank');
+    await expect(page.locator('footer a', { hasText: unique })).toBeVisible();
+    const footerStyles = await page.locator('.footer-custom-links a', { hasText: unique }).evaluate((link) => {
+        const builtIn = document.querySelector('.footer-sections .footer-section-links a');
+        const one = window.getComputedStyle(link);
+        const other = window.getComputedStyle(builtIn);
+        return { fontSize: one.fontSize, builtInFontSize: other.fontSize,
+            padding: one.padding, builtInPadding: other.padding,
+            borderRadius: one.borderRadius, builtInBorderRadius: other.borderRadius };
+    });
+    expect(footerStyles.fontSize).toBe(footerStyles.builtInFontSize);
+    expect(footerStyles.padding).toBe(footerStyles.builtInPadding);
+    expect(footerStyles.borderRadius).toBe(footerStyles.builtInBorderRadius);
+
+    await gotoWithLocalNetworkRetry(page, '/admin/navigation');
+    await page.getByRole('link', { name: unique, exact: true }).first().click();
+    await page.locator('#is_active').uncheck();
+    await page.locator('button[type="submit"]').last().click();
+    await gotoWithLocalNetworkRetry(page, '/ru');
+    await expect(page.locator('header nav a', { hasText: unique })).toHaveCount(0);
+
+    await gotoWithLocalNetworkRetry(page, '/admin/navigation');
+    const row = page.locator('article.content-row', { hasText: unique });
+    await row.getByRole('button', { name: 'Удалить' }).click();
+    await page.locator('[data-page-delete-dialog]').getByRole('button', { name: 'Да, удалить' }).click();
+    await expect(row).toHaveCount(0);
+});

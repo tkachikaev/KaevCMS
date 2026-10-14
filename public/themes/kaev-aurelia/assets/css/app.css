@@ -612,9 +612,6 @@ tbody tr:hover { background: rgba(141, 161, 147, .07); }
 .footer-section-links { display: grid; grid-auto-flow: column; grid-template-rows: repeat(3, auto); grid-auto-columns: minmax(145px,1fr); column-gap: 26px; overflow-x: auto; scrollbar-width: thin; }
 .footer-section-links a { display: block; margin: 6px 0; color: var(--ink-soft); white-space: nowrap; font-size: 12px; }
 .footer-section-links a:hover { color: var(--gold-dark); }
-.socials { display: flex; flex-wrap: wrap; gap: 7px; }
-.socials a { padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,253,247,.44); color: var(--ink-soft); font-size: 10px; font-weight: 700; }
-.socials a:hover { border-color: var(--gold); color: var(--gold-dark); }
 .footer-bottom { display: flex; justify-content: space-between; gap: 24px; padding: 20px 0 25px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 
 /* Notices */
@@ -1119,7 +1116,7 @@ body.kaev-aurelia::before {
     .kaev-aurelia .footer-grid { grid-template-columns: minmax(0, 1fr); padding-top: 20px; }
     .kaev-aurelia .footer-grid > *,
     .kaev-aurelia .footer-bottom > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
-    .kaev-aurelia .socials { min-width: 0; flex-wrap: wrap; }
+    .kaev-aurelia .footer-custom-links { min-width: 0; }
     .kaev-aurelia .page-hero { background-position: 68% center; }
 }
 

@@ -1,4 +1,4 @@
-# KaevCMS 0.47.36
+# KaevCMS 0.47.38
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.36 applies verified technical-audit hardening: administrator self-profile access now uses a dedicated ProfileManage route instead of bypassing administrator-management permissions, shared image upload safety logic is centralized, non-interactive CLI updates no longer print the maintenance recovery URL, and an explicit empty paginator replaces the Web Inventory false-query placeholder. The public website and player account themes remain unchanged. The cumulative update baseline remains 0.42.4.
+Version 0.47.38 polishes custom footer links and the navigation admin icon, building on 0.47.37 which added the Content → Navigation section for custom multilingual links in the public header and footer (for example, /forum/ or Discord), with ordering, enable/disable and new-tab behavior. Both bundled public themes support the links. CMS page navigation stays separate; player account themes are unchanged. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.36 включает подтверждённые исправления по техническому аудиту: собственный профиль администратора вынесен на отдельный маршрут ProfileManage без обхода прав раздела администраторов, общая безопасная логика загрузки изображений централизована, неинтерактивный CLI updater больше не выводит recovery URL maintenance-режима, а в Web Inventory используется явный пустой paginator вместо фиктивного SQL-запроса. Публичный сайт и темы личного кабинета не затрагиваются. Базовая версия cumulative update остаётся 0.42.4.
+Версия 0.47.38 улучшает оформление ссылок в подвале сайта и заменяет значок-заглушку в административном списке навигации на SVG-иконку. Раздел «Контент → Навигация» (добавлен в 0.47.37) позволяет создавать для произвольных многоязычных ссылок в шапке и подвале сайта (например, /forum/ или Discord), с сортировкой, включением/отключением и открытием в новой вкладке. Поддержаны обе встроенные публичные темы. Навигация страниц CMS остаётся отдельной, темы личного кабинета не менялись. База cumulative update — 0.42.4.
 
 ### Требования
 

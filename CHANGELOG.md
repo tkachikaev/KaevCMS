@@ -1,3 +1,18 @@
+## 0.47.38 — Navigation footer and icon polish (2026-10-14)
+
+- Custom footer links now use the same typography, spacing and standard anchor styling as built-in footer entries in both public themes; removed pill-style social button treatment from these links.
+- Replaced the navigation admin list placeholder arrow with an accessible, theme-aware SVG link icon. External favicon fetching is deliberately avoided because admin Content-Security-Policy restricts external images; no remote trackers or CSP changes.
+- Bumped bundled public theme versions: L2 Dark Classic `0.8.4`, Kaev Aurelia `1.0.11`, and updated stale hardcoded theme-version test expectations.
+- Added PHPUnit and Playwright regressions for footer consistency and admin preview, without changing navigation records, schemas, public URLs or unrelated modules/account themes.
+
+## 0.47.37 — Custom public navigation links (2026-10-14)
+
+- New **Content → Navigation** admin section: manage localized RU/EN (and other enabled languages) links to a site-relative `/forum/` path or an external `http(s)` address, with header/footer visibility, order, active status and new-tab controls.
+- Both public themes show saved navigation links, while built-in CMS pages remain managed separately. Removed nonfunctional social-link placeholders from the public footers.
+- Strict URL validation rejects protocol-relative, unsafe-scheme, control-character and credential-bearing addresses. Public rendering also checks stored URLs and handles not-yet-migrated installations.
+- Added audit actions, RBAC via existing content permissions, feature/negative regression coverage and browser flow.
+- Public theme manifests: L2 Dark Classic `0.8.3`; Kaev Aurelia `1.0.10`. No dependency changes or runtime upload-path changes.
+
 ## 0.47.36 - 2026-08-09
 
 ### Fixed
