@@ -146,17 +146,21 @@ class ServerDriverRegistryTest extends TestCase
         );
     }
 
-    public function test_rusacis_drivers_are_registered_as_placeholders(): void
+    public function test_rusacis_login_is_ready_but_game_driver_remains_placeholder(): void
     {
         $registry = app(ServerDriverRegistry::class);
         $loginDriver = $registry->loginDriver('rusacis');
         $gameDriver = $registry->gameDriver('rusacis');
 
         $this->assertNotNull($loginDriver);
-        $this->assertFalse($loginDriver['ready']);
-        $this->assertSame('unknown', $loginDriver['schema_profile']);
-        $this->assertSame([], $loginDriver['capabilities']);
-        $this->assertSame([], $loginDriver['requirements']);
+        $this->assertTrue($loginDriver['ready']);
+        $this->assertSame('rusacis_interlude', $loginDriver['schema_profile']);
+        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $loginDriver['capabilities']);
+        $this->assertSame([[
+            'table' => 'accounts',
+            'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
+            'required' => true,
+        ]], $loginDriver['requirements']);
 
         $this->assertNotNull($gameDriver);
         $this->assertFalse($gameDriver['ready']);

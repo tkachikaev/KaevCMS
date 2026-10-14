@@ -26,6 +26,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 {
     public function __construct(
         private readonly MobiusPasswordEncoder $passwordEncoder,
+        private readonly RusacisPasswordEncoder $rusacisPasswords,
         private readonly MySqlSessionQueryTimeout $queryTimeout,
         private readonly ServerDriverRegistry $drivers,
         private readonly MobiusGameSchemaInspector $schemas,
@@ -36,6 +37,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
         return in_array($loginServer->driver, [
             ServerDriverRegistry::MOBIUS_DRIVER,
             ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
+            ServerDriverRegistry::RUSACIS_DRIVER,
         ], true);
     }
 
@@ -43,14 +45,23 @@ final class ExternalGameAccountGateway implements GameAccountGateway
     {
         return $gameServer->driver === ServerDriverRegistry::MOBIUS_DRIVER
             && $gameServer->loginServer instanceof LoginServer
-            && $this->supportsLoginServer($gameServer->loginServer);
+            && in_array($gameServer->loginServer->driver, [
+                ServerDriverRegistry::MOBIUS_DRIVER,
+                ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
+            ], true);
     }
 
-    public function prepareAccount(string $login, string $password, string $email): PreparedGameAccount
+    public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount
     {
+        if (! $this->supportsLoginServer($loginServer)) {
+            throw new RuntimeException('The selected LoginServer driver does not support game accounts.');
+        }
+
         return new PreparedGameAccount(
             login: trim($login),
-            credential: $this->passwordEncoder->encode($password),
+            credential: $loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER
+                ? $this->rusacisPasswords->encode($password)
+                : $this->passwordEncoder->encode($password),
             email: Str::lower(trim($email)),
         );
     }
@@ -59,23 +70,36 @@ final class ExternalGameAccountGateway implements GameAccountGateway
         LoginServer $loginServer,
         PreparedGameAccount $account,
     ): ExternalGameAccountState {
+        $isRusacis = $loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER;
+
         return $this->withLoginConnection(
             $loginServer,
-            static function (Connection $database) use ($account): ExternalGameAccountState {
+            static function (Connection $database) use ($account, $isRusacis): ExternalGameAccountState {
                 $stored = $database->table('accounts')
                     ->where('login', $account->login)
-                    ->first(['password', 'email']);
+                    ->first($isRusacis ? ['password'] : ['password', 'email']);
 
                 if ($stored === null) {
                     return ExternalGameAccountState::Missing;
                 }
 
+                // The stored prepared hash is the idempotency proof, not a
+                // fresh BCrypt hash of the same plaintext (which differs by salt).
                 $password = is_scalar($stored->password ?? null) ? (string) $stored->password : '';
+                if (! hash_equals($account->credential, $password)) {
+                    return ExternalGameAccountState::Conflict;
+                }
+
+                if ($isRusacis) {
+                    // The RUSaCis LoginServer schema has no email column.
+                    return ExternalGameAccountState::Matching;
+                }
+
                 $email = is_scalar($stored->email ?? null)
                     ? Str::lower(trim((string) $stored->email))
                     : '';
 
-                return hash_equals($account->credential, $password) && hash_equals($account->email, $email)
+                return hash_equals($account->email, $email)
                     ? ExternalGameAccountState::Matching
                     : ExternalGameAccountState::Conflict;
             },
@@ -86,15 +110,20 @@ final class ExternalGameAccountGateway implements GameAccountGateway
         LoginServer $loginServer,
         PreparedGameAccount $account,
     ): ExternalGameAccountWriteResult {
+        $isRusacis = $loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER;
+
         return $this->withLoginConnection(
             $loginServer,
-            function (Connection $database) use ($account): ExternalGameAccountWriteResult {
+            function (Connection $database) use ($account, $isRusacis): ExternalGameAccountWriteResult {
                 try {
-                    $database->table('accounts')->insert([
+                    $values = [
                         'login' => $account->login,
                         'password' => $account->credential,
-                        'email' => $account->email,
-                    ]);
+                    ];
+                    if (! $isRusacis) {
+                        $values['email'] = $account->email;
+                    }
+                    $database->table('accounts')->insert($values);
                 } catch (QueryException $exception) {
                     if ($this->isDuplicateKey($exception)) {
                         return ExternalGameAccountWriteResult::AlreadyExists;
@@ -114,26 +143,36 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             $loginServer,
             fn (Connection $database): bool => $database->table('accounts')
                 ->where('login', $login)
-                ->update(['password' => $this->passwordEncoder->encode($password)]) === 1,
+                ->update(['password' => $loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER
+                    ? $this->rusacisPasswords->encode($password)
+                    : $this->passwordEncoder->encode($password)]) === 1,
         );
     }
 
     public function accountSummary(LoginServer $loginServer, string $login): ?array
     {
-        return $this->withLoginConnection($loginServer, static function (Connection $database) use ($login): ?array {
+        $isRusacis = $loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER;
+
+        return $this->withLoginConnection($loginServer, static function (Connection $database) use ($login, $isRusacis): ?array {
             $account = $database->table('accounts')
                 ->where('login', $login)
-                ->first(['login', 'created_time', 'lastactive', 'accessLevel']);
+                ->first($isRusacis
+                    ? ['login', 'last_active', 'access_level']
+                    : ['login', 'created_time', 'lastactive', 'accessLevel']);
 
             if ($account === null) {
                 return null;
             }
 
+            $lastActive = $isRusacis ? ($account->last_active ?? null) : ($account->lastactive ?? null);
+            $accessLevel = $isRusacis ? ($account->access_level ?? null) : ($account->accessLevel ?? null);
+            $createdAt = $isRusacis ? null : ($account->created_time ?? null);
+
             return [
                 'login' => (string) $account->login,
-                'created_at' => is_scalar($account->created_time) ? (string) $account->created_time : null,
-                'last_active' => is_numeric($account->lastactive) ? (int) $account->lastactive : 0,
-                'status' => is_numeric($account->accessLevel) && (int) $account->accessLevel < 0
+                'created_at' => is_scalar($createdAt) ? (string) $createdAt : null,
+                'last_active' => is_numeric($lastActive) ? (int) $lastActive : 0,
+                'status' => is_numeric($accessLevel) && (int) $accessLevel < 0
                     ? 'blocked'
                     : 'active',
             ];

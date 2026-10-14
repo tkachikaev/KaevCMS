@@ -201,7 +201,7 @@ class LoginServerSettingsTest extends TestCase
         $this->assertDatabaseCount('login_servers', 0);
     }
 
-    public function test_rusacis_placeholder_checks_connection_without_schema_requirements(): void
+    public function test_rusacis_login_checks_its_real_schema_requirements(): void
     {
         $fake = new FakeExternalDatabaseConnectionTester;
         $this->app->instance(ExternalDatabaseConnectionTester::class, $fake);
@@ -213,12 +213,16 @@ class LoginServerSettingsTest extends TestCase
             ->post(route('admin.settings.login-server.store'), $payload)
             ->assertRedirect(route('admin.settings.login-server').'#login-server-create')
             ->assertSessionHas('database_connection_report', fn (array $report): bool => $report['driver'] === 'rusacis'
-                && $report['driver_ready'] === false
-                && $report['compatible'] === null
+                && $report['driver_ready'] === true
+                && $report['compatible'] === true
             );
 
-        $this->assertFalse($fake->driverReady);
-        $this->assertSame([], $fake->requirements);
+        $this->assertTrue($fake->driverReady);
+        $this->assertSame([[
+            'table' => 'accounts',
+            'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
+            'required' => true,
+        ]], $fake->requirements);
     }
 
     public function test_database_password_is_not_flashed_after_validation_error(): void

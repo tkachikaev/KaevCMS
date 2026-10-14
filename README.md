@@ -1,4 +1,4 @@
-# KaevCMS 0.47.38
+# KaevCMS 0.47.39
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.38 polishes custom footer links and the navigation admin icon, building on 0.47.37 which added the Content → Navigation section for custom multilingual links in the public header and footer (for example, /forum/ or Discord), with ordering, enable/disable and new-tab behavior. Both bundled public themes support the links. CMS page navigation stays separate; player account themes are unchanged. Cumulative update baseline: 0.42.4.
+Version 0.47.39 introduces first-stage RUSaCis LoginServer support: account registration and password changes via BCrypt $2a$ and the supplied accounts schema. Mobius remains unchanged, and RUSaCis GameServer character/statistics capabilities remain a placeholder for the next stage. Real Java LoginServer login must be verified before production use. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.38 улучшает оформление ссылок в подвале сайта и заменяет значок-заглушку в административном списке навигации на SVG-иконку. Раздел «Контент → Навигация» (добавлен в 0.47.37) позволяет создавать для произвольных многоязычных ссылок в шапке и подвале сайта (например, /forum/ или Discord), с сортировкой, включением/отключением и открытием в новой вкладке. Поддержаны обе встроенные публичные темы. Навигация страниц CMS остаётся отдельной, темы личного кабинета не менялись. База cumulative update — 0.42.4.
+Версия 0.47.39 добавляет первый этап поддержки RUSaCis LoginServer: создание игровых аккаунтов и смену пароля через BCrypt $2a$ для присланной схемы accounts. Mobius не меняется, а поддержка персонажей и статистики RUSaCis GameServer запланирована следующим этапом. До использования в production необходимо проверить вход через настоящий Java LoginServer. База cumulative update — 0.42.4.
 
 ### Требования
 

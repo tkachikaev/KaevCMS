@@ -1679,6 +1679,7 @@
     "Run this command once through SSH, then reload this page. Manual CLI updates remain available without the agent.": "Run this command once through SSH, then reload this page. Manual CLI updates remain available without the agent.",
     "Running": "Running",
     "Runtime error": "Runtime error",
+    "RUSaCis LoginServer with BCrypt password hashing.": "RUSaCis LoginServer with BCrypt password hashing.",
     "RUSaCis driver placeholder. Schema support will be added later.": "RUSaCis driver placeholder. Schema support will be added later.",
     "Russian and English are included with KaevCMS. Additional packs are discovered in the lang directory.": "Russian and English are included with KaevCMS. Additional packs are discovered in the lang directory.",
     "Safe headings, lists, links, colors and images are allowed.": "Safe headings, lists, links, colors and images are allowed.",

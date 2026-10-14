@@ -10,6 +10,8 @@ final class ServerDriverRegistry
 
     public const MOBIUS_LEGACY_LOGIN_DRIVER = 'l2j_mobius_legacy';
 
+    public const RUSACIS_DRIVER = 'rusacis';
+
     /**
      * @return array<string, array{
      *     label:string,
@@ -70,15 +72,21 @@ final class ServerDriverRegistry
                     ],
                 ],
             ],
-            'rusacis' => [
+            self::RUSACIS_DRIVER => [
                 'label' => 'RUSaCis',
-                'description' => __('RUSaCis driver placeholder. Schema support will be added later.'),
-                'ready' => false,
+                'description' => __('RUSaCis LoginServer with BCrypt password hashing.'),
+                'ready' => true,
                 'service_port' => 2106,
-                'schema_profile' => 'unknown',
-                'capabilities' => [],
+                'schema_profile' => 'rusacis_interlude',
+                'capabilities' => ['account_lookup', 'account_creation', 'password_change'],
                 'optional_capabilities' => [],
-                'requirements' => [],
+                'requirements' => [
+                    [
+                        'table' => 'accounts',
+                        'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
+                        'required' => true,
+                    ],
+                ],
             ],
         ];
     }

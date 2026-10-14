@@ -1,3 +1,13 @@
+## 0.47.39 - 2026-10-14
+
+### Added
+
+- Enabled RUSaCis LoginServer schema checks for accounts(login, password, last_active, access_level, last_server) with account lookup, creation, and password change capabilities.
+- Introduced RUSaCis BCrypt $2a$ password encoding while retaining the original Mobius SHA-1 + Base64 encoding and login/account schema handling without changes.
+- Preserved encrypted pending account proof across retries rather than regenerating a new salted hash; inserted the proof only after locking the real LoginServer driver. RUSaCis lacks the external email column, which is still stored only in KaevCMS.
+- Made RUSaCis GameServer entries available as a registration target when linked to RUSaCis LoginServer; GameServer characters, ratings and rescue remain disabled until the next stage. Rejected mismatched Mobius/RUSaCis account creation pairings.
+- Added driver/schema/BCrypt, mixed-driver and idempotent pending retry regressions. No migrations, public themes, account themes, modules or VDS update-agent changes. RUSaCis Java LoginServer compatibility must be confirmed with a real test account prior to production rollout.
+
 ## 0.47.38 — Navigation footer and icon polish (2026-10-14)
 
 - Custom footer links now use the same typography, spacing and standard anchor styling as built-in footer entries in both public themes; removed pill-style social button treatment from these links.

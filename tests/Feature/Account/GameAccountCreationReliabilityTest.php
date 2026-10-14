@@ -84,6 +84,48 @@ class GameAccountCreationReliabilityTest extends TestCase
         $this->assertCount(1, $this->gateway->created);
     }
 
+    public function test_retry_keeps_the_first_prepared_credential_for_salted_passwords(): void
+    {
+        $user = User::factory()->create(['email' => 'salted@example.com']);
+        [, $gameServer] = $this->freshMobiusServerPair();
+        $saltedGateway = new class extends FakeGameAccountGateway
+        {
+            public int $prepareCalls = 0;
+
+            public function prepareAccount(\App\Models\LoginServer $loginServer, string $login, string $password, string $email): \App\Support\GameAccounts\PreparedGameAccount
+            {
+                $this->prepareCalls++;
+
+                return new \App\Support\GameAccounts\PreparedGameAccount(
+                    $login,
+                    password_hash($password, PASSWORD_BCRYPT),
+                    $email,
+                );
+            }
+        };
+        $this->app->instance(GameAccountGateway::class, $saltedGateway);
+        $saltedGateway->failCreateAfterWrite = true;
+        $saltedGateway->failInspectAfterCreate = true;
+
+        $this->actingAs($user)->post('/account/game-accounts', $this->payload($gameServer->id, 'Salted01'))
+            ->assertRedirect(public_route('game-accounts.index'));
+
+        $account = UserGameAccount::query()->firstOrFail();
+        $originalProof = $account->creation_credential;
+        $this->assertNotNull($originalProof);
+        $this->assertSame(1, $saltedGateway->prepareCalls);
+
+        $saltedGateway->failCreateAfterWrite = false;
+        $saltedGateway->failInspectAfterCreate = false;
+        $this->actingAs($user)->post('/account/game-accounts', $this->payload($gameServer->id, 'Salted01'))
+            ->assertRedirect();
+
+        $this->assertSame(1, $saltedGateway->prepareCalls);
+        $this->assertSame(UserGameAccount::STATUS_ACTIVE, $account->fresh()->creation_status);
+        $this->assertCount(1, $saltedGateway->created);
+        $this->assertSame($originalProof, $saltedGateway->created[0]['password']);
+    }
+
     public function test_matching_pre_existing_account_is_not_claimed_without_a_cms_write_attempt(): void
     {
         $user = User::factory()->create(['email' => 'owner@example.com']);

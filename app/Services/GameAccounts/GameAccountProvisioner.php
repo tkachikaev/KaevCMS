@@ -36,15 +36,14 @@ final class GameAccountProvisioner
     ): UserGameAccount {
         $login = trim($login);
         $normalizedLogin = Str::lower($login);
-        $prepared = $this->gateway->prepareAccount($login, $password, $email);
-
-        /** @var array{0: UserGameAccount, 1: bool} $reservation */
+        /** @var array{0: UserGameAccount, 1: bool, 2: PreparedGameAccount|null} $reservation */
         $reservation = DB::transaction(function () use (
             $user,
             $gameServer,
             $login,
             $normalizedLogin,
-            $prepared,
+            $password,
+            $email,
             $maximumAccounts,
         ): array {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
@@ -70,12 +69,16 @@ final class GameAccountProvisioner
                     throw new GameAccountCreationException(GameAccountCreationFailure::LinkConflict, $existing);
                 }
 
-                return [$existing, false];
+                // A pending operation must retain its original BCrypt hash
+                // as the recovery proof; never generate a fresh salted hash.
+                return [$existing, false, null];
             }
 
             if ($this->quota->reached($lockedUser, $maximumAccounts)) {
                 throw new GameAccountCreationException(GameAccountCreationFailure::LimitReached);
             }
+
+            $prepared = $this->gateway->prepareAccount($lockedLoginServer, $login, $password, $email);
 
             $account = new UserGameAccount;
             $account->forceFill([
@@ -97,9 +100,9 @@ final class GameAccountProvisioner
                 'creation_completed_at' => null,
             ])->save();
 
-            return [$account, true];
+            return [$account, true, $prepared];
         }, 3);
-        [$account, $created] = $reservation;
+        [$account, $created, $prepared] = $reservation;
 
         if ($account->isActive()) {
             return $account;
@@ -107,7 +110,7 @@ final class GameAccountProvisioner
 
         return $this->provision(
             account: $account,
-            replacement: $prepared,
+            replacement: $created ? $prepared : null,
             allowWrite: true,
             firstAttempt: $created,
             actor: $user,
