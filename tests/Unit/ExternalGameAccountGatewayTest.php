@@ -39,7 +39,7 @@ class ExternalGameAccountGatewayTest extends TestCase
         $this->assertNotSame($first->credential, $second->credential);
     }
 
-    public function test_it_supports_only_the_canonical_mobius_game_driver(): void
+    public function test_it_supports_canonical_mobius_and_matched_rusacis_game_drivers(): void
     {
         $gateway = app(ExternalGameAccountGateway::class);
         $loginServer = new LoginServer(['driver' => 'l2j_mobius']);
@@ -57,6 +57,13 @@ class ExternalGameAccountGatewayTest extends TestCase
         $this->assertTrue($gateway->supportsGameServer($supported));
         $this->assertFalse($gateway->supportsGameServer($legacyIdentifier));
         $this->assertFalse($gateway->supportsGameServer($invalidMixed));
+
+        $rusacisGame = new GameServer(['driver' => 'rusacis']);
+        $rusacisGame->setRelation('loginServer', $rusacisLogin);
+        $this->assertTrue($gateway->supportsGameServer($rusacisGame));
+
+        $rusacisGame->setRelation('loginServer', $loginServer);
+        $this->assertFalse($gateway->supportsGameServer($rusacisGame));
     }
 
     public function test_it_prepares_a_normalized_driver_proof_without_plaintext_password(): void

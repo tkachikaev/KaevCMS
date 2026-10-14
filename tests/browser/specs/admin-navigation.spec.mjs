@@ -875,3 +875,22 @@ test('navigation editor creates a header and footer link, then disables it', asy
     await page.locator('[data-page-delete-dialog]').getByRole('button', { name: 'Да, удалить' }).click();
     await expect(row).toHaveCount(0);
 });
+
+
+test('RUSaCis GameServer is selectable as a ready driver', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/game-server');
+
+    const edit = page.locator('[wire\:click^="edit("]').first();
+    await expect(edit).toBeVisible();
+    await edit.click();
+
+    const enableConnection = page.locator('input[wire\:model\.live="connectionEnabled"]');
+    if (!(await enableConnection.isChecked())) {
+        await enableConnection.check({ force: true });
+    }
+
+    const driver = page.locator('#live_game_driver');
+    await expect(driver).toBeVisible();
+    await expect(driver.locator('option[value="rusacis"]')).toHaveText('RUSaCis');
+    await expect(driver.locator('option[value="l2j_mobius"]')).toHaveText('L2J Mobius');
+});

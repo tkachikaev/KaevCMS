@@ -1679,6 +1679,7 @@
     "Run this command once through SSH, then reload this page. Manual CLI updates remain available without the agent.": "Один раз выполните эту команду через SSH, затем обновите страницу. Ручное обновление через CLI доступно и без агента.",
     "Running": "Работает",
     "Runtime error": "Ошибка загрузки",
+    "RUSaCis GameServer with separate Interlude schema and character statistics.": "RUSaCis GameServer с отдельной схемой Interlude и статистикой персонажей.",
     "RUSaCis LoginServer with BCrypt password hashing.": "RUSaCis LoginServer с хешированием паролей BCrypt.",
     "RUSaCis driver placeholder. Schema support will be added later.": "Заглушка драйвера RUSaCis. Поддержка таблиц будет добавлена позже.",
     "Russian and English are included with KaevCMS. Additional packs are discovered in the lang directory.": "Русский и английский входят в KaevCMS. Дополнительные пакеты автоматически обнаруживаются в каталоге lang.",

@@ -1,3 +1,14 @@
+## 0.47.40 RC - 2026-10-14
+
+### Added
+
+- Implemented a separate RUSaCis GameServer driver with required `characters`/`clan_data` schema validation and optional `heroes`/`castle` capabilities. Mobius GameServer and LoginServer code paths remain unchanged.
+- Added RUSaCis character listings for linked accounts (including `obj_Id`, nullable `deletetime`, classes, clan, online state and hero flags), level/PvP/PK/play-time rankings, active heroes, castle owners and the online player counter.
+- Integrated RUSaCis with existing public statistics, admin external database diagnostics, monitoring and account directory. Driver pairings remain restricted to matching RUSaCis LoginServer/GameServer.
+- Left RUSaCis character rescue disabled: SQL column existence alone does not confirm `lastAccess` time units and safe movement semantics. No writes to `items`/`items_delayed` or changes to `kaev_reward_queue`.
+- Added schema, filtering, capability, account mapping and mixed-driver PHPUnit regressions plus a browser driver-option regression. No migrations, bundled theme/module changes or dependency updates.
+- RC requires live RUSaCis GameServer verification and user Windows quality/browser gates before being considered stable.
+
 ## 0.47.39 - 2026-10-14
 
 ### Added

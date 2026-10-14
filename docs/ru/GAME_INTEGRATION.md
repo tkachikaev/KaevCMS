@@ -59,3 +59,7 @@ public/uploads/game-assets/items/common/{icon_key}.webp
 ```
 
 Общие иконки предметов размещаются в `items/common`, а переопределения конкретного сервера — в `items/servers/{server_id}`. Аватары персонажей общие для всех хроник и используют `characters/common/{race}/{gender}/{archetype}.webp`; серверные переопределения размещаются в `characters/servers/{server_id}`. Старый `public/game-assets` и разбиение аватаров по хроникам больше не используются.
+
+## RUSaCis GameServer — 0.47.40 RC
+
+Отдельная схема RUSaCis: персонажи, онлайн, рейтинги по уровню/PvP/PK/времени, активные герои и владельцы замков. Учтены `characters.obj_Id`, `heroes.char_id` и `deletetime IS NULL`. Возврат в город отключён до подтверждения единиц времени `lastAccess` на реальном GameServer. Выдача наград по-прежнему только через нейтральную `kaev_reward_queue`.

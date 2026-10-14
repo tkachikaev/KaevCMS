@@ -3,6 +3,7 @@
 namespace App\Services\Servers;
 
 use App\Services\GameWorld\MobiusGameSchemaInspector;
+use App\Services\GameWorld\RusacisGameSchemaInspector;
 
 final class ServerDriverRegistry
 {
@@ -127,14 +128,23 @@ final class ServerDriverRegistry
                 ],
                 'requirements' => MobiusGameSchemaInspector::requirements(),
             ],
-            'rusacis' => [
+            self::RUSACIS_DRIVER => [
                 'label' => 'RUSaCis',
-                'description' => __('RUSaCis driver placeholder. Schema support will be added later.'),
-                'ready' => false,
+                'description' => __('RUSaCis GameServer with separate Interlude schema and character statistics.'),
+                'ready' => true,
                 'service_port' => 7777,
-                'capabilities' => [],
-                'optional_capabilities' => [],
-                'requirements' => [],
+                'online_count' => [
+                    'table' => 'characters',
+                    'column' => 'online',
+                    'value' => 1,
+                ],
+                'statistics' => ['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'],
+                'capabilities' => ['level', 'pvp', 'pk', 'play_time'],
+                'optional_capabilities' => [
+                    'heroes' => 'heroes',
+                    'castle' => 'castles',
+                ],
+                'requirements' => RusacisGameSchemaInspector::requirements(),
             ],
         ];
     }

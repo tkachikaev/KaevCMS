@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release enables first-stage RUSaCis LoginServer support with BCrypt and safe account creation recovery.'
+Write-Host 'This release adds RUSaCis GameServer character listings, rankings, heroes, castles and schema checks.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

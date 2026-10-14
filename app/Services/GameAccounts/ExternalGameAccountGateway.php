@@ -6,6 +6,7 @@ use App\Contracts\GameAccountGateway;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
+use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\Servers\MySqlSessionQueryTimeout;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\ExternalGameAccountState;
@@ -30,6 +31,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
         private readonly MySqlSessionQueryTimeout $queryTimeout,
         private readonly ServerDriverRegistry $drivers,
         private readonly MobiusGameSchemaInspector $schemas,
+        private readonly GameWorldDriverResolver $worldDrivers,
     ) {}
 
     public function supportsLoginServer(LoginServer $loginServer): bool
@@ -43,8 +45,15 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function supportsGameServer(GameServer $gameServer): bool
     {
+        if (! $gameServer->loginServer instanceof LoginServer) {
+            return false;
+        }
+
+        if ($gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER) {
+            return $gameServer->loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER;
+        }
+
         return $gameServer->driver === ServerDriverRegistry::MOBIUS_DRIVER
-            && $gameServer->loginServer instanceof LoginServer
             && in_array($gameServer->loginServer->driver, [
                 ServerDriverRegistry::MOBIUS_DRIVER,
                 ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
@@ -181,6 +190,34 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function characters(GameServer $gameServer, string $login): array
     {
+        if ($gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER) {
+            if (! $this->supportsGameServer($gameServer)) {
+                throw new RuntimeException('The selected GameServer driver does not support characters.');
+            }
+
+            $rows = $this->worldDrivers->resolve($gameServer)->charactersForAccount($gameServer, $login);
+
+            return array_map(static fn (array $row): array => [
+                'id' => (int) ($row['id'] ?? 0),
+                'name' => (string) ($row['name'] ?? ''),
+                'level' => (int) ($row['level'] ?? 0),
+                'class_id' => (int) ($row['class_id'] ?? 0),
+                'race' => (int) ($row['race'] ?? 0),
+                'gender' => (int) ($row['gender'] ?? 0),
+                'title' => trim((string) ($row['title'] ?? '')) ?: null,
+                'online' => (int) ($row['online'] ?? 0) === 1,
+                'clan' => trim((string) ($row['clan_name'] ?? '')) ?: null,
+                'last_access' => max(0, (int) ($row['last_seen_at_ms'] ?? 0)),
+                'play_time_seconds' => max(0, (int) ($row['play_time_seconds'] ?? 0)),
+                'pvp_kills' => max(0, (int) ($row['pvp_kills'] ?? 0)),
+                'pk_kills' => max(0, (int) ($row['pk_kills'] ?? 0)),
+                'reputation' => (int) ($row['reputation'] ?? 0),
+                'noble' => (int) ($row['noble'] ?? 0) === 1,
+                'hero' => (int) ($row['hero'] ?? 0) === 1,
+                'created_at' => null,
+            ], array_slice($rows, 0, $this->characterLimit()));
+        }
+
         $limit = $this->characterLimit();
         $createdAtColumn = $this->characterCreatedAtColumn($gameServer);
 
