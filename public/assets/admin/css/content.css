@@ -332,22 +332,24 @@
 .rich-editor-dialog {
     width: min(520px, calc(100vw - 32px));
     padding: 0;
-    border: 0;
-    border-radius: 12px;
-    color: #1f2937;
+    max-height: calc(100dvh - 32px);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-card);
+    background: var(--admin-surface);
+    color: var(--admin-text);
     box-shadow: 0 24px 70px rgba(15,23,42,.3);
 }
-.rich-editor-dialog::backdrop { background: rgba(15,23,42,.56); }
-.rich-editor-dialog form { display: grid; gap: 10px; padding: 22px; }
-.rich-editor-dialog h3 { margin: 0 0 6px; font-size: 18px; }
+.rich-editor-dialog::backdrop { background: rgba(15,23,42,.56); backdrop-filter: blur(2px); }
+.rich-editor-dialog-content { display: grid; gap: 20px; padding: 24px; }
+.rich-editor-dialog h3 { margin: 0; color: var(--admin-text); font-size: 18px; line-height: 1.4; letter-spacing: -.012em; }
 .rich-editor-dialog label,
-.rich-editor-dialog label > span { color: #374151; font-weight: 700; }
+.rich-editor-dialog label > span { color: var(--admin-text); font-weight: 700; }
 .rich-editor-dialog input,
 .rich-editor-dialog select { width: 100%; }
 .rich-editor-dialog small { color: var(--muted); }
 .rich-editor-dialog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
 .rich-editor-dialog-grid label { display: grid; gap: 7px; }
-.rich-editor-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.rich-editor-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding-top: 18px; border-top: 1px solid var(--admin-border); }
 .rich-editor-has-fullscreen { overflow: hidden; }
 .rich-editor.is-fullscreen {
     position: fixed;

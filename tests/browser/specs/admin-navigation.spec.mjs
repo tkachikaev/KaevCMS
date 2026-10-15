@@ -408,8 +408,10 @@ test('module foundation is available from the administrator sidebar', async ({ p
 
     await expect(page).toHaveURL(/\/admin\/modules$/);
     await expect(page.getByRole('heading', { name: 'Модули' }).first()).toBeVisible();
-    await expect(page.getByText('Жизненный цикл модулей')).toBeVisible();
-    await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toBeVisible();
+    await expect(page.getByText('Расширения, обнаруженные в каталоге modules.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Жизненный цикл модулей')).toHaveCount(0);
+    await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toHaveCount(0);
+    await expect(page.getByText(/Включайте только доверенные модули/)).toHaveCount(0);
 
     const moduleCatalog = page.getByTestId('module-catalog');
     await expect(moduleCatalog).toHaveAttribute('data-layout', 'single-column');

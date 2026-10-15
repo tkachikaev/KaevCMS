@@ -1,3 +1,12 @@
+## 0.47.47 - 2026-10-15
+
+### Fixed
+
+- Restored content editor dialog padding after nested forms were replaced by div wrappers. Link and image dialogs now use shared administration fields, primary action buttons and theme-aware surfaces, with bounded height on small screens. News and page editors share the fix.
+- Added real-browser regressions for desktop light and mobile dark dialog layout, focus, safe link application, unsafe URL rejection and cancellation.
+- Updated module catalog browser assertions to verify the introductory text removed in 0.47.46 stays absent.
+- No migrations, dependency or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
 ## 0.47.46 - 2026-10-15
 
 ### Changed
