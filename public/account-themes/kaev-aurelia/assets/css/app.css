@@ -760,18 +760,39 @@ body.account-body {
 .account-hero h1 { max-width: 620px; font-size: clamp(38px, 4vw, 62px); line-height: 1.03; }
 .account-hero p { max-width: 560px; color: var(--account-ink-soft); font-size: 16px; }
 .account-hero-portrait { display: none; }
-.account-button { border-radius: 999px; letter-spacing: .07em; text-transform: uppercase; }
-.account-button.primary {
-    border-color: var(--account-text);
-    background: var(--account-text);
-    color: #fffdf8;
-    box-shadow: 0 12px 28px rgba(38,48,42,.16);
+.account-button {
+    border-radius: 999px;
+    font-family: var(--account-serif);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    transition: transform .2s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
 }
-.account-button.primary:hover { border-color: var(--account-gold-dark); background: var(--account-gold-dark); color: #fffdf8; }
+.account-button:focus-visible { outline: 2px solid #775220; outline-offset: 4px; }
+.account-button.primary {
+    border-color: #ad8344;
+    background: linear-gradient(135deg, #e4c483 0%, #cda65f 48%, #b88b43 100%);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(45,33,13,.45);
+    box-shadow: inset 0 1px 0 rgba(255,250,229,.65), inset 0 -1px 0 rgba(119,82,32,.15), 0 5px 18px rgba(184,143,70,.22);
+}
+.account-button.primary:hover:not(:disabled) {
+    border-color: #b48a48;
+    background: linear-gradient(135deg, #edcf93 0%, #d9b572 48%, #c4994d 100%);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,252,237,.8), inset 0 -1px 0 rgba(119,82,32,.12), 0 7px 24px rgba(184,143,70,.32);
+}
 .account-button.secondary,
-.account-button.ghost { border-color: rgba(83,99,87,.22); background: rgba(255,253,247,.68); color: var(--account-text); }
-.account-button.secondary:hover,
-.account-button.ghost:hover { border-color: var(--account-gold-dark); background: #fffdf8; color: var(--account-gold-dark); }
+.account-button.ghost { border-color: rgba(173,131,68,.55); background: rgba(255,253,248,.72); color: #7d5921; box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
+.account-button.secondary:hover:not(:disabled),
+.account-button.ghost:hover:not(:disabled) { border-color: #ad8344; background: #fffdf7; color: #553a12; box-shadow: 0 5px 18px rgba(184,143,70,.13); }
+.account-button:disabled { transform: none; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) {
+    .account-button { transition: none; }
+    .account-button:hover { transform: none; }
+}
 
 .account-metrics article,
 .account-section,
@@ -1049,7 +1070,6 @@ html.account-is-navigating::before {
     font-size: 12px;
     line-height: 1.2;
     letter-spacing: .055em;
-    box-shadow: 0 8px 20px rgba(38, 48, 42, .12);
 }
 .account-button.account-button-create > span[aria-hidden="true"] {
     font-size: 15px;
