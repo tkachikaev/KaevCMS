@@ -5,6 +5,8 @@
     const readyAttribute = 'data-aurelia-ready';
     let monitorCleanup = null;
     let particlesCleanup = null;
+    let pageInitialized = false;
+    let pageEntryAnimation = null;
     let statisticsAbortController = null;
 
     const isPlainPrimaryClick = (event) => event.button === 0
@@ -410,6 +412,15 @@
 
         const content = document.querySelector('#public-content');
         content?.removeAttribute('aria-busy');
+        pageEntryAnimation?.cancel();
+        pageEntryAnimation = null;
+        if (pageInitialized && content && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            pageEntryAnimation = content.animate([{ opacity: 0 }, { opacity: 1 }], {
+                duration: 180,
+                easing: 'ease-out',
+            });
+        }
+        pageInitialized = true;
 
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove(navigationClass);
@@ -427,6 +438,8 @@
         monitorCleanup = null;
         particlesCleanup?.();
         particlesCleanup = null;
+        pageEntryAnimation?.cancel();
+        pageEntryAnimation = null;
     };
 
     document.addEventListener('click', (event) => {

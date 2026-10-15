@@ -34,7 +34,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
 body {
     margin: 0;
     min-width: 320px;
@@ -1290,6 +1290,7 @@ body.kaev-aurelia::before {
     top: 0;
     z-index: 100;
     isolation: isolate;
+    background: #fffdf9;
 }
 
 .kaev-aurelia .hero-art {
@@ -1308,24 +1309,12 @@ body.kaev-aurelia::before {
         url('../images/hero.webp') center top / cover no-repeat;
 }
 
-#public-content,
-.kaev-aurelia .site-footer {
-    transition: opacity .16s ease, transform .16s ease;
-}
-
 html.public-is-navigating {
     cursor: progress;
 }
 
-html.public-is-navigating #public-content,
-html.public-is-navigating .kaev-aurelia .site-footer {
-    opacity: .42;
-    transform: translateY(4px);
+html.public-is-navigating #public-content {
     pointer-events: none;
-}
-
-html.public-is-navigating .kaev-aurelia .site-header {
-    box-shadow: 0 12px 34px rgba(90, 67, 32, .08);
 }
 
 #nprogress .bar {
@@ -1366,18 +1355,6 @@ html.public-is-navigating .kaev-aurelia .site-header {
     .kaev-aurelia .page-hero,
     .kaev-aurelia .auth-page {
         background-position: center top;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    #public-content,
-    .kaev-aurelia .site-footer {
-        transition: none;
-    }
-
-    html.public-is-navigating #public-content,
-    html.public-is-navigating .kaev-aurelia .site-footer {
-        transform: none;
     }
 }
 
