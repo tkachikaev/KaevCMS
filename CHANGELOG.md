@@ -1,3 +1,15 @@
+## 0.47.43 - 2026-10-15
+
+### Added
+
+- Added SSH source synchronization for a separate development VM with initial synchronization, save polling, source-file deletion, PHP syntax checks, private staging and source/web-group permissions. Environment files, uploads, storage, migrations, dependency locks and release metadata are excluded.
+- Added Windows source-selection regressions, Linux apply/unsafe-path/runtime-protection regressions and bilingual live-development documentation. No additional dependencies are required.
+
+### Fixed
+
+- Included both themes and account-themes in VDS deployment-owner permission repairs. The agent installer verifies theme-manifest access for the deployment account and PHP-FPM before registration, preventing fallback-theme failures after switching from root to a regular deployment owner.
+- No migrations, dependency updates or bundled module/theme behavior changes. VDS agent contract remains 3; rerun the installer when changing the project owner. Cumulative baseline remains 0.42.4.
+
 ## 0.47.42 - 2026-10-15
 
 ### Fixed

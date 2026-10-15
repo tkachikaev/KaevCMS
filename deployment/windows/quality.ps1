@@ -38,6 +38,7 @@ try {
 
     & "$PSScriptRoot\tests\update-workflow.ps1"
     & "$PSScriptRoot\tests\composer-audit-policy.ps1"
+    & "$PSScriptRoot\tests\live-dev-policy.ps1"
 
     php deployment/windows/tests/account-theme-contract.php
     if ($LASTEXITCODE -ne 0) { throw "Account theme contract checks failed with exit code $LASTEXITCODE." }

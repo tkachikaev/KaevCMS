@@ -63,6 +63,25 @@ class VdsUpdateAgentTest extends TestCase
         }
     }
 
+    public function test_installer_repairs_every_bundled_theme_root_before_verifying_access(): void
+    {
+        $script = (string) file_get_contents(base_path('deployment/vds/install-update-agent.sh'));
+        $this->assertSame(1, preg_match('/for path in ([^;]+); do\s+repair_program_path/', $script, $matches));
+        $programRoots = preg_split('/\s+/', trim($matches[1]));
+        $manifests = array_merge(
+            glob(base_path('themes/*/theme.json')) ?: [],
+            glob(base_path('account-themes/*/theme.json')) ?: [],
+        );
+        $this->assertNotEmpty($manifests);
+        foreach ($manifests as $manifest) {
+            $root = basename(dirname($manifest, 2));
+            $this->assertContains($root, $programRoots, 'The installer must repair the theme root: '.$root);
+        }
+
+        $this->assertStringContainsString('runuser -u "${DEPLOY_USER}" -g "${DEPLOY_PRIMARY_GROUP}" -- test -r "${manifest}"', $script);
+        $this->assertStringContainsString('runuser -u "${WEB_USER}" -g "${WEB_GROUP}" -- test -r "${manifest}"', $script);
+    }
+
     public function test_legacy_v2_registration_requires_reinstallation(): void
     {
         $agent = $this->agent();

@@ -1,4 +1,4 @@
-# KaevCMS 0.47.42
+# KaevCMS 0.47.43
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.42 fixes Windows quality checks by preserving portable source line endings and correctly removing process environment variables in Windows PowerShell 5.1 and PowerShell 7. Dependencies and database schemas are unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
+Version 0.47.43 adds SSH live development for a separate test VM and repairs ownership of both theme trees when changing the VDS deployment user. Dependencies and database schemas are unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -89,7 +89,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 
 The full release intentionally excludes `vendor`. The generated shared-hosting package includes a production-only `vendor` prepared from the local lock file.
 
-See [Development and quality](docs/en/DEVELOPMENT.md).
+See [Development and quality](docs/en/DEVELOPMENT.md) and [Live development](docs/en/LIVE_DEVELOPMENT.md).
 
 ---
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.42 исправляет Windows quality: сохраняет переносимые переводы строк исходников и корректно удаляет переменные окружения процесса в Windows PowerShell 5.1 и PowerShell 7. Зависимости и схемы баз данных не изменены. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
+Версия 0.47.43 добавляет live dev по SSH для отдельной тестовой виртуалки и исправляет владельца обеих папок шаблонов при смене пользователя развёртывания VDS. Зависимости и схемы баз данных не изменены. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
 
 ### Требования
 
@@ -180,7 +180,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 Полный архив намеренно не содержит `vendor`. Shared-hosting пакет включает production-only `vendor`, подготовленный по локальному lock-файлу.
 
-См. [Разработка и проверки качества](docs/ru/DEVELOPMENT.md).
+См. [Разработка и проверки качества](docs/ru/DEVELOPMENT.md) и [Live dev](docs/ru/LIVE_DEVELOPMENT.md).
 
 ## License / Лицензия
 
