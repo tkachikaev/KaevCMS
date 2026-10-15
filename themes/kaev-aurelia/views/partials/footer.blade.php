@@ -1,7 +1,9 @@
 <footer class="site-footer footer-portal">
     <div class="container footer-statement">
         <a wire:navigate.hover class="footer-emblem" href="{{ public_route('home') }}" aria-label="{{ site_name() }} — {{ __('Go to the home page') }}">
-            <span aria-hidden="true">✦</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="m3 10 9-7 9 7M5 9v11h5v-6h4v6h5V9" />
+            </svg>
         </a>
         @if (site_description() !== '')
             <h2>{{ site_description() }}</h2>
