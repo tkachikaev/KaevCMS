@@ -808,23 +808,54 @@ body.kaev-aurelia::before {
 .kaev-aurelia .button {
     min-height: 48px;
     padding-inline: 24px;
-    border-radius: 10px;
+    border-radius: 999px;
     font-family: var(--serif);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: .02em;
     text-transform: none;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease;
+}
+.kaev-aurelia .button:hover { transform: translateY(-1px); }
+.kaev-aurelia .button:active { transform: translateY(0); }
+.kaev-aurelia .button:focus-visible {
+    outline: 2px solid #775220;
+    outline-offset: 4px;
 }
 .kaev-aurelia .button-gold {
-    border-color: #aa7f3d;
-    background: linear-gradient(135deg, #c39a58, #a87834);
-    color: #fffdf8;
-    box-shadow: 0 12px 28px rgba(157, 112, 47, .24);
+    border-color: #ad8344;
+    background: linear-gradient(135deg, #e4c483 0%, #cda65f 48%, #b88b43 100%);
+    color: #30210f;
+    text-shadow: 0 1px 0 rgba(255, 248, 226, .35);
+    box-shadow: inset 0 1px 0 rgba(255, 250, 229, .65), inset 0 -1px 0 rgba(119, 82, 32, .15), 0 5px 18px rgba(184, 143, 70, .22);
 }
-.kaev-aurelia .button-gold:hover { background: linear-gradient(135deg, #b98e4d, #93652c); }
+.kaev-aurelia .button-gold:hover {
+    border-color: #b48a48;
+    background: linear-gradient(135deg, #edcf93 0%, #d9b572 48%, #c4994d 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 252, 237, .8), inset 0 -1px 0 rgba(119, 82, 32, .12), 0 7px 24px rgba(184, 143, 70, .32);
+}
 .kaev-aurelia .button-ghost {
-    border-color: rgba(155, 117, 58, .34);
-    background: rgba(255, 253, 249, .72);
+    border-color: rgba(173, 131, 68, .55);
+    background: rgba(255, 253, 248, .72);
+    color: #775220;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+.kaev-aurelia .button-ghost:hover {
+    border-color: #ad8344;
+    background: #fffdf7;
+    color: #553a12;
+    box-shadow: inset 0 1px 0 #fff, 0 5px 18px rgba(184, 143, 70, .13);
+}
+.kaev-aurelia .button:disabled,
+.kaev-aurelia .button[aria-disabled="true"] {
+    transform: none;
+    opacity: .55;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+@media (prefers-reduced-motion: reduce) {
+    .kaev-aurelia .button { transition: none; }
+    .kaev-aurelia .button:hover { transform: none; }
 }
 .kaev-aurelia .button-large { min-width: 190px; min-height: 56px; }
 .kaev-aurelia .button span { margin-left: 12px; }
