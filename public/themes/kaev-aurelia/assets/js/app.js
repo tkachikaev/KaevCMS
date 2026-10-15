@@ -4,6 +4,7 @@
     const navigationClass = 'public-is-navigating';
     const readyAttribute = 'data-aurelia-ready';
     let monitorCleanup = null;
+    let particlesCleanup = null;
     let statisticsAbortController = null;
 
     const isPlainPrimaryClick = (event) => event.button === 0
@@ -255,9 +256,156 @@
         };
     };
 
+    const initializeHeroParticles = () => {
+        const canvas = document.querySelector('[data-hero-particles]');
+        const hero = canvas?.closest('.hero');
+        const context = canvas?.getContext('2d');
+        if (!hero || !context) {
+            return () => {};
+        }
+
+        const controller = new AbortController();
+        const { signal } = controller;
+        const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const palette = ['255,215,0', '245,158,11', '255,244,204', '212,175,55'];
+        let width = 0;
+        let height = 0;
+        let particles = [];
+        let frame = null;
+        let previousTime = null;
+        let disposed = false;
+        const initialBounds = hero.getBoundingClientRect();
+        let inView = initialBounds.bottom > 0 && initialBounds.top < window.innerHeight;
+        const mouse = { x: 0, y: 0, active: false };
+
+        const createParticle = (initial) => ({
+            x: Math.random() * width,
+            y: initial ? Math.random() * height : height + 10,
+            size: .8 + Math.random() * 2.2,
+            speed: .25 + Math.random() * .45,
+            sway: Math.random() * Math.PI * 2,
+            swaySpeed: .008 + Math.random() * .02,
+            amplitude: .4 + Math.random() * 1.2,
+            pulse: Math.random() * Math.PI * 2,
+            pulseSpeed: .01 + Math.random() * .03,
+            opacity: .25 + Math.random() * .65,
+            color: palette[Math.floor(Math.random() * palette.length)],
+            glint: Math.random() > .82,
+            spin: Math.random() * Math.PI,
+            spinSpeed: (Math.random() - .5) * .02,
+        });
+
+        const draw = (step) => {
+            context.clearRect(0, 0, width, height);
+            particles.forEach((particle) => {
+                if (step > 0) {
+                    particle.y -= particle.speed * step;
+                    particle.sway += particle.swaySpeed * step;
+                    particle.pulse += particle.pulseSpeed * step;
+                    particle.spin += particle.spinSpeed * step;
+                    particle.x += Math.sin(particle.sway) * particle.amplitude * step;
+                    if (mouse.active) {
+                        const dx = particle.x - mouse.x;
+                        const dy = particle.y - mouse.y;
+                        const distance = Math.hypot(dx, dy);
+                        if (distance > 1 && distance < 180) {
+                            const force = (1 - distance / 180) * 1.5 * step;
+                            particle.x += dx / distance * force * 1.8;
+                            particle.y -= force * .8;
+                        }
+                    }
+                    if (particle.y < -15 || particle.x < -30 || particle.x > width + 30) {
+                        Object.assign(particle, createParticle(false));
+                    }
+                }
+                const opacity = (.2 + .8 * (Math.sin(particle.pulse) + 1) / 2) * particle.opacity;
+                context.save();
+                context.translate(particle.x, particle.y);
+                context.fillStyle = `rgba(${particle.color},${opacity})`;
+                context.shadowColor = `rgba(${particle.color},${opacity * .9})`;
+                context.shadowBlur = particle.size * 5;
+                context.beginPath();
+                if (particle.glint) {
+                    context.rotate(particle.spin);
+                    const radius = particle.size * 2.8;
+                    context.moveTo(0, -radius);
+                    context.quadraticCurveTo(0, 0, radius, 0);
+                    context.quadraticCurveTo(0, 0, 0, radius);
+                    context.quadraticCurveTo(0, 0, -radius, 0);
+                    context.quadraticCurveTo(0, 0, 0, -radius);
+                } else {
+                    context.arc(0, 0, particle.size, 0, Math.PI * 2);
+                }
+                context.fill();
+                context.restore();
+            });
+        };
+
+        const stop = () => {
+            if (frame !== null) window.cancelAnimationFrame(frame);
+            frame = null;
+            previousTime = null;
+        };
+        const tick = (time) => {
+            frame = null;
+            if (disposed || motion.matches || document.hidden || !inView) return;
+            const step = previousTime === null ? 1 : Math.min((time - previousTime) / (1000 / 60), 2);
+            previousTime = time;
+            draw(step);
+            frame = window.requestAnimationFrame(tick);
+        };
+        const sync = () => {
+            stop();
+            if (disposed || document.hidden || !inView) return;
+            draw(0);
+            if (!motion.matches) frame = window.requestAnimationFrame(tick);
+        };
+        const resize = () => {
+            const bounds = hero.getBoundingClientRect();
+            width = bounds.width;
+            height = bounds.height;
+            const ratio = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.round(width * ratio);
+            canvas.height = Math.round(height * ratio);
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            const limit = width < 768 ? 40 : 95;
+            particles = Array.from({ length: Math.min(limit, Math.floor(width * height / 12000)) }, () => createParticle(true));
+            sync();
+        };
+
+        hero.addEventListener('pointermove', (event) => {
+            if (event.pointerType !== 'mouse') return;
+            const bounds = hero.getBoundingClientRect();
+            mouse.x = event.clientX - bounds.left;
+            mouse.y = event.clientY - bounds.top;
+            mouse.active = true;
+        }, { signal });
+        hero.addEventListener('pointerleave', () => { mouse.active = false; }, { signal });
+        document.addEventListener('visibilitychange', sync, { signal });
+        motion.addEventListener('change', sync, { signal });
+        const resizeObserver = new ResizeObserver(resize);
+        const visibilityObserver = new IntersectionObserver(([entry]) => {
+            inView = entry.isIntersecting;
+            sync();
+        });
+        resize();
+        resizeObserver.observe(hero);
+        visibilityObserver.observe(hero);
+
+        return () => {
+            disposed = true;
+            stop();
+            controller.abort();
+            resizeObserver.disconnect();
+            visibilityObserver.disconnect();
+        };
+    };
+
     const initializePage = () => {
         monitorCleanup?.();
         monitorCleanup = initializeServerMonitor();
+        particlesCleanup?.();
+        particlesCleanup = initializeHeroParticles();
         initializeHeader();
 
         const content = document.querySelector('#public-content');
@@ -277,6 +425,8 @@
     const cleanupPage = () => {
         monitorCleanup?.();
         monitorCleanup = null;
+        particlesCleanup?.();
+        particlesCleanup = null;
     };
 
     document.addEventListener('click', (event) => {

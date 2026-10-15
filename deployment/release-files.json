@@ -425,6 +425,7 @@
     "tests/browser/run.mjs",
     "tests/browser/specs/admin-form-system.spec.mjs",
     "tests/browser/specs/admin-navigation.spec.mjs",
+    "tests/browser/specs/aurelia-particles.spec.mjs",
     "tests/browser/specs/content-editor.spec.mjs",
     "tests/browser/specs/dashboard-storage.spec.mjs",
     "tests/browser/specs/notification-settings.spec.mjs",

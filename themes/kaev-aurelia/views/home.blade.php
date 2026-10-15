@@ -31,6 +31,7 @@
 <section class="hero">
     <div class="hero-art" aria-hidden="true"></div>
     <div class="hero-light" aria-hidden="true"></div>
+    <canvas class="hero-particles" data-hero-particles aria-hidden="true"></canvas>
     <div class="container hero-content">
         <div class="hero-copy-block">
             <p class="eyebrow">{{ __('CLASSIC WORLD · YOUR LEGEND') }}</p>
