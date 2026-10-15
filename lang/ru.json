@@ -773,7 +773,7 @@
     "Expired record cleanup": "Очистка устаревших записей",
     "Expired security logs cleaned": "Устаревшие журналы безопасности очищены",
     "Expired: :count": "Устарело: :count",
-    "Extensions discovered in the modules directory. Only trusted modules should be enabled.": "Расширения, обнаруженные в каталоге modules. Включайте только доверенные модули.",
+    "Extensions discovered in the modules directory.": "Расширения, обнаруженные в каталоге modules.",
     "Failed": "Ошибка",
     "Failed jobs": "Ошибки очереди",
     "Failed jobs to delete: :count.": "Неудачных заданий к удалению: :count.",

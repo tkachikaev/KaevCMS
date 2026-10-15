@@ -580,5 +580,8 @@
     "core/deployment/windows/tests/live-dev-policy.ps1",
     "core/docs/en/LIVE_DEVELOPMENT.md",
     "core/docs/ru/LIVE_DEVELOPMENT.md"
+  ],
+  "0.47.46": [
+    "core/deployment/windows/apply-0.47.45.ps1"
   ]
 }

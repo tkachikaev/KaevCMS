@@ -1,3 +1,10 @@
+## 0.47.46 - 2026-10-15
+
+### Changed
+
+- Removed the module lifecycle information block and the trusted-module sentence from the module catalog heading in Russian and English. Module operations, migrations and validation are unchanged.
+- No dependency or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
 ## 0.47.45 - 2026-10-15
 
 ### Changed

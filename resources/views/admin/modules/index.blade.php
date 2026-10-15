@@ -1,7 +1,7 @@
 @extends('admin.layouts.panel')
 
 @section('title', __('Modules'))
-@section('description', __('Extensions discovered in the modules directory. Only trusted modules should be enabled.'))
+@section('description', __('Extensions discovered in the modules directory.'))
 
 @section('content')
 <div class="admin-overview content-toolbar modules-toolbar">
@@ -9,11 +9,6 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('Enabled') }}</span><strong>{{ $enabledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('Problems') }}</span><strong>{{ $problemCount }}</strong></div>
     <p class="admin-overview-copy">{{ __('Modules execute trusted PHP code after activation. Copy modules to the modules directory only from sources you trust.') }}</p>
-</div>
-
-<div class="notice notice-info module-foundation-notice">
-    <strong>{{ __('Module lifecycle') }}</strong>
-    <span>{{ __('KaevCMS validates module manifests and applies declared database migrations before loading module code. Disabling a module preserves its database data.') }}</span>
 </div>
 
 @if ($modules === [])

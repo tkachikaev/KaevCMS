@@ -773,7 +773,7 @@
     "Expired record cleanup": "Expired record cleanup",
     "Expired security logs cleaned": "Expired security logs cleaned",
     "Expired: :count": "Expired: :count",
-    "Extensions discovered in the modules directory. Only trusted modules should be enabled.": "Extensions discovered in the modules directory. Only trusted modules should be enabled.",
+    "Extensions discovered in the modules directory.": "Extensions discovered in the modules directory.",
     "Failed": "Failed",
     "Failed jobs": "Failed jobs",
     "Failed jobs to delete: :count.": "Failed jobs to delete: :count.",
