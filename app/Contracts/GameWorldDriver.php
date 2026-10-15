@@ -19,5 +19,5 @@ interface GameWorldDriver
     public function castleOwners(GameServer $server): array;
 
     /** @return list<array<string,mixed>> */
-    public function charactersForAccount(GameServer $server, string $accountName): array;
+    public function charactersForAccount(GameServer $server, string $accountName, int $limit = 100): array;
 }

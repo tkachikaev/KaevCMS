@@ -115,30 +115,35 @@
     </div>
 
     <dialog class="rich-editor-dialog" data-editor-link-dialog aria-labelledby="{{ $editorId }}-link-title">
-        <div data-editor-link-dialog-content>
+        <div class="rich-editor-dialog-content" data-editor-link-dialog-content>
             <h3 id="{{ $editorId }}-link-title">{{ __('Add or edit link') }}</h3>
-            <label for="{{ $editorId }}-link-url">{{ __('Link URL') }}</label>
-            <input id="{{ $editorId }}-link-url" data-editor-link-url type="text" inputmode="url" maxlength="2048" placeholder="https://example.com">
-            <small>{{ __('Use https://, mailto:, an anchor or a relative website path.') }}</small>
+            <div class="admin-field">
+                <label class="admin-field-label" for="{{ $editorId }}-link-url">{{ __('Link URL') }}</label>
+                <input id="{{ $editorId }}-link-url" data-editor-link-url type="text" inputmode="url" maxlength="2048" placeholder="https://example.com" aria-describedby="{{ $editorId }}-link-help">
+                <small class="admin-field-help" id="{{ $editorId }}-link-help">{{ __('Use https://, mailto:, an anchor or a relative website path.') }}</small>
+            </div>
             <div class="rich-editor-dialog-actions">
                 <button type="button" class="button button-secondary" data-editor-dialog-cancel>{{ __('Cancel') }}</button>
-                <button type="button" class="button" data-editor-link-apply>{{ __('Apply') }}</button>
+                <button type="button" class="button button-primary" data-editor-link-apply>{{ __('Apply') }}</button>
             </div>
         </div>
     </dialog>
 
     <dialog class="rich-editor-dialog" data-editor-image-dialog aria-labelledby="{{ $editorId }}-image-title">
-        <div data-editor-image-dialog-content>
+        <div class="rich-editor-dialog-content" data-editor-image-dialog-content>
             <h3 id="{{ $editorId }}-image-title">{{ __('Image settings') }}</h3>
-            <label for="{{ $editorId }}-image-alt">{{ __('Image description') }}</label>
-            <input id="{{ $editorId }}-image-alt" data-editor-image-alt type="text" maxlength="255">
-            <small>{{ __('Describe the image for visitors who cannot see it.') }}</small>
-
-            <label for="{{ $editorId }}-image-caption">{{ __('Image caption') }}</label>
-            <input id="{{ $editorId }}-image-caption" data-editor-image-caption type="text" maxlength="500">
+            <div class="admin-field">
+                <label class="admin-field-label" for="{{ $editorId }}-image-alt">{{ __('Image description') }}</label>
+                <input id="{{ $editorId }}-image-alt" data-editor-image-alt type="text" maxlength="255" aria-describedby="{{ $editorId }}-image-help">
+                <small class="admin-field-help" id="{{ $editorId }}-image-help">{{ __('Describe the image for visitors who cannot see it.') }}</small>
+            </div>
+            <div class="admin-field">
+                <label class="admin-field-label" for="{{ $editorId }}-image-caption">{{ __('Image caption') }}</label>
+                <input id="{{ $editorId }}-image-caption" data-editor-image-caption type="text" maxlength="500">
+            </div>
 
             <div class="rich-editor-dialog-grid">
-                <label>
+                <label class="admin-field">
                     <span>{{ __('Alignment') }}</span>
                     <select data-editor-image-align>
                         <option value="left">{{ __('Align left') }}</option>
@@ -146,7 +151,7 @@
                         <option value="right">{{ __('Align right') }}</option>
                     </select>
                 </label>
-                <label>
+                <label class="admin-field">
                     <span>{{ __('Image size') }}</span>
                     <select data-editor-image-size>
                         <option value="narrow">{{ __('Narrow') }}</option>
@@ -159,7 +164,7 @@
 
             <div class="rich-editor-dialog-actions">
                 <button type="button" class="button button-secondary" data-editor-dialog-cancel>{{ __('Cancel') }}</button>
-                <button type="button" class="button" data-editor-image-apply>{{ __('Apply') }}</button>
+                <button type="button" class="button button-primary" data-editor-image-apply>{{ __('Apply') }}</button>
             </div>
         </div>
     </dialog>

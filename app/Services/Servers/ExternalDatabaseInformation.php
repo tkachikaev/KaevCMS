@@ -306,6 +306,7 @@ final class ExternalDatabaseInformation
             'mobius_interlude_plus' => (string) __('external_databases.profile.mobius_interlude_plus'),
             'mobius_legacy' => (string) __('external_databases.profile.mobius_legacy'),
             'mobius_modern' => (string) __('external_databases.profile.mobius_modern'),
+            'rusacis_interlude' => (string) __('external_databases.profile.rusacis_interlude'),
             'unknown' => (string) __('external_databases.profile.unknown'),
             default => null,
         };

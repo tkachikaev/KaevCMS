@@ -29,8 +29,7 @@
                 </div>
             </label>
             <div class="account-form-note">
-                <span aria-hidden="true">i</span>
-                <p>{{ __('module-promo-codes::messages.inventory_note') }}</p>
+                {{ __('module-promo-codes::messages.inventory_note') }}
             </div>
             <div class="account-form-actions">
                 <button class="account-button primary" type="submit">{{ __('module-promo-codes::messages.activate') }}</button>

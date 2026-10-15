@@ -234,12 +234,18 @@ class GameAccountController extends Controller
         return GameServer::query()
             ->with(['loginServer', 'translations'])
             ->whereNotNull('login_server_id')
-            ->where('driver', ServerDriverRegistry::MOBIUS_DRIVER)
+            ->whereIn('driver', [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
             ->filter(fn (GameServer $server): bool => $server->connectionConfigured()
                 && $server->loginServer instanceof LoginServer
-                && $this->gateway->supportsLoginServer($server->loginServer));
+                && $this->gateway->supportsLoginServer($server->loginServer)
+                && ($server->driver === ServerDriverRegistry::RUSACIS_DRIVER
+                    ? $server->loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER
+                    : in_array($server->loginServer->driver, [
+                        ServerDriverRegistry::MOBIUS_DRIVER,
+                        ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
+                    ], true)));
     }
 }

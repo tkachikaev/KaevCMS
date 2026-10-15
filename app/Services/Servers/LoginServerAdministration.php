@@ -6,6 +6,7 @@ use App\Models\LoginServer;
 use App\Services\AuditLogger;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 final class LoginServerAdministration
@@ -75,8 +76,17 @@ final class LoginServerAdministration
             unset($payload['database_password']);
         }
 
-        $server->update($payload);
-        $server->refresh();
+        $server = DB::transaction(function () use ($server, $payload): LoginServer {
+            $locked = LoginServer::query()->lockForUpdate()->findOrFail($server->id);
+            if ($locked->driver !== $payload['driver'] && $locked->userGameAccounts()->exists()) {
+                throw ValidationException::withMessages([
+                    'driver' => __('Create a separate LoginServer connection to change the driver while game accounts are linked.'),
+                ]);
+            }
+            $locked->update($payload);
+
+            return $locked;
+        });
         $this->verifyStoredConnection($server);
         $server->refresh();
 

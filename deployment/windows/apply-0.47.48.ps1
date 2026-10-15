@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$SkipTests
 )
 
@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'This release applies verified audit hardening for administrator profile access, image storage reuse, non-interactive recovery output, and explicit empty inventory pagination.'
+Write-Host 'This release refreshes Aurelia presentation, navigation and player account typography.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

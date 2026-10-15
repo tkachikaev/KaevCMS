@@ -232,7 +232,7 @@ repair_project_permissions() {
     chmod 2750 "${PROJECT_ROOT}"
 
     local path
-    for path in app config database deployment docs lang modules resources routes tests vendor; do
+    for path in .github app config database deployment docs integrations lang modules resources routes tests themes account-themes vendor; do
         repair_program_path "${PROJECT_ROOT}/${path}"
     done
 
@@ -274,6 +274,17 @@ repair_project_permissions() {
 }
 
 verify_web_access() {
+    local manifest
+    for manifest in "${PROJECT_ROOT}"/themes/*/theme.json "${PROJECT_ROOT}"/account-themes/*/theme.json; do
+        [[ -f "${manifest}" ]] || continue
+        runuser -u "${DEPLOY_USER}" -g "${DEPLOY_PRIMARY_GROUP}" -- test -r "${manifest}" \
+            || fail "Deployment owner ${DEPLOY_USER} cannot read a theme manifest. Re-run the installer to repair theme permissions."
+        if [[ -n "${WEB_USER}" ]]; then
+            runuser -u "${WEB_USER}" -g "${WEB_GROUP}" -- test -r "${manifest}" \
+                || fail "PHP-FPM user ${WEB_USER} cannot read a theme manifest."
+        fi
+    done
+
     [[ -n "${WEB_USER}" ]] || return 0
     runuser -u "${WEB_USER}" -g "${WEB_GROUP}" -- test -x "${PROJECT_ROOT}" || fail "PHP-FPM user ${WEB_USER} cannot enter the project directory."
     runuser -u "${WEB_USER}" -g "${WEB_GROUP}" -- test -r "${ARTISAN}" || fail "PHP-FPM user ${WEB_USER} cannot read application files."

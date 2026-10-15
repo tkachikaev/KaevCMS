@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\CmsSettings;
 use App\Services\GameWorld\GameStatistics;
+use App\Services\Navigation\NavigationLinks;
 use App\Services\Pages\PageNavigation;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
@@ -35,22 +36,26 @@ class ThemeServiceProvider extends ServiceProvider
         ));
     }
 
-    public function boot(ThemeManager $themes, AccountThemeManager $accountThemes, PageNavigation $pages): void
+    public function boot(ThemeManager $themes, AccountThemeManager $accountThemes, PageNavigation $pages, NavigationLinks $navigation): void
     {
         $themes->boot();
         $accountThemes->boot();
         view()->share('activeTheme', $themes->manifest());
         view()->share('activeAccountTheme', $accountThemes->manifest());
 
-        view()->composer('theme::partials.header', function ($view) use ($pages): void {
+        view()->composer('theme::partials.header', function ($view) use ($pages, $navigation): void {
             $view->with([
                 'headerPages' => $pages->header(),
+                'headerCustomLinks' => $navigation->header(),
                 'statisticsNavigationAvailable' => app(GameStatistics::class)->navigationAvailable(),
             ]);
         });
 
-        view()->composer('theme::partials.footer', function ($view) use ($pages): void {
-            $view->with('footerPages', $pages->footer());
+        view()->composer('theme::partials.footer', function ($view) use ($pages, $navigation): void {
+            $view->with([
+                'footerPages' => $pages->footer(),
+                'footerCustomLinks' => $navigation->footer(),
+            ]);
         });
     }
 }

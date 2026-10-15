@@ -73,6 +73,7 @@ return [
     'profile' => [
         'mobius_interlude_plus' => 'Mobius LoginServer — Interlude and newer',
         'mobius_legacy' => 'Mobius legacy',
+        'rusacis_interlude' => 'RUSaCis Interlude',
         'mobius_modern' => 'Mobius modern',
         'unknown' => 'Unknown profile',
     ],

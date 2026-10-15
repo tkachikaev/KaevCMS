@@ -1,3 +1,96 @@
+## 0.47.48 - 2026-10-15
+
+### Changed
+
+- Refined Aurelia buttons, typography and footer, added locally hosted fonts and floating golden hero particles with reduced-motion support. The footer preserves navigation and account actions; its home shortcut now uses a house icon. Simplified the home news heading.
+- Stabilized the public header when navigating between pages of different heights and limited transition animation to page content.
+- Unified the Aurelia account typography scale across pages and modules, aligned account action buttons with the public theme, and simplified the server-bound promo reward hint in Russian and English.
+- Updated bundled public Aurelia to 1.0.12, account Aurelia to 1.6.7 and Promo Codes to 1.4.2. Added particle, navigation and footer regressions during this release cycle.
+- No migrations or dependency changes. Cumulative baseline remains 0.42.4. Local live-preview tooling remains outside release artifacts.
+
+## 0.47.47 - 2026-10-15
+
+### Fixed
+
+- Restored content editor dialog padding after nested forms were replaced by div wrappers. Link and image dialogs now use shared administration fields, primary action buttons and theme-aware surfaces, with bounded height on small screens. News and page editors share the fix.
+- Added real-browser regressions for desktop light and mobile dark dialog layout, focus, safe link application, unsafe URL rejection and cancellation.
+- Updated module catalog browser assertions to verify the introductory text removed in 0.47.46 stays absent.
+- No migrations, dependency or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
+## 0.47.46 - 2026-10-15
+
+### Changed
+
+- Removed the module lifecycle information block and the trusted-module sentence from the module catalog heading in Russian and English. Module operations, migrations and validation are unchanged.
+- No dependency or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
+## 0.47.45 - 2026-10-15
+
+### Changed
+
+- Removed SSH source-synchronization scripts, their documentation and dedicated CI checks. Local preview setup stays outside release artifacts.
+- Preserved Windows quality fixes and all VDS deployment-owner and theme permission repairs. No application, migration, dependency or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
+## 0.47.44 - 2026-10-15
+
+### Fixed
+
+- Completed VDS deployment-owner permission repairs for integrations and .github. Switching from root to a regular deployment owner no longer leaves these cumulative-update targets unwritable.
+- Added a regression deriving required code roots from release-files.json, in addition to theme-manifest access checks, so future required source trees cannot silently be omitted.
+- No migrations, dependency or bundled module/theme behavior changes. VDS agent contract remains 3; cumulative baseline remains 0.42.4.
+
+## 0.47.43 - 2026-10-15
+
+### Added
+
+- Added SSH source synchronization for a separate development VM with initial synchronization, save polling, source-file deletion, PHP syntax checks, private staging and source/web-group permissions. Environment files, uploads, storage, migrations, dependency locks and release metadata are excluded.
+- Added Windows source-selection regressions, Linux apply/unsafe-path/runtime-protection regressions and bilingual live-development documentation. No additional dependencies are required.
+
+### Fixed
+
+- Included both themes and account-themes in VDS deployment-owner permission repairs. The agent installer verifies theme-manifest access for the deployment account and PHP-FPM before registration, preventing fallback-theme failures after switching from root to a regular deployment owner.
+- No migrations, dependency updates or bundled module/theme behavior changes. VDS agent contract remains 3; rerun the installer when changing the project owner. Cumulative baseline remains 0.42.4.
+
+## 0.47.42 - 2026-10-15
+
+### Fixed
+
+- Preserved LF line endings for composer.lock, CSS, JavaScript, shell scripts and PHPStan configuration in Git checkouts. Windows autocrlf no longer changes dependency fingerprints or breaks multiline administration stylesheet contracts; PowerShell scripts retain CRLF.
+- Removed process environment variables using an explicit null string so Windows PowerShell 5.1 and PowerShell 7 share the same cleanup behavior on newer .NET runtimes. Added regressions for null, empty and repeated removal and restoration of an initially absent Composer network policy.
+- Added a release-source line-ending regression and a Windows CI matrix covering both PowerShell editions. Ignored generated release, PHPStan and isolated browser-test outputs.
+- No migrations, dependency updates, bundled module/theme behavior changes or VDS update-agent contract changes. Cumulative baseline remains 0.42.4.
+
+## 0.47.41 - 2026-10-15
+
+### Fixed
+
+- Corrected RUSaCis castle capabilities for the actual SQL table without a name column; castle names now come from the driver-owned ID catalogue with RU/EN labels.
+- Derived character hero status from current played/active Olympiad records and unexpired herountil, and excluded previous-period heroes from public statistics. Applied cabinet character limits inside SQL queries.
+- Split Mobius and RUSaCis LoginServer operations behind a common driver contract, preserving their password algorithms and SQL schemas. Rejected incompatible persisted credentials before external access, prevented driver changes with linked accounts and revalidated driver pairings after locking registration servers.
+- Added original RUSaCis SQL fixtures and regressions for account operations, hero periods, temporary hero expiry, castle ownership, query limits and driver changes. Corrected stale driver expectations, semantic navigation assertions and browser interactions with accessible controls without weakening checks.
+- No database migrations, Composer/npm dependency changes or game database schema modifications. Cumulative baseline remains 0.42.4. Actual RUSaCis BCrypt interoperability was verified against the supplied JAR; game-client login and live server smoke testing remain required before declaring the integration stable.
+
+## 0.47.40 RC - 2026-10-14
+
+### Added
+
+- Implemented a separate RUSaCis GameServer driver with required `characters`/`clan_data` schema validation and optional `heroes`/`castle` capabilities. Mobius GameServer and LoginServer code paths remain unchanged.
+- Added RUSaCis character listings for linked accounts (including `obj_Id`, nullable `deletetime`, classes, clan, online state and hero flags), level/PvP/PK/play-time rankings, active heroes, castle owners and the online player counter.
+- Integrated RUSaCis with existing public statistics, admin external database diagnostics, monitoring and account directory. Driver pairings remain restricted to matching RUSaCis LoginServer/GameServer.
+- Left RUSaCis character rescue disabled: SQL column existence alone does not confirm `lastAccess` time units and safe movement semantics. No writes to `items`/`items_delayed` or changes to `kaev_reward_queue`.
+- Added schema, filtering, capability, account mapping and mixed-driver PHPUnit regressions plus a browser driver-option regression. No migrations, bundled theme/module changes or dependency updates.
+- RC requires live RUSaCis GameServer verification and user Windows quality/browser gates before being considered stable.
+
+## 0.47.39 - 2026-10-14
+
+### Added
+
+- Enabled RUSaCis LoginServer schema checks for accounts(login, password, last_active, access_level, last_server) with account lookup, creation, and password change capabilities.
+- Introduced RUSaCis BCrypt $2a$ password encoding while retaining the original Mobius SHA-1 + Base64 encoding and login/account schema handling without changes.
+- Preserved encrypted pending account proof across retries rather than regenerating a new salted hash; inserted the proof only after locking the real LoginServer driver. RUSaCis lacks the external email column, which is still stored only in KaevCMS.
+- Made RUSaCis GameServer entries available as a registration target when linked to RUSaCis LoginServer; GameServer characters, ratings and rescue remain disabled until the next stage. Rejected mismatched Mobius/RUSaCis account creation pairings.
+- Added driver/schema/BCrypt, mixed-driver and idempotent pending retry regressions. No migrations, public themes, account themes, modules or VDS update-agent changes. RUSaCis Java LoginServer compatibility must be confirmed with a real test account prior to production rollout.
+
 ## 0.47.38 — Navigation footer and icon polish (2026-10-14)
 
 - Custom footer links now use the same typography, spacing and standard anchor styling as built-in footer entries in both public themes; removed pill-style social button treatment from these links.

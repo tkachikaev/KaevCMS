@@ -552,5 +552,42 @@
   ],
   "0.47.38": [
     "core/deployment/windows/apply-0.47.37.ps1"
+  ],
+  "0.47.39": [
+    "core/deployment/windows/apply-0.47.38.ps1"
+  ],
+  "0.47.40": [
+    "core/deployment/windows/apply-0.47.39.ps1"
+  ],
+  "0.47.41": [
+    "core/deployment/windows/apply-0.47.40.ps1"
+  ],
+  "0.47.42": [
+    "core/deployment/windows/apply-0.47.41.ps1"
+  ],
+  "0.47.43": [
+    "core/deployment/windows/apply-0.47.42.ps1"
+  ],
+  "0.47.44": [
+    "core/deployment/windows/apply-0.47.43.ps1"
+  ],
+  "0.47.45": [
+    "core/deployment/development/live-dev-apply.sh",
+    "core/deployment/development/tests/live-dev-apply-regression.sh",
+    "core/deployment/windows/apply-0.47.44.ps1",
+    "core/deployment/windows/live-dev.ps1",
+    "core/deployment/windows/support/live-dev-support.ps1",
+    "core/deployment/windows/tests/live-dev-policy.ps1",
+    "core/docs/en/LIVE_DEVELOPMENT.md",
+    "core/docs/ru/LIVE_DEVELOPMENT.md"
+  ],
+  "0.47.46": [
+    "core/deployment/windows/apply-0.47.45.ps1"
+  ],
+  "0.47.47": [
+    "core/deployment/windows/apply-0.47.46.ps1"
+  ],
+  "0.47.48": [
+    "core/deployment/windows/apply-0.47.47.ps1"
   ]
 }

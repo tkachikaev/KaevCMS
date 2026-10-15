@@ -31,6 +31,7 @@
 <section class="hero">
     <div class="hero-art" aria-hidden="true"></div>
     <div class="hero-light" aria-hidden="true"></div>
+    <canvas class="hero-particles" data-hero-particles aria-hidden="true"></canvas>
     <div class="container hero-content">
         <div class="hero-copy-block">
             <p class="eyebrow">{{ __('CLASSIC WORLD · YOUR LEGEND') }}</p>
@@ -127,7 +128,7 @@
     <section class="home-section news-section">
         <div class="section-heading section-heading-ornamented">
             <span aria-hidden="true"></span>
-            <div><p class="eyebrow">{{ __('News') }}</p><h2>{{ __('Latest news') }}</h2></div>
+            <div><h2>{{ __('News') }}</h2></div>
             <span aria-hidden="true"></span>
         </div>
 

@@ -52,6 +52,11 @@ final class AdminRouteAccessRegistry
                 AdminPermission::ContentManage,
             ),
             $this->prefix(
+                'admin.navigation.',
+                AdminPermission::ContentView,
+                AdminPermission::ContentManage,
+            ),
+            $this->prefix(
                 'admin.pages.',
                 AdminPermission::ContentView,
                 AdminPermission::ContentManage,

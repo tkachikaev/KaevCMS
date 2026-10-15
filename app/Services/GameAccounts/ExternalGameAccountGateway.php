@@ -3,8 +3,10 @@
 namespace App\Services\GameAccounts;
 
 use App\Contracts\GameAccountGateway;
+use App\Contracts\LoginServerDriver;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\Servers\MySqlSessionQueryTimeout;
 use App\Services\Servers\ServerDriverRegistry;
@@ -25,123 +27,113 @@ use Throwable;
 final class ExternalGameAccountGateway implements GameAccountGateway
 {
     public function __construct(
-        private readonly MobiusPasswordEncoder $passwordEncoder,
+        private readonly LoginServerDriverResolver $loginDrivers,
         private readonly MySqlSessionQueryTimeout $queryTimeout,
         private readonly ServerDriverRegistry $drivers,
         private readonly MobiusGameSchemaInspector $schemas,
+        private readonly GameWorldDriverResolver $worldDrivers,
     ) {}
 
     public function supportsLoginServer(LoginServer $loginServer): bool
     {
-        return in_array($loginServer->driver, [
-            ServerDriverRegistry::MOBIUS_DRIVER,
-            ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
-        ], true);
+        return $this->loginDrivers->supports($loginServer->driver);
     }
 
     public function supportsGameServer(GameServer $gameServer): bool
     {
-        return $gameServer->driver === ServerDriverRegistry::MOBIUS_DRIVER
-            && $gameServer->loginServer instanceof LoginServer
-            && $this->supportsLoginServer($gameServer->loginServer);
+        return $gameServer->loginServer instanceof LoginServer
+            && $this->supportsLoginServer($gameServer->loginServer)
+            && $this->loginDrivers->resolve($gameServer->loginServer->driver)->supportsGameDriver((string) $gameServer->driver);
     }
 
-    public function prepareAccount(string $login, string $password, string $email): PreparedGameAccount
+    public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount
     {
         return new PreparedGameAccount(
             login: trim($login),
-            credential: $this->passwordEncoder->encode($password),
+            credential: $this->loginDrivers->resolve($loginServer->driver)->encodePassword($password),
             email: Str::lower(trim($email)),
         );
     }
 
-    public function inspectPreparedAccount(
-        LoginServer $loginServer,
-        PreparedGameAccount $account,
-    ): ExternalGameAccountState {
-        return $this->withLoginConnection(
-            $loginServer,
-            static function (Connection $database) use ($account): ExternalGameAccountState {
-                $stored = $database->table('accounts')
-                    ->where('login', $account->login)
-                    ->first(['password', 'email']);
+    public function inspectPreparedAccount(LoginServer $loginServer, PreparedGameAccount $account): ExternalGameAccountState
+    {
+        $driver = $this->preparedAccountDriver($loginServer, $account);
 
-                if ($stored === null) {
-                    return ExternalGameAccountState::Missing;
-                }
-
-                $password = is_scalar($stored->password ?? null) ? (string) $stored->password : '';
-                $email = is_scalar($stored->email ?? null)
-                    ? Str::lower(trim((string) $stored->email))
-                    : '';
-
-                return hash_equals($account->credential, $password) && hash_equals($account->email, $email)
-                    ? ExternalGameAccountState::Matching
-                    : ExternalGameAccountState::Conflict;
-            },
-        );
+        return $this->withLoginConnection($loginServer, fn (Connection $database): ExternalGameAccountState => $driver->inspect($database, $account));
     }
 
-    public function createPreparedAccount(
-        LoginServer $loginServer,
-        PreparedGameAccount $account,
-    ): ExternalGameAccountWriteResult {
-        return $this->withLoginConnection(
-            $loginServer,
-            function (Connection $database) use ($account): ExternalGameAccountWriteResult {
-                try {
-                    $database->table('accounts')->insert([
-                        'login' => $account->login,
-                        'password' => $account->credential,
-                        'email' => $account->email,
-                    ]);
-                } catch (QueryException $exception) {
-                    if ($this->isDuplicateKey($exception)) {
-                        return ExternalGameAccountWriteResult::AlreadyExists;
-                    }
+    public function createPreparedAccount(LoginServer $loginServer, PreparedGameAccount $account): ExternalGameAccountWriteResult
+    {
+        $driver = $this->preparedAccountDriver($loginServer, $account);
 
-                    throw $exception;
+        return $this->withLoginConnection($loginServer, function (Connection $database) use ($driver, $account): ExternalGameAccountWriteResult {
+            try {
+                $driver->create($database, $account);
+            } catch (QueryException $exception) {
+                if ($this->isDuplicateKey($exception)) {
+                    return ExternalGameAccountWriteResult::AlreadyExists;
                 }
+                throw $exception;
+            }
 
-                return ExternalGameAccountWriteResult::Created;
-            },
-        );
+            return ExternalGameAccountWriteResult::Created;
+        });
     }
 
     public function changePassword(LoginServer $loginServer, string $login, string $password): bool
     {
-        return $this->withLoginConnection(
-            $loginServer,
-            fn (Connection $database): bool => $database->table('accounts')
-                ->where('login', $login)
-                ->update(['password' => $this->passwordEncoder->encode($password)]) === 1,
-        );
+        $driver = $this->loginDrivers->resolve($loginServer->driver);
+
+        return $this->withLoginConnection($loginServer, fn (Connection $database): bool => $driver->changePassword($database, $login, $password));
     }
 
     public function accountSummary(LoginServer $loginServer, string $login): ?array
     {
-        return $this->withLoginConnection($loginServer, static function (Connection $database) use ($login): ?array {
-            $account = $database->table('accounts')
-                ->where('login', $login)
-                ->first(['login', 'created_time', 'lastactive', 'accessLevel']);
+        $driver = $this->loginDrivers->resolve($loginServer->driver);
 
-            if ($account === null) {
-                return null;
-            }
+        return $this->withLoginConnection($loginServer, fn (Connection $database): ?array => $driver->summary($database, $login));
+    }
 
-            return [
-                'login' => (string) $account->login,
-                'created_at' => is_scalar($account->created_time) ? (string) $account->created_time : null,
-                'last_active' => is_numeric($account->lastactive) ? (int) $account->lastactive : 0,
-                'status' => is_numeric($account->accessLevel) && (int) $account->accessLevel < 0
-                    ? 'blocked'
-                    : 'active',
-            ];
-        });
+    private function preparedAccountDriver(LoginServer $loginServer, PreparedGameAccount $account): LoginServerDriver
+    {
+        $driver = $this->loginDrivers->resolve($loginServer->driver);
+        if (! $driver->acceptsCredential($account->credential)) {
+            throw new RuntimeException('The prepared credential does not match the selected LoginServer driver.');
+        }
+
+        return $driver;
     }
 
     public function characters(GameServer $gameServer, string $login): array
     {
+        if ($gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER) {
+            if (! $this->supportsGameServer($gameServer)) {
+                throw new RuntimeException('The selected GameServer driver does not support characters.');
+            }
+
+            $rows = $this->worldDrivers->resolve($gameServer)->charactersForAccount($gameServer, $login, $this->characterLimit());
+
+            return array_map(static fn (array $row): array => [
+                'id' => (int) ($row['id'] ?? 0),
+                'name' => (string) ($row['name'] ?? ''),
+                'level' => (int) ($row['level'] ?? 0),
+                'class_id' => (int) ($row['class_id'] ?? 0),
+                'race' => (int) ($row['race'] ?? 0),
+                'gender' => (int) ($row['gender'] ?? 0),
+                'title' => trim((string) ($row['title'] ?? '')) ?: null,
+                'online' => (int) ($row['online'] ?? 0) === 1,
+                'clan' => trim((string) ($row['clan_name'] ?? '')) ?: null,
+                'last_access' => max(0, (int) ($row['last_seen_at_ms'] ?? 0)),
+                'play_time_seconds' => max(0, (int) ($row['play_time_seconds'] ?? 0)),
+                'pvp_kills' => max(0, (int) ($row['pvp_kills'] ?? 0)),
+                'pk_kills' => max(0, (int) ($row['pk_kills'] ?? 0)),
+                'reputation' => (int) ($row['reputation'] ?? 0),
+                'noble' => (int) ($row['noble'] ?? 0) === 1,
+                'hero' => (int) ($row['hero'] ?? 0) === 1,
+                'created_at' => null,
+            ], $rows);
+        }
+
         $limit = $this->characterLimit();
         $createdAtColumn = $this->characterCreatedAtColumn($gameServer);
 
