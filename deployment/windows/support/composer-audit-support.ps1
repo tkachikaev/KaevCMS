@@ -21,6 +21,18 @@ function Set-KaevCmsProcessEnvironmentVariable {
         [string] $Value
     )
 
+    # PowerShell converts a null string parameter to an empty string. Recent
+    # .NET runtimes preserve empty environment values, so pass an explicit null
+    # string to retain the same removal behavior as Windows PowerShell 5.1.
+    if ([string]::IsNullOrEmpty($Value)) {
+        [Environment]::SetEnvironmentVariable(
+            $Name,
+            [NullString]::Value,
+            [EnvironmentVariableTarget]::Process
+        )
+        return
+    }
+
     [Environment]::SetEnvironmentVariable(
         $Name,
         $Value,

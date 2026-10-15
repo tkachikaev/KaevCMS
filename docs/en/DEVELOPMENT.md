@@ -9,6 +9,10 @@
 
 The offline quality gate runs Windows Update, Composer policy, Web Installer, shared-hosting, Web Update, unified release-builder, Composer validation, Pint, PHPStan, PHPUnit, and route-cache checks. Browser quality uses dependencies prepared by `browser-setup.ps1` and runs Playwright.
 
+Windows quality supports Windows PowerShell 5.1 and PowerShell 7; CI checks both editions. An empty environment value means removal in the shared deployment helpers, including restoration of Composer network policy after an audit.
+
+The `.gitattributes` rules preserve LF for `composer.lock`, CSS, JavaScript, shell scripts and PHPStan configuration; PowerShell scripts use CRLF. This is part of reproducible release packaging: checksums compare actual bytes, so do not change `composer.lock` or its expected SHA256 merely to accommodate line-ending conversion in a local Git checkout.
+
 Do not weaken a regression to obtain a green result. Add tests for every bug fix, especially installation, updates, authentication, database boundaries, and external game-server failures.
 
 ## Release discipline

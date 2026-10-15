@@ -1,4 +1,4 @@
-# KaevCMS 0.47.41
+# KaevCMS 0.47.42
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.41 corrects RUSaCis castles and hero status using the supplied server schema, separates LoginServer implementations and blocks incompatible credential recovery. RUSaCis character rescue remains disabled. Live game-client verification is still required before production. Cumulative update baseline: 0.42.4.
+Version 0.47.42 fixes Windows quality checks by preserving portable source line endings and correctly removing process environment variables in Windows PowerShell 5.1 and PowerShell 7. Dependencies and database schemas are unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.41 исправляет замки и геройство RUSaCis по фактической структуре сервера, разделяет реализации LoginServer и блокирует восстановление с несовместимым хешем пароля. Спасение персонажей RUSaCis остаётся отключённым. Перед production требуется проверка входа игровым клиентом. База cumulative update — 0.42.4.
+Версия 0.47.42 исправляет Windows quality: сохраняет переносимые переводы строк исходников и корректно удаляет переменные окружения процесса в Windows PowerShell 5.1 и PowerShell 7. Зависимости и схемы баз данных не изменены. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
 
 ### Требования
 

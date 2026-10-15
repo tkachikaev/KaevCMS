@@ -103,6 +103,23 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
     }
 
+    public function test_dependency_lock_and_admin_styles_preserve_portable_line_endings(): void
+    {
+        $paths = ['composer.lock'];
+        foreach (glob(public_path('assets/admin/css/*.css')) ?: [] as $stylesheet) {
+            $paths[] = 'public/assets/admin/css/'.basename($stylesheet);
+        }
+
+        $this->assertGreaterThan(1, count($paths), 'Administration stylesheets must be shipped.');
+        foreach ($paths as $path) {
+            $this->assertStringNotContainsString(
+                "\r",
+                $this->readReleaseFile($path),
+                'Git checkouts must preserve LF for dependency fingerprints and stylesheet contracts: '.$path,
+            );
+        }
+    }
+
     public function test_phpstan_analyzes_every_bundled_module_source_directory(): void
     {
         $configuration = $this->normalized($this->readReleaseFile('phpstan.neon'));

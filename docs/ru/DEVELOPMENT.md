@@ -9,6 +9,10 @@
 
 Офлайн-проверка запускает регрессии Windows Update, сетевой политики Composer, Web Installer, shared-hosting, Web Update, единого release builder, Composer validation, Pint, PHPStan, PHPUnit и route cache. Browser quality использует зависимости, установленные через `browser-setup.ps1`, и запускает Playwright.
 
+Windows quality поддерживает Windows PowerShell 5.1 и PowerShell 7; CI проверяет оба варианта. Пустое значение переменной окружения в общих deployment-функциях означает её удаление, включая восстановление сетевой политики Composer после проверки.
+
+Правила `.gitattributes` сохраняют LF для `composer.lock`, CSS, JavaScript, shell-скриптов и PHPStan-конфигурации; PowerShell-скрипты используют CRLF. Это часть воспроизводимой сборки: контрольные суммы сравнивают фактические байты, поэтому не меняйте `composer.lock` или ожидаемый SHA256 только из-за преобразования переводов строк в локальной копии Git.
+
 Нельзя ослаблять регрессионный тест ради зелёного результата. Для каждого исправления добавляйте тест, особенно для установки, обновлений, аутентификации, границ баз данных и сбоев внешнего GameServer.
 
 ## Выпуск версии

@@ -1,3 +1,12 @@
+## 0.47.42 - 2026-10-15
+
+### Fixed
+
+- Preserved LF line endings for composer.lock, CSS, JavaScript, shell scripts and PHPStan configuration in Git checkouts. Windows autocrlf no longer changes dependency fingerprints or breaks multiline administration stylesheet contracts; PowerShell scripts retain CRLF.
+- Removed process environment variables using an explicit null string so Windows PowerShell 5.1 and PowerShell 7 share the same cleanup behavior on newer .NET runtimes. Added regressions for null, empty and repeated removal and restoration of an initially absent Composer network policy.
+- Added a release-source line-ending regression and a Windows CI matrix covering both PowerShell editions. Ignored generated release, PHPStan and isolated browser-test outputs.
+- No migrations, dependency updates, bundled module/theme behavior changes or VDS update-agent contract changes. Cumulative baseline remains 0.42.4.
+
 ## 0.47.41 - 2026-10-15
 
 ### Fixed
