@@ -82,6 +82,10 @@ final class WalletAppearanceSettingsTest extends TestCase
         $this->assertFileExists($this->uploadRoot.'/'.str_replace('/', DIRECTORY_SEPARATOR, $icon));
         $this->assertSame('5 дублонов', app(WalletAppearanceSettings::class)->label(5, 'ru'));
         $this->assertSame('2 doubloons', app(WalletAppearanceSettings::class)->label(2, 'en'));
+        foreach ([1 => '1 дублон', 2 => '2 дублона', 11 => '11 дублонов', 21 => '21 дублон', 22 => '22 дублона', 25 => '25 дублонов'] as $amount => $label) {
+            $this->assertSame($label, app(WalletAppearanceSettings::class)->label($amount, 'ru'));
+        }
+        $this->assertSame('1 doubloon', app(WalletAppearanceSettings::class)->label(1, 'en'));
         $this->assertDatabaseHas('audit_logs', ['action' => 'settings.wallet_appearance_updated']);
         $this->assertDatabaseCount('wallet_entries', 0);
     }
@@ -120,6 +124,28 @@ final class WalletAppearanceSettingsTest extends TestCase
                 ->assertSessionHasErrors('icon');
         }
         $this->assertDatabaseMissing('cms_settings', ['key' => 'wallet.appearance.symbol']);
+    }
+
+    public function test_one_megabyte_icon_is_accepted_but_one_byte_over_preserves_existing_settings(): void
+    {
+        $this->actingAs($this->admin('owner'), 'admin');
+        $file = $this->png('coin.png');
+        $png = file_get_contents($file->getPathname());
+        $this->assertIsString($png);
+        $limit = 1024 * 1024;
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+            'icon' => UploadedFile::fake()->createWithContent('limit.png', str_pad($png, $limit, "\0")),
+        ]))->assertRedirect()->assertSessionHasNoErrors();
+        $icon = (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value');
+        $this->assertFileExists($this->uploadRoot.'/'.$icon);
+
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+            'symbol' => 'CHANGED',
+            'icon' => UploadedFile::fake()->createWithContent('over-limit.png', str_pad($png, $limit + 1, "\0")),
+        ]))->assertSessionHasErrors('icon');
+        $this->assertSame($icon, CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value'));
+        $this->assertDatabaseHas('cms_settings', ['key' => 'wallet.appearance.symbol', 'value' => 'DBL']);
+        $this->assertFileExists($this->uploadRoot.'/'.$icon);
     }
 
     public function test_missing_grammatical_form_is_rejected_without_partial_saving(): void

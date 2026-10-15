@@ -19,5 +19,6 @@ interface WalletGateway
 
     public function changeBlockStatus(Admin $admin, User $recipient, bool $blocked, string $key, string $reason): WalletStatusEvent;
 
+    /** Authorized corrections may debit a blocked wallet without enabling player spending. */
     public function manualDebit(Admin $admin, User $recipient, int $amount, string $key, string $reason): WalletEntry;
 }

@@ -28,7 +28,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scrollbar-gutter: stable; }
+html { scrollbar-gutter: stable; background: #f4f1e8; }
 body { margin: 0; color: var(--account-text); font-size: 15px; line-height: 1.5; }
 body.account-body {
     min-height: 100vh;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $balance
  * @property bool $is_blocked
  * @property-read User $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, WalletEntry> $entries
+ * @property-read Collection<int, WalletEntry> $entries
  */
 class Wallet extends Model
 {

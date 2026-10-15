@@ -37,7 +37,7 @@ test('player character display mode persists after reload', async ({ page }) => 
     await expect(all).toHaveAttribute('aria-selected', 'true');
 });
 
-test('sidebar persists and wallet-aware topbar refreshes during account navigation and browser history', async ({ page }) => {
+test('sidebar persists during SPA navigation and account history fetches a fresh page', async ({ page }) => {
     await signIn(page);
 
     const sidebar = page.locator('[data-account-sidebar]');
@@ -61,12 +61,20 @@ test('sidebar persists and wallet-aware topbar refreshes during account navigati
     await expect(topbar).not.toHaveAttribute('data-persistence-probe', 'topbar-kept');
     await expect(page.locator('.account-topbar-wallet')).toBeVisible();
 
+    let response = page.waitForResponse((result) => result.request().isNavigationRequest()
+        && new URL(result.url()).pathname === '/account/game-accounts');
     await page.goBack();
     await expect(page).toHaveURL(/\/account\/game-accounts$/);
-    await expect(sidebar).toHaveAttribute('data-persistence-probe', 'sidebar-kept');
+    expect((await response).status()).toBe(200);
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).not.toHaveAttribute('data-persistence-probe', 'sidebar-kept');
 
+    // The newly loaded document has no old snapshot for the next history entry,
+    // so Livewire itself fetches that page instead of restoring cached HTML.
+    response = page.waitForResponse((result) => new URL(result.url()).pathname === '/account');
     await page.goBack();
     await expect(page).toHaveURL(/\/account$/);
+    expect((await response).status()).toBe(200);
     await expect(topbar).not.toHaveAttribute('data-persistence-probe', 'topbar-kept');
     await expect(page.locator('.account-topbar-wallet')).toBeVisible();
 });
@@ -321,4 +329,96 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
     await sidebar.getByRole('link', { name: 'Игровые аккаунты' }).click();
     await expect(page).toHaveURL(/\/account\/game-accounts$/);
     await expect(page.locator('html')).not.toHaveClass(/account-sidebar-open/);
+});
+
+test('Aurelia site and account transitions never paint unstyled SVG icons', async ({ page, context }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/login');
+    await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
+    await page.locator('#password').fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
+    await submitLogin({
+        page, postPath: '/admin/login', label: 'Aurelia transition administrator login',
+        submit: () => page.getByRole('button', { name: 'Войти в панель' }).click(),
+    });
+    await expect(page).toHaveURL(/\/admin$/);
+
+    const activate = async (section, slug) => {
+        await gotoWithLocalNetworkRetry(page, `/admin/${section}`);
+        const form = page.locator(`form[action$="/${section}/${slug}/activate"]`);
+        if (await form.count()) {
+            await form.getByRole('button').click();
+            await expect(form).toHaveCount(0);
+        }
+    };
+    await gotoWithLocalNetworkRetry(page, '/admin/themes');
+    const originalPublicTheme = await page.locator('.admin-overview-stat strong').first().innerText();
+    await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
+    const originalAccountTheme = await page.locator('.admin-overview-stat strong').first().innerText();
+    const player = await context.newPage();
+    try {
+        await activate('themes', 'kaev-aurelia');
+        await activate('account-themes', 'kaev-aurelia');
+        await signIn(player);
+        await player.route('**/account-themes/kaev-aurelia/assets/css/app.css*', async route => {
+            // Model the cold stylesheet load that previously exposed a large,
+            // black default SVG while Livewire had already swapped the body.
+            await new Promise(resolveDelay => setTimeout(resolveDelay, 350));
+            await route.continue();
+        });
+        await player.addInitScript(() => {
+            window.accountPaintSamples = [];
+            window.documentEntrySeen = false;
+            const sample = () => {
+                if (document.body?.getAnimations().length) window.documentEntrySeen = true;
+                const icon = document.querySelector('.account-nav svg');
+                if (icon && window.accountPaintSamples.length < 120) {
+                    const style = getComputedStyle(icon);
+                    window.accountPaintSamples.push({ fill: style.fill, width: icon.getBoundingClientRect().width });
+                }
+                requestAnimationFrame(sample);
+            };
+            requestAnimationFrame(sample);
+        });
+
+        for (const { width, reducedMotion } of [
+            { width: 1440, reducedMotion: 'no-preference' },
+            { width: 390, reducedMotion: 'reduce' },
+        ]) {
+            await player.setViewportSize({ width, height: 900 });
+            await player.emulateMedia({ reducedMotion });
+            await gotoWithLocalNetworkRetry(player, '/');
+            const entries = player.locator('a[href$="/account"]');
+            for (const entry of await entries.all()) {
+                expect(await entry.getAttribute('wire:navigate.hover')).toBeNull();
+                expect(await entry.getAttribute('wire:navigate')).toBeNull();
+            }
+            const response = player.waitForResponse(result => result.request().isNavigationRequest()
+                && new URL(result.url()).pathname === '/account');
+            await player.locator('.hero-actions a[href$="/account"]').click();
+            expect((await response).status()).toBe(200);
+            await expect(player).toHaveURL(/\/account$/);
+            await expect(player.locator('.account-nav svg').first()).toHaveCSS('fill', 'none');
+            await expect.poll(() => player.evaluate(() => window.accountPaintSamples.length)).toBeGreaterThan(0);
+            const samples = await player.evaluate(() => window.accountPaintSamples);
+            expect(samples.every(sample => sample.fill === 'none' && sample.width <= 32)).toBe(true);
+            expect(await player.evaluate(() => window.documentEntrySeen)).toBe(reducedMotion !== 'reduce');
+            await expect(player.locator('link[href*="themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(1);
+            await expect(player.locator('link[href*="/themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(0);
+
+            if (width < 900) {
+                await player.locator('[data-account-sidebar-toggle]').click();
+                await expect(player.locator('html')).toHaveClass(/account-sidebar-open/);
+            }
+            const homeResponse = player.waitForResponse(result => result.request().isNavigationRequest()
+                && new URL(result.url()).pathname === '/');
+            await player.getByRole('link', { name: 'Вернуться на сайт' }).click();
+            expect((await homeResponse).status()).toBe(200);
+            await expect(player.locator('#public-content')).toHaveCSS('opacity', '1');
+            await expect(player.locator('link[href*="account-themes/"]')).toHaveCount(0);
+            await expect.poll(() => player.evaluate(() => window.documentEntrySeen)).toBe(reducedMotion !== 'reduce');
+        }
+    } finally {
+        await activate('themes', originalPublicTheme);
+        await activate('account-themes', originalAccountTheme);
+        await player.close();
+    }
 });

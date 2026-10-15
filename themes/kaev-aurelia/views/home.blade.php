@@ -50,7 +50,7 @@
 
             <div class="hero-actions">
                 @auth
-                    <a wire:navigate.hover class="button button-gold button-large" href="{{ public_route('account') }}">{{ __('Personal account') }} <span aria-hidden="true">→</span></a>
+                    <a class="button button-gold button-large" href="{{ public_route('account') }}">{{ __('Personal account') }} <span aria-hidden="true">→</span></a>
                 @elseif (registration_available())
                     <a wire:navigate.hover class="button button-gold button-large" href="{{ public_route('register') }}">{{ __('Register') }} <span aria-hidden="true">→</span></a>
                 @else

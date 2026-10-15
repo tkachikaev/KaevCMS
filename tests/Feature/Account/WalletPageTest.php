@@ -5,6 +5,7 @@ namespace Tests\Feature\Account;
 use App\Models\User;
 use App\Services\CmsSettings;
 use App\Services\Wallet\WalletTransactionService;
+use App\Support\Themes\AccountThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -94,7 +95,7 @@ class WalletPageTest extends TestCase
         app(WalletTransactionService::class)->credit($owner, 75, 'manual', 'gift-2');
         foreach (['kaev-aurelia', 'luxury'] as $theme) {
             app(CmsSettings::class)->set('account_theme.active', $theme);
-            app(\App\Support\Themes\AccountThemeManager::class)->activate($theme);
+            app(AccountThemeManager::class)->activate($theme);
 
             $this->actingAs($owner)->get('/account')->assertOk()
                 ->assertSee('/account/wallet', false)

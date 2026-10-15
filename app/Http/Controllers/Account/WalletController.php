@@ -21,7 +21,7 @@ final class WalletController extends Controller
 
         $wallet = $user->wallet()->first(['id', 'user_id']);
         $entries = WalletEntry::query()
-            ->where('wallet_id', $wallet?->id ?? 0)
+            ->where('wallet_id', $wallet->id ?? 0)
             ->orderByDesc('id')
             ->paginate(20);
 

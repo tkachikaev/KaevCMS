@@ -10,7 +10,9 @@ use App\Models\User;
 use App\Models\WalletStatusEvent;
 use App\Services\AuditLogger;
 use App\Services\Wallet\WalletTransactionService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Mockery;
@@ -66,6 +68,10 @@ final class WalletStatusManagementTest extends TestCase
             'actor_admin_id' => $owner->id, 'was_blocked' => false, 'is_blocked' => true]);
         $this->assertDatabaseHas('wallet_status_events', ['actor_admin_id' => $admin->id,
             'was_blocked' => true, 'is_blocked' => false]);
+        $entry = $engine->debit($user, 10, 'shop', 'order-after-unlock');
+        $this->assertSame(40, $entry->balance_after);
+        $this->assertSame(40, $user->fresh()->wallet->balance);
+        $this->assertDatabaseCount('wallet_entries', 2);
         DB::table('audit_logs')->delete();
         $this->assertDatabaseCount('wallet_status_events', 2);
         $this->get(route('admin.wallets.show', $user))->assertOk()
@@ -93,6 +99,7 @@ final class WalletStatusManagementTest extends TestCase
 
     public function test_noop_is_not_logged_and_bad_input_is_rejected(): void
     {
+        $this->withoutMiddleware(ThrottleRequests::class);
         $user = User::factory()->create();
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
         $url = route('admin.wallets.status', $user);
@@ -103,6 +110,19 @@ final class WalletStatusManagementTest extends TestCase
         $this->post($url, $this->form(['confirm_status_change' => '0']))->assertSessionHasErrors('confirm_status_change');
         $this->post($url, $this->form(['operation_key' => 'not-a-uuid']))->assertSessionHasErrors('operation_key');
         $this->post($url, $this->form(['action' => 'unblock']))->assertSessionHasErrors('status_change');
+        $this->assertDatabaseCount('wallet_status_events', 0);
+    }
+
+    public function test_status_changes_are_rate_limited_without_changing_a_wallet(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        $url = route('admin.wallets.status', $user);
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->post($url, $this->form(['reason' => 'x']))->assertSessionHasErrors('reason');
+        }
+        $this->post($url, $this->form())->assertTooManyRequests();
+        $this->assertDatabaseCount('wallets', 0);
         $this->assertDatabaseCount('wallet_status_events', 0);
     }
 
@@ -142,7 +162,7 @@ final class WalletStatusManagementTest extends TestCase
         $real = Admin::factory()->create(['role' => AdminRole::Owner]);
         $other = Admin::factory()->create(['role' => AdminRole::Administrator]);
         $this->actingAs($real, 'admin');
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
         app(WalletGateway::class)->changeBlockStatus($other, $user, true, 'status:'.Str::uuid(), 'Test mismatch');
     }
 
@@ -159,7 +179,7 @@ final class WalletStatusManagementTest extends TestCase
     }
 
     /** @param array<string,string> $override
-     *  @return array<string,string>
+     * @return array<string,string>
      */
     private function form(array $override = []): array
     {

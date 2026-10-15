@@ -42,8 +42,9 @@ final class WalletTransactionService
         ?string $reference = null,
         ?string $reason = null,
         User|Admin|null $actor = null,
+        bool $allowBlockedManualDebit = false,
     ): WalletEntry {
-        return $this->apply($user, 'debit', $amount, $source, $sourceKey, $reference, $reason, $actor);
+        return $this->apply($user, 'debit', $amount, $source, $sourceKey, $reference, $reason, $actor, $allowBlockedManualDebit);
     }
 
     private function apply(
@@ -55,6 +56,7 @@ final class WalletTransactionService
         ?string $reference,
         ?string $reason,
         User|Admin|null $actor,
+        bool $allowBlockedManualDebit = false,
     ): WalletEntry {
         if (! $user->exists || (int) $user->getKey() <= 0) {
             throw new InvalidArgumentException('A persisted CMS user is required.');
@@ -77,6 +79,13 @@ final class WalletTransactionService
         if ($actor !== null && (! $actor->exists || (int) $actor->getKey() <= 0)) {
             throw new InvalidArgumentException('Wallet actor must exist.');
         }
+        // This is an internal policy switch, never an HTTP parameter. The gateway
+        // authorizes the administrator; a source name alone cannot bypass a freeze.
+        if ($allowBlockedManualDebit
+            && ($direction !== 'debit' || $source !== WalletSource::Manual->value
+                || ! $actor instanceof Admin || $reason === null)) {
+            throw new InvalidArgumentException('Blocked wallet adjustments require a manual debit, administrator and reason.');
+        }
 
         $userId = (int) $user->getKey();
         $actorUserId = $actor instanceof User ? (int) $actor->getKey() : null;
@@ -96,7 +105,7 @@ final class WalletTransactionService
         try {
             return DB::transaction(function () use (
                 $userId, $direction, $amount, $source, $sourceKey, $fingerprint,
-                $reference, $reason, $actorUserId, $actorAdminId,
+                $reference, $reason, $actorUserId, $actorAdminId, $allowBlockedManualDebit,
             ): WalletEntry {
                 // Serialize even the first wallet creation for newly registered users.
                 User::query()->whereKey($userId)->lockForUpdate()->firstOrFail();
@@ -143,7 +152,7 @@ final class WalletTransactionService
                 }
 
                 if ($direction === 'debit') {
-                    if ((bool) $wallet->is_blocked) {
+                    if ((bool) $wallet->is_blocked && ! $allowBlockedManualDebit) {
                         throw new WalletOperationException('wallet_blocked');
                     }
                     if ($amount > $balance) {

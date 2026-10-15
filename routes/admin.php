@@ -154,9 +154,9 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::get('/wallets', [AdminWalletController::class, 'index'])->name('wallets.index');
         Route::get('/wallets/{user}', [AdminWalletController::class, 'show'])->name('wallets.show');
         Route::post('/wallets/{user}/status', [AdminWalletController::class, 'changeStatus'])
-            ->middleware('throttle:6,1')->name('wallets.status');
+            ->middleware('throttle:admin-wallet-status')->name('wallets.status');
         Route::post('/wallets/{user}/adjust', [AdminWalletController::class, 'adjust'])
-            ->middleware('throttle:6,1')->name('wallets.adjust');
+            ->middleware('throttle:admin-wallet-adjust')->name('wallets.adjust');
 
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
@@ -189,7 +189,7 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::get('/settings/wallet-appearance', [AdminWalletAppearanceController::class, 'index'])
             ->name('settings.wallet-appearance');
         Route::put('/settings/wallet-appearance', [AdminWalletAppearanceController::class, 'update'])
-            ->middleware('throttle:10,1')->name('settings.wallet-appearance.update');
+            ->middleware('throttle:admin-wallet-appearance')->name('settings.wallet-appearance.update');
         Route::get('/settings/game-server', [AdminGameServerController::class, 'index'])->name('settings.game-server');
         Route::post('/settings/game-server/{gameServer}/connection', [AdminGameServerConnectionController::class, 'update'])
             ->middleware('throttle:10,1')

@@ -9,12 +9,12 @@
  * using independent database connections with overlapping transactions.
  */
 
-use App\Exceptions\WalletOperationException;
-use App\Models\User;
-use App\Models\Admin;
 use App\Auth\AdminRole;
-use App\Services\Wallet\WalletStatusService;
+use App\Exceptions\WalletOperationException;
+use App\Models\Admin;
+use App\Models\User;
 use App\Services\Wallet\WalletLedgerReconciler;
+use App\Services\Wallet\WalletStatusService;
 use App\Services\Wallet\WalletTransactionService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
@@ -159,7 +159,8 @@ $successfulDebits = 0;
 foreach ($workers as [$process, $pipes, $mode]) {
     $output = trim((string) stream_get_contents($pipes[1]));
     $error = trim((string) stream_get_contents($pipes[2]));
-    fclose($pipes[1]); fclose($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
     $exit = proc_close($process);
     if ($mode === 'block' && $exit === 0) {
         $blockCount++;

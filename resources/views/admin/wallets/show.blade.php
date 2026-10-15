@@ -11,7 +11,7 @@
 @if($canManageWallet)
     <section class="form-card">
         <h2>{{ __('Wallet spending restriction') }}</h2>
-        <p>{{ __('Blocking prevents all coin debits, including Shop, while incoming credits remain possible. Unlocking does not change the balance.') }}</p>
+        <p>{{ __('Blocking prevents player spending, including Shop. Incoming credits and authorized manual administrator adjustments remain possible. Unlocking does not change the balance.') }}</p>
         @if($errors->has('status_change'))<div class="notice notice-danger" role="alert">{{ $errors->first('status_change') }}</div>@endif
         <form action="{{ route('admin.wallets.status', $user) }}" method="POST" class="settings-form" data-testid="admin-wallet-status-form">
             @csrf

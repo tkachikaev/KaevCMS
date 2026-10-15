@@ -1,5 +1,6 @@
 (() => {
     const readyAttribute = 'data-account-navigation-ready';
+    let documentEntryPlayed = false;
 
     const closeMobileSidebar = () => {
         document.documentElement.classList.remove('account-sidebar-open');
@@ -231,6 +232,17 @@
     const finishNavigation = () => {
         initializeShell();
 
+        if (!documentEntryPlayed) {
+            documentEntryPlayed = true;
+            if (document.body.hasAttribute('data-account-document-entry')
+                && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.body.animate([{ opacity: .88 }, { opacity: 1 }], {
+                    duration: 160,
+                    easing: 'ease-out',
+                });
+            }
+        }
+
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove('account-is-navigating');
         });
@@ -305,7 +317,20 @@
         }
     });
 
-    document.addEventListener('livewire:navigate', beginNavigation);
+    document.addEventListener('livewire:navigate', (event) => {
+        const destination = event.detail?.url;
+        if (event.detail?.history && event.detail?.cached && destination instanceof URL
+            && destination.origin === window.location.origin
+            && /(?:^|\/)account(?:\/|$)/.test(destination.pathname)) {
+            // History snapshots contain old balances, status and private forms.
+            // Replace the current history entry so Back/Forward fetches current
+            // account state without adding an entry or looping through navigation.
+            event.preventDefault();
+            window.location.replace(destination.href);
+            return;
+        }
+        beginNavigation();
+    });
     document.addEventListener('livewire:navigated', finishNavigation);
 
     if (document.readyState === 'loading') {

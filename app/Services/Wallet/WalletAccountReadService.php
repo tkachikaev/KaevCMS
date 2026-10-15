@@ -16,7 +16,7 @@ final class WalletAccountReadService
         // Wallet is optional for old/new users until their first transaction.
         // Never insert a wallet row while rendering a page.
         $wallet = Wallet::query()->where('user_id', $user->getKey())->first(['id', 'balance', 'is_blocked']);
-        $balance = $wallet?->balance ?? 0;
+        $balance = $wallet->balance ?? 0;
         $icon = $this->appearance->values();
 
         return [
@@ -24,7 +24,7 @@ final class WalletAccountReadService
             'formatted' => number_format($balance, 0, '.', ' '),
             'label' => $this->appearance->label($balance),
             'icon_url' => $icon['icon_url'],
-            'blocked' => $wallet?->is_blocked ?? false,
+            'blocked' => $wallet->is_blocked ?? false,
         ];
     }
 }

@@ -46,6 +46,19 @@ class BrowserTestSeeder extends Seeder
         );
 
         $auditorEmail = (string) config('browser_tests.auditor.email');
+
+        // A separate authenticated administrator exercises wallet permissions
+        // without sharing the owner's per-minute adjustment limit.
+        Admin::query()->updateOrCreate(
+            ['email' => 'browser-wallet-administrator@example.test'],
+            [
+                'name' => 'Browser Wallet Administrator',
+                'password' => Hash::make($adminPassword),
+                'is_active' => true,
+                'role' => AdminRole::Administrator,
+                'locale' => 'ru',
+            ],
+        );
         $auditorPassword = (string) config('browser_tests.auditor.password');
 
         Admin::query()->updateOrCreate(

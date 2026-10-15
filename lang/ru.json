@@ -2704,7 +2704,7 @@
     "Zinc": "Цинковый",
     "ZIP support": "Поддержка ZIP",
     "Wallet spending restriction": "Ограничение операций кошелька",
-    "Blocking prevents all coin debits, including Shop, while incoming credits remain possible. Unlocking does not change the balance.": "Блокировка запрещает любые списания монет, включая магазин, но позволяет начисления. Снятие блокировки не меняет баланс.",
+    "Blocking prevents player spending, including Shop. Incoming credits and authorized manual administrator adjustments remain possible. Unlocking does not change the balance.": "Блокировка запрещает расходы игрока, включая покупки в магазине. Начисления и ручные корректировки администратором с соответствующими правами остаются доступны. Снятие блокировки не меняет баланс.",
     "Reason for wallet status change": "Причина изменения статуса кошелька",
     "I confirm changing the spending restriction for this wallet.": "Подтверждаю изменение ограничения расходования монет для этого кошелька.",
     "Unblock wallet": "Разблокировать кошелёк",
@@ -2715,5 +2715,6 @@
     "This status change key was already used for another operation.": "Этот ключ изменения статуса уже использовался для другой операции.",
     "Wallet balance verification failed. Status was not changed.": "Проверка баланса кошелька не пройдена. Статус не изменён.",
     "Wallet status change failed. No changes were applied.": "Не удалось изменить статус кошелька. Изменения не выполнены.",
-    "Wallet status updated.": "Статус кошелька изменён."
+    "Wallet status updated.": "Статус кошелька изменён.",
+    "Source": "Источник"
 }

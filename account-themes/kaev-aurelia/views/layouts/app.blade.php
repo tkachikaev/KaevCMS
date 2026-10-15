@@ -18,7 +18,7 @@
     @livewireStyles
     @stack('head')
 </head>
-<body class="account-body">
+<body class="account-body" data-account-document-entry>
 @php($accountOperation = session('account_operation'))
 <div class="account-page-grid" aria-hidden="true"></div>
 <div class="account-page-orbit" aria-hidden="true"></div>

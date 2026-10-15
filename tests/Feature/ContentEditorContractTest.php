@@ -23,7 +23,7 @@ class ContentEditorContractTest extends TestCase
             '@tiptap/extension-text-align',
             '@tiptap/starter-kit',
         ] as $dependency) {
-            $this->assertSame('3.29.2', $package['devDependencies'][$dependency] ?? null);
+            $this->assertSame('3.30.5', $package['devDependencies'][$dependency] ?? null);
         }
 
         $this->assertSame('0.28.1', $package['devDependencies']['esbuild'] ?? null);
@@ -52,7 +52,7 @@ class ContentEditorContractTest extends TestCase
         $this->assertStringNotContainsString('document.execCommand', $source);
         $this->assertStringContainsString("import { Editor, Mark, Node, mergeAttributes } from '@tiptap/core';", $source);
         $this->assertStringContainsString("node.type.name === 'table'", $source);
-        $this->assertStringContainsString('O.type.name==="table"', $bundle);
+        $this->assertStringContainsString('.type.name==="table"', $bundle);
         $this->assertStringContainsString("'amber'", $source);
         $this->assertStringContainsString("'fuchsia'", $source);
         $this->assertStringContainsString('"amber"', $bundle);

@@ -6,6 +6,7 @@
     let monitorCleanup = null;
     let particlesCleanup = null;
     let pageInitialized = false;
+    let initializedContent = null;
     let pageEntryAnimation = null;
     let statisticsAbortController = null;
 
@@ -404,13 +405,20 @@
     };
 
     const initializePage = () => {
+        const content = document.querySelector('#public-content');
+        // DOMContentLoaded and Livewire's initial navigated event describe the
+        // same document. Never fade already-painted content back to transparent.
+        if (content && content === initializedContent) {
+            content.removeAttribute('aria-busy');
+            document.documentElement.classList.remove(navigationClass);
+            return;
+        }
         monitorCleanup?.();
         monitorCleanup = initializeServerMonitor();
         particlesCleanup?.();
         particlesCleanup = initializeHeroParticles();
         initializeHeader();
 
-        const content = document.querySelector('#public-content');
         content?.removeAttribute('aria-busy');
         pageEntryAnimation?.cancel();
         pageEntryAnimation = null;
@@ -419,8 +427,16 @@
                 duration: 180,
                 easing: 'ease-out',
             });
+        } else if (!pageInitialized && content && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            // A document entry is deliberately subtle: never blank the screen
+            // while changing layouts or replay this on Livewire's bootstrap event.
+            document.body.animate([{ opacity: .88 }, { opacity: 1 }], {
+                duration: 160,
+                easing: 'ease-out',
+            });
         }
         pageInitialized = true;
+        initializedContent = content;
 
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove(navigationClass);
@@ -434,6 +450,7 @@
     };
 
     const cleanupPage = () => {
+        initializedContent = null;
         monitorCleanup?.();
         monitorCleanup = null;
         particlesCleanup?.();

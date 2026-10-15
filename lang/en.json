@@ -2704,7 +2704,7 @@
     "Zinc": "Zinc",
     "ZIP support": "ZIP support",
     "Wallet spending restriction": "Wallet spending restriction",
-    "Blocking prevents all coin debits, including Shop, while incoming credits remain possible. Unlocking does not change the balance.": "Blocking prevents all coin debits, including Shop, while incoming credits remain possible. Unlocking does not change the balance.",
+    "Blocking prevents player spending, including Shop. Incoming credits and authorized manual administrator adjustments remain possible. Unlocking does not change the balance.": "Blocking prevents player spending, including Shop. Incoming credits and authorized manual administrator adjustments remain possible. Unlocking does not change the balance.",
     "Reason for wallet status change": "Reason for wallet status change",
     "I confirm changing the spending restriction for this wallet.": "I confirm changing the spending restriction for this wallet.",
     "Unblock wallet": "Unblock wallet",
@@ -2715,5 +2715,6 @@
     "This status change key was already used for another operation.": "This status change key was already used for another operation.",
     "Wallet balance verification failed. Status was not changed.": "Wallet balance verification failed. Status was not changed.",
     "Wallet status change failed. No changes were applied.": "Wallet status change failed. No changes were applied.",
-    "Wallet status updated.": "Wallet status updated."
+    "Wallet status updated.": "Wallet status updated.",
+    "Source": "Source"
 }

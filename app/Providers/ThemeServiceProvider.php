@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Services\CmsSettings;
 use App\Services\GameWorld\GameStatistics;
 use App\Services\Navigation\NavigationLinks;
-use App\Models\User;
-use App\Services\Wallet\WalletAccountReadService;
 use App\Services\Pages\PageNavigation;
+use App\Services\Wallet\WalletAccountReadService;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
 use App\Support\Themes\ThemeValidator;

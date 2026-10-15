@@ -51,6 +51,8 @@ test('Aurelia fades in only new content and respects reduced motion', async ({ p
     await initialize(page);
     const entry = await page.evaluate(() => {
         document.dispatchEvent(new Event('livewire:navigating'));
+        const previous = document.querySelector('#public-content');
+        previous.replaceWith(previous.cloneNode(true));
         document.dispatchEvent(new Event('livewire:navigated'));
         const content = document.querySelector('#public-content');
         return {
@@ -67,9 +69,18 @@ test('Aurelia fades in only new content and respects reduced motion', async ({ p
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const reducedAnimations = await page.evaluate(() => {
         document.dispatchEvent(new Event('livewire:navigating'));
+        const previous = document.querySelector('#public-content');
+        previous.replaceWith(previous.cloneNode(true));
         document.dispatchEvent(new Event('livewire:navigated'));
         return document.querySelector('#public-content').getAnimations().length;
     });
     expect(reducedAnimations).toBe(0);
+    await expect(page.locator('#public-content')).toHaveCSS('opacity', '1');
+});
+
+test('Aurelia initial Livewire notification does not fade already painted content', async ({ page }) => {
+    await initialize(page);
+    await page.evaluate(() => document.dispatchEvent(new Event('livewire:navigated')));
+    expect(await page.locator('#public-content').evaluate(element => element.getAnimations().length)).toBe(0);
     await expect(page.locator('#public-content')).toHaveCSS('opacity', '1');
 });

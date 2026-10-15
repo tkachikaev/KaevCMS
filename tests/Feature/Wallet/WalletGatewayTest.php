@@ -4,6 +4,7 @@ namespace Tests\Feature\Wallet;
 
 use App\Auth\AdminRole;
 use App\Contracts\WalletGateway;
+use App\Exceptions\WalletOperationException;
 use App\Models\Admin;
 use App\Models\User;
 use App\Services\Wallet\WalletSource;
@@ -124,6 +125,61 @@ class WalletGatewayTest extends TestCase
             // Expected.
         }
         $this->assertDatabaseCount('wallet_entries', 2);
+    }
+
+    public function test_manual_correction_does_not_allow_shop_spending_from_a_blocked_wallet(): void
+    {
+        $user = User::factory()->create();
+        $admin = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $this->actingAs($admin, 'admin');
+        $gateway = app(WalletGateway::class);
+        $gateway->manualCredit($admin, $user, 100, 'initial', 'Initial grant');
+        $gateway->changeBlockStatus($admin, $user, true, 'dispute', 'Payment dispute');
+        $gateway->manualDebit($admin, $user, 40, 'reversal', 'Confirmed payment reversal');
+        $this->actingAs($user, 'web');
+        config()->set('wallet.enabled_sources.shop', true);
+
+        try {
+            $gateway->debitForOwner($user, 1, 'shop-order', 'Shop order');
+            $this->fail('A manual correction must never enable player spending.');
+        } catch (WalletOperationException $exception) {
+            $this->assertSame('wallet_blocked', $exception->reason);
+        }
+        $this->assertTrue($user->fresh()->wallet->is_blocked);
+        $this->assertSame(60, $user->fresh()->wallet->balance);
+        $this->assertDatabaseCount('wallet_entries', 2);
+    }
+
+    public function test_blocked_manual_debit_still_requires_current_active_wallet_manager(): void
+    {
+        $user = User::factory()->create();
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $this->actingAs($owner, 'admin');
+        $gateway = app(WalletGateway::class);
+        $gateway->manualCredit($owner, $user, 100, 'initial', 'Initial grant');
+        $gateway->changeBlockStatus($owner, $user, true, 'dispute', 'Payment dispute');
+
+        foreach ([AdminRole::Auditor, AdminRole::Editor] as $role) {
+            $staff = Admin::factory()->create(['role' => $role]);
+            $this->actingAs($staff, 'admin');
+            try {
+                $gateway->manualDebit($staff, $user, 10, 'forbidden-'.$staff->id, 'Unauthorized correction');
+                $this->fail('A blocked wallet does not relax administrator permissions.');
+            } catch (AuthorizationException) {
+                // Expected.
+            }
+        }
+        $this->actingAs($owner, 'admin');
+        DB::table('admins')->where('id', $owner->id)->update(['is_active' => false]);
+        try {
+            $gateway->manualDebit($owner, $user, 10, 'disabled-admin', 'Unauthorized correction');
+            $this->fail('The stored administrator must still be active.');
+        } catch (AuthorizationException) {
+            // Expected.
+        }
+        $this->assertSame(100, $user->fresh()->wallet->balance);
+        $this->assertTrue($user->fresh()->wallet->is_blocked);
+        $this->assertDatabaseCount('wallet_entries', 1);
     }
 
     public function test_manual_adjustments_require_nonempty_reason_and_cannot_accept_unbounded_text(): void

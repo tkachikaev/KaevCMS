@@ -466,6 +466,7 @@ html.account-operation-modal-open{overflow:hidden}
 .account-wallet-summary-text { min-width:0; }
 .account-wallet-summary-text h2 { margin:3px 0 0; overflow-wrap:anywhere; font-size:clamp(24px,4vw,36px); font-variant-numeric:tabular-nums; }
 .account-wallet-blocked { margin-inline-start:auto; padding:8px 10px; border-radius:10px; background:var(--account-panel-soft); color:var(--account-red); font-size:12px; font-weight:750; }
+.account-wallet-history { min-width:0; padding:26px; border:1px solid var(--account-line); border-radius:var(--account-radius); background:var(--account-panel); }
 .account-wallet-list { display:grid; gap:10px; }
 .account-wallet-entry { display:flex; align-items:center; gap:13px; min-width:0; padding:16px; border:1px solid var(--account-line); border-radius:14px; background:var(--account-panel); }
 .account-wallet-entry-symbol { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:11px; background:var(--account-panel-soft); color:var(--account-gold-bright); font-size:22px; font-weight:700; }
@@ -475,5 +476,5 @@ html.account-operation-modal-open{overflow:hidden}
 .account-wallet-credit { color:var(--account-green); }
 .account-wallet-pagination { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:16px; }
 .account-wallet-payments-unavailable { margin-top:20px; color:var(--account-muted); font-size:12px; }
-@media(max-width:650px) { .account-topbar-wallet { padding:5px 8px; max-width:106px; } .account-topbar-wallet-icon { flex-basis:20px; width:20px; height:20px; } .account-wallet-summary { padding:18px; flex-wrap:wrap; } .account-wallet-blocked { margin-inline-start:0; } .account-wallet-heading { align-items:flex-start; flex-direction:column; } }
+@media(max-width:650px) { .account-topbar-wallet { padding:5px 8px; max-width:106px; } .account-topbar-wallet-icon { flex-basis:20px; width:20px; height:20px; } .account-wallet-summary { padding:18px; flex-wrap:wrap; } .account-wallet-history { padding:18px; } .account-wallet-blocked { margin-inline-start:0; } .account-wallet-heading { align-items:flex-start; flex-direction:column; } }
 @media(max-width:390px) { .account-topbar-wallet { max-width:78px; } .account-wallet-entry { gap:8px; padding:11px; } .account-wallet-entry-symbol { flex-basis:30px; width:30px; height:30px; } .account-wallet-entry-details small { font-size:10px; } }

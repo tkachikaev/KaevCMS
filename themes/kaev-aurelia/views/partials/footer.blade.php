@@ -49,7 +49,7 @@
             <h3>{{ __('Personal account') }}</h3>
             <div class="footer-section-links">
                 @auth
-                    <a wire:navigate.hover href="{{ public_route('account') }}">{{ __('Personal account') }}</a>
+                    <a href="{{ public_route('account') }}">{{ __('Personal account') }}</a>
                 @else
                     <a wire:navigate.hover href="{{ public_route('login') }}">{{ __('Log in') }}</a>
                     @if (registration_available())

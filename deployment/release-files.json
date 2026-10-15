@@ -479,6 +479,7 @@
     "tests/browser/specs/player-character-directory.spec.mjs",
     "tests/browser/specs/support-tickets.spec.mjs",
     "tests/browser/specs/system-updates.spec.mjs",
+    "tests/browser/specs/wallet.spec.mjs",
     "tests/browser/support/authentication.mjs",
     "tests/browser/support/authentication.test.mjs"
   ],

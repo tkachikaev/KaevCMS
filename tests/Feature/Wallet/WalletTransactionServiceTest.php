@@ -154,6 +154,47 @@ class WalletTransactionServiceTest extends TestCase
         $this->assertDatabaseCount('wallet_entries', 2);
     }
 
+    public function test_manual_source_and_admin_actor_do_not_implicitly_bypass_a_freeze(): void
+    {
+        $user = User::factory()->create();
+        $admin = Admin::factory()->create();
+        $engine = $this->engine();
+        $engine->credit($user, 20, 'manual', 'starter');
+        DB::table('wallets')->where('user_id', $user->id)->update(['is_blocked' => true]);
+
+        try {
+            $engine->debit($user, 5, 'manual', 'correction', reason: 'Payment reversed', actor: $admin);
+            $this->fail('An explicit authorized manual-debit policy is required.');
+        } catch (WalletOperationException $exception) {
+            $this->assertSame('wallet_blocked', $exception->reason);
+        }
+        $this->assertSame(20, $user->fresh()->wallet->balance);
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_blocked_manual_debit_policy_cannot_be_used_for_shop_or_without_an_admin_and_reason(): void
+    {
+        $user = User::factory()->create();
+        $admin = Admin::factory()->create();
+        $engine = $this->engine();
+        foreach ([
+            fn () => $engine->debit($user, 1, 'shop', 'order', reason: 'Payment reversed', actor: $admin, allowBlockedManualDebit: true),
+            fn () => $engine->debit($user, 1, 'manual', 'correction', reason: 'Payment reversed', actor: $user, allowBlockedManualDebit: true),
+            fn () => $engine->debit($user, 1, 'manual', 'correction', reason: 'Payment reversed', allowBlockedManualDebit: true),
+            fn () => $engine->debit($user, 1, 'manual', 'correction', reason: ' ', actor: $admin, allowBlockedManualDebit: true),
+        ] as $request) {
+            try {
+                $request();
+                $this->fail('The freeze exception is restricted to reasoned administrator corrections.');
+            } catch (InvalidArgumentException) {
+                // Reject before any wallet or journal writes.
+            }
+        }
+        $this->assertDatabaseCount('wallets', 0);
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
     public function test_integer_overflow_is_rejected_before_the_ledger_changes(): void
     {
         $user = User::factory()->create();

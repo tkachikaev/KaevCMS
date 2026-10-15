@@ -73,3 +73,14 @@ npm run build:editor
 
 A release must include the source, bundle, and `public/assets/admin/js/news-editor.LICENSE.txt`. Do not allow arbitrary `style` or `class` attributes: the editor, `SafeHtmlSanitizer`, and both public-theme stylesheets form one safe `data-*` token contract.
 
+
+## Aurelia navigation between the website and player account
+
+Public and account layouts have independent global stylesheets. Aurelia account links in the public header, mobile menu, hero and footer deliberately use normal document navigation. Do not add wire:navigate to these links: Livewire swaps the body before destination stylesheets finish loading, which can briefly expose oversized black default SVG shapes. Document navigation waits for render-blocking CSS and keeps styles from different layouts separate. Navigation within each layout continues to use Livewire.
+
+Aurelia document entry gently animates body opacity from .88 to 1 over 160 ms once, without moving controls or blanking the page. The account layout enables this through data-account-document-entry and the shared runtime. Reduced-motion disables the effect. Native cross-document View Transitions are not used; browser checks exposed a hang with mixed themes.
+
+Public initialization treats DOMContentLoaded and the initial livewire:navigated event as one page initialization. Repeated bootstrap notifications do not replay the content fade or recreate particles/monitoring. A real livewire:navigating event releases the resources and allows initialization of new content.
+
+Browser coverage checks initial notifications, actual content replacement, site/account round trips with a 350 ms stylesheet delay, SVG paint dimensions/fill, desktop/mobile and reduced-motion. Mobile return links are exercised after opening the sidebar.
+Verified 2026-10-15 without changing CMS 0.48.6: 21 related PHP tests (1,198 assertions), shared account runtime contract and JS syntax passed; full browser-quality.ps1 passed all 72 tests. The wallet concurrency script also passed again in an isolated disposable MariaDB schema, which was removed afterwards.

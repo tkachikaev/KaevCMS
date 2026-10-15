@@ -20,8 +20,7 @@ final class ReconcileWalletsCommand extends Command
         $user = $this->option('user');
         $limit = $this->option('limit');
         foreach ([$user, $limit] as $value) {
-            if ($value !== null && (! is_string($value)
-                || preg_match('/\A[1-9][0-9]{0,17}\z/D', $value) !== 1
+            if ($value !== null && (preg_match('/\A[1-9][0-9]{0,17}\z/D', $value) !== 1
                 || (float) $value > PHP_INT_MAX)) {
                 $this->error('Invalid positive integer option.');
 

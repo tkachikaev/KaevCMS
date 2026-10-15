@@ -8,9 +8,8 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Models\WalletEntry;
 use App\Models\WalletStatusEvent;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 
 /**
@@ -67,7 +66,7 @@ final class CoreWalletGateway implements WalletGateway
 
         return $this->transactions->debit(
             $recipient, $amount, WalletSource::Manual->value, $key,
-            reason: $this->requiredText($reason), actor: $admin,
+            reason: $this->requiredText($reason), actor: $admin, allowBlockedManualDebit: true,
         );
     }
 

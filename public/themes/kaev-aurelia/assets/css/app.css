@@ -49,7 +49,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; background: #f8f4ec; }
 body {
     margin: 0;
     min-width: 320px;

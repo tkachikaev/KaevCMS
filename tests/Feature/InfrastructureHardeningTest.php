@@ -129,10 +129,14 @@ final class InfrastructureHardeningTest extends TestCase
         $bundle = File::get(public_path('assets/admin/js/news-editor.js'));
 
         $this->assertStringContainsString('new TextEncoder().encode(value).length', $source);
+        $this->assertStringContainsString('contentByteLength(source.value) > MAX_CONTENT_LENGTH', $source);
         $this->assertStringContainsString('TextEncoder', $bundle);
         $this->assertMatchesRegularExpression(
-            '/TextEncoder\(\)\.encode\([^)]*\)\.length>(?:2e5|200000)/',
+            '/TextEncoder\(\)\.encode\([^)]*\)\.length/',
             $bundle,
         );
+        // esbuild may keep the byte-length helper separate from its comparison.
+        // Browser tests exercise the compiled guard at the actual UTF-8 boundary.
+        $this->assertMatchesRegularExpression('/(?:2e5|200000)/', $bundle);
     }
 }

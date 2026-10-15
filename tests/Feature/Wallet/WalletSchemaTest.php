@@ -4,6 +4,7 @@ namespace Tests\Feature\Wallet;
 
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\WalletEntry;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +126,7 @@ class WalletSchemaTest extends TestCase
     public function test_wallet_and_ledger_models_forbid_generic_mass_assignment(): void
     {
         $this->assertSame(['*'], (new Wallet)->getGuarded());
-        $this->assertSame(['*'], (new \App\Models\WalletEntry)->getGuarded());
+        $this->assertSame(['*'], (new WalletEntry)->getGuarded());
     }
 
     private function walletFor(User $user): Wallet

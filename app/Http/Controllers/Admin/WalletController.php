@@ -54,9 +54,9 @@ final class WalletController extends Controller
     public function show(User $user, WalletAppearanceSettings $appearance): View
     {
         $wallet = $user->wallet()->first();
-        $entries = WalletEntry::query()->where('wallet_id', $wallet?->id ?? 0)
+        $entries = WalletEntry::query()->where('wallet_id', $wallet->id ?? 0)
             ->orderByDesc('id')->paginate(30);
-        $statusEvents = WalletStatusEvent::query()->where('wallet_id', $wallet?->id ?? 0)
+        $statusEvents = WalletStatusEvent::query()->where('wallet_id', $wallet->id ?? 0)
             ->orderByDesc('id')->paginate(15, ['*'], 'status_page');
 
         return view('admin.wallets.show', [
@@ -103,6 +103,7 @@ final class WalletController extends Controller
         return redirect()->route('admin.wallets.show', $user)
             ->with('status', __('Wallet adjustment recorded.'));
     }
+
     public function changeStatus(ChangeWalletStatusRequest $request, User $user, WalletGateway $gateway): RedirectResponse
     {
         /** @var Admin|null $admin */
@@ -129,5 +130,4 @@ final class WalletController extends Controller
         return redirect()->route('admin.wallets.show', $user)
             ->with('status', __('Wallet status updated.'));
     }
-
 }
