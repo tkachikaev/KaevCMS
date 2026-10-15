@@ -314,6 +314,8 @@
     "public/install/index.php",
     "public/themes/default/assets/css/app.css",
     "public/themes/kaev-aurelia/assets/css/app.css",
+    "public/themes/kaev-aurelia/assets/fonts/cinzel-OFL.txt",
+    "public/themes/kaev-aurelia/assets/fonts/cinzel-variable.ttf",
     "release.json",
     "resources/game-items/classic.json",
     "resources/game-items/high-five.json",

@@ -1,3 +1,11 @@
+@font-face {
+    font-family: 'Cinzel';
+    src: url('../fonts/cinzel-variable.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+}
+
 :root {
     --bg: #f4f1e8;
     --bg-soft: #ebece4;
@@ -809,11 +817,12 @@ body.kaev-aurelia::before {
     min-height: 48px;
     padding-inline: 24px;
     border-radius: 999px;
-    font-family: var(--serif);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: .02em;
-    text-transform: none;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: .1em;
+    text-transform: uppercase;
     transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease;
 }
 .kaev-aurelia .button:hover { transform: translateY(-1px); }
