@@ -570,5 +570,15 @@
   ],
   "0.47.44": [
     "core/deployment/windows/apply-0.47.43.ps1"
+  ],
+  "0.47.45": [
+    "core/deployment/development/live-dev-apply.sh",
+    "core/deployment/development/tests/live-dev-apply-regression.sh",
+    "core/deployment/windows/apply-0.47.44.ps1",
+    "core/deployment/windows/live-dev.ps1",
+    "core/deployment/windows/support/live-dev-support.ps1",
+    "core/deployment/windows/tests/live-dev-policy.ps1",
+    "core/docs/en/LIVE_DEVELOPMENT.md",
+    "core/docs/ru/LIVE_DEVELOPMENT.md"
   ]
 }

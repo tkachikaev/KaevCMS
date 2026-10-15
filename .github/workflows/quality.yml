@@ -51,9 +51,6 @@ jobs:
       - name: Run Composer quality gate
         run: composer quality
 
-      - name: Run live-dev filesystem regressions
-        run: bash deployment/development/tests/live-dev-apply-regression.sh
-
   windows-quality:
     name: Windows quality entrypoint (${{ matrix.shell }})
     runs-on: windows-latest

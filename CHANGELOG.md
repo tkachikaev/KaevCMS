@@ -1,3 +1,10 @@
+## 0.47.45 - 2026-10-15
+
+### Changed
+
+- Removed SSH source-synchronization scripts, their documentation and dedicated CI checks. Local preview setup stays outside release artifacts.
+- Preserved Windows quality fixes and all VDS deployment-owner and theme permission repairs. No application, migration, dependency or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
 ## 0.47.44 - 2026-10-15
 
 ### Fixed
