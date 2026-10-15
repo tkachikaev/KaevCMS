@@ -1,3 +1,11 @@
+## 0.47.44 - 2026-10-15
+
+### Fixed
+
+- Completed VDS deployment-owner permission repairs for integrations and .github. Switching from root to a regular deployment owner no longer leaves these cumulative-update targets unwritable.
+- Added a regression deriving required code roots from release-files.json, in addition to theme-manifest access checks, so future required source trees cannot silently be omitted.
+- No migrations, dependency or bundled module/theme behavior changes. VDS agent contract remains 3; cumulative baseline remains 0.42.4.
+
 ## 0.47.43 - 2026-10-15
 
 ### Added
