@@ -1,3 +1,13 @@
+## 0.47.48 - 2026-10-15
+
+### Changed
+
+- Refined Aurelia buttons, typography and footer, added locally hosted fonts and floating golden hero particles with reduced-motion support. The footer preserves navigation and account actions; its home shortcut now uses a house icon. Simplified the home news heading.
+- Stabilized the public header when navigating between pages of different heights and limited transition animation to page content.
+- Unified the Aurelia account typography scale across pages and modules, aligned account action buttons with the public theme, and simplified the server-bound promo reward hint in Russian and English.
+- Updated bundled public Aurelia to 1.0.12, account Aurelia to 1.6.7 and Promo Codes to 1.4.2. Added particle, navigation and footer regressions during this release cycle.
+- No migrations or dependency changes. Cumulative baseline remains 0.42.4. Local live-preview tooling remains outside release artifacts.
+
 ## 0.47.47 - 2026-10-15
 
 ### Fixed

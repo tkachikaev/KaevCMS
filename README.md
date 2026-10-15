@@ -1,4 +1,4 @@
-# KaevCMS 0.47.47
+# KaevCMS 0.47.48
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.47 restores shared administration styling for the content editor link and image dialogs. Dependencies and database schemas are unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
+Version 0.47.48 refreshes Aurelia buttons and footer, adds golden hero particles, stabilizes public navigation and unifies player account typography. Dependencies and database schemas are unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -97,7 +97,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.47 восстанавливает единое оформление окон ссылок и изображений в редакторе контента. Зависимости и схемы баз данных не изменены. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
+Версия 0.47.48 обновляет кнопки и подвал Aurelia, добавляет золотистые частицы, стабилизирует переходы между страницами и приводит типографику личного кабинета к единой шкале. Зависимости и схемы баз данных не изменены. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
 
 ### Требования
 

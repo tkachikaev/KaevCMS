@@ -586,5 +586,8 @@
   ],
   "0.47.47": [
     "core/deployment/windows/apply-0.47.46.ps1"
+  ],
+  "0.47.48": [
+    "core/deployment/windows/apply-0.47.47.ps1"
   ]
 }
