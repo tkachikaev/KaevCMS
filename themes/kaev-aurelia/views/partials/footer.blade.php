@@ -1,39 +1,15 @@
-<footer class="site-footer">
-    <div class="container footer-cta panel">
-        <div class="footer-cta-mark" aria-hidden="true"><img src="{{ theme_asset('images/kaev-mark.png') }}" alt=""></div>
-        <div>
-            <p class="eyebrow">{{ __('PREPARING TO PLAY') }}</p>
-            <h2>{{ __('Create account') }}</h2>
-            @if (site_description() !== '')
-                <p>{{ site_description() }}</p>
-            @endif
-        </div>
-        <div class="footer-cta-actions">
-            @auth
-                <a wire:navigate.hover class="button button-gold" href="{{ public_route('account') }}">{{ __('Personal account') }} <span aria-hidden="true">→</span></a>
-            @elseif (registration_available())
-                <a wire:navigate.hover class="button button-gold" href="{{ public_route('register') }}">{{ __('Register') }} <span aria-hidden="true">→</span></a>
-            @else
-                <a wire:navigate.hover class="button button-gold" href="{{ public_route('login') }}">{{ __('Log in') }} <span aria-hidden="true">→</span></a>
-            @endauth
-            <a wire:navigate.hover class="button button-ghost" href="{{ public_route('downloads') }}">{{ __('Download client') }}</a>
-        </div>
+<footer class="site-footer footer-portal">
+    <div class="container footer-statement">
+        <a wire:navigate.hover class="footer-emblem" href="{{ public_route('home') }}" aria-label="{{ site_name() }} — {{ __('Go to the home page') }}">
+            <span aria-hidden="true">✦</span>
+        </a>
+        @if (site_description() !== '')
+            <h2>{{ site_description() }}</h2>
+        @endif
+        <p class="footer-quote">«{{ __('Where elven towers touch the clouds, and blades ring in the name of honor.') }}»</p>
     </div>
 
     <div class="container footer-grid">
-        <div class="footer-intro">
-            <a wire:navigate.hover class="brand footer-brand" href="{{ public_route('home') }}">
-                @if (site_logo_url())
-                    <img class="brand-logo footer-brand-logo brand-logo-custom" src="{{ site_logo_url() }}" alt="{{ site_name() }}">
-                @else
-                    <img class="brand-logo footer-brand-logo brand-logo-kaev" src="{{ theme_asset('images/kaev-logo.png') }}" alt="Kaev">
-                @endif
-            </a>
-            @if (site_description() !== '')
-                <p>{{ site_description() }}</p>
-            @endif
-        </div>
-
         <div class="footer-sections">
             <h3>{{ __('Sections') }}</h3>
             <div class="footer-section-links">
@@ -49,6 +25,13 @@
             </div>
         </div>
 
+        <div class="footer-resources">
+            <h3>{{ __('Resources') }}</h3>
+            <div class="footer-section-links">
+                <a wire:navigate.hover href="{{ public_route('downloads') }}">{{ __('Download client') }}</a>
+            </div>
+        </div>
+
         @if (count($footerCustomLinks ?? []) > 0)
             <div class="footer-community">
                 <h3>{{ __('Community') }}</h3>
@@ -60,7 +43,19 @@
             </div>
         @endif
 
-        <div class="footer-decoration" aria-hidden="true"><img src="{{ theme_asset('images/kaev-mark.png') }}" alt=""></div>
+        <div class="footer-account">
+            <h3>{{ __('Personal account') }}</h3>
+            <div class="footer-section-links">
+                @auth
+                    <a wire:navigate.hover href="{{ public_route('account') }}">{{ __('Personal account') }}</a>
+                @else
+                    <a wire:navigate.hover href="{{ public_route('login') }}">{{ __('Log in') }}</a>
+                    @if (registration_available())
+                        <a wire:navigate.hover href="{{ public_route('register') }}">{{ __('Register') }}</a>
+                    @endif
+                @endauth
+            </div>
+        </div>
     </div>
 
     <div class="container footer-bottom">

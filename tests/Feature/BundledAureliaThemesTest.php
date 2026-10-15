@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\NavigationLink;
 use App\Models\User;
+use App\Services\CmsSettings;
+use App\Services\RegistrationSettings;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -152,6 +155,55 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertDatabaseMissing('cms_settings', [
             'key' => 'theme.active',
         ]);
+    }
+
+    public function test_aurelia_footer_keeps_configured_description_guest_actions_and_external_links(): void
+    {
+        app(ThemeManager::class)->activate('kaev-aurelia');
+        $settings = app(CmsSettings::class);
+        $settings->set('site.description.ru', 'Our project description');
+        $settings->set(RegistrationSettings::KEY_ENABLED, '1');
+        $settings->set(RegistrationSettings::KEY_REQUIRE_EMAIL_VERIFICATION, '0');
+        $link = NavigationLink::query()->create([
+            'url' => 'https://community.example.test',
+            'is_active' => true,
+            'show_in_header' => false,
+            'show_in_footer' => true,
+            'open_new_tab' => true,
+            'sort_order' => 10,
+        ]);
+        $link->translations()->create(['locale' => 'ru', 'title' => 'Наше сообщество']);
+
+        $html = $this->get('/ru')->assertOk()->getContent();
+        $this->assertIsString($html);
+        $this->assertSame(1, preg_match('/<footer\b[^>]*>.*?<\/footer>/s', $html, $matches));
+        $footer = $matches[0];
+        $this->assertStringContainsString('<h2>Our project description</h2>', $footer);
+        $this->assertStringContainsString('Там, где эльфийские башни касаются облаков, а клинки звенят во имя чести.', $footer);
+        foreach (['register', 'login', 'downloads'] as $path) {
+            $this->assertStringContainsString('href="'.url('/ru/'.$path).'"', $footer);
+        }
+        $this->assertMatchesRegularExpression('/href="https:\/\/community\.example\.test"\s+target="_blank"\s+rel="noopener noreferrer"/', $footer);
+        $this->assertStringContainsString('Наше сообщество', $footer);
+        $this->assertStringNotContainsString('KAEV AURELIA MMORPG', $footer);
+    }
+
+    public function test_aurelia_footer_hides_disabled_registration_and_shows_the_signed_in_account(): void
+    {
+        app(ThemeManager::class)->activate('kaev-aurelia');
+        app(CmsSettings::class)->set(RegistrationSettings::KEY_ENABLED, '0');
+        $guest = $this->get('/en')->assertOk()->getContent();
+        $this->assertIsString($guest);
+        $this->assertSame(1, preg_match('/<footer\b[^>]*>.*?<\/footer>/s', $guest, $matches));
+        $this->assertStringNotContainsString('href="'.url('/en/register').'"', $matches[0]);
+        $this->assertStringContainsString('Where elven towers touch the clouds, and blades ring in the name of honor.', $matches[0]);
+
+        $signedIn = $this->actingAs(User::factory()->create())->get('/ru')->assertOk()->getContent();
+        $this->assertIsString($signedIn);
+        $this->assertSame(1, preg_match('/<footer\b[^>]*>.*?<\/footer>/s', $signedIn, $matches));
+        $this->assertStringContainsString('href="'.url('/ru/account').'"', $matches[0]);
+        $this->assertStringNotContainsString('href="'.url('/ru/login').'"', $matches[0]);
+        $this->assertStringNotContainsString('footer-community', $matches[0]);
     }
 
     public function test_aurelia_theme_translation_keys_exist_in_both_bundled_languages(): void
