@@ -18,7 +18,13 @@
     --account-purple: #78689b;
     --account-radius: 18px;
     --account-shadow: 0 24px 80px rgba(50, 61, 53, 0.12);
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    --account-font: "Segoe UI", Arial, sans-serif;
+    --account-type-title: 32px;
+    --account-type-section: 24px;
+    --account-type-card: 20px;
+    --account-type-body: 14px;
+    --account-type-caption: 12px;
+    font-family: var(--account-font);
 }
 
 * { box-sizing: border-box; }
@@ -1312,6 +1318,61 @@ html.account-is-navigating::before {
     .world-empty {
         border-radius: 14px;
     }
+}
+
+/* One type scale for pages, shared components and account modules. */
+body.account-body { font-family: var(--account-font); font-size: var(--account-type-body); line-height: 1.6; }
+body.account-body :is(input, select, textarea) { font-family: var(--account-font); font-size: var(--account-type-body); line-height: 1.5; }
+body.account-body :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--account-text);
+    font-family: var(--account-font);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -.02em;
+    overflow-wrap: anywhere;
+}
+body.account-body h1 { font-size: var(--account-type-title); line-height: 1.2; margin-block: 8px 12px; }
+body.account-body h2 { font-size: var(--account-type-section); }
+body.account-body h3 { font-size: var(--account-type-card); }
+body.account-body h4 { font-size: 16px; }
+body.account-body h5 { font-size: var(--account-type-body); }
+body.account-body h6 { font-size: var(--account-type-caption); letter-spacing: 0; }
+body.account-body :is(.account-form-title, .account-form-aside, .account-empty) :is(h2, h3) { font-size: var(--account-type-card); }
+body.account-body .account-content p { font-size: var(--account-type-body); line-height: 1.6; }
+body.account-body .account-content :is(.account-section-heading, .account-page-heading, .account-overview-header, .account-form-title, .account-settings-card-heading) p { margin-block: 6px 0; }
+body.account-body :is(small, .account-form-note, .account-field-error, .account-character-details dt, .account-character-details dd) {
+    font-size: var(--account-type-caption);
+    line-height: 1.5;
+}
+body.account-body :is(.account-eyebrow, .account-nav-label, .account-topbar-context > span) {
+    font-size: var(--account-type-caption);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: .08em;
+}
+body.account-body :is(.account-brand-copy strong, .account-topbar-context strong) { font-family: var(--account-font); font-size: 16px; font-weight: 600; letter-spacing: 0; }
+body.account-body :is(.account-nav a strong, .account-profile-copy strong, .account-user-compact strong) { font-size: var(--account-type-body); font-weight: 600; }
+body.account-body :is(.account-nav a small, .account-profile-copy small, .account-brand-copy small) { font-size: var(--account-type-caption); }
+body.account-body .account-brand-copy small { letter-spacing: .06em; }
+body.account-body :is(.account-form-card label > span, .account-character-filters label > span, .reward-character-select > span) {
+    font-size: var(--account-type-body);
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-transform: none;
+}
+body.account-body :is(.account-metrics strong, .account-character-summary strong) { font-size: var(--account-type-section); font-weight: 600; line-height: 1.3; }
+body.account-body :is(.account-tool-card strong, .account-character-name > strong) { font-size: 16px; font-weight: 600; line-height: 1.4; }
+body.account-body :is(.account-chip, .online-state, .reward-status, .character-badge, .support-ticket-status, .support-ticket-open-count) {
+    font-size: var(--account-type-caption);
+    font-weight: 600;
+    line-height: 1.4;
+}
+body.account-body :is(.account-character-identity > span, .account-character-metrics strong) { font-size: var(--account-type-body); line-height: 1.5; }
+body.account-body :is(.account-character-metrics small, .account-character-details summary, .account-group-toggle em, .account-group-hide, .account-group-actions a, .account-group-actions button) { font-size: var(--account-type-caption); line-height: 1.5; }
+body.account-body :is(.account-character-filters label > span, .account-character-details dt, .account-character-metrics small) { text-transform: none; }
+@media (max-width: 620px) {
+    :root { --account-type-title: 28px; --account-type-section: 22px; --account-type-card: 18px; }
 }
 
 /* Shared account component tokens. */

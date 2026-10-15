@@ -128,7 +128,7 @@
     <section class="home-section news-section">
         <div class="section-heading section-heading-ornamented">
             <span aria-hidden="true"></span>
-            <div><p class="eyebrow">{{ __('News') }}</p><h2>{{ __('Latest news') }}</h2></div>
+            <div><h2>{{ __('News') }}</h2></div>
             <span aria-hidden="true"></span>
         </div>
 
