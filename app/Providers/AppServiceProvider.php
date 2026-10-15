@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Auth\Passwords\UtcPasswordBrokerManager;
+use App\Contracts\WalletGateway;
+use App\Services\Wallet\CoreWalletGateway;
 use App\Http\Middleware\RequireActiveSiteUser;
 use App\Http\Middleware\RequireAdminAuthentication;
 use App\Http\Middleware\RequireConfiguredEmailVerification;
@@ -68,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AdminNotificationSourceScanner::class);
         $this->app->singleton(AdminTwoFactorAuthentication::class);
         $this->app->singleton(AuditLogger::class);
+        $this->app->bind(WalletGateway::class, CoreWalletGateway::class);
         $this->app->singleton(GameAccountSettings::class);
         $this->app->singleton(GameItemProfileCatalog::class);
         $this->app->singleton(GameAssetUrlResolver::class);

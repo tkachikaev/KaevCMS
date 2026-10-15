@@ -14,6 +14,9 @@
         <x-admin.tab wire:navigate :href="route('admin.settings.notifications')" :active="request()->routeIs('admin.settings.notifications*')" class="settings-section-tab">
             {{ __('Notifications') }}
         </x-admin.tab>
+        <x-admin.tab wire:navigate :href="route('admin.settings.wallet-appearance')" :active="request()->routeIs('admin.settings.wallet-appearance*')" class="settings-section-tab">
+            {{ __('Wallet appearance') }}
+        </x-admin.tab>
         <x-admin.tab wire:navigate :href="route('admin.settings.registration')" :active="request()->routeIs('admin.settings.registration*')" class="settings-section-tab">
             {{ __('Registration') }}
         </x-admin.tab>

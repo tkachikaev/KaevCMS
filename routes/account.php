@@ -8,6 +8,7 @@ use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Account\RewardTransferController;
 use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Account\WebInventoryController;
+use App\Http\Controllers\Account\WalletController;
 use App\Http\Controllers\Auth\AccountController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -59,6 +60,8 @@ $registerAccountRoutes = static function (bool $localized = false): void {
                 ->whereNumber('gameAccount')
                 ->middleware('throttle:game-account-password')
                 ->name($namePrefix.'game-accounts.password');
+            Route::get('/account/wallet', WalletController::class)
+                ->name($namePrefix.'wallet.index');
             Route::get('/account/web-inventory', WebInventoryController::class)
                 ->name($namePrefix.'web-inventory.index');
             Route::post('/account/web-inventory/transfers', [RewardTransferController::class, 'store'])

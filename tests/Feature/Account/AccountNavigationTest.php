@@ -48,7 +48,8 @@ class AccountNavigationTest extends TestCase
         $this->assertIsString($sharedStyles);
         $styles = $themeStyles.PHP_EOL.$sharedStyles;
         $this->assertStringContainsString('@persist(\'account-sidebar\')', $layout);
-        $this->assertStringContainsString('@persist(\'account-topbar\')', $layout);
+        // Wallet balances must refresh after Livewire navigation; the topbar is not persisted.
+        $this->assertStringNotContainsString('@persist(\'account-topbar\')', $layout);
         $this->assertStringContainsString('wire:navigate:scroll', $layout);
         $this->assertStringContainsString('account_theme_asset', $layout);
         $this->assertStringContainsString('assets/account/js/navigation.js', $layout);
@@ -60,6 +61,9 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString('public_route(\'profile.edit\')', $accountMenu);
         $this->assertStringContainsString('public_route(\'security.edit\')', $accountMenu);
         $this->assertStringContainsString('account-profile-balance', $accountMenu);
+        $this->assertStringContainsString("public_route('wallet.index')", $accountMenu);
+        $this->assertStringContainsString("public_route('wallet.index')", $navigation);
+        $this->assertStringContainsString('account-topbar-wallet', $layout);
         $this->assertStringNotContainsString('public_route(\'characters.index\')', $layout);
         $this->assertStringNotContainsString('public_route(\'game-accounts.index\')', $layout);
         $this->assertStringNotContainsString('public_route(\'web-inventory.index\')', $layout);

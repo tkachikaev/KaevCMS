@@ -2,7 +2,7 @@
 @section('title', __('User :name', ['name' => $user->name]))
 @section('description', __('Website account details and recent related audit events.'))
 @section('content')
-<div class="admin-page-toolbar user-detail-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.users.index') }}">← {{ __('Back to users') }}</a></div>
+<div class="admin-page-toolbar user-detail-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.users.index') }}">← {{ __('Back to users') }}</a>@if(auth('admin')->user()?->hasPermission(\App\Auth\AdminPermission::WalletView))<a wire:navigate class="button button-secondary" href="{{ route('admin.wallets.show', $user) }}">{{ __('Wallet') }}</a>@endif</div>
 <div class="user-detail-grid">
     <div class="user-detail-main">
         <section class="form-card user-profile-card">

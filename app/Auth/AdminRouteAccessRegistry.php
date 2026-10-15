@@ -90,6 +90,11 @@ final class AdminRouteAccessRegistry
                 AdminPermission::ModulesManage,
             ),
             $this->prefix(
+                'admin.wallets.',
+                AdminPermission::WalletView,
+                AdminPermission::WalletManage,
+            ),
+            $this->prefix(
                 'admin.users.',
                 AdminPermission::UsersView,
                 AdminPermission::UsersManage,

@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Services\CmsSettings;
 use App\Services\GameWorld\GameStatistics;
 use App\Services\Navigation\NavigationLinks;
+use App\Models\User;
+use App\Services\Wallet\WalletAccountReadService;
 use App\Services\Pages\PageNavigation;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
@@ -42,6 +44,13 @@ class ThemeServiceProvider extends ServiceProvider
         $accountThemes->boot();
         view()->share('activeTheme', $themes->manifest());
         view()->share('activeAccountTheme', $accountThemes->manifest());
+
+        view()->composer('account-theme::layouts.app', function ($view): void {
+            $user = auth()->user();
+            if ($user instanceof User) {
+                $view->with('walletView', app(WalletAccountReadService::class)->forUser($user));
+            }
+        });
 
         view()->composer('theme::partials.header', function ($view) use ($pages, $navigation): void {
             $view->with([

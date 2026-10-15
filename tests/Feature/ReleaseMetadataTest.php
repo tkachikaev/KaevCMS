@@ -708,14 +708,14 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.5', 'kaev-aurelia' => '1.6.7'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.6', 'kaev-aurelia' => '1.6.8'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
                 flags: JSON_THROW_ON_ERROR,
             );
             $this->assertSame($expectedVersion, $accountThemeManifest['version']);
-            $this->assertSame('0.47.29', $accountThemeManifest['cms_min']);
+            $this->assertSame('0.48.4', $accountThemeManifest['cms_min']);
         }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');
         $dailyRewardsCss = $this->readReleaseFile('public/assets/modules/daily-rewards.css');

@@ -11,6 +11,7 @@ KaevCMS is a Laravel CMS for Lineage II servers. The public website, player acco
 - [Administration](ADMINISTRATION.md)
 - [Game integration](GAME_INTEGRATION.md)
 - [Character rescue](CHARACTER_RESCUE.md)
+- [Core Wallet (A1 schema)](WALLET.md)
 - [Content and themes](CONTENT_THEMES.md)
 - [Mail and queues](MAIL_AND_QUEUES.md)
 - [Modules](MODULES.md)

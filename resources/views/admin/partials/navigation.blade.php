@@ -46,8 +46,8 @@
         </details>
     @endif
 
-    @if($admin->hasPermission(\App\Auth\AdminPermission::UsersView) || $admin->hasPermission(\App\Auth\AdminPermission::AdministratorsView))
-        <details class="admin-menu-group" data-admin-menu-group="users" @if (request()->routeIs('admin.users.*', 'admin.administrators.*')) open @endif>
+    @if($admin->hasPermission(\App\Auth\AdminPermission::UsersView) || $admin->hasPermission(\App\Auth\AdminPermission::AdministratorsView) || $admin->hasPermission(\App\Auth\AdminPermission::WalletView))
+        <details class="admin-menu-group" data-admin-menu-group="users" @if (request()->routeIs('admin.users.*', 'admin.administrators.*', 'admin.wallets.*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{{ __('Users') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
@@ -55,6 +55,9 @@
             <div class="admin-menu-group-items">
                 @if($admin->hasPermission(\App\Auth\AdminPermission::UsersView))
                     <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.users.index') }}"><span>{{ __('Users') }}</span></a>
+                @endif
+                @if($admin->hasPermission(\App\Auth\AdminPermission::WalletView))
+                    <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.wallets.index') }}"><span>{{ __('Wallets') }}</span></a>
                 @endif
                 @if($admin->hasPermission(\App\Auth\AdminPermission::AdministratorsView))
                     <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.administrators.index') }}"><span>{{ __('Administrators') }}</span></a>

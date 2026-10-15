@@ -47,7 +47,7 @@
     <x-account-sidebar-backdrop />
 
     <main class="account-main">
-        @persist('account-topbar')
+        {{-- The topbar must rerender on Livewire navigation to show the current wallet balance. --}}
             <header class="account-topbar" data-account-topbar>
                 <div class="account-topbar-start">
                     <button class="account-sidebar-toggle" type="button" data-account-sidebar-toggle aria-label="{{ __('Player account navigation') }}" aria-expanded="false">
@@ -60,6 +60,10 @@
                 </div>
 
                 <div class="account-topbar-actions">
+                    <a wire:navigate class="account-topbar-wallet" href="{{ public_route('wallet.index') }}" aria-label="{{ __('My wallet') }}: {{ $walletView['label'] }}">
+                        <span class="account-topbar-wallet-icon" aria-hidden="true"><x-account-wallet-icon :url="$walletView['icon_url']" /></span>
+                        <span class="account-topbar-wallet-amount">{{ $walletView['formatted'] }}</span>
+                    </a>
                     <details class="account-profile-menu account-profile-menu-topbar">
                         <summary aria-label="{{ __('Open account menu') }}">
                             <x-account-avatar :user="$user" class="account-profile-avatar" aria-hidden="true" />
@@ -72,7 +76,6 @@
                     </details>
                 </div>
             </header>
-        @endpersist
 
         <div class="account-content" data-account-content>
             @if (session('status') && ! $accountOperation)

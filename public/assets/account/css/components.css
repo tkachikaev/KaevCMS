@@ -450,3 +450,30 @@ html.account-operation-modal-open{overflow:hidden}
 .account-character-rescue-online-message strong{text-align:left}
 .account-character-rescue-confirmation small{color:var(--account-muted);font-size:11px;line-height:1.55}
 @media(max-width:760px){.account-character-row{grid-template-columns:43px minmax(0,1fr)}.account-character-actions{grid-column:2;justify-content:flex-start}.account-character-rescue-button{width:100%;justify-content:center}.account-character-rescue-confirmation{padding:18px}.account-character-rescue-confirmation p{align-items:flex-start;flex-direction:column;gap:4px}.account-character-rescue-confirmation strong{text-align:left}}
+
+/* Core wallet A5: themed using existing account design tokens; no payment controls yet. */
+.account-wallet-default-icon, .account-wallet-coin-image { display:block; width:100%; height:100%; object-fit:contain; }
+.account-topbar-wallet { display:inline-flex; align-items:center; gap:8px; min-height:36px; max-width:180px; padding:5px 10px; border:1px solid var(--account-line); border-radius:12px; background:var(--account-panel-soft); color:var(--account-text); text-decoration:none; font-weight:800; }
+.account-topbar-wallet:hover, .account-topbar-wallet:focus-visible, .account-wallet-menu-link:hover { border-color:var(--account-gold); }
+.account-topbar-wallet-icon { display:grid; place-items:center; width:23px; height:23px; flex:0 0 23px; color:var(--account-gold-bright); }
+.account-topbar-wallet-amount { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.account-wallet-menu-link { text-decoration:none; color:inherit; }
+.account-wallet-menu-link .account-profile-balance-icon { overflow:hidden; }
+.account-wallet-menu-link:focus-visible, .account-topbar-wallet:focus-visible { outline:2px solid var(--account-gold); outline-offset:2px; }
+.account-wallet-heading { display:flex; justify-content:space-between; gap:18px; align-items:center; }
+.account-wallet-summary { display:flex; align-items:center; gap:20px; padding:26px; min-width:0; border:1px solid var(--account-line); border-radius:var(--account-radius); background:var(--account-panel); }
+.account-wallet-summary-icon { display:grid; place-items:center; flex:0 0 60px; width:60px; height:60px; padding:12px; border-radius:17px; background:var(--account-panel-soft); color:var(--account-gold-bright); }
+.account-wallet-summary-text { min-width:0; }
+.account-wallet-summary-text h2 { margin:3px 0 0; overflow-wrap:anywhere; font-size:clamp(24px,4vw,36px); font-variant-numeric:tabular-nums; }
+.account-wallet-blocked { margin-inline-start:auto; padding:8px 10px; border-radius:10px; background:var(--account-panel-soft); color:var(--account-red); font-size:12px; font-weight:750; }
+.account-wallet-list { display:grid; gap:10px; }
+.account-wallet-entry { display:flex; align-items:center; gap:13px; min-width:0; padding:16px; border:1px solid var(--account-line); border-radius:14px; background:var(--account-panel); }
+.account-wallet-entry-symbol { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:11px; background:var(--account-panel-soft); color:var(--account-gold-bright); font-size:22px; font-weight:700; }
+.account-wallet-entry-details { display:grid; gap:4px; min-width:0; }
+.account-wallet-entry-details small, .account-wallet-entry-amounts small, .account-wallet-page-number { color:var(--account-muted); font-size:12px; }
+.account-wallet-entry-amounts { display:grid; gap:4px; margin-inline-start:auto; text-align:end; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.account-wallet-credit { color:var(--account-green); }
+.account-wallet-pagination { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:16px; }
+.account-wallet-payments-unavailable { margin-top:20px; color:var(--account-muted); font-size:12px; }
+@media(max-width:650px) { .account-topbar-wallet { padding:5px 8px; max-width:106px; } .account-topbar-wallet-icon { flex-basis:20px; width:20px; height:20px; } .account-wallet-summary { padding:18px; flex-wrap:wrap; } .account-wallet-blocked { margin-inline-start:0; } .account-wallet-heading { align-items:flex-start; flex-direction:column; } }
+@media(max-width:390px) { .account-topbar-wallet { max-width:78px; } .account-wallet-entry { gap:8px; padding:11px; } .account-wallet-entry-symbol { flex-basis:30px; width:30px; height:30px; } .account-wallet-entry-details small { font-size:10px; } }

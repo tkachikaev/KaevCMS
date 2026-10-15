@@ -37,7 +37,7 @@ test('player character display mode persists after reload', async ({ page }) => 
     await expect(all).toHaveAttribute('aria-selected', 'true');
 });
 
-test('player shell persists during account navigation and browser history', async ({ page }) => {
+test('sidebar persists and wallet-aware topbar refreshes during account navigation and browser history', async ({ page }) => {
     await signIn(page);
 
     const sidebar = page.locator('[data-account-sidebar]');
@@ -52,12 +52,14 @@ test('player shell persists during account navigation and browser history', asyn
     await page.locator('.account-nav').getByRole('link', { name: 'Игровые аккаунты' }).click();
     await expect(page).toHaveURL(/\/account\/game-accounts$/);
     await expect(sidebar).toHaveAttribute('data-persistence-probe', 'sidebar-kept');
-    await expect(topbar).toHaveAttribute('data-persistence-probe', 'topbar-kept');
+    await expect(topbar).not.toHaveAttribute('data-persistence-probe', 'topbar-kept');
+    await expect(page.locator('.account-topbar-wallet')).toBeVisible();
 
     await page.getByRole('link', { name: /Подробнее|View details/ }).first().click();
     await expect(page).toHaveURL(/\/account\/game-accounts\/\d+$/);
     await expect(sidebar).toHaveAttribute('data-persistence-probe', 'sidebar-kept');
-    await expect(topbar).toHaveAttribute('data-persistence-probe', 'topbar-kept');
+    await expect(topbar).not.toHaveAttribute('data-persistence-probe', 'topbar-kept');
+    await expect(page.locator('.account-topbar-wallet')).toBeVisible();
 
     await page.goBack();
     await expect(page).toHaveURL(/\/account\/game-accounts$/);
@@ -65,7 +67,8 @@ test('player shell persists during account navigation and browser history', asyn
 
     await page.goBack();
     await expect(page).toHaveURL(/\/account$/);
-    await expect(topbar).toHaveAttribute('data-persistence-probe', 'topbar-kept');
+    await expect(topbar).not.toHaveAttribute('data-persistence-probe', 'topbar-kept');
+    await expect(page.locator('.account-topbar-wallet')).toBeVisible();
 });
 
 test('luxury player theme remains reactive after SPA navigation', async ({ page }) => {
@@ -79,7 +82,8 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
 
     const accountMenu = page.locator('.account-profile-menu-topbar');
     await accountMenu.locator('summary').click();
-    await expect(accountMenu.locator('.account-profile-balance')).toContainText(/Монеты|Coins/);
+    await expect(accountMenu.locator('.account-profile-balance')).toContainText(/\d/);
+    await expect(accountMenu.locator('.account-profile-balance')).toHaveAttribute('href', /\/account\/wallet$/);
 
     await page.locator('.account-nav').getByRole('link', { name: 'Игровые аккаунты' }).click();
     await expect(page).toHaveURL(/\/account\/game-accounts$/);

@@ -1,3 +1,73 @@
+## 0.48.6 - 2026-10-15
+
+### Added
+
+- Wallet Core A7: authenticated Owner/Administrator can block and unblock coin spending on a CMS user's wallet from the existing Wallets administration page. Explicit confirmation, 3–190 character reason, and unique status-operation UUID are required. Auditor remains read-only; Editor and guests are denied.
+- Status changes lock the CMS user and wallet rows in the same order as the financial transaction engine. Debit (including future Shop) is prohibited while blocked, credit remains allowed; status changes never change coin balances or financial ledger entries. Unblocking fails closed if the full wallet journal does not reconcile.
+- Permanent `wallet_status_events` table with unique operation key/fingerprint, before/after status, administrator, reason and time. The wallet status history is visible only to authorized administration roles and never deleted by ordinary audit-log retention. Existing A1 migration remains unchanged. Status history has restrict-on-delete foreign keys, and its new migration refuses data-destroying rollback.
+- A status change and standard CMS audit record are committed together; failed audits roll back everything. Exact repeated status requests do not repeat an event; key reuse for another user/actor/reason/status fails. Added negative regression tests, including access control, corruption, replay, history retention, validation and rollback on audit failure.
+- Core Wallet is functionally complete in source, but Windows quality gates, PHPUnit/PHPStan/Pint, real MySQL/MariaDB concurrency, browser tests and live upgrade paths still require verification before calling this version stable. Donations, fiat prices, payment providers and Shop are not yet integrated.
+
+## 0.48.5 - 2026-10-15
+
+### Added
+
+- Core Wallet A6: administrator Wallets page under Users for Owner/Administrator/Auditor, paginated CMS user search by name/email/id, wallet balance and blocked status, per-user ledger history (30 per page) and a direct link from user details. Missing wallets appear as zero without inserting a financial record.
+- Owner/Administrator manual credit and debit via the existing `WalletGateway` only. Typed integer values are checked without float conversion; request requires a descriptive reason, an explicit confirmation checkbox, and a unique UUID form key (reused verbatim on browser resubmission). The engine prevents negative/overflow balances, stores actor identity, and requires a transactional audit entry.
+- Only admins with `wallet.manage` can POST; the read-only Auditor cannot submit, and Editor/guest cannot view. The permission is enforced both at route middleware and again by `CoreWalletGateway` immediately before mutation. No new Livewire action or direct wallet-table write is exposed.
+- Admin UI does not expose wallet source keys, request fingerprints or user game connection secrets. Transactions remain exclusively in the CMS database. New feature tests cover permissions, idempotency, input validation, debit failure, corrupted balances, and isolation between players.
+- No wallet blocks/unblocks yet (A7), Donations integration, game-server changes, dependencies, rewritten migrations, or runtime writes in release ZIP. PHPUnit/Pint/PHPStan/Windows/MySQL gates require user environment verification.
+
+## 0.48.4 - 2026-10-15
+
+### Added
+
+- Core Wallet A5: authenticated/localized `/account/wallet` player page with available balance, custom coin icon, read-only 20-entry paginated private history, empty state and spending-blocked notice. A missing wallet safely appears as zero without creating a financial record.
+- Both bundled account themes now show the real wallet balance/icon in the topbar and profile dropdown and link to the wallet in the sidebar. Shared responsive wallet styles are maintained in `public/assets/account/css/components.css`. Layouts deliberately do not persist the topbar across Livewire navigation, so displayed balances do not stay stale.
+- Account-facing views reveal no internal transaction reference, idempotency key, UUID, admin actor, reason, other user's history or payment details. A server-side controller always scopes entries to the authenticated user, with no user/wallet ID route parameter. No wallet mutation endpoints or payment controls were added.
+- Account theme versions: Kaev Aurelia Account `1.6.8`, L2 Obsidian Luxury `1.6.6`; both require CMS `0.48.4`. Feature tests cover authentication, ownership, confidential ledger fields, locale, empty/history and both themes; account navigation regression reflects the non-persistent balance header.
+- No changes to A1 wallet migration, balances/ledger engine, existing modules, composer lock, game databases or uploads. Full ZIP only (by owner request); Laravel/Windows/browser/MySQL acceptance is pending.
+
+## 0.48.3 - 2026-10-15
+
+### Added
+
+- Core Wallet A4: administrator page `Settings > Wallet appearance`, using existing CMS settings and role authorization. RU/EN (and enabled language) three plural forms for virtual coins, optional short label, safe default labels, and localized quantity rendering in `WalletAppearanceSettings` for later A5 user views.
+- Optional owner-uploaded coin icon (PNG/WebP up to 1 MiB and 1024×1024 pixels). Existing `SettingsImageStorage` validates real image type, extensions, dimensions and safe path; stored under preserved `public/uploads/settings/wallet-coin/`. Invalid uploads cannot mutate settings. Replacements delete only the previous managed icon after settings persist; removing restores the built-in default.
+- Role-aware settings navigation: Owner/Administrator edit, Auditor views only, Editor/guests have no access. Security/feature tests cover permissions, image spoofing, invalid forms, icon replacement and path traversal; EN/RU documentation updated.
+- No new wallet balance migrations, monetary prices or provider integration. No dependencies, GameServer or module/theme edits. Historical Core Wallet operations are unchanged.
+- Full ZIP only; no patch or cumulative artifact (by owner preference). PHP/JSON syntax and archive checks are local; full PHPUnit/Windows/browser/MySQL testing remains pending.
+
+## 0.48.2 - 2026-10-15
+
+### Added
+
+- Core Wallet A3: official server-side `WalletGateway` interface and `CoreWalletGateway` adapter; source allowlist with explicit installation flags (all disabled until integrated). Paid Donations and Shop are **not** enabled by this release.
+- Account-owner-scoped Shop debit, explicit authenticated administrator manual adjustments with required reason; new `wallet.view` / `wallet.manage` role permissions. Owner/Administrator can manage, Auditor can view, Editor has no access; no new public HTTP/Livewire wallet mutation endpoints.
+- Fail-closed CMS audit recording within the same DB transaction as wallet balance and ledger. On audit persistence failure the mutation rolls back. Idempotent replay leaves no extra audit entry.
+- Read-only full historical reconciliation (`kaevcms:wallets-reconcile`, optional `--user` / `--limit`), including per-entry continuity and arithmetic, overflow, invalid directions and current balance matching. Never repairs or deletes ledger records.
+- Regression tests for authorization, replay, audit failure rollback, and tampered historical ledger entries; EN/RU wallet documentation and audit labels updated.
+- No migrations, dependency changes, GameServer operations, payment provider or theme/module changes. Cumulative baseline remains 0.42.4. Windows/Playwright and MySQL concurrency tests require external execution.
+
+## 0.48.1 - 2026-10-15
+
+### Added
+
+- Implemented Core Wallet A2: an internal atomic credit/debit engine on the CMS database with a single per-user wallet, positive integer coin amounts, transactional balance + append-only journal writes, before/after balance snapshots, and creation on demand for new users.
+- Added strict source-scoped idempotency (replays return the original entry; conflicting payloads/users fail), balance row locks, three deadlock attempts, insufficient-funds and blocked-wallet checks, PHP integer overflow prevention, and fail-closed detection of balance/journal drift.
+- Added negative and rollback regressions, plus an optional isolated MySQL/MariaDB multi-process concurrency runner for actual row-locking and duplicate-credit verification. The runner requires an explicitly designated disposable testing database.
+- Updated EN/RU wallet docs. This remains an internal service only; module-facing authorization/API, player/admin UI, fiat pricing, and payment providers are future iterations (A3+).
+- No database migration edits, Composer/npm dependency changes, or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
+## 0.48.0 - 2026-10-15
+
+### Added
+
+- Began Core Wallet A1 with one wallet per CMS user, a zero starting balance, and an operation-ledger schema featuring globally unique operation UUIDs, source-scoped idempotency keys, request fingerprints, unsigned coin amounts and before/after balance snapshots.
+- Added a migration that provisions zero-balance wallets for existing site users without touching L2JMobius/RUSaCis databases; wallet records and history use restrict-on-delete foreign keys. Rollback refuses to drop funded wallets or an existing transaction history.
+- Added guarded Wallet/WalletEntry models, a read-only relation from User, schema/upgrade regression tests, and bilingual wallet documentation. This is preparation only: credit/debit engine, UI, fiat pricing, and payment integration are not enabled in A1.
+- No Composer/npm lock changes or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
+
 ## 0.47.48 - 2026-10-15
 
 ### Changed
