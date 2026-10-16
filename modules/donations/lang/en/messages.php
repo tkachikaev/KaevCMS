@@ -63,6 +63,8 @@ return [
     'player_calculator_help' => 'Choose a coin quantity and one configured currency. The server calculates the price using the administrator’s rate.',
     'player_no_currencies' => 'No currencies are currently available. Funding is unavailable.',
     'player_coin_quantity' => 'Number of coins',
+    'player_quantity_slider' => 'Choose with the slider',
+    'player_live_total' => 'The total updates as you change the quantity or currency.',
     'choose_coins' => 'Choose coin quantity',
     'player_topups_closed' => 'New requests are currently disabled. Your request history remains available.',
     'player_coin_limits' => 'Allowed quantity: :min–:max coins.',

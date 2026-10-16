@@ -1,5 +1,8 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.account_title'))
+@push('head')
+<link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
+@endpush
 @section('content')
 <section class="account-page-heading">
     <div>
@@ -9,7 +12,7 @@
     </div>
     <a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a>
 </section>
-<section class="account-section" data-testid="donations-player-calculator">
+<section class="account-section account-donations-card account-donations-calculator" data-testid="donations-player-calculator" data-donations-calculator>
     <div class="account-section-heading">
         <div>
             <span class="account-eyebrow">{{ __('module-donations::messages.rates_title') }}</span>
@@ -33,43 +36,46 @@
                     <div class="account-field-control">
                         <select id="donations-player-currency" name="currency" required>
                             @foreach($currencies as $currency)
-                                <option value="{{ $currency['code'] }}" @selected($currency['code'] === $selectedCurrency)>{{ $currency['code'] }} — {{ $currency['name'] }}</option>
+                                <option value="{{ $currency['code'] }}" data-price-minor="{{ $currency['unit_price_minor'] }}" data-exponent="{{ $currency['exponent'] }}" @selected($currency['code'] === $selectedCurrency)>{{ $currency['code'] }} — {{ $currency['name'] }}</option>
                             @endforeach
                         </select>
                     </div>
                 </label>
             </div>
-            <p>{{ __('module-donations::messages.player_coin_limits', ['min' => $limits['min_coins'], 'max' => $limits['max_coins']]) }}</p>
-            <div class="account-form-actions">
+            <div class="donations-quantity-range" data-donations-range-control hidden>
+                <label for="donations-player-range"><span>{{ __('module-donations::messages.player_quantity_slider') }}</span></label>
+                <input id="donations-player-range" type="range" min="{{ $limits['min_coins'] }}" max="{{ $limits['max_coins'] }}" step="1" value="{{ $coinsInput ?: $limits['min_coins'] }}" aria-describedby="donations-player-limits">
+                <div class="donations-range-labels" aria-hidden="true"><span>{{ $limits['min_coins'] }}</span><span>{{ $limits['max_coins'] }}</span></div>
+            </div>
+            <p id="donations-player-limits">{{ __('module-donations::messages.player_coin_limits', ['min' => $limits['min_coins'], 'max' => $limits['max_coins']]) }}</p>
+            <p data-donations-live-help hidden>{{ __('module-donations::messages.player_live_total') }}</p>
+            <div class="account-form-actions" data-donations-calculate-fallback>
                 <button class="account-button primary" type="submit">{{ __('module-donations::messages.player_calculate') }}</button>
             </div>
         </form>
-        @if($quoteError !== null)
-            <p class="account-field-error" role="alert" data-testid="donations-quote-error">{{ $quoteError }}</p>
-        @elseif($quote !== null)
-            <div class="account-wallet-summary" data-testid="donations-quote-result" aria-live="polite">
-                <div class="account-wallet-summary-text">
-                    <span class="account-eyebrow">{{ __('module-donations::messages.player_estimated_total') }}</span>
-                    <h2>{{ $money->format($quote['total_minor'], $quote['exponent']) }} {{ $quote['currency_code'] }}</h2>
-                    <p>{{ __('module-donations::messages.player_price_breakdown', [
-                        'coins' => $quote['coins'],
-                        'price' => $money->format($quote['unit_price_minor'], $quote['exponent']),
-                        'currency' => $quote['currency_code'],
-                    ]) }}</p>
-                </div>
+        <p class="account-field-error" role="alert" data-testid="donations-quote-error" data-invalid-coins="{{ __('module-donations::messages.player_invalid_coins') }}" data-invalid-currency="{{ __('module-donations::messages.player_invalid_currency') }}" @if($quoteError === null) hidden @endif>{{ $quoteError }}</p>
+        <div class="account-wallet-summary" data-testid="donations-quote-result" aria-live="polite" aria-atomic="true" @if($quote === null) hidden @endif>
+            <div class="account-wallet-summary-text">
+                <span class="account-eyebrow">{{ __('module-donations::messages.player_estimated_total') }}</span>
+                <h2 data-donations-total>{{ $quote !== null ? $money->format($quote['total_minor'], $quote['exponent']).' '.$quote['currency_code'] : '—' }}</h2>
+                <p data-donations-breakdown data-template="{{ __('module-donations::messages.player_price_breakdown') }}">{{ $quote !== null ? __('module-donations::messages.player_price_breakdown', [
+                    'coins' => $quote['coins'],
+                    'price' => $money->format($quote['unit_price_minor'], $quote['exponent']),
+                    'currency' => $quote['currency_code'],
+                ]) : '' }}</p>
             </div>
-        @endif
+        </div>
     @endif
     <p>{{ __('module-donations::messages.player_preview_only') }}</p>
     <p>{{ __('module-donations::messages.dry_run_warning') }}</p>
-    @if($quote !== null && $quoteError === null)
+    @if($currencies !== [])
         <form method="POST" action="{{ route('modules.donations.orders.store') }}" data-testid="donations-create-test-draft">
             @csrf
-            <input type="hidden" name="coins" value="{{ $quote['coins'] }}">
-            <input type="hidden" name="currency" value="{{ $quote['currency_code'] }}">
+            <input type="hidden" name="coins" value="{{ $quote['coins'] ?? '' }}">
+            <input type="hidden" name="currency" value="{{ $quote['currency_code'] ?? '' }}">
             <input type="hidden" name="request_key" value="{{ $draftRequestKey }}">
             @error('order')<p class="account-field-error" role="alert">{{ $message }}</p>@enderror
-            <button class="account-button secondary" type="submit">{{ __('module-donations::messages.create_test_draft') }}</button>
+            <button class="account-button secondary" type="submit" @disabled($quote === null || $quoteError !== null)>{{ __('module-donations::messages.create_test_draft') }}</button>
         </form>
     @endif
 </section>
@@ -82,3 +88,6 @@
     <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('module-donations::messages.go_to_wallet') }}</a>
 </section>
 @endsection
+@push('scripts')
+<script src="{{ asset('assets/modules/donations-player.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+@endpush

@@ -387,6 +387,8 @@
     "public/assets/modules/daily-rewards.css",
     "public/assets/modules/donations-admin.css",
     "public/assets/modules/donations-admin.js",
+    "public/assets/modules/donations-player.css",
+    "public/assets/modules/donations-player.js",
     "public/assets/modules/support-tickets.css",
     "public/assets/modules/support-tickets.js",
     "public/index.php",

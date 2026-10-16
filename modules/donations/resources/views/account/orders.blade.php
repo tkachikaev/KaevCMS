@@ -1,5 +1,8 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.orders_title'))
+@push('head')
+<link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
+@endpush
 @section('content')
 <section class="account-page-heading">
     <div><h1>{{ __('module-donations::messages.orders_title') }}</h1><p>{{ __('module-donations::messages.orders_description') }}</p></div>
@@ -11,7 +14,7 @@
         <p>{{ __('module-donations::messages.player_topups_closed') }}</p>
     @endif
 </section>
-<section class="account-section" data-testid="donations-player-orders">
+<section class="account-section account-donations-card" data-testid="donations-player-orders">
     @forelse($orders as $order)
         <div class="account-wallet-summary">
             <div class="account-wallet-summary-text">

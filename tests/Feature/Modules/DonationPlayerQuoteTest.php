@@ -60,7 +60,7 @@ class DonationPlayerQuoteTest extends TestCase
             $this->actingAs($user)->get('/modules/donations?coins=100&currency='.$code)
                 ->assertOk()->assertSee('data-testid="donations-quote-result"', false)
                 ->assertSee($amount.' '.$code)
-                ->assertDontSee('data-testid="donations-quote-error"', false);
+                ->assertViewHas('quoteError', null);
         }
         $this->assertDatabaseCount('wallet_entries', 0);
     }
@@ -79,7 +79,7 @@ class DonationPlayerQuoteTest extends TestCase
             $res = $this->actingAs($user)->get('/modules/donations?'.$query)->assertOk();
             if (! str_contains($query, 'total_minor=1')) {
                 $res->assertSee('data-testid="donations-quote-error"', false)
-                    ->assertDontSee('data-testid="donations-quote-result"', false);
+                    ->assertViewHas('quote', null);
             } else {
                 // Injected total must not change the server-calculated price.
                 $res->assertSee('100.00 USD')->assertDontSee('0.01 USD');
@@ -98,7 +98,7 @@ class DonationPlayerQuoteTest extends TestCase
         foreach (['0', '9', '201', '-1', '1.5', '1e2', '9999999', 'invalid'] as $quantity) {
             $this->actingAs($user)->get('/modules/donations?currency=USD&coins='.$quantity)
                 ->assertOk()->assertSee('data-testid="donations-quote-error"', false)
-                ->assertDontSee('data-testid="donations-quote-result"', false);
+                ->assertViewHas('quote', null);
         }
         foreach (['10', '200'] as $quantity) {
             $this->actingAs($user)->get('/modules/donations?currency=USD&coins='.$quantity)

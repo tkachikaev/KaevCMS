@@ -1,5 +1,8 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.order_title'))
+@push('head')
+<link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
+@endpush
 @section('content')
 <section class="account-page-heading"><div><h1>{{ __('module-donations::messages.order_title') }}</h1><p>{{ __('module-donations::messages.not_available_yet') }}</p></div>
 <div class="account-form-actions">
@@ -8,7 +11,7 @@
     @endif
     <a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a>
 </div></section>
-<section class="account-section" data-testid="donations-order-detail">
+<section class="account-section account-donations-card" data-testid="donations-order-detail">
     <p>{{ __('module-donations::messages.order_reference') }}: {{ $order->order_uuid }}</p>
     <p>{{ __('module-donations::messages.order_status') }}: {{ __('module-donations::messages.status_'.$order->displayStatus()) }}</p>
     <p>{{ __('module-donations::messages.player_price_breakdown', ['coins' => $order->coins, 'price' => $money->format((int) $order->unit_price_minor, (int) $order->exponent), 'currency' => $order->currency_code]) }}</p>

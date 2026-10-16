@@ -87,7 +87,7 @@ for (const width of [1440, 390]) {
     });
 }
 
-test('players can reach coin selection from orders and create an exact-price test draft in both themes', async ({ page, context }) => {
+test('players can reach coin selection, adjust a live slider and create an exact-price test draft in both themes', async ({ page, context, browser }) => {
     test.setTimeout(90_000);
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
@@ -108,6 +108,15 @@ test('players can reach coin selection from orders and create an exact-price tes
     }
     await rate.locator('[data-donations-price]').fill('1.25');
     await rate.locator('input[type="checkbox"]').check();
+    for (const [code, price] of [['USD', '0.29'], ['JPY', '2'], ['KWD', '0.125']]) {
+        const currencyRate = page.getByTestId(`donations-rate-${code}`);
+        if (!await currencyRate.count()) {
+            await form.locator('[data-donations-currency]').selectOption(code);
+            await form.getByRole('button', { name: 'Добавить валюту', exact: true }).click();
+        }
+        await currencyRate.locator('[data-donations-price]').fill(price);
+        await currencyRate.locator('input[type="checkbox"]').check();
+    }
     await form.locator('#donations-show-in-account').check();
     await form.locator('[name="min_coins"]').fill('1');
     await form.locator('[name="max_coins"]').fill('1000000');
@@ -139,21 +148,83 @@ test('players can reach coin selection from orders and create an exact-price tes
             await choose.click();
             await expect(player).toHaveURL(/\/modules\/donations$/);
             const quote = player.getByTestId('donations-quote-form');
-            await expect(quote.locator('[name="coins"]')).toBeInViewport();
-            await quote.locator('[name="coins"]').fill('237');
+            const coins = quote.locator('[name="coins"]');
+            const slider = quote.locator('[type="range"]');
+            const result = player.getByTestId('donations-quote-result');
+            const draft = player.getByTestId('donations-create-test-draft');
+            const originalUrl = player.url();
+            let quoteRequests = 0;
+            const countQuoteRequests = request => {
+                if (request.method() === 'GET' && new URL(request.url()).pathname === '/modules/donations') quoteRequests++;
+            };
+            player.on('request', countQuoteRequests);
+            await expect(coins).toBeInViewport();
+            await expect(slider).toBeVisible();
+            expect(await player.getByTestId('donations-player-calculator').evaluate(element => parseFloat(getComputedStyle(element).borderTopLeftRadius))).toBeGreaterThanOrEqual(16);
             await quote.locator('[name="currency"]').selectOption('RUB');
-            await quote.getByRole('button', { name: 'Рассчитать', exact: true }).click();
-            await expect(player.getByTestId('donations-quote-result')).toContainText('296.25 RUB');
-            await expect(player.getByTestId('donations-quote-result')).toContainText('237 монет');
+            await slider.focus();
+            await slider.press('Home');
+            await slider.press('ArrowRight');
+            await expect(coins).toHaveValue('2');
+            await expect(result).toContainText('2.50 RUB');
+            await slider.press('End');
+            await expect(coins).toHaveValue('1000000');
+            await expect(result).toContainText('1250000.00 RUB');
+            for (const invalid of ['', '0', '1000001', '1.5']) {
+                await coins.fill(invalid);
+                await expect(player.getByTestId('donations-quote-error')).toBeVisible();
+                await expect(result.locator('[data-donations-total]')).toHaveText('—');
+                await expect(draft.getByRole('button')).toBeDisabled();
+            }
+            await coins.fill('237');
+            await expect(slider).toHaveValue('237');
+            for (const [code, amount] of [['USD', '68.73'], ['JPY', '474'], ['KWD', '29.625'], ['RUB', '296.25']]) {
+                await quote.locator('[name="currency"]').selectOption(code);
+                await expect(result).toContainText(`${amount} ${code}`);
+            }
+            await coins.press('Enter');
+            await expect(player).toHaveURL(originalUrl);
+            await expect(player.getByTestId('donations-quote-error')).toBeHidden();
+            await expect(draft.locator('[name="coins"]')).toHaveValue('237');
+            await expect(draft.locator('[name="currency"]')).toHaveValue('RUB');
+            expect(quoteRequests).toBe(0);
+            player.off('request', countQuoteRequests);
             expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
             await player.screenshot({ path: `storage/framework/testing/donations-player-${theme}-${width}.png`, fullPage: true });
             await player.getByTestId('donations-create-test-draft').getByRole('button').click();
             await expect(player.getByTestId('donations-order-detail')).toContainText('296.25 RUB');
             await expect(player.getByTestId('donations-order-detail')).toContainText('237 монет');
             await player.getByTestId('donations-choose-coins').click();
-            await expect(quote.locator('[name="coins"]')).toBeVisible();
+            await coins.fill('10');
+            await quote.locator('[name="currency"]').selectOption('USD');
+            await expect(result).toContainText('2.90 USD');
+            await expect(slider).toHaveValue('10');
         }
     }
+    const fallbackContext = await browser.newContext({ storageState: await context.storageState(), javaScriptEnabled: false });
+    const fallback = await fallbackContext.newPage();
+    await gotoWithLocalNetworkRetry(fallback, '/modules/donations');
+    await expect(fallback.locator('[type="range"]')).toBeHidden();
+    await fallback.locator('#donations-player-coins').fill('13');
+    await fallback.locator('#donations-player-currency').selectOption('RUB');
+    await fallback.getByRole('button', { name: 'Рассчитать', exact: true }).click();
+    await expect(fallback.getByTestId('donations-quote-result')).toContainText('16.25 RUB');
+    await fallbackContext.close();
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
+    await form.locator('[name="min_coins"]').fill('10');
+    await form.locator('[name="max_coins"]').fill('500');
+    await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
+    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await gotoWithLocalNetworkRetry(player, '/modules/donations?coins=5&currency=RUB');
+    await expect(player.getByTestId('donations-quote-error')).toBeVisible();
+    const limitedSlider = player.locator('#donations-player-range');
+    await expect(limitedSlider).toHaveAttribute('min', '10');
+    await expect(limitedSlider).toHaveAttribute('max', '500');
+    await limitedSlider.focus();
+    await limitedSlider.press('End');
+    await expect(player.locator('#donations-player-coins')).toHaveValue('500');
+    await expect(player.getByTestId('donations-quote-result')).toContainText('625.00 RUB');
+    await expect(player.getByTestId('donations-create-test-draft').getByRole('button')).toBeEnabled();
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
     await form.locator('#donations-show-in-account').uncheck();
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();

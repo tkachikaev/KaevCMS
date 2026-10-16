@@ -1,0 +1,46 @@
+.account-donations-card.account-section {
+    display: grid;
+    gap: 20px;
+    min-width: 0;
+    padding: clamp(18px, 3vw, 28px);
+    border: 1px solid var(--account-line);
+    border-radius: var(--account-radius-lg, var(--account-radius, 24px));
+    background: var(--account-panel);
+}
+.account-donations-card .account-section-heading,
+.account-donations-card p,
+.account-donations-card > h2 { margin: 0; }
+.account-donations-card > p { overflow-wrap: anywhere; }
+.account-donations-card .account-wallet-summary-text { display: grid; gap: 8px; }
+.account-donations-calculator .account-form-card { min-width: 0; box-shadow: none; }
+.account-donations-calculator [hidden] { display: none !important; }
+.account-donations-calculator .donations-quantity-range { display: grid; gap: 8px; min-width: 0; }
+.account-donations-calculator .account-form-card input[type="range"] {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+    accent-color: var(--account-gold);
+    box-shadow: none;
+    cursor: pointer;
+}
+.account-donations-calculator input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(to right, var(--account-gold) var(--donations-progress, 0%), var(--account-line) var(--donations-progress, 0%)); }
+.account-donations-calculator input[type="range"]::-webkit-slider-thumb { width: 20px; height: 20px; margin-top: -7px; border: 2px solid var(--account-panel); border-radius: 50%; background: var(--account-gold); box-shadow: 0 1px 5px var(--account-line); appearance: none; -webkit-appearance: none; }
+.account-donations-calculator input[type="range"]::-moz-range-track { height: 6px; border-radius: 999px; background: var(--account-line); }
+.account-donations-calculator input[type="range"]::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--account-gold); }
+.account-donations-calculator input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border: 2px solid var(--account-panel); border-radius: 50%; background: var(--account-gold); }
+.account-donations-calculator input[type="range"]:focus-visible { outline: 2px solid var(--account-gold); outline-offset: 4px; }
+.account-donations-calculator .donations-range-labels { display: flex; justify-content: space-between; gap: 12px; color: var(--account-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.account-donations-calculator [data-donations-live-help] { color: var(--account-muted); font-size: 13px; }
+.account-donations-calculator [data-donations-total] { overflow-wrap: anywhere; }
+.account-donations-calculator button:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 650px) {
+    .account-donations-calculator .account-form-card { padding: 18px; }
+    .account-donations-card .account-button { max-width: 100%; white-space: normal; text-align: center; }
+}
