@@ -33,6 +33,14 @@ class BundledModuleTranslationParityTest extends TestCase
         );
     }
 
+    public function test_donations_russian_and_english_keys_match(): void
+    {
+        $this->assertTranslationParity(
+            base_path('modules/donations/lang/en/messages.php'),
+            base_path('modules/donations/lang/ru/messages.php'),
+        );
+    }
+
     public function test_promo_codes_russian_and_english_keys_match(): void
     {
         require_once base_path('modules/promo-codes/src/Exceptions/PromoCodeActivationFailure.php');

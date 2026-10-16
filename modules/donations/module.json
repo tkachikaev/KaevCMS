@@ -1,0 +1,20 @@
+{
+    "schema": 1,
+    "id": "donations",
+    "name": "Donations",
+    "version": "1.5.0",
+    "author": "KaevCMS",
+    "description": "C1: provider contracts, separate encrypted settings per driver, multi-provider readiness and admin configuration. No checkout, callbacks or credits.",
+    "cms_min": "0.49.4",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\Donations\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "web": "routes/web.php",
+        "admin": "routes/admin.php"
+    }
+}

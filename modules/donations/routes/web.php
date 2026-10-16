@@ -1,0 +1,12 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use KaevCMS\Modules\Donations\Http\Controllers\DonationController;
+
+Route::middleware(['auth', 'site.active', 'site.verified'])->group(function (): void {
+    Route::get('/', DonationController::class)->name('index');
+    Route::get('/orders', [DonationController::class, 'orders'])->name('orders.index');
+    Route::get('/orders/{orderUuid}', [DonationController::class, 'show'])->whereUuid('orderUuid')->name('orders.show');
+    Route::post('/orders', [DonationController::class, 'store'])->middleware('throttle:10,1')->name('orders.store');
+    Route::post('/orders/{orderUuid}/cancel', [DonationController::class, 'cancel'])->whereUuid('orderUuid')->middleware('throttle:10,1')->name('orders.cancel');
+});

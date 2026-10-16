@@ -8,6 +8,7 @@ parameters:
         - routes
         - database
         - modules/daily-rewards/src
+        - modules/donations/src
         - modules/promo-codes/src
         - modules/support-tickets/src
 

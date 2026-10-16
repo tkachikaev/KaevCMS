@@ -1,3 +1,61 @@
+## 0.50.0 - 2026-10-16
+
+### Added
+
+- Donations C1 (`donations` 1.5.0): provider-independent PHP contract for signed callback verification and redirect checkout, immutable payment DTOs, explicit code-controlled driver allowlist and separate provider configurations. No dynamically loaded classes from DB or user input.
+- Administrative **Payment providers** pages under Donations with Owner/Admin configuration, Auditor read-only, Editor denied; independent active flags, test/live mode, supported currency selection, encrypted credential storage and generic local readiness rules. No access keys are rendered back to the browser or recorded in audit details.
+- Configurations start absent/off. Multiple drivers can be enabled independently as they are installed in future releases; the player's configured currencies/rates stay under their separate existing controls, without automatic conversion. A provider is live-eligible only when enabled in live mode, configured, supports the currency and the Donations rate is also enabled.
+- New additive module migration for protected provider settings; existing 0.49.4 orders, core wallets, previous migrations and dependencies are unchanged. Tests for fake multi-provider drivers, encrypted secrets, audit rollback, authorization, invalid currency/mode/driver, missing or corrupt keys, and fail-closed defaults.
+- No bundled payment driver, payment creation route, real webhook route, commission settings, automatic credit or status transitions yet. An administrator's test mode selector must not be confused with a verified provider sandbox test. The 0.49.4 unpaid draft flow remains unchanged.
+- Full ZIP only by owner request. PHPUnit, PHPStan, Pint, Windows and browser gates require the user's environment for execution.
+
+## 0.49.4 - 2026-10-16
+
+### Added
+
+- Donations B5 (`donations` 1.4.0): authenticated creation of **unpaid test drafts** from the exact server-calculated quote. Private paginated player order history and detail, cancellation, immutable price snapshots and idempotent resubmission; no card, provider, capture, payment or coin credit.
+- Independent history routes remain readable when the owner hides new funding requests. Direct draft creation fails closed, whereas owned existing drafts remain viewable and cancellable. When the entire module is disabled its HTTP routes disappear, but database records and Core Wallet remain intact.
+- Protected administrative order journal with status/currency/user ID filters, snapshot detail and historical events; Owner/Administrator and read-only Auditor are allowed, Editor denied. Expired drafts are shown as expired even before an explicit persisted expiry transition.
+- Additional feature/negative tests and optional isolated multi-process MySQL/MariaDB gate covering 10 identical draft requests, 10 concurrent cancellations, and tariff-update/quote races. No published migration changed, and no new dependencies were introduced.
+- The eventual trusted-provider notification processing (including module disable with pending real payments) is reserved for 0.50.x; **do not disable a provider-enabled Donations module with unsettled real orders** until the durable callback lifecycle is implemented and verified.
+- Full ZIP only by owner request. Laravel/Windows/browser/MySQL tests require user environment verification.
+
+## 0.49.3 - 2026-10-16
+
+### Added
+
+- Donations B4 (bundled module 1.3.0): durable provider-free payment order drafts with UUID, user-scoped idempotency, exact immutable currency/coin/price/total snapshot, and 30-minute expiry. Stored prices are never recalculated after an administrator changes rates.
+- Draft-only state transitions to cancelled or expired, permanent status-event trail and fail-closed CMS audit within the same transaction. User-scoped reads/cancellation; maximum five active drafts per account. Creating drafts stops with the Donations page closed; previously created orders remain retrievable through the service.
+- Additive module migration with payment-provider placeholders and protected rollback; negative tests for replay, tampered snapshots, lost audit, foreign ownership, missing/disabled prices and draft limits. No provider, checkout, wallet credit or payment status transitions yet. No new player checkout UI or HTTP routes.
+- Core Wallet, existing migrations and dependencies remain unchanged. Full ZIP only by owner request. PHPUnit/Pint/PHPStan/MySQL/Windows/browser gates still require execution before production acceptance.
+
+## 0.49.2 - 2026-10-16
+
+### Added
+
+- Donations B3 (`donations` 1.2.0): authenticated, owner-opt-in player calculator for a whole-number coin quantity and one configured active fiat currency. Estimates are recomputed on the server via the existing exact `DonationRates::quote()` and `DonationMoney`; no browser-provided amount is trusted.
+- Only valid enabled rates with matching registry precision appear. Reject missing/forged/disabled currencies, array inputs, invalid quantities and values outside administrator min/max limits. Includes RU/EN feedback, currency-specific fixed precision, empty-state and mobile-friendly form shared by account themes.
+- Fixed Donations B2 admin Blade section boundary: the rate and limits controls now render inside the admin content layout. Added regression/negative tests for player previews, disabled tariffs, price tampering and the admin layout.
+- Prices are informational; no checkout button, payment orders, providers, webhook handlers, currency exchange, coin grants or changes to Wallet Core. No new migrations or dependencies. Full ZIP only by owner request. Full PHPUnit, Pint, PHPStan, Windows and browser gates remain for user verification.
+
+## 0.49.1 - 2026-10-16
+
+### Added
+
+- Donations B2 (`donations` module 1.1.0): 154-code recognized currency catalogue with per-code exponent/name/symbol. Owner/Administrator can add rates, independently set the cost of **one coin**, enable/disable each currency, and configure global 1–1,000,000 coin quantity limits. Auditor is read-only; Editor denied.
+- Exact integer minor-unit price calculation for 0/2/3/4-decimal currencies (e.g. JPY, USD, KWD). No float, no automatic currency conversion, strict positive price and overflow bounds. Editable administrative price preview and protected server-side quote contract for future B3/B4.
+- Additive Donations migration with persistent per-currency rates and coin limits, atomic settings updates with fail-closed CMS audit, validation of role, currency code, price precision, quantity and stale registry precision. Tests cover successful and rejected operations, tampering and rollback.
+- No real checkout, payment order, provider webhook or coin credit yet. No changes to Wallet Core, previously published migrations, composer.lock, login/game databases or runtime uploads. Delivered full ZIP only per owner preference. Laravel/PHPUnit/Windows/browser/MySQL tests require user acceptance.
+
+## 0.49.0 - 2026-10-15
+
+### Added
+
+- Donations B1: independent bundled `donations` module v1.0.0 with scoped player/admin routes, module migration and explicit Owner/Administrator/Auditor/Editor authorization. The account entry starts hidden and is enabled only by a separately audited setting; module disable hides its routes without touching Core Wallet.
+- Safe, read-only player landing renders current coin balance via existing WalletAccountReadService. There are deliberately no payment buttons, fiat currencies/prices, payment orders, provider credentials, webhooks or wallet credits.
+- Module-scoped RU/EN translations, user/admin views, module documentation, tests for permissions, visibility, safe module disabling and audit rollback. Module setting updates and audit share a database transaction.
+- Core Wallet A1–A7, user balances and old migrations are unchanged. Full release only, by owner preference. User reported all Wallet quality gates green in their updated 0.48.6 source archive; B1 gates require their own verification.
+
 ## 0.48.6 - 2026-10-15
 
 ### Added
