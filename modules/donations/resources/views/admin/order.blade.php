@@ -1,7 +1,7 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.order_title'))
 @section('content')
-<div class="content-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.donations.orders.index', ['adminPath' => $adminPath]) }}">← {{ __('module-donations::messages.orders_admin_title') }}</a></div>
+@include('module-donations::admin.navigation')
 <section class="form-card" data-testid="donations-admin-order-detail">
     <h2>{{ __('module-donations::messages.order_title') }} #{{ $order->id }}</h2>
     <p>{{ __('module-donations::messages.order_reference') }}: {{ $order->order_uuid }}</p>

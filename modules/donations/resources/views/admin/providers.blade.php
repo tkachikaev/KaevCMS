@@ -1,7 +1,7 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.providers_title'))
 @section('content')
-<div class="content-toolbar"><a class="button button-secondary" wire:navigate href="{{ route('admin.module-pages.donations.index', ['adminPath' => $adminPath]) }}">← {{ __('module-donations::messages.admin_title') }}</a></div>
+@include('module-donations::admin.navigation')
 <section class="form-card" data-testid="donations-providers">
     <h2>{{ __('module-donations::messages.providers_title') }}</h2>
     <p class="admin-field-help">{{ __('module-donations::messages.providers_intro') }}</p>
@@ -13,7 +13,11 @@
             <a class="button button-secondary" wire:navigate href="{{ route('admin.module-pages.donations.providers.show', ['adminPath' => $adminPath, 'providerCode' => $provider['code']]) }}">{{ __('module-donations::messages.provider_configure') }}</a>
         </div>
     @empty
-        <div class="admin-empty-state">{{ __('module-donations::messages.providers_none_installed') }}</div>
+        <div class="donations-provider-empty">
+            <strong>{{ __('module-donations::messages.providers_none_installed') }}</strong>
+            <p>{{ __('module-donations::messages.providers_empty_help') }}</p>
+            <a class="button button-secondary" wire:navigate href="{{ route('admin.module-pages.donations.index', ['adminPath' => $adminPath]) }}">{{ __('module-donations::messages.rates_title') }}</a>
+        </div>
     @endforelse
 </section>
 @endsection

@@ -1,7 +1,7 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.providers_title'))
 @section('content')
-<div class="content-toolbar"><a class="button button-secondary" wire:navigate href="{{ route('admin.module-pages.donations.providers.index', ['adminPath' => $adminPath]) }}">← {{ __('module-donations::messages.providers_title') }}</a></div>
+@include('module-donations::admin.navigation')
 <section class="form-card" data-testid="donations-provider-detail">
     <h2>{{ $driver->name() }} ({{ $driver->code() }})</h2>
     <p class="admin-field-help">{{ __('module-donations::messages.provider_not_payment_ready') }}</p>
