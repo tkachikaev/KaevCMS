@@ -33,6 +33,7 @@ final class DonationRates
         if ($min < 1 || $max < $min || $max > DonationMoney::MAX_COINS) {
             throw new RuntimeException('Donations coin limits are invalid.');
         }
+
         return ['min_coins' => $min, 'max_coins' => $max];
     }
 
@@ -138,6 +139,7 @@ final class DonationRates
             throw new \InvalidArgumentException('Currency is not enabled or supported.');
         }
         $minor = (int) $rate->unit_price_minor;
+
         return [
             'currency_code' => $code, 'coins' => $coins, 'unit_price_minor' => $minor,
             'total_minor' => $this->money->totalMinor($minor, $coins), 'exponent' => $currency['exponent'],

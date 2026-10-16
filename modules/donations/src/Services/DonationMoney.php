@@ -8,6 +8,7 @@ use InvalidArgumentException;
 final class DonationMoney
 {
     public const MAX_UNIT_PRICE_MINOR = 999999999;
+
     public const MAX_COINS = 1000000;
 
     public function parseUnitPrice(string $value, int $exponent): int
@@ -30,6 +31,7 @@ final class DonationMoney
         if ($minor < 1 || $minor > self::MAX_UNIT_PRICE_MINOR) {
             throw new InvalidArgumentException('Unit price must be positive and within the limit.');
         }
+
         return $minor;
     }
 
@@ -38,6 +40,7 @@ final class DonationMoney
         if ($unitPriceMinor < 1 || $unitPriceMinor > self::MAX_UNIT_PRICE_MINOR || $coins < 1 || $coins > self::MAX_COINS) {
             throw new InvalidArgumentException('Invalid price or number of coins.');
         }
+
         // With these bounds the result is < 10^15 and therefore safe on PHP 64-bit.
         return $unitPriceMinor * $coins;
     }
@@ -50,6 +53,7 @@ final class DonationMoney
         $factor = 10 ** $exponent;
         $whole = intdiv($minor, $factor);
         $fraction = $minor % $factor;
+
         return (string) $whole.($exponent === 0 ? '' : '.'.str_pad((string) $fraction, $exponent, '0', STR_PAD_LEFT));
     }
 }

@@ -415,11 +415,14 @@ test('module foundation is available from the administrator sidebar', async ({ p
 
     const moduleCatalog = page.getByTestId('module-catalog');
     await expect(moduleCatalog).toHaveAttribute('data-layout', 'single-column');
-    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(3);
+    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(4);
 
     const promoModule = page.locator('[data-module-id="promo-codes"]');
     const dailyModule = page.locator('[data-module-id="daily-rewards"]');
     const supportModule = page.locator('[data-module-id="support-tickets"]');
+    const donationsModule = page.locator('[data-module-id="donations"]');
+    await expect(donationsModule.getByRole('heading', { name: 'Donations', exact: true })).toBeVisible();
+    await expect(donationsModule.locator('.admin-catalog-side')).toBeVisible();
     await expect(promoModule.getByRole('heading', { name: 'Promo Codes' })).toBeVisible();
     await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
     await expect(promoModule.locator('.admin-catalog-side')).toBeVisible();

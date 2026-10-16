@@ -8,12 +8,13 @@ use App\Services\Admin\AdminPathSettings;
 use App\Support\Modules\ModuleAdminAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use KaevCMS\Modules\Donations\Models\DonationOrder;
-use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationSettingsRequest;
+use Illuminate\View\View;
 use KaevCMS\Modules\Donations\Http\Requests\SaveDonationCurrencyRateRequest;
 use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationLimitsRequest;
+use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationSettingsRequest;
+use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationCurrencyRegistry;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationRates;
@@ -90,6 +91,7 @@ final class AdminDonationController extends Controller
         return redirect()->route('admin.module-pages.donations.index', ['adminPath' => $paths->path()])
             ->with('status', __('module-donations::messages.settings_saved'));
     }
+
     public function orders(Request $request, AdminPathSettings $paths, DonationMoney $money): View
     {
         $filters = validator($request->query(), [
@@ -116,7 +118,11 @@ final class AdminDonationController extends Controller
         if (! empty($filters['user_id'])) {
             $query->where('user_id', $filters['user_id']);
         }
-        return view('module-donations::admin.orders', [
+
+        /** @var view-string $view */
+        $view = 'module-donations::admin.orders';
+
+        return view($view, [
             'orders' => $query->orderByDesc('id')->paginate(30)->withQueryString(),
             'filters' => $filters, 'money' => $money, 'adminPath' => $paths->path(),
         ]);
@@ -125,11 +131,14 @@ final class AdminDonationController extends Controller
     public function showOrder(string $orderUuid, AdminPathSettings $paths, DonationMoney $money): View
     {
         $order = DonationOrder::query()->with('user:id,name,email')->where('order_uuid', $orderUuid)->firstOrFail();
-        $events = \Illuminate\Support\Facades\DB::table('module_donation_order_events')
+        $events = DB::table('module_donation_order_events')
             ->where('order_id', $order->id)->orderByDesc('id')->paginate(30);
-        return view('module-donations::admin.order', [
+
+        /** @var view-string $view */
+        $view = 'module-donations::admin.order';
+
+        return view($view, [
             'order' => $order, 'events' => $events, 'money' => $money, 'adminPath' => $paths->path(),
         ]);
     }
-
 }

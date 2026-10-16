@@ -40,10 +40,10 @@
         <div class="settings-grid">
             <div class="form-group"><label for="donations-min-coins">{{ __('module-donations::messages.min_coins') }}</label>
                 <input id="donations-min-coins" type="number" min="1" max="1000000" name="min_coins" required value="{{ old('min_coins', $limits['min_coins']) }}" @disabled(request()->attributes->get('admin_read_only'))>
-                @error('min_coins')<small class="field-error">{{ $message }}</small>@enderror</div>
+                @error('min_coins')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror</div>
             <div class="form-group"><label for="donations-max-coins">{{ __('module-donations::messages.max_coins') }}</label>
                 <input id="donations-max-coins" type="number" min="1" max="1000000" name="max_coins" required value="{{ old('max_coins', $limits['max_coins']) }}" @disabled(request()->attributes->get('admin_read_only'))>
-                @error('max_coins')<small class="field-error">{{ $message }}</small>@enderror</div>
+                @error('max_coins')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror</div>
         </div>
         @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.save_limits') }}</button>@endunless
     </form>
@@ -94,11 +94,11 @@
                             @endunless
                         @endforeach
                     </select>
-                    @error('currency_code')<small class="field-error">{{ $message }}</small>@enderror
+                    @error('currency_code')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
                 </div>
                 <div class="form-group"><label for="donations-new-unit-price">{{ __('module-donations::messages.price_per_coin') }}</label>
                     <input id="donations-new-unit-price" name="unit_price" type="text" inputmode="decimal" required value="{{ old('unit_price', '1') }}">
-                    @error('unit_price')<small class="field-error">{{ $message }}</small>@enderror
+                    @error('unit_price')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
                 </div>
             </div>
             <p class="admin-field-help">{{ __('module-donations::messages.price_hint') }}</p>

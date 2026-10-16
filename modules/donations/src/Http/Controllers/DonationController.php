@@ -5,17 +5,18 @@ namespace KaevCMS\Modules\Donations\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Wallet\WalletAccountReadService;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use KaevCMS\Modules\Donations\Models\DonationOrder;
-use KaevCMS\Modules\Donations\Services\DonationOrders;
-use LogicException;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
+use KaevCMS\Modules\Donations\Services\DonationOrders;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
+use LogicException;
 
 final class DonationController extends Controller
 {
@@ -66,6 +67,7 @@ final class DonationController extends Controller
         $view = 'module-donations::account.index';
 
         return view($view, [
+            'user' => $user,
             'walletView' => $wallets->forUser($user),
             'currencies' => $currencies,
             'limits' => $limits,
@@ -77,12 +79,18 @@ final class DonationController extends Controller
             'draftRequestKey' => (string) Str::uuid(),
         ]);
     }
+
     /** Order history is deliberately independent of new-order visibility. */
     public function orders(Request $request, DonationMoney $money): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
-        return view('module-donations::account.orders', [
+
+        /** @var view-string $view */
+        $view = 'module-donations::account.orders';
+
+        return view($view, [
+            'user' => $user,
             'orders' => DonationOrder::query()->where('user_id', $user->getKey())
                 ->orderByDesc('id')->paginate(20),
             'money' => $money,
@@ -95,7 +103,11 @@ final class DonationController extends Controller
         abort_unless($user instanceof User, 401);
         $order = $orders->forUser($user, $orderUuid);
         abort_unless($order instanceof DonationOrder, 404);
-        return view('module-donations::account.order', ['order' => $order, 'money' => $money]);
+
+        /** @var view-string $view */
+        $view = 'module-donations::account.order';
+
+        return view($view, ['user' => $user, 'order' => $order, 'money' => $money]);
     }
 
     /** This creates only a provider-free draft; there is no checkout or wallet credit. */
@@ -113,6 +125,7 @@ final class DonationController extends Controller
         } catch (InvalidArgumentException|LogicException $exception) {
             return back()->withErrors(['order' => __('module-donations::messages.order_unavailable')]);
         }
+
         return redirect()->route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid])
             ->with('status', __('module-donations::messages.draft_created'));
     }
@@ -123,13 +136,13 @@ final class DonationController extends Controller
         abort_unless($user instanceof User, 401);
         try {
             $orders->cancelDraft($user, $orderUuid);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $exception) {
+        } catch (ModelNotFoundException $exception) {
             abort(404);
         } catch (InvalidArgumentException|LogicException $exception) {
             return back()->withErrors(['order' => __('module-donations::messages.order_unavailable')]);
         }
+
         return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])
             ->with('status', __('module-donations::messages.draft_closed'));
     }
-
 }

@@ -14,6 +14,7 @@ use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 interface PaymentProvider
 {
     public function code(): string;
+
     public function name(): string;
 
     /** @return list<string> ISO 4217 codes the driver's API actually accepts (not CMS tariffs). */
@@ -24,12 +25,24 @@ interface PaymentProvider
     /** @return array<string, array{label:string,secret:bool,required:bool}> */
     public function credentialFields(): array;
 
-    /** Throws for unusable configuration; must not leak credentials in exception messages. */
+    /**
+     * Throws for unusable configuration; must not leak credentials in exception messages.
+     *
+     * @param  array<string, string>  $credentials
+     */
     public function assertConfiguration(array $credentials, string $mode): void;
 
-    /** The driver receives immutable order terms; amounts must never originate from the browser. */
+    /**
+     * The driver receives immutable order terms; amounts must never originate from the browser.
+     *
+     * @param  array<string, string>  $credentials
+     */
     public function beginPayment(PaymentIntent $intent, array $credentials, string $mode): PaymentCheckout;
 
-    /** Verify provider-specific signature/credentials BEFORE returning a trusted result. */
+    /**
+     * Verify provider-specific signature/credentials BEFORE returning a trusted result.
+     *
+     * @param  array<string, string>  $credentials
+     */
     public function verifyCallback(ProviderCallback $callback, array $credentials, string $mode): VerifiedPayment;
 }

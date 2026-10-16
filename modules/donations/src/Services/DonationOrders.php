@@ -20,6 +20,7 @@ use RuntimeException;
 final class DonationOrders
 {
     private const DRAFT_MINUTES = 30;
+
     private const MAX_OPEN_DRAFTS = 5;
 
     public function __construct(
@@ -46,6 +47,7 @@ final class DonationOrders
                 if ($existing->currency_code !== $currencyCode || (int) $existing->coins !== $coins) {
                     throw new InvalidArgumentException('Order request key was reused with different contents.');
                 }
+
                 // Original quote wins on retry, even if rates/visibility have since changed.
                 return $existing;
             }
@@ -73,6 +75,7 @@ final class DonationOrders
             ])->save();
             $this->event($order, null, DonationOrder::DRAFT, 'created');
             $this->auditOrFail('donations.order_created', $lockedUser, $order);
+
             return $order;
         });
     }
@@ -83,6 +86,7 @@ final class DonationOrders
         if (! Str::isUuid($orderUuid)) {
             return null;
         }
+
         return DonationOrder::query()->where('user_id', $user->getKey())
             ->where('order_uuid', strtolower($orderUuid))->first();
     }
@@ -93,6 +97,7 @@ final class DonationOrders
         if (! Str::isUuid($orderUuid)) {
             throw new InvalidArgumentException('Invalid order reference.');
         }
+
         return DB::transaction(function () use ($user, $orderUuid): DonationOrder {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->first();
             if (! $lockedUser instanceof User) {
@@ -113,6 +118,7 @@ final class DonationOrders
             $order->forceFill(['status' => $to])->save();
             $this->event($order, DonationOrder::DRAFT, $to, $to === DonationOrder::EXPIRED ? 'expired' : 'cancelled');
             $this->auditOrFail('donations.order_'.$to, $lockedUser, $order);
+
             return $order;
         });
     }

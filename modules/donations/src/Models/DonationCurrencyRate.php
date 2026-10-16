@@ -4,7 +4,12 @@ namespace KaevCMS\Modules\Donations\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-/** @property string $currency_code @property int $exponent @property int $unit_price_minor @property bool $enabled */
+/**
+ * @property string $currency_code
+ * @property int $exponent
+ * @property int $unit_price_minor
+ * @property bool $enabled
+ */
 final class DonationCurrencyRate extends Model
 {
     protected $table = 'module_donation_currency_rates';

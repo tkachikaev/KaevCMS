@@ -502,6 +502,8 @@
     "tests/Feature/Wallet/WalletLedgerReconcilerTest.php",
     "tests/Feature/WebInstallerReleaseTest.php",
     "tests/Feature/WebUpdaterReleaseTest.php",
+    "tests/Fixtures/Donations/FakePaymentDriverAlpha.php",
+    "tests/Fixtures/Donations/FakePaymentDriverBeta.php",
     "tests/Integration/Donations/mysql-order-concurrency.php",
     "tests/Unit/Auth/AdminRoleTest.php",
     "tests/Unit/Auth/AdminRouteAccessRegistryTest.php",

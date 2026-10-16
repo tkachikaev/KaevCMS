@@ -4,12 +4,14 @@ namespace Tests\Feature\Modules;
 
 use App\Auth\AdminRole;
 use App\Models\Admin;
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use KaevCMS\Modules\Donations\Models\DonationSetting;
@@ -74,7 +76,7 @@ class DonationsModuleTest extends TestCase
         $this->assertTrue(app(DonationSettings::class)->isVisibleToPlayers());
         $this->actingAs($admin, 'admin')->put('/admin/extensions/donations/settings', ['show_in_account' => '0'])->assertRedirect();
         $this->assertFalse(app(DonationSettings::class)->isVisibleToPlayers());
-        $this->assertSame(2, \App\Models\AuditLog::query()->where('action', 'donations.visibility_updated')->count());
+        $this->assertSame(2, AuditLog::query()->where('action', 'donations.visibility_updated')->count());
     }
 
     public function test_invalid_settings_do_not_change_player_visibility(): void
@@ -89,7 +91,7 @@ class DonationsModuleTest extends TestCase
     public function test_service_rejects_editor_even_when_called_directly(): void
     {
         $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
         app(DonationSettings::class)->updateVisibility(true, $editor);
     }
 

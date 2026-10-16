@@ -9,6 +9,8 @@
 use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
+use App\Support\Modules\ModuleManager;
+use App\Support\Modules\ModuleRuntime;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -94,8 +96,8 @@ function workers(array $batch): void
     }
 }
 
-$module = $app->make(\App\Support\Modules\ModuleManager::class)->enable('donations');
-$app->make(\App\Support\Modules\ModuleRuntime::class)->bootModule($module);
+$module = $app->make(ModuleManager::class)->enable('donations');
+$app->make(ModuleRuntime::class)->bootModule($module);
 $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
 $user = User::factory()->create();
 app(DonationSettings::class)->updateVisibility(true, $owner);

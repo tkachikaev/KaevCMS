@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\Themes\AccountThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
@@ -31,7 +32,26 @@ class DonationOrderPagesTest extends TestCase
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         app(DonationSettings::class)->updateVisibility(true, $owner);
         app(DonationRates::class)->saveRate('RUB', '10', true, $owner);
+
         return $owner;
+    }
+
+    public function test_donation_pages_receive_the_authenticated_player_in_each_account_theme(): void
+    {
+        $this->configure();
+        $player = User::factory()->create();
+        $order = app(DonationOrders::class)->createDraft($player, 'RUB', 100, (string) Str::uuid());
+
+        foreach (['luxury', 'kaev-aurelia'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            foreach (['/modules/donations', '/modules/donations/orders', '/modules/donations/orders/'.$order->order_uuid] as $path) {
+                $this->actingAs($player)->get($path)
+                    ->assertOk()
+                    ->assertViewHas('user', fn (User $user): bool => $user->is($player))
+                    ->assertSee($player->name);
+            }
+        }
+        $this->assertDatabaseCount('wallet_entries', 0);
     }
 
     public function test_player_can_create_unpaid_draft_from_valid_quote_and_view_own_history(): void

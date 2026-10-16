@@ -10,7 +10,7 @@
         @if($diagnostic['matched_currencies'] !== [])<p>{{ implode(', ', $diagnostic['matched_currencies']) }}</p>@endif
         <p class="admin-field-help">{{ __('module-donations::messages.provider_local_check_only') }}</p>
     </div>
-    @if($errors->has('provider'))<p class="field-error">{{ $errors->first('provider') }}</p>@endif
+    @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
     <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => $driver->code()]) }}" class="settings-form" autocomplete="off">
         @csrf @method('PUT')
         <div class="form-group"><label for="provider-mode">{{ __('module-donations::messages.provider_mode') }}</label>

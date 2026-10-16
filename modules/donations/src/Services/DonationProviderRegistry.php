@@ -15,7 +15,7 @@ final class DonationProviderRegistry
     /** @var list<class-string<PaymentProvider>> */
     private const BUNDLED_DRIVERS = [];
 
-    /** @param list<class-string<PaymentProvider>>|null $driverClasses */
+    /** @param list<mixed>|null $driverClasses Installation candidates are validated before loading. */
     public function __construct(private readonly ?array $driverClasses = null) {}
 
     /** @return array<string,PaymentProvider> */
@@ -46,6 +46,7 @@ final class DonationProviderRegistry
             $drivers[$code] = $driver;
         }
         ksort($drivers);
+
         return $drivers;
     }
 

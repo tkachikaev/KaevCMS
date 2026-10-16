@@ -1,3 +1,17 @@
+## Unreleased
+
+### Fixed
+
+- Passed the authenticated player to the Donations quote, order history and order detail views. These pages no longer fail with HTTP 500 when the account layout renders. Added coverage for both bundled account themes.
+- Deferred fake payment-driver loading until module initialization so PHPUnit can discover the complete suite. Corrected Donations model and contract type declarations, applied Pint formatting, and restored shared administration field-error styles.
+- Validated provider currency and credential value shapes before duplicate checks or persistence, with negative coverage for nested values, numeric credential keys and duplicate currencies. Updated the browser module catalogue check to include Donations.
+- No version bump, dependency update or release archive rebuild is included in these working-tree corrections.
+
+### Verification
+
+- Windows quality gate passed: Pint, PHPStan, installer/updater/package regressions, route cache and 1,054 PHPUnit tests (11 skipped). All 73 browser scenarios passed.
+- Dependency audit remains unresolved: Composer reported 19 advisories affecting 7 locked PHP packages on 2026-10-16; npm reported no known vulnerabilities. Passing application tests does not resolve these dependency advisories.
+
 ## 0.50.0 - 2026-10-16
 
 ### Added

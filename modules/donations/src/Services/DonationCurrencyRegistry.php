@@ -192,6 +192,7 @@ final class DonationCurrencyRegistry
                 $result[] = $entry;
             }
         }
+
         return $result;
     }
 }

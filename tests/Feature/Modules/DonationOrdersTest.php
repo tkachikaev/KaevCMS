@@ -10,7 +10,6 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -38,6 +37,7 @@ class DonationOrdersTest extends TestCase
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         app(DonationSettings::class)->updateVisibility(true, $owner);
         app(DonationRates::class)->saveRate('RUB', '10', true, $owner);
+
         return $owner;
     }
 

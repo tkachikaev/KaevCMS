@@ -2,22 +2,41 @@
 
 namespace KaevCMS\Modules\Donations\Models;
 
+use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
 use LogicException;
 
-/** Payment-order snapshots are immutable once inserted. All status changes go through DonationOrders. */
+/**
+ * Payment-order snapshots are immutable once inserted. All status changes go through DonationOrders.
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $order_uuid
+ * @property int $coins
+ * @property string $currency_code
+ * @property string $status
+ * @property string|null $provider_code
+ * @property string|null $provider_payment_id
+ * @property int|null $checkout_total_minor
+ * @property CarbonImmutable|null $expires_at
+ * @property CarbonImmutable|null $paid_at
+ * @property CarbonImmutable|null $credited_at
+ */
 final class DonationOrder extends Model
 {
     public const DRAFT = 'draft';
+
     public const CANCELLED = 'cancelled';
+
     public const EXPIRED = 'expired';
 
     protected $table = 'module_donation_orders';
 
     protected $guarded = ['*'];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -43,14 +62,14 @@ final class DonationOrder extends Model
 
     protected static function booted(): void
     {
-        static::creating(static function (self $order): void {
+        self::creating(static function (self $order): void {
             if ($order->status !== self::DRAFT || $order->provider_code !== null
                 || $order->provider_payment_id !== null || $order->checkout_total_minor !== null
                 || $order->paid_at !== null || $order->credited_at !== null) {
                 throw new LogicException('Provider-backed order states are unavailable until a trusted provider handler exists.');
             }
         });
-        static::updating(function (self $order): void {
+        self::updating(function (self $order): void {
             foreach (['order_uuid', 'user_id', 'idempotency_key', 'coins', 'currency_code', 'exponent',
                 'unit_price_minor', 'total_minor', 'expires_at', 'created_at', 'provider_code',
                 'provider_payment_id', 'checkout_total_minor', 'paid_at', 'credited_at'] as $column) {
@@ -64,7 +83,7 @@ final class DonationOrder extends Model
                 throw new LogicException('Unsupported donation order transition.');
             }
         });
-        static::deleting(static function (): void {
+        self::deleting(static function (): void {
             throw new LogicException('Donation orders may not be deleted.');
         });
     }

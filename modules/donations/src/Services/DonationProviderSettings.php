@@ -54,6 +54,7 @@ final class DonationProviderSettings
                 'supported_currencies' => $driver->supportedCurrencies(),
             ];
         }
+
         return $result;
     }
 
@@ -65,12 +66,13 @@ final class DonationProviderSettings
         if ($row === null) {
             throw new RuntimeException('Payment provider is not configured.');
         }
+
         return $this->readCredentials($row);
     }
 
     /**
-     * @param list<string> $currencyCodes
-     * @param array<string,string> $suppliedCredentials
+     * @param  array<array-key, mixed>  $currencyCodes
+     * @param  array<array-key, mixed>  $suppliedCredentials
      */
     public function save(
         Admin $admin,
@@ -86,20 +88,29 @@ final class DonationProviderSettings
             throw new InvalidArgumentException('Unsupported provider mode.');
         }
         $allowed = array_unique($driver->supportedCurrencies());
-        if (count($currencyCodes) > 200 || count($currencyCodes) !== count(array_unique($currencyCodes))) {
+        if (count($currencyCodes) > 200) {
             throw new InvalidArgumentException('Invalid provider currency selection.');
         }
+        $validatedCurrencies = [];
         foreach ($currencyCodes as $currency) {
             if (! is_string($currency) || ! in_array($currency, $allowed, true)) {
                 throw new InvalidArgumentException('Unsupported payment provider currency.');
             }
+            $validatedCurrencies[] = $currency;
+        }
+        if (count($validatedCurrencies) !== count(array_unique($validatedCurrencies))) {
+            throw new InvalidArgumentException('Invalid provider currency selection.');
         }
         $fields = $driver->credentialFields();
+        $validatedCredentials = [];
         foreach ($suppliedCredentials as $key => $value) {
             if (! is_string($key) || ! array_key_exists($key, $fields) || ! is_string($value) || strlen($value) > 1024) {
                 throw new InvalidArgumentException('Invalid payment provider configuration.');
             }
+            $validatedCredentials[$key] = $value;
         }
+        $currencyCodes = $validatedCurrencies;
+        $suppliedCredentials = $validatedCredentials;
         DB::transaction(function () use ($admin, $code, $enabled, $mode, $currencyCodes, $suppliedCredentials, $fields, $driver): void {
             // Serialize the initial insert too, not only updates to an existing provider row.
             DonationSetting::query()->whereKey(1)->lockForUpdate()->firstOrFail();
@@ -133,7 +144,7 @@ final class DonationProviderSettings
             $row->forceFill([
                 'enabled' => $enabled,
                 'mode' => $mode,
-                'currency_codes' => array_values($currencyCodes),
+                'currency_codes' => $currencyCodes,
                 'credentials_ciphertext' => $credentials === [] ? null : Crypt::encryptString(json_encode($credentials, JSON_THROW_ON_ERROR)),
                 'updated_by_admin_id' => $admin->getKey(),
             ])->save();
@@ -143,7 +154,7 @@ final class DonationProviderSettings
                     'provider_code' => $code,
                     'enabled' => $enabled,
                     'mode' => $mode,
-                    'currency_codes' => array_values($currencyCodes),
+                    'currency_codes' => $currencyCodes,
                 ]) === null) {
                 throw new RuntimeException('Unable to audit Donations provider configuration.');
             }
@@ -152,6 +163,7 @@ final class DonationProviderSettings
 
     /**
      * Safe local checks only; a successful result does NOT prove the remote API or webhook works.
+     *
      * @return array{state:string,matched_currencies:list<string>}
      */
     public function localDiagnostic(string $code): array
@@ -174,7 +186,7 @@ final class DonationProviderSettings
             }
             $driver->assertConfiguration($credentials, (string) $row->mode);
             $supported = $driver->supportedCurrencies();
-            $currencies = $row->currency_codes ?? [];
+            $currencies = $row->getAttribute('currency_codes') ?? [];
             if (! is_array($currencies) || $currencies === []
                 || array_diff($currencies, $supported) !== []) {
                 return ['state' => 'invalid', 'matched_currencies' => []];
@@ -188,6 +200,7 @@ final class DonationProviderSettings
             if ($matched === []) {
                 return ['state' => 'no_active_rate', 'matched_currencies' => []];
             }
+
             return ['state' => $row->enabled ? 'local_ok' : 'disabled', 'matched_currencies' => $matched];
         } catch (Throwable) {
             return ['state' => 'invalid', 'matched_currencies' => []];
@@ -209,6 +222,7 @@ final class DonationProviderSettings
                 return false;
             }
             $driver->assertConfiguration($this->readCredentials($row), 'live');
+
             return true;
         } catch (Throwable) {
             return false;
@@ -219,6 +233,7 @@ final class DonationProviderSettings
     {
         $rate = DonationCurrencyRate::query()->where('currency_code', $code)->first();
         $currency = app(DonationCurrencyRegistry::class)->find($code, app()->getLocale());
+
         return $rate !== null && $currency !== null
             && in_array($rate->getRawOriginal('enabled'), [true, 1, '1'], true)
             && (int) $rate->exponent === $currency['exponent']
@@ -256,6 +271,7 @@ final class DonationProviderSettings
                     throw new RuntimeException('Invalid provider configuration.');
                 }
             }
+
             return $credentials;
         } catch (Throwable) {
             throw new RuntimeException('Unable to read protected provider configuration.');

@@ -28,6 +28,7 @@ class DonationPlayerQuoteTest extends TestCase
     {
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         app(DonationSettings::class)->updateVisibility(true, $owner);
+
         return $owner;
     }
 

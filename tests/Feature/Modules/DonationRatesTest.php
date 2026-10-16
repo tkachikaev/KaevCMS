@@ -4,6 +4,7 @@ namespace Tests\Feature\Modules;
 
 use App\Auth\AdminRole;
 use App\Models\Admin;
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\Modules\ModuleManager;
@@ -12,9 +13,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
-use KaevCMS\Modules\Donations\Models\DonationCurrencyRate;
 use KaevCMS\Modules\Donations\Services\DonationCurrencyRegistry;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationRates;
@@ -70,7 +69,7 @@ class DonationRatesTest extends TestCase
             $this->assertSame($total, $quote['total_minor']);
         }
         $this->assertDatabaseCount('module_donation_currency_rates', 5);
-        $this->assertSame(5, \App\Models\AuditLog::query()->where('action', 'donations.rate_updated')->count());
+        $this->assertSame(5, AuditLog::query()->where('action', 'donations.rate_updated')->count());
     }
 
     public function test_exact_parser_rejects_invalid_digits_overflow_and_free_coins(): void

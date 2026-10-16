@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\Donations\Services;
 use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Services\AuditLogger;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use KaevCMS\Modules\Donations\Models\DonationSetting;
@@ -24,6 +25,7 @@ final class DonationSettings
             }
 
             $setting = DonationSetting::query()->find(1);
+
             // Compare the original DB value, not an Eloquent boolean cast of malformed data.
             return $setting instanceof DonationSetting
                 && in_array($setting->getRawOriginal('show_in_account'), [true, 1, '1'], true);
@@ -36,7 +38,7 @@ final class DonationSettings
     public function updateVisibility(bool $visible, Admin $admin): void
     {
         if (! in_array($admin->role, [AdminRole::Owner, AdminRole::Administrator], true)) {
-            throw new \Illuminate\Auth\Access\AuthorizationException;
+            throw new AuthorizationException;
         }
 
         DB::transaction(function () use ($visible, $admin): void {

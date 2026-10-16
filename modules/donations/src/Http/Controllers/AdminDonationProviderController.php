@@ -17,7 +17,10 @@ final class AdminDonationProviderController extends Controller
 {
     public function index(AdminPathSettings $paths, DonationProviderSettings $settings): View
     {
-        return view('module-donations::admin.providers', [
+        /** @var view-string $view */
+        $view = 'module-donations::admin.providers';
+
+        return view($view, [
             'adminPath' => $paths->path(),
             'providers' => $settings->overview(),
         ]);
@@ -33,7 +36,11 @@ final class AdminDonationProviderController extends Controller
         }
         $state = collect($settings->overview())->firstWhere('code', $providerCode);
         abort_unless($state !== null, 404);
-        return view('module-donations::admin.provider', [
+
+        /** @var view-string $view */
+        $view = 'module-donations::admin.provider';
+
+        return view($view, [
             'adminPath' => $paths->path(), 'driver' => $driver, 'state' => $state,
             'fields' => $driver->credentialFields(),
             'availableCurrencies' => $settings->configuredCurrencies($driver),
@@ -69,6 +76,7 @@ final class AdminDonationProviderController extends Controller
         } catch (InvalidArgumentException) {
             return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
         }
+
         return redirect()->route('admin.module-pages.donations.providers.show', [
             'adminPath' => $paths->path(), 'providerCode' => $providerCode,
         ])->with('status', __('module-donations::messages.provider_saved'));
