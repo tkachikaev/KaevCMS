@@ -54,6 +54,26 @@ class DonationOrdersTest extends TestCase
         $this->assertDatabaseCount('module_donation_orders', 0);
     }
 
+    public function test_history_and_order_link_to_coin_selection_only_while_player_page_is_open(): void
+    {
+        $owner = $this->configure();
+        $user = User::factory()->create();
+        $this->actingAs($user)->get('/modules/donations/orders')->assertOk()
+            ->assertSee('data-testid="donations-choose-coins"', false);
+        $order = app(DonationOrders::class)->createDraft($user, 'RUB', 25, (string) Str::uuid());
+        $orderUrl = '/modules/donations/orders/'.$order->order_uuid;
+        $this->get($orderUrl)->assertOk()->assertSee('data-testid="donations-choose-coins"', false);
+
+        app(DonationSettings::class)->updateVisibility(false, $owner);
+        $this->get('/modules/donations/orders')->assertOk()
+            ->assertDontSee('data-testid="donations-choose-coins"', false)
+            ->assertSee(__('module-donations::messages.player_topups_closed'));
+        $this->get($orderUrl)->assertOk()->assertDontSee('data-testid="donations-choose-coins"', false);
+        $this->get('/modules/donations')->assertNotFound();
+        $this->assertDatabaseCount('module_donation_orders', 1);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
     public function test_order_snapshots_exact_fiat_price_without_charging_or_crediting(): void
     {
         $owner = $this->configure();

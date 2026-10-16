@@ -7,21 +7,13 @@
         <h1>{{ __('module-donations::messages.account_title') }}</h1>
         <p>{{ __('module-donations::messages.not_available_yet') }}</p>
     </div>
-    <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('module-donations::messages.go_to_wallet') }}</a>
+    <a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a>
 </section>
-<section class="account-wallet-summary account-section" data-testid="donations-account-wallet">
-    <span class="account-wallet-summary-icon" aria-hidden="true"><x-account-wallet-icon :url="$walletView['icon_url']" /></span>
-    <div class="account-wallet-summary-text">
-        <span class="account-eyebrow">{{ __('module-donations::messages.current_balance_label') }}</span>
-        <h2>{{ $walletView['label'] }}</h2>
-    </div>
-</section>
-<p><a class="account-button secondary" wire:navigate href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a></p>
 <section class="account-section" data-testid="donations-player-calculator">
     <div class="account-section-heading">
         <div>
             <span class="account-eyebrow">{{ __('module-donations::messages.rates_title') }}</span>
-            <h2>{{ __('module-donations::messages.player_calculator_title') }}</h2>
+            <h2>{{ __('module-donations::messages.choose_coins') }}</h2>
             <p>{{ __('module-donations::messages.player_calculator_help') }}</p>
         </div>
     </div>
@@ -80,5 +72,13 @@
             <button class="account-button secondary" type="submit">{{ __('module-donations::messages.create_test_draft') }}</button>
         </form>
     @endif
+</section>
+<section class="account-wallet-summary account-section" data-testid="donations-account-wallet">
+    <span class="account-wallet-summary-icon" aria-hidden="true"><x-account-wallet-icon :url="$walletView['icon_url']" /></span>
+    <div class="account-wallet-summary-text">
+        <span class="account-eyebrow">{{ __('module-donations::messages.current_balance_label') }}</span>
+        <h2>{{ $walletView['label'] }}</h2>
+    </div>
+    <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('module-donations::messages.go_to_wallet') }}</a>
 </section>
 @endsection

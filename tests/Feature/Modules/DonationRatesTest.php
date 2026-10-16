@@ -124,6 +124,29 @@ class DonationRatesTest extends TestCase
         $this->assertDatabaseHas('module_donation_currency_rates', ['currency_code' => 'USD', 'unit_price_minor' => 100, 'enabled' => 1]);
     }
 
+    public function test_invalid_legacy_price_does_not_save_availability(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $rates = app(DonationRates::class);
+        $rates->saveRate('USD', '2', true, $owner);
+        $this->actingAs($owner, 'admin');
+
+        foreach ([true, false] as $pendingEnabled) {
+            $rates->saveRate('RUB', '1', ! $pendingEnabled, $owner);
+            $auditCount = AuditLog::query()->count();
+            $this->from('/admin/extensions/donations')
+                ->post('/admin/extensions/donations/rates', [
+                    'currency_code' => 'RUB', 'unit_price' => '0.001',
+                    'enabled' => $pendingEnabled ? '1' : '0',
+                ])->assertRedirect('/admin/extensions/donations')->assertSessionHasErrors('unit_price');
+
+            $this->assertDatabaseHas('module_donation_currency_rates', [
+                'currency_code' => 'RUB', 'unit_price_minor' => 100, 'enabled' => ! $pendingEnabled,
+            ]);
+            $this->assertSame($auditCount, AuditLog::query()->count());
+        }
+    }
+
     public function test_disabled_or_unconfigured_rates_cannot_be_quoted(): void
     {
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);

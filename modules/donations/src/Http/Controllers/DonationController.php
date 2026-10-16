@@ -81,7 +81,7 @@ final class DonationController extends Controller
     }
 
     /** Order history is deliberately independent of new-order visibility. */
-    public function orders(Request $request, DonationMoney $money): View
+    public function orders(Request $request, DonationMoney $money, DonationSettings $settings): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -94,10 +94,11 @@ final class DonationController extends Controller
             'orders' => DonationOrder::query()->where('user_id', $user->getKey())
                 ->orderByDesc('id')->paginate(20),
             'money' => $money,
+            'canChooseCoins' => $settings->isVisibleToPlayers(),
         ]);
     }
 
-    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money): View
+    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -107,7 +108,10 @@ final class DonationController extends Controller
         /** @var view-string $view */
         $view = 'module-donations::account.order';
 
-        return view($view, ['user' => $user, 'order' => $order, 'money' => $money]);
+        return view($view, [
+            'user' => $user, 'order' => $order, 'money' => $money,
+            'canChooseCoins' => $settings->isVisibleToPlayers(),
+        ]);
     }
 
     /** This creates only a provider-free draft; there is no checkout or wallet credit. */

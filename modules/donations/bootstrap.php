@@ -17,7 +17,8 @@ return static function (Application $app, ModuleContext $module): void {
         sortOrder: 70,
     );
 
-    // The owner must explicitly opt in before exposing an informational donations page.
+    // The registry has one account entry per module. Prefer coin selection while
+    // enabled; history stays reachable from that page and becomes the entry when closed.
     // If the table is unavailable/corrupt, visibility fails closed.
     if ($app->make(DonationSettings::class)->isVisibleToPlayers()) {
         $navigation->registerAccountLink(
@@ -27,16 +28,16 @@ return static function (Application $app, ModuleContext $module): void {
             descriptionKey: 'module-donations::messages.navigation_description',
             sortOrder: 70,
         );
+    } else {
+        // History must remain available even when the owner stops accepting new drafts.
+        $navigation->registerAccountLink(
+            moduleId: $module->id,
+            routeName: 'modules.donations.orders.index',
+            labelKey: 'module-donations::messages.orders_title',
+            descriptionKey: 'module-donations::messages.orders_description',
+            sortOrder: 71,
+        );
     }
-
-    // History must remain available even when the owner stops accepting new draft orders.
-    $navigation->registerAccountLink(
-        moduleId: $module->id,
-        routeName: 'modules.donations.orders.index',
-        labelKey: 'module-donations::messages.orders_title',
-        descriptionKey: 'module-donations::messages.orders_description',
-        sortOrder: 71,
-    );
 
     $access = $app->make(ModuleAdminAccessRegistry::class);
     $access->registerExact(
@@ -53,7 +54,7 @@ return static function (Application $app, ModuleContext $module): void {
             manageRoles: [AdminRole::Owner, AdminRole::Administrator],
         );
     }
-    foreach (['settings.update', 'limits.update', 'rates.store', 'providers.update'] as $route) {
+    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,

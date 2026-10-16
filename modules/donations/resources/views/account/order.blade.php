@@ -2,7 +2,12 @@
 @section('title', __('module-donations::messages.order_title'))
 @section('content')
 <section class="account-page-heading"><div><h1>{{ __('module-donations::messages.order_title') }}</h1><p>{{ __('module-donations::messages.not_available_yet') }}</p></div>
-<a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a></section>
+<div class="account-form-actions">
+    @if($canChooseCoins)
+        <a wire:navigate class="account-button primary" data-testid="donations-choose-coins" href="{{ route('modules.donations.index') }}">{{ __('module-donations::messages.choose_coins') }}</a>
+    @endif
+    <a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a>
+</div></section>
 <section class="account-section" data-testid="donations-order-detail">
     <p>{{ __('module-donations::messages.order_reference') }}: {{ $order->order_uuid }}</p>
     <p>{{ __('module-donations::messages.order_status') }}: {{ __('module-donations::messages.status_'.$order->displayStatus()) }}</p>

@@ -1,7 +1,16 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.orders_title'))
 @section('content')
-<section class="account-page-heading"><div><h1>{{ __('module-donations::messages.orders_title') }}</h1><p>{{ __('module-donations::messages.orders_description') }}</p></div></section>
+<section class="account-page-heading">
+    <div><h1>{{ __('module-donations::messages.orders_title') }}</h1><p>{{ __('module-donations::messages.orders_description') }}</p></div>
+    @if($canChooseCoins)
+        <div class="account-form-actions">
+            <a wire:navigate class="account-button primary" data-testid="donations-choose-coins" href="{{ route('modules.donations.index') }}">{{ __('module-donations::messages.choose_coins') }}</a>
+        </div>
+    @else
+        <p>{{ __('module-donations::messages.player_topups_closed') }}</p>
+    @endif
+</section>
 <section class="account-section" data-testid="donations-player-orders">
     @forelse($orders as $order)
         <div class="account-wallet-summary">

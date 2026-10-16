@@ -191,7 +191,7 @@ try {
     await waitForServer();
 
     const playwrightCli = resolve(root, 'node_modules/@playwright/test/cli.js');
-    run(process.execPath, [playwrightCli, 'test', '--config=playwright.config.mjs']);
+    run(process.execPath, [playwrightCli, 'test', '--config=playwright.config.mjs', ...process.argv.slice(2)]);
 } catch (error) {
     primaryError = error;
 } finally {

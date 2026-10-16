@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use KaevCMS\Modules\Donations\Http\Requests\SaveDonationCurrencyRateRequest;
+use KaevCMS\Modules\Donations\Http\Requests\SaveDonationWorkspaceRequest;
 use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationLimitsRequest;
 use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationSettingsRequest;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
@@ -19,28 +20,42 @@ use KaevCMS\Modules\Donations\Services\DonationCurrencyRegistry;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
+use KaevCMS\Modules\Donations\Services\DonationWorkspace;
 
 final class AdminDonationController extends Controller
 {
-    public function index(Request $request, DonationSettings $settings, AdminPathSettings $paths, DonationRates $rates, DonationCurrencyRegistry $registry, DonationMoney $money): View
+    public function index(Request $request, DonationWorkspace $workspace, AdminPathSettings $paths, DonationCurrencyRegistry $registry, DonationMoney $money): View
     {
         /** @var view-string $view */
         $view = 'module-donations::admin.index';
 
-        $limits = $rates->limits();
+        $state = $workspace->read();
+        $limits = ['min_coins' => $state['min_coins'], 'max_coins' => $state['max_coins']];
         $rawCount = $request->query('preview_coins', '100');
         $count = is_string($rawCount) && preg_match('/\A[1-9][0-9]{0,6}\z/D', $rawCount)
             ? (int) $rawCount : 100;
         $count = min($limits['max_coins'], max($limits['min_coins'], $count));
 
         return view($view, ['previewCoins' => $count, 'limits' => $limits,
-            'showInAccount' => $settings->isVisibleToPlayers(),
+            'showInAccount' => $state['show_in_account'],
+            'snapshot' => $state['snapshot'],
             'adminPath' => $paths->path(),
-            'rates' => $rates->configured(),
+            'rates' => $state['rates'],
             'currencies' => $registry->all(app()->getLocale()),
             'money' => $money,
             'registry' => $registry,
         ]);
+    }
+
+    public function saveWorkspace(SaveDonationWorkspaceRequest $request, DonationWorkspace $workspace, ModuleAdminAuthorizer $access, AdminPathSettings $paths): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.workspace.update', 'PUT', $admin);
+        $workspace->save($request->validated(), $admin);
+
+        return redirect()->route('admin.module-pages.donations.index', ['adminPath' => $paths->path()])
+            ->with('status', __('module-donations::messages.workspace_saved'));
     }
 
     public function limits(

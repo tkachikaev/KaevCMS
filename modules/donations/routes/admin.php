@@ -5,6 +5,7 @@ use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationController;
 use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationProviderController;
 
 Route::get('/', [AdminDonationController::class, 'index'])->name('index');
+Route::put('/workspace', [AdminDonationController::class, 'saveWorkspace'])->name('workspace.update');
 Route::put('/settings', [AdminDonationController::class, 'update'])->name('settings.update');
 Route::put('/limits', [AdminDonationController::class, 'limits'])->name('limits.update');
 Route::post('/rates', [AdminDonationController::class, 'rate'])->name('rates.store');
