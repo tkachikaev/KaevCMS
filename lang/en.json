@@ -2716,5 +2716,6 @@
     "Wallet balance verification failed. Status was not changed.": "Wallet balance verification failed. Status was not changed.",
     "Wallet status change failed. No changes were applied.": "Wallet status change failed. No changes were applied.",
     "Wallet status updated.": "Wallet status updated.",
-    "Source": "Source"
+    "Source": "Source",
+    "Top up balance": "Top up balance"
 }

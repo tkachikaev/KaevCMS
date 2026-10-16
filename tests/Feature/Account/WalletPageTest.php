@@ -28,6 +28,7 @@ class WalletPageTest extends TestCase
             ->assertSee(__('My wallet'))
             ->assertSee(__('No wallet transactions yet'))
             ->assertSee('0 ', false)
+            ->assertDontSee(__('Top up balance'))
             ->assertDontSee('Not connected');
 
         $this->assertDatabaseCount('wallets', 0);

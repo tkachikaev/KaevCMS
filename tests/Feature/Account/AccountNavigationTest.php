@@ -169,9 +169,6 @@ class AccountNavigationTest extends TestCase
         $themePath = base_path('account-themes/luxury/views');
         $views = [
             $themePath.'/dashboard.blade.php',
-            $themePath.'/characters/index.blade.php',
-            $themePath.'/profile/edit.blade.php',
-            $themePath.'/security/edit.blade.php',
             $themePath.'/partials/settings-tabs.blade.php',
             $themePath.'/game-accounts/index.blade.php',
             $themePath.'/game-accounts/create.blade.php',

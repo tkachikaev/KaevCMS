@@ -1,7 +1,9 @@
 @extends('account-theme::layouts.app')
 @section('title', $ticket->subject)
 @section('content')
+<x-account-page>
 <livewire:support-tickets.account-conversation :ticket-id="$ticket->id" />
+</x-account-page>
 @endsection
 @push('head')
 <link rel="stylesheet" href="{{ asset('assets/modules/support-tickets.css') }}?v={{ cms_version() }}" data-navigate-track>

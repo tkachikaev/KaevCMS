@@ -1,15 +1,13 @@
-<div class="account-character-directory">
-    <div class="account-character-directory-head">
-        <div>
-            <span class="account-eyebrow">{{ __('Characters') }}</span>
-            <h2>{{ __('My characters') }}</h2>
-            <p>{{ __('Switch between the server hierarchy and one combined character list.') }}</p>
-        </div>
-        <div class="account-character-summary" aria-label="{{ __('Character summary') }}">
-            <span><strong>{{ $counts['characters'] }}</strong><small>{{ __('Characters') }}</small></span>
-            <span class="online"><strong>{{ $counts['online'] }}</strong><small>{{ __('Online now') }}</small></span>
-        </div>
-    </div>
+<x-account-panel flush class="account-character-directory">
+    <x-account-panel-header class="account-character-directory-head">
+        <x-slot:summary>
+            <div class="account-panel-stats" aria-label="{{ __('Character summary') }}">
+                <x-account-stat :label="__('Characters')" :value="$counts['characters']" />
+                <x-account-stat class="online" :label="__('Online now')" :value="$counts['online']" />
+            </div>
+        </x-slot:summary>
+        <x-slot:actions><a wire:navigate class="account-button secondary" href="{{ public_route('game-accounts.index') }}">{{ __('Manage accounts') }}</a></x-slot:actions>
+    </x-account-panel-header>
 
     <div class="account-character-tabs" role="tablist" aria-label="{{ __('Character display mode') }}">
         <button type="button" role="tab" @class(['active' => $viewMode === 'grouped']) aria-selected="{{ $viewMode === 'grouped' ? 'true' : 'false' }}" wire:click="setViewMode('grouped')">
@@ -72,7 +70,7 @@
                     @endif
                 </section>
             @empty
-                <div class="account-empty small"><h3>{{ __('No visible character groups') }}</h3><p>{{ __('Restore a hidden server or account to show it here again.') }}</p></div>
+                <x-account-empty class="account-empty small"><h3>{{ __('No visible character groups') }}</h3><p>{{ __('Restore a hidden server or account to show it here again.') }}</p></x-account-empty>
             @endforelse
 
             @if($hiddenServers !== [] || $hiddenAccounts !== [])
@@ -101,7 +99,7 @@
             </div>
 
             @if($allCharacters === [])
-                <div class="account-empty small"><h3>{{ __('No characters found') }}</h3><p>{{ __('Change the filters or return to the grouped view.') }}</p><button class="account-button secondary" type="button" wire:click="resetFilters">{{ __('Reset filters') }}</button></div>
+                <x-account-empty class="account-empty small"><h3>{{ __('No characters found') }}</h3><p>{{ __('Change the filters or return to the grouped view.') }}</p><button class="account-button secondary" type="button" wire:click="resetFilters">{{ __('Reset filters') }}</button></x-account-empty>
             @else
                 <div class="account-character-list account-character-list-flat">
                     @foreach($allCharacters as $character)
@@ -115,5 +113,5 @@
             @endif
         </div>
     @endif
-</div>
+</x-account-panel>
 <x-account-character-rescue-modal />

@@ -1,20 +1,20 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.orders_title'))
+@section('description', __('module-donations::messages.orders_description'))
 @push('head')
 <link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
 @endpush
 @section('content')
-<section class="account-page-heading">
-    <div><h1>{{ __('module-donations::messages.orders_title') }}</h1><p>{{ __('module-donations::messages.orders_description') }}</p></div>
-    @if($canChooseCoins)
-        <div class="account-form-actions">
-            <a wire:navigate class="account-button primary" data-testid="donations-choose-coins" href="{{ route('modules.donations.index') }}">{{ __('module-donations::messages.choose_coins') }}</a>
-        </div>
-    @else
-        <p>{{ __('module-donations::messages.player_topups_closed') }}</p>
-    @endif
-</section>
-<section class="account-section account-donations-card" data-testid="donations-player-orders">
+<x-account-page>
+
+<x-account-panel class="account-section account-donations-card" data-testid="donations-player-orders">
+    <x-account-panel-header>
+        @if($canChooseCoins)
+            <x-slot:actions><a wire:navigate class="account-button primary" data-testid="donations-choose-coins" href="{{ route('modules.donations.index') }}">{{ __('module-donations::messages.choose_coins') }}</a></x-slot:actions>
+        @else
+            <x-slot:summary><p>{{ __('module-donations::messages.player_topups_closed') }}</p></x-slot:summary>
+        @endif
+    </x-account-panel-header>
     @forelse($orders as $order)
         <div class="account-wallet-summary">
             <div class="account-wallet-summary-text">
@@ -26,5 +26,6 @@
         <p>{{ __('module-donations::messages.no_orders') }}</p>
     @endforelse
     {{ $orders->links() }}
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection

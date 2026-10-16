@@ -1,15 +1,9 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-promo-codes::messages.account_title'))
+@section('description', __('module-promo-codes::messages.account_description'))
 @section('content')
-<section class="account-section account-surface">
-    <div class="account-section-heading">
-        <div>
-            <span class="account-eyebrow">{{ __('module-promo-codes::messages.rewards') }}</span>
-            <h1>{{ __('module-promo-codes::messages.account_title') }}</h1>
-            <p>{{ __('module-promo-codes::messages.account_description') }}</p>
-        </div>
-    </div>
-
+<x-account-page>
+<x-account-panel class="account-section account-surface">
     <div class="account-form-layout">
         <form class="account-form-card" method="POST" action="{{ route('modules.promo-codes.activate') }}">
             @csrf
@@ -43,9 +37,9 @@
             <p>{{ __('module-promo-codes::messages.how_it_works_text') }}</p>
         </aside>
     </div>
-</section>
+</x-account-panel>
 
-<section class="account-section account-surface promo-activation-surface">
+<x-account-panel class="account-section account-surface promo-activation-surface">
     <div class="account-section-heading">
         <div>
             <h2>{{ __('module-promo-codes::messages.recent_activations') }}</h2>
@@ -54,7 +48,7 @@
     </div>
 
     @if($activations->isEmpty())
-        <div class="account-empty"><span class="account-empty-symbol" aria-hidden="true">%</span><h2>{{ __('module-promo-codes::messages.no_activations_title') }}</h2><p>{{ __('module-promo-codes::messages.no_activations_description') }}</p></div>
+        <x-account-empty class="account-empty"><span class="account-empty-symbol" aria-hidden="true">%</span><h2>{{ __('module-promo-codes::messages.no_activations_title') }}</h2><p>{{ __('module-promo-codes::messages.no_activations_description') }}</p></x-account-empty>
     @else
         <div class="reward-history-list">
             @foreach($activations as $activation)
@@ -77,5 +71,6 @@
             @endforeach
         </div>
     @endif
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection

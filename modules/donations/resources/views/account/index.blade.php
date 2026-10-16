@@ -1,25 +1,16 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.account_title'))
+@section('description', __('module-donations::messages.not_available_yet'))
 @push('head')
 <link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
 @endpush
 @section('content')
-<section class="account-page-heading">
-    <div>
-        <span class="account-eyebrow">{{ __('module-donations::messages.navigation_label') }}</span>
-        <h1>{{ __('module-donations::messages.account_title') }}</h1>
-        <p>{{ __('module-donations::messages.not_available_yet') }}</p>
-    </div>
-    <a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a>
-</section>
-<section class="account-section account-donations-card account-donations-calculator" data-testid="donations-player-calculator" data-donations-calculator>
-    <div class="account-section-heading">
-        <div>
-            <span class="account-eyebrow">{{ __('module-donations::messages.rates_title') }}</span>
-            <h2>{{ __('module-donations::messages.choose_coins') }}</h2>
-            <p>{{ __('module-donations::messages.player_calculator_help') }}</p>
-        </div>
-    </div>
+<x-account-page>
+
+<x-account-panel class="account-section account-donations-card account-donations-calculator" data-testid="donations-player-calculator" data-donations-calculator>
+    <x-account-panel-header :title="__('module-donations::messages.choose_coins')" :description="__('module-donations::messages.player_calculator_help')">
+        <x-slot:actions><a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a></x-slot:actions>
+    </x-account-panel-header>
     @if($currencies === [])
         <p data-testid="donations-no-currencies">{{ __('module-donations::messages.player_no_currencies') }}</p>
     @else
@@ -78,15 +69,16 @@
             <button class="account-button secondary" type="submit" @disabled($quote === null || $quoteError !== null)>{{ __('module-donations::messages.create_test_draft') }}</button>
         </form>
     @endif
-</section>
-<section class="account-wallet-summary account-section" data-testid="donations-account-wallet">
+</x-account-panel>
+<x-account-panel layout="row" class="account-wallet-summary account-section" data-testid="donations-account-wallet">
     <span class="account-wallet-summary-icon" aria-hidden="true"><x-account-wallet-icon :url="$walletView['icon_url']" /></span>
     <div class="account-wallet-summary-text">
         <span class="account-eyebrow">{{ __('module-donations::messages.current_balance_label') }}</span>
         <h2>{{ $walletView['label'] }}</h2>
     </div>
     <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('module-donations::messages.go_to_wallet') }}</a>
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection
 @push('scripts')
 <script src="{{ asset('assets/modules/donations-player.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>

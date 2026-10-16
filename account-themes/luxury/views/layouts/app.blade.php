@@ -22,15 +22,14 @@
     @persist('account-sidebar')
         <aside class="account-sidebar" data-account-sidebar wire:navigate:scroll>
             <div class="account-sidebar-glow" aria-hidden="true"></div>
-            <a wire:navigate.hover class="account-brand" href="{{ public_route('account') }}">
+            <a wire:navigate.hover class="account-brand" href="{{ public_route('account') }}" aria-label="{{ site_name() }} — {{ __('Player account') }}">
                 @if (site_logo_url())
                     <span class="account-brand-logo"><img src="{{ site_logo_url() }}" alt="{{ site_name() }}"></span>
                 @else
                     <span class="account-brand-mark">L2</span>
                 @endif
                 <span class="account-brand-copy">
-                    <strong>{{ site_name() }}</strong>
-                    <small>{{ __('Player account') }}</small>
+                    <strong title="{{ site_name() }}">{{ site_name() }}</strong>
                 </span>
             </a>
 
@@ -54,8 +53,10 @@
                         <span></span><span></span><span></span>
                     </button>
                     <div class="account-topbar-context">
-                        <span>{{ __('Player account') }}</span>
-                        <strong>{{ $user->name }}</strong>
+                        <h1 class="account-page-title">@yield('title', __('Personal account'))</h1>
+                        @hasSection('description')
+                            <p class="account-page-description">@yield('description')</p>
+                        @endif
                     </div>
                 </div>
 

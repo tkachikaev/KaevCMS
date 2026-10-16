@@ -215,7 +215,7 @@ test('wallet starts at zero, rejects overdrafts, permits frozen corrections and 
     // then return with Back. The old HTML must not restore the previous balance.
     await gotoWithLocalNetworkRetry(player, '/account/wallet');
     await expect(player.locator('.account-wallet-summary')).toContainText('60 монет');
-    await player.getByRole('link', { name: 'Вернуться к обзору' }).click();
+    await player.locator('.account-nav').getByRole('link', { name: 'Обзор' }).click();
     await expect(player).toHaveURL(/\/account$/);
     await adjustment.locator('[name="operation"]').selectOption('credit');
     await adjustment.locator('[name="amount"]').fill('10');

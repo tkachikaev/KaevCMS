@@ -71,15 +71,16 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
     z-index: 1;
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-height: 64px;
-    padding: 10px;
-    border: 1px solid rgba(83, 99, 87, 0.12);
+    gap: 10px;
+    min-height: 54px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
     border-radius: 17px;
-    background: rgba(255, 253, 247, 0.66);
-    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    background: transparent;
+    transition: border-color 0.18s ease, background 0.18s ease;
 }
-.account-brand:hover { border-color: rgba(212, 173, 103, 0.28); background: rgba(212, 173, 103, 0.055); transform: translateY(-1px); }
+.account-brand:hover { border-color: var(--account-line-soft); background: rgba(212, 173, 103, 0.035); }
+.account-brand:focus-visible { outline: 2px solid var(--account-gold); outline-offset: 3px; }
 .account-brand-logo, .account-brand-mark {
     width: 44px;
     height: 44px;
@@ -556,7 +557,7 @@ html.account-is-navigating .account-content { opacity: 0.54; transform: translat
 @media (max-width: 560px) {
     .account-content { padding: 22px 13px 48px; }
     .account-topbar { padding: 0 13px; }
-    .account-topbar-context span { display: none; }
+    .account-topbar-context { display: none; }
     .account-hero { min-height: auto; padding: 24px 20px; border-radius: 20px; }
     .account-hero h1, .account-page-hero h1, .account-page-heading h1, .account-detail-hero h1 { font-size: 31px; }
     .account-hero p, .account-page-hero p, .account-page-heading p { font-size: 14px; }
@@ -642,31 +643,31 @@ body.account-body {
 }
 .account-sidebar-glow { background: rgba(141, 161, 147, .16); }
 .account-brand {
-    min-height: 70px;
-    border-color: rgba(83, 99, 87, .12);
-    background: rgba(255, 253, 247, .72);
-    box-shadow: 0 14px 36px rgba(50, 61, 53, .06);
+    min-height: 54px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
 }
-.account-brand:hover { border-color: rgba(125, 103, 61, .34); background: #fffdf8; }
+.account-brand:hover { border-color: rgba(83, 99, 87, .08); background: rgba(255, 253, 247, .35); }
 .account-brand-logo {
-    width: 78px;
-    height: 46px;
-    flex: 0 0 78px;
+    width: 60px;
+    height: 36px;
+    flex: 0 0 60px;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
 }
-.account-brand-logo img { max-width: 76px; max-height: 44px; object-fit: contain; }
+.account-brand-logo img { max-width: 58px; max-height: 34px; object-fit: contain; }
 .account-brand-logo-custom {
-    width: 48px;
-    height: 48px;
-    flex-basis: 48px;
-    padding: 5px;
-    border: 1px solid rgba(125, 103, 61, .24);
-    border-radius: 14px;
-    background: rgba(255,253,247,.76);
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
-.account-brand-logo-custom img { max-width: 38px; max-height: 38px; }
+.account-brand-logo-custom img { max-width: 36px; max-height: 36px; }
 .account-brand-copy strong { color: var(--account-text); font-family: var(--account-serif); font-size: 15px; letter-spacing: .025em; }
 .account-brand-copy small { color: var(--account-gold-dark); }
 .account-user-compact { border-bottom-color: rgba(83,99,87,.12); }

@@ -35,8 +35,7 @@
                     <span class="account-brand-logo"><img src="{{ account_theme_asset('assets/images/kaev-logo.png') }}" alt="Kaev"></span>
                 @endif
                 <span class="account-brand-copy">
-                    <strong>{{ site_name() }}</strong>
-                    <small>{{ __('Player account') }}</small>
+                    <strong title="{{ site_name() }}">{{ site_name() }}</strong>
                 </span>
             </a>
 
@@ -60,8 +59,10 @@
                         <span></span><span></span><span></span>
                     </button>
                     <div class="account-topbar-context">
-                        <span>{{ __('Player account') }}</span>
-                        <strong>{{ $user->name }}</strong>
+                        <h1 class="account-page-title">@yield('title', __('Personal account'))</h1>
+                        @hasSection('description')
+                            <p class="account-page-description">@yield('description')</p>
+                        @endif
                     </div>
                 </div>
 

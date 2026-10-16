@@ -1,20 +1,14 @@
 @extends('account-theme::layouts.app')
 @section('title', __('Account settings'))
+@section('description', __('Manage your KaevCMS avatar and account information.'))
 @section('inline-validation-errors', '1')
 @section('content')
-<section class="account-page-heading account-settings-heading">
-    <div>
-        <span class="account-eyebrow">{{ __('Your account') }}</span>
-        <h1>{{ __('Account settings') }}</h1>
-        <p>{{ __('Manage your KaevCMS avatar and account information.') }}</p>
-    </div>
-    <a wire:navigate class="account-button secondary" href="{{ public_route('account') }}">{{ __('Back to overview') }}</a>
-</section>
+<x-account-page>
 
-@include('account-theme::partials.settings-tabs')
+<x-account-panel class="account-section account-settings-card account-settings-card-single">
+    @include('account-theme::partials.settings-tabs')
 
-<section class="account-section account-settings-card account-settings-card-single">
-    <div class="account-settings-card-heading">
+    <div class="account-settings-card-heading account-panel-header">
         <div>
             <span class="account-eyebrow">{{ __('Profile') }}</span>
             <h2>{{ __('Account information') }}</h2>
@@ -35,5 +29,6 @@
     <div class="account-form-actions account-settings-actions">
         <button type="button" class="account-button primary" data-avatar-modal-open>{{ __('Change avatar') }}</button>
     </div>
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection

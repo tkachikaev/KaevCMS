@@ -85,6 +85,19 @@ class BrowserTestSeeder extends Seeder
             ],
         );
 
+        // Donation draft POSTs must not consume the account-action throttle budget
+        // of the player used by password, promo-code and daily-reward scenarios.
+        User::query()->updateOrCreate(
+            ['email' => 'browser-donations-player@example.test'],
+            [
+                'name' => 'browser-donations-player',
+                'email_verified_at' => now(),
+                'password' => Hash::make($playerPassword),
+                'is_active' => true,
+                'locale' => 'ru',
+            ],
+        );
+
         $loginServer = LoginServer::query()->updateOrCreate(
             ['name' => 'Browser LoginServer'],
             [

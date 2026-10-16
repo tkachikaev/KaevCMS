@@ -86,7 +86,7 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
     await expect(page.locator('link[href*="assets/account/css/components.css"]')).toHaveCount(1);
     await expect(page.locator('script[src*="/assets/account/js/navigation.js"]')).toHaveCount(1);
     await expect(page.locator('script[src*="account-themes/luxury/assets/js/navigation.js"]')).toHaveCount(0);
-    await expect(page.locator('.account-overview-header')).toBeVisible();
+    await expect(page.locator('.account-topbar h1')).toHaveText('Обзор');
 
     const accountMenu = page.locator('.account-profile-menu-topbar');
     await accountMenu.locator('summary').click();

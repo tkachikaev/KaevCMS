@@ -1,26 +1,27 @@
 @extends('account-theme::layouts.app')
 @section('title', __('My wallet'))
+@section('description', __('Your virtual currency balance is shared across all game accounts on this site.'))
 @section('content')
-<section class="account-page-heading account-wallet-heading">
-    <div><span class="account-eyebrow">{{ __('Virtual currency') }}</span><h1>{{ __('My wallet') }}</h1><p>{{ __('Your virtual currency balance is shared across all game accounts on this site.') }}</p></div>
-    <a wire:navigate class="account-button secondary" href="{{ public_route('account') }}">{{ __('Back to overview') }}</a>
-</section>
+<x-account-page>
 
-<section class="account-wallet-summary account-section" aria-label="{{ __('Wallet balance') }}">
+<x-account-panel layout="row" class="account-wallet-summary account-section" aria-label="{{ __('Wallet balance') }}">
     <span class="account-wallet-summary-icon" aria-hidden="true"><x-account-wallet-icon :url="$walletView['icon_url']" /></span>
     <div class="account-wallet-summary-text"><span class="account-eyebrow">{{ __('Available balance') }}</span><h2>{{ $walletView['label'] }}</h2></div>
     @if($walletView['blocked'])
         <span class="account-wallet-blocked" role="status">{{ __('Wallet spending suspended') }}</span>
     @endif
-</section>
+    @if($topUpUrl !== null)
+        <a wire:navigate class="account-button primary account-wallet-topup" href="{{ $topUpUrl }}">{{ __('Top up balance') }}</a>
+    @endif
+</x-account-panel>
 @if($walletView['blocked'])
     <p class="account-inline-warning">{{ __('Spending from this wallet is disabled. Contact support for details.') }}</p>
 @endif
 
-<section class="account-section account-wallet-history" aria-labelledby="wallet-history-title">
-    <div class="account-section-heading"><div><span class="account-eyebrow">{{ __('Wallet activity') }}</span><h2 id="wallet-history-title">{{ __('Transaction history') }}</h2><p>{{ __('All virtual currency amounts are shown in coins, not payment currencies.') }}</p></div></div>
+<x-account-panel class="account-section account-wallet-history" aria-labelledby="wallet-history-title">
+    <x-account-panel-header title-id="wallet-history-title" :title="__('Transaction history')" :description="__('All virtual currency amounts are shown in coins, not payment currencies.')" />
     @if($entries->isEmpty())
-        <div class="account-empty account-wallet-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h3>{{ __('No wallet transactions yet') }}</h3><p>{{ __('Credits and purchases will be shown here once they occur.') }}</p></div>
+        <x-account-empty class="account-empty account-wallet-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h3>{{ __('No wallet transactions yet') }}</h3><p>{{ __('Credits and purchases will be shown here once they occur.') }}</p></x-account-empty>
     @else
         <div class="account-wallet-list">
             @foreach($entries as $entry)
@@ -45,6 +46,9 @@
             </nav>
         @endif
     @endif
-</section>
+</x-account-panel>
+@if($topUpUrl === null)
 <p class="account-wallet-payments-unavailable">{{ __('Online wallet top-ups will become available when Donations is enabled.') }}</p>
+@endif
+</x-account-page>
 @endsection

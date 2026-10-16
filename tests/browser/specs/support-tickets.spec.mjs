@@ -51,7 +51,7 @@ test('player and administrator complete the support ticket conversation flow wit
     await signInPlayer(page);
     await page.locator('.account-nav a[href$="/modules/support-tickets"]').click();
     await expect(page).toHaveURL(/\/modules\/support-tickets$/);
-    await expect(page.getByRole('heading', { name: 'Мои обращения', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Техническая поддержка', exact: true })).toBeVisible();
     await expect(page.locator('[data-testid="support-ticket-create-form"]')).toHaveCount(0);
     await page.getByRole('button', { name: /Создать обращение/, exact: false }).click();
     await expect(page.locator('[data-testid="support-ticket-create-form"]')).toBeVisible();

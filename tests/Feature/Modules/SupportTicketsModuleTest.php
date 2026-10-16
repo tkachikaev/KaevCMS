@@ -856,7 +856,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->actingAs($user);
         Livewire::test(AccountTicketIndex::class)
             ->assertSet('creating', false)
-            ->assertSee('Мои обращения')
+            ->assertSee(__('module-support-tickets::messages.create_ticket'))
             ->assertDontSee('Кратко опишите проблему')
             ->call('openCreateForm')
             ->assertSet('creating', true)

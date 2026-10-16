@@ -125,7 +125,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
 
     const player = await context.newPage();
     await gotoWithLocalNetworkRetry(player, '/login');
-    await player.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);
+    await player.locator('#login').fill('browser-donations-player@example.test');
     await player.locator('#password').fill(process.env.PLAYWRIGHT_PLAYER_PASSWORD);
     await submitLogin({
         page: player, postPath: '/login', label: 'Donation coin selection player login',
@@ -140,6 +140,11 @@ test('players can reach coin selection, adjust a live slider and create an exact
         }
         for (const width of [1440, 390]) {
             await player.setViewportSize({ width, height: 1000 });
+            await gotoWithLocalNetworkRetry(player, '/account/wallet');
+            const topUp = player.getByRole('link', { name: 'Пополнить баланс', exact: true });
+            await expect(topUp).toHaveAttribute('href', /\/modules\/donations$/);
+            await topUp.click();
+            await expect(player.getByTestId('donations-player-calculator')).toBeVisible();
             await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
             await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations$/);
             await expect(player.locator('a[data-account-module-id="donations"]')).toContainText('Пополнить монеты');
@@ -233,5 +238,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
     await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations\/orders$/);
     await expect(player.getByTestId('donations-choose-coins')).toHaveCount(0);
     await expect(player.getByTestId('donations-player-orders').locator('a')).toHaveCount(4);
+    await gotoWithLocalNetworkRetry(player, '/account/wallet');
+    await expect(player.getByRole('link', { name: 'Пополнить баланс', exact: true })).toHaveCount(0);
     await player.close();
 });

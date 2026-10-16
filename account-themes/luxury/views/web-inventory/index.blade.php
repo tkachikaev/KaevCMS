@@ -1,11 +1,14 @@
 @extends('account-theme::layouts.app')
 @section('title', __('Web inventory'))
+@section('description', __('Rewards from promo codes, donations and future modules are stored here until you transfer them to a character.'))
 @section('content')
-<section class="account-section reward-inventory-shell">
-    <div class="account-section-heading reward-inventory-heading">
-        <div><span class="account-eyebrow">{{ __('Rewards') }}</span><h1>{{ __('Web inventory') }}</h1><p>{{ __('Rewards from promo codes, donations and future modules are stored here until you transfer them to a character.') }}</p></div>
-        @if($selectedServer)<span class="account-chip">{{ $selectedServer->nameFor() }}</span>@endif
-    </div>
+<x-account-page>
+<x-account-panel class="account-section reward-inventory-shell">
+    @if($selectedServer)
+        <div class="account-section-heading reward-inventory-heading">
+            <span class="account-chip">{{ $selectedServer->nameFor() }}</span>
+        </div>
+    @endif
 
     @if($servers->count() > 1)
         <nav class="reward-server-tabs" aria-label="{{ __('Game servers') }}">
@@ -21,10 +24,10 @@
     </nav>
 
     @if(! $selectedServer)
-        <div class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('Your web inventory is empty') }}</h2><p>{{ __('Rewards will appear here after they are granted by promo codes, donations or other modules.') }}</p></div>
+        <x-account-empty class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('Your web inventory is empty') }}</h2><p>{{ __('Rewards will appear here after they are granted by promo codes, donations or other modules.') }}</p></x-account-empty>
     @elseif($activeView === 'history')
         @if($deliveries->isEmpty())
-            <div class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">↗</span><h2>{{ __('No transfers yet') }}</h2><p>{{ __('Transfer operations will appear here after players send rewards to characters.') }}</p></div>
+            <x-account-empty class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">↗</span><h2>{{ __('No transfers yet') }}</h2><p>{{ __('Transfer operations will appear here after players send rewards to characters.') }}</p></x-account-empty>
         @else
             <div class="reward-history-list">
                 @foreach($deliveries as $delivery)
@@ -42,7 +45,7 @@
             @endif
         @endif
     @elseif($availableItems->isEmpty())
-        <div class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('No available rewards on this server') }}</h2><p>{{ __('New rewards for this server will appear here automatically.') }}</p></div>
+        <x-account-empty class="account-empty reward-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('No available rewards on this server') }}</h2><p>{{ __('New rewards for this server will appear here automatically.') }}</p></x-account-empty>
     @else
         @if(! $capabilities->supported)
             <div class="account-inline-warning">{{ $deliveryUnavailableMessage }}</div>
@@ -80,5 +83,6 @@
             </div>
         </form>
     @endif
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection

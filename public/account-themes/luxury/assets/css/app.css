@@ -65,28 +65,29 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
     z-index: 1;
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-height: 64px;
-    padding: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.055);
+    gap: 10px;
+    min-height: 54px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
     border-radius: 17px;
-    background: rgba(255, 255, 255, 0.027);
-    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    background: transparent;
+    transition: border-color 0.18s ease, background 0.18s ease;
 }
-.account-brand:hover { border-color: rgba(212, 173, 103, 0.28); background: rgba(212, 173, 103, 0.055); transform: translateY(-1px); }
+.account-brand:hover { border-color: var(--account-line-soft); background: rgba(212, 173, 103, 0.035); }
+.account-brand:focus-visible { outline: 2px solid var(--account-gold); outline-offset: 3px; }
 .account-brand-logo, .account-brand-mark {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
     display: grid;
     place-items: center;
-    border-radius: 13px;
+    border-radius: 11px;
     background: linear-gradient(145deg, var(--account-gold-bright), var(--account-gold-dark));
     color: #17120a;
-    box-shadow: 0 12px 28px rgba(103, 70, 28, 0.34);
+    box-shadow: 0 4px 12px rgba(103, 70, 28, 0.18);
     font-weight: 900;
 }
-.account-brand-logo img { max-width: 34px; max-height: 34px; object-fit: contain; }
+.account-brand-logo img { max-width: 28px; max-height: 28px; object-fit: contain; }
 .account-brand-copy { min-width: 0; display: flex; flex-direction: column; }
 .account-brand-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
 .account-brand-copy small { color: var(--account-muted); font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; }
@@ -550,7 +551,7 @@ html.account-is-navigating .account-content { opacity: 0.54; transform: translat
 @media (max-width: 560px) {
     .account-content { padding: 22px 13px 48px; }
     .account-topbar { padding: 0 13px; }
-    .account-topbar-context span { display: none; }
+    .account-topbar-context { display: none; }
     .account-hero { min-height: auto; padding: 24px 20px; border-radius: 20px; }
     .account-hero h1, .account-page-hero h1, .account-page-heading h1, .account-detail-hero h1 { font-size: 31px; }
     .account-hero p, .account-page-hero p, .account-page-heading p { font-size: 14px; }

@@ -1,18 +1,9 @@
-<div>
-    <section class="account-section account-surface">
-        <div class="account-section-heading support-ticket-list-heading">
-            <div>
-                <span class="account-eyebrow">{{ __('module-support-tickets::messages.navigation_label') }}</span>
-                <h1>{{ __('module-support-tickets::messages.my_tickets') }}</h1>
-                <p>{{ __('module-support-tickets::messages.my_tickets_help') }}</p>
-            </div>
-            <div class="support-ticket-heading-actions">
-                <span class="support-ticket-open-count">{{ $openCount }} / {{ $limits['max_open_tickets_per_user'] }}</span>
-                <button class="account-button primary support-create-ticket-button" type="button" wire:click="openCreateForm" @disabled($creating || $openCount >= $limits['max_open_tickets_per_user'])>
-                    + {{ __('module-support-tickets::messages.create_ticket') }}
-                </button>
-            </div>
-        </div>
+<div class="account-page">
+    <x-account-panel class="account-section account-surface">
+        <x-account-panel-header class="support-ticket-list-heading">
+            <x-slot:summary><span class="support-ticket-open-count">{{ $openCount }} / {{ $limits['max_open_tickets_per_user'] }}</span></x-slot:summary>
+            <x-slot:actions><button class="account-button primary support-create-ticket-button" type="button" wire:click="openCreateForm" @disabled($creating || $openCount >= $limits['max_open_tickets_per_user'])>+ {{ __('module-support-tickets::messages.create_ticket') }}</button></x-slot:actions>
+        </x-account-panel-header>
 
         @if($creating)
             <form class="account-form-card support-ticket-form support-ticket-create-panel" wire:submit="createTicket" data-testid="support-ticket-create-form" novalidate>
@@ -78,11 +69,11 @@
         @endif
 
         @if($tickets->isEmpty())
-            <div class="account-empty support-ticket-empty">
+            <x-account-empty class="account-empty support-ticket-empty">
                 <span class="account-empty-symbol" aria-hidden="true">?</span>
                 <h2>{{ __('module-support-tickets::messages.no_tickets_title') }}</h2>
                 <p>{{ __('module-support-tickets::messages.no_tickets_description') }}</p>
-            </div>
+            </x-account-empty>
         @else
             <div class="support-ticket-list">
                 @foreach($tickets as $ticket)
@@ -105,5 +96,5 @@
                 </nav>
             @endif
         @endif
-    </section>
+    </x-account-panel>
 </div>

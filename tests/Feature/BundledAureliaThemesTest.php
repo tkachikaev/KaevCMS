@@ -128,7 +128,7 @@ class BundledAureliaThemesTest extends TestCase
             ->get('/account/game-accounts')
             ->assertOk()
             ->assertSee('Мои аккаунты')
-            ->assertSee('account-page-hero', false);
+            ->assertSee('account-panel-stats', false);
 
         $this->actingAs($user)
             ->get('/account/profile')

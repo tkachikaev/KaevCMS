@@ -1,22 +1,19 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-daily-rewards::messages.account_title'))
+@section('description', __('module-daily-rewards::messages.account_description'))
 @section('content')
-<section class="account-section account-surface daily-reward-account-section">
-    <div class="account-section-heading">
-        <div>
-            <span class="account-eyebrow">{{ __('module-daily-rewards::messages.rewards') }}</span>
-            <h1>{{ __('module-daily-rewards::messages.account_title') }}</h1>
-            <p>{{ __('module-daily-rewards::messages.account_description') }}</p>
-        </div>
+<x-account-page>
+<x-account-panel class="account-section account-surface daily-reward-account-section">
+    <x-account-panel-header><x-slot:actions>
         <a wire:navigate class="account-button secondary" href="{{ public_route('web-inventory.index') }}">{{ __('module-daily-rewards::messages.open_inventory') }}</a>
-    </div>
+    </x-slot:actions></x-account-panel-header>
 
     @if($calendars->isEmpty() || ! $calendar)
-        <div class="account-empty reward-empty">
+        <x-account-empty class="account-empty reward-empty">
             <span class="account-empty-symbol" aria-hidden="true">31</span>
             <h2>{{ __('module-daily-rewards::messages.no_calendars_title') }}</h2>
             <p>{{ __('module-daily-rewards::messages.no_calendars_description') }}</p>
-        </div>
+        </x-account-empty>
     @else
         <form class="daily-reward-account-filters" method="GET" action="{{ route('modules.daily-rewards.index') }}">
             <label>
@@ -43,11 +40,11 @@
         </form>
 
         @if($accounts->isEmpty() || ! $selectedAccount)
-            <div class="account-empty reward-empty">
+            <x-account-empty class="account-empty reward-empty">
                 <span class="account-empty-symbol" aria-hidden="true">@</span>
                 <h2>{{ __('module-daily-rewards::messages.no_accounts_title') }}</h2>
                 <p>{{ __('module-daily-rewards::messages.no_accounts_description') }}</p>
-            </div>
+            </x-account-empty>
         @else
             <div class="daily-reward-account-summary">
                 <div><span>{{ __('module-daily-rewards::messages.current_calendar', ['period' => $calendar->periodLabel()]) }}</span><strong>{{ $calendar->gameServer->nameFor() }}</strong></div>
@@ -98,12 +95,12 @@
             </div>
         @endif
     @endif
-</section>
+</x-account-panel>
 
-<section class="account-section account-surface">
+<x-account-panel class="account-section account-surface">
     <div class="account-section-heading"><div><h2>{{ __('module-daily-rewards::messages.recent_claims') }}</h2><p>{{ __('module-daily-rewards::messages.recent_claims_help') }}</p></div></div>
     @if($recentClaims->isEmpty())
-        <div class="account-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('module-daily-rewards::messages.no_claims_title') }}</h2><p>{{ __('module-daily-rewards::messages.no_claims_description') }}</p></div>
+        <x-account-empty class="account-empty"><span class="account-empty-symbol" aria-hidden="true">◇</span><h2>{{ __('module-daily-rewards::messages.no_claims_title') }}</h2><p>{{ __('module-daily-rewards::messages.no_claims_description') }}</p></x-account-empty>
     @else
         <div class="reward-history-list">
             @foreach($recentClaims as $claim)
@@ -117,7 +114,8 @@
             @endforeach
         </div>
     @endif
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection
 @push('head')
 <link rel="stylesheet" href="{{ asset('assets/modules/daily-rewards.css') }}?v={{ cms_version() }}" data-navigate-track>
