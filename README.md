@@ -1,4 +1,4 @@
-# KaevCMS 0.50.6
+# KaevCMS 0.50.7
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.50.6 (Donations C4d) retains verified YooMoney callback evidence for safe retries even after a 24-hour retired-key grace expires. Unverified history candidates cannot credit Wallet; new callbacks still require a valid provider signature. Previous C4b delayed-payment behavior and fee/dispute reporting are retained. No production checkout or automatic Wallet credits are enabled. Live checkout and production wallet credits remain disabled. Existing B5 drafts and independent prices remain available. Core Wallet A1–A7 remains independent and unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
+Version 0.50.7 (Donations C5) adds a guarded server-priced YooMoney POST checkout page for wallet or bank card, with no browser-side authority for price, recipient or order. Its four separate server-side gates remain FALSE in the release, so no live checkout or automatic Wallet credits are enabled. Signed callbacks, idempotent Wallet settlement, verification-key rotation and fee/dispute tools remain available for controlled testing. Existing drafts and independent prices remain available. Core Wallet A1–A7 remains independent and unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -98,7 +98,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.50.6 (Donations C4d) позволяет повторно обработать ранее проверенное и защищённо сохранённое уведомление ЮMoney даже после истечения 24-часового срока старого ключа. Новые уведомления по-прежнему требуют действительной HMAC-подписи, а неподписанная история API не начисляет монеты. Сохранены 60-минутное окно заявок, обработка поздних подтверждений, точный учёт комиссии и журнал споров. Реальная отправка платёжной формы, обработка webhook и начисления по умолчанию отключены. Кошелёк ядра A1–A7 остаётся независимым. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
+Версия 0.50.7 (Donations C5) добавляет отдельную серверную страницу оплаты ЮMoney с POST-формами для кошелька и карты. Сумма, получатель и метка заказа берутся только из доверенных данных CMS; параметры браузера не принимаются за доказательство платежа. Все четыре серверных переключателя оплаты по умолчанию выключены, поэтому live-платежи и начисления остаются недоступны. Сохранены 60-минутное окно заявки, проверенные вебхуки, восстановление, комиссионный учёт и журнал споров. Кошелёк ядра A1–A7 остаётся независимым. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
 
 ### Требования
 

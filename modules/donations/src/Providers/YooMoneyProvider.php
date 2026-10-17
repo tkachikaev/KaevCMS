@@ -11,8 +11,8 @@ use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 
 /**
- * YooMoney wallet P2P collection, NOT YooKassa. C2 only prepares an inert form.
- * There is deliberately no production webhook route or form submission in this release.
+ * YooMoney wallet P2P collection, NOT YooKassa. The form can only render through the explicit C5 trusted checkout gates;
+ * provider callback/Wallet credit gates remain disabled by default.
  * https://yoomoney.ru/docs/payment-buttons/using-api/notifications
  */
 final class YooMoneyProvider implements PaymentProvider
@@ -77,7 +77,8 @@ final class YooMoneyProvider implements PaymentProvider
         }
 
         // sum means PAYER DEBIT, not the net receiver amount. Owner bears provider fees.
-        // No external request is made here; C2 does not render the returned form to a player.
+        // No external request is made here. Only the trusted checkout controller can
+        // render the returned fields, after all four payment gates pass.
         return new PaymentCheckout(
             providerPaymentId: null, // YooMoney allocates operation_id only after transfer.
             redirectUrl: self::CHECKOUT_URL,

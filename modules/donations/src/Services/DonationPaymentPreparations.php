@@ -17,9 +17,8 @@ use LogicException;
 use RuntimeException;
 
 /**
- * C2: associates an immutable, server-priced draft and a single trusted provider.
- * Intentionally returns only an inert DB record, NEVER a browser payment form.
- * C3 owns all external checkout, webhooks, settlement, and WalletGateway credits.
+ * Associates an immutable, server-priced draft and a trusted provider.
+ * C5 renders a separate checkout only behind four trusted server-side gates.
  */
 final class DonationPaymentPreparations
 {

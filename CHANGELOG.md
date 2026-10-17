@@ -1,3 +1,13 @@
+## 0.50.7 - 2026-10-17
+
+### Added — Donations C5, gated YooMoney checkout (module 1.11.0)
+
+- Added `/modules/donations/orders/{orderUuid}/checkout` under existing authenticated, verified player routes. A read-only checkout page prepares official YooMoney `POST https://yoomoney.ru/quickpay/confirm` forms for wallet (`PC`) or card (`AC`). The user must explicitly submit the form on YooMoney; rendering a page never transfers money.
+- Prices, currency, merchant receiver, UUID label and return URL are rebuilt from the owned immutable order/preparation and trusted encrypted provider configuration; browser `sum`, `receiver`, `label` and `paymentType` query values cannot change the server-side form. Browser redirects do **not** credit Wallet; only the existing HMAC-verified settlement chain can.
+- **Fail-closed delivery:** the new `checkout_enabled` flag AND existing `callbacks_enabled`, `credits_enabled` and `wallet.enabled_sources.donations` must all be true before checkout can render. **All four remain FALSE in the shipped release.** Reject other users, expired/cancelled orders, disabled/test-mode providers, mismatched order snapshots and orders with existing verified payment receipts. No automatic activation or real payments.
+- Added clear RU/EN checkout copy and admin webhook URL for merchant setup, non-cacheable checkout responses, and feature tests for default-disabled gates, forged browser parameters, receipt-free checkout, expiration, provider shutdown and user isolation. Existing migrations and Wallet Core unchanged.
+- **QA required:** PHPUnit/Pint/PHPStan, Windows/browser suites, MySQL/MariaDB concurrency and clean/upgrade tests on a dedicated environment. Never enable live gates based solely on syntax checks or provider-local diagnostics.
+
 ## 0.50.6 - 2026-10-17
 
 ### Fixed — Donations C4d, payment receipt recovery (module 1.10.1)

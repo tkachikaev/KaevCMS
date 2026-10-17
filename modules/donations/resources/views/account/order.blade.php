@@ -20,7 +20,10 @@
     <p>{{ __('module-donations::messages.player_price_breakdown', ['coins' => $order->coins, 'price' => $money->format((int) $order->unit_price_minor, (int) $order->exponent), 'currency' => $order->currency_code]) }}</p>
     <h2>{{ $money->format((int) $order->total_minor, (int) $order->exponent) }} {{ $order->currency_code }}</h2>
     <p>{{ __('module-donations::messages.order_expires_at') }}: {{ $order->expires_at->format('Y-m-d H:i') }}</p>
-    <p class="account-field-help" data-testid="donations-payment-c2-warning">{{ __('module-donations::messages.preparation_warning') }}</p>
+    @unless($canCheckout)<p class="account-field-help" data-testid="donations-payment-c2-warning">{{ __('module-donations::messages.preparation_warning') }}</p>@endunless
+    @if($canCheckout)
+        <a class="account-button primary" data-testid="donations-start-checkout" href="{{ route('modules.donations.orders.checkout', ['orderUuid' => $order->order_uuid]) }}">{{ __('module-donations::messages.checkout_open') }}</a>
+    @endif
     @if($paymentPreparation)
         <p data-testid="donations-payment-prepared">{{ __('module-donations::messages.preparation_selected', ['provider' => $paymentPreparation->provider_code, 'mode' => $paymentPreparation->mode]) }}</p>
     @elseif($order->status === 'draft' && $order->expires_at->isFuture() && $canChooseCoins && $availableProviders !== [])

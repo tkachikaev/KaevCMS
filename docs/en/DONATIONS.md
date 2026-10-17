@@ -1,6 +1,6 @@
-# Donations C4d — KaevCMS 0.50.6
+# Donations C5 — KaevCMS 0.50.7
 
-**Current Donations 1.10.1**: 60-minute draft window, authenticated late settlement after local cancel/expiry or provider mode change, and simplified player statuses. C4a dispute reporting and exact payer/net reporting remain. Live checkout and wallet credits stay disabled. Earlier sections are historical.
+**Current Donations 1.11.0**: 60-minute draft window, authenticated late settlement after local cancel/expiry or provider mode change, and simplified player statuses. C4a dispute reporting and exact payer/net reporting remain. Live checkout and wallet credits stay disabled. Earlier sections are historical.
 
 ## Historical C1 reference
 
@@ -97,3 +97,10 @@ The signed YooMoney receipt displays exact `withdraw_amount` (payer gross), `amo
 - This is a convenience for routine rotation, **not compromised-secret handling**. On suspected key theft, stop callbacks and credits and investigate existing orders. After the grace period, old signatures are not accepted; read-only recovery/manual review is needed.
 - `php artisan kaevcms:donations-reconcile --scan` prioritizes the most recent preparations; use `--order=UUID` for a particular older order. Unsigned API history is never sufficient to credit Wallet.
 - The 3 payment gates still default to false, and there is still no live checkout. Windows tests, full Laravel QA, isolated MySQL concurrency and clean/upgrade checks have not been run in this release environment.
+
+## C5 — guarded YooMoney checkout page (0.50.7)
+
+- The account owner may visit `/modules/donations/orders/{UUID}/checkout` once explicitly enabled: it renders official YooMoney `POST` forms for wallet (`PC`) and card (`AC`). The `sum` is the payer-debit RUB amount from the immutable CMS snapshot; `receiver` comes from trusted merchant configuration and `label=kaevcms-UUID`. Browser inputs and success redirects can never prove payment; verified HMAC callback, exact amount and idempotent Wallet credit are mandatory.
+- **Live payments are OFF in this release**: `config/donation-payments.php` uses `checkout_enabled=false`, `callbacks_enabled=false`, `credits_enabled=false`; `config/wallet.php` has `enabled_sources.donations=false`. By default even a valid checkout URL yields 404 and no external form.
+- Configure the HTTPS `/payments/yoomoney/notify` callback URL separately in merchant YooMoney wallet settings; the admin provider page displays the resolved callback URL. Do not expose HMAC secrets. Confirm the merchant's intended use is allowed under YooMoney wallet collection terms; it is not the same as YooKassa acquiring.
+- Before enabling any gate: PHPUnit/PHPStan/Pint, both Windows quality suites, dedicated MySQL/MariaDB race tests, clean install/upgrade, signed callback replay/fee/recovery tests and separate approved small live transfer.

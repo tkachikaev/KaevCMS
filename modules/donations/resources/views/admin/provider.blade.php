@@ -5,6 +5,9 @@
 <section class="form-card" data-testid="donations-provider-detail">
     <h2>{{ $driver->name() }} ({{ $driver->code() }})</h2>
     <p class="admin-field-help">{{ __('module-donations::messages.provider_not_payment_ready') }}</p>
+    @if($driver->code() === 'yoomoney')
+        <p class="admin-field-help">{{ __('module-donations::messages.provider_webhook_label') }}: <code>{{ route('payments.yoomoney.notify') }}</code></p>
+    @endif
     <div class="settings-form" data-testid="donations-provider-local-diagnostic">
         <strong>{{ __('module-donations::messages.provider_local_check') }}:</strong> {{ __('module-donations::messages.provider_state_'.$diagnostic['state']) }}
         @if($diagnostic['matched_currencies'] !== [])<p>{{ implode(', ', $diagnostic['matched_currencies']) }}</p>@endif

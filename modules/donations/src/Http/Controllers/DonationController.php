@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Wallet\WalletAccountReadService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -15,6 +16,7 @@ use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationOrders;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
+use KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use LogicException;
@@ -99,7 +101,7 @@ final class DonationController extends Controller
         ]);
     }
 
-    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings, DonationPaymentPreparations $payments): View
+    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -113,8 +115,27 @@ final class DonationController extends Controller
             'user' => $user, 'order' => $order, 'money' => $money,
             'canChooseCoins' => $settings->isVisibleToPlayers(),
             'paymentPreparation' => $payments->forOrder($order),
+            'canCheckout' => $checkout->available($user, $order),
             'availableProviders' => $settings->isVisibleToPlayers() ? $payments->available($order->currency_code) : [],
         ]);
+    }
+
+    /** Read-only render of a server-built POST checkout. Browser return is NOT payment proof. */
+    public function checkout(Request $request, string $orderUuid, DonationOrders $orders, DonationYooMoneyCheckout $checkout, DonationMoney $money): Response
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $order = $orders->forUser($user, $orderUuid);
+        abort_unless($order instanceof DonationOrder, 404);
+        abort_unless($checkout->available($user, $order), 404);
+        $form = $checkout->build($user, $order);
+
+        return response()->view('module-donations::account.checkout', [
+            'user' => $user, 'order' => $order, 'money' => $money, 'form' => $form,
+        ])->header('Cache-Control', 'private, no-store, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Referrer-Policy', 'no-referrer')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     /** This creates only a provider-free draft; there is no checkout or wallet credit. */
@@ -137,7 +158,7 @@ final class DonationController extends Controller
             ->with('status', __('module-donations::messages.draft_created'));
     }
 
-    /** Prepare and audit immutable payment terms; never redirects to a provider in C2. */
+    /** Prepare and audit immutable payment terms; does not initiate an external payment. */
     public function prepare(Request $request, string $orderUuid, DonationPaymentPreparations $payments): RedirectResponse
     {
         $user = $request->user();

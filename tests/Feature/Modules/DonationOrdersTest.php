@@ -43,7 +43,7 @@ class DonationOrdersTest extends TestCase
 
     public function test_schema_contains_provenance_and_starts_empty(): void
     {
-        $this->assertSame('1.10.1', app(ModuleManager::class)->inspect('donations')['version']);
+        $this->assertSame('1.11.0', app(ModuleManager::class)->inspect('donations')['version']);
         $this->assertTrue(Schema::hasColumns('module_donation_orders', [
             'order_uuid', 'user_id', 'idempotency_key', 'coins', 'currency_code',
             'exponent', 'unit_price_minor', 'total_minor', 'provider_code',

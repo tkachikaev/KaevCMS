@@ -3,8 +3,8 @@
 namespace KaevCMS\Modules\Donations\Data;
 
 /**
- * Prepared checkout description. NOT proof of settlement. POST fields may only be
- * rendered after C3 enables an authenticated, signed, persistent payment flow.
+ * Prepared checkout description, NOT proof of settlement. Fields are rendered
+ * only through the C5 trusted, default-disabled checkout gate.
  */
 final readonly class PaymentCheckout
 {
