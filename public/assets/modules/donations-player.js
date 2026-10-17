@@ -13,8 +13,8 @@
         const error = root.querySelector('[data-testid="donations-quote-error"]');
         const total = result.querySelector('[data-donations-total]');
         const breakdown = result.querySelector('[data-donations-breakdown]');
-        const draft = root.querySelector('[data-testid="donations-create-test-draft"]');
-        const draftButton = draft.querySelector('[type="submit"]');
+        const order = root.querySelector('[data-testid="donations-create-order"]');
+        const orderButton = order?.querySelector('[type="submit"]');
         const format = (minor, exponent) => {
             const factor = 10n ** BigInt(exponent);
             return `${minor / factor}${exponent ? `.${String(minor % factor).padStart(exponent, '0')}` : ''}`;
@@ -31,9 +31,11 @@
             coins.setAttribute('aria-invalid', String(!validCoins));
             error.hidden = valid;
             error.textContent = valid ? '' : (validCoins ? error.dataset.invalidCurrency : error.dataset.invalidCoins);
-            draftButton.disabled = !valid;
-            draft.elements.namedItem('coins').value = valid ? count : '';
-            draft.elements.namedItem('currency').value = valid ? option.value : '';
+            if (order) {
+                orderButton.disabled = !valid;
+                order.elements.namedItem('coins').value = valid ? count : '';
+                order.elements.namedItem('currency').value = valid ? option.value : '';
+            }
             result.hidden = false;
             if (!valid) {
                 total.textContent = '—';
@@ -56,7 +58,7 @@
         form.addEventListener('input', input);
         form.addEventListener('change', input);
         form.addEventListener('submit', (event) => { event.preventDefault(); refresh(); });
-        draft.addEventListener('submit', (event) => {
+        order?.addEventListener('submit', (event) => {
             if (!refresh()) { event.preventDefault(); coins.focus(); }
         });
         refresh();

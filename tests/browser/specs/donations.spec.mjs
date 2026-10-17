@@ -138,6 +138,8 @@ test('players can preview accurate coin prices but cannot create fake payment dr
     await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
 
     const player = await context.newPage();
+    const calculatorErrors = [];
+    player.on('pageerror', error => calculatorErrors.push(error.message));
     await gotoWithLocalNetworkRetry(player, '/login');
     await player.locator('#login').fill('browser-donations-player@example.test');
     await player.locator('#password').fill(process.env.PLAYWRIGHT_PLAYER_PASSWORD);
@@ -249,9 +251,46 @@ test('players can preview accurate coin prices but cannot create fake payment dr
     await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
     await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations\/orders$/);
     await expect(player.getByTestId('donations-choose-coins')).toHaveCount(0);
-    await expect(player.getByTestId('donations-player-orders').locator('a')).toHaveCount(4);
+    // Previewing prices must not create payment orders.
+    await expect(player.getByTestId('donations-player-orders').locator('a')).toHaveCount(0);
+    await expect(player.getByTestId('donations-player-orders')).toContainText('Заявок пока нет.');
     await gotoWithLocalNetworkRetry(player, '/account/wallet');
     await expect(player.getByRole('link', { name: 'Пополнить баланс', exact: true })).toHaveCount(0);
+
+    // Exercise the optional order form in this disposable testing database.
+    // No order is submitted; block the external provider as an extra guard.
+    await context.route('https://yoomoney.ru/**', route => route.abort());
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations/providers/yoomoney');
+    const providerSettings = page.getByTestId('donations-yoomoney-simple-settings');
+    await providerSettings.locator('#yoomoney-wallet-number').fill('410012345678901');
+    await providerSettings.locator('#yoomoney-secret').fill('browser-calculator-fixture-secret');
+    const accepting = providerSettings.locator('[name="payment_enabled"][type="checkbox"]');
+    await accepting.check();
+    await providerSettings.locator('button[type="submit"]').click();
+    await expect(page.getByText('Настройки платёжной системы сохранены.', { exact: true })).toBeVisible();
+    await gotoWithLocalNetworkRetry(player, '/modules/donations');
+    const order = player.getByTestId('donations-create-order');
+    const activeCoins = player.locator('#donations-player-coins');
+    await expect(order).toBeVisible();
+    await expect(player.locator('#donations-player-range')).toBeVisible();
+    await activeCoins.fill('237');
+    await expect(order.locator('[name="coins"]')).toHaveValue('237');
+    await expect(order.locator('[name="currency"]')).toHaveValue('RUB');
+    await expect(player.getByTestId('donations-quote-result')).toContainText('296.25 RUB');
+    await activeCoins.fill('0');
+    await expect(order.locator('[type="submit"]')).toBeDisabled();
+    await expect(order.locator('[name="coins"]')).toHaveValue('');
+    await activeCoins.fill('239');
+    await expect(order.locator('[type="submit"]')).toBeEnabled();
+    await expect(order.locator('[name="coins"]')).toHaveValue('239');
+    await expect(player.locator('#donations-player-range')).toHaveValue('239');
+    await accepting.uncheck();
+    await providerSettings.locator('button[type="submit"]').click();
+    await expect(page.getByText('Настройки платёжной системы сохранены.', { exact: true })).toBeVisible();
+    await player.reload();
+    await expect(order).toHaveCount(0);
+    await expect(player.locator('#donations-player-range')).toBeVisible();
+    expect(calculatorErrors).toEqual([]);
     await player.close();
 });
 

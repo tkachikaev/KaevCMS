@@ -61,6 +61,13 @@
 .donations-provider-currencies > span { color:var(--admin-text-muted); }
 .donations-provider-currencies strong { overflow-wrap:anywhere; }
 .donations-provider-card > .button { justify-self:start; }
+.donations-readiness { margin:18px 0; padding:18px 20px; border:1px solid var(--admin-warning-border); border-radius:10px; background:var(--admin-warning-soft); color:var(--admin-text); }
+.donations-readiness h3 { margin:0 0 10px; font-size:15px; }
+.donations-readiness p { margin:0 0 12px; line-height:1.6; }
+.donations-readiness ul { margin:0; padding-left:20px; }
+.donations-readiness li { padding-left:3px; line-height:1.6; overflow-wrap:anywhere; }
+.donations-readiness li + li { margin-top:10px; }
+.donations-readiness a { color:var(--admin-primary); text-decoration:underline; }
 .donations-provider-advanced { margin:16px 0; border:1px solid var(--admin-border); border-radius:10px; background:var(--admin-surface-subtle); }
 .donations-provider-advanced > summary { padding:14px 16px; cursor:pointer; color:var(--admin-text-muted); font-size:13px; font-weight:600; }
 .donations-provider-advanced > summary:focus-visible { outline:2px solid var(--admin-primary); outline-offset:2px; border-radius:10px; }

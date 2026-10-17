@@ -109,4 +109,55 @@ final class DonationSimplePaymentFlowTest extends TestCase
         ])->assertForbidden();
         $this->assertSame('off', app(DonationLiveActivation::class)->state()['mode']);
     }
+
+    public function test_local_activation_explains_only_actual_blockers_and_keeps_credentials(): void
+    {
+        $this->ownerWithRubPrice();
+        $this->app->instance('env', 'local');
+        config(['app.url' => 'http://127.0.0.1:8000', 'app.debug' => false]);
+        $url = '/admin/extensions/donations/providers/yoomoney';
+        $token = Str::random(40);
+        $this->withSession(['_token' => $token])->put($url, [
+            '_token' => $token,
+            'payment_enabled' => '1',
+            'credentials' => ['receiver' => '410012345678901', 'notification_secret' => 'local-readiness-secret-123'],
+        ])->assertRedirect($url)->assertSessionHasErrors('provider');
+
+        $response = $this->get($url)->assertOk()
+            ->assertSee(__('module-donations::messages.yoomoney_not_ready'))
+            ->assertSee('data-payment-blocker="environment"', false)
+            ->assertSee('data-payment-blocker="https"', false)
+            ->assertSee('data-payment-blocker="database"', false)
+            ->assertDontSee('data-payment-blocker="debug"', false)
+            ->assertDontSee('data-payment-blocker="rate"', false)
+            ->assertDontSee('data-payment-blocker="credentials"', false)
+            ->assertDontSee('local-readiness-secret-123');
+        $response->assertSee('value="410012345678901"', false);
+        $this->assertSame('off', app(DonationLiveActivation::class)->state()['mode']);
+        $this->assertDatabaseCount('wallet_entries', 0);
+
+        $this->app->instance('env', 'production');
+        config(['app.debug' => true]);
+        $this->get($url)->assertOk()
+            ->assertSee('data-payment-blocker="debug"', false)
+            ->assertDontSee('data-payment-blocker="environment"', false);
+    }
+
+    public function test_missing_rub_price_has_its_own_action_and_ready_settings_hide_the_warning(): void
+    {
+        $owner = $this->ownerWithRubPrice();
+        $url = '/admin/extensions/donations/providers/yoomoney';
+        $this->put($url, [
+            'payment_enabled' => '1',
+            'credentials' => ['receiver' => '410012345678901', 'notification_secret' => 'price-readiness-secret-123'],
+        ])->assertRedirect($url)->assertSessionHasNoErrors();
+        $this->get($url)->assertOk()->assertDontSee('data-testid="donations-payment-blockers"', false);
+
+        app(DonationRates::class)->saveRate('RUB', '1.25', false, $owner);
+        $this->get($url)->assertOk()
+            ->assertSee('data-payment-blocker="rate"', false)
+            ->assertSee(__('module-donations::messages.yoomoney_configure_price'))
+            ->assertDontSee('data-payment-blocker="https"', false)
+            ->assertDontSee('data-payment-blocker="credentials"', false);
+    }
 }

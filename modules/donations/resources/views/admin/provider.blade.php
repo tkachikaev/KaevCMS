@@ -6,9 +6,9 @@
     @if($driver->code() === 'yoomoney')
         <h2>ЮMoney</h2>
         <p class="admin-field-help">{{ __('module-donations::messages.yoomoney_simple_intro') }}</p>
-        @if($webhookIsLocal)
+        @if($webhookIsLocal && ! in_array('https', $readinessIssues, true))
             <p class="admin-field-error" role="status">{{ __('module-donations::messages.yoomoney_local_warning') }}</p>
-        @else
+        @elseif(! $webhookIsLocal)
             <div class="form-group">
                 <label>{{ __('module-donations::messages.yoomoney_notification_address') }}</label>
                 <code class="donations-callback-url">{{ $webhookUrl }}</code>
@@ -16,6 +16,30 @@
             </div>
         @endif
         @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
+        @if($readinessIssues !== [])
+            <div class="donations-readiness" role="status" data-testid="donations-payment-blockers">
+                <h3>{{ __('module-donations::messages.yoomoney_blockers_title') }}</h3>
+                @if(app()->environment('local'))<p>{{ __('module-donations::messages.yoomoney_local_preview') }}</p>@endif
+                <ul>
+                    @foreach($readinessIssues as $issue)
+                        @php($reason = $issue === 'provider' ? match ($diagnostic['state']) {
+                            'no_active_rate' => 'rate',
+                            'invalid', 'not_configured' => 'credentials',
+                            'disabled' => 'disabled',
+                            default => 'provider',
+                        } : ($issue === 'environment' && app()->environment('production') ? 'debug' : $issue))
+                        <li data-payment-blocker="{{ $reason }}">{{ __('module-donations::messages.yoomoney_blocker_'.$reason) }}
+                            @if($reason === 'rate')
+                                <a wire:navigate href="{{ route('admin.module-pages.donations.index', ['adminPath' => $adminPath]) }}">{{ __('module-donations::messages.yoomoney_configure_price') }}</a>
+                            @endif
+                        </li>
+                        @if($issue === 'environment' && ! app()->environment('production') && config('app.debug') !== false)
+                            <li data-payment-blocker="debug">{{ __('module-donations::messages.yoomoney_blocker_debug') }}</li>
+                        @endif
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => 'yoomoney']) }}" class="settings-form" autocomplete="off" data-testid="donations-yoomoney-simple-settings">
             @csrf @method('PUT')
             <div class="form-group">
