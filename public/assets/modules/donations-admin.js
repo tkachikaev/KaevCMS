@@ -6,27 +6,15 @@
         const list = form.querySelector('[data-donations-rates]');
         const selector = form.querySelector('[data-donations-currency]');
         const template = form.querySelector('[data-donations-rate-template]');
-        const preview = form.querySelector('[data-donations-preview]');
         const status = form.querySelector('[data-donations-save-status]');
         const rows = () => Array.from(list.querySelectorAll('[data-donations-row]'));
-        const dirty = () => { if (status) status.textContent = status.dataset.dirty; };
+        const dirty = () => {
+            if (status) {
+                status.textContent = status.dataset.dirty;
+                status.hidden = false;
+            }
+        };
         const refresh = () => {
-            const count = preview?.value ?? '';
-            rows().forEach((row) => {
-                const output = row.querySelector('[data-donations-total]');
-                output.textContent = output.dataset.empty;
-                const price = row.querySelector('[data-donations-price]').value.replace(',', '.');
-                const exponent = Number(row.dataset.exponent);
-                if (!/^[0-9]{1,12}(?:\.[0-9]{1,4})?$/.test(price) || !/^[1-9][0-9]{0,6}$/.test(count) || Number(count) > 1000000) return;
-                const [whole, fraction = ''] = price.split('.');
-                if (fraction.length > exponent) return;
-                const factor = 10n ** BigInt(exponent);
-                const minor = BigInt(whole) * factor + BigInt(fraction.padEnd(exponent, '0') || '0');
-                if (minor < 1n || minor > 999999999n) return;
-                const total = minor * BigInt(count);
-                const amount = `${total / factor}${exponent ? `.${String(total % factor).padStart(exponent, '0')}` : ''}`;
-                output.textContent = `${count} × ${price} = ${amount} ${row.dataset.code}`;
-            });
             const empty = form.querySelector('[data-donations-empty]');
             empty.hidden = rows().some((row) => row.querySelector('[data-donations-remove]').value !== '1');
             if (selector) Array.from(selector.options).forEach((option) => {
@@ -36,7 +24,7 @@
             if (add) add.disabled = !selector?.value;
         };
         const input = (event) => {
-            if (event.target !== preview && event.target !== selector) dirty();
+            if (event.target !== selector) dirty();
             refresh();
         };
         const click = (event) => {
@@ -79,21 +67,38 @@
             }
             dirty(); refresh();
         };
-        const keydown = (event) => {
-            if (event.target === preview && event.key === 'Enter') event.preventDefault();
-        };
         form.addEventListener('input', input);
         form.addEventListener('change', input);
         form.addEventListener('click', click);
-        form.addEventListener('keydown', keydown);
         refresh();
         return () => {
             form.removeEventListener('input', input);
             form.removeEventListener('change', input);
             form.removeEventListener('click', click);
-            form.removeEventListener('keydown', keydown);
         };
     };
-    if (window.KaevCMSAdmin?.registerPage) window.KaevCMSAdmin.registerPage('donations', initialize);
-    else initialize();
+    const initializeActivation = () => {
+        const form = document.querySelector('[data-donations-activation]');
+        if (!(form instanceof HTMLFormElement)) return;
+        const mode = form.querySelector('#donations-payment-mode');
+        const controls = form.querySelector('[data-donations-pilot-controls]');
+        const player = form.querySelector('#donations-pilot-player');
+        const refresh = () => {
+            controls.hidden = mode.value !== 'pilot';
+            player.required = mode.value === 'pilot';
+            form.querySelectorAll('[data-donations-mode-help]').forEach((help) => {
+                help.hidden = help.dataset.donationsModeHelp !== mode.value;
+            });
+        };
+        mode.addEventListener('change', refresh);
+        refresh();
+        return () => mode.removeEventListener('change', refresh);
+    };
+    if (window.KaevCMSAdmin?.registerPage) {
+        window.KaevCMSAdmin.registerPage('donations', initialize);
+        window.KaevCMSAdmin.registerPage('donations-activation', initializeActivation);
+    } else {
+        initialize();
+        initializeActivation();
+    }
 })();

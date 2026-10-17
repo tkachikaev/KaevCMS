@@ -37,13 +37,12 @@ for (const width of [1440, 390]) {
         await form.locator('#donations-show-in-account').check();
         await form.locator('[name="min_coins"]').fill('10');
         await form.locator('[name="max_coins"]').fill('500');
-        await form.locator('[data-donations-preview]').fill('40');
-        await form.locator('[data-donations-preview]').press('Enter');
-        await expect(first.locator('[data-donations-total]')).toContainText(`50.00 ${firstCode}`);
+        await expect(form.locator('[data-donations-preview]')).toHaveCount(0);
         await expect(form.locator('[data-donations-save-status]')).toContainText('Есть несохранённые изменения');
         expect(saves).toBe(0);
         await save.click();
-        await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+        await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
+        await expect(form.locator('[data-donations-save-status]')).toBeHidden();
         expect(saves).toBe(1);
         await page.reload();
         await expect(first.locator('[data-donations-price]')).toHaveValue('1.25');
@@ -80,6 +79,33 @@ for (const width of [1440, 390]) {
         // The module script must initialize again after Livewire navigation.
         await page.getByRole('link', { name: 'Платёжные системы', exact: true }).click();
         await expect(page).toHaveURL(/\/donations\/providers$/);
+        const provider = page.locator('.donations-provider-card[data-provider="yoomoney"]');
+        await expect(provider.getByRole('heading', { name: 'ЮMoney', exact: true })).toBeVisible();
+        await expect(provider.locator('img')).toHaveJSProperty('complete', true);
+        expect(await provider.locator('img').evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+        await provider.getByRole('link', { name: 'Настроить', exact: true }).click();
+        const paymentMode = page.locator('#donations-payment-mode');
+        const pilotControls = page.locator('[data-donations-pilot-controls]');
+        await expect(paymentMode).toHaveValue('off');
+        await expect(pilotControls).toBeHidden();
+        await paymentMode.selectOption('pilot');
+        await expect(pilotControls).toBeVisible();
+        await expect(page.locator('#donations-pilot-player')).toHaveAttribute('required', '');
+        await expect(page.locator('[data-donations-mode-help="pilot"]')).toBeVisible();
+        await page.locator('#donations-player-search').fill('Player');
+        await pilotControls.getByRole('button', { name: 'Найти', exact: true }).click();
+        await expect(page).toHaveURL(/payment_mode=pilot.*player_search=Player/);
+        await expect(paymentMode).toHaveValue('pilot');
+        await expect(pilotControls).toBeVisible();
+        await paymentMode.selectOption('live');
+        await expect(pilotControls).toBeHidden();
+        await expect(page.locator('#donations-pilot-player')).not.toHaveAttribute('required', '');
+        await paymentMode.selectOption('off');
+        await expect(pilotControls).toBeHidden();
+        // Changing the form and searching must not save or activate payments.
+        await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations/providers/yoomoney');
+        await expect(paymentMode).toHaveValue('off');
         await page.locator('.donations-navigation').getByRole('link', { name: 'Настройки', exact: true }).click();
         await add(firstCode, '1.00');
         await page.getByTestId(`donations-rate-${firstCode}`).getByRole('button', { name: 'Удалить валюту', exact: true }).click();
@@ -121,7 +147,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
     await form.locator('[name="min_coins"]').fill('1');
     await form.locator('[name="max_coins"]').fill('1000000');
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
-    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
 
     const player = await context.newPage();
     await gotoWithLocalNetworkRetry(player, '/login');
@@ -219,7 +245,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
     await form.locator('[name="min_coins"]').fill('10');
     await form.locator('[name="max_coins"]').fill('500');
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
-    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
     await gotoWithLocalNetworkRetry(player, '/modules/donations?coins=5&currency=RUB');
     await expect(player.getByTestId('donations-quote-error')).toBeVisible();
     const limitedSlider = player.locator('#donations-player-range');
@@ -233,7 +259,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
     await form.locator('#donations-show-in-account').uncheck();
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
-    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
     await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
     await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations\/orders$/);
     await expect(player.getByTestId('donations-choose-coins')).toHaveCount(0);
@@ -267,7 +293,7 @@ test('donations calculator stays translated and gated in RU/EN, both account the
     await form.locator('[name="min_coins"]').fill('1');
     await form.locator('[name="max_coins"]').fill('1000000');
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
-    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
     const player = await context.newPage();
     await gotoWithLocalNetworkRetry(player, '/login');
     await player.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);
@@ -304,6 +330,6 @@ test('donations calculator stays translated and gated in RU/EN, both account the
     await form.locator('[name="min_coins"]').fill(initial.min);
     await form.locator('[name="max_coins"]').fill(initial.max);
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
-    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
     await player.close();
 });

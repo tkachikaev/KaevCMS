@@ -28,19 +28,15 @@ use LogicException;
 
 final class AdminDonationController extends Controller
 {
-    public function index(Request $request, DonationWorkspace $workspace, AdminPathSettings $paths, DonationCurrencyRegistry $registry, DonationMoney $money): View
+    public function index(DonationWorkspace $workspace, AdminPathSettings $paths, DonationCurrencyRegistry $registry, DonationMoney $money): View
     {
         /** @var view-string $view */
         $view = 'module-donations::admin.index';
 
         $state = $workspace->read();
         $limits = ['min_coins' => $state['min_coins'], 'max_coins' => $state['max_coins']];
-        $rawCount = $request->query('preview_coins', '100');
-        $count = is_string($rawCount) && preg_match('/\A[1-9][0-9]{0,6}\z/D', $rawCount)
-            ? (int) $rawCount : 100;
-        $count = min($limits['max_coins'], max($limits['min_coins'], $count));
 
-        return view($view, ['previewCoins' => $count, 'limits' => $limits,
+        return view($view, ['limits' => $limits,
             'showInAccount' => $state['show_in_account'],
             'snapshot' => $state['snapshot'],
             'adminPath' => $paths->path(),

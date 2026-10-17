@@ -21,16 +21,17 @@
     }
 @endphp
 @include('module-donations::admin.navigation')
-<div class="donations-mode" role="note">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3v1"/></svg>
-    <div><strong>{{ \KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout::enabled() ? __('module-donations::messages.live_mode_title') : __('module-donations::messages.test_mode_title') }}</strong><p>{{ \KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout::enabled() ? __('module-donations::messages.live_mode_description') : __('module-donations::messages.test_mode_description') }}</p></div>
+@php($paymentMode = \KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout::enabled() ? app(\KaevCMS\Modules\Donations\Services\DonationLiveActivation::class)->state()['mode'] : 'off')
+<div class="donations-payment-status">
+    <span @class(['status-badge', 'status-badge-success' => $paymentMode === 'live'])>{{ __('module-donations::messages.payment_status_'.$paymentMode) }}</span>
+    <a wire:navigate href="{{ route('admin.module-pages.donations.providers.show', ['adminPath' => $adminPath, 'providerCode' => 'yoomoney']) }}">{{ __('module-donations::messages.payment_settings') }} →</a>
 </div>
 <form method="POST" action="{{ route('admin.module-pages.donations.workspace.update', ['adminPath' => $adminPath]) }}" data-donations-workspace data-testid="donations-workspace">
     @csrf @method('PUT')
     <input type="hidden" name="snapshot" value="{{ old('snapshot', $snapshot) }}">
     <div class="donations-layout">
         <x-admin.card data-testid="donations-currency-rates">
-            <x-admin.card-heading :title="__('module-donations::messages.rates_title')" :description="__('module-donations::messages.workspace_help')" />
+            <x-admin.card-heading :title="__('module-donations::messages.rates_title')" />
             @unless($readOnly)
                 <div class="donations-add-currency" data-testid="donations-add-currency">
                     <x-admin.field for="donations-currency-code" :label="__('module-donations::messages.add_currency')">
@@ -53,17 +54,11 @@
                 @endforeach
             </div>
             <div class="admin-empty-state" data-donations-empty @if(collect($rows)->contains(fn ($row) => ! (bool) $row['remove'])) hidden @endif>{{ __('module-donations::messages.no_rates') }}</div>
-            <div class="donations-preview">
-                <x-admin.field for="donations-preview-coins" :label="__('module-donations::messages.preview_coins')">
-                    <input id="donations-preview-coins" data-donations-preview type="number" min="1" max="1000000" value="{{ $previewCoins }}">
-                </x-admin.field>
-                <p>{{ __('module-donations::messages.preview_live') }}</p>
-            </div>
         </x-admin.card>
         <aside class="donations-side">
             <x-admin.card>
                 <x-admin.card-heading :title="__('module-donations::messages.general_settings')" />
-                <x-admin.toggle id="donations-show-in-account" name="show_in_account" :label="__('module-donations::messages.show_in_account')" :hint="__('module-donations::messages.show_in_account_help')" :checked="(bool) old('show_in_account', $showInAccount)" :disabled="$readOnly" />
+                <x-admin.toggle id="donations-show-in-account" name="show_in_account" :label="__('module-donations::messages.show_in_account')" :checked="(bool) old('show_in_account', $showInAccount)" :disabled="$readOnly" />
             </x-admin.card>
             <x-admin.card data-testid="donations-coin-limits">
                 <x-admin.card-heading :title="__('module-donations::messages.limits_title')" :description="__('module-donations::messages.limits_description')" />
@@ -80,7 +75,7 @@
     </div>
     @unless($readOnly)
         <div class="donations-save-bar">
-            <p data-donations-save-status data-saved="{{ __('module-donations::messages.save_help') }}" data-dirty="{{ __('module-donations::messages.unsaved_changes') }}" role="status">{{ __('module-donations::messages.save_help') }}</p>
+            <p data-donations-save-status data-dirty="{{ __('module-donations::messages.unsaved_changes') }}" role="status" hidden></p>
             <x-admin.button type="submit" variant="primary">{{ __('module-donations::messages.save_all') }}</x-admin.button>
         </div>
         <template data-donations-rate-template>
