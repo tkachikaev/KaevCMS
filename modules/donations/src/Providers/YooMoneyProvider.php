@@ -51,7 +51,7 @@ final class YooMoneyProvider implements PaymentProvider
         ];
     }
 
-    /** @param array<string,string> $credentials */
+    /** @param array<string,mixed> $credentials */
     public function assertConfiguration(array $credentials, string $mode): void
     {
         if (! in_array($mode, ['test', 'live'], true)

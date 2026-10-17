@@ -1,4 +1,5 @@
 <?php
+
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;

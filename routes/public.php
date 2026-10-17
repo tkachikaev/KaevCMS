@@ -8,6 +8,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Payments\YooMoneyNotificationController;
 use App\Http\Controllers\ServerMonitorStatusController;
 use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Route;
@@ -83,5 +84,5 @@ Route::get('/language/{locale}', [LocaleController::class, 'public'])
 
 // Core-owned callback persists after Donations UI/module is disabled. Disabled by
 // default in config/donation-payments.php; no public checkout route in C3.
-Route::post('/payments/yoomoney/notify', \App\Http\Controllers\Payments\YooMoneyNotificationController::class)
+Route::post('/payments/yoomoney/notify', YooMoneyNotificationController::class)
     ->middleware('throttle:60,1')->name('payments.yoomoney.notify');

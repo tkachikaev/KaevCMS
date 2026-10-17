@@ -22,6 +22,7 @@ final class ReconcileDonationPaymentsCommand extends Command
             $limit = filter_var($this->option('limit'), FILTER_VALIDATE_INT);
             if (! is_int($limit) || $limit < 1 || $limit > 100) {
                 $this->error('Invalid scan limit.');
+
                 return self::FAILURE;
             }
             if ($this->option('scan')) {
@@ -36,9 +37,11 @@ final class ReconcileDonationPaymentsCommand extends Command
             if (! $this->option('scan') && ! $this->option('retry-verified')) {
                 $this->line('Select --scan (read-only API recovery) or --retry-verified (gated settlement).');
             }
+
             return self::SUCCESS;
         } catch (Throwable) {
             $this->error('Donation reconciliation unavailable; check provider credentials and test database.');
+
             return self::FAILURE;
         }
     }

@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationOrders;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
+use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
@@ -226,8 +227,8 @@ final class DonationYooMoneySettlementTest extends TestCase
         config()->set('donation-payments.callbacks_enabled', true);
         $this->notify($this->signed($order))->assertOk();
         $this->openCredits();
-        $this->assertSame(1, app(\KaevCMS\Modules\Donations\Services\DonationPaymentSettlements::class)->retryPending());
-        $this->assertSame(0, app(\KaevCMS\Modules\Donations\Services\DonationPaymentSettlements::class)->retryPending());
+        $this->assertSame(1, app(DonationPaymentSettlements::class)->retryPending());
+        $this->assertSame(0, app(DonationPaymentSettlements::class)->retryPending());
         $this->assertDatabaseCount('wallet_entries', 1);
         $this->assertSame('credited', $order->fresh()->status);
     }

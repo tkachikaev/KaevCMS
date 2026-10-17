@@ -79,6 +79,7 @@ class AdminAccountThemeManagementTest extends TestCase
         $theme = app(AccountThemeManager::class)->inspect('luxury');
         $this->assertTrue($theme['valid']);
         $this->assertTrue($theme['compatible']);
+        app(AccountThemeManager::class)->activate('luxury');
 
         $this->actingAs($user)
             ->get('/account')

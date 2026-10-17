@@ -82,6 +82,7 @@ final class YooMoneyDriverTest extends TestCase
     public function test_unsupported_or_forged_notification_does_not_verify(): void
     {
         $driver = new YooMoneyProvider;
+        $rejections = 0;
         foreach ([
             ['amount' => '101.00', 'withdraw_amount' => '100.00'],
             ['amount' => '98.00', 'withdraw_amount' => '99.999'],
@@ -97,7 +98,7 @@ final class YooMoneyDriverTest extends TestCase
                 $driver->verifyCallback(new ProviderCallback($this->body($data), [], ''), self::CREDENTIALS, 'live');
                 $this->fail('A signed but invalid YooMoney payload passed validation.');
             } catch (InvalidArgumentException) {
-                // Expected.
+                $rejections++;
             }
         }
         $body = $this->body($this->fields());
@@ -111,9 +112,10 @@ final class YooMoneyDriverTest extends TestCase
                 $driver->verifyCallback(new ProviderCallback($forged, [], ''), self::CREDENTIALS, 'live');
                 $this->fail('A forged YooMoney payload passed HMAC verification.');
             } catch (InvalidArgumentException) {
-                // Expected.
+                $rejections++;
             }
         }
+        $this->assertSame(12, $rejections);
     }
 
     public function test_signed_legacy_sha1_field_is_included_but_cannot_replace_hmac(): void

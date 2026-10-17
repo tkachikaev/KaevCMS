@@ -6,6 +6,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use LogicException;
 
 /**
@@ -15,6 +16,9 @@ use LogicException;
  * @property int $user_id
  * @property string $order_uuid
  * @property int $coins
+ * @property int $exponent
+ * @property int $unit_price_minor
+ * @property int $total_minor
  * @property string $currency_code
  * @property string $status
  * @property string|null $provider_code
@@ -46,7 +50,7 @@ final class DonationOrder extends Model
     public function displayStatus(): string
     {
         if ($this->status === self::DRAFT && $this->exists
-            && \Illuminate\Support\Facades\DB::table('module_donation_payment_receipts')
+            && DB::table('module_donation_payment_receipts')
                 ->where('order_id', $this->getKey())->whereIn('status', ['pending', 'review'])->exists()) {
             return 'payment_pending';
         }

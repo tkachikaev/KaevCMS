@@ -4,6 +4,7 @@ namespace KaevCMS\Modules\Donations\Services;
 
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Contracts\PaymentProvider;
+use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 use LogicException;
 
 /**
@@ -13,7 +14,7 @@ use LogicException;
 final class DonationProviderRegistry
 {
     /** @var list<class-string<PaymentProvider>> */
-    private const BUNDLED_DRIVERS = [\KaevCMS\Modules\Donations\Providers\YooMoneyProvider::class];
+    private const BUNDLED_DRIVERS = [YooMoneyProvider::class];
 
     /** @param list<mixed>|null $driverClasses Installation candidates are validated before loading. */
     public function __construct(private readonly ?array $driverClasses = null) {}

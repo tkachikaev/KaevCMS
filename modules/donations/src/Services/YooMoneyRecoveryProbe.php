@@ -16,7 +16,7 @@ use RuntimeException;
 final class YooMoneyRecoveryProbe
 {
     /**
-     * @param array<string,string> $credentials
+     * @param  array<string,mixed>  $credentials
      * @return list<array{operation_id:string,status:string}>
      */
     public function candidates(string $orderUuid, array $credentials): array
