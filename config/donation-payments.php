@@ -1,11 +1,10 @@
 <?php
 
 return [
-    // C3 deliberately ships with both gates CLOSED. Flip neither on production
-    // until completed C4 integration/merchant tests and an explicit release.
-    // Callbacks can be accepted without allowing wallet credits, to retain evidence.
-    // Real-money form rendering requires ALL four independent trusted gates.
-    'checkout_enabled' => false,
-    'callbacks_enabled' => false,
-    'credits_enabled' => false,
+    // Installed payment adapter: activation is controlled only by audited database
+    // settings in Donations admin. These static guards are not .env requirements.
+    // A trusted deployment can override a guard in code for emergency containment.
+    'checkout_enabled' => true,
+    'callbacks_enabled' => true,
+    'credits_enabled' => true,
 ];

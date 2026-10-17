@@ -58,7 +58,12 @@
         "DB_PASSWORD",
         "MAIL_PASSWORD",
         "LOGIN_SERVER_PASSWORD",
-        "GAME_SERVER_PASSWORD"
+        "GAME_SERVER_PASSWORD",
+        "DONATIONS_CHECKOUT_ENABLED",
+        "DONATIONS_CALLBACKS_ENABLED",
+        "DONATIONS_CREDITS_ENABLED",
+        "WALLET_DONATIONS_ENABLED",
+        "DONATIONS_LIVE_TEST_USER_ID"
     ],
     "stage_order": [
         "preflight",

@@ -1,6 +1,6 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.order_title'))
-@section('description', __('module-donations::messages.not_available_yet'))
+@section('description', __('module-donations::messages.account_description'))
 @push('head')
 <link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
 @endpush

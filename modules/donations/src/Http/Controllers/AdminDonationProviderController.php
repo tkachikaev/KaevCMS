@@ -4,12 +4,14 @@ namespace KaevCMS\Modules\Donations\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\User;
 use App\Services\Admin\AdminPathSettings;
 use App\Support\Modules\ModuleAdminAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 
@@ -27,7 +29,7 @@ final class AdminDonationProviderController extends Controller
     }
 
     public function show(string $providerCode, AdminPathSettings $paths, DonationProviderSettings $settings,
-        DonationProviderRegistry $registry): View
+        DonationProviderRegistry $registry, Request $request, DonationLiveActivation $activation): View
     {
         try {
             $driver = $registry->get($providerCode);
@@ -45,7 +47,47 @@ final class AdminDonationProviderController extends Controller
             'fields' => $driver->credentialFields(),
             'availableCurrencies' => $settings->configuredCurrencies($driver),
             'diagnostic' => $settings->localDiagnostic($providerCode),
+            'activation' => $activation->state(),
+            'readinessIssues' => $activation->blockers(),
+            'pilotPlayer' => $activation->state()['pilot_user_id']
+                ? User::query()->find($activation->state()['pilot_user_id']) : null,
+            'playerSearch' => is_string($request->query('player_search'))
+                ? mb_substr(trim($request->query('player_search')), 0, 64) : '',
+            'players' => $providerCode === 'yoomoney'
+                ? User::query()->where('is_active', true)->when(is_string($request->query('player_search'))
+                    && trim($request->query('player_search')) !== '', function ($query) use ($request): void {
+                        $term = mb_substr(trim($request->query('player_search')), 0, 64);
+                        $query->where(function ($q) use ($term): void {
+                            $q->where('name', 'like', '%'.$term.'%')->orWhere('email', 'like', '%'.$term.'%');
+                            if (ctype_digit($term)) {
+                                $q->orWhere('id', (int) $term);
+                            }
+                        });
+                    })->orderByDesc('id')->limit(25)->get(['id', 'name', 'email']) : collect(),
         ]);
+    }
+
+    public function updateActivation(Request $request, AdminPathSettings $paths,
+        ModuleAdminAuthorizer $access, DonationLiveActivation $activation): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.activation.update', 'PUT', $admin);
+        $mode = $request->input('payment_mode');
+        $pilot = $request->input('pilot_user_id');
+        if (! is_string($mode) || (! is_null($pilot) && ! is_string($pilot))
+            || (is_string($pilot) && $pilot !== '' && ! ctype_digit($pilot))) {
+            return back()->withErrors(['activation' => __('module-donations::messages.activation_invalid')]);
+        }
+        try {
+            $activation->update($admin, $mode, is_string($pilot) && $pilot !== '' ? (int) $pilot : null);
+        } catch (InvalidArgumentException) {
+            return back()->withErrors(['activation' => __('module-donations::messages.activation_invalid')]);
+        }
+
+        return redirect()->route('admin.module-pages.donations.providers.show', [
+            'adminPath' => $paths->path(), 'providerCode' => 'yoomoney',
+        ])->with('status', __('module-donations::messages.activation_saved'));
     }
 
     public function update(string $providerCode, Request $request, AdminPathSettings $paths,

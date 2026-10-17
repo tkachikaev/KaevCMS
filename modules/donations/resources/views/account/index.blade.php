@@ -1,6 +1,6 @@
 @extends('account-theme::layouts.app')
 @section('title', __('module-donations::messages.account_title'))
-@section('description', __('module-donations::messages.not_available_yet'))
+@section('description', __('module-donations::messages.account_description'))
 @push('head')
 <link rel="stylesheet" href="{{ asset('assets/modules/donations-player.css') }}?v={{ cms_version() }}" data-navigate-track>
 @endpush
@@ -57,8 +57,12 @@
             </div>
         </div>
     @endif
-    <p>{{ __('module-donations::messages.player_preview_only') }}</p>
-    <p>{{ __('module-donations::messages.dry_run_warning') }}</p>
+    @if($liveCheckoutEnabled)
+        <p>{{ __('module-donations::messages.player_live_order_help') }}</p>
+    @else
+        <p>{{ __('module-donations::messages.player_preview_only') }}</p>
+        <p>{{ __('module-donations::messages.dry_run_warning') }}</p>
+    @endif
     @if($currencies !== [])
         <form method="POST" action="{{ route('modules.donations.orders.store') }}" data-testid="donations-create-test-draft">
             @csrf
@@ -66,7 +70,7 @@
             <input type="hidden" name="currency" value="{{ $quote['currency_code'] ?? '' }}">
             <input type="hidden" name="request_key" value="{{ $draftRequestKey }}">
             @error('order')<p class="account-field-error" role="alert">{{ $message }}</p>@enderror
-            <button class="account-button secondary" type="submit" @disabled($quote === null || $quoteError !== null)>{{ __('module-donations::messages.create_test_draft') }}</button>
+            <button class="account-button secondary" type="submit" @disabled($quote === null || $quoteError !== null)>{{ $liveCheckoutEnabled ? __('module-donations::messages.create_payment_order') : __('module-donations::messages.create_test_draft') }}</button>
         </form>
     @endif
 </x-account-panel>

@@ -34,6 +34,10 @@ final class DonationYooMoneySettlementTest extends TestCase
         parent::setUp();
         $module = app(ModuleManager::class)->enable('donations');
         app(ModuleRuntime::class)->bootModule($module);
+        // Simulate the legacy emergency guards in isolated settlement tests.
+        config()->set('donation-payments.callbacks_enabled', false);
+        config()->set('donation-payments.credits_enabled', false);
+        config()->set('wallet.enabled_sources.donations', false);
     }
 
     /** @return array{0:User,1:DonationOrder} */

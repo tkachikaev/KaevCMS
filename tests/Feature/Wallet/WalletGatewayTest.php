@@ -22,12 +22,12 @@ class WalletGatewayTest extends TestCase
     {
         $user = User::factory()->create();
         $gateway = app(WalletGateway::class);
-        foreach ([WalletSource::Donations, WalletSource::PromoCodes, WalletSource::DailyRewards, WalletSource::ShopRefund] as $source) {
+        foreach ([WalletSource::PromoCodes, WalletSource::DailyRewards, WalletSource::ShopRefund] as $source) {
             try {
                 $gateway->creditFromModule($source, $user, 100, 'payment-001', 'verified-reference');
                 $this->fail('An uninstalled module must not be able to write to wallets.');
             } catch (AuthorizationException) {
-                // All module integrations remain disabled by default in A3.
+                // Non-installed module sources remain disabled.
             }
         }
         $this->assertDatabaseCount('wallet_entries', 0);

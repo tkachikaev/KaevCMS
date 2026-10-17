@@ -1,3 +1,44 @@
+## 0.50.11 — Donations activation from administration panel (2026-10-17)
+
+- Donations 1.13.0: audit-logged payment activation (off, one-player pilot, all players) from the existing YooMoney admin page; no donation-specific `.env` flags or Artisan commands.
+- New additive `module_donation_live_settings` migration; defaults off. Existing migrations and Wallet transaction engine untouched.
+- Live readiness validates provider, active RUB tariff, visible account page, HTTPS, production/debug and DB. User search for pilot account, Owner/Admin control, Auditor read-only.
+- Signed YooMoney callback / in-flight settlement stays live after disabling new checkout. Error and negative regression tests added for modes, permissions and invalid pilot.
+- Live merchant acceptance is NOT claimed until a genuine approved transfer is completed and verified.
+
+## 0.50.10 - 2026-10-17
+
+### Added — YooMoney monitored live launch (Donations 1.12.1)
+
+- Existing production checkout, signed HMAC-SHA256 callback and exactly-once Wallet credit remain available behind the four opt-in deployment flags. No merchant credentials are bundled and no real transfer was executed in this environment.
+- Optional `DONATIONS_LIVE_TEST_USER_ID=<CMS user ID>` restricts only new player checkout to one account for the first live transfer. All other users see preview-only UI; protected GET checkout denies them. Invalid pilot IDs fail closed.
+- Stored signed callbacks and settlement do **not** depend on the current pilot account; receiving delayed payments works after the pilot scope changes.
+- Read-only readiness command reports whether pilot-only or all-player checkout is configured. Default gates remain false; no automatically enabled live transfers.
+- Added feature regressions for pilot-vs-nonpilot checkout, malformed restrictions and return to public checkout. No new database migration, no Wallet Core changes.
+
+## 0.50.9 - 2026-10-17
+
+### Added — Donations C6 operational activation (module 1.12.0)
+
+- Four independent secure deployment gates for trusted YooMoney checkout/callback/credit and Wallet source now read explicitly from `.env`, instead of being hardcoded to false. All still default to **false**, including on upgraded installations; no live transfers are enabled by this release.
+- Added read-only `php artisan kaevcms:donations-readiness`: local production/HTTPS/DB/module/provider/RUB-tariff/credential/gate checks, strict nonzero exit when blocked, no secret values or API calls. Green local status does not prove actual callback reachability or a real payment.
+- Changed admin and player descriptions to show the actual live vs unpaid preview state. Original fee checks, signed notifications, idempotent Wallet settlement and recovery remain unchanged.
+- Added release-gate/diagnostic regressions. Protected deployment contract includes the four opt-in values; previous financial migrations and Wallet Core are unchanged.
+- Live activation requires separate final Windows/Linux and MySQL/MariaDB QA and one user-approved small-value transfer; no online merchant API or live transfer tested in this build environment.
+
+## 0.50.8 - 2026-10-17
+
+### Fixed — Donations C5 QA stabilization (module 1.11.1)
+
+- Preserved active Administrator rights to manually report Donations refunds/disputes without granting global `ModulesManage`; retained Auditor read-only and Editor denial. Added regression coverage for permitted/denied writes, audit and Wallet invariants.
+- Preserved checkout `Referrer-Policy: no-referrer` across global security middleware, and removed the duplicate checkout heading. Tested headers, DOM and repeated checkout reads.
+- Kept RU/EN language switching on the same Donations page with calculator query parameters, without breaking existing Daily Rewards navigation or accepting unsafe encoded paths.
+- Isolated throttle buckets for language switching, payment callback and distinct Donations actions. Existing numeric limits remain unchanged. Browser regressions cover formerly competing requests and expected 429 responses.
+- Fixed MySQL/MariaDB payment-test setup to apply module schema before per-test transactions. Expanded concurrent signed callback tests via the full Laravel HTTP kernel, plus two themes and RU/EN on desktop/mobile.
+- Integrated Codex-reviewed fixes from the attached 0.50.7 candidate; published them under a new release and module version. Core Wallet, all published migrations, independent currency tariffs, and the four disabled production payment gates are unchanged.
+- Acceptance evidence: Codex reported 1121 passed / 11 skipped on Windows PHPUnit; 1132 passed on Linux; 41 payment tests each on MariaDB and MySQL; and 78 Playwright tests. These outcomes were recorded for the unreleased candidate, not independently reproduced against this packaged 0.50.8 tree. Live merchant/API payment was not tested.
+- **Next steps:** verify the final release ZIP with the Windows scripts and disposable Docker MySQL/MariaDB, then run a separately approved low-value live YooMoney transfer. Do not enable live payment gates for public users until this final validation succeeds.
+
 ## 0.50.7 - 2026-10-17
 
 ### Added — Donations C5, gated YooMoney checkout (module 1.11.0)

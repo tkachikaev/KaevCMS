@@ -56,6 +56,36 @@ final class DonationYooMoneyCheckoutTest extends TestCase
         config()->set('donation-payments.callbacks_enabled', true);
         config()->set('donation-payments.credits_enabled', true);
         config()->set('wallet.enabled_sources.donations', true);
+        DB::table('module_donation_live_settings')->where('id', 1)->update(['mode' => 'live', 'pilot_user_id' => null]);
+    }
+
+    public function test_pilot_mode_allows_only_selected_player_without_changing_callback_gates(): void
+    {
+        $this->configure();
+        $pilot = User::factory()->create();
+        $other = User::factory()->create();
+        $pilotOrder = $this->order($pilot);
+        $otherOrder = $this->order($other);
+        $this->enableTrustedGates();
+        DB::table('module_donation_live_settings')->where('id', 1)->update(['mode' => 'pilot', 'pilot_user_id' => $pilot->getKey()]);
+
+        $this->actingAs($pilot)->get('/modules/donations/orders/'.$pilotOrder->order_uuid.'/checkout')->assertOk();
+        $this->actingAs($other)->get('/modules/donations/orders/'.$otherOrder->order_uuid.'/checkout')->assertNotFound();
+        $this->actingAs($other)->get('/modules/donations/orders/'.$otherOrder->order_uuid)
+            ->assertOk()->assertDontSee('data-testid="donations-start-checkout"', false);
+        $this->actingAs($other)->get('/modules/donations')->assertOk()
+            ->assertDontSee('name="paymentType"', false);
+        $this->assertDatabaseCount('wallet_entries', 0);
+
+        // A malformed value must never silently widen the allowed audience.
+        DB::table('module_donation_live_settings')->where('id', 1)->update(['mode' => 'pilot', 'pilot_user_id' => null]);
+        $this->actingAs($pilot)->get('/modules/donations/orders/'.$pilotOrder->order_uuid.'/checkout')->assertNotFound();
+        $this->actingAs($other)->get('/modules/donations/orders/'.$otherOrder->order_uuid.'/checkout')->assertNotFound();
+
+        // Removing the optional pilot restriction permits sales for both accounts;
+        // switching pilot users never disables callbacks for already paid orders.
+        DB::table('module_donation_live_settings')->where('id', 1)->update(['mode' => 'live', 'pilot_user_id' => null]);
+        $this->actingAs($other)->get('/modules/donations/orders/'.$otherOrder->order_uuid.'/checkout')->assertOk();
     }
 
     public function test_default_release_never_exposes_a_money_transfer_form_even_with_live_merchant(): void

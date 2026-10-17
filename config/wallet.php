@@ -5,7 +5,7 @@ return [
     // their installation. Do not expose these flags in arbitrary user input.
     // Manual administrator adjustments use role permissions instead.
     'enabled_sources' => [
-        'donations' => false,
+        'donations' => true, // Bundled trusted Donations adapter; only verified signed receipts may settle.
         'promo_codes' => false,
         'daily_rewards' => false,
         'shop' => false,

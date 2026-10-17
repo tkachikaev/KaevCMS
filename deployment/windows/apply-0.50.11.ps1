@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Donations C5: guarded YooMoney checkout form; all four production gates stay disabled by default.'
+Write-Host 'Donations: payment mode is configured in Admin -> Donations -> YooMoney; defaults OFF.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

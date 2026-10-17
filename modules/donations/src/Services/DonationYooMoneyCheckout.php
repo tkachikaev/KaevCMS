@@ -27,13 +27,20 @@ final class DonationYooMoneyCheckout
         private readonly DonationMoney $money,
     ) {}
 
-    /** Separate deploy-time gates; all are OFF in the distributed release. */
+    /** Trusted integration guards plus audited payment mode in the database. */
     public static function enabled(): bool
     {
         return config('donation-payments.checkout_enabled') === true
             && config('donation-payments.callbacks_enabled') === true
             && config('donation-payments.credits_enabled') === true
-            && config('wallet.enabled_sources.donations') === true;
+            && config('wallet.enabled_sources.donations') === true
+            && app(DonationLiveActivation::class)->state()['mode'] !== 'off';
+    }
+
+    /** Scope a first live payment to one CMS account without disabling callbacks. */
+    public static function allowedForUser(User $user): bool
+    {
+        return app(DonationLiveActivation::class)->allows($user);
     }
 
     public function available(User $user, DonationOrder $order): bool
@@ -56,7 +63,7 @@ final class DonationYooMoneyCheckout
         if ((int) $order->user_id !== (int) $user->getKey()) {
             throw new ModelNotFoundException;
         }
-        if (! self::enabled() || ! $this->settings->isVisibleToPlayers()
+        if (! self::enabled() || ! self::allowedForUser($user) || ! $this->settings->isVisibleToPlayers()
             || $order->status !== DonationOrder::DRAFT || $order->expires_at === null
             || $order->expires_at->isPast()) {
             throw new LogicException('Live checkout is not available.');

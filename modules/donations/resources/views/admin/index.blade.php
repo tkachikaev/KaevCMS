@@ -23,7 +23,7 @@
 @include('module-donations::admin.navigation')
 <div class="donations-mode" role="note">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3v1"/></svg>
-    <div><strong>{{ __('module-donations::messages.test_mode_title') }}</strong><p>{{ __('module-donations::messages.test_mode_description') }}</p></div>
+    <div><strong>{{ \KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout::enabled() ? __('module-donations::messages.live_mode_title') : __('module-donations::messages.test_mode_title') }}</strong><p>{{ \KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout::enabled() ? __('module-donations::messages.live_mode_description') : __('module-donations::messages.test_mode_description') }}</p></div>
 </div>
 <form method="POST" action="{{ route('admin.module-pages.donations.workspace.update', ['adminPath' => $adminPath]) }}" data-donations-workspace data-testid="donations-workspace">
     @csrf @method('PUT')

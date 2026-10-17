@@ -80,6 +80,7 @@ final class DonationController extends Controller
             'quoteError' => $error,
             'money' => $money,
             'draftRequestKey' => (string) Str::uuid(),
+            'liveCheckoutEnabled' => DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user),
         ]);
     }
 
@@ -116,7 +117,9 @@ final class DonationController extends Controller
             'canChooseCoins' => $settings->isVisibleToPlayers(),
             'paymentPreparation' => $payments->forOrder($order),
             'canCheckout' => $checkout->available($user, $order),
-            'availableProviders' => $settings->isVisibleToPlayers() ? $payments->available($order->currency_code) : [],
+            'availableProviders' => $settings->isVisibleToPlayers()
+                && (! DonationYooMoneyCheckout::enabled() || DonationYooMoneyCheckout::allowedForUser($user))
+                ? $payments->available($order->currency_code) : [],
         ]);
     }
 

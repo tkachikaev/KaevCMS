@@ -14,4 +14,5 @@ Route::post('/orders/{orderUuid}/reviews', [AdminDonationController::class, 'rep
 Route::get('/orders/{orderUuid}', [AdminDonationController::class, 'showOrder'])->whereUuid('orderUuid')->name('orders.show');
 Route::get('/providers', [AdminDonationProviderController::class, 'index'])->name('providers.index');
 Route::get('/providers/{providerCode}', [AdminDonationProviderController::class, 'show'])->where('providerCode', '[a-z][a-z0-9_-]{1,39}')->name('providers.show');
+Route::put('/providers/activation', [AdminDonationProviderController::class, 'updateActivation'])->name('providers.activation.update');
 Route::put('/providers/{providerCode}', [AdminDonationProviderController::class, 'update'])->where('providerCode', '[a-z][a-z0-9_-]{1,39}')->name('providers.update');
