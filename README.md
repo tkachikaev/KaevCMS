@@ -1,4 +1,4 @@
-# KaevCMS 0.50.11
+# KaevCMS 0.50.12
 
 Donations 1.13.0: configure YooMoney completely in the CMS administration panel. New installations default to **payments off**. Owner/Administrator may enable a **single-player pilot** or **all-player live** after automated local checks (HTTPS, MySQL, enabled RUB pricing, provider credentials and production settings). No DONATIONS_* `.env` variables or PHP editing. Signed callback processing for in-flight payments is independent of new checkout availability; Wallet Core and existing migrations are unchanged.
 

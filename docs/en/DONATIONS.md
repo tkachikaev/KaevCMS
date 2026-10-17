@@ -1,18 +1,17 @@
-# YooMoney in KaevCMS 0.50.11 / Donations 1.13.0
+# YooMoney — KaevCMS 0.50.12 / Donations 1.14.0
 
-## Configure everything from the administration panel
+## Configure from the administration panel
 
-1. Open **Donations → Currencies and prices**, enable a RUB price per coin and display top-ups in the player account.
-2. Open **Donations → Payment systems → YooMoney**; enter your wallet and notification secret, enable the provider in **live** mode with RUB.
-3. In your YooMoney account configure HTTP notifications to the HTTPS callback address shown in the CMS (`/payments/yoomoney/notify`). The CMS cannot configure the external provider account.
-4. On the same admin page choose **Pilot payment**, search for an active CMS player and save. Only this player can see the real payment form. **No editing .env, PHP or running Artisan commands.**
-5. Make one small genuine transfer and confirm funds in YooMoney, `credited` status in CMS, a single Wallet credit and no duplicates on webhook replay.
-6. Once acceptance is complete, select **Live — all players**.
+1. Deploy KaevCMS at a **public HTTPS address** and enable Donations.
+2. Under **Donations → Currencies and prices**, configure the RUB price per coin.
+3. Under **Donations → Payment systems → YooMoney**, enter the wallet number and HTTP notification secret. The wallet number is visible after saving; the secret remains encrypted and is shown only as a saved-password indicator.
+4. Copy the callback URL shown by the CMS into your YooMoney wallet's HTTP notification settings.
+5. Turn on **Accept payments through YooMoney** and save. The player top-up page becomes visible automatically. Players select coins and continue directly to checkout.
 
-New installations and upgrades start **off**. Switching off new sales from the administration panel never disables the independent signed callback and settlement path for in-flight payments. When the CMS is unavailable an unrecorded callback may require later delivery or manual investigation.
+There is no test/live selector, pilot player setup or donation-specific `.env` editing for normal operation. Turning off this one control stops new checkouts while signed callbacks for existing payments continue to work.
 
-Enabling live requires production without debugging, public HTTPS, MySQL/MariaDB, enabled Donations player UI, a valid enabled RUB tariff and an enabled live YooMoney provider with valid credentials. Readiness is a local check only; it neither makes an API call nor proves an external transfer.
+## Localhost cannot receive real callbacks
 
-Only authenticated HMAC-SHA256 notifications can credit the Wallet after immutable order, currency and gross `withdraw_amount` validation. `amount` records the net merchant receipt; duplicate notifications never cause a second credit. Test notifications are ineligible for live credits. Preserve the site's APP_KEY for encryption continuity.
+`127.0.0.1` is not publicly reachable by YooMoney. Genuine transfers with automatic crediting require a public HTTPS website and working MySQL/MariaDB. Local automated tests can validate the form, prices and signatures but cannot substitute for receipt of a real remote webhook. The CMS displays this limitation when the operator attempts to enable payments; do not bypass signature verification.
 
-The operator is responsible for verifying whether their personal YooMoney wallet terms permit collecting payments for game currency; YooMoney and YooKassa are different products.
+The server calculates the immutable order amount. Signed HMAC-SHA256 notifications must match the order and gross payer debit (`withdraw_amount`); `amount` records the receiver net. Verified credit is idempotent and goes through WalletGateway. Preserve the application's encryption key across upgrades and verify your YooMoney wallet's terms of use before taking payments for game currency.

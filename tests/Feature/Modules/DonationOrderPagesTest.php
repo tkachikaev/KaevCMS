@@ -59,7 +59,7 @@ class DonationOrderPagesTest extends TestCase
         $this->configure();
         $player = User::factory()->create();
         $this->actingAs($player)->get('/modules/donations?coins=100&currency=RUB')
-            ->assertOk()->assertSee('data-testid="donations-create-test-draft"', false);
+            ->assertOk()->assertDontSee('data-testid="donations-create-order"', false);
         $key = (string) Str::uuid();
         $response = $this->actingAs($player)->post('/modules/donations/orders', [
             'coins' => 100, 'currency' => 'RUB', 'request_key' => $key,

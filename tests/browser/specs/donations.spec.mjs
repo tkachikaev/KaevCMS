@@ -85,27 +85,15 @@ for (const width of [1440, 390]) {
         expect(await provider.locator('img').evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
         expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
         await provider.getByRole('link', { name: 'Настроить', exact: true }).click();
-        const paymentMode = page.locator('#donations-payment-mode');
-        const pilotControls = page.locator('[data-donations-pilot-controls]');
-        await expect(paymentMode).toHaveValue('off');
-        await expect(pilotControls).toBeHidden();
-        await paymentMode.selectOption('pilot');
-        await expect(pilotControls).toBeVisible();
-        await expect(page.locator('#donations-pilot-player')).toHaveAttribute('required', '');
-        await expect(page.locator('[data-donations-mode-help="pilot"]')).toBeVisible();
-        await page.locator('#donations-player-search').fill('Player');
-        await pilotControls.getByRole('button', { name: 'Найти', exact: true }).click();
-        await expect(page).toHaveURL(/payment_mode=pilot.*player_search=Player/);
-        await expect(paymentMode).toHaveValue('pilot');
-        await expect(pilotControls).toBeVisible();
-        await paymentMode.selectOption('live');
-        await expect(pilotControls).toBeHidden();
-        await expect(page.locator('#donations-pilot-player')).not.toHaveAttribute('required', '');
-        await paymentMode.selectOption('off');
-        await expect(pilotControls).toBeHidden();
-        // Changing the form and searching must not save or activate payments.
+        const simpleSettings = page.getByTestId('donations-yoomoney-simple-settings');
+        await expect(simpleSettings).toBeVisible();
+        await expect(simpleSettings.locator('#yoomoney-wallet-number')).toBeVisible();
+        await expect(simpleSettings.locator('#yoomoney-secret')).toHaveAttribute('type', 'password');
+        await expect(simpleSettings.locator('[name="payment_enabled"][type="checkbox"]')).not.toBeChecked();
+        await expect(page.locator('#donations-payment-mode')).toHaveCount(0);
+        // Merely visiting setup must never activate payments or create a transfer.
         await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations/providers/yoomoney');
-        await expect(paymentMode).toHaveValue('off');
+        await expect(simpleSettings.locator('[name="payment_enabled"][type="checkbox"]')).not.toBeChecked();
         await page.locator('.donations-navigation').getByRole('link', { name: 'Настройки', exact: true }).click();
         await add(firstCode, '1.00');
         await page.getByTestId(`donations-rate-${firstCode}`).getByRole('button', { name: 'Удалить валюту', exact: true }).click();
@@ -113,7 +101,7 @@ for (const width of [1440, 390]) {
     });
 }
 
-test('players can reach coin selection, adjust a live slider and create an exact-price test draft in both themes', async ({ page, context, browser }) => {
+test('players can preview accurate coin prices but cannot create fake payment drafts in both themes', async ({ page, context, browser }) => {
     test.setTimeout(90_000);
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
@@ -182,7 +170,8 @@ test('players can reach coin selection, adjust a live slider and create an exact
             const coins = quote.locator('[name="coins"]');
             const slider = quote.locator('[type="range"]');
             const result = player.getByTestId('donations-quote-result');
-            const draft = player.getByTestId('donations-create-test-draft');
+            const draft = player.getByTestId('donations-create-order');
+            await expect(draft).toHaveCount(0);
             const originalUrl = player.url();
             let quoteRequests = 0;
             const countQuoteRequests = request => {
@@ -205,7 +194,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
                 await coins.fill(invalid);
                 await expect(player.getByTestId('donations-quote-error')).toBeVisible();
                 await expect(result.locator('[data-donations-total]')).toHaveText('—');
-                await expect(draft.getByRole('button')).toBeDisabled();
+                await expect(draft).toHaveCount(0);
             }
             await coins.fill('237');
             await expect(slider).toHaveValue('237');
@@ -216,16 +205,13 @@ test('players can reach coin selection, adjust a live slider and create an exact
             await coins.press('Enter');
             await expect(player).toHaveURL(originalUrl);
             await expect(player.getByTestId('donations-quote-error')).toBeHidden();
-            await expect(draft.locator('[name="coins"]')).toHaveValue('237');
-            await expect(draft.locator('[name="currency"]')).toHaveValue('RUB');
+            await expect(draft).toHaveCount(0);
+            await expect(player.getByText('Пополнение сейчас недоступно. Попробуйте позже.')).toBeVisible();
             expect(quoteRequests).toBe(0);
             player.off('request', countQuoteRequests);
             expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
             await player.screenshot({ path: `storage/framework/testing/donations-player-${theme}-${width}.png`, fullPage: true });
-            await player.getByTestId('donations-create-test-draft').getByRole('button').click();
-            await expect(player.getByTestId('donations-order-detail')).toContainText('296.25 RUB');
-            await expect(player.getByTestId('donations-order-detail')).toContainText('237 монет');
-            await player.getByTestId('donations-choose-coins').click();
+            await expect(draft).toHaveCount(0);
             await coins.fill('10');
             await quote.locator('[name="currency"]').selectOption('USD');
             await expect(result).toContainText('2.90 USD');
@@ -255,7 +241,7 @@ test('players can reach coin selection, adjust a live slider and create an exact
     await limitedSlider.press('End');
     await expect(player.locator('#donations-player-coins')).toHaveValue('500');
     await expect(player.getByTestId('donations-quote-result')).toContainText('625.00 RUB');
-    await expect(player.getByTestId('donations-create-test-draft').getByRole('button')).toBeEnabled();
+    await expect(player.getByTestId('donations-create-order')).toHaveCount(0);
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
     await form.locator('#donations-show-in-account').uncheck();
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();

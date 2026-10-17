@@ -59,7 +59,7 @@ final class DonationYooMoneyPreparationsTest extends TestCase
         $player = User::factory()->create();
         $order = $this->draft($player);
         $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid)
-            ->assertOk()->assertSee('data-testid="donations-prepare-provider"', false)
+            ->assertOk()->assertDontSee('data-testid="donations-prepare-provider"', false)
             ->assertDontSee('quickpay/confirm');
         $request = ['provider' => 'yoomoney', 'amount' => '0.01', 'coins' => 1000000, 'receiver' => 'fake'];
         $url = '/modules/donations/orders/'.$order->order_uuid.'/prepare';
@@ -77,7 +77,7 @@ final class DonationYooMoneyPreparationsTest extends TestCase
         $this->assertDatabaseCount('wallet_entries', 0);
         $this->assertSame(1, AuditLog::query()->where('action', 'donations.payment_prepared')->count());
         $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid)
-            ->assertOk()->assertSee('data-testid="donations-payment-prepared"', false)
+            ->assertOk()->assertDontSee('data-testid="donations-payment-prepared"', false)
             ->assertDontSee('quickpay/confirm');
     }
 

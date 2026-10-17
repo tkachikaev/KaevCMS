@@ -29,6 +29,7 @@ final class DonationController extends Controller
         WalletAccountReadService $wallets,
         DonationRates $rates,
         DonationMoney $money,
+        DonationPaymentPreparations $payments,
     ): View {
         // Module enabled is not enough: owner must opt in to showing the player page.
         abort_unless($settings->isVisibleToPlayers(), 404);
@@ -37,6 +38,18 @@ final class DonationController extends Controller
 
         $limits = $rates->limits();
         $currencies = $rates->availableForPlayers(app()->getLocale());
+        $canStartCheckout = DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user);
+        if ($canStartCheckout) {
+            $currencies = array_values(array_filter($currencies, static function (array $currency) use ($payments): bool {
+                foreach ($payments->available($currency['code']) as $provider) {
+                    if ($provider['mode'] === 'live') {
+                        return true;
+                    }
+                }
+
+                return false;
+            }));
+        }
         $firstCurrency = $currencies[0]['code'] ?? '';
         $defaultCoins = min($limits['max_coins'], max($limits['min_coins'], 100));
 
@@ -80,7 +93,7 @@ final class DonationController extends Controller
             'quoteError' => $error,
             'money' => $money,
             'draftRequestKey' => (string) Str::uuid(),
-            'liveCheckoutEnabled' => DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user),
+            'liveCheckoutEnabled' => $canStartCheckout && $currencies !== [],
         ]);
     }
 
@@ -118,8 +131,8 @@ final class DonationController extends Controller
             'paymentPreparation' => $payments->forOrder($order),
             'canCheckout' => $checkout->available($user, $order),
             'availableProviders' => $settings->isVisibleToPlayers()
-                && (! DonationYooMoneyCheckout::enabled() || DonationYooMoneyCheckout::allowedForUser($user))
-                ? $payments->available($order->currency_code) : [],
+                && DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user)
+                ? array_values(array_filter($payments->available($order->currency_code), static fn (array $provider): bool => $provider['mode'] === 'live')) : [],
         ]);
     }
 
@@ -142,7 +155,7 @@ final class DonationController extends Controller
     }
 
     /** This creates only a provider-free draft; there is no checkout or wallet credit. */
-    public function store(Request $request, DonationOrders $orders): RedirectResponse
+    public function store(Request $request, DonationOrders $orders, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -157,8 +170,24 @@ final class DonationController extends Controller
             return back()->withErrors(['order' => __('module-donations::messages.order_unavailable')]);
         }
 
-        return redirect()->route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid])
-            ->with('status', __('module-donations::messages.draft_created'));
+        // Exactly one available payment provider needs no separate selection page.
+        // A draft remains recoverable in order history if preparation is unavailable.
+        if (DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user)) {
+            $available = array_values(array_filter($payments->available($order->currency_code),
+                static fn (array $provider): bool => $provider['mode'] === 'live'));
+            if (count($available) === 1) {
+                try {
+                    $payments->prepare($user, $order->order_uuid, $available[0]['code']);
+                    if ($checkout->available($user, $order)) {
+                        return redirect()->route('modules.donations.orders.checkout', ['orderUuid' => $order->order_uuid]);
+                    }
+                } catch (InvalidArgumentException|LogicException|ModelNotFoundException) {
+                    // Payment creation must never pretend that an unfinished order is payable.
+                }
+            }
+        }
+
+        return redirect()->route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]);
     }
 
     /** Prepare and audit immutable payment terms; does not initiate an external payment. */
@@ -175,8 +204,11 @@ final class DonationController extends Controller
             return back()->withErrors(['order' => __('module-donations::messages.preparation_unavailable')]);
         }
 
-        return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])
-            ->with('status', __('module-donations::messages.preparation_saved'));
+        if (app(DonationYooMoneyCheckout::class)->available($user, app(DonationOrders::class)->forUser($user, $orderUuid))) {
+            return redirect()->route('modules.donations.orders.checkout', ['orderUuid' => $orderUuid]);
+        }
+
+        return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid]);
     }
 
     public function cancel(Request $request, string $orderUuid, DonationOrders $orders): RedirectResponse

@@ -29,7 +29,7 @@ final class YooMoneyProvider implements PaymentProvider
 
     public function name(): string
     {
-        return 'ЮMoney (кошелёк / wallet)';
+        return 'ЮMoney';
     }
 
     public function supportedCurrencies(): array
@@ -46,9 +46,9 @@ final class YooMoneyProvider implements PaymentProvider
     public function credentialFields(): array
     {
         return [
-            'receiver' => ['label' => 'Номер кошелька ЮMoney / Wallet number', 'secret' => false, 'required' => true],
-            'notification_secret' => ['label' => 'HTTP notification HMAC-SHA256 secret', 'secret' => true, 'required' => true],
-            'history_token' => ['label' => 'Read-only OAuth history token (optional)', 'secret' => true, 'required' => false],
+            'receiver' => ['label' => 'Номер кошелька ЮMoney', 'secret' => false, 'required' => true],
+            'notification_secret' => ['label' => 'Секрет HTTP-уведомлений', 'secret' => true, 'required' => true],
+            'history_token' => ['label' => 'Токен истории операций (необязательно)', 'secret' => true, 'required' => false],
         ];
     }
 
