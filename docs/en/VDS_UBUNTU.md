@@ -1,5 +1,7 @@
 # Ubuntu VDS installation
 
+For automatic server preparation followed by the existing Web Installer, see [automatic server preparation](VDS_AUTOMATIC.md). The manual procedure remains below.
+
 This guide covers a clean KaevCMS deployment on a dedicated VDS running **Ubuntu Server 24.04 LTS**, nginx, PHP 8.3-FPM, and MySQL.
 
 Ubuntu 24.04 is the KaevCMS baseline because its standard repositories provide PHP 8.3, matching the minimum and pinned Composer platform. Ubuntu 26.04 LTS ships PHP 8.5; it may be tested separately, but it is not the primary validated platform until the complete quality gate passes on it.

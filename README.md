@@ -54,6 +54,7 @@ Documentation:
 
 - [Installation](docs/en/INSTALLATION.md)
 - [Ubuntu VDS](docs/en/VDS_UBUNTU.md)
+- [Automatic Linux server preparation](docs/en/VDS_AUTOMATIC.md)
 - [Updates](docs/en/UPDATES.md)
 - [Shared hosting](docs/en/SHARED_HOSTING.md)
 - [Character rescue](docs/en/CHARACTER_RESCUE.md)
@@ -146,6 +147,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 - [Установка](docs/ru/INSTALLATION.md)
 - [Ubuntu VDS](docs/ru/VDS_UBUNTU.md)
+- [Автоматическая подготовка Linux-сервера](docs/ru/VDS_AUTOMATIC.md)
 - [Обновления](docs/ru/UPDATES.md)
 - [Обычный хостинг](docs/ru/SHARED_HOSTING.md)
 - [Возврат персонажа в город](docs/ru/CHARACTER_RESCUE.md)

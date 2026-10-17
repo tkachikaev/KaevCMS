@@ -1,10 +1,11 @@
-## [0.50.12] - 2026-10-17
+## 0.50.12 - 2026-10-17
 
 - Simplified YooMoney setup to one form with a visible wallet number, saved-secret indicator and one payment switch; separate provider/test/pilot controls are no longer exposed in the YooMoney admin UI.
 - Players create an order and proceed directly to checkout when the only active provider is YooMoney; no unpaid-test-draft buttons or internal mode labels on the player page.
 - Removed noisy diagnostics from the provider screen; clearly explain why an external signed webhook cannot reach localhost. Provider setup is saved even when activation readiness is missing.
 - Kept authenticated HMAC callbacks, fee separation, immutable order pricing, idempotent Wallet settlement and ongoing processing of in-flight payments when new sales are turned off.
 - Added regression coverage for simple admin settings and direct player checkout; legacy migration and Wallet Core remain unchanged.
+- Added dedicated Linux server preparation for Ubuntu 24.04/26.04 and Debian 13; CMS installation remains in the existing Web Installer.
 
 ## 0.50.11 - 2026-10-17
 
