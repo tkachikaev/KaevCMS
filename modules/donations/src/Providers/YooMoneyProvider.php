@@ -11,8 +11,9 @@ use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 
 /**
- * YooMoney wallet P2P collection, NOT YooKassa. The form can only render through the explicit C5 trusted checkout gates;
- * provider callback/Wallet credit gates remain disabled by default.
+ * YooMoney wallet P2P collection, NOT YooKassa. Checkout requires trusted static
+ * guards and audited database activation, which defaults off. Signed callbacks
+ * and in-flight Wallet settlement remain available when new sales are closed.
  * https://yoomoney.ru/docs/payment-buttons/using-api/notifications
  */
 final class YooMoneyProvider implements PaymentProvider

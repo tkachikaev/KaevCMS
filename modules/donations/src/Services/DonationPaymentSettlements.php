@@ -18,8 +18,8 @@ use LogicException;
 use RuntimeException;
 
 /**
- * Durable verification + single-effect settlement. The default C3 release has
- * both callback and credit gates closed, and exposes no payment checkout.
+ * Durable verification + single-effect settlement. Trusted callback/credit
+ * guards are independent of the database switch that closes new checkout.
  * No HTTP parameter is an authority for recipient, price, wallet or source.
  */
 final class DonationPaymentSettlements
@@ -201,7 +201,7 @@ final class DonationPaymentSettlements
                 return $status;
             }
             if (config('donation-payments.credits_enabled') !== true || config('wallet.enabled_sources.donations') !== true) {
-                return 'pending'; // Signed and durably stored, but deliberately not settled in C3.
+                return 'pending'; // Preserve signed evidence while a trusted credit guard is closed.
             }
             // Unique per order AND wallet source-key: DB constraints plus Wallet's own
             // idempotency make the effect exactly once under concurrent deliveries.

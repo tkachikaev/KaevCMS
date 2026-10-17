@@ -1,4 +1,6 @@
-## 0.50.11 — Donations activation from administration panel (2026-10-17)
+## 0.50.11 - 2026-10-17
+
+### Added — Donations activation from administration panel
 
 - Donations 1.13.0: audit-logged payment activation (off, one-player pilot, all players) from the existing YooMoney admin page; no donation-specific `.env` flags or Artisan commands.
 - New additive `module_donation_live_settings` migration; defaults off. Existing migrations and Wallet transaction engine untouched.

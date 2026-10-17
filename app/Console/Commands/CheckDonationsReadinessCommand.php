@@ -6,9 +6,9 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Payments\DonationsTrustedAutoload;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
+use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
-use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use Throwable;
 
 /** Local operational preflight. Never makes an HTTP call or changes payment settings. */
@@ -38,17 +38,18 @@ final class CheckDonationsReadinessCommand extends Command
         $check('Signed callbacks remain reachable', config('donation-payments.callbacks_enabled') === true);
         $check('Verified Wallet settlement remains available', config('donation-payments.credits_enabled') === true
             && config('wallet.enabled_sources.donations') === true);
-        $activation = app(DonationLiveActivation::class);
-        $state = $activation->state();
-        $check('Payment mode selected in Donations admin', $state['mode'] !== 'off');
-        if ($state['mode'] !== 'off') {
-            $this->line('[INFO] Checkout audience: '.($state['mode'] === 'pilot' ? 'selected player only.' : 'all eligible site users.'));
-        }
-        $check('Payment setup readiness', $activation->blockers() === []);
-
-
-
         try {
+            // The command must also diagnose a fresh or disabled module, whose
+            // namespace has not been registered by the normal UI runtime.
+            DonationsTrustedAutoload::register();
+            $activation = app(DonationLiveActivation::class);
+            $state = $activation->state();
+            $check('Payment mode selected in Donations admin', $state['mode'] !== 'off');
+            if ($state['mode'] !== 'off') {
+                $this->line('[INFO] Checkout audience: '.($state['mode'] === 'pilot' ? 'selected player only.' : 'all eligible site users.'));
+            }
+            $check('Payment setup readiness', $activation->blockers() === []);
+
             $tables = ['module_donation_settings', 'module_donation_currency_rates',
                 'module_donation_orders', 'module_donation_payment_preparations',
                 'module_donation_provider_settings', 'module_donation_payment_receipts',
@@ -62,7 +63,6 @@ final class CheckDonationsReadinessCommand extends Command
             }
             $check('Donation and Wallet database tables installed', $available);
             if ($available) {
-                DonationsTrustedAutoload::register();
                 $module = app(ModuleManager::class)->inspect('donations');
                 $check('Donations module enabled', ($module['status'] ?? null) === 'enabled');
                 $check('Donations visible to players', app(DonationSettings::class)->isVisibleToPlayers());

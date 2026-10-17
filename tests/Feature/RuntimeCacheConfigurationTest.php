@@ -2,11 +2,24 @@
 
 namespace Tests\Feature;
 
+use Dotenv\Dotenv;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 final class RuntimeCacheConfigurationTest extends TestCase
 {
+    public function test_environment_template_is_parseable_and_uses_admin_payment_activation(): void
+    {
+        $environment = Dotenv::parse(File::get(base_path('.env.example')));
+
+        $this->assertSame('production', $environment['APP_ENV']);
+        $this->assertSame('database', $environment['CACHE_LIMITER']);
+        foreach (['DONATIONS_CHECKOUT_ENABLED', 'DONATIONS_CALLBACKS_ENABLED',
+            'DONATIONS_CREDITS_ENABLED', 'WALLET_DONATIONS_ENABLED', 'DONATIONS_LIVE_TEST_USER_ID'] as $obsoleteFlag) {
+            $this->assertArrayNotHasKey($obsoleteFlag, $environment);
+        }
+    }
+
     public function test_rate_limiter_uses_database_cache_by_default(): void
     {
         $this->assertSame('database', config('cache.limiter'));

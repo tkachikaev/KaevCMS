@@ -113,5 +113,5 @@
             @endif
         </div>
     @endif
+    <x-account-character-rescue-modal />
 </x-account-panel>
-<x-account-character-rescue-modal />

@@ -55,8 +55,11 @@ class DonationsModuleTest extends TestCase
         app(DonationSettings::class)->updateVisibility(true, $owner);
         $this->actingAs($user)->get('/modules/donations')
             ->assertOk()
-            ->assertSee(__('module-donations::messages.not_available_yet'))
-            ->assertDontSee('name="payment_amount"', false);
+            ->assertSee(__('module-donations::messages.account_description'))
+            ->assertSee('data-testid="donations-no-currencies"', false)
+            ->assertDontSee('name="payment_amount"', false)
+            ->assertDontSee('https://yoomoney.ru/quickpay/confirm');
+        $this->assertDatabaseCount('wallet_entries', 0);
         $this->actingAs($user)->post('/modules/donations')->assertStatus(405);
     }
 

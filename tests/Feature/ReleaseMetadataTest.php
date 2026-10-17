@@ -157,9 +157,30 @@ class ReleaseMetadataTest extends TestCase
 
         $this->assertIsArray($guzzle);
         $this->assertIsArray($psr7);
-        $this->assertTrue(version_compare((string) ($guzzle['version'] ?? '0.0.0'), '7.15.1', '>='));
+        $this->assertTrue(version_compare((string) ($guzzle['version'] ?? '0.0.0'), '7.15.2', '>='));
         $this->assertTrue(version_compare((string) ($psr7['version'] ?? '0.0.0'), '2.13.0', '>='));
         $this->assertSame('^2.13', $guzzle['require']['guzzlehttp/psr7'] ?? null);
+    }
+
+    public function test_runtime_dependency_lock_contains_security_fixed_versions(): void
+    {
+        $lock = $this->jsonReleaseFile('composer.lock');
+        $packages = collect(array_merge($lock['packages'] ?? [], $lock['packages-dev'] ?? []))->keyBy('name');
+        // Fixed versions from the vendors' published 2026 security advisories.
+        $minimumVersions = [
+            'laravel/framework' => '13.30.0',
+            'league/commonmark' => '2.10.2',
+            'league/flysystem' => '3.35.3',
+            'livewire/livewire' => '4.3.4',
+            'symfony/http-foundation' => '7.4.19',
+            'symfony/yaml' => '7.4.18',
+        ];
+        foreach ($minimumVersions as $name => $minimum) {
+            $package = $packages->get($name);
+            $this->assertIsArray($package, $name);
+            $this->assertTrue(version_compare(ltrim((string) $package['version'], 'v'), $minimum, '>='),
+                $name.' must include the vendor security fixes.');
+        }
     }
 
     public function test_documentation_is_bilingual_and_current(): void
