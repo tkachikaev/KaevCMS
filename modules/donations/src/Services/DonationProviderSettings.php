@@ -6,13 +6,13 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Services\AuditLogger;
 use Carbon\CarbonImmutable;
-use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Contracts\PaymentProvider;
 use KaevCMS\Modules\Donations\Models\DonationCurrencyRate;
+use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use KaevCMS\Modules\Donations\Models\DonationProviderSetting;
 use KaevCMS\Modules\Donations\Models\DonationSetting;
 use RuntimeException;
@@ -305,7 +305,7 @@ final class DonationProviderSettings
     }
 
     /**
-     * @param array<string,string> $stored
+     * @param  array<string,string>  $stored
      * @return list<array{secret:string,rotated_at:string,max_preparation_id:int,expires_at:string}>
      */
     private function readRetiredYooMoneyKeys(array $stored): array

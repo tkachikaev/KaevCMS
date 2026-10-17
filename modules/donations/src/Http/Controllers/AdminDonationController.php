@@ -2,20 +2,18 @@
 
 namespace KaevCMS\Modules\Donations\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Auth\AdminPermission;
+use App\Http\Controllers\Controller;
 use App\Models\Admin;
-use App\Support\Modules\ModuleAdminAuthorizer;
 use App\Services\Admin\AdminPathSettings;
+use App\Support\Modules\ModuleAdminAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
-use LogicException;
-use KaevCMS\Modules\Donations\Services\DonationPaymentReviews;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Http\Requests\SaveDonationCurrencyRateRequest;
 use KaevCMS\Modules\Donations\Http\Requests\SaveDonationWorkspaceRequest;
 use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationLimitsRequest;
@@ -23,9 +21,11 @@ use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationSettingsRequest;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationCurrencyRegistry;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
+use KaevCMS\Modules\Donations\Services\DonationPaymentReviews;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationWorkspace;
+use LogicException;
 
 final class AdminDonationController extends Controller
 {
@@ -202,5 +202,4 @@ final class AdminDonationController extends Controller
             'adminPath' => $paths->path(), 'orderUuid' => $orderUuid,
         ])->with('status', __('module-donations::messages.review_saved'));
     }
-
 }

@@ -195,5 +195,4 @@ final class DonationPaymentReviewTest extends TestCase
             $this->assertDatabaseCount('wallet_entries', 0);
         }
     }
-
 }

@@ -66,6 +66,10 @@ Official references: https://yoomoney.ru/docs/payment-buttons/using-api/forms , 
 
 For real MySQL/MariaDB concurrency on a disposable **test** database: `APP_ENV=testing DONATIONS_TEST_ALLOW_CONCURRENCY=1 php tests/Integration/Donations/mysql-settlement-concurrency.php`. Never run on production.
 
+Before installing Donations on MariaDB, check `SHOW GLOBAL VARIABLES LIKE 'explicit_defaults_for_timestamp';`. The published financial migrations require explicit timestamp defaults: configure `explicit_defaults_for_timestamp=ON` on the selected database server. MariaDB 10.4 with this setting OFF fails to create `module_donation_recovery_candidates` under strict SQL mode. Do not edit previously applied migrations or disable strict mode to work around this. An isolated QA container can set `--explicit-defaults-for-timestamp=ON` at startup without changing another local server.
+
+Also run `tests/Integration/Donations/mysql-order-concurrency.php` for concurrent creation, cancellation and tariff snapshots, and `tests/Integration/Wallet/mysql-concurrency.php` with `WALLET_TEST_ALLOW_CONCURRENCY=1` for balance and ledger races. Each script must return exit code 0 **and** its final success message; uncaught exceptions return a failing exit code. After a CMS update, approve the pending Donations module update in **Modules** before checking its player pages. This preserves the module approval boundary.
+
 
 ## C4a — 0.50.3 / Donations 1.8.0 (2026-10-17)
 

@@ -27,6 +27,12 @@ require $root.'/vendor/autoload.php';
 $app = require $root.'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
+// These standalone scripts run outside Artisan's command exit-code handling.
+set_exception_handler(static function (Throwable $exception): never {
+    fwrite(STDERR, $exception::class.': '.$exception->getMessage()."\n");
+    exit(1);
+});
+
 $db = (string) DB::connection()->getDatabaseName();
 if ((string) config('app.env') !== 'testing'
     || DB::connection()->getDriverName() !== 'mysql'

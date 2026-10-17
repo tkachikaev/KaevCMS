@@ -76,6 +76,10 @@ Owner/Administrator могут менять настройки; Auditor — то
 
 Для проверки реальной конкурентности на одноразовой MySQL/MariaDB тестовой БД: `APP_ENV=testing DONATIONS_TEST_ALLOW_CONCURRENCY=1 php tests/Integration/Donations/mysql-settlement-concurrency.php`. Не выполнять на production.
 
+Перед установкой Donations на MariaDB проверьте `SHOW GLOBAL VARIABLES LIKE 'explicit_defaults_for_timestamp';`. Опубликованные финансовые миграции требуют явных значений по умолчанию для временных меток: на выбранном сервере БД настройте `explicit_defaults_for_timestamp=ON`. На MariaDB 10.4 с OFF создание `module_donation_recovery_candidates` завершается ошибкой в строгом SQL-режиме. Не изменяйте уже применённые миграции и не отключайте строгий режим ради обхода ошибки. Для отдельного QA-контейнера можно указать `--explicit-defaults-for-timestamp=ON` при запуске, не меняя другой локальный сервер.
+
+Дополнительно выполните `tests/Integration/Donations/mysql-order-concurrency.php` для одновременного создания, отмены и изменения тарифов, а также `tests/Integration/Wallet/mysql-concurrency.php` с `WALLET_TEST_ALLOW_CONCURRENCY=1` для гонок баланса и журнала. Каждый скрипт должен вернуть код 0 **и** итоговое сообщение об успехе; необработанные исключения возвращают код ошибки. После обновления CMS подтвердите ожидающее обновление Donations в разделе **Модули**, затем проверяйте страницы игрока. Это сохраняет явное подтверждение новой версии модуля.
+
 
 ## C4a — 0.50.3 / Donations 1.8.0 (17.10.2026)
 
