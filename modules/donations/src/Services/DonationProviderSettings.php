@@ -17,7 +17,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * One independent configuration per installed provider. No checkout or remote API call in C1.
+ * One independent configuration per installed provider. C2 checkout is inert.
  * All credentials are stored as one encrypted payload, never returned to the view or audit.
  */
 final class DonationProviderSettings

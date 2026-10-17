@@ -38,14 +38,15 @@ final class DonationProvidersTest extends TestCase
         $this->app->forgetInstance(DonationProviderSettings::class);
     }
 
-    public function test_zero_bundled_drivers_and_no_real_payment_route(): void
+    public function test_yoomoney_is_allowlisted_but_no_real_payment_or_webhook_routes_exist(): void
     {
-        $this->assertSame([], app(DonationProviderRegistry::class)->all());
+        $this->assertSame(['yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers')
-            ->assertOk()->assertSee(__('module-donations::messages.providers_none_installed'));
+            ->assertOk()->assertSee('yoomoney');
         $this->assertDatabaseCount('module_donation_provider_settings', 0);
         $this->post('/modules/donations/payment/webhook')->assertNotFound();
+        $this->post('/modules/donations/orders/00000000-0000-0000-0000-000000000000/checkout')->assertNotFound();
     }
 
     public function test_multiple_independent_provider_configs_encrypted_and_never_echoed(): void

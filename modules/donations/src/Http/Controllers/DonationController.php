@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
+use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationOrders;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
@@ -98,7 +99,7 @@ final class DonationController extends Controller
         ]);
     }
 
-    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings): View
+    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings, DonationPaymentPreparations $payments): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -111,6 +112,8 @@ final class DonationController extends Controller
         return view($view, [
             'user' => $user, 'order' => $order, 'money' => $money,
             'canChooseCoins' => $settings->isVisibleToPlayers(),
+            'paymentPreparation' => $payments->forOrder($order),
+            'availableProviders' => $settings->isVisibleToPlayers() ? $payments->available($order->currency_code) : [],
         ]);
     }
 
@@ -132,6 +135,24 @@ final class DonationController extends Controller
 
         return redirect()->route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid])
             ->with('status', __('module-donations::messages.draft_created'));
+    }
+
+    /** Prepare and audit immutable payment terms; never redirects to a provider in C2. */
+    public function prepare(Request $request, string $orderUuid, DonationPaymentPreparations $payments): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $data = $request->validate(['provider' => ['required', 'string', 'regex:/\A[a-z][a-z0-9_-]{1,39}\z/D']]);
+        try {
+            $payments->prepare($user, $orderUuid, $data['provider']);
+        } catch (ModelNotFoundException) {
+            abort(404);
+        } catch (InvalidArgumentException|LogicException) {
+            return back()->withErrors(['order' => __('module-donations::messages.preparation_unavailable')]);
+        }
+
+        return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])
+            ->with('status', __('module-donations::messages.preparation_saved'));
     }
 
     public function cancel(Request $request, string $orderUuid, DonationOrders $orders): RedirectResponse

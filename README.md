@@ -1,4 +1,4 @@
-# KaevCMS 0.50.0
+# KaevCMS 0.50.2
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.50.0 introduces Donations C1: a provider-independent driver contract, isolated encrypted credentials and configurable provider modes/currencies, with no live payment processor bundled yet. B5 unpaid drafts remain available. No money movements, real callbacks or wallet credits. Core Wallet A1–A7 remains independent and unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
+Version 0.50.2 (Donations C3) adds persistent but default-disabled YooMoney HMAC-SHA256 callbacks, a durable review journal, exactly-once-effect Wallet integration behind two separate trusted switches, and read-only recovery for missing notifications. Live checkout and production wallet credits remain disabled. Existing B5 drafts and independent prices remain available. Core Wallet A1–A7 remains independent and unchanged. RUSaCis still requires live game-client verification before production. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -98,7 +98,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.50.0 добавляет фундамент платёжных провайдеров Donations C1: общий контракт драйвера, отдельные зашифрованные реквизиты, настройки режимов/валют и защищённую админку. Ни одного рабочего драйвера в комплекте пока нет. Реальные платежи, webhook и начисления отключены. Кошелёк ядра A1–A7 остаётся независимым. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
+Версия 0.50.2 (Donations C3) добавляет защищённый приём подписанных уведомлений ЮMoney с выключенным по умолчанию обработчиком, постоянный журнал событий, строго однократное зачисление через Wallet при отдельном разрешении в доверенных настройках и поиск потерянных уведомлений. Реальная отправка платёжной формы и рабочие зачисления по умолчанию отключены. Кошелёк ядра A1–A7 остаётся независимым. Для RUSaCis по-прежнему требуется проверка входа игровым клиентом перед production. База cumulative update — 0.42.4.
 
 ### Требования
 

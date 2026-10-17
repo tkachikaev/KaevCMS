@@ -114,6 +114,12 @@ final class DonationOrders
             if ($order->status !== DonationOrder::DRAFT) {
                 throw new LogicException('Payment order cannot be cancelled in its current state.');
             }
+            // A verified incoming transfer cannot be dismissed just because new sales closed.
+            // Keep the order available for reconciliation or manual review.
+            if (DB::table('module_donation_payment_receipts')->where('order_id', $order->id)
+                ->whereIn('status', ['pending', 'review', 'credited'])->exists()) {
+                throw new LogicException('Verified payment evidence requires settlement review.');
+            }
             $to = $order->expires_at->isPast() ? DonationOrder::EXPIRED : DonationOrder::CANCELLED;
             $order->forceFill(['status' => $to])->save();
             $this->event($order, DonationOrder::DRAFT, $to, $to === DonationOrder::EXPIRED ? 'expired' : 'cancelled');

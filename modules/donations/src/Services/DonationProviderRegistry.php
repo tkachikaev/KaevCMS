@@ -7,13 +7,13 @@ use KaevCMS\Modules\Donations\Contracts\PaymentProvider;
 use LogicException;
 
 /**
- * Installation-time PHP allowlist. C2 adds UnitPay here; DB entries cannot load classes.
+ * Installation-time PHP allowlist. DB entries cannot load classes.
  * Injectable list allows test drivers without including fake production providers.
  */
 final class DonationProviderRegistry
 {
     /** @var list<class-string<PaymentProvider>> */
-    private const BUNDLED_DRIVERS = [];
+    private const BUNDLED_DRIVERS = [\KaevCMS\Modules\Donations\Providers\YooMoneyProvider::class];
 
     /** @param list<mixed>|null $driverClasses Installation candidates are validated before loading. */
     public function __construct(private readonly ?array $driverClasses = null) {}

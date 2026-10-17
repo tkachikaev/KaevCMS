@@ -9,7 +9,7 @@ use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 
 /**
  * Implemented by explicitly installed, trusted PHP drivers. Never resolve driver classes
- * from a request or the database. No driver is bundled in C1/0.50.0.
+ * from a request or the database. YooMoney is the first installed C2 driver.
  */
 interface PaymentProvider
 {

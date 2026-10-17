@@ -33,3 +33,30 @@ Verified on 2026-10-16 without changing version 0.50.0: full `quality.ps1` passe
 Run `deployment/windows/quality.ps1`, `deployment/windows/browser-quality.ps1` and the `DonationProvidersTest` suite along with previous Donations/Wallet tests. Test fresh installation, migration over existing orders and provider-secret storage against a dedicated MySQL/MariaDB database. Ensure that no live checkout/webhook route is exposed and changes in provider settings cannot credit coins.
 
 Do not disable a provider-enabled module with outstanding paid orders once real payment processing becomes available; durable webhook handling must be implemented and tested beforehand.
+
+---
+
+## C2 — 0.50.1 / Donations 1.6.0 (2026-10-17)
+
+The first allowlisted integration is the **YooMoney personal-wallet P2P transfer** provider, not YooKassa. It supports **RUB only**; other CMS tariffs and independent provider settings remain unchanged. Admins may store an encrypted wallet receiver, HTTP notification signing secret, and optional **read-only** OAuth history token (`operation-history` scope, never `payment`). No notification URL is provided in this release because a live webhook handler has NOT been activated. Test mode is local preparation/provider test notifications, **not a money-transfer sandbox**.
+
+A player may attach an enabled provider to their own, unexpired unpaid draft using **Prepare without paying**. This creates an immutable, audited preparation with an exact original order amount, currency, provider and mode. It does not execute or expose a payment POST form. Drafts remain cancelable, and Wallet/ledger/coin balances stay unchanged. The future POST DTO includes a fixed receiver and `sum` from server-side order snapshot, never the browser. No real-money URL is available to players in C2.
+
+For notification verification, the provider uses `sign`: HMAC-SHA256 over all POST fields except `sign`, sorted alphabetically, values RFC3986 URL-encoded. SHA-1 authentication is obsolete. `withdraw_amount` is payer gross/debit; `amount` is receiver net after fees. A signed event is NOT sufficient settlement: C3 must match gross amount, operation, order, currency, recipient/mode and reconcile duplicates before any Wallet credit. Test notifications can never settle an order. `YooMoneyRecoveryProbe` offers a read-only lookup of candidate operation IDs by order `label` via `/api/operation-history`; it does not confirm final settlement or update any balance, and incomplete scans fail closed.
+
+**Not payment-ready:** no live checkout, public webhook, paid/credited state transitions, automatic credit, module-disable-independent callback lifecycle, or refunds/chargebacks. These are C3/C4 acceptance requirements; never advertise this release as accepting actual payments. Previous migrations and core Wallet services remain untouched. Run `quality.ps1`, `browser-quality.ps1`, clean install/upgrade, and MySQL concurrency tests. Standalone signing and negative test (without Laravel dependencies): `php -d zend.assertions=1 -d assert.exception=1 tests/Integration/Donations/yoomoney-driver-standalone.php`.
+
+Official references: https://yoomoney.ru/docs/payment-buttons/using-api/forms , https://yoomoney.ru/docs/payment-buttons/using-api/notifications , https://yoomoney.ru/docs/wallet/user-account/operation-history .
+
+
+## C3 — 0.50.2 / Donations 1.7.0 (2026-10-17)
+
+### Status: **real checkout and coin credits remain disabled**
+
+- The player may only prepare an inert order. Both `config/donation-payments.php` switches (`callbacks_enabled`, `credits_enabled`) are `false`; `config/wallet.php` keeps the Donations credit source disabled. Do not enable any switch before C4 and full testing.
+- Core-owned `POST /payments/yoomoney/notify` remains present when the Donations module UI is disabled. It responds HTTP 503 while the callback gate is closed. Future activation requires HTTPS, URL-encoded POST, signed `sign` HMAC-SHA256, correct order `label`, RUB currency code `643`, unique provider `operation_id`, and **exact** order gross payer `withdraw_amount`. Store receiver net `amount` separately; never compare it as payer debit.
+- Verified original notifications are encrypted with Laravel Crypt and stored permanently. Only a matching live preparation/draft can become credited, under the **second** dedicated trusted credit switch **and** trusted core wallet source switch. The WalletGateway operation (`donation:<uuid>`), settlement, order state, and audit commit together or all roll back. Duplicate/invalid/test/cancelled/extra payments remain for admin review; pending paid evidence blocks player cancellation.
+- A missing webhook may be investigated manually via `php artisan kaevcms:donations-reconcile --scan --limit=30` or `--order=UUID`. Only read-only OAuth scope `operation-history` is needed; unsigned history candidates are **not settlement proof** and cannot credit. `--retry-verified` decrypts and re-verifies previously signed notifications; default gates still prohibit credits. No automatic network job is scheduled.
+- This is not a verified provider sandbox or production merchant deployment. Chargebacks, fees, key rotation, scheduled recovery and real end-to-end checkout remain for C4. Run Windows quality/browser gates, PHPUnit C3 cases, disposable MySQL/MariaDB concurrency, clean install and 0.50.1 upgrade before production decisions.
+
+For real MySQL/MariaDB concurrency on a disposable **test** database: `APP_ENV=testing DONATIONS_TEST_ALLOW_CONCURRENCY=1 php tests/Integration/Donations/mysql-settlement-concurrency.php`. Never run on production.

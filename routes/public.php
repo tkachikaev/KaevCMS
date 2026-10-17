@@ -80,3 +80,8 @@ Route::get('/language/{locale}', [LocaleController::class, 'public'])
     ->where('locale', (string) config('localization.locale_pattern'))
     ->middleware('throttle:20,1')
     ->name('language.switch');
+
+// Core-owned callback persists after Donations UI/module is disabled. Disabled by
+// default in config/donation-payments.php; no public checkout route in C3.
+Route::post('/payments/yoomoney/notify', \App\Http\Controllers\Payments\YooMoneyNotificationController::class)
+    ->middleware('throttle:60,1')->name('payments.yoomoney.notify');

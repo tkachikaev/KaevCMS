@@ -25,7 +25,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
 
-        $middleware->validateCsrfTokens(except: []);
+        $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify']);
         $middleware->appendToGroup('web', SetApplicationLocale::class);
         $middleware->appendToGroup('web', SecurityHeaders::class);
         $middleware->alias([

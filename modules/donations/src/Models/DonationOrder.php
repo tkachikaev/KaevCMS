@@ -45,6 +45,12 @@ final class DonationOrder extends Model
     /** Display-only TTL status; no GET request may mutate financial order history. */
     public function displayStatus(): string
     {
+        if ($this->status === self::DRAFT && $this->exists
+            && \Illuminate\Support\Facades\DB::table('module_donation_payment_receipts')
+                ->where('order_id', $this->getKey())->whereIn('status', ['pending', 'review'])->exists()) {
+            return 'payment_pending';
+        }
+
         return $this->status === self::DRAFT && $this->expires_at?->isPast()
             ? self::EXPIRED : $this->status;
     }

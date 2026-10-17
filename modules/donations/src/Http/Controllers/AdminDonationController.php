@@ -110,7 +110,7 @@ final class AdminDonationController extends Controller
     public function orders(Request $request, AdminPathSettings $paths, DonationMoney $money): View
     {
         $filters = validator($request->query(), [
-            'status' => ['nullable', Rule::in(['draft', 'cancelled', 'expired'])],
+            'status' => ['nullable', Rule::in(['draft', 'cancelled', 'expired', 'credited'])],
             'currency' => ['nullable', 'string', 'regex:/\A[A-Z]{3}\z/D'],
             'user_id' => ['nullable', 'integer', 'min:1'],
         ])->validate();
@@ -146,6 +146,11 @@ final class AdminDonationController extends Controller
     public function showOrder(string $orderUuid, AdminPathSettings $paths, DonationMoney $money): View
     {
         $order = DonationOrder::query()->with('user:id,name,email')->where('order_uuid', $orderUuid)->firstOrFail();
+        $receipts = DB::table('module_donation_payment_receipts')->where('order_id', $order->id)
+            ->orderByDesc('id')->limit(30)->get();
+        $candidateIds = DB::table('module_donation_payment_preparations')->where('order_id', $order->id)->pluck('id');
+        $recovery = DB::table('module_donation_recovery_candidates')->whereIn('preparation_id', $candidateIds)
+            ->orderByDesc('id')->limit(30)->get();
         $events = DB::table('module_donation_order_events')
             ->where('order_id', $order->id)->orderByDesc('id')->paginate(30);
 
@@ -153,7 +158,7 @@ final class AdminDonationController extends Controller
         $view = 'module-donations::admin.order';
 
         return view($view, [
-            'order' => $order, 'events' => $events, 'money' => $money, 'adminPath' => $paths->path(),
+            'order' => $order, 'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'money' => $money, 'adminPath' => $paths->path(),
         ]);
     }
 }

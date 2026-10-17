@@ -20,7 +20,22 @@
     <p>{{ __('module-donations::messages.player_price_breakdown', ['coins' => $order->coins, 'price' => $money->format((int) $order->unit_price_minor, (int) $order->exponent), 'currency' => $order->currency_code]) }}</p>
     <h2>{{ $money->format((int) $order->total_minor, (int) $order->exponent) }} {{ $order->currency_code }}</h2>
     <p>{{ __('module-donations::messages.order_expires_at') }}: {{ $order->expires_at->format('Y-m-d H:i') }}</p>
-    @if($order->status === 'draft' && $order->expires_at->isFuture())
+    <p class="account-field-help" data-testid="donations-payment-c2-warning">{{ __('module-donations::messages.preparation_warning') }}</p>
+    @if($paymentPreparation)
+        <p data-testid="donations-payment-prepared">{{ __('module-donations::messages.preparation_selected', ['provider' => $paymentPreparation->provider_code, 'mode' => $paymentPreparation->mode]) }}</p>
+    @elseif($order->status === 'draft' && $order->expires_at->isFuture() && $canChooseCoins && $availableProviders !== [])
+        <form method="POST" action="{{ route('modules.donations.orders.prepare', ['orderUuid' => $order->order_uuid]) }}" data-testid="donations-prepare-provider">
+            @csrf
+            <label for="donations-provider-selection">{{ __('module-donations::messages.preparation_choose') }}</label>
+            <select id="donations-provider-selection" name="provider" required>
+                @foreach($availableProviders as $provider)
+                    <option value="{{ $provider['code'] }}">{{ $provider['name'] }} ({{ $provider['mode'] }})</option>
+                @endforeach
+            </select>
+            <button class="account-button secondary" type="submit">{{ __('module-donations::messages.preparation_action') }}</button>
+        </form>
+    @endif
+    @if($order->displayStatus() === 'draft' && $order->expires_at->isFuture())
         <form method="POST" action="{{ route('modules.donations.orders.cancel', ['orderUuid' => $order->order_uuid]) }}">
             @csrf
             <button class="account-button secondary" type="submit">{{ __('module-donations::messages.cancel_draft') }}</button>

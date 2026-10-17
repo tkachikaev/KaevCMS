@@ -1,13 +1,40 @@
-## Unreleased
+## 0.50.2 - 2026-10-17
 
-### Fixed
+### Added — Donations C3 (`donations` 1.7.0)
+
+- Persistent **core-owned** `/payments/yoomoney/notify` webhook endpoint, independent of Donations UI/module enablement. Strict form content type, HTTPS production check, exact CSRF exception for signed webhook, throttling, cryptographic HMAC-SHA256 verified with YooMoney credentials; invalid requests fail closed. Default route responds 503 because `config/donation-payments.php` keeps callbacks disabled.
+- New additive migration: encrypted durable signed payment receipts, unique provider operation IDs, one settlement record per order and wallet entry, read-only recovery candidate journal. No existing migrations changed.
+- Atomic signed callback → immutable order/pricing and payer `withdraw_amount` match → receipt → Core `WalletGateway` credit → order credited status → audit. Exactly-once idempotency at receipt, order settlement and wallet source-key levels. Distinct receiver `amount` preserved for fee reconciliation. No direct Wallet SQL writes or changes to the Wallet financial engine.
+- Test/mismatched/cancelled/duplicate/different operation payments held for review, never credited. Retried signed pending notifications are decrypted and reverified, not blindly trusted. Verify/credit rollback together on any audit or wallet failure. History-only recovery identifies missing payment candidates for human review but **cannot prove payer gross** and never credits coins.
+- Player/admin displays payment evidence, dedicated error/recovery states and pending transfer prevents cancelling a draft. New negative regression tests for signature, amount, duplicate operations, module disable, cancelled orders, test notices, rollback and replay.
+- **Production gates CLOSED**: no player checkout, no real-money sending, `donation-payments.callbacks_enabled=false`, `donation-payments.credits_enabled=false`, `wallet.enabled_sources.donations=false`. No live merchant/API sandbox payment or MySQL parallelism was confirmed. Requires Windows/browser/MySQL acceptance before any activation.
+
+### Deferred to C4
+
+- Real approved merchant end-to-end validation, fees/disputes/refunds, rotating notification secrets, scheduled reconciliation and enablement of the complete checkout lifecycle. No live payment activation in this release.
+
+## 0.50.1 - 2026-10-17
+
+### Added
+
+- Donations C2 (`donations` 1.6.0): allowlisted YooMoney personal-wallet P2P driver, RUB only. `PaymentCheckout` can describe POST form fields; no external checkout is exposed in player routes. The driver keeps payer `withdraw_amount` separate from receiver `amount` and checks signed `sign` with current canonical RFC3986 HMAC-SHA256 (no SHA-1 fallback). Provider test notices remain explicitly non-settling.
+- Additive `module_donation_payment_preparations`: one provider per immutable, server-priced player order, stored payment mode/amount/currency/label, own authenticated POST endpoint and fail-closed transactional audit. Existing `module_donation_orders`, Wallet API/ledger, and migrations were not modified.
+- Optional read-only YooMoney OAuth `operation-history` label probe for lost callback candidates; it cannot finalize orders or credit coins. New feature/negative and standalone HMAC regression tests.
+- **Safety gate:** no real checkout HTML, no live payment entrypoint or webhook route, no automatic settlement/coin credit. Test mode is NOT a provider payment sandbox. User-configured prices in currencies other than RUB remain untouched.
+
+### Deferred (C3/C4)
+
+- Verified notification persistence, amount/label/order matching, provider API reconciliation (including ambiguous/late events), idempotent Wallet credit, protected callbacks during module shutdown, actual test/live transfer, fees and chargeback handling. Run Windows/PHPUnit/Playwright and MySQL concurrency acceptance before any real payment activation.
+
+### Carried forward from Codex working-tree corrections before C2
+
 
 - Passed the authenticated player to the Donations quote, order history and order detail views. These pages no longer fail with HTTP 500 when the account layout renders. Added coverage for both bundled account themes.
 - Deferred fake payment-driver loading until module initialization so PHPUnit can discover the complete suite. Corrected Donations model and contract type declarations, applied Pint formatting, and restored shared administration field-error styles.
 - Validated provider currency and credential value shapes before duplicate checks or persistence, with negative coverage for nested values, numeric credential keys and duplicate currencies. Updated the browser module catalogue check to include Donations.
-- No version bump, dependency update or release archive rebuild is included in these working-tree corrections.
+- The working-tree fixes are included in the 0.50.1 full archive without separate release.
 
-### Verification
+**Historical validation of the pre-C2 worktree (not a C2 acceptance):**
 
 - Windows quality gate passed: Pint, PHPStan, installer/updater/package regressions, route cache and 1,054 PHPUnit tests (11 skipped). All 73 browser scenarios passed.
 - Dependency audit remains unresolved: Composer reported 19 advisories affecting 7 locked PHP packages on 2026-10-16; npm reported no known vulnerabilities. Passing application tests does not resolve these dependency advisories.
