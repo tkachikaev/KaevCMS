@@ -160,14 +160,21 @@ test('players can preview accurate coin prices but cannot create fake payment dr
             const topUp = player.getByRole('link', { name: 'Пополнить баланс', exact: true });
             await expect(topUp).toHaveAttribute('href', /\/modules\/donations$/);
             await topUp.click();
+            await expect(player.locator('[data-donations-dialog]')).toBeVisible();
+            await expect(player).toHaveURL(/\/account\/wallet$/);
             await expect(player.getByTestId('donations-player-calculator')).toBeVisible();
+            await player.keyboard.press('Escape');
+            await expect(player.locator('[data-donations-dialog]')).not.toBeVisible();
             await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
             await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations$/);
             await expect(player.locator('a[data-account-module-id="donations"]')).toContainText('Пополнить монеты');
             const choose = player.getByTestId('donations-choose-coins');
             await expect(choose).toBeInViewport();
             await choose.click();
-            await expect(player).toHaveURL(/\/modules\/donations$/);
+            await expect(player.locator('[data-donations-dialog]')).toBeVisible();
+            await expect(player).toHaveURL(/\/modules\/donations\/orders$/);
+            await player.keyboard.press('Escape');
+            await gotoWithLocalNetworkRetry(player, '/modules/donations');
             const quote = player.getByTestId('donations-quote-form');
             const coins = quote.locator('[name="coins"]');
             const slider = quote.locator('[type="range"]');
@@ -356,5 +363,148 @@ test('donations calculator stays translated and gated in RU/EN, both account the
     await form.locator('[name="max_coins"]').fill(initial.max);
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
     await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
+    await player.close();
+});
+
+
+test('wallet top-up dialog keeps context, reviews changed prices and posts once to a mocked provider', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await context.route('https://yoomoney.ru/**', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Offline provider fixture</h1>' }));
+    await gotoWithLocalNetworkRetry(page, '/admin/login');
+    await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
+    await page.locator('#password').fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
+    await submitLogin({ page, postPath: '/admin/login', label: 'Top-up dialog administrator', submit: () => page.getByRole('button', { name: 'Войти в панель' }).click() });
+    await gotoWithLocalNetworkRetry(page, '/admin/modules');
+    const enable = page.locator('[data-module-id="donations"] form[action$="/enable"]');
+    if (await enable.count()) await enable.getByRole('button').click();
+    const savePrice = async price => {
+        await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
+        const workspace = page.getByTestId('donations-workspace');
+        if (!await page.getByTestId('donations-rate-RUB').count()) {
+            await workspace.locator('[data-donations-currency]').selectOption('RUB');
+            await workspace.getByRole('button', { name: 'Добавить валюту', exact: true }).click();
+        }
+        await page.getByTestId('donations-rate-RUB').locator('[data-donations-price]').fill(price);
+        await page.getByTestId('donations-rate-RUB').locator('input[type="checkbox"]').check();
+        await workspace.locator('#donations-show-in-account').check();
+        await workspace.locator('[name="min_coins"]').fill('1');
+        await workspace.locator('[name="max_coins"]').fill('1000000');
+        await workspace.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
+        await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
+    };
+    await savePrice('1.25');
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations/providers/yoomoney');
+    const settings = page.getByTestId('donations-yoomoney-simple-settings');
+    await settings.locator('#yoomoney-wallet-number').fill('410012345678901');
+    await settings.locator('#yoomoney-secret').fill('offline-dialog-fixture-secret');
+    await settings.locator('[name="payment_enabled"][type="checkbox"]').check();
+    await settings.locator('button[type="submit"]').click();
+    await expect(page.getByText('Настройки платёжной системы сохранены.', { exact: true })).toBeVisible();
+    const player = await context.newPage();
+    const errors = [];
+    player.on('pageerror', error => errors.push(error.message));
+    let topups = 0;
+    player.on('request', request => { if (request.method() === 'POST' && new URL(request.url()).pathname === '/modules/donations/top-up') topups++; });
+    await gotoWithLocalNetworkRetry(player, '/login');
+    await player.locator('#login').fill('browser-donations-player@example.test');
+    await player.locator('#password').fill(process.env.PLAYWRIGHT_PLAYER_PASSWORD);
+    await submitLogin({ page: player, postPath: '/login', label: 'Top-up dialog player', submit: () => player.locator('form').getByRole('button').click() });
+    let expectedPrice = 1.25;
+    for (const theme of ['kaev-aurelia', 'luxury']) {
+        await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
+        const activate = page.locator(`form[action$="/account-themes/${theme}/activate"]`);
+        if (await activate.count()) { await activate.getByRole('button').click(); await expect(activate).toHaveCount(0); }
+        for (const width of [1440, 390]) {
+            await player.setViewportSize({ width, height: 900 });
+            await gotoWithLocalNetworkRetry(player, '/account/wallet');
+            const trigger = player.getByRole('link', { name: 'Пополнить баланс', exact: true });
+            const dialog = player.locator('[data-donations-dialog]');
+            let before = topups;
+            await trigger.click();
+            await expect(dialog).toBeVisible();
+            await expect(dialog.locator('#donations-player-coins')).toBeFocused();
+            await expect(player).toHaveURL(/\/account\/wallet$/);
+            if (width === 1440) {
+                const rangeBounds = await dialog.locator('#donations-player-range').boundingBox();
+                const bounds = await dialog.boundingBox();
+                await player.mouse.move(rangeBounds.x + 12, rangeBounds.y + rangeBounds.height / 2);
+                await player.mouse.down();
+                await player.mouse.move(bounds.x + bounds.width + 20, rangeBounds.y + rangeBounds.height / 2);
+                await player.mouse.up();
+                await expect(dialog).toBeVisible();
+                await player.mouse.click(bounds.x + bounds.width + 20, bounds.y + 20);
+                await expect(dialog).not.toBeVisible();
+                await trigger.press('Enter');
+                await expect(dialog).toBeVisible();
+            }
+            await player.keyboard.press('Escape');
+            await expect(dialog).not.toBeVisible();
+            await expect(trigger).toBeFocused();
+            expect(topups).toBe(before);
+            await trigger.press('Enter');
+            await expect(dialog).toBeVisible();
+            await expect(dialog.locator('[name="provider"]')).toBeChecked();
+            await expect(dialog.locator('.donations-provider-logo img')).toBeVisible();
+            const coins = dialog.locator('#donations-player-coins');
+            const pay = dialog.getByTestId('donations-create-order').locator('button[type="submit"]');
+            await coins.fill('0');
+            await expect(pay).toBeDisabled();
+            await coins.fill('100');
+            await expect(dialog.getByTestId('donations-quote-result')).toContainText(`${(100 * expectedPrice).toFixed(2)} RUB`);
+            if (theme === 'kaev-aurelia' && width === 1440) {
+                // Closing while preparation is in progress must cancel the browser redirect.
+                let releasePreparation;
+                let preparationAborted;
+                const held = new Promise(resolve => { releasePreparation = resolve; });
+                const aborted = new Promise(resolve => { preparationAborted = resolve; });
+                await player.route('**/modules/donations/top-up', async route => {
+                    await held;
+                    await route.abort();
+                    preparationAborted();
+                }, { times: 1 });
+                const started = player.waitForRequest(request => request.url().endsWith('/modules/donations/top-up'));
+                await pay.click(); await started;
+                await expect(pay).toBeDisabled();
+                await dialog.locator('[data-donations-close]').click();
+                releasePreparation(); await aborted;
+                await expect(dialog).not.toBeVisible();
+                await expect(player).toHaveURL(/\/account\/wallet$/);
+                before = topups;
+                await trigger.click();
+                await expect(pay).toBeEnabled();
+                await savePrice('2.00');
+                const changed = player.waitForResponse(response => response.url().endsWith('/modules/donations/top-up') && response.status() === 409);
+                await pay.click(); await changed;
+                await expect(dialog.locator('[data-donations-submit-error]')).toContainText('Цена изменилась');
+                await expect(dialog.getByTestId('donations-quote-result')).toContainText('200.00 RUB');
+                expectedPrice = 2;
+                expect(topups).toBe(before + 1);
+            }
+            await coins.fill('237');
+            await expect(dialog.locator('#donations-player-range')).toHaveValue('237');
+            await expect(dialog.getByTestId('donations-quote-result')).toContainText(`${(237 * expectedPrice).toFixed(2)} RUB`);
+            expect(await dialog.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+            await player.screenshot({ path: `storage/framework/testing/donations-dialog-${theme}-${width}.png`, fullPage: true });
+            const prepared = player.waitForResponse(response => response.url().endsWith('/modules/donations/top-up') && response.ok());
+            const transfer = player.waitForRequest(request => request.url() === 'https://yoomoney.ru/quickpay/confirm');
+            await pay.click();
+            await prepared;
+            const request = await transfer;
+            await expect(player.getByRole('heading', { name: 'Offline provider fixture' })).toBeVisible();
+            expect(request.method()).toBe('POST');
+            const fields = new URLSearchParams(request.postData());
+            expect(fields.get('sum')).toBe((237 * expectedPrice).toFixed(2));
+            expect(fields.get('receiver')).toBe('410012345678901');
+            expect(fields.get('paymentType')).toBe('PC');
+            expect(fields.get('successURL')).toMatch(/\/modules\/donations\/orders\/[0-9a-f-]{36}$/);
+            await gotoWithLocalNetworkRetry(player, fields.get('successURL'));
+            await expect(player.getByTestId('donations-order-detail')).toContainText((237 * expectedPrice).toFixed(2));
+            await expect(player.locator('.account-topbar-wallet-amount')).toHaveText('0');
+            await player.getByRole('button', { name: 'Отменить заявку', exact: true }).click();
+            await expect(player.getByTestId('donations-order-detail')).toContainText('Отменена');
+            await expect(player.locator('.account-topbar-wallet-amount')).toHaveText('0');
+        }
+    }
+    expect(errors).toEqual([]);
     await player.close();
 });

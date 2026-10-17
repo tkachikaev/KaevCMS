@@ -137,7 +137,8 @@ final class DonationYooMoneyCheckoutTest extends TestCase
             ->assertSee('name="sum" value="120.00"', false)
             ->assertSee('name="label" value="kaevcms-'.$order->order_uuid.'"', false)
             ->assertSee('name="paymentType" value="PC"', false)
-            ->assertSee('name="paymentType" value="AC"', false);
+            ->assertDontSee('name="paymentType" value="AC"', false)
+            ->assertSee('data-testid="donations-checkout-submit"', false);
         // The account avatar dialog retains the escaped current URL. Inspect the
         // external payment form itself, where attacker input must never be used.
         $document = new \DOMDocument;

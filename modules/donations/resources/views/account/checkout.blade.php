@@ -20,9 +20,9 @@
         <input type="hidden" name="label" value="{{ $form->fields['label'] }}">
         <input type="hidden" name="sum" value="{{ $form->fields['sum'] }}">
         <input type="hidden" name="successURL" value="{{ $form->fields['successURL'] }}">
+        <input type="hidden" name="paymentType" value="{{ $form->fields['paymentType'] }}">
         <div class="account-form-actions">
-            <button class="account-button primary" name="paymentType" value="PC" type="submit" data-testid="donations-checkout-wallet">{{ __('module-donations::messages.checkout_wallet') }}</button>
-            <button class="account-button secondary" name="paymentType" value="AC" type="submit" data-testid="donations-checkout-card">{{ __('module-donations::messages.checkout_card') }}</button>
+            <button class="account-button primary" type="submit" data-testid="donations-checkout-submit">{{ __('module-donations::messages.topup_submit') }}</button>
         </div>
     </form>
     <a class="account-button secondary" href="{{ route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]) }}">{{ __('module-donations::messages.checkout_back') }}</a>

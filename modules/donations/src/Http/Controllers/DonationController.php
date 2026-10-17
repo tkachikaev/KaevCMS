@@ -5,11 +5,15 @@ namespace KaevCMS\Modules\Donations\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Wallet\WalletAccountReadService;
+use App\Services\Wallet\WalletAppearanceSettings;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
@@ -30,6 +34,7 @@ final class DonationController extends Controller
         DonationRates $rates,
         DonationMoney $money,
         DonationPaymentPreparations $payments,
+        WalletAppearanceSettings $appearance,
     ): View {
         // Module enabled is not enough: owner must opt in to showing the player page.
         abort_unless($settings->isVisibleToPlayers(), 404);
@@ -39,15 +44,19 @@ final class DonationController extends Controller
         $limits = $rates->limits();
         $currencies = $rates->availableForPlayers(app()->getLocale());
         $canStartCheckout = DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user);
+        $paymentProviders = [];
         if ($canStartCheckout) {
-            $currencies = array_values(array_filter($currencies, static function (array $currency) use ($payments): bool {
+            $currencies = array_values(array_filter($currencies, static function (array $currency) use ($payments, &$paymentProviders): bool {
+                $available = false;
                 foreach ($payments->available($currency['code']) as $provider) {
                     if ($provider['mode'] === 'live') {
-                        return true;
+                        $paymentProviders[$provider['code']] ??= ['code' => $provider['code'], 'name' => $provider['name'], 'currencies' => []];
+                        $paymentProviders[$provider['code']]['currencies'][] = $currency['code'];
+                        $available = true;
                     }
                 }
 
-                return false;
+                return $available;
             }));
         }
         $firstCurrency = $currencies[0]['code'] ?? '';
@@ -80,7 +89,7 @@ final class DonationController extends Controller
         }
 
         /** @var view-string $view */
-        $view = 'module-donations::account.index';
+        $view = $request->boolean('dialog') ? 'module-donations::account.calculator' : 'module-donations::account.index';
 
         return view($view, [
             'user' => $user,
@@ -94,7 +103,58 @@ final class DonationController extends Controller
             'money' => $money,
             'draftRequestKey' => (string) Str::uuid(),
             'liveCheckoutEnabled' => $canStartCheckout && $currencies !== [],
+            'paymentProviders' => array_values($paymentProviders),
+            'isDialog' => $request->boolean('dialog'),
+            'coinForms' => $appearance->forms(),
+            'coinsLabel' => $quote !== null ? $appearance->label($quote['coins']) : '—',
         ]);
+    }
+
+    /** A deliberate top-up action creates immutable terms, never a transfer or Wallet credit. */
+    public function topUp(Request $request, DonationOrders $orders, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout, DonationRates $rates): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $data = $request->validate([
+            'coins' => ['required', 'integer', 'min:1', 'max:1000000'],
+            'currency' => ['required', 'string', 'regex:/\A[A-Z]{3}\z/D'],
+            'provider' => ['required', 'string', 'regex:/\A[a-z][a-z0-9_-]{1,39}\z/D'],
+            'request_key' => ['required', 'uuid'],
+            'quoted_total_minor' => ['required', 'string', 'regex:/\A[0-9]{1,16}\z/D'],
+        ]);
+
+        try {
+            return DB::transaction(function () use ($user, $data, $orders, $payments, $checkout, $rates): JsonResponse {
+                // Match the existing user -> settings locking order. Price updates take this settings lock too.
+                User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+                DB::table('module_donation_settings')->where('id', 1)->lockForUpdate()->first();
+                if (! DonationYooMoneyCheckout::enabled() || ! DonationYooMoneyCheckout::allowedForUser($user)
+                    || ! app(DonationSettings::class)->isVisibleToPlayers()
+                    || ! collect($payments->available($data['currency']))->contains(fn (array $provider): bool => $provider['code'] === $data['provider'] && $provider['mode'] === 'live')) {
+                    throw new LogicException('Payment provider unavailable.');
+                }
+                $existing = DonationOrder::query()->where('user_id', $user->getKey())->where('idempotency_key', strtolower($data['request_key']))->first();
+                $quote = $existing === null ? $rates->quote($data['currency'], (int) $data['coins']) : [
+                    'coins' => (int) $existing->coins, 'currency_code' => $existing->currency_code,
+                    'unit_price_minor' => (int) $existing->unit_price_minor, 'total_minor' => (int) $existing->total_minor,
+                    'exponent' => (int) $existing->exponent,
+                ];
+                if ((string) $quote['total_minor'] !== $data['quoted_total_minor']) {
+                    return response()->json(['message' => __('module-donations::messages.topup_price_changed'), 'quote' => $quote], 409)
+                        ->header('Cache-Control', 'private, no-store');
+                }
+                $order = $orders->createDraft($user, $data['currency'], (int) $data['coins'], $data['request_key']);
+                $payments->prepare($user, $order->order_uuid, $data['provider']);
+                $form = $checkout->build($user, $order);
+
+                return response()->json([
+                    'action' => $form->redirectUrl, 'method' => $form->method, 'fields' => $form->fields,
+                    'order_url' => route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]),
+                ])->header('Cache-Control', 'private, no-store');
+            });
+        } catch (InvalidArgumentException|LogicException|ModelNotFoundException) {
+            throw ValidationException::withMessages(['order' => __('module-donations::messages.order_unavailable')]);
+        }
     }
 
     /** Order history is deliberately independent of new-order visibility. */

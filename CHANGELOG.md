@@ -1,4 +1,4 @@
-## [0.50.12] - 2026-10-17
+## 0.50.12 - 2026-10-17
 
 - Simplified YooMoney setup to one form with a visible wallet number, saved-secret indicator and one payment switch; separate provider/test/pilot controls are no longer exposed in the YooMoney admin UI.
 - Players create an order and proceed directly to checkout when the only active provider is YooMoney; no unpaid-test-draft buttons or internal mode labels on the player page.

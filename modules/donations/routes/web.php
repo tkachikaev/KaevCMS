@@ -5,6 +5,7 @@ use KaevCMS\Modules\Donations\Http\Controllers\DonationController;
 
 Route::middleware(['auth', 'site.active', 'site.verified'])->group(function (): void {
     Route::get('/', DonationController::class)->name('index');
+    Route::post('/top-up', [DonationController::class, 'topUp'])->middleware('throttle:10,1,donations-create')->name('topup');
     Route::get('/orders', [DonationController::class, 'orders'])->name('orders.index');
     Route::get('/orders/{orderUuid}', [DonationController::class, 'show'])->whereUuid('orderUuid')->name('orders.show');
     Route::post('/orders', [DonationController::class, 'store'])->middleware('throttle:10,1,donations-create')->name('orders.store');

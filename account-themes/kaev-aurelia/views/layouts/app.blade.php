@@ -17,6 +17,7 @@
     <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
+    @includeIf('module-donations::account.assets')
 </head>
 <body class="account-body" data-account-document-entry>
 @php($accountOperation = session('account_operation'))
@@ -110,6 +111,7 @@
 </div>
 <x-account-avatar-modal :user="$user" />
 <x-account-operation-modal :payload="$accountOperation" />
+@includeIf('module-donations::account.dialog')
 @livewireScripts
 @stack('scripts')
 </body>
