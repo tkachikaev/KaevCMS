@@ -477,6 +477,7 @@
     "routes/account.php",
     "routes/admin.php",
     "routes/console.php",
+    "tests/Concerns/RefreshDonationDatabase.php",
     "tests/Feature/Account/AccountNavigationTest.php",
     "tests/Feature/Account/CharacterRescueTest.php",
     "tests/Feature/Account/GameAccountCabinetTest.php",

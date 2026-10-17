@@ -7,7 +7,6 @@
 @section('content')
 <x-account-page>
 <x-account-panel class="account-section account-donations-card" data-testid="donations-yoomoney-checkout">
-    <h1>{{ __('module-donations::messages.checkout_title') }}</h1>
     <p>{{ __('module-donations::messages.order_reference') }}: {{ $order->order_uuid }}</p>
     <p>{{ __('module-donations::messages.checkout_description') }}</p>
     <h2>{{ $money->format((int) $order->total_minor, 2) }} RUB</h2>

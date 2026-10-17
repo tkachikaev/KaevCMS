@@ -183,6 +183,12 @@ if (! function_exists('localized_current_url')) {
 
         $firstSegment = strtolower((string) ($segments[0] ?? ''));
         if ($firstSegment === 'modules') {
+            // Donations routes have no /{locale} prefix; their middleware reads
+            // the language saved by LocaleController. Keep the selected order.
+            $modulePath = implode('/', $segments);
+            if (preg_match('/\Amodules\/donations(?:\/[A-Za-z0-9_-]+)*\z/D', $modulePath) === 1) {
+                return url('/'.$modulePath).($query !== '' ? '?'.$query : '');
+            }
             $segments = ['account'];
             $query = '';
         } elseif ($firstSegment === 'language' || $firstSegment === 'admin' || str_starts_with($firstSegment, 'admin-')) {

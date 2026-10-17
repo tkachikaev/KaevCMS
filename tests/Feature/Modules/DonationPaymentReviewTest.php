@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Auth\AdminPermission;
 use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
@@ -9,7 +10,6 @@ use App\Services\AuditLogger;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -21,11 +21,12 @@ use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use LogicException;
 use RuntimeException;
+use Tests\Concerns\RefreshDonationDatabase;
 use Tests\TestCase;
 
 final class DonationPaymentReviewTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDonationDatabase;
 
     protected function setUp(): void
     {
@@ -159,6 +160,40 @@ final class DonationPaymentReviewTest extends TestCase
         $this->actingAs($owner, 'admin')->post($url.'/reviews', $payload)->assertRedirect();
         $this->actingAs($auditor, 'admin')->get($url)->assertOk()->assertSee('Manual payment review item.');
         $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_administrator_can_record_audited_review_without_wallet_or_critical_module_access(): void
+    {
+        [, $uuid, $receipt] = $this->fixture();
+        $admin = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        $this->assertFalse($admin->hasPermission(AdminPermission::ModulesManage));
+        $url = '/admin/extensions/donations/orders/'.$uuid;
+        $this->actingAs($admin, 'admin')->get($url)->assertOk()->assertSee('donations-review-form');
+        $this->actingAs($admin, 'admin')->post($url.'/reviews', [
+            'receipt_id' => $receipt, 'kind' => 'review_note',
+            'reason' => 'Administrator reviewed the payment.', 'request_uuid' => (string) Str::uuid(),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('module_donation_payment_review_events', [
+            'admin_id' => $admin->id, 'receipt_id' => $receipt, 'source' => 'manual',
+        ]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'donations.payment_review_reported']);
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseHas('module_donation_orders', ['order_uuid' => $uuid, 'status' => 'draft']);
+    }
+
+    public function test_inactive_and_unsaved_administrators_cannot_record_reviews(): void
+    {
+        [, $uuid, $receipt] = $this->fixture();
+        foreach ([Admin::factory()->create(['is_active' => false]), Admin::factory()->make()] as $admin) {
+            try {
+                app(DonationPaymentReviews::class)->record($admin, $uuid, $receipt,
+                    'review_note', 'Must not be recorded.', (string) Str::uuid());
+                $this->fail('Inactive or unsaved administrator was accepted.');
+            } catch (AuthorizationException) {
+                $this->assertTrue(true);
+            }
+        }
+        $this->assertDatabaseCount('module_donation_payment_review_events', 0);
     }
 
     public function test_resolution_requires_a_report_and_cannot_be_replayed_as_a_new_resolution(): void

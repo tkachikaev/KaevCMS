@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -23,11 +22,12 @@ use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationYooMoneyReconciliation;
 use RuntimeException;
+use Tests\Concerns\RefreshDonationDatabase;
 use Tests\TestCase;
 
 final class DonationYooMoneySettlementTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDonationDatabase;
 
     protected function setUp(): void
     {

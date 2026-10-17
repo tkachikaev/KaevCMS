@@ -12,6 +12,7 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use App\Support\Payments\DonationsTrustedAutoload;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
@@ -72,11 +73,24 @@ if (($argv[1] ?? '') === '--worker') {
         usleep(1000);
     }
     try {
-        $status = app(DonationPaymentSettlements::class)->receive(
-            new ProviderCallback(signed((string) $argv[2], (string) $argv[3]), [], ''),
-        );
-        if (! in_array($status, ['credited', 'review'], true)) {
-            throw new RuntimeException('Unexpected uncredited status.');
+        $body = signed((string) $argv[2], (string) $argv[3]);
+        if (($argv[5] ?? '') === 'http') {
+            // In-process HTTP dispatch exercises the real public route and
+            // middleware without connecting to any external host or provider.
+            $request = Request::create('https://qa.invalid/payments/yoomoney/notify', 'POST', [], [], [], [
+                'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'REMOTE_ADDR' => '127.0.0.1',
+            ], $body);
+            $kernel = app(Illuminate\Contracts\Http\Kernel::class);
+            $response = $kernel->handle($request);
+            $kernel->terminate($request, $response);
+            if ($response->getStatusCode() !== 200 || ! in_array($response->getContent(), ['OK', 'Recorded'], true)) {
+                throw new RuntimeException('Webhook HTTP request was not acknowledged.');
+            }
+        } else {
+            $status = app(DonationPaymentSettlements::class)->receive(new ProviderCallback($body, [], ''));
+            if (! in_array($status, ['credited', 'review'], true)) {
+                throw new RuntimeException('Unexpected uncredited status.');
+            }
         }
         echo "ok\n";
         exit(0);
@@ -87,12 +101,12 @@ if (($argv[1] ?? '') === '--worker') {
 }
 
 /** @param list<string> $operations */
-function runConcurrent(string $uuid, array $operations): void
+function runConcurrent(string $uuid, array $operations, bool $http = false): void
 {
     $start = microtime(true) + 1.5;
     $workers = [];
     foreach ($operations as $id) {
-        $cmd = [PHP_BINARY, __FILE__, '--worker', $uuid, $id, (string) $start];
+        $cmd = [PHP_BINARY, __FILE__, '--worker', $uuid, $id, (string) $start, $http ? 'http' : 'service'];
         $pipes = [];
         $proc = proc_open($cmd, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         if (! is_resource($proc)) {
@@ -133,3 +147,16 @@ if (DB::table('module_donation_payment_settlements')->where('order_id', $order->
     throw new RuntimeException('Concurrent settlement violated exactly-once or review invariants.');
 }
 echo "Concurrent YooMoney settlement verified on disposable MySQL test DB\n";
+
+$httpOrder = app(DonationOrders::class)->createDraft($user, 'RUB', 10, (string) Str::uuid());
+app(DonationPaymentPreparations::class)->prepare($user, $httpOrder->order_uuid, 'yoomoney');
+runConcurrent($httpOrder->order_uuid, array_fill(0, 10, '550010001'), true);
+runConcurrent($httpOrder->order_uuid, array_map(static fn ($n): string => (string) (550010002 + $n), range(0, 9)), true);
+if (DB::table('module_donation_payment_settlements')->where('order_id', $httpOrder->id)->count() !== 1
+    || DB::table('wallet_entries')->where('source', 'donations')->where('source_key', 'donation:'.$httpOrder->order_uuid)->count() !== 1
+    || DB::table('module_donation_payment_receipts')->where('order_id', $httpOrder->id)->where('status', 'credited')->count() !== 1
+    || DB::table('module_donation_payment_receipts')->where('order_id', $httpOrder->id)->where('status', 'review')->count() !== 10
+    || (int) DB::table('wallets')->where('user_id', $user->id)->value('balance') !== 20) {
+    throw new RuntimeException('Concurrent public HTTP webhook violated exactly-once invariants.');
+}
+echo "Concurrent HTTP webhook verified: 10 duplicate and 10 distinct notifications, exactly one credit per order\n";

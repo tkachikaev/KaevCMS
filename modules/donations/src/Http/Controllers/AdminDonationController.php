@@ -2,7 +2,6 @@
 
 namespace KaevCMS\Modules\Donations\Http\Controllers;
 
-use App\Auth\AdminPermission;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Services\Admin\AdminPathSettings;
@@ -174,7 +173,7 @@ final class AdminDonationController extends Controller
 
         return view($view, [
             'order' => $order, 'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'reviews' => $reviews,
-            'canReport' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::ModulesManage),
+            'canReport' => $admin instanceof Admin && DonationPaymentReviews::canReport($admin),
             'reportRequestUuid' => (string) Str::uuid(), 'money' => $money, 'adminPath' => $paths->path(),
         ]);
     }

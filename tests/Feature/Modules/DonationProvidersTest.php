@@ -46,7 +46,8 @@ final class DonationProvidersTest extends TestCase
             ->assertOk()->assertSee('yoomoney');
         $this->assertDatabaseCount('module_donation_provider_settings', 0);
         $this->post('/modules/donations/payment/webhook')->assertNotFound();
-        $this->post('/modules/donations/orders/00000000-0000-0000-0000-000000000000/checkout')->assertNotFound();
+        // Checkout is a guarded GET preview; local POST never submits to the provider.
+        $this->post('/modules/donations/orders/00000000-0000-0000-0000-000000000000/checkout')->assertStatus(405);
     }
 
     public function test_multiple_independent_provider_configs_encrypted_and_never_echoed(): void

@@ -242,3 +242,68 @@ test('players can reach coin selection, adjust a live slider and create an exact
     await expect(player.getByRole('link', { name: 'Пополнить баланс', exact: true })).toHaveCount(0);
     await player.close();
 });
+
+test('donations calculator stays translated and gated in RU/EN, both account themes and mobile', async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await gotoWithLocalNetworkRetry(page, '/admin/login');
+    await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
+    await page.locator('#password').fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
+    await submitLogin({ page, postPath: '/admin/login', label: 'Donation translation administrator login',
+        submit: () => page.getByRole('button', { name: 'Войти в панель' }).click() });
+    await gotoWithLocalNetworkRetry(page, '/admin/modules');
+    const enable = page.locator('[data-module-id="donations"] form[action$="/enable"]');
+    if (await enable.count()) await enable.getByRole('button').click();
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
+    const form = page.getByTestId('donations-workspace');
+    const initial = { visible: await form.locator('#donations-show-in-account').isChecked(),
+        min: await form.locator('[name="min_coins"]').inputValue(), max: await form.locator('[name="max_coins"]').inputValue() };
+    if (!await page.getByTestId('donations-rate-RUB').count()) {
+        await form.locator('[data-donations-currency]').selectOption('RUB');
+        await form.getByRole('button', { name: 'Добавить валюту', exact: true }).click();
+    }
+    await page.getByTestId('donations-rate-RUB').locator('[data-donations-price]').fill('1.25');
+    await page.getByTestId('donations-rate-RUB').locator('input[type="checkbox"]').check();
+    await form.locator('#donations-show-in-account').check();
+    await form.locator('[name="min_coins"]').fill('1');
+    await form.locator('[name="max_coins"]').fill('1000000');
+    await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
+    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    const player = await context.newPage();
+    await gotoWithLocalNetworkRetry(player, '/login');
+    await player.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);
+    await player.locator('#password').fill(process.env.PLAYWRIGHT_PLAYER_PASSWORD);
+    await submitLogin({ page: player, postPath: '/login', label: 'Donation translation player login',
+        submit: () => player.locator('form').getByRole('button').click() });
+    for (const theme of ['kaev-aurelia', 'luxury']) {
+        await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
+        const activate = page.locator(`form[action$="/account-themes/${theme}/activate"]`);
+        if (await activate.count()) {
+            await activate.getByRole('button').click();
+            await expect(activate).toHaveCount(0);
+        }
+        for (const width of [1440, 390]) {
+            await player.setViewportSize({ width, height: 900 });
+            for (const [locale, title] of [['ru', 'Пополнение монет'], ['en', 'Add coins']]) {
+                await gotoWithLocalNetworkRetry(player, `/language/${locale}?return=%2Fmodules%2Fdonations`);
+                await expect(player.locator('h1')).toHaveText(title);
+                await expect(player.locator('html')).toHaveAttribute('lang', locale);
+                const quote = player.getByTestId('donations-quote-form');
+                await quote.locator('[name="currency"]').selectOption('RUB');
+                await quote.locator('[name="coins"]').fill('237');
+                await expect(player.getByTestId('donations-quote-result')).toContainText('296.25 RUB');
+                await expect(player.locator('form[action*="yoomoney.ru"]')).toHaveCount(0);
+                await expect(player.getByTestId('donations-start-checkout')).toHaveCount(0);
+                expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+                await player.screenshot({ path: `storage/framework/testing/donations-${locale}-${theme}-${width}.png`, fullPage: true });
+            }
+        }
+    }
+    await gotoWithLocalNetworkRetry(player, '/language/ru?return=%2Fmodules%2Fdonations');
+    await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations');
+    await form.locator('#donations-show-in-account').setChecked(initial.visible);
+    await form.locator('[name="min_coins"]').fill(initial.min);
+    await form.locator('[name="max_coins"]').fill(initial.max);
+    await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
+    await expect(form.locator('[data-donations-save-status]')).toContainText('Сохраняются настройки');
+    await player.close();
+});

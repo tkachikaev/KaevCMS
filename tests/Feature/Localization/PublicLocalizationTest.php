@@ -50,6 +50,23 @@ class PublicLocalizationTest extends TestCase
         $this->get('/language/de')->assertNotFound();
     }
 
+    public function test_language_switch_keeps_donations_pages_and_query_without_a_locale_prefix(): void
+    {
+        foreach (['/modules/donations?coins=237&currency=RUB',
+            '/modules/donations/orders/12345678-1234-1234-1234-123456789abc'] as $path) {
+            $this->get(route('language.switch', ['locale' => 'en', 'return' => $path]))
+                ->assertRedirect(url($path))->assertSessionHas('locale', 'en');
+        }
+    }
+
+    public function test_module_language_return_rejects_dot_segments_and_encoded_separators(): void
+    {
+        foreach (['/modules/donations/../admin', '/modules/donations/%2e%2e/admin', '/modules/donations%2f..%2fadmin'] as $path) {
+            $this->get(route('language.switch', ['locale' => 'en', 'return' => $path]))
+                ->assertRedirect(url('/en/account'));
+        }
+    }
+
     public function test_language_switch_updates_authenticated_user_preference(): void
     {
         $user = User::query()->create([

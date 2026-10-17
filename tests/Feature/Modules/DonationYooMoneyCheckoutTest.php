@@ -7,7 +7,6 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -17,11 +16,12 @@ use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
+use Tests\Concerns\RefreshDonationDatabase;
 use Tests\TestCase;
 
 final class DonationYooMoneyCheckoutTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDonationDatabase;
 
     protected function setUp(): void
     {
@@ -99,18 +99,49 @@ final class DonationYooMoneyCheckoutTest extends TestCase
         $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid)
             ->assertOk()->assertSee('data-testid="donations-start-checkout"', false);
         $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout?sum=0.01&receiver=41009999999999&paymentType=AC');
-        $response->assertOk()->assertHeader('Cache-Control', 'private, no-store, max-age=0')
+        $response->assertOk()->assertHeader('Cache-Control', 'max-age=0, no-store, private')
+            ->assertHeader('Referrer-Policy', 'no-referrer')
             ->assertSee('data-testid="donations-yoomoney-checkout"', false)
             ->assertSee('action="https://yoomoney.ru/quickpay/confirm"', false)
             ->assertSee('name="receiver" value="410012345678901"', false)
             ->assertSee('name="sum" value="120.00"', false)
             ->assertSee('name="label" value="kaevcms-'.$order->order_uuid.'"', false)
             ->assertSee('name="paymentType" value="PC"', false)
-            ->assertSee('name="paymentType" value="AC"', false)
-            ->assertDontSee('41009999999999');
+            ->assertSee('name="paymentType" value="AC"', false);
+        // The account avatar dialog retains the escaped current URL. Inspect the
+        // external payment form itself, where attacker input must never be used.
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $forms = $xpath->query('//form[@data-testid="donations-checkout-form"]');
+        $this->assertNotFalse($forms);
+        $this->assertSame(1, $forms->length);
+        $form = $forms->item(0);
+        $this->assertInstanceOf(\DOMElement::class, $form);
+        $this->assertSame('POST', $form->getAttribute('method'));
+        $this->assertSame('https://yoomoney.ru/quickpay/confirm', $form->getAttribute('action'));
+        $this->assertSame('410012345678901', $xpath->evaluate('string(.//input[@name="receiver"]/@value)', $form));
+        $this->assertSame('120.00', $xpath->evaluate('string(.//input[@name="sum"]/@value)', $form));
+        $this->assertStringNotContainsString('41009999999999', $document->saveHTML($form));
         Http::assertNothingSent();
         $this->assertDatabaseCount('module_donation_payment_receipts', 0);
         $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_reloading_checkout_does_not_duplicate_preparations_or_page_titles(): void
+    {
+        $this->configure();
+        $player = User::factory()->create();
+        $order = $this->order($player);
+        $this->enableTrustedGates();
+        Http::preventStrayRequests();
+        foreach (range(1, 2) as $attempt) {
+            $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertOk();
+            $this->assertSame(1, preg_match_all('/<h1\b/i', $response->getContent()));
+        }
+        $this->assertDatabaseCount('module_donation_payment_preparations', 1);
+        $this->assertDatabaseCount('wallet_entries', 0);
+        Http::assertNothingSent();
     }
 
     public function test_other_users_are_denied_and_test_mode_cannot_emit_a_real_checkout(): void

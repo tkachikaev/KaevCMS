@@ -2,7 +2,7 @@
 
 namespace KaevCMS\Modules\Donations\Services;
 
-use App\Auth\AdminPermission;
+use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Services\AuditLogger;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -22,9 +22,15 @@ final class DonationPaymentReviews
 
     public function __construct(private readonly AuditLogger $audit) {}
 
+    public static function canReport(Admin $admin): bool
+    {
+        return $admin->exists && $admin->is_active
+            && in_array($admin->role, [AdminRole::Owner, AdminRole::Administrator], true);
+    }
+
     public function record(Admin $admin, string $orderUuid, int $receiptId, string $kind, string $reason, string $requestUuid): int
     {
-        if (! $admin->hasPermission(AdminPermission::ModulesManage)) {
+        if (! self::canReport($admin)) {
             throw new AuthorizationException('Not authorized to record payment review evidence.');
         }
         if (! preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $orderUuid)

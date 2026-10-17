@@ -54,6 +54,62 @@ class DonationOrdersTest extends TestCase
         $this->assertDatabaseCount('module_donation_orders', 0);
     }
 
+    public function test_language_switch_does_not_consume_the_promo_activation_budget(): void
+    {
+        $this->configure();
+        $module = app(ModuleManager::class)->enable('promo-codes');
+        app(ModuleRuntime::class)->bootModule($module);
+        $this->actingAs(User::factory()->create());
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->get('/language/ru?return=%2Fmodules%2Fdonations')->assertRedirect();
+        }
+        $this->from('/modules/promo-codes')->post('/modules/promo-codes/activate', [
+            'code' => 'UNKNOWNQA2026', 'request_token' => (string) Str::uuid(),
+        ])->assertRedirect('/modules/promo-codes')->assertSessionHasErrors('code');
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_checkout_reads_do_not_consume_the_order_creation_budget(): void
+    {
+        $this->configure();
+        $user = User::factory()->create();
+        $order = app(DonationOrders::class)->createDraft($user, 'RUB', 10, (string) Str::uuid());
+        $this->actingAs($user);
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $this->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertNotFound();
+        }
+        $this->post('/modules/donations/orders', [
+            'coins' => 10, 'currency' => 'RUB', 'request_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+        $this->assertDatabaseCount('module_donation_orders', 2);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_order_creation_still_rejects_the_eleventh_request_per_minute(): void
+    {
+        $this->configure();
+        $this->actingAs(User::factory()->create());
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $this->post('/modules/donations/orders', [
+                'coins' => 10, 'currency' => 'RUB', 'request_key' => (string) Str::uuid(),
+            ])->assertRedirect();
+        }
+        $this->post('/modules/donations/orders', [
+            'coins' => 10, 'currency' => 'RUB', 'request_key' => (string) Str::uuid(),
+        ])->assertTooManyRequests();
+        // The independent pending-draft cap remains in force as well.
+        $this->assertDatabaseCount('module_donation_orders', 5);
+    }
+
+    public function test_language_switch_still_rejects_the_twenty_first_request_per_minute(): void
+    {
+        $this->actingAs(User::factory()->create());
+        for ($attempt = 0; $attempt < 20; $attempt++) {
+            $this->get('/language/ru?return=%2Fmodules%2Fdonations')->assertRedirect();
+        }
+        $this->get('/language/ru?return=%2Fmodules%2Fdonations')->assertTooManyRequests();
+    }
+
     public function test_history_and_order_link_to_coin_selection_only_while_player_page_is_open(): void
     {
         $owner = $this->configure();
