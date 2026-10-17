@@ -26,7 +26,7 @@ final class DonationYooMoneyReconciliation
     {
         $result = ['scanned' => 0, 'candidates' => 0, 'errors' => 0];
         $query = DonationPaymentPreparation::query()->where('provider_code', 'yoomoney')
-            ->where('mode', 'live')->orderBy('id');
+            ->where('mode', 'live')->orderByDesc('id');
         if ($orderUuid !== null) {
             if (! preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $orderUuid)) {
                 throw new RuntimeException('Invalid order UUID.');

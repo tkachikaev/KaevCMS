@@ -5,6 +5,8 @@ namespace KaevCMS\Modules\Donations\Services;
 use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Services\AuditLogger;
+use Carbon\CarbonImmutable;
+use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,12 @@ use Throwable;
  */
 final class DonationProviderSettings
 {
+    // Encrypted inside the existing credential payload, never a field in the UI.
+    // At most four retired YooMoney secrets are retained for 24 hours after rotation.
+    private const YOOMONEY_RETIRED_KEYS = '_yoomoney_retired_hmac_keys';
+
+    private const YOOMONEY_GRACE_HOURS = 24;
+
     public function __construct(
         private readonly DonationProviderRegistry $registry,
         private readonly AuditLogger $audit,
@@ -36,7 +44,9 @@ final class DonationProviderSettings
             $configured = [];
             if ($row !== null) {
                 try {
-                    $configured = array_keys($this->readCredentials($row));
+                    $configured = array_keys(array_intersect_key(
+                        $this->readCredentials($row), $driver->credentialFields(),
+                    ));
                 } catch (Throwable) {
                     // Never display a broken config as ready or leak the exception/secret.
                     $configured = [];
@@ -67,7 +77,42 @@ final class DonationProviderSettings
             throw new RuntimeException('Payment provider is not configured.');
         }
 
-        return $this->readCredentials($row);
+        return array_intersect_key($this->readCredentials($row), $this->registry->get($code)->credentialFields());
+    }
+
+    /**
+     * Trusted signing keys for ONE immutable payment preparation. Rotated keys are
+     * accepted only for orders prepared before rotation, and for a short grace
+     * period. The read-only provider UI and API never expose prior secrets.
+     *
+     * @return list<array<string,string>>
+     */
+    public function notificationVerificationCredentials(DonationPaymentPreparation $preparation): array
+    {
+        $code = (string) $preparation->provider_code;
+        $driver = $this->registry->get($code);
+        $row = DonationProviderSetting::query()->find($code);
+        if ($row === null) {
+            throw new RuntimeException('Payment provider is not configured.');
+        }
+        $stored = $this->readCredentials($row);
+        $current = array_intersect_key($stored, $driver->credentialFields());
+        $result = [$current];
+        if ($code !== 'yoomoney' || $preparation->mode !== 'live') {
+            return $result;
+        }
+        $now = CarbonImmutable::now();
+        foreach ($this->readRetiredYooMoneyKeys($stored) as $retired) {
+            $expiresAt = CarbonImmutable::parse($retired['expires_at']);
+            // The serialized provider-settings lock also guards preparation.
+            // Compare the immutable ID boundary, not seconds-precision timestamps.
+            if ((int) $preparation->getKey() <= $retired['max_preparation_id']
+                && $now->lessThan($expiresAt)) {
+                $result[] = [...$current, 'notification_secret' => $retired['secret']];
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -121,15 +166,45 @@ final class DonationProviderSettings
                     'mode' => 'test', 'currency_codes' => [], 'credentials_ciphertext' => null])->save();
                 $row = DonationProviderSetting::query()->whereKey($code)->lockForUpdate()->firstOrFail();
             }
-            $credentials = $this->readCredentials($row);
+            $stored = $this->readCredentials($row);
+            $credentials = array_intersect_key($stored, $fields);
+            $oldSecret = $credentials['notification_secret'] ?? null;
             foreach ($suppliedCredentials as $key => $value) {
                 // Empty secret input means "keep", never "clear". Rotations overwrite atomically.
                 if ($value !== '') {
                     $credentials[$key] = $value;
                 }
             }
-            // Driver declarations may evolve: strip retired keys before persisting.
-            $credentials = array_intersect_key($credentials, $fields);
+            // Keep a short, private grace window if YooMoney rotates its HMAC key.
+            // Existing live payment preparations may already have been signed using
+            // the previous key. Never retain retired credentials for other drivers.
+            $retired = [];
+            if ($code === 'yoomoney') {
+                $now = CarbonImmutable::now();
+                foreach ($this->readRetiredYooMoneyKeys($stored) as $entry) {
+                    if ($now->lessThan(CarbonImmutable::parse($entry['expires_at']))) {
+                        $retired[] = $entry;
+                    }
+                }
+                if (is_string($oldSecret) && $oldSecret !== ''
+                    && isset($credentials['notification_secret'])
+                    && $oldSecret !== $credentials['notification_secret']) {
+                    $retired[] = [
+                        'secret' => $oldSecret,
+                        'rotated_at' => $now->toIso8601String(),
+                        'max_preparation_id' => (int) (DonationPaymentPreparation::query()
+                            ->where('provider_code', 'yoomoney')->max('id') ?? 0),
+                        'expires_at' => $now->addHours(self::YOOMONEY_GRACE_HOURS)->toIso8601String(),
+                    ];
+                }
+                if ($retired !== []) {
+                    // Bound encrypted data growth; extraordinary repeated rotations
+                    // require manual verification of oldest delayed transfers.
+                    $credentials[self::YOOMONEY_RETIRED_KEYS] = json_encode(
+                        array_slice($retired, -4), JSON_THROW_ON_ERROR,
+                    );
+                }
+            }
             if ($enabled) {
                 if ($currencyCodes === []) {
                     throw new InvalidArgumentException('Select at least one provider currency.');
@@ -226,6 +301,39 @@ final class DonationProviderSettings
             return true;
         } catch (Throwable) {
             return false;
+        }
+    }
+
+    /**
+     * @param array<string,string> $stored
+     * @return list<array{secret:string,rotated_at:string,max_preparation_id:int,expires_at:string}>
+     */
+    private function readRetiredYooMoneyKeys(array $stored): array
+    {
+        if (! isset($stored[self::YOOMONEY_RETIRED_KEYS])) {
+            return [];
+        }
+        try {
+            $values = json_decode($stored[self::YOOMONEY_RETIRED_KEYS], true, 512, JSON_THROW_ON_ERROR);
+            if (! is_array($values) || count($values) > 4) {
+                throw new RuntimeException('Invalid retained payment secrets.');
+            }
+            foreach ($values as $entry) {
+                if (! is_array($entry) || ! is_string($entry['secret'] ?? null)
+                    || strlen($entry['secret']) < 8 || strlen($entry['secret']) > 1024
+                    || ! is_string($entry['rotated_at'] ?? null)
+                    || ! is_int($entry['max_preparation_id'] ?? null)
+                    || $entry['max_preparation_id'] < 0
+                    || ! is_string($entry['expires_at'] ?? null)) {
+                    throw new RuntimeException('Invalid retained payment secrets.');
+                }
+                CarbonImmutable::parse($entry['rotated_at']);
+                CarbonImmutable::parse($entry['expires_at']);
+            }
+
+            return array_values($values);
+        } catch (Throwable) {
+            throw new RuntimeException('Unable to read protected payment key history.');
         }
     }
 

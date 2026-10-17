@@ -11,6 +11,7 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
@@ -53,7 +54,7 @@ final class DonationYooMoneySettlementTest extends TestCase
     }
 
     /** RFC3986 signed notification, gross payer 120 RUB, net receiver 117.60 RUB. */
-    private function signed(DonationOrder $order, string $operation = '44012345', array $overrides = []): string
+    private function signed(DonationOrder $order, string $operation = '44012345', array $overrides = [], string $secret = 'private-secret'): string
     {
         $fields = array_merge([
             'notification_type' => 'p2p-incoming', 'operation_id' => $operation,
@@ -64,7 +65,7 @@ final class DonationYooMoneySettlementTest extends TestCase
             'test_notification' => 'false',
         ], $overrides);
         ksort($fields, SORT_STRING);
-        $signature = hash_hmac('sha256', http_build_query($fields, '', '&', PHP_QUERY_RFC3986), 'private-secret');
+        $signature = hash_hmac('sha256', http_build_query($fields, '', '&', PHP_QUERY_RFC3986), $secret);
         $fields['sign'] = $signature;
 
         return http_build_query($fields, '', '&', PHP_QUERY_RFC3986);
@@ -175,15 +176,58 @@ final class DonationYooMoneySettlementTest extends TestCase
         app(DonationOrders::class)->cancelDraft($player, $order->order_uuid);
     }
 
-    public function test_cancelled_order_stays_uncredited_even_with_signed_transfer(): void
+    public function test_cancelled_prepared_order_with_late_genuine_payment_is_credited_once(): void
     {
         [$player, $order] = $this->prepared();
         app(DonationOrders::class)->cancelDraft($player, $order->order_uuid);
         $this->openCredits();
-        $this->notify($this->signed($order))->assertOk();
+        $body = $this->signed($order);
+        $this->notify($body)->assertOk();
+        $this->notify($body)->assertOk();
         $this->assertDatabaseHas('module_donation_payment_receipts', [
-            'status' => 'review', 'review_reason' => 'order_not_payable',
+            'provider_payment_id' => '44012345', 'status' => 'credited',
+            'payer_amount_minor' => 12000, 'received_amount_minor' => 11760,
         ]);
+        $this->assertDatabaseHas('module_donation_order_events', [
+            'order_id' => $order->id, 'from_status' => 'cancelled', 'to_status' => 'credited',
+        ]);
+        $this->assertSame('credited', $order->fresh()->status);
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 1);
+    }
+
+    public function test_expired_prepared_order_with_delayed_signed_payment_is_credited(): void
+    {
+        [$player, $order] = $this->prepared();
+        $this->travel(61)->minutes();
+        $this->assertSame('expired', app(DonationOrders::class)->cancelDraft($player, $order->order_uuid)->status);
+        $this->openCredits();
+        $this->notify($this->signed($order))->assertOk();
+        $this->assertDatabaseHas('module_donation_order_events', [
+            'order_id' => $order->id, 'from_status' => 'expired', 'to_status' => 'credited',
+        ]);
+        $this->assertSame('credited', $order->fresh()->status);
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_switching_provider_mode_and_disabling_new_sales_does_not_lose_signed_old_payment(): void
+    {
+        [, $order] = $this->prepared();
+        $owner = Admin::query()->where('role', AdminRole::Owner->value)->firstOrFail();
+        app(DonationProviderSettings::class)->save($owner, 'yoomoney', false, 'test', ['RUB']);
+        app(DonationSettings::class)->updateVisibility(false, $owner);
+        $this->openCredits();
+        $this->notify($this->signed($order))->assertOk();
+        $this->assertSame('credited', $order->fresh()->status);
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_review_receipt_is_shown_as_problem_not_processing(): void
+    {
+        [, $order] = $this->prepared();
+        $this->openCredits();
+        $this->notify($this->signed($order, '55111', ['withdraw_amount' => '119.99']))->assertOk();
+        $this->assertSame('payment_review', $order->fresh()->displayStatus());
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 
@@ -233,6 +277,64 @@ final class DonationYooMoneySettlementTest extends TestCase
         $this->assertSame('credited', $order->fresh()->status);
     }
 
+    public function test_previously_verified_pending_receipt_survives_expired_hmac_rotation_grace(): void
+    {
+        [, $order] = $this->prepared();
+        config()->set('donation-payments.callbacks_enabled', true);
+        $this->notify($this->signed($order))->assertOk();
+        $this->assertDatabaseHas('module_donation_payment_receipts', ['status' => 'pending']);
+        $owner = Admin::query()->where('role', AdminRole::Owner->value)->firstOrFail();
+        app(DonationProviderSettings::class)->save($owner, 'yoomoney', true, 'live', ['RUB'], [
+            'notification_secret' => 'rotated-private-secret',
+        ]);
+        $this->travel(25)->hours();
+        $this->openCredits();
+        // Provider no longer accepts the old HMAC, but the initial accepted
+        // callback is bound to a receipt by authenticated encrypted evidence.
+        $this->notify($this->signed($order))->assertStatus(400);
+        $this->assertSame(1, app(DonationPaymentSettlements::class)->retryPending());
+        $this->assertSame(0, app(DonationPaymentSettlements::class)->retryPending());
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertSame('credited', $order->fresh()->status);
+    }
+
+    public function test_tampered_or_swapped_stored_pending_evidence_never_credits(): void
+    {
+        [$player, $first] = $this->prepared();
+        $second = app(DonationOrders::class)->createDraft($player, 'RUB', 12, (string) Str::uuid());
+        app(DonationPaymentPreparations::class)->prepare($player, $second->order_uuid, 'yoomoney');
+        config()->set('donation-payments.callbacks_enabled', true);
+        $this->notify($this->signed($first, '11111'))->assertOk();
+        $this->notify($this->signed($second, '22222'))->assertOk();
+        $rows = DB::table('module_donation_payment_receipts')->orderBy('id')->get();
+        $this->assertCount(2, $rows);
+        DB::table('module_donation_payment_receipts')->where('id', $rows[0]->id)
+            ->update(['encrypted_notification' => $rows[1]->encrypted_notification]);
+        DB::table('module_donation_payment_receipts')->where('id', $rows[1]->id)
+            ->update(['encrypted_notification' => 'modified ciphertext']);
+        $this->openCredits();
+        $this->assertSame(0, app(DonationPaymentSettlements::class)->retryPending());
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertSame('draft', $first->fresh()->status);
+        $this->assertSame('draft', $second->fresh()->status);
+    }
+
+    public function test_legacy_encrypted_raw_callback_receipt_can_still_be_retried(): void
+    {
+        [, $order] = $this->prepared();
+        config()->set('donation-payments.callbacks_enabled', true);
+        $signed = $this->signed($order);
+        $this->notify($signed)->assertOk();
+        // Pre-0.50.6 receipts contain a raw signed form body, not an envelope.
+        DB::table('module_donation_payment_receipts')->update([
+            'encrypted_notification' => Crypt::encryptString($signed),
+        ]);
+        $this->openCredits();
+        $this->assertSame(1, app(DonationPaymentSettlements::class)->retryPending());
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertSame('credited', $order->fresh()->status);
+    }
+
     public function test_read_only_recovery_only_records_review_candidates_and_never_changes_wallet(): void
     {
         [, $order] = $this->prepared();
@@ -246,6 +348,80 @@ final class DonationYooMoneySettlementTest extends TestCase
         $this->assertSame(['scanned' => 1, 'candidates' => 1, 'errors' => 0], $probe->scan());
         $this->assertSame(['scanned' => 1, 'candidates' => 0, 'errors' => 0], $probe->scan());
         $this->assertDatabaseCount('module_donation_recovery_candidates', 1);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_rotated_yoomoney_signing_key_accepts_old_live_preparation_but_not_new_one(): void
+    {
+        [$player, $oldOrder] = $this->prepared();
+        $oldBody = $this->signed($oldOrder);
+        $owner = Admin::query()->where('role', AdminRole::Owner->value)->firstOrFail();
+        $settings = app(DonationProviderSettings::class);
+        $settings->save($owner, 'yoomoney', true, 'live', ['RUB'], [
+            'notification_secret' => 'rotated-private-secret',
+        ]);
+        $this->assertSame('rotated-private-secret', $settings->credentialsForDriver('yoomoney')['notification_secret']);
+        $this->assertArrayNotHasKey('_yoomoney_retired_hmac_keys', $settings->credentialsForDriver('yoomoney'));
+        $raw = (string) DB::table('module_donation_provider_settings')->where('provider_code', 'yoomoney')
+            ->value('credentials_ciphertext');
+        $this->assertStringNotContainsString('private-secret', $raw);
+        $this->assertStringNotContainsString('rotated-private-secret', $raw);
+
+        $newOrder = app(DonationOrders::class)->createDraft($player, 'RUB', 12, (string) Str::uuid());
+        app(DonationPaymentPreparations::class)->prepare($player, $newOrder->order_uuid, 'yoomoney');
+        $this->openCredits();
+        $this->notify($oldBody)->assertOk();
+        $this->assertSame('credited', $oldOrder->fresh()->status);
+        $this->notify($this->signed($newOrder, '44012346'))->assertStatus(400);
+        $this->assertSame('draft', $newOrder->fresh()->status);
+        $this->notify($this->signed($newOrder, '44012346', [], 'rotated-private-secret'))->assertOk();
+        $this->assertSame('credited', $newOrder->fresh()->status);
+        $this->assertDatabaseCount('wallet_entries', 2);
+    }
+
+    public function test_expired_key_rotation_grace_rejects_old_signatures_without_credit(): void
+    {
+        [, $order] = $this->prepared();
+        $owner = Admin::query()->where('role', AdminRole::Owner->value)->firstOrFail();
+        app(DonationProviderSettings::class)->save($owner, 'yoomoney', true, 'live', ['RUB'], [
+            'notification_secret' => 'rotated-private-secret',
+        ]);
+        $this->travel(25)->hours();
+        $this->openCredits();
+        $this->notify($this->signed($order))->assertStatus(400);
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_key_rotation_remains_safe_when_provider_is_disabled_after_preparation(): void
+    {
+        [, $order] = $this->prepared();
+        $owner = Admin::query()->where('role', AdminRole::Owner->value)->firstOrFail();
+        app(DonationProviderSettings::class)->save($owner, 'yoomoney', false, 'test', ['RUB'], [
+            'notification_secret' => 'rotated-private-secret',
+        ]);
+        $this->openCredits();
+        $this->notify($this->signed($order))->assertOk();
+        $this->assertSame('credited', $order->fresh()->status);
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_recovery_scan_prioritizes_recent_uncredited_preparations(): void
+    {
+        [$player, $older] = $this->prepared();
+        $newer = app(DonationOrders::class)->createDraft($player, 'RUB', 12, (string) Str::uuid());
+        app(DonationPaymentPreparations::class)->prepare($player, $newer->order_uuid, 'yoomoney');
+        Http::fake(['https://yoomoney.ru/api/operation-history' => Http::response([
+            'operations' => [[
+                'operation_id' => '900112', 'status' => 'success', 'direction' => 'in',
+                'label' => 'kaevcms-'.$newer->order_uuid,
+            ]],
+        ], 200)]);
+        $this->assertSame(['scanned' => 1, 'candidates' => 1, 'errors' => 0],
+            app(DonationYooMoneyReconciliation::class)->scan(1));
+        $this->assertDatabaseHas('module_donation_recovery_candidates', [
+            'provider_operation_id' => '900112',
+        ]);
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 

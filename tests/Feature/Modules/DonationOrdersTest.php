@@ -43,7 +43,7 @@ class DonationOrdersTest extends TestCase
 
     public function test_schema_contains_provenance_and_starts_empty(): void
     {
-        $this->assertSame('1.7.0', app(ModuleManager::class)->inspect('donations')['version']);
+        $this->assertSame('1.10.1', app(ModuleManager::class)->inspect('donations')['version']);
         $this->assertTrue(Schema::hasColumns('module_donation_orders', [
             'order_uuid', 'user_id', 'idempotency_key', 'coins', 'currency_code',
             'exponent', 'unit_price_minor', 'total_minor', 'provider_code',
@@ -164,13 +164,25 @@ class DonationOrdersTest extends TestCase
         $service = app(DonationOrders::class);
         $key = (string) Str::uuid();
         $order = $service->createDraft($user, 'RUB', 2, $key);
-        $this->travel(31)->minutes();
+        $this->travel(61)->minutes();
         $expired = $service->cancelDraft($user, $order->order_uuid);
         $this->assertSame(DonationOrder::EXPIRED, $expired->status);
         $this->assertSame($order->id, $service->createDraft($user, 'RUB', 2, $key)->id);
         $this->assertSame(DonationOrder::DRAFT,
             $service->createDraft($user, 'RUB', 2, (string) Str::uuid())->status);
         $this->assertDatabaseCount('module_donation_order_events', 3);
+    }
+
+    public function test_new_draft_expires_after_sixty_minutes_not_thirty(): void
+    {
+        $this->configure();
+        $user = User::factory()->create();
+        $order = app(DonationOrders::class)->createDraft($user, 'RUB', 2, (string) Str::uuid());
+        $this->assertSame(now()->addHour()->format('Y-m-d H:i:s'), $order->expires_at->format('Y-m-d H:i:s'));
+        $this->travel(31)->minutes();
+        $this->assertSame('draft', $order->fresh()->displayStatus());
+        $this->travel(30)->minutes();
+        $this->assertSame('expired', $order->fresh()->displayStatus());
     }
 
     public function test_limit_of_five_active_drafts_does_not_block_cancelled_drafts(): void

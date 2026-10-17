@@ -1,4 +1,9 @@
-# Donations C1 — KaevCMS 0.50.0
+# Donations C4d — KaevCMS 0.50.6
+
+**Current Donations 1.10.1**: 60-minute draft window, authenticated late settlement after local cancel/expiry or provider mode change, and simplified player statuses. C4a dispute reporting and exact payer/net reporting remain. Live checkout and wallet credits stay disabled. Earlier sections are historical.
+
+## Historical C1 reference
+
 
 `Donations 1.5.0` establishes a provider-agnostic payment architecture. There is **no working payment driver**, no real checkout, callback, wallet credit or money movement in this version. The old B5 unpaid drafts, private history and administration journal remain intact.
 
@@ -60,3 +65,31 @@ Official references: https://yoomoney.ru/docs/payment-buttons/using-api/forms , 
 - This is not a verified provider sandbox or production merchant deployment. Chargebacks, fees, key rotation, scheduled recovery and real end-to-end checkout remain for C4. Run Windows quality/browser gates, PHPUnit C3 cases, disposable MySQL/MariaDB concurrency, clean install and 0.50.1 upgrade before production decisions.
 
 For real MySQL/MariaDB concurrency on a disposable **test** database: `APP_ENV=testing DONATIONS_TEST_ALLOW_CONCURRENCY=1 php tests/Integration/Donations/mysql-settlement-concurrency.php`. Never run on production.
+
+
+## C4a — 0.50.3 / Donations 1.8.0 (2026-10-17)
+
+Adds a persistent **administrator-reported** review journal. This is not YooMoney-verifiable evidence of a refund or chargeback. Owner/Admin may record a dispute, reported refund/chargeback, note and manual resolution tied to a specific non-test receipt, with required reason, stable idempotency UUID and fail-closed audit in the same DB transaction. Refund/chargeback reports require a credited receipt. Auditor may read, Editor cannot write. Orders may be filtered by presence of manual reports.
+
+The signed YooMoney receipt displays exact `withdraw_amount` (payer gross), `amount` (merchant net) and their minor-unit difference. No floats or assumed provider fee rates. No Wallet debit, automated refund, new paid state or checkout is introduced. Previously released 71 migrations and core Wallet code remain unchanged; only additive migration `2026_10_17_020000` is new. The production callback and credit gates stay closed. Windows tests plus clean-install/0.50.2-upgrade on a disposable MySQL DB are required before accepting the version. Provider-verified refund/dispute and scheduled reconciliation remain deferred to C4b.
+
+## C4b — 0.50.4 / Donations 1.9.0 (2026-10-17)
+
+- New drafts expire after **60 minutes** (existing order deadlines stay unchanged). Expiry limits starting a payment, **never late delivery of a signed callback**.
+- Verified matching YooMoney notifications for an immutable prior **live** preparation can be settled from `draft`, `expired`, or `cancelled`, including after provider disable or test/live switch. The gross `withdraw_amount` must exactly match the snapshotted amount, and the HMAC, currency, UUID and uniqueness checks remain strict. Prior test preparations can never credit.
+- Pending authenticated receipts display **Processing**; mismatches display **Payment needs review**. A second payment for a credited order is reviewed rather than credited again. No Wallet changes or migrations.
+- Callback, checkout and credits are **still inactive by default**; run Windows gates, isolated MySQL concurrency and install/upgrade from 0.50.3, and test provider notification cases before production enablement. Key rotation after live checkout needs a separate verified strategy before activation.
+
+## C4d — 0.50.6 / Donations 1.10.1 (2026-10-17)
+
+- A callback is first HMAC-verified, then its payment snapshot and original message are stored as **Laravel-Crypt authenticated evidence**. A previously verified pending payment can be retried after the retired YooMoney signing key has expired.
+- Exact order, provider operation ID, payer `withdraw_amount`, receiver `amount`, currency and fingerprint still must match the original receipt. Corrupted/swapped evidence and unsigned history candidates cannot credit a wallet. A newly received callback signed with an expired key still fails verification.
+- Legacy C3/C4 encrypted raw-only receipts can still be processed with a currently eligible signing key. No published financial migrations or Wallet Core behavior changed.
+- Production checkout, callback and credits remain disabled pending Windows/Playwright/PHPUnit/MySQL full acceptance.
+
+## C4c — 0.50.5 / Donations 1.10.0 (2026-10-17)
+
+- When the YooMoney notification HMAC secret changes, the previously used key is retained within the **encrypted** existing provider settings for **24 hours**. It is eligible only for immutable live preparations made **before** rotation; newly prepared payments use the new key (atomic maximum-preparation-ID cutoff, even in the same second). At most four previous keys can be retained for consecutive rotations. No extra merchant controls, migrations or exposed secrets.
+- This is a convenience for routine rotation, **not compromised-secret handling**. On suspected key theft, stop callbacks and credits and investigate existing orders. After the grace period, old signatures are not accepted; read-only recovery/manual review is needed.
+- `php artisan kaevcms:donations-reconcile --scan` prioritizes the most recent preparations; use `--order=UUID` for a particular older order. Unsigned API history is never sufficient to credit Wallet.
+- The 3 payment gates still default to false, and there is still no live checkout. Windows tests, full Laravel QA, isolated MySQL concurrency and clean/upgrade checks have not been run in this release environment.

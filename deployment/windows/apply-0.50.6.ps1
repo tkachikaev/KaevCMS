@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$SkipTests
 )
 
@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Donations C3: signed callback journal, gated settlement and recovery. Real checkout and wallet credits remain disabled by default.'
+Write-Host 'Donations C4d: authenticated verified receipt retry after key rotation. Live checkout and credits stay disabled.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

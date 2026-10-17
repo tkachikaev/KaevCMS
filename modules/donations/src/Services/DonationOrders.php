@@ -19,7 +19,7 @@ use RuntimeException;
  */
 final class DonationOrders
 {
-    private const DRAFT_MINUTES = 30;
+    private const DRAFT_MINUTES = 60;
 
     private const MAX_OPEN_DRAFTS = 5;
 

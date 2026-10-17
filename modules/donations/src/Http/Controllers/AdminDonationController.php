@@ -3,12 +3,17 @@
 namespace KaevCMS\Modules\Donations\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Auth\AdminPermission;
 use App\Models\Admin;
-use App\Services\Admin\AdminPathSettings;
 use App\Support\Modules\ModuleAdminAuthorizer;
+use App\Services\Admin\AdminPathSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
+use LogicException;
+use KaevCMS\Modules\Donations\Services\DonationPaymentReviews;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use KaevCMS\Modules\Donations\Http\Requests\SaveDonationCurrencyRateRequest;
@@ -113,6 +118,7 @@ final class AdminDonationController extends Controller
             'status' => ['nullable', Rule::in(['draft', 'cancelled', 'expired', 'credited'])],
             'currency' => ['nullable', 'string', 'regex:/\A[A-Z]{3}\z/D'],
             'user_id' => ['nullable', 'integer', 'min:1'],
+            'reported' => ['nullable', Rule::in(['1'])],
         ])->validate();
         $query = DonationOrder::query()->with('user:id,name,email');
         if (($filters['status'] ?? '') === 'expired') {
@@ -126,6 +132,9 @@ final class AdminDonationController extends Controller
             $query->where('status', 'draft')->where('expires_at', '>', now());
         } elseif (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        }
+        if (($filters['reported'] ?? '') === '1') {
+            $query->whereIn('id', DB::table('module_donation_payment_review_events')->select('order_id'));
         }
         if (! empty($filters['currency'])) {
             $query->where('currency_code', $filters['currency']);
@@ -151,6 +160,12 @@ final class AdminDonationController extends Controller
         $candidateIds = DB::table('module_donation_payment_preparations')->where('order_id', $order->id)->pluck('id');
         $recovery = DB::table('module_donation_recovery_candidates')->whereIn('preparation_id', $candidateIds)
             ->orderByDesc('id')->limit(30)->get();
+        $reviews = DB::table('module_donation_payment_review_events as r')
+            ->join('admins as a', 'a.id', '=', 'r.admin_id')
+            ->where('r.order_id', $order->id)
+            ->select(['r.id', 'r.receipt_id', 'r.kind', 'r.source', 'r.reason', 'r.created_at', 'a.name as admin_name'])
+            ->orderByDesc('r.id')->limit(100)->get();
+        $admin = auth('admin')->user();
         $events = DB::table('module_donation_order_events')
             ->where('order_id', $order->id)->orderByDesc('id')->paginate(30);
 
@@ -158,7 +173,34 @@ final class AdminDonationController extends Controller
         $view = 'module-donations::admin.order';
 
         return view($view, [
-            'order' => $order, 'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'money' => $money, 'adminPath' => $paths->path(),
+            'order' => $order, 'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'reviews' => $reviews,
+            'canReport' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::ModulesManage),
+            'reportRequestUuid' => (string) Str::uuid(), 'money' => $money, 'adminPath' => $paths->path(),
         ]);
     }
+
+    public function reportReview(string $orderUuid, Request $request, AdminPathSettings $paths,
+        ModuleAdminAuthorizer $access, DonationPaymentReviews $reviews): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.orders.reviews.store', 'POST', $admin);
+        $data = $request->validate([
+            'receipt_id' => ['required', 'integer', 'min:1'],
+            'kind' => ['required', Rule::in(DonationPaymentReviews::KINDS)],
+            'reason' => ['required', 'string', 'min:10', 'max:1000'],
+            'request_uuid' => ['required', 'uuid'],
+        ]);
+        try {
+            $reviews->record($admin, $orderUuid, (int) $data['receipt_id'],
+                (string) $data['kind'], (string) $data['reason'], (string) $data['request_uuid']);
+        } catch (InvalidArgumentException|LogicException) {
+            return back()->withErrors(['review' => __('module-donations::messages.review_invalid')]);
+        }
+
+        return redirect()->route('admin.module-pages.donations.orders.show', [
+            'adminPath' => $paths->path(), 'orderUuid' => $orderUuid,
+        ])->with('status', __('module-donations::messages.review_saved'));
+    }
+
 }

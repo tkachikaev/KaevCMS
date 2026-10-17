@@ -1,3 +1,48 @@
+## 0.50.6 - 2026-10-17
+
+### Fixed — Donations C4d, payment receipt recovery (module 1.10.1)
+
+- Previously authenticated, durable signed YooMoney receipts are stored with a Laravel-Crypt-authenticated, immutable verification snapshot. Deferred settlement no longer fails if the provider rotates its HMAC signing secret and its 24-hour acceptance grace expires **after** the initial successful verification.
+- On retry, the saved evidence is checked against its original receipt ID, operation ID, order, currency, exact payer and net amounts, and verification fingerprint. Corrupted or swapped ciphertext fails closed. WalletGateway, financial migrations, price snapshots, and exactly-once settlement stay unchanged.
+- Existing pre-0.50.6 receipts containing only encrypted raw POST bodies remain readable: they still require an eligible signing secret for re-verification. Unauthenticated provider-history candidates can **never** use the deferred-credit path. A new callback using an expired old key remains invalid.
+- Added feature regression tests for expired key rotation, corrupted/swapped evidence and legacy receipts; expanded standalone YooMoney HMAC and verified-evidence contract test. Locally executed standalone and available installer/shared-hosting regressions; Composer/PHPUnit/Pint/PHPStan, Windows/Playwright, ZIP-extension release-builder tests and isolated MySQL concurrency/upgrade remain unverified here.
+- Checkout, callback processing and coin-credit feature gates remain OFF by default. Do not accept real transfers before complete QA and explicit live enablement.
+
+## 0.50.5 - 2026-10-17
+
+### Changed — Donations C4c (module 1.10.0)
+
+- **Bounded YooMoney HMAC key rotation:** when an administrator replaces the notification signing secret, the prior secret is retained only encrypted in the existing provider credentials payload for **24 hours**. Earlier immutable **live** preparations can verify delayed signed callbacks with it. Preparations created after rotation cannot use previous keys: an immutable preparation-ID cutoff (not seconds-precision timestamps) closes the same-second race; test preparations remain non-creditable. Up to four recently retired keys may exist during repeated rotations. Blank secret inputs still retain the current credential. No additional admin controls or database migrations were introduced.
+- Verification uses the current signing secret first; only an actual signature mismatch permits trying an eligible retired key. Malformed callbacks, duplicate parameters, wrong amounts and wrong currencies remain rejected or reviewed without creating extra Wallet credits. Previous keys are never included in provider UI, public API, audit logs or `credentialsForDriver` results. Retired keys expire automatically and are dropped on the next provider-settings save; old lost transfers beyond the grace window require explicit read-only recovery/manual investigation. This grace is intended for ordinary rotations, **not suspected credential compromise**; isolate callbacks/credits during an incident.
+- Read-only YooMoney history reconciliation now starts from the most recently prepared orders, rather than repeatedly scanning only the earliest limited batch. Candidates remain administrative evidence, **never a source for automatic credit**. Use the existing `--order` option to inspect older specific orders.
+- Added regression tests for key rotation with old/new orders, expired grace, disabled provider, recovery order, and old HMAC rejection. No changes to existing migrations or Core Wallet.
+- **Live checkout, callback and credit gates remain disabled**. PHPUnit, Pint, PHPStan, Windows browser gates and isolated MySQL/MariaDB concurrency/upgrade remain to be executed in the target environment before considering real payments.
+
+## 0.50.4 - 2026-10-17
+
+### Changed — Donations C4b (module 1.9.0)
+
+- New **unpaid draft** expiration window is 60 minutes instead of 30. Previously persisted deadlines do not change: an existing order keeps its original `expires_at` snapshot and new drafts receive 60 minutes. This window limits initiating payment, **not delivery of a signed callback**.
+- Correctly HMAC-verified YooMoney transfer for a prepared live order can complete **after the deadline or local cancellation/expiry**, provided its immutable order UUID, currency, payer `withdraw_amount`, and preparation snapshot all match. The credit path still uses one WalletGateway operation and a unique settlement per order with transactional audit. A second different incoming transfer for a credited order remains manual review; invalid signatures/test notifications/amount mismatch never credit.
+- Current provider test/live toggle or disable does not retroactively reject a valid signed transfer with a prior immutable **live** preparation. A previous **test** preparation always remains non-creditable even when the provider is subsequently switched to live. Credential rotation still requires separately planned historic-signature support before live release.
+- More useful UI statuses: pending signed receipts show **Processing**, mismatched authenticated receipts show **Payment needs review**, settled orders show **Credited**. Fee reporting continues to distinguish payer `withdraw_amount` and receiver `amount` without float.
+- Added regression tests for 60-minute expiry, delayed valid payments from expired/cancelled prepared orders, mode flip with closed sales, status display, and replay protection. No new migrations; published schemas and Wallet Core remain untouched.
+- **Production checkout, callback and credit switches remain disabled.** This is an incremental, unaccepted C4b build; testing with PHPUnit/Pint/PHPStan/Playwright and disposable MySQL/MariaDB clean install/upgrade/concurrency is still required. No true live payment performed.
+
+## 0.50.3 - 2026-10-17
+
+### Added — Donations C4a (`donations` 1.8.0)
+
+- Exact signed YooMoney receipt accounting displayed per order: payer `withdraw_amount`, recipient `amount`, and the **difference** in RUB minor units. The difference is an observed fee/deduction, not a published fixed rate or permission to surcharge the payer.
+- New additive `module_donation_payment_review_events` journal for **administrator-reported, unverified** disputes, refunds, chargebacks, review notes and resolution notes; every event references a receipt/order/admin, has an idempotency UUID, preserves the human reason and requires an atomic audit record. No Wallet changes and no automatic refund or debit.
+- Owner/Administrator-only report action with server-side permission checks, Auditor read-only, Editor denied. Administrative order page displays history; list can be filtered to orders with reports. Test and cross-order receipts cannot be associated with a review. Refund/chargeback reports require a credited receipt.
+- Negative regression tests for replay/conflicting key, roles, forged order/receipt association, audit rollback and read-only Wallet invariants.
+- All previous migrations and Wallet Core are unchanged; only an additive C4a migration. Release keeps `donation-payments.callbacks_enabled=false`, `donation-payments.credits_enabled=false`, and `wallet.enabled_sources.donations=false`. **No production checkout, provider refund API, verified refund notice, or live payments.**
+
+### Deferred — C4b / acceptance
+
+- Provider-backed confirmation of disputes/refunds, scheduled reconciliation and missing-webhook workflow, credential-rotation hardening, fully reviewed payment lifecycle and real merchant/live validation. Windows PHPUnit/Pint/PHPStan/Playwright and isolated MySQL concurrency/upgrade acceptance remain required. Existing dependency advisories also need a separate audit.
+
 ## 0.50.2 - 2026-10-17
 
 ### Added — Donations C3 (`donations` 1.7.0)

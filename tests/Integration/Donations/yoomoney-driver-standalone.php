@@ -2,6 +2,7 @@
 
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
+use KaevCMS\Modules\Donations\Data\VerifiedReceiptEnvelope;
 use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 
 /** Run without Laravel/vendor: php tests/Integration/Donations/yoomoney-driver-standalone.php */
@@ -9,7 +10,7 @@ $root = dirname(__DIR__, 3);
 foreach ([
     'src/Contracts/PaymentProvider.php', 'src/Data/PaymentCheckout.php',
     'src/Data/PaymentIntent.php', 'src/Data/ProviderCallback.php',
-    'src/Data/VerifiedPayment.php', 'src/Services/DonationMoney.php',
+    'src/Data/VerifiedPayment.php', 'src/Data/VerifiedReceiptEnvelope.php', 'src/Services/DonationMoney.php',
     'src/Providers/YooMoneyProvider.php',
 ] as $path) {
     require_once $root.'/modules/donations/'.$path;
@@ -56,4 +57,25 @@ assert($testMode->environment === 'test');
 // sha1_hash AS A SIGNED FIELD. It must not be verified using SHA-1 instead of sign.
 $official = 'amount=98.00&codepro=false&currency=643&datetime=2013-12-26T08%3A28%3A34Z&label=ML23045&notification_type=p2p-incoming&operation_id=441361714955017004&sender=41000000000&sha1_hash=ac13833bd6ba9eff1fa9e4bed76f3d6ebb57f6c0&unaccepted=false&withdraw_amount=100.00';
 assert(hash_hmac('sha256', $official, 'secret123') === 'a452af731650e2c5b39abcdc7c28dd27db7b3b654c2230ad2c386e64afb98605');
-echo "YooMoney standalone driver and HMAC tests passed\n";
+// Authenticated evidence is built ONLY from a previously signed and verified
+// notification, and includes all immutable fields needed for offline retries.
+$sealed = VerifiedReceiptEnvelope::seal($verified, $callback->rawBody);
+$restored = VerifiedReceiptEnvelope::restore($sealed);
+if ($restored === null || $restored['rawBody'] !== $callback->rawBody
+    || VerifiedReceiptEnvelope::fingerprint($restored['verified']) !== VerifiedReceiptEnvelope::fingerprint($verified)
+    || VerifiedReceiptEnvelope::restore($callback->rawBody) !== null) {
+    throw new RuntimeException('Verified callback evidence round-trip failed.');
+}
+foreach ([
+    str_replace('"amountMinor":10000', '"amountMinor":0', $sealed),
+    str_replace('"providerPaymentId":"441361714955017004"', '"providerPaymentId":"invalid"', $sealed),
+    str_replace('"_format":"kaevcms-signed-yoomoney-v1"', '"_format":"unknown"', $sealed),
+] as $invalid) {
+    try {
+        VerifiedReceiptEnvelope::restore($invalid);
+        throw new RuntimeException('Invalid stored evidence was accepted.');
+    } catch (InvalidArgumentException) {
+        // Expected. Real stored evidence is additionally authenticated by Crypt.
+    }
+}
+echo "YooMoney standalone driver, HMAC and evidence contract tests passed\n";

@@ -634,5 +634,17 @@
   ],
   "0.50.2": [
     "core/deployment/windows/apply-0.50.1.ps1"
+  ],
+  "0.50.3": [
+    "core/deployment/windows/apply-0.50.2.ps1"
+  ],
+  "0.50.4": [
+    "core/deployment/windows/apply-0.50.3.ps1"
+  ],
+  "0.50.5": [
+    "core/deployment/windows/apply-0.50.4.ps1"
+  ],
+  "0.50.6": [
+    "core/deployment/windows/apply-0.50.5.ps1"
   ]
 }
