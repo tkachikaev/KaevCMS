@@ -23,7 +23,10 @@ final class DonationGameExchangeController extends Controller
         abort_unless($user instanceof User, 401);
         $servers = $exchange->available();
 
-        return view('module-donations::account.exchange', [
+        /** @var view-string $view */
+        $view = 'module-donations::account.exchange';
+
+        return view($view, [
             'user' => $user, 'walletView' => $wallets->forUser($user),
             'servers' => $servers, 'requestUuid' => (string) Str::uuid(),
             'maxCoins' => DonationGameExchange::MAX_COINS,

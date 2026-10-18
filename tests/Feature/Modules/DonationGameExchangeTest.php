@@ -64,6 +64,16 @@ final class DonationGameExchangeTest extends TestCase
         ]);
     }
 
+    public function test_player_and_admin_can_open_exchange_pages(): void
+    {
+        [$admin, $user, $server] = $this->setupExchange();
+
+        $this->actingAs($user)->get('/modules/donations/exchange')
+            ->assertOk()->assertSee('data-exchange-form', false)->assertSee($server->name);
+        $this->actingAs($admin, 'admin')->get('/admin/extensions/donations/exchange')
+            ->assertOk()->assertSee('donations-exchange-settings')->assertSee($server->name);
+    }
+
     public function test_same_request_is_idempotent_and_modified_terms_are_rejected(): void
     {
         [, $user, $server] = $this->setupExchange();

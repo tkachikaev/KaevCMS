@@ -16,7 +16,10 @@ final class AdminDonationGameExchangeController extends Controller
 {
     public function index(DonationGameExchange $exchange, AdminPathSettings $paths): View
     {
-        return view('module-donations::admin.exchange', [
+        /** @var view-string $view */
+        $view = 'module-donations::admin.exchange';
+
+        return view($view, [
             'servers' => $exchange->configured(), 'adminPath' => $paths->path(),
             'readOnly' => (bool) request()->attributes->get('admin_read_only'),
         ]);
