@@ -121,11 +121,11 @@ body.account-body .donations-dialog .account-donations-card { border: 0; padding
 .donations-exchange-balance > .account-wallet-coin-image { width: 30px; height: 30px; flex: 0 0 30px; }
 .donations-exchange-balance > span { display: grid; gap: 3px; color: var(--account-muted); font-size: 11px; }
 .donations-exchange-balance strong { color: var(--account-text); font-size: 17px; }
-.donations-exchange-preview { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--account-panel-soft); border-radius: 12px; }
+.donations-exchange-preview { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 12px; background: var(--account-panel-soft); border-radius: 12px; }
 .donations-exchange-preview img { width: 28px; height: 28px; object-fit: contain; }
 .donations-exchange-preview > div { display: grid; gap: 3px; min-width: 0; }
 .donations-exchange-preview small { color: var(--account-muted); font-size: 11px; }
-.donations-exchange-preview strong { font-size: 14px; overflow-wrap: anywhere; }
+.donations-exchange-preview strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .donations-exchange-note { margin: 0; font-size: 12px; line-height: 1.6; }
 .donations-exchange-form > .account-button { width: 100%; }
 .donations-exchange-form[aria-busy="true"] { opacity: .65; }

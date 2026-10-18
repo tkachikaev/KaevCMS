@@ -17,17 +17,15 @@
       const amount = Number(coins?.value || 0);
       const limit = factor > 0 ? Math.min(maxCoins, Number(root.dataset.balance), Math.floor(maxItems / factor)) : 0;
       if (coins) coins.max = String(Math.max(1, limit));
-      submit.disabled = blocked || limit < 1;
+      const valid = Number.isSafeInteger(amount) && amount >= 1 && amount <= limit;
+      submit.disabled = blocked || !valid;
       if (icon) {
         icon.hidden = !option?.dataset.icon;
         if (option?.dataset.icon) icon.src = option.dataset.icon;
       }
-      if (!Number.isSafeInteger(amount) || amount < 1 || amount > limit) {
-        preview.hidden = true;
-        return;
-      }
       preview.hidden = false;
-      output.textContent = `${option.dataset.name} × ${(amount * factor).toLocaleString()}`;
+      output.textContent = `${option.dataset.name} × ${(valid ? amount * factor : 0).toLocaleString()}`;
+      output.title = output.textContent;
     };
     server?.addEventListener('change', update);
     coins?.addEventListener('input', update);

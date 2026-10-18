@@ -1,4 +1,4 @@
-# YooMoney — KaevCMS 0.50.12 / Donations 1.14.0
+# YooMoney — KaevCMS 0.50.14 / Donations 1.16.0
 
 ## Configure from the administration panel
 

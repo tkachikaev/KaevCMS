@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.50.14 - 2026-10-18
+
+- Keep the player exchange dialog stable while editing the amount: the received-item preview remains visible at zero and invalid submissions stay disabled.
+
 - Open player coin transfers in a shared Donations dialog from the wallet menu and wallet page, simplify the form, and show success with an inventory hand-off. Keep exchange history in the wallet journal and compact the inventory character-transfer controls.
 
 - Add a direct game-coin exchange link to the shared player wallet menu when a server has exchange enabled, independently of wallet top-up availability. Use the current wallet coin icon for history entries in both account themes.
