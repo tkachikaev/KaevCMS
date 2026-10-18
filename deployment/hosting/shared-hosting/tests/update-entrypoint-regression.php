@@ -117,7 +117,11 @@ assertUpdateEntrypoint(hash_file('sha256', $installEntry) === hash_file('sha256'
 assertUpdateEntrypoint(hash_file('sha256', $standardHtaccess) === hash_file('sha256', $sharedHtaccess), 'Standard and shared-hosting Apache rules must stay identical.');
 assertUpdateEntrypoint(str_contains((string) file_get_contents($standardHtaccess), 'RewriteRule ^kaevcms-path\\.php$ - [F,L]'), 'The unified Apache rules must protect kaevcms-path.php.');
 
-$root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'kaevcms-entrypoint-update-'.bin2hex(random_bytes(8));
+// PHP resolves __DIR__ to the canonical path, including Windows drive casing
+// and expanded short directory names used by hosted runners' TEMP directories.
+$temporaryRoot = realpath(sys_get_temp_dir());
+assertUpdateEntrypoint(is_string($temporaryRoot), 'The temporary directory must exist.');
+$root = $temporaryRoot.DIRECTORY_SEPARATOR.'kaevcms-entrypoint-update-'.bin2hex(random_bytes(8));
 
 try {
     foreach (['public_html', 'a860dbbcc70b.hosting.myjino.ru'] as $publicDirectoryName) {
