@@ -2,31 +2,37 @@
 
 /* Donations: wallet coin to server item exchange. */
 .donation-exchange-settings { display: grid; gap: 16px; }
-.donation-exchange-server { min-width: 0; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); overflow: hidden; }
-.donation-exchange-server-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; background: var(--admin-surface-subtle); border-bottom: 1px solid var(--admin-border); }
-.donation-exchange-server-head h3 { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.donation-exchange-server { min-width: 0; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); overflow: hidden; container-type: inline-size; }
+.donation-exchange-server-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; background: var(--admin-surface-subtle); border-bottom: 1px solid var(--admin-border); }
+.donation-exchange-server-head h3 { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
 .donation-exchange-server-head .admin-toggle-row { margin: 0; padding: 0; border: 0; background: transparent; gap: 12px; }
 .donation-exchange-server-head .admin-toggle-copy strong { font-size: 12px; }
-.donation-exchange-flow { display: grid; grid-template-columns: minmax(150px, .7fr) 32px minmax(0, 2fr); align-items: center; gap: 16px; padding: 20px; }
-.donation-exchange-source { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.donation-exchange-source strong { display: block; font-size: 17px; overflow-wrap: anywhere; }
-.donation-exchange-coin { flex: 0 0 56px; object-fit: contain; }
-.donation-exchange-caption { display: block; margin-bottom: 4px; color: var(--admin-text-muted); font-size: 11px; }
-.donation-exchange-arrow { color: var(--admin-text-muted); text-align: center; font-size: 28px; }
-.donation-exchange-target { min-width: 0; display: grid; gap: 14px; }
-.donation-exchange-item { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.donation-exchange-flow { display: grid; grid-template-columns: minmax(110px, .7fr) 20px minmax(0, 3fr); align-items: center; gap: 12px; padding: 14px 16px; }
+.donation-exchange-source { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.donation-exchange-source strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.donation-exchange-coin { flex: 0 0 28px; width: 28px; height: 28px; object-fit: contain; }
+.donation-exchange-caption { display: block; margin-bottom: 2px; color: var(--admin-text-muted); font-size: 10px; }
+.donation-exchange-arrow { color: var(--admin-text-muted); text-align: center; font-size: 20px; }
+.donation-exchange-target { min-width: 0; display: grid; grid-template-columns: minmax(100px, 1fr) minmax(240px, 1.7fr); align-items: center; gap: 16px; }
+.donation-exchange-item { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .donation-exchange-item-copy { min-width: 0; }
-.donation-exchange-item-copy strong { font-size: 14px; overflow-wrap: anywhere; }
-.donation-exchange-icon { display: grid; place-items: center; flex: 0 0 48px; width: 48px; height: 48px; border: 1px solid var(--admin-border); border-radius: 8px; background: var(--admin-surface-muted); color: var(--admin-text-muted); font-size: 24px; overflow: hidden; }
-.donation-exchange-icon img { width: 48px; height: 48px; object-fit: contain; image-rendering: auto; }
-.donation-exchange-fields { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; }
+.donation-exchange-item-copy strong { font-size: 13px; overflow-wrap: anywhere; }
+.donation-exchange-icon { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border: 1px solid var(--admin-border); border-radius: 5px; background: var(--admin-surface-muted); color: var(--admin-text-muted); font-size: 18px; overflow: hidden; }
+.donation-exchange-icon img { width: 28px; height: 28px; object-fit: contain; }
+.donation-exchange-fields { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 12px; }
 .donation-exchange-fields .admin-field { margin: 0; }
+.donation-exchange-fields .admin-field-label { font-size: 11px; }
+.donation-exchange-fields .admin-field-help { font-size: 10px; }
+.donation-exchange-fields .admin-field > input { min-height: 36px; padding: 7px 10px; }
 .donation-exchange-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 4px; }
+@container (max-width: 620px) {
+    .donation-exchange-flow { grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1.6fr); }
+    .donation-exchange-target { display: contents; }
+    .donation-exchange-fields { grid-column: 1 / -1; }
+}
 @media (max-width: 640px) {
     .donation-exchange-server-head { padding: 12px 14px; flex-wrap: wrap; }
-    .donation-exchange-flow { grid-template-columns: minmax(0, 1fr); padding: 16px 14px; gap: 12px; }
-    .donation-exchange-source { justify-content: center; }
-    .donation-exchange-arrow { transform: rotate(90deg); line-height: 1; }
+    .donation-exchange-flow { padding: 12px 14px; gap: 12px; }
     .donation-exchange-actions { align-items: stretch; flex-direction: column; }
 }
 @media (max-width: 380px) {

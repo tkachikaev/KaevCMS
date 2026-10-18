@@ -36,14 +36,14 @@
                 @error($prefix.'.enabled')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
                 <div class="donation-exchange-flow">
                     <div class="donation-exchange-source">
-                        <img src="{{ $walletAppearance['icon_url'] }}" alt="" width="56" height="56" class="donation-exchange-coin">
+                        <img src="{{ $walletAppearance['icon_url'] }}" alt="" width="28" height="28" class="donation-exchange-coin">
                         <div><span class="donation-exchange-caption">{{ __('module-donations::messages.exchange_from_wallet') }}</span><strong>{{ $coinLabel }}</strong></div>
                     </div>
                     <span class="donation-exchange-arrow" aria-hidden="true">→</span>
                     <div class="donation-exchange-target">
                         <div class="donation-exchange-item">
                             <span class="donation-exchange-icon" aria-hidden="true" data-admin-exchange-icon>
-                                @if($server['preview']['icon'] ?? null)<img src="{{ $server['preview']['icon'] }}" alt="" width="48" height="48">@else<span>◇</span>@endif
+                                @if($server['preview']['icon'] ?? null)<img src="{{ $server['preview']['icon'] }}" alt="" width="28" height="28">@else<span>◇</span>@endif
                             </span>
                             <div class="donation-exchange-item-copy">
                                 <span class="donation-exchange-caption">{{ __('module-donations::messages.exchange_to_inventory') }}</span>

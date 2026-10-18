@@ -38,8 +38,8 @@
       if (url) {
         element.src = url;
         element.alt = '';
-        element.width = 48;
-        element.height = 48;
+        element.width = 28;
+        element.height = 28;
         element.addEventListener('error', () => {
           const fallback = document.createElement('span');
           fallback.textContent = '◇';
