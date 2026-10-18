@@ -2,9 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Donations\Http\Controllers\DonationController;
+use KaevCMS\Modules\Donations\Http\Controllers\DonationGameExchangeController;
 
 Route::middleware(['auth', 'site.active', 'site.verified'])->group(function (): void {
     Route::get('/', DonationController::class)->name('index');
+    Route::get('/exchange', [DonationGameExchangeController::class, 'index'])->name('exchange.index');
+    Route::post('/exchange', [DonationGameExchangeController::class, 'store'])->middleware('throttle:10,1,donations-exchange')->name('exchange.store');
     Route::post('/top-up', [DonationController::class, 'topUp'])->middleware('throttle:10,1,donations-create')->name('topup');
     Route::get('/orders', [DonationController::class, 'orders'])->name('orders.index');
     Route::get('/orders/{orderUuid}', [DonationController::class, 'show'])->whereUuid('orderUuid')->name('orders.show');

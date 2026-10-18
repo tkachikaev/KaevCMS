@@ -193,7 +193,9 @@ final class SafeHtmlSanitizer
 
             $this->sanitizeContentChildren($child, $profile);
 
-            if (! in_array($tag, self::CONTENT_ALLOWED_ELEMENTS, true)) {
+            $pageBlock = $profile === self::PROFILE_PAGE && $tag === 'div'
+                && in_array($child->getAttribute('data-content-block'), ['cards', 'card'], true);
+            if (! $pageBlock && ! in_array($tag, self::CONTENT_ALLOWED_ELEMENTS, true)) {
                 $this->unwrap($child);
 
                 continue;
@@ -221,11 +223,15 @@ final class SafeHtmlSanitizer
     {
         $allowed = match ($tag) {
             'a' => ['href', 'title'],
+            'div' => $profile === self::PROFILE_PAGE ? ['data-content-block'] : [],
             'img' => ['src', 'alt'],
             'span' => ['data-color', 'data-highlight', 'data-text-size'],
             'figure' => ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
         };
+        if ($profile === self::PROFILE_PAGE && $tag === 'a') {
+            $allowed[] = 'data-content-button';
+        }
 
         $attributes = [];
         foreach ($element->attributes as $attribute) {
@@ -240,6 +246,19 @@ final class SafeHtmlSanitizer
 
         if ($tag === 'a') {
             $href = $this->sanitizeContentLink($element->getAttribute('href'));
+            $button = $profile === self::PROFILE_PAGE ? $element->getAttribute('data-content-button') : '';
+            if (! in_array($button, ['primary', 'secondary'], true)) {
+                $element->removeAttribute('data-content-button');
+            } else {
+                $parts = parse_url($href ?? '');
+                if (is_array($parts) && (isset($parts['user']) || isset($parts['pass']))) {
+                    $href = null;
+                }
+                if ($href === null || $href === '#') {
+                    $element->setAttribute('aria-disabled', 'true');
+                    $element->setAttribute('tabindex', '-1');
+                }
+            }
             if ($href === null) {
                 $element->removeAttribute('href');
             } else {

@@ -2,9 +2,9 @@
     "schema": 1,
     "id": "donations",
     "name": "Donations",
-    "version": "1.14.0",
+    "version": "1.15.0",
     "author": "KaevCMS",
-    "description": "YooMoney one-screen admin setup and direct player checkout, with verified callbacks and exactly-once Wallet settlement.",
+    "description": "YooMoney payments and optional direct CMS coin exchange into per-server Web Inventory.",
     "cms_min": "0.50.2",
     "cms_max": null,
     "namespace": "KaevCMS\\Modules\\Donations\\",
@@ -20,11 +20,11 @@
     "locales": {
         "ru": {
             "name": "Пожертвования",
-            "description": "Пополнение кошелька через ЮMoney: цены монет, заявки, подтверждение платежей и однократное начисление."
+            "description": "Пополнение монет через ЮMoney и настраиваемый обмен монет CMS на игровые предметы в веб-инвентаре."
         },
         "en": {
             "name": "Donations",
-            "description": "YooMoney one-screen admin setup and direct player checkout, with verified callbacks and exactly-once Wallet settlement."
+            "description": "YooMoney top-ups and optional CMS coin exchange into game items in Web Inventory."
         }
     }
 }

@@ -6,6 +6,7 @@
         @foreach([
             'settings' => ['admin.module-pages.donations.index', 'settings_tab'],
             'providers' => ['admin.module-pages.donations.providers.index', 'providers_title'],
+            'exchange' => ['admin.module-pages.donations.exchange.index', 'exchange_title'],
             'orders' => ['admin.module-pages.donations.orders.index', 'orders_admin_title'],
         ] as $section => [$destination, $label])
             @php($selected = $section === 'settings' ? request()->routeIs($destination) : request()->routeIs('admin.module-pages.donations.'.$section.'.*'))

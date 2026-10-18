@@ -73,7 +73,7 @@ final class PageController extends Controller
         $payload = $this->preparePayload($request);
         $default = $payload['translations'][$this->languages->default()];
 
-        $page = DB::transaction(function () use ($payload, $default, $request): Page {
+        $page = DB::transaction(function () use ($payload, $default): Page {
             $page = Page::query()->create([
                 'slug' => $this->makeUniqueBaseSlug($default['slug']),
                 'is_published' => $payload['is_published'],
@@ -84,12 +84,6 @@ final class PageController extends Controller
 
             $this->syncTranslations($page, $payload['translations']);
             $page->update(['slug' => $this->makeUniqueBaseSlug($page->slugFor($this->languages->default(), false), $page->id)]);
-            if ($page->slug === DownloadPages::SLUG) {
-                $page->update([
-                    'download_client_url' => DownloadPages::safeUrl($request->validated('download_links.client')),
-                    'download_patch_url' => DownloadPages::safeUrl($request->validated('download_links.patch')),
-                ]);
-            }
 
             return $page->load('translations');
         });
@@ -150,16 +144,7 @@ final class PageController extends Controller
             ]),
         ]));
 
-        $downloadId = app(DownloadPages::class)->selectedId();
         $isDownloadPage = $preview->slug === DownloadPages::SLUG;
-        if ($isDownloadPage) {
-            $original = Page::query()->find($downloadId);
-            foreach (['client', 'patch'] as $kind) {
-                $preview->setAttribute('download_'.$kind.'_url', $request->has('download_links')
-                    ? DownloadPages::safeUrl($request->validated('download_links.'.$kind))
-                    : $original?->getAttribute('download_'.$kind.'_url'));
-            }
-        }
 
         return response()->view('theme::pages.show', [
             'page' => $preview,
@@ -187,8 +172,6 @@ final class PageController extends Controller
         $page->load('translations');
         $before = [
             'slug' => $page->slug,
-            'download_client_url' => $page->download_client_url,
-            'download_patch_url' => $page->download_patch_url,
             'titles' => $page->translations->pluck('title', 'locale')->all(),
             'content_hash' => hash('sha256', implode('|', $page->translations->pluck('body')->all())),
             'is_published' => $page->is_published,
@@ -199,7 +182,7 @@ final class PageController extends Controller
         $oldImages = $this->contentImagePaths($page);
         $payload = $this->preparePayload($request);
 
-        DB::transaction(function () use ($page, $payload, $request): void {
+        DB::transaction(function () use ($page, $payload): void {
             $this->syncTranslations($page, $payload['translations']);
             $page->update([
                 'slug' => $this->makeUniqueBaseSlug($page->slugFor($this->languages->default(), false), $page->id),
@@ -208,12 +191,6 @@ final class PageController extends Controller
                 'show_in_footer' => $payload['show_in_footer'],
                 'sort_order' => $payload['sort_order'],
             ]);
-            if (app(DownloadPages::class)->selectedId() === $page->id && $request->has('download_links')) {
-                $page->update([
-                    'download_client_url' => DownloadPages::safeUrl($request->validated('download_links.client')),
-                    'download_patch_url' => DownloadPages::safeUrl($request->validated('download_links.patch')),
-                ]);
-            }
         });
 
         $page->refresh()->load('translations');
@@ -223,8 +200,6 @@ final class PageController extends Controller
 
         $after = [
             'slug' => $page->slug,
-            'download_client_url' => $page->download_client_url,
-            'download_patch_url' => $page->download_patch_url,
             'titles' => $page->translations->pluck('title', 'locale')->all(),
             'content_hash' => hash('sha256', implode('|', $page->translations->pluck('body')->all())),
             'is_published' => $page->is_published,

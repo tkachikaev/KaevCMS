@@ -1,10 +1,15 @@
-/* File cards inherit the public theme's palette and typography. */
-.download-files { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
-.download-page-content .download-files { margin: 0 0 24px; }
-.download-files .download-file { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; min-width: 0; padding: clamp(24px, 4vw, 36px); border: 1px solid var(--line, #e2dfd5); border-radius: 24px; }
-.download-file-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: var(--gold, #b99550); background: rgba(180,150,90,.1); }
-.download-files .download-file h2 { margin: 0; font-size: 26px; }
-.download-files .download-file p { flex: 1; margin: 0; color: var(--ink-soft, inherit); line-height: 1.7; }
-.download-files .download-file .button { max-width: 100%; white-space: normal; text-align: center; }
-.download-files .download-file button:disabled { opacity: .55; cursor: default; box-shadow: none; transform: none; }
-@media (max-width: 680px) { .download-files { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
+/* Shared visual blocks: the same editable content is shown in the page and editor. */
+[data-content-block="cards"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 0 0 28px; }
+[data-content-block="cards"] > [data-content-block="card"] { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line, #deddd5); border-radius: 20px; background: var(--surface, rgba(180,150,90,.035)); }
+[data-content-block="card"] > h2 { margin: 0 0 14px; font-size: 24px; }
+[data-content-block="card"] > p { margin: 0 0 18px; }
+[data-content-block="card"] > :last-child { margin-top: auto; margin-bottom: 0; padding-top: 6px; }
+a[data-content-button] { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; max-width: 100%; padding: 11px 22px; border: 1px solid var(--gold, #b99550); border-radius: 999px; font: inherit; font-weight: 600; line-height: 1.5; text-align: center; text-decoration: none; overflow-wrap: anywhere; box-sizing: border-box; }
+a[data-content-button="primary"] { background: var(--gold, #b99550); color: #fffdf7; }
+a[data-content-button="secondary"] { background: transparent; color: var(--ink, #483c26); }
+.cms-page a[data-content-button][aria-disabled="true"] { opacity: .55; cursor: default; pointer-events: none; }
+.cms-page a[data-content-button]:focus-visible { outline: 2px solid var(--gold, #b99550); outline-offset: 4px; }
+.rich-editor-canvas [data-content-block="cards"] { gap: 16px; }
+.rich-editor-canvas [data-content-block="card"] { padding: 20px; }
+.rich-editor-canvas a[data-content-button] { cursor: text; }
+@media (max-width: 680px) { [data-content-block="cards"] { grid-template-columns: minmax(0, 1fr); gap: 18px; } }

@@ -190,3 +190,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 ## License / Лицензия
 
 MIT.
+
+### Donations game coin exchange (0.50.13)
+
+Donations now optionally converts CMS coins into a per-server game item in Web Inventory, configurable from the admin panel. This works without live YooMoney or the future Shop; existing reward-queue transfer remains unchanged. See docs/ru/DONATIONS.md and docs/en/DONATIONS.md.

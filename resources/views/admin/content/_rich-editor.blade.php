@@ -1,6 +1,12 @@
 <div
     class="rich-editor"
     data-rich-editor
+    data-page-blocks="{{ ($pageBlocks ?? false) ? '1' : '0' }}"
+    @if ($pageBlocks ?? false)
+        data-card-title="{{ __('New card') }}"
+        data-card-description="{{ __('Add a description here.') }}"
+        data-card-button="{{ __('Open link') }}"
+    @endif
     data-required="{{ $required ? '1' : '0' }}"
     data-editor-label="{{ $label }}"
     data-empty-message="{{ __('Add text in the default language.') }}"
@@ -96,6 +102,15 @@
             </div>
         </details>
 
+        @if ($pageBlocks ?? false)
+            <span class="editor-toolbar-group">
+                <button type="button" data-editor-action="cards">{{ __('Cards') }}</button>
+                <span data-editor-card-tools hidden>
+                    <button type="button" data-editor-action="addCard">{{ __('Add card') }}</button>
+                    <button type="button" data-editor-action="deleteCard">{{ __('Delete card') }}</button>
+                </span>
+            </span>
+        @endif
         <span class="editor-toolbar-group editor-toolbar-group-end">
             <button type="button" data-editor-action="clear" title="{{ __('Clear formatting') }}">{{ __('Clear') }}</button>
             <button type="button" data-editor-fullscreen aria-pressed="false" title="{{ __('Full screen') }}">{{ __('Full screen') }}</button>
@@ -122,6 +137,17 @@
                 <input id="{{ $editorId }}-link-url" data-editor-link-url type="text" inputmode="url" maxlength="2048" placeholder="https://example.com" aria-describedby="{{ $editorId }}-link-help">
                 <small class="admin-field-help" id="{{ $editorId }}-link-help">{{ __('Use https://, mailto:, an anchor or a relative website path.') }}</small>
             </div>
+            @if ($pageBlocks ?? false)
+                <label class="admin-field">
+                    <span class="admin-field-label">{{ __('Link appearance') }}</span>
+                    <select data-editor-link-style>
+                        <option value="">{{ __('Text link') }}</option>
+                        <option value="primary">{{ __('Primary button') }}</option>
+                        <option value="secondary">{{ __('Secondary button') }}</option>
+                    </select>
+                    <small class="admin-field-help">{{ __('Leave the button address empty until the file is ready.') }}</small>
+                </label>
+            @endif
             <div class="rich-editor-dialog-actions">
                 <button type="button" class="button button-secondary" data-editor-dialog-cancel>{{ __('Cancel') }}</button>
                 <button type="button" class="button button-primary" data-editor-link-apply>{{ __('Apply') }}</button>

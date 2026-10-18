@@ -6,6 +6,7 @@ use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use KaevCMS\Modules\Donations\Services\DonationGameExchange;
 use KaevCMS\Modules\Donations\Services\DonationPlayerHistory;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 
@@ -31,6 +32,14 @@ return static function (Application $app, ModuleContext $module): void {
             descriptionKey: 'module-donations::messages.navigation_description',
             sortOrder: 70,
         );
+    } elseif ($app->make(DonationGameExchange::class)->available() !== []) {
+        $navigation->registerAccountLink(
+            moduleId: $module->id,
+            routeName: 'modules.donations.exchange.index',
+            labelKey: 'module-donations::messages.exchange_title',
+            descriptionKey: 'module-donations::messages.exchange_account_help',
+            sortOrder: 70,
+        );
     } else {
         // History must remain available even when the owner stops accepting new drafts.
         $navigation->registerAccountLink(
@@ -49,7 +58,7 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
-    foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show'] as $route) {
+    foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show', 'exchange.index'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,
@@ -57,7 +66,7 @@ return static function (Application $app, ModuleContext $module): void {
             manageRoles: [AdminRole::Owner, AdminRole::Administrator],
         );
     }
-    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'orders.reviews.store'] as $route) {
+    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'orders.reviews.store', 'exchange.update'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,

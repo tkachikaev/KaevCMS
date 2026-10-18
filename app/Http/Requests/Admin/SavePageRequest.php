@@ -3,8 +3,6 @@
 namespace App\Http\Requests\Admin;
 
 use App\Services\Localization\LanguageManager;
-use App\Services\Pages\DownloadPages;
-use Closure;
 use Illuminate\Validation\Validator;
 
 class SavePageRequest extends AdminFormRequest
@@ -47,15 +45,7 @@ class SavePageRequest extends AdminFormRequest
             'show_in_header' => ['required', 'boolean'],
             'show_in_footer' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:100000'],
-            'download_links' => ['sometimes', 'array:client,patch'],
         ];
-        foreach (['client', 'patch'] as $kind) {
-            $rules['download_links.'.$kind] = ['nullable', 'string', 'max:2048', static function (string $attribute, mixed $value, Closure $fail): void {
-                if ($value !== null && $value !== '' && DownloadPages::safeUrl($value) === null) {
-                    $fail(__('Use a complete HTTP or HTTPS link without a username or password.'));
-                }
-            }];
-        }
 
         foreach (app(LanguageManager::class)->enabledCodes() as $locale) {
             $rules['translations.'.$locale.'.title'] = ['nullable', 'string', 'max:255'];

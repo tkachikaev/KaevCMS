@@ -7,6 +7,6 @@
 </form>
 @endsection
 @push('scripts')
-<script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+<script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ cms_version() }}&ui=editable-page-blocks" defer data-navigate-once></script>
 <script src="{{ asset('assets/admin/js/localization.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
 @endpush

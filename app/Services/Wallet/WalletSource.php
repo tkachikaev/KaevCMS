@@ -9,6 +9,7 @@ enum WalletSource: string
     case PromoCodes = 'promo_codes';
     case DailyRewards = 'daily_rewards';
     case Shop = 'shop';
+    case DonationExchange = 'donation_exchange';
     case ShopRefund = 'shop_refund';
     case Manual = 'manual';
 

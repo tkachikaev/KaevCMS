@@ -2765,5 +2765,17 @@
     "sort order": "sort order",
     "unsafe CSS expressions": "unsafe CSS expressions",
     "unsafe URL schemes": "unsafe URL schemes",
-    "update files": "update files"
+    "update files": "update files",
+    "Everything below is page content: edit card titles, descriptions and buttons directly. To set a download address, click its button text and choose Link.": "Everything below is page content: edit card titles, descriptions and buttons directly. To set a download address, click its button text and choose Link.",
+    "New card": "New card",
+    "Add a description here.": "Add a description here.",
+    "Cards": "Cards",
+    "Add card": "Add card",
+    "Delete card": "Delete card",
+    "Link appearance": "Link appearance",
+    "Text link": "Text link",
+    "Primary button": "Primary button",
+    "Secondary button": "Secondary button",
+    "Leave the button address empty until the file is ready.": "Leave the button address empty until the file is ready.",
+    "Edit text directly. Select text or a button and use the toolbar to format it or change its link.": "Edit text directly. Select text or a button and use the toolbar to format it or change its link."
 }
