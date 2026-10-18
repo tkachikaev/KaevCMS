@@ -1,6 +1,16 @@
 ## Unreleased
 
-- Add an editable RU/EN download page with client/patch link fields. The reserved downloads page address connects directly to Download client in both themes; admins can recreate it from a prefilled form or create a page with that address. Existing content and file links survive updates.
+## 0.50.14 - 2026-10-18
+
+- Keep the player exchange dialog stable while editing the amount: the received-item preview remains visible at zero and invalid submissions stay disabled.
+
+- Open player coin transfers in a shared Donations dialog from the wallet menu and wallet page, simplify the form, and show success with an inventory hand-off. Keep exchange history in the wallet journal and compact the inventory character-transfer controls.
+
+- Add a direct game-coin exchange link to the shared player wallet menu when a server has exchange enabled, independently of wallet top-up availability. Use the current wallet coin icon for history entries in both account themes.
+
+- Make Donations exchange settings visual with the current wallet coin, server-aware item names and compact inline icon previews, and one atomic Save settings action for all servers. Preserve per-server exchange rules and read-only administrator access.
+
+- Add a fully editable RU/EN download page: card titles, descriptions and buttons are stored in page content and edited visually. Existing download cards and links migrate into the editor once without replacing owner text. Page editors can insert/remove cards and style links as buttons. The reserved downloads page address connects directly to Download client in both themes; admins can recreate it from a prefilled form or create a page with that address. Existing content and file links survive updates.
 - Use the bundled transparent Kaev coin as the default wallet icon throughout administration and both account themes; removing an uploaded icon restores it. Reveal the mobile Aurelia portrait above the hero text while preserving scenery across navigation.
 
 - Keep Aurelia scenery and its pale overlay continuous during public-page navigation. Unify account summary cards and tabs in both themes, and hide theme/version metadata from players.
@@ -9,6 +19,16 @@
 
 - Localize bundled module catalogue names/descriptions and audit activity labels in RU/EN, including stored events from disabled modules; stable action codes remain unchanged.
 - Add a shared account balance dropdown with direct top-up and transaction-log links in both themes. Make top-up order history and wallet operations visible from the top-up form.
+
+## 0.50.13 - 2026-10-18
+
+### Added — simple in-game coin exchange (Donations 1.15.0)
+
+- Optional game-coin exchange configured entirely in Donations administration, separately per game server: in-game item ID, number of items per CMS coin, enabled/off. Defaults off, no `.env` editing.
+- Player chooses server and integer CMS coin quantity, sees recalculated amount and receives the corresponding ordinary game item in Web Inventory (not a direct game database credit). Existing reward queue / character delivery is unchanged.
+- Persistent immutable exchange snapshots, distinct trusted Wallet debit source, unique request UUID and atomic wallet debit + inventory grant + audit on primary CMS DB; failure rolls everything back.
+- Exchange can be used without live YooMoney payments and without the full Shop module. Existing Wallet transaction engine and all published migrations preserved; one additive Donations migration.
+- Automated feature regressions included; full PHPUnit/Playwright/MySQL concurrency still require user/Codex quality gates.
 
 ## 0.50.12 - 2026-10-17
 

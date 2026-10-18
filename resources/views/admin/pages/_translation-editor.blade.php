@@ -35,9 +35,10 @@
             'placeholder' => __('Start writing page…'),
             'body' => $editorBody,
             'required' => $requiredLocale,
+            'pageBlocks' => true,
             'uploadUrl' => route('admin.pages.images.store'),
         ])
-        <small>{{ __('HTML is sanitized on the server. Scripts, styles, iframes and unsafe attributes are removed.') }}</small>
+        <small>{{ __('Edit text directly. Select text or a button and use the toolbar to format it or change its link.') }}</small>
     </div>
 
     <section class="seo-fields">

@@ -1,4 +1,7 @@
 @csrf
+@push('head')
+    <link rel="stylesheet" href="{{ asset('assets/css/downloads.css') }}?v={{ cms_version() }}&ui=editable-content" data-navigate-track>
+@endpush
 @if ($pageItem->exists)
     @method('PUT')
     <input type="hidden" name="page_id" value="{{ $pageItem->id }}">
@@ -9,12 +12,7 @@
     <div class="editor-main">
         @if ($isDownloadPage ?? false)
             <section class="form-card" data-download-links-editor>
-                <div class="settings-card-heading"><div><h2>{{ __('Game downloads') }}</h2><p>{{ __('This page opens from Download client. Paste your file links below; empty links show an inactive button.') }}</p></div></div>
-                @foreach (['client' => 'Game client link', 'patch' => 'Server patch link'] as $downloadKind => $downloadLabel)
-                    <x-admin.field :for="'download_'.$downloadKind.'_url'" :name="'download_links.'.$downloadKind" :label="__($downloadLabel)">
-                        <input type="url" id="download_{{ $downloadKind }}_url" name="download_links[{{ $downloadKind }}]" maxlength="2048" placeholder="https://" value="{{ old('download_links.'.$downloadKind, $pageItem->getAttribute('download_'.$downloadKind.'_url')) }}">
-                    </x-admin.field>
-                @endforeach
+                <div class="settings-card-heading"><div><h2>{{ __('Game downloads') }}</h2><p>{{ __('Everything below is page content: edit card titles, descriptions and buttons directly. To set a download address, click its button text and choose Link.') }}</p></div></div>
                 <p class="form-hint">{{ __('Keep the downloads address in the default language to connect this page to Download client. The title and text can be changed freely.') }}</p>
             </section>
         @endif

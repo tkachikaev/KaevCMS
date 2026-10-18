@@ -50,6 +50,22 @@ final class CoreWalletGateway implements WalletGateway
         );
     }
 
+    public function debitForDonationExchange(User $owner, int $amount, string $key, string $reference): WalletEntry
+    {
+        $authenticated = Auth::guard('web')->user();
+        if (! $authenticated instanceof User || ! $authenticated->exists
+            || (int) $authenticated->getKey() !== (int) $owner->getKey()
+            || ! (bool) $authenticated->is_active
+            || ! $this->sourceEnabled(WalletSource::DonationExchange)) {
+            throw new AuthorizationException('Wallet exchange debit is not authorized.');
+        }
+
+        return $this->transactions->debit(
+            $authenticated, $amount, WalletSource::DonationExchange->value, $key,
+            $this->requiredText($reference), actor: $authenticated,
+        );
+    }
+
     public function manualCredit(Admin $admin, User $recipient, int $amount, string $key, string $reason): WalletEntry
     {
         $this->assertWalletManager($admin);

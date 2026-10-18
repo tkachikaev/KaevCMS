@@ -1,4 +1,5 @@
 import { Editor, Mark, Node, mergeAttributes } from '@tiptap/core';
+import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import CharacterCount from '@tiptap/extension-character-count';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -47,6 +48,29 @@ const createTokenMark = (name, attribute, values) => Mark.create({
 const SafeColor = createTokenMark('safeColor', 'data-color', SAFE_COLORS);
 const SafeHighlight = createTokenMark('safeHighlight', 'data-highlight', SAFE_HIGHLIGHTS);
 const SafeTextSize = createTokenMark('safeTextSize', 'data-text-size', SAFE_TEXT_SIZES);
+
+const ContentCards = Node.create({
+    name: 'contentCards', group: 'block', content: 'contentCard+', defining: true,
+    parseHTML: () => [{ tag: 'div[data-content-block="cards"]' }],
+    renderHTML: () => ['div', { 'data-content-block': 'cards' }, 0],
+});
+const ContentCard = Node.create({
+    name: 'contentCard', content: 'block+', defining: true, isolating: true,
+    parseHTML: () => [{ tag: 'div[data-content-block="card"]' }],
+    renderHTML: () => ['div', { 'data-content-block': 'card' }, 0],
+});
+const ContentButtons = Extension.create({
+    name: 'contentButtons',
+    addGlobalAttributes() {
+        return [{ types: ['link'], attributes: { buttonStyle: {
+            default: null,
+            parseHTML: element => ['primary', 'secondary'].includes(element.getAttribute('data-content-button'))
+                ? element.getAttribute('data-content-button') : null,
+            renderHTML: attributes => ['primary', 'secondary'].includes(attributes.buttonStyle)
+                ? { 'data-content-button': attributes.buttonStyle } : {},
+        } } }];
+    },
+});
 
 const SafeTable = Table.extend({
     renderHTML() {
@@ -242,6 +266,8 @@ const initializeRichEditor = (root, signal) => {
     const linkDialog = root.querySelector('[data-editor-link-dialog]');
     const linkApply = root.querySelector('[data-editor-link-apply]');
     const linkUrl = root.querySelector('[data-editor-link-url]');
+    const linkStyle = root.querySelector('[data-editor-link-style]');
+    const pageBlocks = root.dataset.pageBlocks === '1';
     const imageDialog = root.querySelector('[data-editor-image-dialog]');
     const imageApply = root.querySelector('[data-editor-image-apply]');
     const imageAlt = root.querySelector('[data-editor-image-alt]');
@@ -303,6 +329,7 @@ const initializeRichEditor = (root, signal) => {
             SafeHighlight,
             SafeTextSize,
             FigureImage,
+            ...(pageBlocks ? [ContentCards, ContentCard, ContentButtons] : []),
             SafeTable.configure({
                 resizable: false,
                 renderWrapper: false,
@@ -395,9 +422,44 @@ const initializeRichEditor = (root, signal) => {
         }
 
         root.querySelector('[data-editor-table-tools]')?.toggleAttribute('hidden', !editor.isActive('table'));
+        root.querySelector('[data-editor-card-tools]')?.toggleAttribute('hidden', !editor.isActive('contentCards'));
+    };
+
+    const newCard = () => ({ type: 'contentCard', content: [
+        { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: root.dataset.cardTitle }] },
+        { type: 'paragraph', content: [{ type: 'text', text: root.dataset.cardDescription }] },
+        { type: 'paragraph', content: [{ type: 'text', text: root.dataset.cardButton,
+            marks: [{ type: 'link', attrs: { href: '#', buttonStyle: 'primary' } }] }] },
+    ] });
+    const cardDepth = () => {
+        const { $from } = editor.state.selection;
+        for (let depth = $from.depth; depth > 0; depth -= 1) {
+            if ($from.node(depth).type.name === 'contentCard') return depth;
+        }
+        return 0;
+    };
+    const editCards = (action) => {
+        if (!pageBlocks) return;
+        const { $from } = editor.state.selection;
+        const depth = cardDepth();
+        if (action === 'cards') {
+            const position = $from.depth ? $from.after(1) : editor.state.doc.content.size;
+            editor.chain().focus().insertContentAt(position, [
+                { type: 'contentCards', content: [newCard(), newCard()] }, { type: 'paragraph' },
+            ]).run();
+        } else if (depth && action === 'addCard') {
+            editor.chain().focus().insertContentAt($from.after(depth), newCard()).run();
+        } else if (depth && action === 'deleteCard') {
+            const target = $from.node(depth - 1).childCount === 1 ? depth - 1 : depth;
+            editor.chain().focus().deleteRange({ from: $from.before(target), to: $from.after(target) }).run();
+        }
     };
 
     const runAction = (action) => {
+        if (['cards', 'addCard', 'deleteCard'].includes(action)) {
+            editCards(action);
+            return;
+        }
         const chain = editor.chain().focus();
         const commands = {
             undo: () => chain.undo().run(),
@@ -493,6 +555,7 @@ const initializeRichEditor = (root, signal) => {
         }
 
         linkUrl.value = editor.getAttributes('link').href ?? '';
+        if (linkStyle) linkStyle.value = editor.getAttributes('link').buttonStyle ?? '';
         linkDialog.showModal();
         linkUrl.focus();
         linkUrl.select();
@@ -508,10 +571,11 @@ const initializeRichEditor = (root, signal) => {
             return;
         }
 
-        if (url === '') {
+        const buttonStyle = linkStyle?.value || null;
+        if (url === '' && !buttonStyle) {
             editor.chain().focus().unsetLink().run();
         } else {
-            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+            editor.chain().focus().extendMarkRange('link').setLink({ href: url || '#', ...(pageBlocks ? { buttonStyle } : {}) }).run();
         }
 
         linkDialog?.close();

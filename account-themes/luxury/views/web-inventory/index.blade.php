@@ -1,6 +1,6 @@
 @extends('account-theme::layouts.app')
 @section('title', __('Web inventory'))
-@section('description', __('Rewards from promo codes, donations and future modules are stored here until you transfer them to a character.'))
+@section('description', __('Items ready to send to your character.'))
 @section('content')
 <x-account-page>
 <x-account-panel class="account-section reward-inventory-shell">
@@ -70,14 +70,14 @@
                                 {{ mb_strtoupper(mb_substr($item->displayName(), 0, 1)) }}
                             @endif
                         </span>
-                        <span class="reward-item-copy"><strong>{{ $item->displayName() }}</strong><small>{{ $item->grant->source_label ?: __('Source: :source', ['source' => $item->grant->source_type]) }}</small></span>
+                        <span class="reward-item-copy"><strong>{{ $item->displayName() }}</strong><small>{{ $item->grant->source_type === 'donation_exchange' ? __('Wallet transfer') : ($item->grant->source_label ?: __('Source: :source', ['source' => $item->grant->source_type])) }}</small></span>
                         <strong class="reward-item-amount">× {{ number_format($item->amount, 0, '.', ' ') }}</strong>
                     </label>
                 @endforeach
             </div>
 
             <div class="reward-transfer-panel">
-                <div><span class="account-eyebrow">{{ __('Reward transfer') }}</span><h2>{{ __('Choose a character') }}</h2><p>{{ __('Only characters belonging to your game accounts on :server are shown.', ['server' => $selectedServer->nameFor()]) }}</p><p>{{ __('Select rewards and a character. After confirmation, the rewards will be transferred for processing. This may take some time.') }}</p></div>
+                <div class="reward-transfer-copy"><strong>{{ __('Send to a character') }}</strong><p>{{ __('Select items and a character to send them to the game.') }}</p></div>
                 <label class="reward-character-select"><span>{{ __('Character') }}</span><select name="character_id" required @disabled(! $capabilities->supported || $characters === [])><option value="">{{ __('Select character') }}</option>@foreach($characters as $character)<option value="{{ $character['id'] }}" data-avatar-url="{{ $character['avatar_url'] ?? '' }}" data-character-race="{{ $character['race_key'] ?? 'unknown' }}" data-character-gender="{{ $character['gender_key'] ?? 'neutral' }}" data-character-archetype="{{ $character['archetype'] ?? 'default' }}" @selected((int) old('character_id') === $character['id'])>{{ $character['name'] }} — {{ __('Level :level', ['level' => $character['level']]) }}{{ $character['online'] ? ' · '.__('Online') : '' }}</option>@endforeach</select></label>
                 <button class="account-button primary" type="submit" @disabled(! $capabilities->supported || $characters === [])>{{ __('Transfer selected rewards') }}</button>
             </div>

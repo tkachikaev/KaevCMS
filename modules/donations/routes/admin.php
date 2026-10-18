@@ -2,9 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationController;
+use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationGameExchangeController;
 use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationProviderController;
 
 Route::get('/', [AdminDonationController::class, 'index'])->name('index');
+Route::get('/exchange', [AdminDonationGameExchangeController::class, 'index'])->name('exchange.index');
+Route::put('/exchange', [AdminDonationGameExchangeController::class, 'save'])->name('exchange.save');
+Route::get('/exchange/{serverId}/items/{itemId}', [AdminDonationGameExchangeController::class, 'itemPreview'])
+    ->whereNumber('serverId')->where('itemId', '[0-9]{1,10}')->middleware('throttle:120,1,donations-item-preview')->name('exchange.items.preview');
+Route::put('/exchange/{serverId}', [AdminDonationGameExchangeController::class, 'update'])->whereNumber('serverId')->name('exchange.update');
 Route::put('/workspace', [AdminDonationController::class, 'saveWorkspace'])->name('workspace.update');
 Route::put('/settings', [AdminDonationController::class, 'update'])->name('settings.update');
 Route::put('/limits', [AdminDonationController::class, 'limits'])->name('limits.update');

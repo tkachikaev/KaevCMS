@@ -12,6 +12,8 @@ final class DownloadPages
 
     public const SLUG = 'downloads';
 
+    public const EDITABLE_KEY = 'content.downloads_editable_blocks_initialized';
+
     public function selectedId(): ?int
     {
         return $this->selected()?->id;
@@ -69,6 +71,43 @@ final class DownloadPages
         return $page->load('translations');
     }
 
+    /** Move previously rendered cards into content once, retaining the owner's text and links. */
+    public function migrateEditableContent(): void
+    {
+        DB::transaction(function (): void {
+            $inserted = CmsSetting::query()->insertOrIgnore([
+                'key' => self::EDITABLE_KEY, 'value' => '1', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            if ($inserted !== 1 || ($page = $this->selected()) === null) {
+                return;
+            }
+            foreach ($page->translations as $translation) {
+                if (! str_contains($translation->body, 'data-content-block="cards"')) {
+                    $translation->update(['body' => $this->cardsHtml($translation->locale,
+                        self::safeUrl($page->download_client_url), self::safeUrl($page->download_patch_url)).$translation->body]);
+                }
+            }
+        });
+    }
+
+    private function cardsHtml(string $locale, ?string $client = null, ?string $patch = null): string
+    {
+        $labels = $locale === 'ru' ? [
+            ['Клиент игры', 'Установите клиент игры перед установкой патча сервера.', 'Скачать клиент'],
+            ['Патч сервера', 'Распакуйте патч в папку игры с заменой файлов.', 'Скачать патч'],
+        ] : [
+            ['Game client', 'Install the game client before applying the server patch.', 'Download client'],
+            ['Server patch', 'Extract the patch into the game folder and replace existing files.', 'Download patch'],
+        ];
+        $html = '<div data-content-block="cards">';
+        foreach ($labels as $index => [$title, $description, $button]) {
+            $url = ($index === 0 ? $client : $patch) ?? '#';
+            $html .= '<div data-content-block="card"><h2>'.e($title).'</h2><p>'.e($description).'</p><p><a href="'.e($url).'" data-content-button="primary">'.e($button).'</a></p></div>';
+        }
+
+        return $html.'</div>';
+    }
+
     /** @return array<string, array{locale:string,slug:string,title:string,body:string,seo_title:string,seo_description:string}> */
     public function templateTranslations(): array
     {
@@ -77,7 +116,7 @@ final class DownloadPages
             'ru' => ['Скачать игру', '<h2>Всё готово для начала приключения</h2><p>Установите клиент игры, затем распакуйте патч в его папку с заменой файлов. После установки запустите игру и войдите в свой игровой аккаунт.</p><p>Официальные ссылки на файлы появятся здесь, когда сервер будет готов к запуску.</p>'],
             'en' => ['Download the game', '<h2>Your adventure starts here</h2><p>Install the game client, then extract the patch into its folder and replace the existing files. Launch the game and sign in with your game account.</p><p>Official file links will appear here when the server is ready to launch.</p>'],
         ] as $locale => [$title, $body]) {
-            $translations[$locale] = ['locale' => $locale, 'slug' => self::SLUG, 'title' => $title, 'body' => $body, 'seo_title' => '', 'seo_description' => ''];
+            $translations[$locale] = ['locale' => $locale, 'slug' => self::SLUG, 'title' => $title, 'body' => $this->cardsHtml($locale).$body, 'seo_title' => '', 'seo_description' => ''];
         }
 
         return $translations;

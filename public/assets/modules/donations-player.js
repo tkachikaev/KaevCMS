@@ -173,20 +173,29 @@
     let loading;
     let opener;
     let backdropPress = false;
+    const dialogForLink = link => {
+        if (!link || link.hasAttribute('data-donations-fallback')) return null;
+        const url = new URL(link.href, location.href);
+        return Array.from(document.querySelectorAll('[data-donations-dialog]')).find(dialog => {
+            const endpoint = new URL(dialog.dataset.url, location.href);
+            return url.origin === endpoint.origin && url.pathname === endpoint.pathname;
+        });
+    };
     const outsideDialog = (event, dialog) => {
         const bounds = dialog.getBoundingClientRect();
         return event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom;
     };
     document.addEventListener('pointerdown', event => {
-        const dialog = document.querySelector('[data-donations-dialog]');
+        const dialog = event.target.closest('[data-donations-dialog]');
         backdropPress = dialog?.open && event.target === dialog && outsideDialog(event, dialog);
     }, true);
     const initialize = () => {
         document.querySelectorAll('[data-donations-calculator]').forEach(initializeCalculator);
-        const dialog = document.querySelector('[data-donations-dialog]');
-        if (!dialog || dialog.dataset.initialized) return;
-        dialog.dataset.initialized = 'true';
-        dialog.addEventListener('close', () => { loading?.abort(); if (opener?.isConnected) opener.focus(); });
+        document.querySelectorAll('[data-donations-dialog]').forEach(dialog => {
+            if (dialog.dataset.initialized) return;
+            dialog.dataset.initialized = 'true';
+            dialog.addEventListener('close', () => { loading?.abort(); if (opener?.isConnected) opener.focus(); });
+        });
     };
     // Livewire starts link navigation on mousedown / Enter, before the click.
     // Keep the normal href as a no-JS fallback, but reserve these links for the dialog.
@@ -194,29 +203,24 @@
         if (event.type === 'keydown' && event.key !== 'Enter') return;
         if (event.type === 'mousedown' && event.button !== 0) return;
         if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-        const dialog = document.querySelector('[data-donations-dialog]');
         const link = event.target.closest('a[href]');
-        if (!dialog || !link || link.target === '_blank') return;
-        const url = new URL(link.href, location.href);
-        const endpoint = new URL(dialog.dataset.url, location.href);
-        if (url.origin === endpoint.origin && url.pathname === endpoint.pathname) event.stopImmediatePropagation();
+        if (link?.target !== '_blank' && dialogForLink(link)) event.stopImmediatePropagation();
     };
     document.addEventListener('mousedown', reserveDialogLink, true);
     document.addEventListener('keydown', reserveDialogLink, true);
     document.addEventListener('click', async event => {
-        const dialog = document.querySelector('[data-donations-dialog]');
-        if (!dialog) return;
-        if (event.target.closest('[data-donations-close]')) { dialog.close(); return; }
-        if (event.target === dialog) {
-            if (backdropPress && outsideDialog(event, dialog)) dialog.close();
+        const activeDialog = event.target.closest('[data-donations-dialog]');
+        if (event.target.closest('[data-donations-close]')) { activeDialog?.close(); return; }
+        if (activeDialog && event.target === activeDialog) {
+            if (backdropPress && outsideDialog(event, activeDialog)) activeDialog.close();
             backdropPress = false;
             return;
         }
         const link = event.target.closest('a[href]');
         if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || link.target === '_blank') return;
+        const dialog = dialogForLink(link);
+        if (!dialog) return;
         const url = new URL(link.href, location.href);
-        const endpoint = new URL(dialog.dataset.url, location.href);
-        if (url.origin !== endpoint.origin || url.pathname !== endpoint.pathname) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         opener = link.closest('details')?.querySelector('summary') || link;
@@ -225,7 +229,8 @@
         document.querySelector('[data-account-sidebar-toggle]')?.setAttribute('aria-expanded', 'false');
         if (!dialog.open) dialog.showModal();
         const content = dialog.querySelector('[data-donations-dialog-content]');
-        if (content.childElementCount) { content.querySelector('input')?.focus(); return; }
+        if (content.childElementCount && dialog.dataset.kind !== 'exchange') { content.querySelector('input')?.focus(); return; }
+        content.replaceChildren();
         loading?.abort();
         const controller = new AbortController();
         loading = controller;
@@ -238,12 +243,13 @@
             const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
             if (!response.ok) throw new Error('Unavailable');
             const markup = new DOMParser().parseFromString(await response.text(), 'text/html');
-            const calculator = markup.querySelector('[data-donations-calculator]');
+            const calculator = markup.querySelector(dialog.dataset.kind === 'exchange' ? '[data-exchange-content]' : '[data-donations-calculator]');
             if (!calculator) throw new Error('Unavailable');
             if (!dialog.open || !dialog.isConnected) return;
             content.replaceChildren(document.importNode(calculator, true));
-            initializeCalculator(content.firstElementChild);
-            content.querySelector('input')?.focus();
+            if (dialog.dataset.kind === 'exchange') document.dispatchEvent(new Event('donations:content-loaded'));
+            else initializeCalculator(content.firstElementChild);
+            content.querySelector('select, input:not([type="hidden"])')?.focus();
         } catch (exception) {
             if (exception.name !== 'AbortError') failed.hidden = false;
         } finally {
@@ -255,8 +261,7 @@
     }, true);
     document.addEventListener('livewire:navigating', () => {
         loading?.abort();
-        const dialog = document.querySelector('[data-donations-dialog]');
-        if (dialog?.open) dialog.close();
+        document.querySelectorAll('[data-donations-dialog][open]').forEach(dialog => dialog.close());
     });
     document.addEventListener('livewire:navigated', initialize);
     window.addEventListener('pageshow', () => document.querySelectorAll('[data-donations-calculator]').forEach(root => initialized.get(root)?.()));

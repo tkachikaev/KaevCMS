@@ -1,6 +1,6 @@
-# KaevCMS 0.50.12
+# KaevCMS 0.50.14
 
-Donations 1.13.0: configure YooMoney completely in the CMS administration panel. New installations default to **payments off**. Owner/Administrator may enable a **single-player pilot** or **all-player live** after automated local checks (HTTPS, MySQL, enabled RUB pricing, provider credentials and production settings). No DONATIONS_* `.env` variables or PHP editing. Signed callback processing for in-flight payments is independent of new checkout availability; Wallet Core and existing migrations are unchanged.
+Donations 1.16.0: configure YooMoney completely in the CMS administration panel. New installations default to **payments off**. Owner/Administrator may enable a **single-player pilot** or **all-player live** after automated local checks (HTTPS, MySQL, enabled RUB pricing, provider credentials and production settings). No DONATIONS_* `.env` variables or PHP editing. Signed callback processing for in-flight payments is independent of new checkout availability; Wallet Core and existing migrations are unchanged.
 
 Для запуска ЮMoney откройте **Пожертвования → Платёжные системы → ЮMoney**: настройте реквизиты, выберите «Контрольный платёж» или «Рабочий режим». Никаких изменений `.env` и команд Artisan. После включения контрольного режима самостоятельно проведите небольшой платёж и проверьте его поступление. Подробности: `docs/ru/DONATIONS.md`.
 
@@ -190,3 +190,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 ## License / Лицензия
 
 MIT.
+
+### Donations game coin exchange (0.50.13)
+
+Donations now optionally converts CMS coins into a per-server game item in Web Inventory, configurable from the admin panel. This works without live YooMoney or the future Shop; existing reward-queue transfer remains unchanged. See docs/ru/DONATIONS.md and docs/en/DONATIONS.md.

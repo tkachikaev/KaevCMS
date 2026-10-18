@@ -1,4 +1,7 @@
 @extends('theme::layouts.app')
+@push('head')
+    <link rel="stylesheet" href="{{ asset('assets/css/downloads.css') }}?v={{ cms_version() }}&ui=editable-content" data-navigate-track>
+@endpush
 @section('scene', 'page')
 @section('title'){{ $page->seoTitleFor().' — '.site_name() }}@endsection
 @if ($page->seoDescriptionFor() !== '')
@@ -12,7 +15,6 @@
     </div>
 </section>
 <section @class(['container page-content cms-page', 'download-page-content' => $isDownloadPage ?? false])>
-    @if ($isDownloadPage ?? false)<x-download-files :page="$page" />@endif
     <article class="panel prose cms-page-prose">{!! $page->safeBodyHtml() !!}</article>
 </section>
 @endsection

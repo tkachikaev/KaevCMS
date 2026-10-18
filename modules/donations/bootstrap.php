@@ -6,12 +6,21 @@ use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use KaevCMS\Modules\Donations\Services\DonationGameExchange;
 use KaevCMS\Modules\Donations\Services\DonationPlayerHistory;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 
 return static function (Application $app, ModuleContext $module): void {
     $app->bind(WalletTopUpHistory::class, DonationPlayerHistory::class);
     $navigation = $app->make(ModuleNavigationRegistry::class);
+    $navigation->registerWalletLink(
+        moduleId: $module->id,
+        routeName: 'modules.donations.exchange.index',
+        labelKey: 'module-donations::messages.exchange_wallet_action',
+        descriptionKey: 'module-donations::messages.exchange_account_help',
+        visibleWhen: fn (): bool => $app->make(DonationGameExchange::class)->available() !== [],
+        sortOrder: 70,
+    );
     $navigation->registerAdminLink(
         moduleId: $module->id,
         routeName: 'admin.module-pages.donations.index',
@@ -29,6 +38,14 @@ return static function (Application $app, ModuleContext $module): void {
             routeName: 'modules.donations.index',
             labelKey: 'module-donations::messages.navigation_label',
             descriptionKey: 'module-donations::messages.navigation_description',
+            sortOrder: 70,
+        );
+    } elseif ($app->make(DonationGameExchange::class)->available() !== []) {
+        $navigation->registerAccountLink(
+            moduleId: $module->id,
+            routeName: 'modules.donations.exchange.index',
+            labelKey: 'module-donations::messages.exchange_title',
+            descriptionKey: 'module-donations::messages.exchange_account_help',
             sortOrder: 70,
         );
     } else {
@@ -49,7 +66,7 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
-    foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show'] as $route) {
+    foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show', 'exchange.index', 'exchange.items.preview'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,
@@ -57,7 +74,7 @@ return static function (Application $app, ModuleContext $module): void {
             manageRoles: [AdminRole::Owner, AdminRole::Administrator],
         );
     }
-    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'orders.reviews.store'] as $route) {
+    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'orders.reviews.store', 'exchange.update', 'exchange.save'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,

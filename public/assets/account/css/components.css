@@ -103,7 +103,11 @@ body.account-body .account-tabs svg { display: block; width: 18px; height: 18px;
 .reward-item-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reward-item-copy small { color: var(--account-muted); }
 .reward-item-amount { white-space: nowrap; color: var(--account-gold-dark); }
-.reward-transfer-panel { overflow: var(--account-shared-reward-transfer-overflow); display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 320px) auto; align-items: end; gap: 18px; padding: 18px; border: 1px solid var(--account-line); border-radius: var(--account-shared-reward-transfer-radius); background: var(--account-panel-soft); }
+.reward-transfer-panel { overflow: var(--account-shared-reward-transfer-overflow); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 14px; padding: 16px; border: 1px solid var(--account-line); border-radius: var(--account-shared-reward-transfer-radius); background: var(--account-panel-soft); }
+.reward-transfer-copy { grid-column: 1 / -1; min-width: 0; }
+.reward-transfer-copy > strong { display: block; font-size: 15px; }
+.reward-transfer-copy > p { margin-top: 3px; font-size: 12px; }
+.reward-transfer-panel > .account-button { min-width: 0; white-space: normal; }
 .reward-transfer-panel h2 { margin: 3px 0; }
 .reward-transfer-panel p { margin: 0; color: var(--account-muted); }
 .reward-character-select { display: grid; gap: 6px; }
@@ -121,7 +125,7 @@ body.account-body .account-tabs svg { display: block; width: 18px; height: 18px;
 .reward-status-failed { color: var(--account-red); }
 .reward-status-pending, .reward-status-processing, .reward-status-review { color: var(--account-orange); }
 .reward-empty { border-radius: var(--account-radius); }
-@media (max-width: 920px) { .reward-transfer-panel { grid-template-columns: 1fr; align-items: stretch; } .reward-transfer-panel .account-button { justify-content: center; } }
+@media (max-width: 560px) { .reward-transfer-panel { grid-template-columns: 1fr; align-items: stretch; } .reward-transfer-panel .account-button { justify-content: center; } }
 @media (max-width: 760px) {
     .reward-server-tabs a, .reward-view-tabs a { border-radius: var(--account-shared-reward-tab-radius-760); }
     .reward-item-row { border-radius: var(--account-shared-reward-item-radius-760); }
@@ -543,6 +547,9 @@ html.account-operation-modal-open{overflow:hidden}
 .account-wallet-summary { display:flex; align-items:center; gap:20px; padding:26px; min-width:0; border:1px solid var(--account-line); border-radius:var(--account-radius); background:var(--account-panel); }
 .account-wallet-summary-icon { display:grid; place-items:center; flex:0 0 60px; width:60px; height:60px; padding:12px; border-radius:17px; background:var(--account-panel-soft); color:var(--account-gold-bright); }
 .account-wallet-summary-text { min-width:0; }
+.account-wallet-actions { margin-inline-start: auto; display: flex; flex-direction: column; gap: 8px; flex: 0 1 auto; }
+.account-wallet-actions .account-wallet-topup { margin: 0; }
+@media (max-width: 640px) { .account-wallet-summary { flex-wrap: wrap; } .account-wallet-actions { flex-basis: 100%; } }
 .account-wallet-summary-text h2 { margin:3px 0 0; overflow-wrap:anywhere; font-size:clamp(24px,4vw,36px); font-variant-numeric:tabular-nums; }
 .account-wallet-blocked { margin-inline-start:auto; padding:8px 10px; border-radius:10px; background:var(--account-panel-soft); color:var(--account-red); font-size:12px; font-weight:750; }
 .account-wallet-history { min-width:0; padding:26px; border:1px solid var(--account-line); border-radius:var(--account-radius); background:var(--account-panel); }
