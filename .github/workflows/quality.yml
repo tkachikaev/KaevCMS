@@ -75,14 +75,20 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Prepare application
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path storage/framework/cache/data, storage/framework/cache/phpstan, storage/framework/sessions, storage/framework/views, storage/logs, bootstrap/cache | Out-Null
           Copy-Item .env.example .env -Force
           php artisan key:generate
 
-      - name: Run official Windows quality gate
-        shell: ${{ matrix.shell }}
+      - name: Run official Windows PowerShell quality gate
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: .\deployment\windows\quality.ps1
+
+      - name: Run official PowerShell 7 quality gate
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
         run: .\deployment\windows\quality.ps1
 
       - name: Upload Windows diagnostics
