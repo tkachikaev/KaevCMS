@@ -63,7 +63,7 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString('account-profile-balance', $accountMenu);
         $this->assertStringContainsString("public_route('wallet.index')", $accountMenu);
         $this->assertStringContainsString("public_route('wallet.index')", $navigation);
-        $this->assertStringContainsString('account-topbar-wallet', $layout);
+        $this->assertStringContainsString('<x-account-wallet-menu', $layout);
         $this->assertStringNotContainsString('public_route(\'characters.index\')', $layout);
         $this->assertStringNotContainsString('public_route(\'game-accounts.index\')', $layout);
         $this->assertStringNotContainsString('public_route(\'web-inventory.index\')', $layout);

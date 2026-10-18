@@ -69,8 +69,6 @@ body:has(.donations-dialog[open]) { overflow: hidden; }
 .donations-dialog-close:focus-visible { outline: 2px solid var(--account-gold); outline-offset: 3px; }
 body.account-body .donations-dialog .account-donations-card { border: 0; padding: 0; background: transparent; }
 .donations-dialog-loading { margin: 30px 0; color: var(--account-muted); }
-.donations-dialog-history { justify-self: center; color: var(--account-muted); font-size: 13px; }
-.donations-dialog-history:hover { color: var(--account-gold); }
 .donations-topup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); gap: 24px; align-items: start; }
 .donations-topup-controls, .donations-topup-payment { min-width: 0; display: grid; gap: 16px; }
 .account-donations-calculator .account-form-card { display: grid; gap: 22px; margin: 0; padding: 22px; background: var(--account-panel-soft); border: 1px solid var(--account-line); border-radius: 18px; }
@@ -106,3 +104,5 @@ body.account-body .donations-dialog .account-donations-card { border: 0; padding
     .donations-dialog-shell { padding: 20px 18px calc(24px + env(safe-area-inset-bottom)); }
     .donations-dialog .account-form-card, .donations-topup-total { padding: 18px; }
 }
+
+.donations-history-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; padding-top:20px; }

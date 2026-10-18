@@ -52,6 +52,7 @@ final class DonationTopUpDialogTest extends TestCase
     {
         $this->actingAs(User::factory()->create())->get('/modules/donations?dialog=1')->assertOk()
             ->assertSee('data-donations-calculator', false)->assertSee('data-donations-provider', false)
+            ->assertSee('История')->assertDontSee('Журнал операций')->assertDontSee('История пополнений')
             ->assertDontSee('<html', false)->assertDontSee('quickpay/confirm')->assertDontSee('private-dialog-fixture-secret');
         $this->assertDatabaseCount('module_donation_orders', 0);
         $this->assertDatabaseCount('module_donation_payment_preparations', 0);

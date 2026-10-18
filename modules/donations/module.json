@@ -16,5 +16,15 @@
     "routes": {
         "web": "routes/web.php",
         "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Пожертвования",
+            "description": "Пополнение кошелька через ЮMoney: цены монет, заявки, подтверждение платежей и однократное начисление."
+        },
+        "en": {
+            "name": "Donations",
+            "description": "YooMoney one-screen admin setup and direct player checkout, with verified callbacks and exactly-once Wallet settlement."
+        }
     }
 }

@@ -1,13 +1,16 @@
 <?php
 
 use App\Auth\AdminRole;
+use App\Contracts\WalletTopUpHistory;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use KaevCMS\Modules\Donations\Services\DonationPlayerHistory;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 
 return static function (Application $app, ModuleContext $module): void {
+    $app->bind(WalletTopUpHistory::class, DonationPlayerHistory::class);
     $navigation = $app->make(ModuleNavigationRegistry::class);
     $navigation->registerAdminLink(
         moduleId: $module->id,

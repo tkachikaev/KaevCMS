@@ -1,4 +1,5 @@
 @extends('theme::layouts.app')
+@section('scene', 'home')
 
 @php
     $heroDetails = $server
@@ -29,9 +30,6 @@
 
 @section('content')
 <section class="hero">
-    <div class="hero-art" aria-hidden="true"></div>
-    <div class="hero-light" aria-hidden="true"></div>
-    <canvas class="hero-particles" data-hero-particles aria-hidden="true"></canvas>
     <div class="container hero-content">
         <div class="hero-copy-block">
             <p class="eyebrow">{{ __('CLASSIC WORLD · YOUR LEGEND') }}</p>
@@ -56,7 +54,7 @@
                 @else
                     <a wire:navigate.hover class="button button-gold button-large" href="{{ public_route('login') }}">{{ __('Log in') }} <span aria-hidden="true">→</span></a>
                 @endauth
-                <a wire:navigate.hover class="button button-ghost button-large" href="{{ public_route('downloads') }}">{{ __('Download client') }} <span class="button-play" aria-hidden="true">▷</span></a>
+                <a wire:navigate.hover class="button button-ghost button-large" href="{{ download_page_url() }}">{{ __('Download client') }} <span class="button-play" aria-hidden="true">▷</span></a>
             </div>
         </div>
     </div>

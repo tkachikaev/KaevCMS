@@ -30,6 +30,33 @@ test('Aurelia particles animate behind usable hero controls and resize on mobile
     expect(errors).toEqual([]);
 });
 
+test('persisted scenery pauses particles on inner pages and resumes the same canvas on home', async ({ page }) => {
+    await page.setContent('<body class="kaev-aurelia"><div class="public-stage"><div class="aurelia-scene" data-aurelia-scene data-mode="home"><div class="aurelia-scene-frame"><canvas class="hero-particles" data-hero-particles></canvas></div></div><main id="public-content"><section class="hero"></section></main></div></body>');
+    await page.addStyleTag({ path: resolve(assets, 'css/app.css') });
+    await page.addScriptTag({ path: resolve(assets, 'js/app.js') });
+    const canvas = page.locator('[data-hero-particles]');
+    const first = await canvas.evaluate(element => element.toDataURL());
+    await expect.poll(() => canvas.evaluate(element => element.toDataURL())).not.toBe(first);
+    await page.evaluate(() => {
+        window.originalCanvas = document.querySelector('[data-hero-particles]');
+        document.dispatchEvent(new Event('livewire:navigating'));
+        document.querySelector('#public-content').innerHTML = '<section class="page-hero"></section>';
+        document.dispatchEvent(new Event('livewire:navigated'));
+    });
+    await expect(page.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', 'page');
+    await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+    const stopped = await canvas.evaluate(element => element.toDataURL());
+    await page.waitForTimeout(150);
+    expect(await canvas.evaluate(element => element.toDataURL())).toBe(stopped);
+    await page.evaluate(() => {
+        document.dispatchEvent(new Event('livewire:navigating'));
+        document.querySelector('#public-content').innerHTML = '<section class="hero"></section>';
+        document.dispatchEvent(new Event('livewire:navigated'));
+    });
+    expect(await canvas.evaluate(element => element === window.originalCanvas)).toBe(true);
+    await expect.poll(() => canvas.evaluate(element => element.toDataURL())).not.toBe(stopped);
+});
+
 test('Aurelia particles respect live reduced-motion changes and high density displays', async ({ browser }) => {
     const context = await browser.newContext({ deviceScaleFactor: 3, reducedMotion: 'reduce' });
     try {

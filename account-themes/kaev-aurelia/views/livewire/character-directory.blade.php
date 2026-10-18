@@ -9,7 +9,7 @@
         <x-slot:actions><a wire:navigate class="account-button secondary" href="{{ public_route('game-accounts.index') }}">{{ __('Manage accounts') }}</a></x-slot:actions>
     </x-account-panel-header>
 
-    <div class="account-character-tabs" role="tablist" aria-label="{{ __('Character display mode') }}">
+    <div class="account-character-tabs account-tabs" role="tablist" aria-label="{{ __('Character display mode') }}">
         <button type="button" role="tab" @class(['active' => $viewMode === 'grouped']) aria-selected="{{ $viewMode === 'grouped' ? 'true' : 'false' }}" wire:click="setViewMode('grouped')">
             <span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg></span>{{ __('By servers') }}
         </button>

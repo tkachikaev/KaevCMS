@@ -18,6 +18,33 @@ const signIn = async (page) => {
     await expect(page).toHaveURL(/\/account$/);
 };
 
+const componentStyle = element => {
+    const style = getComputedStyle(element);
+    return Object.fromEntries(['borderRadius', 'borderWidth', 'padding', 'fontSize', 'fontWeight', 'minHeight', 'backgroundColor'].map(key => [key, style[key]]));
+};
+
+const assertConsistentAccountSections = async page => {
+    for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await gotoWithLocalNetworkRetry(page, '/account/game-accounts');
+        await expect(page.locator('.account-sidebar-footer')).not.toContainText(/Шаблон кабинета|Версия|Account theme|Version/);
+        await expect(page.locator('.account-sidebar-footer a')).toHaveText('←Вернуться на сайт');
+        const summaryStyle = await page.locator('.account-stat').first().evaluate(componentStyle);
+        await gotoWithLocalNetworkRetry(page, '/account/characters');
+        expect(await page.locator('.account-stat').first().evaluate(componentStyle)).toEqual(summaryStyle);
+        const tab = page.getByRole('tab', { name: 'Все персонажи' });
+        await tab.click();
+        await expect(tab).toHaveAttribute('aria-selected', 'true');
+        const tabStyle = await tab.evaluate(componentStyle);
+        await gotoWithLocalNetworkRetry(page, '/account/web-inventory');
+        const history = page.locator('.reward-view-tabs a').filter({ hasText: 'История передач' });
+        await history.click();
+        await expect(history).toHaveAttribute('aria-current', 'page');
+        expect(await history.evaluate(componentStyle)).toEqual(tabStyle);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    }
+};
+
 test('player character display mode persists after reload', async ({ page }) => {
     await signIn(page);
 
@@ -79,7 +106,20 @@ test('sidebar persists during SPA navigation and account history fetches a fresh
     await expect(page.locator('.account-topbar-wallet')).toBeVisible();
 });
 
-test('luxury player theme remains reactive after SPA navigation', async ({ page }) => {
+test('luxury player theme remains reactive after SPA navigation', async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await gotoWithLocalNetworkRetry(page, '/admin/login');
+    await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
+    await page.locator('#password').fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
+    await submitLogin({ page, postPath: '/admin/login', label: 'Luxury theme administrator login',
+        submit: () => page.getByRole('button', { name: 'Войти в панель' }).click() });
+    await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
+    const activation = page.locator('form[action$="/account-themes/luxury/activate"]');
+    if (await activation.count()) {
+        await activation.getByRole('button').click();
+        await expect(activation).toHaveCount(0);
+    }
+    await context.clearCookies();
     await signIn(page);
 
     await expect(page.locator('link[href*="account-themes/luxury/assets/css/app.css"]')).toHaveCount(1);
@@ -106,6 +146,7 @@ test('luxury player theme remains reactive after SPA navigation', async ({ page 
     const allCharacters = page.getByRole('tab', { name: 'Все персонажи' });
     await allCharacters.click();
     await expect(allCharacters).toHaveAttribute('aria-selected', 'true');
+    await assertConsistentAccountSections(page);
 });
 
 test('player can choose an administrator-provided account avatar in a modal', async ({ page }) => {
@@ -228,6 +269,7 @@ test('promo codes and daily rewards remain usable on a mobile viewport', async (
 });
 
 test('aurelia player theme keeps shared runtime and active module navigation after SPA changes', async ({ page, context }) => {
+    test.setTimeout(60_000);
     const adminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
     const adminPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'BrowserPassword123!';
 
@@ -278,6 +320,7 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
     await expect(inventoryLink).toHaveClass(/active/);
     await expect(page.locator('.reward-inventory-shell')).toBeVisible();
     await expect(page.locator('.reward-view-tabs').getByRole('link').first()).toBeVisible();
+    await assertConsistentAccountSections(page);
 });
 
 test('mobile account sidebar stays sharp and clickable above its backdrop', async ({ page }) => {
@@ -331,7 +374,8 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
     await expect(page.locator('html')).not.toHaveClass(/account-sidebar-open/);
 });
 
-test('Aurelia site and account transitions never paint unstyled SVG icons', async ({ page, context }) => {
+test('Aurelia site and account transitions never paint unstyled SVG icons', async ({ page, context }, testInfo) => {
+    test.setTimeout(60_000);
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
     await page.locator('#password').fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
@@ -386,6 +430,46 @@ test('Aurelia site and account transitions never paint unstyled SVG icons', asyn
             await player.setViewportSize({ width, height: 900 });
             await player.emulateMedia({ reducedMotion });
             await gotoWithLocalNetworkRetry(player, '/');
+            if (width === 390) {
+                await expect(player.locator('.aurelia-scene .hero-art')).toHaveCSS('opacity', '1');
+                await expect(player.locator('.aurelia-scene .hero-art')).toHaveCSS('background-image', /hero-mobile\.webp/);
+                await expect(player.locator('.aurelia-scene .hero-light')).toHaveCSS('background-image', 'none');
+                const portraitSpace = await player.evaluate(() => document.querySelector('.hero-copy-block').getBoundingClientRect().top - document.querySelector('.aurelia-scene').getBoundingClientRect().top);
+                expect(portraitSpace).toBeGreaterThanOrEqual(300);
+                await player.screenshot({ path: testInfo.outputPath('aurelia-mobile-home.png'), fullPage: false });
+            }
+            await player.evaluate(() => {
+                window.sceneProbe = [...document.querySelectorAll('[data-aurelia-scene], .aurelia-scene .hero-art, .aurelia-scene-veil, [data-hero-particles]')];
+            });
+            for (const path of ['/news', '/about', '/news', '/']) {
+                if (await player.locator('[data-menu-toggle]').isVisible()) {
+                    await player.locator('[data-menu-toggle]').click();
+                }
+                await player.locator(path === '/' ? '[data-public-header] .brand' : `[data-main-menu] a[href$="${path}"]`).click();
+                await expect(player).toHaveURL(new RegExp(`${path === '/' ? '/' : path}$`));
+                await expect(player.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', path === '/' ? 'home' : 'page');
+                expect(await player.evaluate(() => {
+                    const nodes = [...document.querySelectorAll('[data-aurelia-scene], .aurelia-scene .hero-art, .aurelia-scene-veil, [data-hero-particles]')];
+                    return nodes.length === 4 && nodes.every((node, index) => node === window.sceneProbe[index])
+                        && !document.querySelector('#public-content').contains(nodes[0])
+                        && nodes[1].getAnimations().length === 0;
+                })).toBe(true);
+                if (path === '/about') {
+                    // The already-visible veil must not fade out on an inner-page swap.
+                    await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', '1');
+                    expect(await player.locator('.aurelia-scene-veil').evaluate(element => element.getAnimations().length)).toBe(0);
+                }
+                await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', path === '/' ? '0' : '1');
+                expect(await player.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+            }
+            await player.goBack();
+            await expect(player).toHaveURL(/\/news$/);
+            await expect(player.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', 'page');
+            await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', '1');
+            await player.goForward();
+            await expect(player).toHaveURL(/\/$/);
+            await expect(player.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', 'home');
+            await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', '0');
             const entries = player.locator('a[href$="/account"]');
             for (const entry of await entries.all()) {
                 expect(await entry.getAttribute('wire:navigate.hover')).toBeNull();

@@ -1,3 +1,15 @@
+## Unreleased
+
+- Add an editable RU/EN download page with client/patch link fields. The reserved downloads page address connects directly to Download client in both themes; admins can recreate it from a prefilled form or create a page with that address. Existing content and file links survive updates.
+- Use the bundled transparent Kaev coin as the default wallet icon throughout administration and both account themes; removing an uploaded icon restores it. Reveal the mobile Aurelia portrait above the hero text while preserving scenery across navigation.
+
+- Keep Aurelia scenery and its pale overlay continuous during public-page navigation. Unify account summary cards and tabs in both themes, and hide theme/version metadata from players.
+
+- Simplify player wallet history: one timeline for purchases, other credits, spending and pending top-ups; inline payment/cancellation actions, expiry countdown and optional inactive attempts. Purchase credits appear once; no settlement or ledger-write changes.
+
+- Localize bundled module catalogue names/descriptions and audit activity labels in RU/EN, including stored events from disabled modules; stable action codes remain unchanged.
+- Add a shared account balance dropdown with direct top-up and transaction-log links in both themes. Make top-up order history and wallet operations visible from the top-up form.
+
 ## 0.50.12 - 2026-10-17
 
 - Simplified YooMoney setup to one form with a visible wallet number, saved-secret indicator and one payment switch; separate provider/test/pilot controls are no longer exposed in the YooMoney admin UI.

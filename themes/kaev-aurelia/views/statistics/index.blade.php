@@ -1,4 +1,5 @@
 @extends('theme::layouts.app')
+@section('scene', 'page')
 
 @section('title', __('Statistics').' — '.site_name())
 @section('meta_description', __('Character rankings, current heroes and castle owners.'))

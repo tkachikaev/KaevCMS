@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\NewsController;
@@ -41,7 +42,7 @@ $registerPublicRoutes = static function (bool $localized = false): void {
         Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name($namePrefix.'pages.show');
     }
 
-    Route::view('/downloads', 'theme::pages.downloads')->name($namePrefix.'downloads');
+    Route::get('/downloads', DownloadController::class)->name($namePrefix.'downloads');
     Route::view('/about', 'theme::pages.about')->name($namePrefix.'about');
 
     Route::middleware('guest')->group(function () use ($namePrefix): void {

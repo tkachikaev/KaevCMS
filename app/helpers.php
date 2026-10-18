@@ -6,6 +6,7 @@ use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
 use App\Services\Localization\LocalizedContentResolver;
 use App\Services\MailSettings;
+use App\Services\Pages\DownloadPages;
 use App\Services\RegistrationSettings;
 use App\Services\SiteSettings;
 use App\Support\KaevCMS;
@@ -17,6 +18,17 @@ if (! function_exists('cms_version')) {
     function cms_version(): string
     {
         return KaevCMS::version();
+    }
+}
+
+if (! function_exists('download_page_url')) {
+    function download_page_url(?string $locale = null): string
+    {
+        $page = app(DownloadPages::class)->selected();
+
+        return $page !== null && $page->isLive() && $page->translation($locale) !== null
+            ? page_url($page, $locale)
+            : public_route('downloads');
     }
 }
 

@@ -11,8 +11,8 @@
     @endif
     <title>@yield('title', __('Personal account')) — {{ site_name() }}</title>
     <link rel="stylesheet" href="{{ account_theme_asset('assets/css/app.css') }}" data-navigate-track>
-    <link rel="stylesheet" href="{{ asset('assets/account/css/components.css') }}?v={{ cms_version() }}" data-navigate-track>
-    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
+    <link rel="stylesheet" href="{{ asset('assets/account/css/components.css') }}?v={{ cms_version() }}&ui=account-consistency" data-navigate-track>
+    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}&ui=account-consistency" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
     @includeIf('module-donations::account.assets')
@@ -38,8 +38,6 @@
 
             <div class="account-sidebar-footer">
                 <a href="{{ public_route('home') }}"><span aria-hidden="true">←</span>{{ __('Back to website') }}</a>
-                <div><span>{{ __('Account theme') }}</span><strong>{{ $activeAccountTheme['name'] ?? '—' }}</strong></div>
-                <small>{{ __('Version :version', ['version' => cms_version()]) }}</small>
             </div>
         </aside>
     @endpersist
@@ -62,10 +60,7 @@
                 </div>
 
                 <div class="account-topbar-actions">
-                    <a wire:navigate class="account-topbar-wallet" href="{{ public_route('wallet.index') }}" aria-label="{{ __('My wallet') }}: {{ $walletView['label'] }}">
-                        <span class="account-topbar-wallet-icon" aria-hidden="true"><x-account-wallet-icon :url="$walletView['icon_url']" /></span>
-                        <span class="account-topbar-wallet-amount">{{ $walletView['formatted'] }}</span>
-                    </a>
+                    <x-account-wallet-menu :wallet-view="$walletView" />
                     <details class="account-profile-menu account-profile-menu-topbar">
                         <summary aria-label="{{ __('Open account menu') }}">
                             <x-account-avatar :user="$user" class="account-profile-avatar" aria-hidden="true" />

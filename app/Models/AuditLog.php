@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Lang;
 
 class AuditLog extends Model
 {
@@ -54,6 +55,12 @@ class AuditLog extends Model
 
     public function actionLabel(): string
     {
+        $translation = 'audit.actions.'.$this->action;
+        $label = Lang::get($translation);
+        if (is_string($label) && $label !== $translation) {
+            return $label;
+        }
+
         return match ($this->action) {
             'transaction.credit' => __('Wallet credited'),
             'transaction.debit' => __('Wallet debited'),

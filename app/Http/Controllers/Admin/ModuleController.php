@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Support\Modules\ModuleManager;
+use App\Support\Modules\ModulePresentation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -113,10 +114,10 @@ class ModuleController extends Controller
 
         $status = $appliedCount > 0
             ? __('Module :module enabled after applying :count database migration(s).', [
-                'module' => $resolvedModule['name'],
+                'module' => ModulePresentation::text($resolvedModule, 'name'),
                 'count' => $appliedCount,
             ])
-            : __('Module :module enabled. It will be active from the next request.', ['module' => $resolvedModule['name']]);
+            : __('Module :module enabled. It will be active from the next request.', ['module' => ModulePresentation::text($resolvedModule, 'name')]);
 
         return redirect()
             ->route('admin.modules.index')
@@ -160,6 +161,6 @@ class ModuleController extends Controller
 
         return redirect()
             ->route('admin.modules.index')
-            ->with('status', __('Module :module disabled. Its database data was preserved.', ['module' => $resolvedModule['name']]));
+            ->with('status', __('Module :module disabled. Its database data was preserved.', ['module' => ModulePresentation::text($resolvedModule, 'name')]));
     }
 }

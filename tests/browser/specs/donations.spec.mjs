@@ -168,11 +168,11 @@ test('players can preview accurate coin prices but cannot create fake payment dr
             await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
             await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations$/);
             await expect(player.locator('a[data-account-module-id="donations"]')).toContainText('Пополнить монеты');
-            const choose = player.getByTestId('donations-choose-coins');
+            const choose = player.getByRole('link', { name: 'Пополнить баланс', exact: true });
             await expect(choose).toBeInViewport();
             await choose.click();
             await expect(player.locator('[data-donations-dialog]')).toBeVisible();
-            await expect(player).toHaveURL(/\/modules\/donations\/orders$/);
+            await expect(player).toHaveURL(/\/account\/wallet$/);
             await player.keyboard.press('Escape');
             await gotoWithLocalNetworkRetry(player, '/modules/donations');
             const quote = player.getByTestId('donations-quote-form');
@@ -259,8 +259,8 @@ test('players can preview accurate coin prices but cannot create fake payment dr
     await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations\/orders$/);
     await expect(player.getByTestId('donations-choose-coins')).toHaveCount(0);
     // Previewing prices must not create payment orders.
-    await expect(player.getByTestId('donations-player-orders').locator('a')).toHaveCount(0);
-    await expect(player.getByTestId('donations-player-orders')).toContainText('Заявок пока нет.');
+    await expect(player.locator('[data-wallet-history] [data-history-key]')).toHaveCount(0);
+    await expect(player.locator('[data-wallet-history]')).toContainText('Операций пока нет');
     await gotoWithLocalNetworkRetry(player, '/account/wallet');
     await expect(player.getByRole('link', { name: 'Пополнить баланс', exact: true })).toHaveCount(0);
 
@@ -345,6 +345,12 @@ test('donations calculator stays translated and gated in RU/EN, both account the
                 await gotoWithLocalNetworkRetry(player, `/language/${locale}?return=%2Fmodules%2Fdonations`);
                 await expect(player.locator('h1')).toHaveText(title);
                 await expect(player.locator('html')).toHaveAttribute('lang', locale);
+                const menu = player.locator('[data-account-wallet-menu]');
+                await menu.locator('summary').click();
+                await expect(menu.getByRole('link', { name: locale === 'ru' ? 'Пополнить' : 'Top up', exact: true })).toBeVisible();
+                await expect(menu.getByRole('link', { name: locale === 'ru' ? 'История' : 'History', exact: true })).toBeVisible();
+                await player.keyboard.press('Escape');
+                await expect(menu).not.toHaveAttribute('open', '');
                 const quote = player.getByTestId('donations-quote-form');
                 await quote.locator('[name="currency"]').selectOption('RUB');
                 await quote.locator('[name="coins"]').fill('237');
@@ -417,6 +423,26 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
         for (const width of [1440, 390]) {
             await player.setViewportSize({ width, height: 900 });
             await gotoWithLocalNetworkRetry(player, '/account/wallet');
+            const balanceMenu = player.locator('[data-account-wallet-menu]');
+            const balanceToggle = balanceMenu.locator('summary');
+            await balanceToggle.click();
+            await expect(balanceMenu).toHaveAttribute('open', '');
+            await expect(balanceMenu.getByRole('link', { name: 'История', exact: true })).toBeVisible();
+            await player.locator('.account-profile-menu-topbar > summary').click();
+            await expect(balanceMenu).not.toHaveAttribute('open', '');
+            await balanceToggle.click();
+            await expect(player.locator('.account-profile-menu-topbar')).not.toHaveAttribute('open', '');
+            await balanceMenu.getByRole('link', { name: 'Пополнить', exact: true }).click();
+            await expect(player.locator('[data-donations-dialog]')).toBeVisible();
+            await expect(balanceMenu).not.toHaveAttribute('open', '');
+            await expect(player.locator('[data-donations-dialog]').getByRole('link', { name: 'История', exact: true })).toBeVisible();
+            await player.keyboard.press('Escape');
+            await expect(balanceToggle).toBeFocused();
+            await balanceToggle.press('Enter');
+            await expect(balanceMenu).toHaveAttribute('open', '');
+            await player.keyboard.press('Escape');
+            await expect(balanceMenu).not.toHaveAttribute('open', '');
+            await expect(balanceToggle).toBeFocused();
             const trigger = player.getByRole('link', { name: 'Пополнить баланс', exact: true });
             const dialog = player.locator('[data-donations-dialog]');
             let before = topups;
@@ -500,8 +526,36 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
             await gotoWithLocalNetworkRetry(player, fields.get('successURL'));
             await expect(player.getByTestId('donations-order-detail')).toContainText((237 * expectedPrice).toFixed(2));
             await expect(player.locator('.account-topbar-wallet-amount')).toHaveText('0');
-            await player.getByRole('button', { name: 'Отменить заявку', exact: true }).click();
-            await expect(player.getByTestId('donations-order-detail')).toContainText('Отменена');
+            // One history shows actionable unpaid orders without opening their details.
+            await gotoWithLocalNetworkRetry(player, '/account/wallet');
+            const pendingRow = player.locator('[data-history-key^="topup-"]').filter({ hasText: '237' });
+            await expect(pendingRow).toHaveCount(1);
+            await expect(pendingRow).toContainText('Ожидает оплаты');
+            await expect(pendingRow.locator('[data-wallet-time]')).toContainText('Осталось');
+            await expect(pendingRow.getByRole('link', { name: 'Оплатить', exact: true })).toBeVisible();
+            await expect(pendingRow.getByRole('button', { name: 'Отменить', exact: true })).toBeVisible();
+            await player.screenshot({ path: `storage/framework/testing/wallet-history-${theme}-${width}.png`, fullPage: true });
+            if (theme === 'luxury' && width === 390) {
+                await player.clock.install();
+                await player.reload();
+                const seconds = Number(await pendingRow.getAttribute('data-wallet-expires')) - Number(await pendingRow.getAttribute('data-wallet-now'));
+                await player.clock.fastForward((seconds + 2) * 1000);
+                await expect(pendingRow.locator('[data-wallet-time]')).toHaveText('Время оплаты истекло');
+                await expect(pendingRow.getByRole('link', { name: 'Оплатить', exact: true })).toHaveAttribute('aria-disabled', 'true');
+                await expect(pendingRow.getByRole('button', { name: 'Отменить', exact: true })).toBeDisabled();
+                await pendingRow.getByRole('link', { name: 'Оплатить', exact: true }).click({ force: true });
+                await expect(player).toHaveURL(/\/account\/wallet$/);
+                // Server time and order state never changed; reload restores the still-valid actions.
+                await player.reload();
+            }
+            await pendingRow.getByRole('button', { name: 'Отменить', exact: true }).click();
+            await expect(player).toHaveURL(/\/account\/wallet$/);
+            await expect(pendingRow).toHaveCount(0);
+            await player.getByRole('link', { name: 'Показать неактивные', exact: true }).click();
+            const closedRow = player.locator('[data-history-key^="topup-"]').filter({ hasText: '237' });
+            await expect(closedRow.last()).toContainText('Пополнение отменено');
+            await expect(closedRow.getByRole('button', { name: 'Отменить', exact: true })).toHaveCount(0);
+            await player.getByRole('link', { name: 'Скрыть неактивные', exact: true }).click();
             await expect(player.locator('.account-topbar-wallet-amount')).toHaveText('0');
         }
     }

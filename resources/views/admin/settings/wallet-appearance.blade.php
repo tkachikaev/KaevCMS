@@ -44,13 +44,11 @@
                     <div @class(['settings-image-preview', 'settings-favicon-preview', 'has-image' => $settings['icon_url']]) data-settings-preview data-preview-alt="{{ __('Selected image preview') }}">
                         @if ($settings['icon_url'])
                             <img src="{{ $settings['icon_url'] }}" alt="{{ __('Current wallet icon') }}" data-settings-preview-image>
-                        @else
-                            <span data-settings-preview-empty>🪙</span>
                         @endif
                     </div>
                     <input id="wallet_icon" name="icon" type="file" accept=".png,.webp,image/png,image/webp" data-settings-file>
                     <button class="button button-secondary" type="button" data-settings-file-select>{{ __('Choose wallet icon') }}</button>
-                    @if ($settings['icon_url'])
+                    @if ($settings['icon'])
                         <label class="settings-remove-row">
                             <input name="remove_icon" type="checkbox" value="1" @checked(old('remove_icon')) data-settings-remove>
                             <span>{{ __('Remove wallet icon') }}</span>

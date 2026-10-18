@@ -105,6 +105,30 @@ class BundledAureliaThemesTest extends TestCase
         ]);
     }
 
+    public function test_aurelia_scenery_has_the_correct_initial_state_without_javascript(): void
+    {
+        app(ThemeManager::class)->activate('kaev-aurelia');
+
+        foreach (['/' => 'home', '/news' => 'page', '/about' => 'page', '/ru/pages/downloads' => 'page', '/login' => 'hidden'] as $path => $mode) {
+            $this->get($path)->assertOk()
+                ->assertSee('x-persist="aurelia-scene"', false)
+                ->assertSee('data-aurelia-scene data-mode="'.$mode.'"', false);
+        }
+    }
+
+    public function test_both_account_themes_hide_player_facing_build_metadata(): void
+    {
+        $user = User::factory()->create(['locale' => 'ru']);
+
+        foreach (['luxury', 'kaev-aurelia'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            $this->actingAs($user)->get('/account')->assertOk()
+                ->assertSee(__('Back to website'))
+                ->assertDontSee(__('Account theme'))
+                ->assertDontSee(__('Version :version', ['version' => cms_version()]));
+        }
+    }
+
     public function test_account_aurelia_theme_can_be_activated_without_changing_public_theme(): void
     {
         $user = User::factory()->create([
@@ -122,7 +146,7 @@ class BundledAureliaThemesTest extends TestCase
             ->assertSee('assets/account/js/navigation.js', false)
             ->assertSee('data-account-sidebar', false)
             ->assertSee('data-account-topbar', false)
-            ->assertSee('Kaev Aurelia Account');
+            ->assertDontSee('Kaev Aurelia Account');
 
         $this->actingAs($user)
             ->get('/account/game-accounts')
@@ -180,7 +204,7 @@ class BundledAureliaThemesTest extends TestCase
         $footer = $matches[0];
         $this->assertStringContainsString('<h2>Our project description</h2>', $footer);
         $this->assertStringContainsString('Там, где эльфийские башни касаются облаков, а клинки звенят во имя чести.', $footer);
-        foreach (['register', 'login', 'downloads'] as $path) {
+        foreach (['register', 'login', 'pages/downloads'] as $path) {
             $this->assertStringContainsString('href="'.url('/ru/'.$path).'"', $footer);
         }
         $this->assertMatchesRegularExpression('/href="https:\/\/community\.example\.test"\s+target="_blank"\s+rel="noopener noreferrer"/', $footer);

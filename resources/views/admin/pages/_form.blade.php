@@ -7,6 +7,17 @@
 
 <div class="editor-grid">
     <div class="editor-main">
+        @if ($isDownloadPage ?? false)
+            <section class="form-card" data-download-links-editor>
+                <div class="settings-card-heading"><div><h2>{{ __('Game downloads') }}</h2><p>{{ __('This page opens from Download client. Paste your file links below; empty links show an inactive button.') }}</p></div></div>
+                @foreach (['client' => 'Game client link', 'patch' => 'Server patch link'] as $downloadKind => $downloadLabel)
+                    <x-admin.field :for="'download_'.$downloadKind.'_url'" :name="'download_links.'.$downloadKind" :label="__($downloadLabel)">
+                        <input type="url" id="download_{{ $downloadKind }}_url" name="download_links[{{ $downloadKind }}]" maxlength="2048" placeholder="https://" value="{{ old('download_links.'.$downloadKind, $pageItem->getAttribute('download_'.$downloadKind.'_url')) }}">
+                    </x-admin.field>
+                @endforeach
+                <p class="form-hint">{{ __('Keep the downloads address in the default language to connect this page to Download client. The title and text can be changed freely.') }}</p>
+            </section>
+        @endif
         <section class="form-card translation-editor" data-locale-tabs>
             <div class="settings-card-heading">
                 <div>

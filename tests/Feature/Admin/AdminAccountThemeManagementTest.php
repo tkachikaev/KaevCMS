@@ -87,7 +87,7 @@ class AdminAccountThemeManagementTest extends TestCase
             ->assertSee('account-themes/luxury/assets/css/app.css', false)
             ->assertSee('assets/account/js/navigation.js', false)
             ->assertDontSee('account-themes/luxury/assets/js/navigation.js', false)
-            ->assertSee('L2 Obsidian Luxury')
+            ->assertDontSee('L2 Obsidian Luxury')
             ->assertDontSee('assets/account/css/app.css', false);
     }
 

@@ -19,6 +19,7 @@ final class ModuleValidator
         'version',
         'author',
         'description',
+        'locales',
         'cms_min',
         'cms_max',
         'namespace',
@@ -108,6 +109,27 @@ final class ModuleValidator
         $unknownFields = array_values(array_diff(array_keys($manifest), self::ALLOWED_FIELDS));
         foreach ($unknownFields as $unknownField) {
             $result['errors'][] = __('Unknown module.json field: :field.', ['field' => $unknownField]);
+        }
+
+        if (array_key_exists('locales', $manifest)) {
+            $locales = $manifest['locales'];
+            if (! is_array($locales) || ($locales !== [] && array_is_list($locales))) {
+                $result['errors'][] = __('The :field field must contain text.', ['field' => 'locales']);
+            } else {
+                foreach ($locales as $locale => $labels) {
+                    if (! is_string($locale) || preg_match('/\A[a-z]{2,3}(?:[_-][A-Za-z]{2,4})?\z/', $locale) !== 1
+                        || ! is_array($labels) || array_diff(array_keys($labels), ['name', 'description']) !== []) {
+                        $result['errors'][] = __('The :field field must contain text.', ['field' => 'locales']);
+
+                        continue;
+                    }
+                    foreach ($labels as $field => $value) {
+                        if (! is_string($value) || trim($value) === '' || mb_strlen($value) > ($field === 'name' ? 120 : 1000)) {
+                            $result['errors'][] = __('The :field field must contain text.', ['field' => 'locales.'.$locale.'.'.$field]);
+                        }
+                    }
+                }
+            }
         }
 
         if (Arr::get($manifest, 'schema') !== self::SUPPORTED_SCHEMA) {

@@ -7,3 +7,9 @@ Content areas include multilingual news, pages, navigation, site identity, logos
 Built-in Russian and English catalogs must have matching keys and placeholders. Additional reviewed language packs are discovered without a database migration. Public canonical links and localized slugs are generated per enabled language.
 
 The bundled Kaev Aurelia Account theme uses a persistent Livewire shell, rounded dashboard surfaces, separate pages for characters and game accounts, a web inventory, and a modal account-avatar picker.
+
+## Download page
+
+Installation or the first upgrade creates an editable RU/EN download page with the reserved `downloads` address. Bundled theme download buttons resolve its localized address with `download_page_url()`. Edit its title, text and client/patch URLs under **Pages**; empty URLs leave file buttons inactive.
+
+Deleted pages are not recreated by subsequent upgrades. Create a normal page with the `downloads` address in the default language, or use the prefilled form offered in the page list. Missing or unpublished pages show a files-unavailable message. Upgrades preserve existing downloads content and URLs.

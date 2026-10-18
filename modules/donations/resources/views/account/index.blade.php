@@ -11,7 +11,6 @@
         <span class="account-eyebrow">{{ __('module-donations::messages.current_balance_label') }}</span>
         <h2>{{ $walletView['label'] }}</h2>
     </div>
-    <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('module-donations::messages.go_to_wallet') }}</a>
 </x-account-panel>
 </x-account-page>
 @endsection

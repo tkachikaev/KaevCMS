@@ -30,7 +30,7 @@
         <div class="footer-resources">
             <h3>{{ __('Resources') }}</h3>
             <div class="footer-section-links">
-                <a wire:navigate.hover href="{{ public_route('downloads') }}">{{ __('Download client') }}</a>
+                <a wire:navigate.hover href="{{ download_page_url() }}">{{ __('Download client') }}</a>
             </div>
         </div>
 

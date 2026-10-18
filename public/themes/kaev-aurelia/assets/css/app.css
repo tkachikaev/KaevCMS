@@ -227,6 +227,26 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .text-link { color: var(--gold-dark); font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .text-link:hover { color: var(--ink); }
 
+/* Persistent scenery lives outside the page content animated during navigation.
+ * The artwork has one frame size on home and inner pages: only the veil changes. */
+.public-stage { position: relative; isolation: isolate; }
+.aurelia-scene { position: absolute; inset: 0 0 auto; height: 390px; overflow: hidden; pointer-events: none; z-index: -1; mask-image: linear-gradient(#000 calc(100% - 90px), transparent); }
+.aurelia-scene[data-mode="home"] { height: 760px; }
+.aurelia-scene[data-mode="hidden"] { visibility: hidden; }
+.aurelia-scene-frame { position: relative; height: 760px; }
+.aurelia-scene-shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(255,253,249,.98) 0%, rgba(255,253,249,.94) 29%, rgba(255,253,249,.66) 45%, rgba(255,253,249,.12) 69%, transparent 100%), linear-gradient(0deg, rgba(248,244,236,.88), transparent 22%); }
+.aurelia-scene-veil { position: absolute; inset: 0; z-index: 3; background: rgba(255,253,249,.48); opacity: 1; transition: opacity .35s ease; }
+.aurelia-scene[data-mode="home"] .aurelia-scene-veil { opacity: 0; }
+.aurelia-scene .hero-particles { transition: opacity .35s ease; }
+.aurelia-scene:not([data-mode="home"]) .hero-particles { opacity: 0; }
+@media (max-width: 680px) {
+    .aurelia-scene[data-mode="home"], .aurelia-scene-frame { height: 735px; }
+    .aurelia-scene-shade { background: linear-gradient(90deg, rgba(255,253,249,.98), rgba(255,253,249,.87)), linear-gradient(0deg, rgba(248,244,236,.96), transparent 26%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .aurelia-scene-veil, .aurelia-scene .hero-particles { transition: none; }
+}
+
 /* Hero */
 .hero {
     position: relative;
@@ -1537,4 +1557,20 @@ html.public-is-navigating #public-content {
     .statistics-page[data-statistics-page].is-refreshed > :not(.statistics-partial-progress) {
         animation: none;
     }
+}
+
+/* Override the legacy per-page backgrounds; content fades, scenery does not. */
+body.kaev-aurelia .public-stage :is(.hero, .page-hero) { background: transparent; }
+body.kaev-aurelia .public-stage .hero::before,
+body.kaev-aurelia .public-stage .page-hero::after { content: none; }
+
+/* Give the portrait its own clear space above the mobile copy. */
+@media (max-width: 680px) {
+    body.kaev-aurelia .hero,
+    body.kaev-aurelia .hero-content { min-height: 860px; }
+    body.kaev-aurelia .hero-content { justify-content: flex-start; padding-top: 310px; padding-bottom: 110px; }
+    .aurelia-scene[data-mode="home"], .aurelia-scene-frame { height: 860px; }
+    body.kaev-aurelia .aurelia-scene .hero-art { background-image: url('../images/hero-mobile.webp'); background-position: right top; opacity: 1; }
+    .aurelia-scene-shade { background: linear-gradient(180deg, rgba(255,253,249,.04) 0%, rgba(255,253,249,.08) 24%, rgba(255,253,249,.82) 38%, rgba(255,253,249,.98) 49%, #f8f4ec 65%); }
+    body.kaev-aurelia .aurelia-scene .hero-light { background: none; }
 }

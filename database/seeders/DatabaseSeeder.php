@@ -8,7 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // KaevCMS starts without demo content.
+        // The download page is installed by migrations; no demo news is seeded.
         // Create the first news item in the administrator panel.
     }
 }

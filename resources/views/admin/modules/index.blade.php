@@ -31,8 +31,8 @@
             >
                 <div class="admin-catalog-main">
                     <div class="admin-catalog-heading">
-                        <h2>{{ $module['name'] }}</h2>
-                        <p>{{ $module['description'] ?: __('No module description.') }}</p>
+                        <h2>{{ \App\Support\Modules\ModulePresentation::text($module, 'name') }}</h2>
+                        <p>{{ \App\Support\Modules\ModulePresentation::text($module, 'description') ?: __('No module description.') }}</p>
                     </div>
 
                     <div class="admin-catalog-meta module-meta">
@@ -96,7 +96,7 @@
                     @if($module['image_path'])
                         <img src="{{ route('admin.modules.image', ['adminPath' => request()->route('adminPath'), 'module' => $module['id']]) }}?v={{ rawurlencode((string) $module['version']) }}" alt="" width="512" height="512">
                     @else
-                        <div class="admin-catalog-preview-placeholder"><span>{{ mb_strtoupper(mb_substr($module['name'], 0, 1)) }}</span></div>
+                        <div class="admin-catalog-preview-placeholder"><span>{{ mb_strtoupper(mb_substr(\App\Support\Modules\ModulePresentation::text($module, 'name'), 0, 1)) }}</span></div>
                     @endif
                 </div>
 

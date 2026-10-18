@@ -29,7 +29,8 @@ test('custom currency names and PNG/WebP icons persist, render in both themes an
     };
     await gotoWithLocalNetworkRetry(page, path);
     // The browser runner creates a new database with no custom wallet image.
-    await expect(form.locator('[data-settings-preview-image]')).toHaveCount(0);
+    await expect(form.locator('[data-settings-preview-image]')).toHaveAttribute('src', /\/assets\/images\/wallet-coin\.webp$/);
+    await expect(form.locator('[name="remove_icon"]')).toHaveCount(0);
     const originalFields = await form.locator('input[type="text"]').evaluateAll(
         (inputs) => inputs.map((input) => ({ id: input.id, value: input.value })),
     );
@@ -93,11 +94,11 @@ test('custom currency names and PNG/WebP icons persist, render in both themes an
                     const image = player.locator('.account-wallet-summary-icon .account-wallet-coin-image');
                     await expect(image).toHaveAttribute('src', iconUrl);
                     await expect.poll(() => image.evaluate((element) => element.complete && element.naturalWidth > 0)).toBe(true);
-                    await player.locator('.account-profile-menu > summary').click();
+                    await player.locator('.account-profile-menu-topbar > summary').click();
                     await expect(player.locator('.account-wallet-menu-link')).toBeVisible();
                     await expect(player.locator('.account-wallet-menu-link')).toContainText(`${amount} дублонов`);
                     await expect(player.locator('.account-wallet-menu-link .account-wallet-coin-image')).toHaveAttribute('src', iconUrl);
-                    await player.locator('.account-profile-menu > summary').click();
+                    await player.locator('.account-profile-menu-topbar > summary').click();
                     if (width === 390) {
                         await player.locator('[data-account-sidebar-toggle]').click();
                         await expect(player.locator('.account-nav').getByRole('link', { name: 'Мой кошелёк' })).toBeVisible();
@@ -116,8 +117,8 @@ test('custom currency names and PNG/WebP icons persist, render in both themes an
         for (const theme of ['luxury', 'kaev-aurelia']) {
             await activate(theme);
             await gotoWithLocalNetworkRetry(player, '/account/wallet');
-            await expect(player.locator('.account-wallet-summary-icon .account-wallet-default-icon')).toBeVisible();
-            await expect(player.locator('.account-wallet-coin-image')).toHaveCount(0);
+            await expect(player.locator('.account-wallet-summary-icon .account-wallet-coin-image')).toHaveAttribute('src', /\/assets\/images\/wallet-coin\.webp$/);
+            await expect(player.locator('.account-topbar-wallet-icon img')).toHaveAttribute('src', /\/assets\/images\/wallet-coin\.webp$/);
         }
     } finally {
         if (changed) {

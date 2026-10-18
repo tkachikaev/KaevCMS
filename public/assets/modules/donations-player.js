@@ -219,7 +219,8 @@
         if (url.origin !== endpoint.origin || url.pathname !== endpoint.pathname) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        opener = link;
+        opener = link.closest('details')?.querySelector('summary') || link;
+        document.querySelectorAll('.account-profile-menu[open]').forEach(menu => menu.removeAttribute('open'));
         document.documentElement.classList.remove('account-sidebar-open');
         document.querySelector('[data-account-sidebar-toggle]')?.setAttribute('aria-expanded', 'false');
         if (!dialog.open) dialog.showModal();

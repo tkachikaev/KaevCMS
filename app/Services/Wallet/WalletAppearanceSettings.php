@@ -26,7 +26,7 @@ final class WalletAppearanceSettings
         return [
             'symbol' => mb_substr($symbol, 0, 16),
             'icon' => $icon,
-            'icon_url' => $this->images->publicUrl($icon),
+            'icon_url' => $this->images->publicUrl($icon) ?? asset('assets/images/wallet-coin.webp'),
         ];
     }
 

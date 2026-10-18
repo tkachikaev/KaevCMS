@@ -158,21 +158,12 @@ final class DonationController extends Controller
     }
 
     /** Order history is deliberately independent of new-order visibility. */
-    public function orders(Request $request, DonationMoney $money, DonationSettings $settings): View
+    public function orders(Request $request): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
-        /** @var view-string $view */
-        $view = 'module-donations::account.orders';
-
-        return view($view, [
-            'user' => $user,
-            'orders' => DonationOrder::query()->where('user_id', $user->getKey())
-                ->orderByDesc('id')->paginate(20),
-            'money' => $money,
-            'canChooseCoins' => $settings->isVisibleToPlayers(),
-        ]);
+        return redirect()->to(public_route('wallet.index', $request->only(['inactive', 'page'])));
     }
 
     public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout): View
@@ -281,6 +272,10 @@ final class DonationController extends Controller
             abort(404);
         } catch (InvalidArgumentException|LogicException $exception) {
             return back()->withErrors(['order' => __('module-donations::messages.order_unavailable')]);
+        }
+
+        if ($request->input('return_to') === 'history') {
+            return redirect()->to(public_route('wallet.index'))->with('status', __('Top-up cancelled'));
         }
 
         return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])

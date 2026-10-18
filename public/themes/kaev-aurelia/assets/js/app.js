@@ -5,6 +5,7 @@
     const readyAttribute = 'data-aurelia-ready';
     let monitorCleanup = null;
     let particlesCleanup = null;
+    let particlesCanvas = null;
     let pageInitialized = false;
     let initializedContent = null;
     let pageEntryAnimation = null;
@@ -261,7 +262,8 @@
 
     const initializeHeroParticles = () => {
         const canvas = document.querySelector('[data-hero-particles]');
-        const hero = canvas?.closest('.hero');
+        const hero = canvas?.closest('.aurelia-scene-frame, .hero');
+        const scene = canvas?.closest('[data-aurelia-scene]');
         const context = canvas?.getContext('2d');
         if (!hero || !context) {
             return () => {};
@@ -351,7 +353,7 @@
         };
         const tick = (time) => {
             frame = null;
-            if (disposed || motion.matches || document.hidden || !inView) return;
+            if (disposed || motion.matches || document.hidden || !inView || (scene && scene.dataset.mode !== 'home')) return;
             const step = previousTime === null ? 1 : Math.min((time - previousTime) / (1000 / 60), 2);
             previousTime = time;
             draw(step);
@@ -359,7 +361,7 @@
         };
         const sync = () => {
             stop();
-            if (disposed || document.hidden || !inView) return;
+            if (disposed || document.hidden || !inView || (scene && scene.dataset.mode !== 'home')) return;
             draw(0);
             if (!motion.matches) frame = window.requestAnimationFrame(tick);
         };
@@ -376,14 +378,18 @@
             sync();
         };
 
-        hero.addEventListener('pointermove', (event) => {
+        // The stage is replaced during navigation, while the scene is persisted.
+        // Bind its pointer tracking to the document so it survives a round trip.
+        const pointerSurface = scene ? document : hero;
+        pointerSurface.addEventListener('pointermove', (event) => {
             if (event.pointerType !== 'mouse') return;
             const bounds = hero.getBoundingClientRect();
             mouse.x = event.clientX - bounds.left;
             mouse.y = event.clientY - bounds.top;
-            mouse.active = true;
+            mouse.active = (!scene || scene.dataset.mode === 'home')
+                && mouse.x >= 0 && mouse.x <= bounds.width && mouse.y >= 0 && mouse.y <= bounds.height;
         }, { signal });
-        hero.addEventListener('pointerleave', () => { mouse.active = false; }, { signal });
+        pointerSurface.addEventListener('pointerleave', () => { mouse.active = false; }, { signal });
         document.addEventListener('visibilitychange', sync, { signal });
         motion.addEventListener('change', sync, { signal });
         const resizeObserver = new ResizeObserver(resize);
@@ -394,6 +400,8 @@
         resize();
         resizeObserver.observe(hero);
         visibilityObserver.observe(hero);
+        const modeObserver = new MutationObserver(sync);
+        if (scene) modeObserver.observe(scene, { attributes: true, attributeFilter: ['data-mode'] });
 
         return () => {
             disposed = true;
@@ -401,11 +409,20 @@
             controller.abort();
             resizeObserver.disconnect();
             visibilityObserver.disconnect();
+            modeObserver.disconnect();
         };
     };
 
     const initializePage = () => {
         const content = document.querySelector('#public-content');
+        const scene = document.querySelector('[data-aurelia-scene]');
+        const heading = content?.querySelector('.hero, .page-hero');
+        if (scene) {
+            const mode = heading?.classList.contains('hero') ? 'home' : heading ? 'page' : 'hidden';
+            // Keep the artwork and veil outside the animated content. In particular,
+            // page-to-page navigation must never replay an opacity transition.
+            if (scene.dataset.mode !== mode) scene.dataset.mode = mode;
+        }
         // DOMContentLoaded and Livewire's initial navigated event describe the
         // same document. Never fade already-painted content back to transparent.
         if (content && content === initializedContent) {
@@ -415,8 +432,12 @@
         }
         monitorCleanup?.();
         monitorCleanup = initializeServerMonitor();
-        particlesCleanup?.();
-        particlesCleanup = initializeHeroParticles();
+        const canvas = document.querySelector('[data-hero-particles]');
+        if (canvas !== particlesCanvas) {
+            particlesCleanup?.();
+            particlesCleanup = initializeHeroParticles();
+            particlesCanvas = canvas;
+        }
         initializeHeader();
 
         content?.removeAttribute('aria-busy');
@@ -453,8 +474,11 @@
         initializedContent = null;
         monitorCleanup?.();
         monitorCleanup = null;
-        particlesCleanup?.();
-        particlesCleanup = null;
+        if (!particlesCanvas?.closest('[data-aurelia-scene]')) {
+            particlesCleanup?.();
+            particlesCleanup = null;
+            particlesCanvas = null;
+        }
         pageEntryAnimation?.cancel();
         pageEntryAnimation = null;
     };

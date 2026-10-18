@@ -20,7 +20,7 @@
                 <td data-label="ID" class="wallet-id">{{ $user->id }}</td>
                 <td data-label="{{ __('User') }}"><strong>{{ $user->name }}</strong></td>
                 <td data-label="Email">{{ $user->email }}</td>
-                <td data-label="{{ __('Balance') }}" class="wallet-amount"><span class="admin-wallet-balance"><strong>{{ number_format($user->wallet?->balance ?? 0, 0, '.', ' ') }}</strong> @if($appearance['icon_url'])<img src="{{ $appearance['icon_url'] }}" width="20" height="20" alt="">@else<span aria-hidden="true">🪙</span>@endif</span></td>
+                <td data-label="{{ __('Balance') }}" class="wallet-amount"><span class="admin-wallet-balance"><strong>{{ number_format($user->wallet?->balance ?? 0, 0, '.', ' ') }}</strong> <img src="{{ $appearance['icon_url'] }}" width="20" height="20" alt=""></span></td>
                 <td data-label="{{ __('Wallet status') }}"><span @class(['status-badge', 'status-badge-danger' => $user->wallet?->is_blocked, 'status-badge-success' => ! $user->wallet?->is_blocked])>{{ $user->wallet?->is_blocked ? __('Blocked') : __('Available') }}</span></td>
                 <td data-label="{{ __('Actions') }}"><a wire:navigate class="button button-secondary" href="{{ route('admin.wallets.show', $user) }}">{{ __('Details') }}</a></td>
             </tr>

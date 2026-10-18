@@ -136,7 +136,7 @@ return [
     'order_title' => 'Top-up order',
     'orders_admin_title' => 'Requests',
     'orders_description' => 'Order history remains available after new sales are closed.',
-    'orders_title' => 'My orders',
+    'orders_title' => 'History',
     'providers_title' => 'Payment providers',
     'providers_intro' => 'Drivers ship with CMS updates. Each provider is configured independently; multiple providers may operate concurrently. Live checkout is not yet available.',
     'providers_none_installed' => 'No payment providers connected',

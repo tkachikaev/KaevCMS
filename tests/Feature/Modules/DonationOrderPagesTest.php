@@ -44,7 +44,7 @@ class DonationOrderPagesTest extends TestCase
 
         foreach (['luxury', 'kaev-aurelia'] as $theme) {
             app(AccountThemeManager::class)->activate($theme);
-            foreach (['/modules/donations', '/modules/donations/orders', '/modules/donations/orders/'.$order->order_uuid] as $path) {
+            foreach (['/modules/donations', '/account/wallet', '/modules/donations/orders/'.$order->order_uuid] as $path) {
                 $this->actingAs($player)->get($path)
                     ->assertOk()
                     ->assertViewHas('user', fn (User $user): bool => $user->is($player))
@@ -71,7 +71,8 @@ class DonationOrderPagesTest extends TestCase
         $this->assertSame('draft', $order->status);
         $this->assertNull($order->paid_at);
         $this->assertNull($order->provider_code);
-        $this->actingAs($player)->get('/modules/donations/orders')->assertOk()
+        $this->actingAs($player)->get('/modules/donations/orders')->assertRedirect('/account/wallet');
+        $this->get('/account/wallet')->assertOk()
             ->assertSee('1000.00')->assertSee($order->order_uuid);
         $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid)
             ->assertOk()->assertSee('1000.00')->assertSee('data-testid="donations-order-detail"', false);
@@ -99,7 +100,8 @@ class DonationOrderPagesTest extends TestCase
         $first = User::factory()->create();
         $other = User::factory()->create();
         $order = app(DonationOrders::class)->createDraft($first, 'RUB', 3, (string) Str::uuid());
-        $this->actingAs($other)->get('/modules/donations/orders')->assertDontSee($order->order_uuid);
+        $this->actingAs($other)->get('/modules/donations/orders')->assertRedirect('/account/wallet');
+        $this->get('/account/wallet')->assertOk()->assertDontSee($order->order_uuid);
         $this->actingAs($other)->get('/modules/donations/orders/'.$order->order_uuid)->assertNotFound();
         $this->actingAs($other)->post('/modules/donations/orders/'.$order->order_uuid.'/cancel')->assertNotFound();
         $this->assertSame('draft', $order->fresh()->status);
@@ -112,7 +114,8 @@ class DonationOrderPagesTest extends TestCase
         $order = app(DonationOrders::class)->createDraft($player, 'RUB', 30, (string) Str::uuid());
         app(DonationSettings::class)->updateVisibility(false, $owner);
         $this->actingAs($player)->get('/modules/donations')->assertNotFound();
-        $this->actingAs($player)->get('/modules/donations/orders')->assertOk()->assertSee($order->order_uuid);
+        $this->actingAs($player)->get('/modules/donations/orders')->assertRedirect('/account/wallet');
+        $this->get('/account/wallet')->assertOk()->assertSee($order->order_uuid);
         $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid)->assertOk();
         $this->actingAs($player)->post('/modules/donations/orders', [
             'coins' => 30, 'currency' => 'RUB', 'request_key' => (string) Str::uuid(),

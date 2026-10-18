@@ -6,6 +6,7 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -114,16 +115,21 @@ class DonationOrdersTest extends TestCase
     {
         $owner = $this->configure();
         $user = User::factory()->create();
-        $this->actingAs($user)->get('/modules/donations/orders')->assertOk()
-            ->assertSee('data-testid="donations-choose-coins"', false);
+        // HTTP tests reuse the application; refresh the boot-time navigation as a new request would.
+        $module = app(ModuleManager::class)->inspect('donations');
+        $bootstrap = require $module['bootstrap_path'];
+        $context = new ModuleContext('donations', $module['path'], $module['manifest']);
+        $bootstrap(app(), $context);
+        $this->actingAs($user)->get('/modules/donations/orders')->assertRedirect('/account/wallet');
+        $this->get('/account/wallet')->assertOk()->assertSee(__('Top up balance'));
         $order = app(DonationOrders::class)->createDraft($user, 'RUB', 25, (string) Str::uuid());
         $orderUrl = '/modules/donations/orders/'.$order->order_uuid;
         $this->get($orderUrl)->assertOk()->assertSee('data-testid="donations-choose-coins"', false);
 
         app(DonationSettings::class)->updateVisibility(false, $owner);
-        $this->get('/modules/donations/orders')->assertOk()
-            ->assertDontSee('data-testid="donations-choose-coins"', false)
-            ->assertSee(__('module-donations::messages.player_topups_closed'));
+        $bootstrap(app(), $context);
+        $this->get('/modules/donations/orders')->assertRedirect('/account/wallet');
+        $this->get('/account/wallet')->assertOk()->assertDontSee(__('Top up balance'));
         $this->get($orderUrl)->assertOk()->assertDontSee('data-testid="donations-choose-coins"', false);
         $this->get('/modules/donations')->assertNotFound();
         $this->assertDatabaseCount('module_donation_orders', 1);

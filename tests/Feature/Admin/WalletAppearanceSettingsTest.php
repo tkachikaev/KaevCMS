@@ -4,7 +4,9 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Admin;
 use App\Models\CmsSetting;
+use App\Models\User;
 use App\Services\Wallet\WalletAppearanceSettings;
+use App\Support\Themes\AccountThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -33,6 +35,7 @@ final class WalletAppearanceSettingsTest extends TestCase
 
     public function test_default_names_and_pluralization_are_localized_without_database_writes(): void
     {
+        $beforeSettings = CmsSetting::query()->get()->toArray();
         $settings = app(WalletAppearanceSettings::class);
         $this->assertSame('1 монета', $settings->label(1, 'ru'));
         $this->assertSame('2 монеты', $settings->label(2, 'ru'));
@@ -41,8 +44,9 @@ final class WalletAppearanceSettingsTest extends TestCase
         $this->assertSame('21 монета', $settings->label(21, 'ru'));
         $this->assertSame('1 coin', $settings->label(1, 'en'));
         $this->assertSame('100 coins', $settings->label(100, 'en'));
-        $this->assertNull($settings->values()['icon_url']);
-        $this->assertDatabaseCount('cms_settings', 0);
+        $this->assertSame(asset('assets/images/wallet-coin.webp'), $settings->values()['icon_url']);
+        $this->assertNull($settings->values()['icon']);
+        $this->assertSame($beforeSettings, CmsSetting::query()->get()->toArray());
     }
 
     public function test_guest_and_editor_cannot_change_wallet_appearance(): void
@@ -55,6 +59,23 @@ final class WalletAppearanceSettingsTest extends TestCase
         $this->actingAs($editor, 'admin')->get('/admin/settings/wallet-appearance')->assertForbidden();
         $this->actingAs($editor, 'admin')->put('/admin/settings/wallet-appearance', $this->validFields())->assertForbidden();
         $this->assertDatabaseMissing('cms_settings', ['key' => 'wallet.appearance.symbol']);
+    }
+
+    public function test_bundled_coin_is_used_in_administration_and_both_account_themes(): void
+    {
+        $url = asset('assets/images/wallet-coin.webp');
+        $user = User::factory()->create();
+        $this->actingAs($this->admin('owner'), 'admin');
+        $this->get('/admin/settings/wallet-appearance')->assertOk()->assertSee($url)->assertDontSee('name="remove_icon"', false);
+        $this->get('/admin/wallets')->assertOk()->assertSee($url);
+        $this->get('/admin/wallets/'.$user->id)->assertOk()->assertSee($url);
+        foreach (['luxury', 'kaev-aurelia'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            $this->actingAs($user)->get('/account')->assertOk()->assertSee($url);
+            $this->actingAs($user)->get('/account/wallet')->assertOk()->assertSee($url)
+                ->assertDontSee('account-wallet-default-icon', false);
+        }
+        $this->assertDatabaseCount('wallet_entries', 0);
     }
 
     public function test_auditor_can_view_but_cannot_edit(): void
@@ -109,6 +130,8 @@ final class WalletAppearanceSettingsTest extends TestCase
         $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), ['remove_icon' => '1']))->assertRedirect();
         $this->assertFileDoesNotExist($this->uploadRoot.'/'.$second);
         $this->assertSame('', (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value'));
+        $this->assertSame(asset('assets/images/wallet-coin.webp'), app(WalletAppearanceSettings::class)->values()['icon_url']);
+        $this->assertFileExists(public_path('assets/images/wallet-coin.webp'));
     }
 
     public function test_svg_and_fake_png_are_rejected_and_do_not_overwrite_existing_settings(): void
@@ -161,7 +184,8 @@ final class WalletAppearanceSettingsTest extends TestCase
     public function test_stored_path_traversal_and_unsafe_filenames_cannot_be_rendered(): void
     {
         CmsSetting::query()->updateOrCreate(['key' => 'wallet.appearance.icon'], ['value' => 'settings/wallet-coin/../../unsafe.php']);
-        $this->assertNull(app(WalletAppearanceSettings::class)->values()['icon_url']);
+        $this->assertSame(asset('assets/images/wallet-coin.webp'), app(WalletAppearanceSettings::class)->values()['icon_url']);
+        $this->assertNull(app(WalletAppearanceSettings::class)->values()['icon']);
     }
 
     /** @return array<string,mixed> */

@@ -13,7 +13,7 @@
     @if($canChooseCoins)
         <a wire:navigate class="account-button primary" data-testid="donations-choose-coins" href="{{ route('modules.donations.index') }}">{{ __('module-donations::messages.choose_coins') }}</a>
     @endif
-    <a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a>
+    <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('History') }}</a>
 </div></x-slot:actions></x-account-panel-header>
     <p>{{ __('module-donations::messages.order_reference') }}: {{ $order->order_uuid }}</p>
     <p>{{ __('module-donations::messages.order_status') }}: {{ __('module-donations::messages.status_'.$order->displayStatus()) }}</p>

@@ -35,6 +35,21 @@ class WalletPageTest extends TestCase
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 
+    public function test_balance_menu_keeps_the_journal_but_omits_top_up_when_the_module_is_disabled(): void
+    {
+        $user = User::factory()->create();
+        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            foreach (['ru' => 'История', 'en' => 'History'] as $locale => $label) {
+                $this->actingAs($user)->get('/'.$locale.'/account')->assertOk()
+                    ->assertSee('data-account-wallet-menu', false)->assertSee('data-wallet-journal', false)
+                    ->assertSee($label)->assertDontSee('data-wallet-topup', false);
+            }
+        }
+        $this->assertDatabaseCount('wallets', 0);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
     public function test_player_only_reads_own_operations_and_private_engine_data_is_not_leaked(): void
     {
         $owner = User::factory()->create();
@@ -65,9 +80,9 @@ class WalletPageTest extends TestCase
         }
 
         $this->actingAs($owner)->get('/account/wallet?page=1')
-            ->assertOk()->assertSee('Страница 1 из 2')->assertSee('+24')->assertDontSee('>+1<', false);
+            ->assertOk()->assertSee('Страница 1 из 2')->assertSee('+24')->assertDontSee('+1 монета', false);
         $this->actingAs($owner)->get('/account/wallet?page=2')
-            ->assertOk()->assertSee('Страница 2 из 2')->assertSee('>+1<', false)->assertDontSee('>+24<', false);
+            ->assertOk()->assertSee('Страница 2 из 2')->assertSee('+1 монета', false)->assertDontSee('+24 монеты', false);
     }
 
     public function test_custom_coin_name_icon_and_blocked_state_are_shown_without_payment_controls(): void

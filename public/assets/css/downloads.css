@@ -1,0 +1,10 @@
+/* File cards inherit the public theme's palette and typography. */
+.download-files { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.download-page-content .download-files { margin: 0 0 24px; }
+.download-files .download-file { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; min-width: 0; padding: clamp(24px, 4vw, 36px); border: 1px solid var(--line, #e2dfd5); border-radius: 24px; }
+.download-file-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: var(--gold, #b99550); background: rgba(180,150,90,.1); }
+.download-files .download-file h2 { margin: 0; font-size: 26px; }
+.download-files .download-file p { flex: 1; margin: 0; color: var(--ink-soft, inherit); line-height: 1.7; }
+.download-files .download-file .button { max-width: 100%; white-space: normal; text-align: center; }
+.download-files .download-file button:disabled { opacity: .55; cursor: default; box-shadow: none; transform: none; }
+@media (max-width: 680px) { .download-files { grid-template-columns: minmax(0, 1fr); gap: 18px; } }

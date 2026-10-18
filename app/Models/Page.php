@@ -19,6 +19,8 @@ use Throwable;
  * @property bool $show_in_header
  * @property bool $show_in_footer
  * @property int $sort_order
+ * @property string|null $download_client_url
+ * @property string|null $download_patch_url
  * @property-read Collection<int, PageTranslation> $translations
  */
 class Page extends Model
@@ -31,6 +33,8 @@ class Page extends Model
         'show_in_header',
         'show_in_footer',
         'sort_order',
+        'download_client_url',
+        'download_patch_url',
     ];
 
     protected function casts(): array

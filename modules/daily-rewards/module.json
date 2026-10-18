@@ -16,5 +16,15 @@
     "routes": {
         "web": "routes/web.php",
         "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Ежедневные награды",
+            "description": "Ежемесячные календари ежедневных наград для игровых серверов. Предметы выдаются в веб-инвентарь KaevCMS."
+        },
+        "en": {
+            "name": "Daily Rewards",
+            "description": "Monthly daily reward calendars that grant items to the KaevCMS web inventory."
+        }
     }
 }

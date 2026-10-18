@@ -11,16 +11,16 @@
     @endif
 
     @if($servers->count() > 1)
-        <nav class="reward-server-tabs" aria-label="{{ __('Game servers') }}">
+        <nav class="reward-server-tabs account-tabs" aria-label="{{ __('Game servers') }}">
             @foreach($servers as $server)
-                <a wire:navigate @class(['active' => $selectedServer?->id === $server->id]) href="{{ public_route('web-inventory.index', ['server' => $server->id, 'view' => $activeView]) }}">{{ $server->nameFor() }}</a>
+                <a wire:navigate @class(['active' => $selectedServer?->id === $server->id]) @if($selectedServer?->id === $server->id) aria-current="page" @endif href="{{ public_route('web-inventory.index', ['server' => $server->id, 'view' => $activeView]) }}">{{ $server->nameFor() }}</a>
             @endforeach
         </nav>
     @endif
 
-    <nav class="reward-view-tabs" aria-label="{{ __('Web inventory sections') }}">
-        <a wire:navigate @class(['active' => $activeView === 'available']) href="{{ public_route('web-inventory.index', array_filter(['server' => $selectedServer?->id])) }}">{{ __('Available rewards') }} <span>{{ $availableItems->count() }}</span></a>
-        <a wire:navigate @class(['active' => $activeView === 'history']) href="{{ public_route('web-inventory.index', array_filter(['server' => $selectedServer?->id, 'view' => 'history'])) }}">{{ __('Transfer history') }} <span>{{ $deliveries->total() }}</span></a>
+    <nav class="reward-view-tabs account-tabs" aria-label="{{ __('Web inventory sections') }}">
+        <a wire:navigate @class(['active' => $activeView === 'available']) @if($activeView === 'available') aria-current="page" @endif href="{{ public_route('web-inventory.index', array_filter(['server' => $selectedServer?->id])) }}">{{ __('Available rewards') }} <span>{{ $availableItems->count() }}</span></a>
+        <a wire:navigate @class(['active' => $activeView === 'history']) @if($activeView === 'history') aria-current="page" @endif href="{{ public_route('web-inventory.index', array_filter(['server' => $selectedServer?->id, 'view' => 'history'])) }}">{{ __('Transfer history') }} <span>{{ $deliveries->total() }}</span></a>
     </nav>
 
     @if(! $selectedServer)

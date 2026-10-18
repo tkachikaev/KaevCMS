@@ -1,7 +1,7 @@
 <x-account-panel class="account-section account-donations-card account-donations-calculator" data-testid="donations-player-calculator" data-donations-calculator>
     @unless($isDialog ?? false)
         <x-account-panel-header :title="__('module-donations::messages.topup_title')">
-            <x-slot:actions><a wire:navigate class="account-button secondary" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }}</a></x-slot:actions>
+            <x-slot:actions><a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('History') }}</a></x-slot:actions>
         </x-account-panel-header>
     @endunless
     @if($currencies === [])
@@ -67,6 +67,8 @@
         </div>
     @endif
     @if($isDialog ?? false)
-        <a wire:navigate class="donations-dialog-history" href="{{ route('modules.donations.orders.index') }}">{{ __('module-donations::messages.orders_title') }} →</a>
+        <nav class="donations-history-actions" aria-label="{{ __('History') }}">
+            <a wire:navigate class="account-button secondary" href="{{ public_route('wallet.index') }}">{{ __('History') }}</a>
+        </nav>
     @endif
 </x-account-panel>

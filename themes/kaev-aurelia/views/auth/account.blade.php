@@ -1,4 +1,5 @@
 @extends('theme::layouts.app')
+@section('scene', 'page')
 
 @section('title', __('Personal account').' — '.site_name())
 

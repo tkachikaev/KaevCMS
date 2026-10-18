@@ -6,7 +6,7 @@
 <div class="admin-page-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.wallets.index') }}">← {{ __('Back to wallets') }}</a><a wire:navigate class="button button-secondary" href="{{ route('admin.users.show', $user) }}">{{ __('User details') }}</a></div>
 <div class="admin-overview admin-wallet-summary">
     <div class="admin-overview-stat"><span>{{ __('User') }}</span><strong>{{ $user->name }}</strong><small>{{ $user->email }} · ID {{ $user->id }}</small></div>
-    <div class="admin-overview-stat"><span>{{ __('Balance') }}</span><strong>{{ number_format($wallet?->balance ?? 0, 0, '.', ' ') }} @if($appearance['icon_url'])<img src="{{ $appearance['icon_url'] }}" width="24" height="24" alt="">@else 🪙 @endif</strong></div>
+    <div class="admin-overview-stat"><span>{{ __('Balance') }}</span><strong>{{ number_format($wallet?->balance ?? 0, 0, '.', ' ') }} <img src="{{ $appearance['icon_url'] }}" width="24" height="24" alt=""></strong></div>
     <div class="admin-overview-stat"><span>{{ __('Wallet status') }}</span><strong>{{ $wallet?->is_blocked ? __('Blocked') : __('Available') }}</strong></div>
 </div>
 @if($canManageWallet)
