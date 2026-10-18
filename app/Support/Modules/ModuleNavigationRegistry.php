@@ -15,6 +15,12 @@ final class ModuleNavigationRegistry
     private array $accountLinks = [];
 
     /** @var array<string, array<string, mixed>> */
+    private array $walletLinks = [];
+
+    /** @var array<string, Closure(): bool> */
+    private array $walletVisibilityResolvers = [];
+
+    /** @var array<string, array<string, mixed>> */
     private array $adminLinks = [];
 
     /** @var array<string, Closure(Admin): int> */
@@ -35,6 +41,34 @@ final class ModuleNavigationRegistry
             sortOrder: $sortOrder,
             routePrefix: 'modules.'.$moduleId.'.',
         );
+    }
+
+    /** @param Closure(): bool $visibleWhen */
+    public function registerWalletLink(
+        string $moduleId,
+        string $routeName,
+        string $labelKey,
+        string $descriptionKey,
+        Closure $visibleWhen,
+        int $sortOrder = 100,
+    ): void {
+        $key = $moduleId.':'.$routeName;
+        $this->walletLinks[$key] = $this->validatedLink(
+            $moduleId, $routeName, $labelKey, $descriptionKey, $sortOrder, 'modules.'.$moduleId.'.',
+        );
+        $this->walletVisibilityResolvers[$key] = $visibleWhen;
+    }
+
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    public function walletLinks(): array
+    {
+        return array_values(array_filter($this->availableLinks($this->walletLinks), function (array $link): bool {
+            try {
+                return ($this->walletVisibilityResolvers[$link['module_id'].':'.$link['route']])();
+            } catch (Throwable) {
+                return false;
+            }
+        }));
     }
 
     /** @param Closure(Admin): int|null $badgeResolver */

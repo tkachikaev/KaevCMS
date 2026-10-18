@@ -25,6 +25,7 @@ class WalletPageTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)->get('/account/wallet')
             ->assertOk()
+            ->assertDontSee('data-wallet-exchange', false)
             ->assertSee(__('My wallet'))
             ->assertSee(__('No wallet transactions yet'))
             ->assertSee('0 ', false)

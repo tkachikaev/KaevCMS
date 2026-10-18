@@ -11,6 +11,9 @@
         @if($walletTopUp !== null)
             <a wire:navigate href="{{ route($walletTopUp['route']) }}" data-wallet-topup>{{ __('Top up') }}</a>
         @endif
+        @foreach(app(\App\Support\Modules\ModuleNavigationRegistry::class)->walletLinks() as $walletLink)
+            <a wire:navigate href="{{ route($walletLink['route']) }}" data-wallet-exchange>{{ __($walletLink['label_key']) }}</a>
+        @endforeach
         <a wire:navigate href="{{ public_route('wallet.index') }}" data-wallet-journal>{{ __('History') }}</a>
     </div>
 </details>

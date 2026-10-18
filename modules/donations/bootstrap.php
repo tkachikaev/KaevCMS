@@ -13,6 +13,14 @@ use KaevCMS\Modules\Donations\Services\DonationSettings;
 return static function (Application $app, ModuleContext $module): void {
     $app->bind(WalletTopUpHistory::class, DonationPlayerHistory::class);
     $navigation = $app->make(ModuleNavigationRegistry::class);
+    $navigation->registerWalletLink(
+        moduleId: $module->id,
+        routeName: 'modules.donations.exchange.index',
+        labelKey: 'module-donations::messages.exchange_wallet_action',
+        descriptionKey: 'module-donations::messages.exchange_account_help',
+        visibleWhen: fn (): bool => $app->make(DonationGameExchange::class)->available() !== [],
+        sortOrder: 70,
+    );
     $navigation->registerAdminLink(
         moduleId: $module->id,
         routeName: 'admin.module-pages.donations.index',
@@ -58,7 +66,7 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
-    foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show', 'exchange.index'] as $route) {
+    foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show', 'exchange.index', 'exchange.items.preview'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,
@@ -66,7 +74,7 @@ return static function (Application $app, ModuleContext $module): void {
             manageRoles: [AdminRole::Owner, AdminRole::Administrator],
         );
     }
-    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'orders.reviews.store', 'exchange.update'] as $route) {
+    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'orders.reviews.store', 'exchange.update', 'exchange.save'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,

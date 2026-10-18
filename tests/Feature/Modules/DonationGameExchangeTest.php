@@ -8,13 +8,17 @@ use App\Models\AuditLog;
 use App\Models\GameServer;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\CmsSettings;
 use App\Services\Wallet\WalletTransactionService;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\Themes\AccountThemeManager;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Services\DonationGameExchange;
+use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout;
 use RuntimeException;
 use Tests\Concerns\RefreshDonationDatabase;
@@ -169,5 +173,131 @@ final class DonationGameExchangeTest extends TestCase
         $this->assertDatabaseHas('module_donation_game_exchange_rates', [
             'game_server_id' => $server->id, 'items_per_coin' => 10,
         ]);
+    }
+
+    public function test_all_server_rates_are_saved_together(): void
+    {
+        [$admin, , $first] = $this->setupExchange();
+        $second = GameServer::factory()->create();
+        $this->actingAs($admin, 'admin')->put('/admin/extensions/donations/exchange', ['servers' => [
+            ['server_id' => $first->id, 'item_id' => 57, 'items_per_coin' => 100, 'enabled' => 1],
+            ['server_id' => $second->id, 'item_id' => 4037, 'items_per_coin' => 10, 'enabled' => 0],
+        ]])->assertRedirect('/admin/extensions/donations/exchange')->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('module_donation_game_exchange_rates', [
+            'game_server_id' => $first->id, 'item_id' => 57, 'items_per_coin' => 100, 'enabled' => 1,
+        ]);
+        $this->assertDatabaseHas('module_donation_game_exchange_rates', [
+            'game_server_id' => $second->id, 'item_id' => 4037, 'items_per_coin' => 10, 'enabled' => 0,
+        ]);
+    }
+
+    public function test_wallet_menu_links_to_exchange_in_both_themes_and_locales_independently_of_topups(): void
+    {
+        [$admin, $user] = $this->setupExchange();
+        foreach ([false, true] as $topUpsVisible) {
+            app(DonationSettings::class)->updateVisibility($topUpsVisible, $admin);
+            foreach (['kaev-aurelia', 'luxury'] as $theme) {
+                app(AccountThemeManager::class)->activate($theme);
+                foreach (['ru' => 'Перевести монеты в игру', 'en' => 'Transfer coins to game'] as $locale => $label) {
+                    $this->actingAs($user)->get('/'.$locale.'/account/wallet')->assertOk()
+                        ->assertSee('data-wallet-exchange', false)->assertSee($label)
+                        ->assertSee(route('modules.donations.exchange.index'), false)
+                        ->assertSee('data-wallet-journal', false);
+                }
+            }
+        }
+        $this->get(route('modules.donations.exchange.index'))->assertOk()->assertSee('data-exchange-form', false);
+        $this->assertDatabaseHas('wallets', ['user_id' => $user->id, 'balance' => 100]);
+        $this->assertDatabaseCount('module_donation_game_exchanges', 0);
+    }
+
+    public function test_wallet_menu_hides_exchange_when_all_server_exchanges_are_off(): void
+    {
+        [$admin, $user, $server] = $this->setupExchange();
+        $this->actingAs($user)->get('/account/wallet')->assertOk()->assertSee('data-wallet-exchange', false);
+        $this->actingAs($admin, 'admin');
+        app(DonationGameExchange::class)->configure($admin, $server->id, 90000, 10, false);
+        $this->actingAs($user)->get('/account/wallet')->assertOk()
+            ->assertDontSee('data-wallet-exchange', false)->assertSee('data-wallet-journal', false);
+    }
+
+    public function test_invalid_second_server_does_not_save_first_and_keeps_input(): void
+    {
+        [$admin, , $first] = $this->setupExchange();
+        $second = GameServer::factory()->create();
+        $this->actingAs($admin, 'admin')->from('/admin/extensions/donations/exchange')
+            ->put('/admin/extensions/donations/exchange', ['servers' => [
+                ['server_id' => $first->id, 'item_id' => 57, 'items_per_coin' => 100, 'enabled' => 1],
+                ['server_id' => $second->id, 'item_id' => '', 'items_per_coin' => 10, 'enabled' => 1],
+            ]])->assertSessionHasErrors('servers.1.item_id');
+        $this->assertSame(57, session()->getOldInput('servers.0.item_id'));
+        $this->assertDatabaseHas('module_donation_game_exchange_rates', [
+            'game_server_id' => $first->id, 'item_id' => 90000, 'items_per_coin' => 10,
+        ]);
+        $this->assertDatabaseMissing('module_donation_game_exchange_rates', ['game_server_id' => $second->id]);
+    }
+
+    public function test_failure_auditing_second_server_rolls_back_all_settings(): void
+    {
+        [$admin, , $first] = $this->setupExchange();
+        $second = GameServer::factory()->create();
+        $writes = 0;
+        $this->mock(AuditLogger::class)->shouldReceive('success')->andReturnUsing(
+            static function (string $category, string $action) use (&$writes): ?AuditLog {
+                return $action === 'donations.exchange_configured' && ++$writes === 2 ? null : new AuditLog;
+            }
+        );
+        $this->withoutExceptionHandling();
+        try {
+            $this->actingAs($admin, 'admin')->put('/admin/extensions/donations/exchange', ['servers' => [
+                ['server_id' => $first->id, 'item_id' => 57, 'items_per_coin' => 100, 'enabled' => 1],
+                ['server_id' => $second->id, 'item_id' => 4037, 'items_per_coin' => 10, 'enabled' => 1],
+            ]]);
+            $this->fail('Missing audit must roll back all servers.');
+        } catch (RuntimeException) {
+            $this->assertDatabaseHas('module_donation_game_exchange_rates', [
+                'game_server_id' => $first->id, 'item_id' => 90000, 'items_per_coin' => 10,
+            ]);
+            $this->assertDatabaseMissing('module_donation_game_exchange_rates', ['game_server_id' => $second->id]);
+        }
+    }
+
+    public function test_preview_uses_server_icon_over_common_icon_and_is_read_only(): void
+    {
+        [$admin, , $server] = $this->setupExchange();
+        $root = storage_path('framework/testing/exchange-icons-'.Str::uuid());
+        config(['cms.game_assets.uploads_path' => $root]);
+        File::ensureDirectoryExists($root.'/items/servers/'.$server->id);
+        File::ensureDirectoryExists($root.'/items/common');
+        File::put($root.'/items/servers/'.$server->id.'/57.png', 'server-icon');
+        File::put($root.'/items/common/57.png', 'common-icon');
+        try {
+            $this->actingAs($admin, 'admin')->getJson('/admin/extensions/donations/exchange/'.$server->id.'/items/57')
+                ->assertOk()->assertJsonPath('item_id', 57)
+                ->assertJsonPath('icon_url', url('uploads/game-assets/items/servers/'.$server->id.'/57.png'));
+            $auditor = Admin::factory()->create(['role' => AdminRole::Auditor]);
+            $this->actingAs($auditor, 'admin')->getJson('/admin/extensions/donations/exchange/'.$server->id.'/items/57')->assertOk();
+            $this->put('/admin/extensions/donations/exchange', ['servers' => []])->assertForbidden();
+            $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
+            $this->actingAs($editor, 'admin')->getJson('/admin/extensions/donations/exchange/'.$server->id.'/items/57')->assertForbidden();
+            $this->assertDatabaseCount('module_donation_game_exchange_rates', 1);
+        } finally {
+            File::deleteDirectory($root);
+        }
+    }
+
+    public function test_form_uses_wallet_branding_and_one_save_for_multiple_servers(): void
+    {
+        [$admin] = $this->setupExchange();
+        GameServer::factory()->create();
+        app(CmsSettings::class)->set('wallet.appearance.ru.one', 'жетон');
+        $response = $this->actingAs($admin, 'admin')->get('/admin/extensions/donations/exchange')
+            ->assertOk()->assertSee('1 жетон')->assertSee('assets/images/wallet-coin.webp')
+            ->assertSee('Сохранить настройки')->assertDontSee('Сохранить отображение');
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//form[@data-testid="donations-exchange-settings"]//button[@type="submit"]')->length);
+        $this->assertSame(GameServer::query()->count(), $xpath->query('//section[@data-admin-exchange-row]')->length);
     }
 }

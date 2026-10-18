@@ -18,7 +18,7 @@
     <p class="account-inline-warning">{{ __('Spending from this wallet is disabled. Contact support for details.') }}</p>
 @endif
 
-<x-account-wallet-history :entries="$entries" :include-inactive="$includeInactive" :can-show-inactive="$canShowInactive" />
+<x-account-wallet-history :entries="$entries" :include-inactive="$includeInactive" :can-show-inactive="$canShowInactive" :coin-icon-url="$walletView['icon_url']" />
 @if($topUpUrl === null)
 <p class="account-wallet-payments-unavailable">{{ __('Online wallet top-ups will become available when Donations is enabled.') }}</p>
 @endif

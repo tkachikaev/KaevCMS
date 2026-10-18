@@ -23,7 +23,65 @@
     coins?.addEventListener('input', update);
     update();
   }
-  function boot() { document.querySelectorAll('[data-exchange-form]').forEach(activate); }
+  function activateAdmin(row) {
+    if (row.dataset.exchangeBound === '1') return;
+    row.dataset.exchangeBound = '1';
+    const input = row.querySelector('[data-admin-exchange-item]');
+    const icon = row.querySelector('[data-admin-exchange-icon]');
+    const name = row.querySelector('[data-admin-exchange-name]');
+    if (!input || !icon || !name) return;
+    let timer;
+    let request;
+    let revision = 0;
+    const render = (label, url = null) => {
+      const element = document.createElement(url ? 'img' : 'span');
+      if (url) {
+        element.src = url;
+        element.alt = '';
+        element.width = 48;
+        element.height = 48;
+        element.addEventListener('error', () => {
+          const fallback = document.createElement('span');
+          fallback.textContent = '◇';
+          element.replaceWith(fallback);
+        }, { once: true });
+      } else {
+        element.textContent = '◇';
+      }
+      icon.replaceChildren(element);
+      name.textContent = label;
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      request?.abort();
+      const current = ++revision;
+      const itemId = Number(input.value);
+      if (!Number.isInteger(itemId) || itemId < 1 || itemId > 2147483647) {
+        render(row.dataset.emptyLabel);
+        return;
+      }
+      render(row.dataset.loadingLabel);
+      timer = setTimeout(async () => {
+        request = new AbortController();
+        try {
+          const response = await fetch(row.dataset.previewUrl.replace('__ITEM__', String(itemId)), {
+            headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: request.signal,
+          });
+          if (!response.ok) throw new Error('preview_failed');
+          const item = await response.json();
+          if (current === revision) render(item.name, item.icon_url);
+        } catch (error) {
+          if (error.name !== 'AbortError' && current === revision) render(row.dataset.unavailableLabel);
+        }
+      }, 250);
+    };
+    input.addEventListener('input', schedule);
+    input.addEventListener('change', schedule);
+  }
+  function boot() {
+    document.querySelectorAll('[data-exchange-form]').forEach(activate);
+    document.querySelectorAll('[data-admin-exchange-row]').forEach(activateAdmin);
+  }
   document.addEventListener('DOMContentLoaded', boot);
   document.addEventListener('livewire:navigated', boot);
   boot();

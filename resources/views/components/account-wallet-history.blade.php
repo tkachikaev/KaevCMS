@@ -1,4 +1,4 @@
-@props(['entries', 'includeInactive' => false, 'canShowInactive' => false])
+@props(['entries', 'includeInactive' => false, 'canShowInactive' => false, 'coinIconUrl' => null])
 <x-account-panel class="account-section account-wallet-history" aria-labelledby="wallet-history-title" data-wallet-history>
     <x-account-panel-header title-id="wallet-history-title" :title="__('History')" :description="__('Top-ups, coins received and spending in one place.')" />
     @if($entries->isEmpty())
@@ -9,7 +9,7 @@
                 <article class="account-wallet-entry wallet-history-row wallet-history-{{ $item['tone'] }}" data-history-key="{{ $item['key'] }}"
                     @if($item['expires_at']) data-wallet-expires="{{ $item['expires_at']->getTimestamp() }}" data-wallet-now="{{ now()->getTimestamp() }}" data-wallet-time-template="{{ __('Time left: :time') }}" data-wallet-expired-label="{{ __('Payment time expired') }}" @endif>
                     @if($item['url'])<a wire:navigate class="wallet-history-main" href="{{ $item['url'] }}" aria-label="{{ __('View details') }}: {{ $item['amount'] }}">@else<div class="wallet-history-main">@endif
-                        <span class="account-wallet-entry-symbol" aria-hidden="true">{{ $item['tone'] === 'success' ? '+' : ($item['tone'] === 'waiting' ? '◷' : '−') }}</span>
+                        <span class="account-wallet-entry-symbol" aria-hidden="true"><x-account-wallet-icon :url="$coinIconUrl" /></span>
                         <div class="account-wallet-entry-details">
                             <strong @class(['account-wallet-credit' => $item['tone'] === 'success'])>{{ $item['amount'] }}</strong>
                             <span>{{ $item['title'] }}</span>
