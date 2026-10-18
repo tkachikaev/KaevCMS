@@ -47,6 +47,19 @@ try {
         throw new RuntimeException('Unable to hash synthetic previous apply script.');
     }
     $targetRelease['previous_apply_sha256'] = $previousApplyHash;
+    // The fixture's previous tree is synthetic, not the published predecessor.
+    // Give it a distinct valid lock file and bind metadata to those actual bytes
+    // so dependency-changing releases exercise the patch path as well.
+    $previousLock = file_get_contents($previousRoot.'/composer.lock');
+    if (! is_string($previousLock)) {
+        throw new RuntimeException('Unable to read synthetic previous dependency lock.');
+    }
+    writeFixture($previousRoot.'/composer.lock', $previousLock."\n");
+    $previousLockHash = hash_file('sha256', $previousRoot.'/composer.lock');
+    if (! is_string($previousLockHash)) {
+        throw new RuntimeException('Unable to hash synthetic previous dependency lock.');
+    }
+    $targetRelease['composer_lock']['previous_sha256'] = $previousLockHash;
     writeFixtureJson($targetRoot.'/release.json', $targetRelease);
 
     $syntheticRelease = $targetRelease;
@@ -55,6 +68,7 @@ try {
     $syntheticRelease['apply_script'] = $previousApply;
     $syntheticRelease['previous_apply_script'] = 'deployment/windows/apply-'.syntheticOlderVersion($previousVersion).'.ps1';
     $syntheticRelease['previous_apply_sha256'] = str_repeat('0', 64);
+    $syntheticRelease['composer_lock']['current_sha256'] = $previousLockHash;
     writeFixtureJson($previousRoot.'/release.json', $syntheticRelease);
     writeFixture($previousRoot.'/VERSION', $previousVersion."\n");
 
@@ -109,6 +123,7 @@ try {
     assertFixture(in_array('deployment/release/build-release.php', $fullEntries, true), 'Unified release builder must be shipped.');
     assertFixture(in_array('docs/release-builder-target-only.txt', $fullEntries, true), 'Target-only file must enter the full release.');
     assertFixture(in_array('docs/release-builder-target-only.txt', fixtureZipEntries($first['patch']), true), 'Target-only file must enter the direct patch.');
+    assertFixture(in_array('composer.lock', fixtureZipEntries($first['patch']), true), 'Changed dependency lock must enter the direct patch.');
 
     $checksumLines = file($first['checksums'], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     assertFixture(is_array($checksumLines) && count($checksumLines) === 3, 'Checksum file must contain exactly three release artifacts.');

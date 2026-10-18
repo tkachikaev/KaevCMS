@@ -22,8 +22,12 @@
             @foreach ($headerPages ?? [] as $menuPage)
                 <a wire:navigate.hover wire:current="active" href="{{ page_url($menuPage) }}">{{ $menuPage->titleFor() }}</a>
             @endforeach
+            @foreach ($headerCustomLinks ?? [] as $customLink)
+                <a href="{{ $customLink->url }}" @if ($customLink->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $customLink->titleFor() }}</a>
+            @endforeach
             @auth
-                <a wire:navigate.hover wire:current="active" class="mobile-account-link" href="{{ public_route('account') }}">{{ __('Account') }}</a>
+                {{-- The account has a separate layout: load its styles before painting. --}}
+                <a class="mobile-account-link" href="{{ public_route('account') }}">{{ __('Account') }}</a>
             @else
                 <a wire:navigate.hover wire:current.exact="active" class="mobile-account-link" href="{{ public_route('login') }}">{{ __('Sign in') }}</a>
                 @if (registration_available())
@@ -42,7 +46,7 @@
             @endif
 
             @auth
-                <a wire:navigate.hover class="button button-gold header-main-action" href="{{ public_route('account') }}">{{ __('Account') }}</a>
+                <a class="button button-gold header-main-action" href="{{ public_route('account') }}">{{ __('Account') }}</a>
                 <form class="header-logout-form" method="POST" action="{{ public_route('logout') }}">
                     @csrf
                     <button class="header-text-action" type="submit">{{ __('Sign out') }}</button>

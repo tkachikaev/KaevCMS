@@ -52,6 +52,11 @@ final class AdminRouteAccessRegistry
                 AdminPermission::ContentManage,
             ),
             $this->prefix(
+                'admin.navigation.',
+                AdminPermission::ContentView,
+                AdminPermission::ContentManage,
+            ),
+            $this->prefix(
                 'admin.pages.',
                 AdminPermission::ContentView,
                 AdminPermission::ContentManage,
@@ -83,6 +88,11 @@ final class AdminRouteAccessRegistry
                 'admin.module-pages.',
                 AdminPermission::ModulesView,
                 AdminPermission::ModulesManage,
+            ),
+            $this->prefix(
+                'admin.wallets.',
+                AdminPermission::WalletView,
+                AdminPermission::WalletManage,
             ),
             $this->prefix(
                 'admin.users.',

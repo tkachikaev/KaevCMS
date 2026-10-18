@@ -1,18 +1,12 @@
 @extends('account-theme::layouts.app')
 @section('title', __('Security and password'))
+@section('description', __('Manage the password used to sign in to your KaevCMS account.'))
 @section('inline-validation-errors', '1')
 @section('content')
-<section class="account-page-heading account-settings-heading">
-    <div>
-        <span class="account-eyebrow">{{ __('Your account') }}</span>
-        <h1>{{ __('Security and password') }}</h1>
-        <p>{{ __('Manage the password used to sign in to your KaevCMS account.') }}</p>
-    </div>
-    <a wire:navigate class="account-button secondary" href="{{ public_route('account') }}">{{ __('Back to overview') }}</a>
-</section>
+<x-account-page>
 
-@include('account-theme::partials.settings-tabs')
-
+<x-account-panel class="account-section account-settings-card account-settings-card-single">
+    @include('account-theme::partials.settings-tabs')
 <div class="account-security-scope" role="note">
     <span class="account-settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="3"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"></path></svg></span>
     <div>
@@ -20,9 +14,7 @@
         <span>{{ __('Only the password used to sign in to the website changes. Game account passwords remain unchanged.') }}</span>
     </div>
 </div>
-
-<section class="account-section account-settings-card account-settings-card-single">
-    <div class="account-settings-card-heading">
+    <div class="account-settings-card-heading account-panel-header">
         <div>
             <span class="account-eyebrow">{{ __('Security') }}</span>
             <h2>{{ __('Change password') }}</h2>
@@ -72,5 +64,6 @@
             <button type="submit" class="account-button primary">{{ __('Change password') }}</button>
         </div>
     </form>
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection

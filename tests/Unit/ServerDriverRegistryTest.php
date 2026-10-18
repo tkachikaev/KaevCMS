@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use App\Models\GameServer;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\GameWorld\MobiusGameWorldDriver;
+use App\Services\GameWorld\RusacisGameSchemaInspector;
+use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\Servers\ServerDriverRegistry;
 use Tests\TestCase;
 
@@ -146,21 +148,31 @@ class ServerDriverRegistryTest extends TestCase
         );
     }
 
-    public function test_rusacis_drivers_are_registered_as_placeholders(): void
+    public function test_rusacis_login_and_game_drivers_are_ready_with_independent_schemas(): void
     {
         $registry = app(ServerDriverRegistry::class);
         $loginDriver = $registry->loginDriver('rusacis');
         $gameDriver = $registry->gameDriver('rusacis');
 
         $this->assertNotNull($loginDriver);
-        $this->assertFalse($loginDriver['ready']);
-        $this->assertSame('unknown', $loginDriver['schema_profile']);
-        $this->assertSame([], $loginDriver['capabilities']);
-        $this->assertSame([], $loginDriver['requirements']);
+        $this->assertTrue($loginDriver['ready']);
+        $this->assertSame('rusacis_interlude', $loginDriver['schema_profile']);
+        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $loginDriver['capabilities']);
+        $this->assertSame([[
+            'table' => 'accounts',
+            'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
+            'required' => true,
+        ]], $loginDriver['requirements']);
 
         $this->assertNotNull($gameDriver);
-        $this->assertFalse($gameDriver['ready']);
-        $this->assertSame([], $gameDriver['capabilities']);
-        $this->assertSame([], $gameDriver['requirements']);
+        $this->assertTrue($gameDriver['ready']);
+        $this->assertSame('characters', $gameDriver['online_count']['table']);
+        $this->assertSame(['level', 'pvp', 'pk', 'play_time'], $gameDriver['capabilities']);
+        $this->assertSame(RusacisGameSchemaInspector::requirements(), $gameDriver['requirements']);
+        $this->assertNotContains('character_rescue', $gameDriver['capabilities']);
+        $this->assertInstanceOf(
+            RusacisGameWorldDriver::class,
+            app(GameWorldDriverResolver::class)->resolve(new GameServer(['driver' => 'rusacis'])),
+        );
     }
 }

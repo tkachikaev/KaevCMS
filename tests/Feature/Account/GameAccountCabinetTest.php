@@ -198,7 +198,7 @@ class GameAccountCabinetTest extends TestCase
             ->get('/account/game-accounts/'.$account->id)
             ->assertOk()
             ->assertSee('Создать игровой аккаунт')
-            ->assertDontSee('← Мои аккаунты');
+            ->assertSee('← Мои аккаунты');
     }
 
     public function test_player_sees_game_servers_instead_of_the_login_server_name(): void

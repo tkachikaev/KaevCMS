@@ -40,6 +40,12 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    /** @return HasOne<Wallet, $this> */
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
     /** @return HasMany<UserGameAccount, $this> */
     public function gameAccounts(): HasMany
     {

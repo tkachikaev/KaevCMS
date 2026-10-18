@@ -53,6 +53,20 @@ class ModuleFoundationTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_optional_catalogue_locales_are_validated_and_old_manifests_remain_valid(): void
+    {
+        $this->createModule('localized-fixture', ['locales' => ['ru' => ['name' => 'Модуль', 'description' => 'Описание']]]);
+        $this->assertTrue(app(ModuleManager::class)->inspect('localized-fixture')['valid']);
+        foreach (['plain text', ['ru' => ['name' => ['not text']]], ['ru' => ['name' => str_repeat('x', 121)]],
+            ['ru' => ['description' => str_repeat('x', 1001)]], ['../ru' => ['name' => 'Unsafe']], ['ru' => ['bootstrap' => 'run.php']]] as $index => $locales) {
+            $id = 'locale-invalid-'.$index;
+            $this->createModule($id, ['locales' => $locales]);
+            $this->assertFalse(app(ModuleManager::class)->inspect($id)['valid']);
+        }
+        $this->createModule('untranslated-fixture');
+        $this->assertTrue(app(ModuleManager::class)->inspect('untranslated-fixture')['valid']);
+    }
+
     public function test_enable_refreshes_stale_migration_tracking_state(): void
     {
         $id = 'migration-cache-fixture';

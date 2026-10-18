@@ -27,6 +27,7 @@
     @endif
     <title>@yield('title', site_name())</title>
     <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}">
+    @stack('head')
 </head>
 <body>
     @if (! empty($isPreview))

@@ -16,5 +16,15 @@
     "routes": {
         "web": "routes/web.php",
         "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Техническая поддержка",
+            "description": "Личные обращения игроков: переписка, уведомления сотрудников, назначение ответственных, лимиты и хранение истории."
+        },
+        "en": {
+            "name": "Support Tickets",
+            "description": "Private player support tickets with Livewire conversations, staff attention badges, administrator notifications, configurable limits, retention cleanup and owner-only deletion of closed tickets."
+        }
     }
 }

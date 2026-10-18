@@ -1,0 +1,192 @@
+<?php
+
+namespace KaevCMS\Modules\Donations\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\Admin;
+use App\Models\User;
+use App\Services\Admin\AdminPathSettings;
+use App\Support\Modules\ModuleAdminAuthorizer;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
+use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
+use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
+use KaevCMS\Modules\Donations\Services\DonationSettings;
+use Throwable;
+
+final class AdminDonationProviderController extends Controller
+{
+    public function index(AdminPathSettings $paths, DonationProviderSettings $settings): View
+    {
+        /** @var view-string $view */
+        $view = 'module-donations::admin.providers';
+
+        return view($view, [
+            'adminPath' => $paths->path(),
+            'providers' => $settings->overview(),
+            'yoomoneyAccepting' => app(DonationLiveActivation::class)->state()['mode'] !== 'off',
+        ]);
+    }
+
+    public function show(string $providerCode, AdminPathSettings $paths, DonationProviderSettings $settings,
+        DonationProviderRegistry $registry, Request $request, DonationLiveActivation $activation): View
+    {
+        try {
+            $driver = $registry->get($providerCode);
+        } catch (InvalidArgumentException) {
+            abort(404);
+        }
+        $state = collect($settings->overview())->firstWhere('code', $providerCode);
+        abort_unless($state !== null, 404);
+
+        $wallet = '';
+        $hasSecret = false;
+        if ($providerCode === 'yoomoney') {
+            try {
+                $stored = $settings->credentialsForDriver('yoomoney');
+                $wallet = $stored['receiver'] ?? '';
+                $hasSecret = ($stored['notification_secret'] ?? '') !== '';
+            } catch (Throwable) {
+                // Never reveal errors containing credentials in the admin UI.
+            }
+        }
+        $webhookUrl = route('payments.yoomoney.notify');
+        $webhookHost = strtolower((string) parse_url($webhookUrl, PHP_URL_HOST));
+        $webhookIsLocal = ! str_starts_with($webhookUrl, 'https://')
+            || in_array($webhookHost, ['localhost', '127.0.0.1', '::1'], true)
+            || str_ends_with($webhookHost, '.localhost');
+
+        /** @var view-string $view */
+        $view = 'module-donations::admin.provider';
+
+        return view($view, [
+            'adminPath' => $paths->path(), 'driver' => $driver, 'state' => $state,
+            'fields' => $driver->credentialFields(),
+            'availableCurrencies' => $settings->configuredCurrencies($driver),
+            'diagnostic' => $settings->localDiagnostic($providerCode),
+            'publicWalletNumber' => $wallet, 'hasNotificationSecret' => $hasSecret,
+            'webhookUrl' => $webhookUrl, 'webhookIsLocal' => $webhookIsLocal,
+            'activation' => $activation->state(),
+            'readinessIssues' => $activation->blockers(),
+            'pilotPlayer' => $activation->state()['pilot_user_id']
+                ? User::query()->find($activation->state()['pilot_user_id']) : null,
+            'playerSearch' => is_string($request->query('player_search'))
+                ? mb_substr(trim($request->query('player_search')), 0, 64) : '',
+            'players' => $providerCode === 'yoomoney'
+                ? User::query()->where('is_active', true)->when(is_string($request->query('player_search'))
+                    && trim($request->query('player_search')) !== '', function ($query) use ($request): void {
+                        $term = mb_substr(trim($request->query('player_search')), 0, 64);
+                        $query->where(function ($q) use ($term): void {
+                            $q->where('name', 'like', '%'.$term.'%')->orWhere('email', 'like', '%'.$term.'%');
+                            if (ctype_digit($term)) {
+                                $q->orWhere('id', (int) $term);
+                            }
+                        });
+                    })->orderByDesc('id')->limit(25)->get(['id', 'name', 'email']) : collect(),
+        ]);
+    }
+
+    public function updateActivation(Request $request, AdminPathSettings $paths,
+        ModuleAdminAuthorizer $access, DonationLiveActivation $activation): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.activation.update', 'PUT', $admin);
+        $mode = $request->input('payment_mode');
+        $pilot = $request->input('pilot_user_id');
+        if (! is_string($mode) || (! is_null($pilot) && ! is_string($pilot))
+            || (is_string($pilot) && $pilot !== '' && ! ctype_digit($pilot))) {
+            return back()->withErrors(['activation' => __('module-donations::messages.activation_invalid')]);
+        }
+        try {
+            $activation->update($admin, $mode, is_string($pilot) && $pilot !== '' ? (int) $pilot : null);
+        } catch (InvalidArgumentException) {
+            return back()->withErrors(['activation' => __('module-donations::messages.activation_invalid')]);
+        }
+
+        return redirect()->route('admin.module-pages.donations.providers.show', [
+            'adminPath' => $paths->path(), 'providerCode' => 'yoomoney',
+        ])->with('status', __('module-donations::messages.activation_saved'));
+    }
+
+    public function update(string $providerCode, Request $request, AdminPathSettings $paths,
+        ModuleAdminAuthorizer $access, DonationProviderSettings $settings): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.update', 'PUT', $admin);
+
+        // YooMoney has a single switch in the UI. Provider and activation are
+        // still audited independently and changed in one database transaction.
+        if ($providerCode === 'yoomoney' && $request->has('payment_enabled')) {
+            $switch = $request->input('payment_enabled');
+            $fields = $request->input('credentials', []);
+            if (! in_array($switch, ['0', '1', 0, 1], true) || ! is_array($fields)
+                || array_diff(array_keys($fields), ['receiver', 'notification_secret']) !== []) {
+                return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
+            }
+            foreach ($fields as $value) {
+                if (! is_string($value) && $value !== null) {
+                    return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
+                }
+            }
+            $fields = array_map(static fn ($value): string => is_string($value) ? $value : '', $fields);
+            $wantPayment = (string) $switch === '1';
+            $ready = false;
+            try {
+                DB::transaction(function () use ($admin, $fields, $wantPayment, $settings, &$ready): void {
+                    // Even when OFF, keep credentials for the next enable and for
+                    // verification of previously initiated transfers.
+                    $settings->save($admin, 'yoomoney', $wantPayment, 'live', ['RUB'], $fields);
+                    $activation = app(DonationLiveActivation::class);
+                    if ($wantPayment) {
+                        app(DonationSettings::class)->updateVisibility(true, $admin);
+                        $ready = $activation->blockers() === [];
+                    }
+                    $activation->update($admin, $wantPayment && $ready ? 'live' : 'off', null);
+                });
+            } catch (InvalidArgumentException|\RuntimeException) {
+                return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
+            }
+            if ($wantPayment && ! $ready) {
+                return redirect()->route('admin.module-pages.donations.providers.show', [
+                    'adminPath' => $paths->path(), 'providerCode' => 'yoomoney',
+                ])->withErrors(['provider' => __('module-donations::messages.yoomoney_not_ready')]);
+            }
+
+            return redirect()->route('admin.module-pages.donations.providers.show', [
+                'adminPath' => $paths->path(), 'providerCode' => 'yoomoney',
+            ])->with('status', __('module-donations::messages.provider_saved'));
+        }
+
+        // Explicit failure handling avoids flashing API keys/passwords into session old input.
+        $enabled = $request->input('enabled');
+        $mode = $request->input('mode');
+        $codes = $request->input('currency_codes', []);
+        $credentials = $request->input('credentials', []);
+        if (! in_array($enabled, ['0', '1', 0, 1], true) || ! is_string($mode)
+            || ! is_array($codes) || ! is_array($credentials)) {
+            return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
+        }
+        // Laravel ConvertEmptyStringsToNull turns blank password controls into null.
+        // Preserve an existing credential when the owner leaves its field blank.
+        foreach ($credentials as $field => $value) {
+            if ($value === null) {
+                $credentials[$field] = '';
+            }
+        }
+        try {
+            $settings->save($admin, $providerCode, (string) $enabled === '1', $mode, $codes, $credentials);
+        } catch (InvalidArgumentException) {
+            return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
+        }
+
+        return redirect()->route('admin.module-pages.donations.providers.show', [
+            'adminPath' => $paths->path(), 'providerCode' => $providerCode,
+        ])->with('status', __('module-donations::messages.provider_saved'));
+    }
+}

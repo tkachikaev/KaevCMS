@@ -17,13 +17,13 @@ final class SettingsImageStorage
         'application/octet-stream',
     ];
 
-    private const PATH_PATTERN = '~^settings/(logo|favicon)/[a-f0-9-]+\.(?:jpg|png|webp|ico)$~i';
+    private const PATH_PATTERN = '~^settings/(logo|favicon|wallet-coin)/[a-f0-9-]+\.(?:jpg|png|webp|ico)$~i';
 
     public function __construct(private readonly PublicImageStorage $storage) {}
 
     public function validateUpload(UploadedFile $file, string $kind): ?string
     {
-        if (! in_array($kind, ['logo', 'favicon'], true)) {
+        if (! in_array($kind, ['logo', 'favicon', 'wallet-coin'], true)) {
             return __('Unknown image type.');
         }
 
@@ -44,9 +44,11 @@ final class SettingsImageStorage
         }
 
         if ($this->storage->extensionForMime($mime) === null) {
-            return $kind === 'logo'
-                ? __('The logo must be a JPG, PNG or WebP image.')
-                : __('The favicon must be a PNG, WebP or ICO image.');
+            return match ($kind) {
+                'logo' => __('The logo must be a JPG, PNG or WebP image.'),
+                'wallet-coin' => __('The wallet icon must be a PNG or WebP image.'),
+                default => __('The favicon must be a PNG, WebP or ICO image.'),
+            };
         }
 
         $detectedExtension = $this->storage->extensionForMime($mime);
@@ -55,12 +57,24 @@ final class SettingsImageStorage
             return __('The favicon must be a PNG, WebP or ICO image.');
         }
 
+        if ($kind === 'wallet-coin' && ! in_array($detectedExtension, ['png', 'webp'], true)) {
+            return __('The wallet icon must be a PNG or WebP image.');
+        }
+
+        if ($kind === 'wallet-coin' && $extension !== $detectedExtension) {
+            return __('The wallet icon must be a PNG or WebP image.');
+        }
+
         $size = @getimagesize($path);
         if (! is_array($size)) {
             return __('The file is not a valid image.');
         }
 
-        $maxDimension = $kind === 'logo' ? 6000 : 2048;
+        $maxDimension = match ($kind) {
+            'logo' => 6000,
+            'wallet-coin' => 1024,
+            default => 2048,
+        };
         if ($size[0] < 1 || $size[1] < 1 || $size[0] > $maxDimension || $size[1] > $maxDimension) {
             return __('The image dimensions must not exceed :width×:height pixels.', ['width' => $maxDimension, 'height' => $maxDimension]);
         }
@@ -114,6 +128,10 @@ final class SettingsImageStorage
             return null;
         }
 
+        if (($kind === 'wallet-coin' || $segments[1] === 'wallet-coin') && preg_match('~\.(?:png|webp)$~i', $path) !== 1) {
+            return null;
+        }
+
         return $path;
     }
 
@@ -132,7 +150,7 @@ final class SettingsImageStorage
         $mime = (string) File::mimeType($file->getRealPath());
         $extension = $this->storage->extensionForMime($mime);
 
-        if ($extension === null || ($kind === 'favicon' && $extension === 'jpg')) {
+        if ($extension === null || (in_array($kind, ['favicon', 'wallet-coin'], true) && $extension === 'jpg')) {
             throw new RuntimeException('Unsupported settings image type.');
         }
 

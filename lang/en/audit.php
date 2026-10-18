@@ -1,0 +1,61 @@
+<?php
+
+// Presentation labels remain available when the originating module is disabled.
+return [
+    'actions' => [
+        'donations' => [
+            'order_created' => 'Top-up order created',
+            'order_cancelled' => 'Top-up order cancelled',
+            'order_expired' => 'Top-up order expired',
+            'payment_prepared' => 'Payment checkout prepared',
+            'payment_verified' => 'Payment notification verified',
+            'payment_credited' => 'Payment coins credited',
+            'payment_review' => 'Payment requires review',
+            'payment_test' => 'Test payment notification received',
+            'payment_review_reported' => 'Payment review result recorded',
+            'recovery_candidate' => 'Payment found for reconciliation',
+            'workspace_updated' => 'Top-up settings and coin prices changed',
+            'visibility_updated' => 'Account top-up visibility changed',
+            'limits_updated' => 'Top-up limits changed',
+            'rate_updated' => 'Coin price changed',
+            'provider_updated' => 'Payment provider settings changed',
+            'live_mode_updated' => 'Payment acceptance mode changed',
+        ],
+        'daily_reward_calendar' => [
+            'created' => 'Daily reward calendar created',
+            'updated' => 'Daily reward calendar updated',
+            'enabled' => 'Daily reward calendar enabled',
+            'disabled' => 'Daily reward calendar disabled',
+        ],
+        'promo_code' => [
+            'created' => 'Promo code created',
+            'updated' => 'Promo code updated',
+            'enabled' => 'Promo code enabled',
+            'disabled' => 'Promo code disabled',
+            'archived' => 'Promo code archived',
+            'deleted' => 'Promo code deleted',
+            'restored' => 'Promo code restored',
+        ],
+        'support_ticket' => [
+            'created' => 'Support ticket created',
+            'player_replied' => 'Player replied to support ticket',
+            'staff_replied' => 'Staff replied to support ticket',
+            'internal_note_added' => 'Internal support note added',
+            'assigned' => 'Support ticket assignee changed',
+            'closed_by_player' => 'Support ticket closed by player',
+            'closed_by_staff' => 'Support ticket closed by staff',
+            'reopened' => 'Support ticket reopened',
+            'retention_protected' => 'Support ticket protected from cleanup',
+            'retention_unprotected' => 'Support ticket cleanup protection removed',
+            'message_edited' => 'Support ticket message edited',
+            'settings_updated' => 'Support settings changed',
+            'cleanup_completed' => 'Old support tickets cleaned up',
+            'deleted' => 'Support ticket deleted',
+        ],
+        'module' => [
+            'installed' => 'Module installed',
+            'database_updated' => 'Module database updated',
+            'migration_failed' => 'Module database update failed',
+        ],
+    ],
+];

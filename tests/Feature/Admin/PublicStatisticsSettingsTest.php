@@ -79,6 +79,14 @@ class PublicStatisticsSettingsTest extends TestCase
             ->assertSee('Дополнительные сетевые настройки');
     }
 
+    public function test_ready_rusacis_driver_can_publish_statistics(): void
+    {
+        $server = GameServer::query()->firstOrFail();
+        $this->actingAs(Admin::factory()->create(), 'admin');
+        Livewire::test(GameServerManager::class)->call('edit', $server->id)->set('driver', 'rusacis')->set('statisticsEnabled', true)->call('save')->assertHasNoErrors();
+        $this->assertTrue($server->fresh()->statistics_enabled);
+    }
+
     public function test_unsupported_driver_cannot_publish_statistics(): void
     {
         $server = GameServer::query()->firstOrFail();
@@ -86,7 +94,7 @@ class PublicStatisticsSettingsTest extends TestCase
 
         Livewire::test(GameServerManager::class)
             ->call('edit', $server->id)
-            ->set('driver', 'rusacis')
+            ->set('driver', 'unsupported_driver')
             ->set('statisticsEnabled', true)
             ->call('save')
             ->assertHasNoErrors();

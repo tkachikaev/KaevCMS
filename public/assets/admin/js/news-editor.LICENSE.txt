@@ -1,7 +1,7 @@
 KaevCMS content editor third-party notices
 ===========================================
 
-The compiled news-editor.js bundle contains Tiptap 3.29.2 packages and their
+The compiled news-editor.js bundle contains Tiptap 3.30.5 packages and their
 MIT-licensed ProseMirror dependencies.
 
 Tiptap

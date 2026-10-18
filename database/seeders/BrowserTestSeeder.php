@@ -46,6 +46,19 @@ class BrowserTestSeeder extends Seeder
         );
 
         $auditorEmail = (string) config('browser_tests.auditor.email');
+
+        // A separate authenticated administrator exercises wallet permissions
+        // without sharing the owner's per-minute adjustment limit.
+        Admin::query()->updateOrCreate(
+            ['email' => 'browser-wallet-administrator@example.test'],
+            [
+                'name' => 'Browser Wallet Administrator',
+                'password' => Hash::make($adminPassword),
+                'is_active' => true,
+                'role' => AdminRole::Administrator,
+                'locale' => 'ru',
+            ],
+        );
         $auditorPassword = (string) config('browser_tests.auditor.password');
 
         Admin::query()->updateOrCreate(
@@ -65,6 +78,19 @@ class BrowserTestSeeder extends Seeder
             ['email' => $playerEmail],
             [
                 'name' => 'browser-player',
+                'email_verified_at' => now(),
+                'password' => Hash::make($playerPassword),
+                'is_active' => true,
+                'locale' => 'ru',
+            ],
+        );
+
+        // Donation draft POSTs must not consume the account-action throttle budget
+        // of the player used by password, promo-code and daily-reward scenarios.
+        User::query()->updateOrCreate(
+            ['email' => 'browser-donations-player@example.test'],
+            [
+                'name' => 'browser-donations-player',
                 'email_verified_at' => now(),
                 'password' => Hash::make($playerPassword),
                 'is_active' => true,

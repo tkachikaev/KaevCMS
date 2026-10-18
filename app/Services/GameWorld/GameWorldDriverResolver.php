@@ -13,6 +13,7 @@ final class GameWorldDriverResolver
     {
         return match ((string) $server->driver) {
             ServerDriverRegistry::MOBIUS_DRIVER => app(MobiusGameWorldDriver::class),
+            ServerDriverRegistry::RUSACIS_DRIVER => app(RusacisGameWorldDriver::class),
             default => throw new RuntimeException('The selected GameServer driver does not provide game statistics.'),
         };
     }

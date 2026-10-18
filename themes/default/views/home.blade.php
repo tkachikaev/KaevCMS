@@ -40,7 +40,7 @@
             @else
                 <a class="button button-gold button-large" href="{{ public_route('login') }}">{{ __('Log in') }}</a>
             @endauth
-            <a class="button button-ghost button-large" href="{{ public_route('downloads') }}">{{ __('Download client') }}</a>
+            <a class="button button-ghost button-large" href="{{ download_page_url() }}">{{ __('Download client') }}</a>
         </div>
     </div>
 </section>

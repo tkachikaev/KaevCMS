@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { resolve } from 'node:path';
 import { submitLogin } from '../support/authentication.mjs';
 import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
 
@@ -17,6 +18,80 @@ const signIn = async (page) => {
     });
     await expect(page).toHaveURL(/\/admin$/);
 };
+
+for (const appearance of ['light', 'dark']) {
+    test(`editor link dialog uses shared controls and preserves safe link editing (${appearance})`, async ({ page }) => {
+        await page.setViewportSize(appearance === 'dark' ? { width: 390, height: 844 } : { width: 1280, height: 900 });
+        await signIn(page);
+        await gotoWithLocalNetworkRetry(page, '/admin/news/create');
+        await page.locator(`[data-admin-appearance-option="${appearance}"]`).click();
+
+        const editor = page.locator('[data-rich-editor]').first();
+        const canvas = editor.locator('.ProseMirror');
+        await canvas.fill('Server guide');
+        await canvas.press('Control+A');
+        await editor.locator('[data-editor-link]').click();
+        const dialog = editor.locator('[data-editor-link-dialog]');
+        const url = dialog.locator('[data-editor-link-url]');
+        const apply = dialog.locator('[data-editor-link-apply]');
+        await expect(dialog).toBeVisible();
+        await expect(url).toBeFocused();
+        await expect(apply).toHaveClass(/button-primary/);
+
+        const layout = await dialog.evaluate(element => {
+            const input = element.querySelector('input');
+            const content = element.querySelector('.rich-editor-dialog-content');
+            const bounds = element.getBoundingClientRect();
+            return {
+                padding: parseFloat(getComputedStyle(content).paddingLeft),
+                inputHeight: input.getBoundingClientRect().height,
+                left: bounds.left,
+                right: bounds.right,
+                viewport: innerWidth,
+                overflow: element.scrollWidth - element.clientWidth,
+                background: getComputedStyle(element).backgroundColor,
+                fieldBackground: getComputedStyle(input).backgroundColor,
+                cardBackground: getComputedStyle(document.querySelector('.form-card')).backgroundColor,
+                sharedFieldBackground: getComputedStyle(document.querySelector('#title_ru')).backgroundColor,
+            };
+        });
+        expect(layout.padding).toBeGreaterThanOrEqual(20);
+        expect(layout.inputHeight).toBeGreaterThanOrEqual(42);
+        expect(layout.left).toBeGreaterThanOrEqual(15);
+        expect(layout.right).toBeLessThanOrEqual(layout.viewport - 15);
+        expect(layout.overflow).toBeLessThanOrEqual(1);
+        expect(layout.background).toBe(layout.cardBackground);
+        expect(layout.fieldBackground).toBe(layout.sharedFieldBackground);
+        await page.screenshot({ path: resolve(import.meta.dirname, `../../../storage/framework/testing/editor-dialogs/link-${appearance}.png`) });
+
+        await url.fill('javascript:alert(1)');
+        await apply.click();
+        await expect(dialog).toBeVisible();
+        await expect(editor.locator('.rich-editor-source')).not.toHaveValue(/javascript:/);
+        await url.fill('https://example.com/guide');
+        await apply.click();
+        await expect(dialog).not.toBeVisible();
+        await expect(canvas.locator('a')).toHaveAttribute('href', 'https://example.com/guide');
+
+        await canvas.locator('a').click();
+        await editor.locator('[data-editor-link]').click();
+        await expect(url).toHaveValue('https://example.com/guide');
+        await url.fill('https://example.com/cancelled');
+        await dialog.locator('[data-editor-dialog-cancel]').click();
+        await expect(dialog).not.toBeVisible();
+        await expect(canvas.locator('a')).toHaveAttribute('href', 'https://example.com/guide');
+
+        const imageDialog = editor.locator('[data-editor-image-dialog]');
+        await imageDialog.evaluate(element => element.showModal());
+        await expect(imageDialog.locator('[data-editor-image-alt]')).toHaveCSS('min-height', '42px');
+        await expect(imageDialog.locator('[data-editor-image-size]')).toHaveCSS('min-height', '42px');
+        await expect(imageDialog.locator('.rich-editor-dialog-content')).toHaveCSS('padding', '24px');
+        const imageOverflow = await imageDialog.evaluate(element => element.scrollWidth - element.clientWidth);
+        expect(imageOverflow).toBeLessThanOrEqual(1);
+        await imageDialog.locator('[data-editor-dialog-cancel]').click();
+        await expect(imageDialog).not.toBeVisible();
+    });
+}
 
 test('shared admin fields keep the security-page control dimensions', async ({ page }) => {
     await signIn(page);

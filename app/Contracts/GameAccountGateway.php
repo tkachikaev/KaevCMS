@@ -15,7 +15,7 @@ interface GameAccountGateway
 
     public function supportsGameServer(GameServer $gameServer): bool;
 
-    public function prepareAccount(string $login, string $password, string $email): PreparedGameAccount;
+    public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount;
 
     public function inspectPreparedAccount(
         LoginServer $loginServer,

@@ -13,12 +13,13 @@
     @endif
     <title>@yield('title', __('Personal account')) — {{ site_name() }}</title>
     <link rel="stylesheet" href="{{ account_theme_asset('assets/css/app.css') }}" data-navigate-track>
-    <link rel="stylesheet" href="{{ asset('assets/account/css/components.css') }}?v={{ cms_version() }}" data-navigate-track>
-    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
+    <link rel="stylesheet" href="{{ asset('assets/account/css/components.css') }}?v={{ cms_version() }}&ui=account-consistency" data-navigate-track>
+    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}&ui=account-consistency" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
+    @includeIf('module-donations::account.assets')
 </head>
-<body class="account-body">
+<body class="account-body" data-account-document-entry>
 @php($accountOperation = session('account_operation'))
 <div class="account-page-grid" aria-hidden="true"></div>
 <div class="account-page-orbit" aria-hidden="true"></div>
@@ -35,8 +36,7 @@
                     <span class="account-brand-logo"><img src="{{ account_theme_asset('assets/images/kaev-logo.png') }}" alt="Kaev"></span>
                 @endif
                 <span class="account-brand-copy">
-                    <strong>{{ site_name() }}</strong>
-                    <small>{{ __('Player account') }}</small>
+                    <strong title="{{ site_name() }}">{{ site_name() }}</strong>
                 </span>
             </a>
 
@@ -44,8 +44,6 @@
 
             <div class="account-sidebar-footer">
                 <a href="{{ public_route('home') }}"><span aria-hidden="true">←</span>{{ __('Back to website') }}</a>
-                <div><span>{{ __('Account theme') }}</span><strong>{{ $activeAccountTheme['name'] ?? '—' }}</strong></div>
-                <small>{{ __('Version :version', ['version' => cms_version()]) }}</small>
             </div>
         </aside>
     @endpersist
@@ -53,19 +51,22 @@
     <x-account-sidebar-backdrop />
 
     <main class="account-main">
-        @persist('account-topbar')
+        {{-- The topbar must rerender on Livewire navigation to show the current wallet balance. --}}
             <header class="account-topbar" data-account-topbar>
                 <div class="account-topbar-start">
                     <button class="account-sidebar-toggle" type="button" data-account-sidebar-toggle aria-label="{{ __('Player account navigation') }}" aria-expanded="false">
                         <span></span><span></span><span></span>
                     </button>
                     <div class="account-topbar-context">
-                        <span>{{ __('Player account') }}</span>
-                        <strong>{{ $user->name }}</strong>
+                        <h1 class="account-page-title">@yield('title', __('Personal account'))</h1>
+                        @hasSection('description')
+                            <p class="account-page-description">@yield('description')</p>
+                        @endif
                     </div>
                 </div>
 
                 <div class="account-topbar-actions">
+                    <x-account-wallet-menu :wallet-view="$walletView" />
                     @if(count($enabledLanguages ?? []) > 1)
                         <div class="account-language-switcher" aria-label="{{ __('Switch language') }}">
                             @foreach($enabledLanguages as $code => $language)
@@ -85,7 +86,6 @@
                     </details>
                 </div>
             </header>
-        @endpersist
 
         <div class="account-content" data-account-content>
             @if (session('status') && ! $accountOperation)
@@ -106,6 +106,7 @@
 </div>
 <x-account-avatar-modal :user="$user" />
 <x-account-operation-modal :payload="$accountOperation" />
+@includeIf('module-donations::account.dialog')
 @livewireScripts
 @stack('scripts')
 </body>

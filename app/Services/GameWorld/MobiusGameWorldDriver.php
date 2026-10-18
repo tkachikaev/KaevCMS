@@ -117,14 +117,15 @@ final class MobiusGameWorldDriver implements GameWorldDriver
         return $rows;
     }
 
-    public function charactersForAccount(GameServer $server, string $accountName): array
+    public function charactersForAccount(GameServer $server, string $accountName, int $limit = 100): array
     {
         $profile = $this->schemaProfile($server);
 
         /** @var list<array<string,mixed>> $rows */
-        $rows = $this->database->run($server, function (Connection $connection) use ($profile, $accountName): array {
+        $rows = $this->database->run($server, function (Connection $connection) use ($profile, $accountName, $limit): array {
             return $this->charactersQuery($connection, $profile)
                 ->where('characters.account_name', $accountName)
+                ->limit($this->limit($limit))
                 ->orderByDesc('characters.level')
                 ->orderBy('characters.char_name')
                 ->get()

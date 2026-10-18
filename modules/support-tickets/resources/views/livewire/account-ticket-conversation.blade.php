@@ -1,16 +1,16 @@
-<div>
+<div class="account-page">
     @if($notice)
         <div class="account-notice success support-live-notice" role="status">
             <span aria-hidden="true">✓</span><div>{{ $notice }}</div>
         </div>
     @endif
 
-    <section class="account-section account-surface support-ticket-detail">
+    <x-account-panel class="account-section account-surface support-ticket-detail">
         <div class="account-section-heading support-ticket-heading">
             <div>
                 <a wire:navigate class="support-ticket-back" href="{{ route('modules.support-tickets.index') }}">← {{ __('module-support-tickets::messages.back_to_tickets') }}</a>
                 <span class="account-eyebrow">{{ __('module-support-tickets::messages.ticket_number', ['number' => $ticket->number()]) }}</span>
-                <h1>{{ $ticket->subject }}</h1>
+
                 <p>{{ $ticket->category->label() }}</p>
             </div>
             <span class="support-ticket-status {{ $ticket->status->cssClass() }}">{{ $ticket->status->label() }}</span>
@@ -21,9 +21,9 @@
             <div><span>{{ __('module-support-tickets::messages.updated_at') }}</span><strong>{{ $ticket->last_message_at->format('d.m.Y H:i') }}</strong></div>
             <div><span>{{ __('module-support-tickets::messages.assigned_to') }}</span><strong>{{ $ticket->assignedAdmin?->name ?? __('module-support-tickets::messages.not_assigned') }}</strong></div>
         </div>
-    </section>
+    </x-account-panel>
 
-    <section class="account-section account-surface support-chat-card">
+    <x-account-panel class="account-section account-surface support-chat-card">
         <div class="account-section-heading"><div><h2>{{ __('module-support-tickets::messages.conversation') }}</h2></div></div>
 
         <div class="support-chat-window" data-support-conversation>
@@ -71,5 +71,5 @@
                 </div>
             </form>
         @endif
-    </section>
+    </x-account-panel>
 </div>

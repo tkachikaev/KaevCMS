@@ -1,0 +1,99 @@
+/* Donations workspace; colours follow the shared administration theme. */
+.donations-navigation { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--admin-border); }
+.donations-navigation-tabs { display:flex; flex-wrap:wrap; gap:4px; }
+.donations-navigation-tabs a { display:block; padding:12px 16px; margin-bottom:-1px; border-bottom:2px solid transparent; color:var(--admin-text-muted); font-weight:600; }
+.donations-navigation-tabs a:hover { color:var(--admin-text); background:var(--admin-surface-subtle); }
+.donations-navigation-tabs a[aria-current="page"] { color:var(--admin-primary); border-bottom-color:var(--admin-primary); }
+.donations-back { color:var(--admin-text-muted); font-size:12px; white-space:nowrap; }
+.donations-navigation a:focus-visible, .donations-add-currency > summary:focus-visible { outline:2px solid var(--admin-primary); outline-offset:3px; border-radius:4px; }
+.donations-payment-status { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; margin-bottom:20px; }
+.donations-payment-status a { font-size:12px; color:var(--admin-text-muted); }
+.donations-payment-status a:hover { color:var(--admin-primary); }
+.donations-payment-status .status-badge, .donations-provider-badges .status-badge { padding:5px 9px; border:1px solid var(--admin-border); border-radius:6px; background:var(--admin-surface-subtle); color:var(--admin-text-muted); font-weight:600; line-height:1.4; }
+.donations-payment-status .status-badge-success, .donations-provider-badges .status-badge-success { background:var(--admin-success-soft); border-color:var(--admin-success-border); color:var(--admin-success); }
+.donations-layout { display:grid; grid-template-columns:minmax(0,1fr) 320px; align-items:start; gap:20px; }
+.donations-layout > *, .donations-side > * { min-width:0; }
+.donations-layout .form-card { margin:0; width:100%; max-width:none; }
+.donations-side { display:grid; gap:20px; }
+.donations-layout .admin-card-heading { margin-bottom:20px; }
+.donations-rate-list { display:grid; gap:14px; }
+.donations-rate-row { padding:18px; border:1px solid var(--admin-border); border-radius:10px; background:var(--admin-surface); min-width:0; }
+.donations-rate-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(120px,160px) auto auto; align-items:end; gap:14px; border:0; padding:0; margin:0; min-width:0; }
+.donations-rate-fields[hidden], .donations-removal[hidden], [data-donations-empty][hidden] { display:none; }
+.donations-currency-identity { display:flex; align-items:center; gap:12px; align-self:center; min-width:0; }
+.donations-currency-code { display:grid; place-items:center; flex:0 0 48px; height:42px; border:1px solid var(--admin-border); border-radius:8px; background:var(--admin-surface-subtle); color:var(--admin-text); font-size:13px; font-weight:700; }
+.donations-currency-identity strong { display:block; color:var(--admin-text); font-size:14px; font-weight:600; overflow-wrap:anywhere; }
+.donations-currency-identity small { color:var(--admin-text-muted); font-size:12px; }
+.donations-rate-fields .admin-field { margin:0; }
+.donations-rate-fields .button { margin:0; }
+.donations-rate-fields [data-donations-delete] { color:var(--admin-danger); }
+.donations-rate-availability { display:flex; align-items:center; min-height:42px; }
+.donations-rate-availability .admin-toggle-row { margin:0; padding:0; border:0; background:none; gap:10px; }
+.donations-rate-availability .admin-toggle-copy strong { font-size:12px; font-weight:500; white-space:nowrap; }
+.donations-add-currency { display:flex; align-items:end; gap:12px; padding:14px; margin-bottom:18px; border:1px dashed var(--admin-border-strong); border-radius:10px; background:var(--admin-surface-subtle); }
+.donations-add-currency .admin-field { flex:1; min-width:0; margin:0; }
+.donations-add-currency select { width:100%; }
+.donations-removal { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.donations-removal p { margin:4px 0 0; font-size:12px; color:var(--admin-text-muted); }
+.donations-rate-row.is-removed { border-style:dashed; }
+.donations-save-bar { position:sticky; bottom:0; z-index:10; display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:12px; margin-top:20px; padding:16px 20px; border:1px solid var(--admin-border); border-radius:var(--admin-radius-card); background:var(--admin-surface); box-shadow:var(--admin-shadow-card); }
+.donations-save-bar p { flex:1; min-width:180px; margin:0; font-size:13px; color:var(--admin-text-muted); }
+.donations-save-bar p[hidden] { display:none; }
+.donations-form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:18px; }
+.donations-side .admin-toggle-row { padding:0 0 18px; margin:0; border:0; background:none; align-items:flex-start; }
+.donations-side .admin-toggle-copy strong { font-size:13px; }
+.donations-side .settings-grid { grid-template-columns:1fr 1fr; gap:12px; }
+.donations-layout .admin-empty-state { padding:24px 16px; color:var(--admin-text-muted); background:var(--admin-surface-subtle); border-radius:10px; text-align:center; }
+.donations-provider-empty { display:grid; justify-items:center; gap:10px; padding:40px 20px; text-align:center; }
+.donations-provider-empty strong { font-size:18px; }
+.donations-provider-empty p { max-width:480px; margin:0; color:var(--admin-text-muted); }
+.donations-provider-empty a { margin-top:8px; }
+.donations-provider-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); align-items:start; gap:20px; }
+.donations-provider-card { display:grid; gap:20px; margin:0; min-width:0; }
+.donations-provider-heading { display:flex; align-items:center; gap:16px; }
+.donations-provider-heading h2 { margin:0; font-size:20px; }
+.donations-provider-heading small { display:block; margin-top:4px; color:var(--admin-text-muted); font-size:12px; }
+.donations-provider-logo { display:grid; place-items:center; flex:0 0 72px; width:72px; height:72px; border-radius:16px; background:#f7f2ff; color:#8b3ffd; }
+.donations-provider-logo img { display:block; width:40px; height:40px; object-fit:contain; }
+.donations-provider-description { margin:0; color:var(--admin-text-muted); line-height:1.5; }
+.donations-provider-badges { display:flex; flex-wrap:wrap; gap:8px; }
+.donations-provider-currencies { display:flex; justify-content:space-between; align-items:center; gap:16px; padding-top:18px; border-top:1px solid var(--admin-border); font-size:13px; }
+.donations-provider-currencies > span { color:var(--admin-text-muted); }
+.donations-provider-currencies strong { overflow-wrap:anywhere; }
+.donations-provider-card > .button { justify-self:start; }
+.donations-readiness { margin:18px 0; padding:18px 20px; border:1px solid var(--admin-warning-border); border-radius:10px; background:var(--admin-warning-soft); color:var(--admin-text); }
+.donations-readiness h3 { margin:0 0 10px; font-size:15px; }
+.donations-readiness p { margin:0 0 12px; line-height:1.6; }
+.donations-readiness ul { margin:0; padding-left:20px; }
+.donations-readiness li { padding-left:3px; line-height:1.6; overflow-wrap:anywhere; }
+.donations-readiness li + li { margin-top:10px; }
+.donations-readiness a { color:var(--admin-primary); text-decoration:underline; }
+.donations-provider-advanced { margin:16px 0; border:1px solid var(--admin-border); border-radius:10px; background:var(--admin-surface-subtle); }
+.donations-provider-advanced > summary { padding:14px 16px; cursor:pointer; color:var(--admin-text-muted); font-size:13px; font-weight:600; }
+.donations-provider-advanced > summary:focus-visible { outline:2px solid var(--admin-primary); outline-offset:2px; border-radius:10px; }
+.donations-provider-advanced > .admin-field { margin:0; padding:0 16px 16px; }
+.donations-activation-form { display:grid; gap:16px; }
+.donations-activation-form .admin-field, .donations-activation-form p { margin:0; }
+.donations-activation-form > .button { justify-self:start; }
+.donations-pilot-controls { display:grid; gap:16px; padding:16px; border:1px solid var(--admin-border); border-radius:10px; background:var(--admin-surface-subtle); }
+.donations-pilot-controls[hidden], [data-donations-mode-help][hidden] { display:none; }
+.donations-player-search { display:flex; align-items:end; gap:12px; }
+.donations-player-search .admin-field { flex:1; min-width:0; }
+@media(max-width:1200px) {
+    .donations-layout { grid-template-columns:1fr; }
+    .donations-side { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:640px) {
+    .donations-navigation { align-items:flex-start; flex-direction:column; gap:6px; padding-bottom:10px; }
+    .donations-navigation-tabs { width:100%; gap:0; }
+    .donations-navigation-tabs a { padding:10px 9px; font-size:12px; }
+    .donations-side { grid-template-columns:1fr; }
+    .donations-rate-row { padding:14px; }
+    .donations-rate-fields { grid-template-columns:minmax(0,1fr) auto; }
+    .donations-currency-identity { grid-column:1/-1; }
+    .donations-rate-fields [data-donations-delete] { grid-column:1/-1; justify-self:end; }
+    .donations-add-currency { flex-wrap:wrap; }
+    .donations-add-currency .admin-field { flex-basis:100%; }
+    .donations-save-bar { padding:14px; }
+    .donations-save-bar .button { width:100%; }
+}

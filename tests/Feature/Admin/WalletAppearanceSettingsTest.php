@@ -1,0 +1,220 @@
+<?php
+
+namespace Tests\Feature\Admin;
+
+use App\Models\Admin;
+use App\Models\CmsSetting;
+use App\Models\User;
+use App\Services\Wallet\WalletAppearanceSettings;
+use App\Support\Themes\AccountThemeManager;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
+
+final class WalletAppearanceSettingsTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private string $uploadRoot;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->uploadRoot = storage_path('framework/testing/wallet-icons');
+        File::deleteDirectory($this->uploadRoot);
+        config()->set('cms.settings.uploads_path', $this->uploadRoot);
+    }
+
+    protected function tearDown(): void
+    {
+        File::deleteDirectory($this->uploadRoot);
+        parent::tearDown();
+    }
+
+    public function test_default_names_and_pluralization_are_localized_without_database_writes(): void
+    {
+        $beforeSettings = CmsSetting::query()->get()->toArray();
+        $settings = app(WalletAppearanceSettings::class);
+        $this->assertSame('1 монета', $settings->label(1, 'ru'));
+        $this->assertSame('2 монеты', $settings->label(2, 'ru'));
+        $this->assertSame('5 монет', $settings->label(5, 'ru'));
+        $this->assertSame('11 монет', $settings->label(11, 'ru'));
+        $this->assertSame('21 монета', $settings->label(21, 'ru'));
+        $this->assertSame('1 coin', $settings->label(1, 'en'));
+        $this->assertSame('100 coins', $settings->label(100, 'en'));
+        $this->assertSame(asset('assets/images/wallet-coin.webp'), $settings->values()['icon_url']);
+        $this->assertNull($settings->values()['icon']);
+        $this->assertSame($beforeSettings, CmsSetting::query()->get()->toArray());
+    }
+
+    public function test_guest_and_editor_cannot_change_wallet_appearance(): void
+    {
+        $this->get('/admin/settings/wallet-appearance')->assertRedirect(route('admin.login'));
+        $this->put('/admin/settings/wallet-appearance', $this->validFields())
+            ->assertRedirect(route('admin.login'));
+
+        $editor = $this->admin('editor');
+        $this->actingAs($editor, 'admin')->get('/admin/settings/wallet-appearance')->assertForbidden();
+        $this->actingAs($editor, 'admin')->put('/admin/settings/wallet-appearance', $this->validFields())->assertForbidden();
+        $this->assertDatabaseMissing('cms_settings', ['key' => 'wallet.appearance.symbol']);
+    }
+
+    public function test_bundled_coin_is_used_in_administration_and_both_account_themes(): void
+    {
+        $url = asset('assets/images/wallet-coin.webp');
+        $user = User::factory()->create();
+        $this->actingAs($this->admin('owner'), 'admin');
+        $this->get('/admin/settings/wallet-appearance')->assertOk()->assertSee($url)->assertDontSee('name="remove_icon"', false);
+        $this->get('/admin/wallets')->assertOk()->assertSee($url);
+        $this->get('/admin/wallets/'.$user->id)->assertOk()->assertSee($url);
+        foreach (['luxury', 'kaev-aurelia'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            $this->actingAs($user)->get('/account')->assertOk()->assertSee($url);
+            $this->actingAs($user)->get('/account/wallet')->assertOk()->assertSee($url)
+                ->assertDontSee('account-wallet-default-icon', false);
+        }
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_auditor_can_view_but_cannot_edit(): void
+    {
+        $auditor = $this->admin('auditor');
+        $this->actingAs($auditor, 'admin')->get('/admin/settings/wallet-appearance')->assertOk();
+        $this->actingAs($auditor, 'admin')->put('/admin/settings/wallet-appearance', $this->validFields())->assertForbidden();
+        $this->assertDatabaseMissing('cms_settings', ['key' => 'wallet.appearance.symbol']);
+    }
+
+    public function test_owner_updates_ru_en_forms_and_icon_without_touching_balances(): void
+    {
+        $this->actingAs($this->admin('owner'), 'admin')
+            ->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+                'icon' => $this->png('icon.png'),
+            ]))
+            ->assertRedirect(route('admin.settings.wallet-appearance'))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('cms_settings', ['key' => 'wallet.appearance.ru.one', 'value' => 'дублон']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'wallet.appearance.en.many', 'value' => 'doubloons']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'wallet.appearance.symbol', 'value' => 'DBL']);
+        $icon = (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value');
+        $this->assertMatchesRegularExpression('~^settings/wallet-coin/[a-f0-9-]+\.png$~', $icon);
+        $this->assertFileExists($this->uploadRoot.'/'.str_replace('/', DIRECTORY_SEPARATOR, $icon));
+        $this->assertSame('5 дублонов', app(WalletAppearanceSettings::class)->label(5, 'ru'));
+        $this->assertSame('2 doubloons', app(WalletAppearanceSettings::class)->label(2, 'en'));
+        foreach ([1 => '1 дублон', 2 => '2 дублона', 11 => '11 дублонов', 21 => '21 дублон', 22 => '22 дублона', 25 => '25 дублонов'] as $amount => $label) {
+            $this->assertSame($label, app(WalletAppearanceSettings::class)->label($amount, 'ru'));
+        }
+        $this->assertSame('1 doubloon', app(WalletAppearanceSettings::class)->label(1, 'en'));
+        $this->assertDatabaseHas('audit_logs', ['action' => 'settings.wallet_appearance_updated']);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_replacement_and_removal_clean_only_own_wallet_icons(): void
+    {
+        $this->actingAs($this->admin('owner'), 'admin');
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+            'icon' => $this->png('first.png'),
+        ]))->assertRedirect();
+        $first = (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value');
+
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+            'icon' => $this->png('second.png'),
+        ]))->assertRedirect();
+        $second = (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value');
+        $this->assertNotSame($first, $second);
+        $this->assertFileDoesNotExist($this->uploadRoot.'/'.$first);
+        $this->assertFileExists($this->uploadRoot.'/'.$second);
+
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), ['remove_icon' => '1']))->assertRedirect();
+        $this->assertFileDoesNotExist($this->uploadRoot.'/'.$second);
+        $this->assertSame('', (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value'));
+        $this->assertSame(asset('assets/images/wallet-coin.webp'), app(WalletAppearanceSettings::class)->values()['icon_url']);
+        $this->assertFileExists(public_path('assets/images/wallet-coin.webp'));
+    }
+
+    public function test_svg_and_fake_png_are_rejected_and_do_not_overwrite_existing_settings(): void
+    {
+        $this->actingAs($this->admin('owner'), 'admin');
+        foreach ([
+            UploadedFile::fake()->createWithContent('coin.svg', '<svg onload="alert(1)"></svg>'),
+            UploadedFile::fake()->createWithContent('coin.png', 'not actually a png'),
+            $this->png('coin.jpg'),
+            UploadedFile::fake()->create('huge.webp', 1500, 'image/webp'),
+        ] as $file) {
+            $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), ['icon' => $file]))
+                ->assertSessionHasErrors('icon');
+        }
+        $this->assertDatabaseMissing('cms_settings', ['key' => 'wallet.appearance.symbol']);
+    }
+
+    public function test_one_megabyte_icon_is_accepted_but_one_byte_over_preserves_existing_settings(): void
+    {
+        $this->actingAs($this->admin('owner'), 'admin');
+        $file = $this->png('coin.png');
+        $png = file_get_contents($file->getPathname());
+        $this->assertIsString($png);
+        $limit = 1024 * 1024;
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+            'icon' => UploadedFile::fake()->createWithContent('limit.png', str_pad($png, $limit, "\0")),
+        ]))->assertRedirect()->assertSessionHasNoErrors();
+        $icon = (string) CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value');
+        $this->assertFileExists($this->uploadRoot.'/'.$icon);
+
+        $this->put('/admin/settings/wallet-appearance', array_merge($this->validFields(), [
+            'symbol' => 'CHANGED',
+            'icon' => UploadedFile::fake()->createWithContent('over-limit.png', str_pad($png, $limit + 1, "\0")),
+        ]))->assertSessionHasErrors('icon');
+        $this->assertSame($icon, CmsSetting::query()->where('key', 'wallet.appearance.icon')->value('value'));
+        $this->assertDatabaseHas('cms_settings', ['key' => 'wallet.appearance.symbol', 'value' => 'DBL']);
+        $this->assertFileExists($this->uploadRoot.'/'.$icon);
+    }
+
+    public function test_missing_grammatical_form_is_rejected_without_partial_saving(): void
+    {
+        $this->actingAs($this->admin('owner'), 'admin');
+        $fields = $this->validFields();
+        $fields['translations']['ru']['many'] = '';
+        $this->put('/admin/settings/wallet-appearance', $fields)
+            ->assertSessionHasErrors('translations.ru.many');
+        $this->assertDatabaseMissing('cms_settings', ['key' => 'wallet.appearance.symbol']);
+    }
+
+    public function test_stored_path_traversal_and_unsafe_filenames_cannot_be_rendered(): void
+    {
+        CmsSetting::query()->updateOrCreate(['key' => 'wallet.appearance.icon'], ['value' => 'settings/wallet-coin/../../unsafe.php']);
+        $this->assertSame(asset('assets/images/wallet-coin.webp'), app(WalletAppearanceSettings::class)->values()['icon_url']);
+        $this->assertNull(app(WalletAppearanceSettings::class)->values()['icon']);
+    }
+
+    /** @return array<string,mixed> */
+    private function validFields(): array
+    {
+        return [
+            'symbol' => 'DBL',
+            'translations' => [
+                'ru' => ['one' => 'дублон', 'few' => 'дублона', 'many' => 'дублонов'],
+                'en' => ['one' => 'doubloon', 'few' => 'doubloons', 'many' => 'doubloons'],
+            ],
+        ];
+    }
+
+    private function admin(string $role): Admin
+    {
+        return Admin::query()->create([
+            'name' => ucfirst($role),
+            'email' => $role.'-wallet@example.test',
+            'password' => Hash::make('Safe-Test-Password-123'),
+            'is_active' => true,
+            'role' => $role,
+        ]);
+    }
+
+    private function png(string $filename): UploadedFile
+    {
+        $data = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2V1sAAAAASUVORK5CYII=', true);
+
+        return UploadedFile::fake()->createWithContent($filename, $data ?: '');
+    }
+}

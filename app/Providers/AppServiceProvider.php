@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Auth\Passwords\UtcPasswordBrokerManager;
+use App\Contracts\WalletGateway;
 use App\Http\Middleware\RequireActiveSiteUser;
 use App\Http\Middleware\RequireAdminAuthentication;
 use App\Http\Middleware\RequireConfiguredEmailVerification;
@@ -42,6 +43,7 @@ use App\Services\Servers\ServerMonitorSettings;
 use App\Services\Settings\SettingsImageStorage;
 use App\Services\SiteSettings;
 use App\Services\Updates\VdsUpdateAgent;
+use App\Services\Wallet\CoreWalletGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
@@ -68,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AdminNotificationSourceScanner::class);
         $this->app->singleton(AdminTwoFactorAuthentication::class);
         $this->app->singleton(AuditLogger::class);
+        $this->app->bind(WalletGateway::class, CoreWalletGateway::class);
         $this->app->singleton(GameAccountSettings::class);
         $this->app->singleton(GameItemProfileCatalog::class);
         $this->app->singleton(GameAssetUrlResolver::class);
@@ -256,6 +259,17 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perHour($perHour)->by($key.':hour'),
             ];
         });
+
+        // Named limiters isolate wallet actions from generic admin polling and
+        // use the admin guard even when the same browser has a player session.
+        foreach (['admin-wallet-adjust' => 6, 'admin-wallet-status' => 6, 'admin-wallet-appearance' => 10] as $name => $attempts) {
+            RateLimiter::for($name, static function (Request $request) use ($attempts): Limit {
+                $adminId = $request->user('admin')?->getAuthIdentifier();
+                $identity = $adminId !== null ? 'admin:'.$adminId : 'guest:'.($request->ip() ?? 'unknown');
+
+                return Limit::perMinute($attempts)->by($identity);
+            });
+        }
 
         RateLimiter::for('game-account-create', static function (Request $request): Limit {
             $userId = (string) ($request->user()?->getAuthIdentifier() ?? 'guest');

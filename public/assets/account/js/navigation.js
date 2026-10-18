@@ -1,5 +1,40 @@
 (() => {
     const readyAttribute = 'data-account-navigation-ready';
+    let documentEntryPlayed = false;
+
+    let historyTimer;
+    const historyClocks = new WeakMap();
+    const updateHistoryTimes = () => {
+        document.querySelectorAll('[data-wallet-expires]').forEach(row => {
+            if (!historyClocks.has(row)) {
+                historyClocks.set(row, performance.now() + (Number(row.dataset.walletExpires) - Number(row.dataset.walletNow)) * 1000);
+            }
+            const remaining = Math.max(0, Math.ceil((historyClocks.get(row) - performance.now()) / 1000));
+            const clock = row.querySelector('[data-wallet-time]');
+            if (!remaining) {
+                row.dataset.walletExpired = 'true';
+                if (clock) clock.textContent = row.dataset.walletExpiredLabel;
+                const status = row.querySelector('[data-wallet-order-status]');
+                if (status) status.textContent = row.dataset.walletExpiredLabel;
+                row.querySelectorAll('button').forEach(button => { button.disabled = true; });
+                row.querySelectorAll('[data-wallet-pay]').forEach(link => {
+                    link.setAttribute('aria-disabled', 'true');
+                    link.setAttribute('tabindex', '-1');
+                });
+                return;
+            }
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = remaining % 60;
+            const time = (hours ? `${hours}:` : '') + `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            if (clock) clock.textContent = row.dataset.walletTimeTemplate.replace(':time', time);
+        });
+    };
+    const initializeHistoryTimes = () => {
+        clearInterval(historyTimer);
+        updateHistoryTimes();
+        if (document.querySelector('[data-wallet-expires]')) historyTimer = setInterval(updateHistoryTimes, 1000);
+    };
 
     const closeMobileSidebar = () => {
         document.documentElement.classList.remove('account-sidebar-open');
@@ -218,9 +253,11 @@
         initializeAvatarModal();
         initializeOperationModal();
         initializeCharacterRescueModal();
+        initializeHistoryTimes();
     };
 
     const beginNavigation = () => {
+        clearInterval(historyTimer);
         document.documentElement.classList.add('account-is-navigating');
         closeAvatarModal();
         closeOperationModal();
@@ -231,14 +268,50 @@
     const finishNavigation = () => {
         initializeShell();
 
+        if (!documentEntryPlayed) {
+            documentEntryPlayed = true;
+            if (document.body.hasAttribute('data-account-document-entry')
+                && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.body.animate([{ opacity: .88 }, { opacity: 1 }], {
+                    duration: 160,
+                    easing: 'ease-out',
+                });
+            }
+        }
+
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove('account-is-navigating');
         });
     };
 
+    document.addEventListener('mousedown', event => {
+        if (event.target instanceof Element && event.target.closest('[data-wallet-expired="true"] [data-wallet-pay]')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    }, true);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && event.target instanceof Element && event.target.closest('[data-wallet-expired="true"] [data-wallet-pay]')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    }, true);
     document.addEventListener('click', (event) => {
         if (!(event.target instanceof Element)) {
             return;
+        }
+
+        if (event.target.closest('[data-wallet-expired="true"] [data-wallet-pay]')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
+        const menuSummary = event.target.closest('.account-profile-menu > summary');
+        if (menuSummary) {
+            profileMenus().forEach(menu => {
+                if (menu !== menuSummary.parentElement) menu.removeAttribute('open');
+            });
         }
 
         const passwordToggle = event.target.closest('[data-password-toggle]');
@@ -291,11 +364,16 @@
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeMobileSidebar();
+            const summary = document.querySelector('.account-profile-menu[open] > summary');
             closeProfileMenus();
+            summary?.focus();
         }
     });
 
     document.addEventListener('pointerdown', (event) => {
+        profileMenus().forEach(menu => {
+            if (event.target instanceof Node && !menu.contains(event.target)) menu.removeAttribute('open');
+        });
         if (!document.documentElement.classList.contains('account-sidebar-open')) {
             return;
         }
@@ -305,7 +383,20 @@
         }
     });
 
-    document.addEventListener('livewire:navigate', beginNavigation);
+    document.addEventListener('livewire:navigate', (event) => {
+        const destination = event.detail?.url;
+        if (event.detail?.history && event.detail?.cached && destination instanceof URL
+            && destination.origin === window.location.origin
+            && /(?:^|\/)account(?:\/|$)/.test(destination.pathname)) {
+            // History snapshots contain old balances, status and private forms.
+            // Replace the current history entry so Back/Forward fetches current
+            // account state without adding an entry or looping through navigation.
+            event.preventDefault();
+            window.location.replace(destination.href);
+            return;
+        }
+        beginNavigation();
+    });
     document.addEventListener('livewire:navigated', finishNavigation);
 
     if (document.readyState === 'loading') {

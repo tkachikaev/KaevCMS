@@ -1,4 +1,8 @@
-# KaevCMS 0.47.38
+# KaevCMS 0.50.12
+
+Donations 1.13.0: configure YooMoney completely in the CMS administration panel. New installations default to **payments off**. Owner/Administrator may enable a **single-player pilot** or **all-player live** after automated local checks (HTTPS, MySQL, enabled RUB pricing, provider credentials and production settings). No DONATIONS_* `.env` variables or PHP editing. Signed callback processing for in-flight payments is independent of new checkout availability; Wallet Core and existing migrations are unchanged.
+
+Для запуска ЮMoney откройте **Пожертвования → Платёжные системы → ЮMoney**: настройте реквизиты, выберите «Контрольный платёж» или «Рабочий режим». Никаких изменений `.env` и команд Artisan. После включения контрольного режима самостоятельно проведите небольшой платёж и проверьте его поступление. Подробности: `docs/ru/DONATIONS.md`.
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +10,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.47.38 polishes custom footer links and the navigation admin icon, building on 0.47.37 which added the Content → Navigation section for custom multilingual links in the public header and footer (for example, /forum/ or Discord), with ordering, enable/disable and new-tab behavior. Both bundled public themes support the links. CMS page navigation stays separate; player account themes are unchanged. Cumulative update baseline: 0.42.4.
+Version 0.50.8 (Donations C5 QA, module 1.11.1) integrates the reviewed fixes for Administrator payment-review access, checkout no-referrer and single heading, persistent language navigation, and independent per-action rate-limit buckets without relaxing limits. Additional checkout, security, MySQL/MariaDB, concurrency, RU/EN and responsive browser regression tests are included. All four payment gates remain OFF in this release; live payment acceptance is not enabled. Core Wallet and all published migrations remain unchanged. RUSaCis requires live game-client verification before production. Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -53,6 +57,7 @@ Documentation:
 - [Updates](docs/en/UPDATES.md)
 - [Shared hosting](docs/en/SHARED_HOSTING.md)
 - [Character rescue](docs/en/CHARACTER_RESCUE.md)
+- [Core Wallet (A7 wallet restrictions)](docs/en/WALLET.md)
 - [Security and permissions](docs/en/SECURITY.md)
 - [Operations runbook](docs/en/OPERATIONS.md)
 - [Administration and diagnostic package](docs/en/ADMINISTRATION.md)
@@ -97,7 +102,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.47.38 улучшает оформление ссылок в подвале сайта и заменяет значок-заглушку в административном списке навигации на SVG-иконку. Раздел «Контент → Навигация» (добавлен в 0.47.37) позволяет создавать для произвольных многоязычных ссылок в шапке и подвале сайта (например, /forum/ или Discord), с сортировкой, включением/отключением и открытием в новой вкладке. Поддержаны обе встроенные публичные темы. Навигация страниц CMS остаётся отдельной, темы личного кабинета не менялись. База cumulative update — 0.42.4.
+Версия 0.50.8 (Donations C5 QA, модуль 1.11.1) включает исправления Codex: права Administrator на ручные сообщения, no-referrer и единый заголовок checkout, сохранение страницы при переключении языка, раздельные ограничители частоты запросов без увеличения лимитов. Дополнены тесты оплаты, безопасности, конкурентности MySQL/MariaDB и браузерные сценарии RU/EN для обеих тем. Все четыре переключателя live-оплаты и начислений остаются выключены. Wallet Core и опубликованные миграции не изменены. Для RUSaCis необходима проверка игровым клиентом перед production. База cumulative update — 0.42.4.
 
 ### Требования
 

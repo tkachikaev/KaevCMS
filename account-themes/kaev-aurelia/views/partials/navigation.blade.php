@@ -7,6 +7,13 @@
         <span><strong>{{ __('Overview') }}</strong><small>{{ __('Account summary and quick access') }}</small></span>
     </a>
 
+    <a wire:navigate.hover wire:current="active" href="{{ public_route('wallet.index') }}">
+        <span class="account-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="14" rx="2.5"/><path d="M16 11h4.5v5H16a2.5 2.5 0 0 1 0-5zM5 6V4.5h12"/></svg>
+        </span>
+        <span><strong>{{ __('My wallet') }}</strong><small>{{ __('Balance and transaction history') }}</small></span>
+    </a>
+
     <span class="account-nav-label">{{ __('Game') }}</span>
     <a wire:navigate.hover wire:current="active" href="{{ public_route('characters.index') }}">
         <span class="account-nav-icon" aria-hidden="true">

@@ -4,10 +4,12 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Payments\YooMoneyNotificationController;
 use App\Http\Controllers\ServerMonitorStatusController;
 use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Route;
@@ -40,7 +42,7 @@ $registerPublicRoutes = static function (bool $localized = false): void {
         Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name($namePrefix.'pages.show');
     }
 
-    Route::view('/downloads', 'theme::pages.downloads')->name($namePrefix.'downloads');
+    Route::get('/downloads', DownloadController::class)->name($namePrefix.'downloads');
     Route::view('/about', 'theme::pages.about')->name($namePrefix.'about');
 
     Route::middleware('guest')->group(function () use ($namePrefix): void {
@@ -78,5 +80,10 @@ Route::prefix('{locale}')
 
 Route::get('/language/{locale}', [LocaleController::class, 'public'])
     ->where('locale', (string) config('localization.locale_pattern'))
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:20,1,language-switch')
     ->name('language.switch');
+
+// Core-owned callback persists after Donations UI/module or new sales are
+// disabled. Its trusted static guard is independent of database activation.
+Route::post('/payments/yoomoney/notify', YooMoneyNotificationController::class)
+    ->middleware('throttle:60,1,yoomoney-notify')->name('payments.yoomoney.notify');

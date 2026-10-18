@@ -408,23 +408,28 @@ test('module foundation is available from the administrator sidebar', async ({ p
 
     await expect(page).toHaveURL(/\/admin\/modules$/);
     await expect(page.getByRole('heading', { name: 'Модули' }).first()).toBeVisible();
-    await expect(page.getByText('Жизненный цикл модулей')).toBeVisible();
-    await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toBeVisible();
+    await expect(page.getByText('Расширения, обнаруженные в каталоге modules.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Жизненный цикл модулей')).toHaveCount(0);
+    await expect(page.getByText(/При отключении модуля его данные сохраняются/)).toHaveCount(0);
+    await expect(page.getByText(/Включайте только доверенные модули/)).toHaveCount(0);
 
     const moduleCatalog = page.getByTestId('module-catalog');
     await expect(moduleCatalog).toHaveAttribute('data-layout', 'single-column');
-    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(3);
+    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(4);
 
     const promoModule = page.locator('[data-module-id="promo-codes"]');
     const dailyModule = page.locator('[data-module-id="daily-rewards"]');
     const supportModule = page.locator('[data-module-id="support-tickets"]');
-    await expect(promoModule.getByRole('heading', { name: 'Promo Codes' })).toBeVisible();
+    const donationsModule = page.locator('[data-module-id="donations"]');
+    await expect(donationsModule.getByRole('heading', { name: 'Пожертвования', exact: true })).toBeVisible();
+    await expect(donationsModule.locator('.admin-catalog-side')).toBeVisible();
+    await expect(promoModule.getByRole('heading', { name: 'Промокоды' })).toBeVisible();
     await expect(promoModule.locator('img[src*="/modules/promo-codes/image"]')).toBeVisible();
     await expect(promoModule.locator('.admin-catalog-side')).toBeVisible();
-    await expect(dailyModule.getByRole('heading', { name: 'Daily Rewards' })).toBeVisible();
+    await expect(dailyModule.getByRole('heading', { name: 'Ежедневные награды' })).toBeVisible();
     await expect(dailyModule.locator('img[src*="/modules/daily-rewards/image"]')).toBeVisible();
     await expect(dailyModule.locator('.admin-catalog-side')).toBeVisible();
-    await expect(supportModule.getByRole('heading', { name: 'Support Tickets' })).toBeVisible();
+    await expect(supportModule.getByRole('heading', { name: 'Техническая поддержка' })).toBeVisible();
     await expect(supportModule.locator('img[src*="/modules/support-tickets/image"]')).toBeVisible();
     await expect(supportModule.locator('.admin-catalog-side')).toBeVisible();
 });
@@ -874,4 +879,29 @@ test('navigation editor creates a header and footer link, then disables it', asy
     await row.getByRole('button', { name: 'Удалить' }).click();
     await page.locator('[data-page-delete-dialog]').getByRole('button', { name: 'Да, удалить' }).click();
     await expect(row).toHaveCount(0);
+});
+
+
+test('RUSaCis GameServer is selectable as a ready driver', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/game-server');
+
+    const edit = page.getByRole('button', { name: 'Настроить' }).first();
+    await expect(edit).toBeVisible();
+    await edit.click();
+
+    const dialog = page.getByTestId('game-server-dialog');
+    await expect(dialog).toBeVisible();
+    const connectionLabel = dialog.locator('label.server-connection-enable');
+    const enableConnection = connectionLabel.getByRole('checkbox');
+    if (!(await enableConnection.isChecked())) {
+        await connectionLabel.click();
+        await expect(enableConnection).toBeChecked();
+    }
+
+    const driver = page.locator('#live_game_driver');
+    await expect(driver).toBeVisible();
+    await expect(driver.locator('option[value="rusacis"]')).toHaveText('RUSaCis');
+    await expect(driver.locator('option[value="l2j_mobius"]')).toHaveText('L2J Mobius');
+    await driver.selectOption('rusacis');
+    await expect(driver).toHaveValue('rusacis');
 });

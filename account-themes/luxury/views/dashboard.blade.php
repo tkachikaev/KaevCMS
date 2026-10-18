@@ -1,23 +1,14 @@
 @extends('account-theme::layouts.app')
-@section('title', __('Personal account'))
+@section('title', __('Overview'))
+@section('description', __('Account summary and quick access to game services.'))
 @section('content')
+<x-account-page>
 @php
     $canCreateGameAccount = $settings['enabled'] && $quotaAccountCount < $settings['max_accounts'] && $availableServers > 0;
 @endphp
 
-<section class="account-overview-header">
-    <div>
-        <span class="account-eyebrow">{{ __('Player account') }}</span>
-        <h1>{{ __('Overview') }}</h1>
-        <p>{{ __('Account summary and quick access to game services.') }}</p>
-    </div>
-    @if ($canCreateGameAccount && $quotaAccountCount > 0)
-        <a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a>
-    @endif
-</section>
-
 @if ($quotaAccountCount === 0)
-    <section class="account-empty account-onboarding">
+    <x-account-empty class="account-onboarding">
         <span class="account-empty-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="4"></rect><path d="M8 12h4M10 10v4M16.5 10.5h.01M18 13h.01"></path></svg></span>
         <h2>{{ __('Create your first game account') }}</h2>
         <p>{{ __('A game account is required to see characters and use game services.') }}</p>
@@ -26,7 +17,7 @@
         @else
             <small>{{ __('Game account creation is currently unavailable.') }}</small>
         @endif
-    </section>
+    </x-account-empty>
 @endif
 
 <section class="account-metrics" aria-label="{{ __('Account summary') }}">
@@ -44,14 +35,12 @@
     </article>
 </section>
 
-<section class="account-section account-dashboard-tools">
-    <div class="account-section-heading">
-        <div>
-            <span class="account-eyebrow">{{ __('Quick access') }}</span>
-            <h2>{{ __('Choose a section') }}</h2>
-            <p>{{ __('Characters, game accounts and rewards are kept on separate pages.') }}</p>
-        </div>
-    </div>
+<x-account-panel class="account-section account-dashboard-tools">
+    <x-account-panel-header :title="__('Choose a section')" :description="__('Characters, game accounts and rewards are kept on separate pages.')">
+        @if ($canCreateGameAccount && $quotaAccountCount > 0)
+            <x-slot:actions><a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a></x-slot:actions>
+        @endif
+    </x-account-panel-header>
 
     <div class="account-tool-grid">
         <a wire:navigate.hover href="{{ public_route('characters.index') }}" class="account-tool-card">
@@ -70,9 +59,10 @@
             <b aria-hidden="true">→</b>
         </a>
     </div>
-</section>
+</x-account-panel>
 
 @if ($hiddenAccountCount > 0)
     <div class="account-inline-warning">{{ __('Some game accounts are temporarily unavailable because their LoginServer has no configured GameServer. They remain safe and continue to count toward the account limit.') }}</div>
 @endif
+</x-account-page>
 @endsection

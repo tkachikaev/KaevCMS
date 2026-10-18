@@ -103,6 +103,23 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
     }
 
+    public function test_dependency_lock_and_admin_styles_preserve_portable_line_endings(): void
+    {
+        $paths = ['composer.lock'];
+        foreach (glob(public_path('assets/admin/css/*.css')) ?: [] as $stylesheet) {
+            $paths[] = 'public/assets/admin/css/'.basename($stylesheet);
+        }
+
+        $this->assertGreaterThan(1, count($paths), 'Administration stylesheets must be shipped.');
+        foreach ($paths as $path) {
+            $this->assertStringNotContainsString(
+                "\r",
+                $this->readReleaseFile($path),
+                'Git checkouts must preserve LF for dependency fingerprints and stylesheet contracts: '.$path,
+            );
+        }
+    }
+
     public function test_phpstan_analyzes_every_bundled_module_source_directory(): void
     {
         $configuration = $this->normalized($this->readReleaseFile('phpstan.neon'));
@@ -140,9 +157,30 @@ class ReleaseMetadataTest extends TestCase
 
         $this->assertIsArray($guzzle);
         $this->assertIsArray($psr7);
-        $this->assertTrue(version_compare((string) ($guzzle['version'] ?? '0.0.0'), '7.15.1', '>='));
+        $this->assertTrue(version_compare((string) ($guzzle['version'] ?? '0.0.0'), '7.15.2', '>='));
         $this->assertTrue(version_compare((string) ($psr7['version'] ?? '0.0.0'), '2.13.0', '>='));
         $this->assertSame('^2.13', $guzzle['require']['guzzlehttp/psr7'] ?? null);
+    }
+
+    public function test_runtime_dependency_lock_contains_security_fixed_versions(): void
+    {
+        $lock = $this->jsonReleaseFile('composer.lock');
+        $packages = collect(array_merge($lock['packages'] ?? [], $lock['packages-dev'] ?? []))->keyBy('name');
+        // Fixed versions from the vendors' published 2026 security advisories.
+        $minimumVersions = [
+            'laravel/framework' => '13.30.0',
+            'league/commonmark' => '2.10.2',
+            'league/flysystem' => '3.35.3',
+            'livewire/livewire' => '4.3.4',
+            'symfony/http-foundation' => '7.4.19',
+            'symfony/yaml' => '7.4.18',
+        ];
+        foreach ($minimumVersions as $name => $minimum) {
+            $package = $packages->get($name);
+            $this->assertIsArray($package, $name);
+            $this->assertTrue(version_compare(ltrim((string) $package['version'], 'v'), $minimum, '>='),
+                $name.' must include the vendor security fixes.');
+        }
     }
 
     public function test_documentation_is_bilingual_and_current(): void
@@ -691,14 +729,14 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.5', 'kaev-aurelia' => '1.6.6'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.6', 'kaev-aurelia' => '1.6.8'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
                 flags: JSON_THROW_ON_ERROR,
             );
             $this->assertSame($expectedVersion, $accountThemeManifest['version']);
-            $this->assertSame('0.47.29', $accountThemeManifest['cms_min']);
+            $this->assertSame('0.48.4', $accountThemeManifest['cms_min']);
         }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');
         $dailyRewardsCss = $this->readReleaseFile('public/assets/modules/daily-rewards.css');
@@ -740,7 +778,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.4.1', $manifest['version']);
+        $this->assertSame('1.4.2', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 

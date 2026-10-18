@@ -69,7 +69,7 @@ class AdminPageManagementTest extends TestCase
             ->assertRedirect(route('admin.pages.index'))
             ->assertSessionHas('status');
 
-        $page = Page::query()->with('translations')->firstOrFail();
+        $page = Page::query()->with('translations')->where('slug', 'pravila-servera')->firstOrFail();
 
         $this->assertDatabaseHas('pages', [
             'id' => $page->id,
@@ -130,6 +130,7 @@ class AdminPageManagementTest extends TestCase
     public function test_administrator_can_preview_unsaved_page_from_create_and_edit_forms(): void
     {
         $admin = $this->createAdmin();
+        $beforePages = Page::with('translations')->get()->toArray();
         $payload = [
             'translations' => [
                 'ru' => [
@@ -164,8 +165,7 @@ class AdminPageManagementTest extends TestCase
             ->assertSee('Предпросмотр правил')
             ->assertSee('<strong>предпросмотра</strong>', false);
 
-        $this->assertDatabaseCount('pages', 0);
-        $this->assertDatabaseCount('page_translations', 0);
+        $this->assertSame($beforePages, Page::with('translations')->get()->toArray());
     }
 
     public function test_page_forms_use_styled_delete_dialog_and_clean_footer_checkbox_layout(): void
@@ -233,7 +233,7 @@ class AdminPageManagementTest extends TestCase
             'sort_order' => '20',
         ]);
 
-        $page = Page::query()->firstOrFail();
+        $page = Page::query()->where('slug', 'contacts')->firstOrFail();
         $translation = $page->translations()->where('locale', 'ru')->firstOrFail();
         $this->assertStringContainsString('<p>Связь</p>', $translation->body);
         $this->assertStringNotContainsString('onclick', $translation->body);

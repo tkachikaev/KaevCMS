@@ -1,3 +1,26 @@
+@font-face {
+    font-family: 'Cinzel';
+    src: url('../fonts/cinzel-variable.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Cormorant Garamond';
+    src: url('../fonts/cormorant-garamond-italic.ttf') format('truetype');
+    font-style: italic;
+    font-weight: 500;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../fonts/montserrat-regular.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
 :root {
     --bg: #f4f1e8;
     --bg-soft: #ebece4;
@@ -26,7 +49,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; background: #f8f4ec; }
 body {
     margin: 0;
     min-width: 320px;
@@ -203,6 +226,26 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .button-large { min-height: 54px; padding: 0 31px; }
 .text-link { color: var(--gold-dark); font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .text-link:hover { color: var(--ink); }
+
+/* Persistent scenery lives outside the page content animated during navigation.
+ * The artwork has one frame size on home and inner pages: only the veil changes. */
+.public-stage { position: relative; isolation: isolate; }
+.aurelia-scene { position: absolute; inset: 0 0 auto; height: 390px; overflow: hidden; pointer-events: none; z-index: -1; mask-image: linear-gradient(#000 calc(100% - 90px), transparent); }
+.aurelia-scene[data-mode="home"] { height: 760px; }
+.aurelia-scene[data-mode="hidden"] { visibility: hidden; }
+.aurelia-scene-frame { position: relative; height: 760px; }
+.aurelia-scene-shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(255,253,249,.98) 0%, rgba(255,253,249,.94) 29%, rgba(255,253,249,.66) 45%, rgba(255,253,249,.12) 69%, transparent 100%), linear-gradient(0deg, rgba(248,244,236,.88), transparent 22%); }
+.aurelia-scene-veil { position: absolute; inset: 0; z-index: 3; background: rgba(255,253,249,.48); opacity: 1; transition: opacity .35s ease; }
+.aurelia-scene[data-mode="home"] .aurelia-scene-veil { opacity: 0; }
+.aurelia-scene .hero-particles { transition: opacity .35s ease; }
+.aurelia-scene:not([data-mode="home"]) .hero-particles { opacity: 0; }
+@media (max-width: 680px) {
+    .aurelia-scene[data-mode="home"], .aurelia-scene-frame { height: 735px; }
+    .aurelia-scene-shade { background: linear-gradient(90deg, rgba(255,253,249,.98), rgba(255,253,249,.87)), linear-gradient(0deg, rgba(248,244,236,.96), transparent 26%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .aurelia-scene-veil, .aurelia-scene .hero-particles { transition: none; }
+}
 
 /* Hero */
 .hero {
@@ -808,23 +851,55 @@ body.kaev-aurelia::before {
 .kaev-aurelia .button {
     min-height: 48px;
     padding-inline: 24px;
-    border-radius: 10px;
-    font-family: var(--serif);
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: .02em;
-    text-transform: none;
+    border-radius: 999px;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease;
+}
+.kaev-aurelia .button:hover { transform: translateY(-1px); }
+.kaev-aurelia .button:active { transform: translateY(0); }
+.kaev-aurelia .button:focus-visible {
+    outline: 2px solid #775220;
+    outline-offset: 4px;
 }
 .kaev-aurelia .button-gold {
-    border-color: #aa7f3d;
-    background: linear-gradient(135deg, #c39a58, #a87834);
-    color: #fffdf8;
-    box-shadow: 0 12px 28px rgba(157, 112, 47, .24);
+    border-color: #ad8344;
+    background: linear-gradient(135deg, #e4c483 0%, #cda65f 48%, #b88b43 100%);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(45, 33, 13, .45);
+    box-shadow: inset 0 1px 0 rgba(255, 250, 229, .65), inset 0 -1px 0 rgba(119, 82, 32, .15), 0 5px 18px rgba(184, 143, 70, .22);
 }
-.kaev-aurelia .button-gold:hover { background: linear-gradient(135deg, #b98e4d, #93652c); }
+.kaev-aurelia .button-gold:hover {
+    border-color: #b48a48;
+    background: linear-gradient(135deg, #edcf93 0%, #d9b572 48%, #c4994d 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 252, 237, .8), inset 0 -1px 0 rgba(119, 82, 32, .12), 0 7px 24px rgba(184, 143, 70, .32);
+}
 .kaev-aurelia .button-ghost {
-    border-color: rgba(155, 117, 58, .34);
-    background: rgba(255, 253, 249, .72);
+    border-color: rgba(173, 131, 68, .55);
+    background: rgba(255, 253, 248, .72);
+    color: #7d5921;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+.kaev-aurelia .button-ghost:hover {
+    border-color: #ad8344;
+    background: #fffdf7;
+    color: #553a12;
+    box-shadow: inset 0 1px 0 #fff, 0 5px 18px rgba(184, 143, 70, .13);
+}
+.kaev-aurelia .button:disabled,
+.kaev-aurelia .button[aria-disabled="true"] {
+    transform: none;
+    opacity: .55;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+@media (prefers-reduced-motion: reduce) {
+    .kaev-aurelia .button { transition: none; }
+    .kaev-aurelia .button:hover { transform: none; }
 }
 .kaev-aurelia .button-large { min-width: 190px; min-height: 56px; }
 .kaev-aurelia .button span { margin-left: 12px; }
@@ -854,6 +929,14 @@ body.kaev-aurelia::before {
     background:
         radial-gradient(circle at 25% 42%, rgba(255,255,255,.78), transparent 28rem),
         linear-gradient(180deg, rgba(255,255,255,.14), transparent 28%);
+}
+.kaev-aurelia .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
 .kaev-aurelia .hero-content {
     min-height: 760px;
@@ -1008,28 +1091,46 @@ body.kaev-aurelia::before {
 
 
 /* Footer */
-.kaev-aurelia .site-footer { margin-top: 30px; background: #f4eee4; }
-.kaev-aurelia .footer-cta {
-    top: -36px;
-    min-height: 150px;
-    display: grid;
-    grid-template-columns: 84px 1fr auto;
-    align-items: center;
-    gap: 28px;
-    padding: 28px 34px;
-    border-radius: 14px;
-    background:
-        linear-gradient(90deg, rgba(255,253,249,.96), rgba(250,243,232,.96)),
-        var(--paper-solid);
+.kaev-aurelia .site-footer {
+    margin-top: 48px;
+    padding-top: 64px;
+    border-color: #dfd4c0;
+    background: #f0e9dc;
+    color: #50504c;
+    font-family: 'Montserrat', var(--sans);
 }
-.kaev-aurelia .footer-cta-mark { width: 72px; height: 72px; display: grid; place-items: center; border: 1px solid rgba(164,125,62,.35); border-radius: 50%; color: var(--gold); font-size: 30px; }
-.kaev-aurelia .footer-cta h2 { margin: 0; font: 500 31px/1.1 var(--serif); }
-.kaev-aurelia .footer-cta p:not(.eyebrow) { margin: 8px 0 0; color: var(--muted); }
-.kaev-aurelia .footer-cta-actions { display: flex; gap: 10px; }
-.kaev-aurelia .footer-grid { grid-template-columns: 1.3fr 1fr .65fr 170px; padding-top: 38px; }
-.kaev-aurelia .footer-decoration { min-height: 180px; display: grid; place-items: center; border: 1px solid rgba(169,130,66,.24); border-radius: 80px 80px 12px 12px; color: var(--gold); font-size: 32px; }
-.kaev-aurelia .footer-brand-logo { width: 130px; }
-.kaev-aurelia .footer-intro p { font-family: var(--serif); }
+.kaev-aurelia .footer-statement { max-width: 780px; margin-bottom: 48px; text-align: center; }
+.kaev-aurelia .footer-emblem {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    border: 1px solid rgba(197,157,82,.6);
+    border-radius: 50%;
+    background: rgba(255,255,255,.7);
+    color: #8f672f;
+    font: 700 24px/1 'Cinzel', Georgia, serif;
+    box-shadow: 0 2px 5px rgba(114,95,59,.06);
+}
+.kaev-aurelia .footer-emblem:focus-visible,
+.kaev-aurelia .footer-section-links a:focus-visible { outline: 2px solid #8f672f; outline-offset: 4px; }
+.kaev-aurelia .footer-statement h2 {
+    margin: 0 0 12px;
+    color: #232422;
+    font: 700 clamp(18px, 2vw, 24px)/1.55 'Cinzel', Georgia, serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+.kaev-aurelia .footer-quote { margin: 0; color: #746c60; font: italic 500 23px/1.5 'Cormorant Garamond', Georgia, serif; }
+.kaev-aurelia .footer-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 40px; padding: 0 0 48px; }
+.kaev-aurelia .footer-grid > * { min-width: 0; }
+.kaev-aurelia .footer-grid h3 { margin: 0 0 16px; color: #232422; font: 700 12px/1.5 'Cinzel', Georgia, serif; letter-spacing: .1em; text-transform: uppercase; }
+.kaev-aurelia .footer-section-links { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-columns: auto; gap: 10px; overflow: visible; }
+.kaev-aurelia .footer-section-links a { margin: 0; color: #50504c; font-size: 12px; line-height: 1.7; white-space: normal; overflow-wrap: anywhere; transition: color .18s ease; }
+.kaev-aurelia .footer-section-links a:hover { color: #8f672f; }
+.kaev-aurelia .footer-bottom { align-items: center; gap: 16px 32px; padding: 24px 0 36px; border-color: #dfd4c0; color: #746c60; font-size: 11px; line-height: 1.8; }
 
 /* Inner pages inherit the same art direction */
 .kaev-aurelia .page-hero {
@@ -1054,8 +1155,6 @@ body.kaev-aurelia::before {
     .kaev-aurelia .hero-copy-block { width: min(620px, 58vw); }
     .kaev-aurelia .server-stat { min-width: 135px; padding-inline: 17px; }
     .kaev-aurelia .news-card { grid-template-columns: 38% 1fr; }
-    .kaev-aurelia .footer-grid { grid-template-columns: 1.2fr 1fr .7fr; }
-    .kaev-aurelia .footer-decoration { display: none; }
 }
 
 @media (max-width: 900px) {
@@ -1081,8 +1180,6 @@ body.kaev-aurelia::before {
     .kaev-aurelia .news-showcase { grid-template-columns: 1fr; }
     .kaev-aurelia .news-card { grid-template-columns: 260px 1fr; }
     .kaev-aurelia .features-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .kaev-aurelia .footer-cta { grid-template-columns: 70px 1fr; }
-    .kaev-aurelia .footer-cta-actions { grid-column: 1 / -1; justify-content: center; }
 }
 
 @media (max-width: 680px) {
@@ -1110,10 +1207,11 @@ body.kaev-aurelia::before {
     .kaev-aurelia .news-card { display: block; }
     .kaev-aurelia .news-card .news-thumb { min-height: 220px; }
     .kaev-aurelia .features-grid { grid-template-columns: 1fr; }
-    .kaev-aurelia .footer-cta { top: -24px; grid-template-columns: 1fr; padding: 28px 22px; text-align: center; }
-    .kaev-aurelia .footer-cta-mark { margin: auto; }
-    .kaev-aurelia .footer-cta-actions { flex-direction: column; }
-    .kaev-aurelia .footer-grid { grid-template-columns: minmax(0, 1fr); padding-top: 20px; }
+    .kaev-aurelia .site-footer { padding-top: 48px; }
+    .kaev-aurelia .footer-statement { margin-bottom: 36px; }
+    .kaev-aurelia .footer-quote { font-size: 21px; }
+    .kaev-aurelia .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 20px; padding-bottom: 36px; }
+    .kaev-aurelia .footer-bottom { text-align: center; }
     .kaev-aurelia .footer-grid > *,
     .kaev-aurelia .footer-bottom > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
     .kaev-aurelia .footer-custom-links { min-width: 0; }
@@ -1169,19 +1267,7 @@ body.kaev-aurelia::before {
     opacity: .42;
 }
 
-.kaev-aurelia .footer-cta-mark img {
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-    opacity: .72;
-}
 
-.kaev-aurelia .footer-decoration img {
-    width: 76px;
-    height: 76px;
-    object-fit: contain;
-    opacity: .32;
-}
 
 @media (max-width: 900px) {
     .kaev-aurelia .site-header {
@@ -1242,6 +1328,7 @@ body.kaev-aurelia::before {
     top: 0;
     z-index: 100;
     isolation: isolate;
+    background: #fffdf9;
 }
 
 .kaev-aurelia .hero-art {
@@ -1260,24 +1347,12 @@ body.kaev-aurelia::before {
         url('../images/hero.webp') center top / cover no-repeat;
 }
 
-#public-content,
-.kaev-aurelia .site-footer {
-    transition: opacity .16s ease, transform .16s ease;
-}
-
 html.public-is-navigating {
     cursor: progress;
 }
 
-html.public-is-navigating #public-content,
-html.public-is-navigating .kaev-aurelia .site-footer {
-    opacity: .42;
-    transform: translateY(4px);
+html.public-is-navigating #public-content {
     pointer-events: none;
-}
-
-html.public-is-navigating .kaev-aurelia .site-header {
-    box-shadow: 0 12px 34px rgba(90, 67, 32, .08);
 }
 
 #nprogress .bar {
@@ -1318,18 +1393,6 @@ html.public-is-navigating .kaev-aurelia .site-header {
     .kaev-aurelia .page-hero,
     .kaev-aurelia .auth-page {
         background-position: center top;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    #public-content,
-    .kaev-aurelia .site-footer {
-        transition: none;
-    }
-
-    html.public-is-navigating #public-content,
-    html.public-is-navigating .kaev-aurelia .site-footer {
-        transform: none;
     }
 }
 
@@ -1494,4 +1557,20 @@ html.public-is-navigating .kaev-aurelia .site-header {
     .statistics-page[data-statistics-page].is-refreshed > :not(.statistics-partial-progress) {
         animation: none;
     }
+}
+
+/* Override the legacy per-page backgrounds; content fades, scenery does not. */
+body.kaev-aurelia .public-stage :is(.hero, .page-hero) { background: transparent; }
+body.kaev-aurelia .public-stage .hero::before,
+body.kaev-aurelia .public-stage .page-hero::after { content: none; }
+
+/* Give the portrait its own clear space above the mobile copy. */
+@media (max-width: 680px) {
+    body.kaev-aurelia .hero,
+    body.kaev-aurelia .hero-content { min-height: 860px; }
+    body.kaev-aurelia .hero-content { justify-content: flex-start; padding-top: 310px; padding-bottom: 110px; }
+    .aurelia-scene[data-mode="home"], .aurelia-scene-frame { height: 860px; }
+    body.kaev-aurelia .aurelia-scene .hero-art { background-image: url('../images/hero-mobile.webp'); background-position: right top; opacity: 1; }
+    .aurelia-scene-shade { background: linear-gradient(180deg, rgba(255,253,249,.04) 0%, rgba(255,253,249,.08) 24%, rgba(255,253,249,.82) 38%, rgba(255,253,249,.98) 49%, #f8f4ec 65%); }
+    body.kaev-aurelia .aurelia-scene .hero-light { background: none; }
 }

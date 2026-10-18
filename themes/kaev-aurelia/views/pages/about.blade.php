@@ -1,4 +1,5 @@
 @extends('theme::layouts.app')
+@section('scene', 'page')
 @section('title', __('About the server').' — '.site_name())
 
 @section('content')

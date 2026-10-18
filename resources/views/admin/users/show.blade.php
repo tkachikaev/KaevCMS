@@ -2,7 +2,7 @@
 @section('title', __('User :name', ['name' => $user->name]))
 @section('description', __('Website account details and recent related audit events.'))
 @section('content')
-<div class="admin-page-toolbar user-detail-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.users.index') }}">← {{ __('Back to users') }}</a></div>
+<div class="admin-page-toolbar user-detail-toolbar"><a wire:navigate class="button button-secondary" href="{{ route('admin.users.index') }}">← {{ __('Back to users') }}</a>@if(auth('admin')->user()?->hasPermission(\App\Auth\AdminPermission::WalletView))<a wire:navigate class="button button-secondary" href="{{ route('admin.wallets.show', $user) }}">{{ __('Wallet') }}</a>@endif</div>
 <div class="user-detail-grid">
     <div class="user-detail-main">
         <section class="form-card user-profile-card">
@@ -27,7 +27,7 @@
                 <div class="admin-empty-state user-activity-empty">{{ __('No related audit records yet.') }}</div>
             @else
                 <div class="admin-table-wrap user-activity-table-wrap"><table class="admin-table user-activity-table"><thead><tr><th>{{ __('Date') }}</th><th>{{ __('Action') }}</th><th>{{ __('Result') }}</th><th>{{ __('IP address') }}</th><th>{{ __('Browser') }}</th></tr></thead><tbody>
-                    @foreach($activity as $event)<tr><td><strong>{{ $event->created_at?->format('d.m.Y') }}</strong><span>{{ $event->created_at?->format('H:i:s') }}</span></td><td><a wire:navigate href="{{ route('admin.logs.show',$event) }}">{{ $event->actionLabel() }}</a><code>{{ $event->action }}</code></td><td><span @class(['status-badge','status-badge-success'=>$event->result==='success','status-badge-danger'=>$event->result==='failed'])>{{ $event->resultLabel() }}</span></td><td class="user-activity-monospace">{{ $event->ip_address ?: '—' }}</td><td class="user-agent-cell" title="{{ $event->user_agent ?: '' }}">{{ $event->user_agent ?: '—' }}</td></tr>@endforeach
+                    @foreach($activity as $event)<tr><td><strong>{{ $event->created_at?->format('d.m.Y') }}</strong><span>{{ $event->created_at?->format('H:i:s') }}</span></td><td><a wire:navigate href="{{ route('admin.logs.show',$event) }}">{{ $event->actionLabel() }}</a></td><td><span @class(['status-badge','status-badge-success'=>$event->result==='success','status-badge-danger'=>$event->result==='failed'])>{{ $event->resultLabel() }}</span></td><td class="user-activity-monospace">{{ $event->ip_address ?: '—' }}</td><td class="user-agent-cell" title="{{ $event->user_agent ?: '' }}">{{ $event->user_agent ?: '—' }}</td></tr>@endforeach
                 </tbody></table></div>
             @endif
         </section>

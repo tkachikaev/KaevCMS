@@ -63,6 +63,46 @@ class VdsUpdateAgentTest extends TestCase
         }
     }
 
+    public function test_installer_repairs_every_bundled_theme_root_before_verifying_access(): void
+    {
+        $script = (string) file_get_contents(base_path('deployment/vds/install-update-agent.sh'));
+        $this->assertSame(1, preg_match('/for path in ([^;]+); do\s+repair_program_path/', $script, $matches));
+        $programRoots = preg_split('/\s+/', trim($matches[1]));
+        $manifests = array_merge(
+            glob(base_path('themes/*/theme.json')) ?: [],
+            glob(base_path('account-themes/*/theme.json')) ?: [],
+        );
+        $this->assertNotEmpty($manifests);
+        foreach ($manifests as $manifest) {
+            $root = basename(dirname($manifest, 2));
+            $this->assertContains($root, $programRoots, 'The installer must repair the theme root: '.$root);
+        }
+
+        $this->assertStringContainsString('runuser -u "${DEPLOY_USER}" -g "${DEPLOY_PRIMARY_GROUP}" -- test -r "${manifest}"', $script);
+        $this->assertStringContainsString('runuser -u "${WEB_USER}" -g "${WEB_GROUP}" -- test -r "${manifest}"', $script);
+    }
+
+    public function test_installer_repairs_every_required_release_code_tree(): void
+    {
+        $script = (string) file_get_contents(base_path('deployment/vds/install-update-agent.sh'));
+        $this->assertSame(1, preg_match('/for path in ([^;]+); do\s+repair_program_path/', $script, $matches));
+        $programRoots = preg_split('/\s+/', trim($matches[1]));
+        $manifest = json_decode((string) file_get_contents(base_path('deployment/release-files.json')), true, flags: JSON_THROW_ON_ERROR);
+        $requiredRoots = ['.github', 'vendor'];
+        foreach ($manifest['required_files'] as $file) {
+            if (! str_contains($file, '/')) {
+                continue;
+            }
+            $root = explode('/', $file, 2)[0];
+            if (! in_array($root, ['bootstrap', 'public', 'storage'], true)) {
+                $requiredRoots[] = $root;
+            }
+        }
+        foreach (array_unique($requiredRoots) as $root) {
+            $this->assertContains($root, $programRoots, 'The installer must repair the required code tree: '.$root);
+        }
+    }
+
     public function test_legacy_v2_registration_requires_reinstallation(): void
     {
         $agent = $this->agent();

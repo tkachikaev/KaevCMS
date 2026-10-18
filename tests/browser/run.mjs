@@ -181,17 +181,16 @@ try {
     server = spawn('php', ['artisan', 'serve', '--no-reload', '--host=127.0.0.1', `--port=${browserPort}`], {
         cwd: root,
         env: environment,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        // Playwright runs synchronously below, so this Node event loop cannot
+        // drain PHP's pipes. Inherit output to avoid blocking a verbose server.
+        stdio: ['ignore', 'inherit', 'inherit'],
         shell: false,
     });
-
-    server.stdout.on('data', (chunk) => process.stdout.write(chunk));
-    server.stderr.on('data', (chunk) => process.stderr.write(chunk));
 
     await waitForServer();
 
     const playwrightCli = resolve(root, 'node_modules/@playwright/test/cli.js');
-    run(process.execPath, [playwrightCli, 'test', '--config=playwright.config.mjs']);
+    run(process.execPath, [playwrightCli, 'test', '--config=playwright.config.mjs', ...process.argv.slice(2)]);
 } catch (error) {
     primaryError = error;
 } finally {

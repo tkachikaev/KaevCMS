@@ -48,7 +48,8 @@ class AccountNavigationTest extends TestCase
         $this->assertIsString($sharedStyles);
         $styles = $themeStyles.PHP_EOL.$sharedStyles;
         $this->assertStringContainsString('@persist(\'account-sidebar\')', $layout);
-        $this->assertStringContainsString('@persist(\'account-topbar\')', $layout);
+        // Wallet balances must refresh after Livewire navigation; the topbar is not persisted.
+        $this->assertStringNotContainsString('@persist(\'account-topbar\')', $layout);
         $this->assertStringContainsString('wire:navigate:scroll', $layout);
         $this->assertStringContainsString('account_theme_asset', $layout);
         $this->assertStringContainsString('assets/account/js/navigation.js', $layout);
@@ -60,6 +61,9 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString('public_route(\'profile.edit\')', $accountMenu);
         $this->assertStringContainsString('public_route(\'security.edit\')', $accountMenu);
         $this->assertStringContainsString('account-profile-balance', $accountMenu);
+        $this->assertStringContainsString("public_route('wallet.index')", $accountMenu);
+        $this->assertStringContainsString("public_route('wallet.index')", $navigation);
+        $this->assertStringContainsString('<x-account-wallet-menu', $layout);
         $this->assertStringNotContainsString('public_route(\'characters.index\')', $layout);
         $this->assertStringNotContainsString('public_route(\'game-accounts.index\')', $layout);
         $this->assertStringNotContainsString('public_route(\'web-inventory.index\')', $layout);
@@ -165,9 +169,6 @@ class AccountNavigationTest extends TestCase
         $themePath = base_path('account-themes/luxury/views');
         $views = [
             $themePath.'/dashboard.blade.php',
-            $themePath.'/characters/index.blade.php',
-            $themePath.'/profile/edit.blade.php',
-            $themePath.'/security/edit.blade.php',
             $themePath.'/partials/settings-tabs.blade.php',
             $themePath.'/game-accounts/index.blade.php',
             $themePath.'/game-accounts/create.blade.php',

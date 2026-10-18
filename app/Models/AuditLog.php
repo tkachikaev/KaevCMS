@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Lang;
 
 class AuditLog extends Model
 {
@@ -42,6 +43,7 @@ class AuditLog extends Model
             'system' => __('System'),
             'module' => __('Modules'),
             'reward' => __('Rewards'),
+            'wallet' => __('Wallet'),
             default => str($category)->replace(['_', '-', '.'], ' ')->headline()->toString(),
         };
     }
@@ -53,7 +55,15 @@ class AuditLog extends Model
 
     public function actionLabel(): string
     {
+        $translation = 'audit.actions.'.$this->action;
+        $label = Lang::get($translation);
+        if (is_string($label) && $label !== $translation) {
+            return $label;
+        }
+
         return match ($this->action) {
+            'transaction.credit' => __('Wallet credited'),
+            'transaction.debit' => __('Wallet debited'),
             'auth.login' => __('Account signed in'),
             'auth.login_failed' => __('Failed sign-in attempt'),
             'auth.logout' => __('Account signed out'),
@@ -146,6 +156,7 @@ class AuditLog extends Model
             'system' => __('System'),
             'module' => __('Modules'),
             'reward' => __('Rewards'),
+            'wallet' => __('Wallet'),
             null, '' => __('Unauthenticated'),
             default => str((string) $this->actor_type)->replace(['_', '-'], ' ')->headline()->toString(),
         };

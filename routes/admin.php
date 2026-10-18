@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\LoginServerController as AdminLoginServerControll
 use App\Http\Controllers\Admin\MailDeliveryController as AdminMailDeliveryController;
 use App\Http\Controllers\Admin\MailSettingsController as AdminMailSettingsController;
 use App\Http\Controllers\Admin\ModuleController as AdminModuleController;
+use App\Http\Controllers\Admin\NavigationLinkController as AdminNavigationLinkController;
 use App\Http\Controllers\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Admin\NewsImageController as AdminNewsImageController;
 use App\Http\Controllers\Admin\NotificationSettingsController as AdminNotificationSettingsController;
@@ -32,6 +33,8 @@ use App\Http\Controllers\Admin\SystemSettingsController as AdminSystemSettingsCo
 use App\Http\Controllers\Admin\SystemUpdateController as AdminSystemUpdateController;
 use App\Http\Controllers\Admin\ThemeController as AdminThemeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\WalletAppearanceController as AdminWalletAppearanceController;
+use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\Localization\LocaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -100,6 +103,13 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
         Route::put('/news/{news}', [AdminNewsController::class, 'update'])->name('news.update');
         Route::delete('/news/{news}', [AdminNewsController::class, 'destroy'])->name('news.destroy');
 
+        Route::get('/navigation', [AdminNavigationLinkController::class, 'index'])->name('navigation.index');
+        Route::get('/navigation/create', [AdminNavigationLinkController::class, 'create'])->name('navigation.create');
+        Route::post('/navigation', [AdminNavigationLinkController::class, 'store'])->name('navigation.store');
+        Route::get('/navigation/{navigationLink}/edit', [AdminNavigationLinkController::class, 'edit'])->name('navigation.edit');
+        Route::put('/navigation/{navigationLink}', [AdminNavigationLinkController::class, 'update'])->name('navigation.update');
+        Route::delete('/navigation/{navigationLink}', [AdminNavigationLinkController::class, 'destroy'])->name('navigation.destroy');
+
         Route::get('/pages', [AdminPageController::class, 'index'])->name('pages.index');
         Route::get('/pages/create', [AdminPageController::class, 'create'])->name('pages.create');
         Route::match(['post', 'put'], '/pages/preview', [AdminPageController::class, 'preview'])
@@ -141,6 +151,13 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->middleware('throttle:10,1')
             ->name('modules.disable');
 
+        Route::get('/wallets', [AdminWalletController::class, 'index'])->name('wallets.index');
+        Route::get('/wallets/{user}', [AdminWalletController::class, 'show'])->name('wallets.show');
+        Route::post('/wallets/{user}/status', [AdminWalletController::class, 'changeStatus'])
+            ->middleware('throttle:admin-wallet-status')->name('wallets.status');
+        Route::post('/wallets/{user}/adjust', [AdminWalletController::class, 'adjust'])
+            ->middleware('throttle:admin-wallet-adjust')->name('wallets.adjust');
+
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
         Route::patch('/users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
@@ -169,6 +186,10 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
 
         Route::get('/settings', [AdminGeneralSettingsController::class, 'general'])->name('settings.general');
         Route::put('/settings', [AdminGeneralSettingsController::class, 'updateGeneral'])->name('settings.general.update');
+        Route::get('/settings/wallet-appearance', [AdminWalletAppearanceController::class, 'index'])
+            ->name('settings.wallet-appearance');
+        Route::put('/settings/wallet-appearance', [AdminWalletAppearanceController::class, 'update'])
+            ->middleware('throttle:admin-wallet-appearance')->name('settings.wallet-appearance.update');
         Route::get('/settings/game-server', [AdminGameServerController::class, 'index'])->name('settings.game-server');
         Route::post('/settings/game-server/{gameServer}/connection', [AdminGameServerConnectionController::class, 'update'])
             ->middleware('throttle:10,1')

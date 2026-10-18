@@ -252,12 +252,14 @@ a.admin-menu-item[data-current]:hover {
 
 @media (max-width: 760px) {
     .admin-main { padding-inline: 20px; }
+    .admin-mobile-toolbar { margin-inline: -20px; }
     .admin-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .admin-tab { min-width: 0; white-space: normal; text-align: center; }
 }
 
 @media (max-width: 480px) {
     .admin-main { padding-inline: 14px; }
+    .admin-mobile-toolbar { margin-inline: -14px; }
     .admin-tabs { grid-template-columns: 1fr; }
 }
 
@@ -1430,3 +1432,31 @@ p.field-error,
     .admin-toggle-row { gap: 18px; }
 }
 
+
+/* Wallet administration uses the shared form controls and a consistent grid. */
+.admin-wallet-filters { grid-template-columns: minmax(200px, 1fr) minmax(180px, 240px) auto; }
+.admin-wallet-page { display: grid; gap: 20px; }
+.admin-wallet-page > .admin-page-toolbar, .admin-wallet-page > .form-card, .admin-wallet-page > .admin-overview { margin: 0; }
+.admin-wallet-summary { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr)); }
+.admin-wallet-summary .admin-overview-stat { min-width: 0; overflow-wrap: anywhere; }
+.admin-wallet-summary .admin-overview-stat:last-child { border-right: 0; padding-right: 0; }
+.admin-wallet-adjustment-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; }
+.admin-wallet-page .settings-form { display: grid; gap: 16px; }
+.admin-wallet-page .settings-form > .admin-actions-panel { margin-top: 0; }
+.admin-wallet-table td { border-bottom: 1px solid var(--admin-border); overflow-wrap: anywhere; }
+.admin-wallet-table .wallet-id { width: 70px; color: var(--admin-text-muted); font-variant-numeric: tabular-nums; }
+.admin-wallet-table .wallet-amount { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.admin-wallet-balance { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.admin-wallet-balance img { display: block; object-fit: contain; flex-shrink: 0; }
+@media (max-width: 760px) {
+    .admin-wallet-filters, .admin-wallet-adjustment-fields, .admin-wallet-summary { grid-template-columns: 1fr; }
+    .admin-wallet-page .admin-overview-stat { border-right: 0; }
+    .admin-wallet-table, .admin-wallet-table tbody { display: block; width: 100%; min-width: 0; }
+    .admin-wallet-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .admin-wallet-table tr { display: grid; padding: 6px 0; }
+    .admin-wallet-table td { display: grid; grid-template-columns: minmax(100px, .45fr) minmax(0, 1fr); gap: 12px; min-width: 0; border: 0; }
+    .admin-wallet-table td::before { content: attr(data-label); color: var(--admin-text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .admin-wallet-table .wallet-id { width: auto; }
+    .admin-wallet-table .wallet-amount { text-align: left; white-space: normal; }
+    .admin-wallet-balance { justify-content: flex-start; }
+}

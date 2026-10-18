@@ -1,4 +1,5 @@
 @extends('theme::layouts.app')
+@section('scene', 'home')
 
 @php
     $heroDetails = $server
@@ -29,8 +30,6 @@
 
 @section('content')
 <section class="hero">
-    <div class="hero-art" aria-hidden="true"></div>
-    <div class="hero-light" aria-hidden="true"></div>
     <div class="container hero-content">
         <div class="hero-copy-block">
             <p class="eyebrow">{{ __('CLASSIC WORLD · YOUR LEGEND') }}</p>
@@ -49,13 +48,13 @@
 
             <div class="hero-actions">
                 @auth
-                    <a wire:navigate.hover class="button button-gold button-large" href="{{ public_route('account') }}">{{ __('Personal account') }} <span aria-hidden="true">→</span></a>
+                    <a class="button button-gold button-large" href="{{ public_route('account') }}">{{ __('Personal account') }} <span aria-hidden="true">→</span></a>
                 @elseif (registration_available())
                     <a wire:navigate.hover class="button button-gold button-large" href="{{ public_route('register') }}">{{ __('Register') }} <span aria-hidden="true">→</span></a>
                 @else
                     <a wire:navigate.hover class="button button-gold button-large" href="{{ public_route('login') }}">{{ __('Log in') }} <span aria-hidden="true">→</span></a>
                 @endauth
-                <a wire:navigate.hover class="button button-ghost button-large" href="{{ public_route('downloads') }}">{{ __('Download client') }} <span class="button-play" aria-hidden="true">▷</span></a>
+                <a wire:navigate.hover class="button button-ghost button-large" href="{{ download_page_url() }}">{{ __('Download client') }} <span class="button-play" aria-hidden="true">▷</span></a>
             </div>
         </div>
     </div>
@@ -127,7 +126,7 @@
     <section class="home-section news-section">
         <div class="section-heading section-heading-ornamented">
             <span aria-hidden="true"></span>
-            <div><p class="eyebrow">{{ __('News') }}</p><h2>{{ __('Latest news') }}</h2></div>
+            <div><h2>{{ __('News') }}</h2></div>
             <span aria-hidden="true"></span>
         </div>
 

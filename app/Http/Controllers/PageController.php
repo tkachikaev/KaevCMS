@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use App\Services\Localization\LanguageManager;
 use App\Services\Localization\LocalizedContentResolver;
+use App\Services\Pages\DownloadPages;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -57,7 +58,7 @@ final class PageController
         }
 
         return view('theme::pages.show', array_merge(
-            ['page' => $page],
+            ['page' => $page, 'isDownloadPage' => app(DownloadPages::class)->selectedId() === $page->id],
             $resolver->pageMetadata($page, $translation),
         ));
     }

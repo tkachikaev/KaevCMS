@@ -2,6 +2,12 @@
 @section('title', __('Pages'))
 @section('description', __('Create multilingual information pages and add them to website navigation.'))
 @section('content')
+@if (! $downloadPage || ! $downloadPage->isLive())
+    <div class="admin-notice" role="status"><strong>{{ __('Download page needs attention') }}</strong><p>{{ __('The Download client button currently shows a files-unavailable message.') }}</p>
+        @if ($downloadPage)<a wire:navigate href="{{ route('admin.pages.edit', $downloadPage) }}">{{ __('Edit download page and file links') }}</a>
+        @else<a wire:navigate href="{{ route('admin.pages.create', ['template' => 'downloads']) }}">{{ __('Create download page') }}</a>@endif
+    </div>
+@endif
 <div class="admin-overview content-toolbar">
     <div class="admin-overview-stat content-stat"><span>{{ __('Total') }}</span><strong>{{ $totalCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('Published') }}</span><strong>{{ $publishedCount }}</strong></div>
@@ -32,6 +38,7 @@
                     <a wire:navigate class="content-row-title" href="{{ route('admin.pages.edit', $item) }}">{{ $itemTitle }}</a>
                     <p>/pages/{{ $item->slug }}</p>
                     <div class="content-row-meta">
+                        @if ($item->id === $downloadPageId)<span>{{ __('Download page') }}</span>@endif
                         <span>{{ __('Languages') }}: {{ implode(', ', array_map('strtoupper', $translationCodes)) }}</span>
                         <span>{{ __('Order') }}: {{ $item->sort_order }}</span>
                         @if ($item->show_in_header)<span>{{ __('Header') }}</span>@endif

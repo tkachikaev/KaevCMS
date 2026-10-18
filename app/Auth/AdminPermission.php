@@ -27,6 +27,8 @@ enum AdminPermission: string
     case AdministratorsView = 'administrators.view';
     case AdministratorsManage = 'administrators.manage';
     case AuditView = 'audit.view';
+    case WalletView = 'wallet.view';
+    case WalletManage = 'wallet.manage';
     case RewardsView = 'rewards.view';
     case RewardsManage = 'rewards.manage';
     case SystemView = 'system.view';

@@ -28,14 +28,15 @@
         <meta name="robots" content="noindex, nofollow, noarchive">
     @endif
     <title>@yield('title', site_name())</title>
-    <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}" data-navigate-track>
-    <script src="{{ theme_asset('js/app.js') }}" defer data-navigate-track data-navigate-once></script>
+    <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}&ui=mobile-portrait" data-navigate-track>
+    <script src="{{ theme_asset('js/app.js') }}&ui=mobile-portrait" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
 </head>
 <body class="kaev-aurelia">
-    <div class="page-grain" aria-hidden="true"></div>
-    <div class="page-aura" aria-hidden="true"></div>
+    @persist('aurelia-decoration')
+        <div aria-hidden="true"><div class="page-grain"></div><div class="page-aura"></div></div>
+    @endpersist
 
     @if (! empty($isPreview))
         <aside class="news-preview-banner" role="status">
@@ -66,7 +67,20 @@
         </div>
     @endif
 
-    <main id="public-content" tabindex="-1">@yield('content')</main>
+    <div class="public-stage">
+        @persist('aurelia-scene')
+            <div class="aurelia-scene" data-aurelia-scene data-mode="@yield('scene', 'hidden')" aria-hidden="true">
+                <div class="aurelia-scene-frame">
+                    <div class="hero-art"></div>
+                    <div class="aurelia-scene-shade"></div>
+                    <div class="hero-light"></div>
+                    <canvas class="hero-particles" data-hero-particles></canvas>
+                    <div class="aurelia-scene-veil"></div>
+                </div>
+            </div>
+        @endpersist
+        <main id="public-content" tabindex="-1">@yield('content')</main>
+    </div>
     @include('theme::partials.footer')
 
     @livewireScripts

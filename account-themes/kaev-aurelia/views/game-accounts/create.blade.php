@@ -1,18 +1,16 @@
 @extends('account-theme::layouts.app')
 @section('title', __('Create game account'))
+@section('description', __('Choose a game world and set the login credentials. The form contains only the required fields.'))
 @section('inline-validation-errors', '1')
 @section('content')
-<div class="account-page-heading">
-    <a wire:navigate href="{{ public_route('game-accounts.index') }}">← {{ __('My accounts') }}</a>
-    <span class="account-eyebrow">{{ __('New access') }}</span>
-    <h1>{{ __('Create game account') }}</h1>
-    <p>{{ __('Choose a game world and set the login credentials. The form contains only the required fields.') }}</p>
-</div>
+<x-account-page>
 
 <div class="account-form-layout">
-    <form class="account-form-card" method="POST" action="{{ public_route('game-accounts.store') }}">
+    <form class="account-form-card account-panel" method="POST" action="{{ public_route('game-accounts.store') }}">
         @csrf
-        <div class="account-form-title"><span aria-hidden="true">01</span><div><h2>{{ __('Account details') }}</h2><p>{{ __('Credentials are written directly to the selected LoginServer.') }}</p></div></div>
+        <x-account-panel-header :title="__('Account details')" :description="__('Credentials are written directly to the selected LoginServer.')">
+            <x-slot:actions><a wire:navigate class="account-button secondary" href="{{ public_route('game-accounts.index') }}">← {{ __('My accounts') }}</a></x-slot:actions>
+        </x-account-panel-header>
         <label>
             <span>{{ __('Game server') }}</span>
             <div class="account-field-control">
@@ -65,4 +63,5 @@
         </ul>
     </aside>
 </div>
+</x-account-page>
 @endsection

@@ -40,7 +40,7 @@ class LoginServerSettingsTest extends TestCase
             ->assertSee('L2J Mobius — Interlude и новее')
             ->assertSee('L2J Mobius Legacy — C1/C4')
             ->assertSee('RUSaCis')
-            ->assertSee('заглушка')
+            ->assertDontSee('RUSaCis — заглушка')
             ->assertSee('Хост базы данных')
             ->assertSee('Кодировка базы данных');
     }
@@ -201,7 +201,7 @@ class LoginServerSettingsTest extends TestCase
         $this->assertDatabaseCount('login_servers', 0);
     }
 
-    public function test_rusacis_placeholder_checks_connection_without_schema_requirements(): void
+    public function test_rusacis_login_checks_its_real_schema_requirements(): void
     {
         $fake = new FakeExternalDatabaseConnectionTester;
         $this->app->instance(ExternalDatabaseConnectionTester::class, $fake);
@@ -213,12 +213,16 @@ class LoginServerSettingsTest extends TestCase
             ->post(route('admin.settings.login-server.store'), $payload)
             ->assertRedirect(route('admin.settings.login-server').'#login-server-create')
             ->assertSessionHas('database_connection_report', fn (array $report): bool => $report['driver'] === 'rusacis'
-                && $report['driver_ready'] === false
-                && $report['compatible'] === null
+                && $report['driver_ready'] === true
+                && $report['compatible'] === true
             );
 
-        $this->assertFalse($fake->driverReady);
-        $this->assertSame([], $fake->requirements);
+        $this->assertTrue($fake->driverReady);
+        $this->assertSame([[
+            'table' => 'accounts',
+            'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
+            'required' => true,
+        ]], $fake->requirements);
     }
 
     public function test_database_password_is_not_flashed_after_validation_error(): void
@@ -286,6 +290,29 @@ class LoginServerSettingsTest extends TestCase
             ->assertSessionHasErrors('login_server');
 
         $this->assertDatabaseHas('login_servers', ['id' => $loginServer->id]);
+    }
+
+    public function test_driver_cannot_change_while_a_pending_or_active_game_account_is_linked(): void
+    {
+        $server = LoginServer::factory()->create();
+        $account = UserGameAccount::factory()->create(['login_server_id' => $server->id, 'creation_status' => UserGameAccount::STATUS_PENDING]);
+        $values = $this->payload();
+        $values['driver'] = 'rusacis';
+        $this->actingAs($this->createAdmin(), 'admin');
+        foreach ([UserGameAccount::STATUS_PENDING, UserGameAccount::STATUS_ACTIVE] as $status) {
+            $account->forceFill(['creation_status' => $status])->save();
+            $this->post(route('admin.settings.login-server.update', $server), $values)->assertSessionHasErrors('driver');
+            $this->assertSame('l2j_mobius', $server->fresh()->driver);
+        }
+    }
+
+    public function test_driver_can_change_before_any_game_accounts_are_linked(): void
+    {
+        $server = LoginServer::factory()->create();
+        $values = $this->payload();
+        $values['driver'] = 'rusacis';
+        $this->actingAs($this->createAdmin(), 'admin')->post(route('admin.settings.login-server.update', $server), $values)->assertSessionHasNoErrors();
+        $this->assertSame('rusacis', $server->fresh()->driver);
     }
 
     /** @return array<string,mixed> */

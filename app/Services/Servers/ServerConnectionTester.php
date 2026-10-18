@@ -9,6 +9,7 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\MobiusGameSchemaProfile;
+use App\Services\GameWorld\RusacisGameSchemaProfile;
 use InvalidArgumentException;
 
 final class ServerConnectionTester
@@ -210,6 +211,9 @@ final class ServerConnectionTester
             ? $this->mobiusProfile($report, $chronicle)
             : null;
         $report['schema_profile'] = $profile?->name;
+        if ($driverKey === ServerDriverRegistry::RUSACIS_DRIVER && ($report['compatible'] ?? false) === true) {
+            $report['schema_profile'] = RusacisGameSchemaProfile::NAME;
+        }
         $report['capabilities'] = ($report['compatible'] ?? false) === true
             ? ($profile?->capabilities() ?? $this->availableCapabilities(
                 $report,

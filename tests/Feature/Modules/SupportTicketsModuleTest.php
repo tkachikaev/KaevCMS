@@ -531,6 +531,8 @@ class SupportTicketsModuleTest extends TestCase
 
     public function test_daily_and_per_ticket_limits_are_enforced(): void
     {
+        // Minute-spaced fixtures must stay in one day even when the suite runs after midnight.
+        $this->travelTo(now()->setTime(12, 0));
         $user = User::factory()->create();
         $ticket = $this->ticket($user, SupportTicketStatus::InProgress);
 
@@ -854,7 +856,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->actingAs($user);
         Livewire::test(AccountTicketIndex::class)
             ->assertSet('creating', false)
-            ->assertSee('Мои обращения')
+            ->assertSee(__('module-support-tickets::messages.create_ticket'))
             ->assertDontSee('Кратко опишите проблему')
             ->call('openCreateForm')
             ->assertSet('creating', true)

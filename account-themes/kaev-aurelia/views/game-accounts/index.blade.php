@@ -1,37 +1,35 @@
 @extends('account-theme::layouts.app')
-@section('title', __('Game accounts'))
+@section('title', __('My accounts'))
+@section('description', __('Manage logins, passwords and characters connected to each game world.'))
 @section('content')
-<section class="account-page-hero">
-    <div>
-        <span class="account-eyebrow">{{ __('Game access') }}</span>
-        <h1>{{ __('My accounts') }}</h1>
-        <p>{{ __('Manage logins, passwords and characters connected to each game world.') }}</p>
-    </div>
-    @if ($settings['enabled'] && $quotaAccountCount < $settings['max_accounts'] && $availableServers > 0)
-        <a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a>
-    @endif
-</section>
-
-<section class="account-metrics account-metrics-compact">
-    <article><span class="account-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="4"></rect><path d="M8 12h4M10 10v4M16.5 10.5h.01M18 13h.01"></path></svg></span><div><small>{{ __('Used slots') }}</small><strong>{{ $quotaAccountCount }} / {{ $settings['max_accounts'] }}</strong></div></article>
-    <article><span class="account-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M4 12h16M12 4a13 13 0 0 1 0 16M12 4a13 13 0 0 0 0 16"></path></svg></span><div><small>{{ __('Available worlds') }}</small><strong>{{ $availableServers }}</strong></div></article>
-</section>
-
+<x-account-page>
+<x-account-panel>
+    <x-account-panel-header>
+        <x-slot:summary>
+            <div class="account-panel-stats">
+                <x-account-stat :label="__('Used slots')" :value="$quotaAccountCount.' / '.$settings['max_accounts']" />
+                <x-account-stat :label="__('Available worlds')" :value="$availableServers" />
+            </div>
+        </x-slot:summary>
+        @if ($settings['enabled'] && $quotaAccountCount < $settings['max_accounts'] && $availableServers > 0)
+            <x-slot:actions>
+                <a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}"><span aria-hidden="true">＋</span>{{ __('Create game account') }}</a>
+            </x-slot:actions>
+        @endif
+    </x-account-panel-header>
 @if ($hiddenAccountCount > 0)
     <div class="account-inline-warning">{{ __('Some game accounts are temporarily unavailable because their LoginServer has no configured GameServer. They remain safe and continue to count toward the account limit.') }}</div>
 @endif
 
 @if ($accounts->isEmpty())
-    <div class="account-empty">
+    <x-account-empty class="account-empty">
         <span class="account-empty-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"></path></svg></span>
         <h3>{{ __('No game accounts yet') }}</h3>
         <p>{{ __('Create the first account, then its characters will appear here.') }}</p>
-        @if ($settings['enabled'] && $quotaAccountCount < $settings['max_accounts'] && $availableServers > 0)
-            <a wire:navigate.hover class="account-button primary account-button-create" href="{{ public_route('game-accounts.create') }}">{{ __('Create game account') }}</a>
-        @elseif ($availableServers === 0)
+        @if ($availableServers === 0)
             <small>{{ __('No configured game servers are available for registration.') }}</small>
         @endif
-    </div>
+    </x-account-empty>
 @else
     <div class="game-account-grid game-account-grid-wide">
         @foreach ($accounts as $account)
@@ -52,4 +50,6 @@
         @endforeach
     </div>
 @endif
+</x-account-panel>
+</x-account-page>
 @endsection

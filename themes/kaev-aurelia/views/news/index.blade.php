@@ -1,4 +1,5 @@
 @extends('theme::layouts.app')
+@section('scene', 'page')
 @section('title', __('News').' — '.site_name())
 @section('content')
 <section class="page-hero">

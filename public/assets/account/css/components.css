@@ -3,6 +3,68 @@
  * Theme-specific palette and decoration are supplied through --account-shared-* variables.
  */
 
+/* Shared page heading and compact account shell. */
+body.account-body { --account-panel-gap: 24px; --account-panel-padding: 24px; --account-panel-radius: 24px; }
+.account-page { display: grid; gap: var(--account-panel-gap); min-width: 0; align-content: start; }
+body.account-body .account-page > * { margin-block: 0; }
+body.account-body .account-panel { display: grid; gap: 20px; min-width: 0; width: 100%; max-width: none; margin: 0; padding: var(--account-panel-padding); border: 1px solid var(--account-line); border-radius: var(--account-panel-radius); background: var(--account-panel); box-shadow: none; }
+body.account-body .account-panel--flush { display: block; padding: 0; }
+body.account-body .account-panel--row { display: flex; align-items: center; flex-wrap: wrap; }
+.account-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
+.account-panel-heading { min-width: 0; }
+body.account-body .account-panel-header { margin: 0; }
+body.account-body .account-panel-header h2 { margin: 0; font-size: 20px; line-height: 1.3; }
+body.account-body .account-panel-header p { margin: 6px 0 0; color: var(--account-muted); font-size: 13px; }
+.account-panel-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-inline-start: auto; }
+.account-panel-stats { display: flex; align-items: stretch; flex-wrap: wrap; gap: 10px; }
+.account-stat { display: inline-flex; flex-direction: column; justify-content: center; gap: 5px; min-width: 150px; padding: 12px 16px; border: 1px solid var(--account-line); border-radius: 14px; background: var(--account-panel-soft); font-size: 12px; }
+.account-stat > span { color: var(--account-muted); }
+.account-stat strong { color: var(--account-text); font-size: 20px; line-height: 1.3; font-weight: 600; font-variant-numeric: tabular-nums; }
+body.account-body .account-standard-empty { display: grid; justify-items: center; gap: 12px; margin: 0; padding: 36px 20px; border: 1px dashed var(--account-line); border-radius: 18px; background: var(--account-panel-soft); box-shadow: none; }
+body.account-body .account-standard-empty :is(h2, h3, p, small) { margin: 0; }
+body.account-body .account-standard-empty :is(h2, h3) { font-size: 20px; }
+body.account-body .account-panel--flush > .account-panel-header { padding: var(--account-panel-padding); }
+body.account-body .account-panel :is(.account-section-heading, .account-form-title) { margin-block: 0; }
+@media (max-width: 760px) {
+    body.account-body { --account-panel-gap: 18px; --account-panel-padding: 18px; --account-panel-radius: 20px; }
+    .account-panel-header { flex-wrap: wrap; align-items: flex-start; }
+    .account-panel-actions { width: 100%; justify-content: flex-start; margin-inline-start: 0; }
+    .account-panel-actions > .account-button { flex: 1; }
+    body.account-body .account-standard-empty { padding: 28px 16px; }
+}
+@media (min-width: 981px) {
+    body.account-body .account-shell { grid-template-columns: 260px minmax(0, 1fr); }
+    body.account-body .account-shell > .account-sidebar { width: auto; padding-inline: 14px; }
+}
+body.account-body .account-content { width: min(100%, 1480px); padding: 24px 28px 60px; }
+body.account-body .account-main { isolation: isolate; }
+body.account-body .account-content { position: relative; z-index: 0; }
+body.account-body .account-topbar { height: auto; min-height: 80px; padding: 16px 28px; gap: 20px; }
+body.account-body .account-topbar-start { min-width: 0; flex: 1; }
+body.account-body .account-topbar-actions { flex-shrink: 0; }
+body.account-body .account-topbar .account-topbar-context { display: block; min-width: 0; }
+body.account-body .account-topbar .account-page-title { margin: 0; color: var(--account-text); font-family: var(--account-font); font-size: 24px; font-weight: 600; line-height: 1.3; letter-spacing: 0; overflow-wrap: anywhere; }
+body.account-body .account-topbar .account-page-description { max-width: 76ch; margin: 5px 0 0; color: var(--account-muted); font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.account-page-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.account-page-actions > a:not(.account-button) { color: var(--account-muted); font-size: 13px; font-weight: 600; }
+.account-character-directory-head { justify-content: flex-end; }
+.account-wallet-topup { margin-inline-start: auto; }
+@media (max-width: 980px) {
+    body.account-body .account-content { padding: 22px 20px 48px; }
+    body.account-body .account-topbar { padding: 14px 20px; }
+}
+@media (max-width: 760px) {
+    body.account-body .account-topbar { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 12px 13px; }
+    body.account-body .account-topbar-start { display: contents; }
+    body.account-body .account-sidebar-toggle { grid-column: 1; grid-row: 1; }
+    body.account-body .account-topbar-actions { grid-column: 2; grid-row: 1; justify-self: end; }
+    body.account-body .account-topbar .account-topbar-context { grid-column: 1 / -1; grid-row: 2; }
+    body.account-body .account-topbar .account-page-title { font-size: 20px; }
+    body.account-body .account-topbar .account-page-description { font-size: 12px; }
+    body.account-body .account-content { padding: 20px 13px 48px; }
+    .account-wallet-topup { margin-inline-start: 0; }
+}
+
 /* Web inventory */
 .reward-inventory-shell { display: grid; gap: 20px; margin-top: var(--account-shared-reward-inventory-margin-top); }
 .reward-inventory-heading h1 { margin: 4px 0 6px; font-size: clamp(28px, 4vw, 42px); }
@@ -11,6 +73,23 @@
 .reward-server-tabs a.active, .reward-view-tabs a.active { border-color: rgba(212, 173, 103, 0.45); background: rgba(212, 173, 103, 0.12); color: var(--account-text); }
 .reward-view-tabs a { display: inline-flex; align-items: center; gap: 8px; }
 .reward-view-tabs a span { min-width: 24px; padding: 1px 7px; border-radius: 999px; background: var(--account-panel-soft); text-align: center; font-size: 11px; }
+/* One tab treatment for Livewire buttons and page links in both account themes. */
+body.account-body .account-tabs { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; border: 0; padding: 0; }
+body.account-body .account-character-tabs.account-tabs { padding: 0 var(--account-panel-padding) 20px; }
+body.account-body .account-character-groups { padding: 0 var(--account-panel-padding) var(--account-panel-padding); }
+body.account-body .account-character-filters { padding: 0 var(--account-panel-padding) 20px; border-bottom: 0; }
+body.account-body .account-character-directory > [role="tabpanel"]:not(.account-character-groups) > .account-standard-empty { margin: 0 var(--account-panel-padding) var(--account-panel-padding); }
+body.account-body .account-tabs > :is(a, button) { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; margin: 0; padding: 10px 14px; border: 1px solid var(--account-line); border-radius: 12px; background: var(--account-panel-soft); color: var(--account-muted); font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.4; text-decoration: none; cursor: pointer; }
+body.account-body .account-tabs > :is(a, button):hover { color: var(--account-text); border-color: var(--account-gold); }
+body.account-body .account-tabs > :is(a, button).active { border-color: var(--account-gold); background: rgba(212,173,103,.12); color: var(--account-text); }
+body.account-body .account-tabs > :is(a, button)::after { content: none; }
+body.account-body .account-tabs > :is(a, button):focus-visible { outline: 2px solid var(--account-gold); outline-offset: 3px; }
+body.account-body .account-tabs svg { display: block; width: 18px; height: 18px; }
+@media (max-width: 760px) {
+    .account-panel-heading:has(.account-panel-stats), .account-panel-stats { width: 100%; }
+    .account-stat { flex: 1; min-width: 120px; padding: 12px; }
+    body.account-body .account-tabs > :is(a, button) { flex: 1; padding: 10px 12px; }
+}
 .reward-item-list, .reward-history-list { display: grid; gap: 10px; }
 .reward-item-row { position: relative; display: grid; grid-template-columns: 22px 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--account-line); border-radius: var(--account-shared-reward-item-radius); background: var(--account-panel); cursor: pointer; transition: border-color .16s ease, transform .16s ease, background .16s ease; }
 .reward-item-row:hover { border-color: rgba(212, 173, 103, 0.35); transform: translateY(-1px); }
@@ -450,3 +529,58 @@ html.account-operation-modal-open{overflow:hidden}
 .account-character-rescue-online-message strong{text-align:left}
 .account-character-rescue-confirmation small{color:var(--account-muted);font-size:11px;line-height:1.55}
 @media(max-width:760px){.account-character-row{grid-template-columns:43px minmax(0,1fr)}.account-character-actions{grid-column:2;justify-content:flex-start}.account-character-rescue-button{width:100%;justify-content:center}.account-character-rescue-confirmation{padding:18px}.account-character-rescue-confirmation p{align-items:flex-start;flex-direction:column;gap:4px}.account-character-rescue-confirmation strong{text-align:left}}
+
+/* Core wallet A5: themed using existing account design tokens; no payment controls yet. */
+.account-wallet-default-icon, .account-wallet-coin-image { display:block; width:100%; height:100%; object-fit:contain; }
+.account-topbar-wallet { display:inline-flex; align-items:center; gap:8px; min-height:36px; max-width:180px; padding:5px 10px; border:1px solid var(--account-line); border-radius:12px; background:var(--account-panel-soft); color:var(--account-text); text-decoration:none; font-weight:800; }
+.account-topbar-wallet:hover, .account-topbar-wallet:focus-visible, .account-wallet-menu-link:hover { border-color:var(--account-gold); }
+.account-topbar-wallet-icon { display:grid; place-items:center; width:23px; height:23px; flex:0 0 23px; color:var(--account-gold-bright); }
+.account-topbar-wallet-amount { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.account-wallet-menu-link { text-decoration:none; color:inherit; }
+.account-wallet-menu-link .account-profile-balance-icon { overflow:hidden; }
+.account-wallet-menu-link:focus-visible, .account-topbar-wallet:focus-visible { outline:2px solid var(--account-gold); outline-offset:2px; }
+.account-wallet-heading { display:flex; justify-content:space-between; gap:18px; align-items:center; }
+.account-wallet-summary { display:flex; align-items:center; gap:20px; padding:26px; min-width:0; border:1px solid var(--account-line); border-radius:var(--account-radius); background:var(--account-panel); }
+.account-wallet-summary-icon { display:grid; place-items:center; flex:0 0 60px; width:60px; height:60px; padding:12px; border-radius:17px; background:var(--account-panel-soft); color:var(--account-gold-bright); }
+.account-wallet-summary-text { min-width:0; }
+.account-wallet-summary-text h2 { margin:3px 0 0; overflow-wrap:anywhere; font-size:clamp(24px,4vw,36px); font-variant-numeric:tabular-nums; }
+.account-wallet-blocked { margin-inline-start:auto; padding:8px 10px; border-radius:10px; background:var(--account-panel-soft); color:var(--account-red); font-size:12px; font-weight:750; }
+.account-wallet-history { min-width:0; padding:26px; border:1px solid var(--account-line); border-radius:var(--account-radius); background:var(--account-panel); }
+.account-wallet-list { display:grid; gap:10px; }
+.account-wallet-entry { display:flex; align-items:center; gap:13px; min-width:0; padding:16px; border:1px solid var(--account-line); border-radius:14px; background:var(--account-panel); }
+.account-wallet-entry-symbol { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:11px; background:var(--account-panel-soft); color:var(--account-gold-bright); font-size:22px; font-weight:700; }
+.account-wallet-entry-details { display:grid; gap:4px; min-width:0; }
+.account-wallet-entry-details small, .account-wallet-entry-amounts small, .account-wallet-page-number { color:var(--account-muted); font-size:12px; }
+.account-wallet-entry-amounts { display:grid; gap:4px; margin-inline-start:auto; text-align:end; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.account-wallet-credit { color:var(--account-green); }
+.account-wallet-pagination { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:16px; }
+.account-wallet-payments-unavailable { margin-top:20px; color:var(--account-muted); font-size:12px; }
+@media(max-width:650px) { .account-topbar-wallet { padding:5px 8px; max-width:106px; } .account-topbar-wallet-icon { flex-basis:20px; width:20px; height:20px; } .account-wallet-summary { padding:18px; flex-wrap:wrap; } .account-wallet-history { padding:18px; } .account-wallet-blocked { margin-inline-start:0; } .account-wallet-heading { align-items:flex-start; flex-direction:column; } }
+@media(max-width:390px) { .account-topbar-wallet { max-width:78px; } .account-wallet-entry { gap:8px; padding:11px; } .account-wallet-entry-symbol { flex-basis:30px; width:30px; height:30px; } .account-wallet-entry-details small { font-size:10px; } }
+
+/* Shared balance menu in both account themes. */
+.account-wallet-menu > summary.account-topbar-wallet { display:inline-flex; min-width:0; min-height:36px; grid-template-columns:none; gap:8px; padding:5px 10px; border-radius:12px; }
+.account-wallet-menu > summary::marker { content:''; }
+.account-wallet-dropdown { width:230px; max-width:calc(100vw - 24px); }
+.account-wallet-dropdown .account-profile-dropdown-head { gap:5px; }
+.account-wallet-menu .account-profile-chevron { width:auto; }
+@media(max-width:650px) { .account-wallet-menu > summary.account-topbar-wallet { padding:5px 8px; gap:5px; } .account-wallet-dropdown { position:fixed; top:76px; right:12px; } }
+
+/* One player-facing history, with actions only on unpaid top-ups. */
+.wallet-history-row { display:block; padding:0; overflow:hidden; }
+.wallet-history-main { display:flex; align-items:center; gap:14px; padding:18px; color:var(--account-text); text-decoration:none; }
+a.wallet-history-main:hover { background:var(--account-panel-soft); }
+.wallet-history-main .account-wallet-entry-details { flex:1; min-width:0; display:grid; gap:4px; }
+.wallet-history-main .account-wallet-entry-details > span { color:var(--account-muted); font-size:12px; }
+.wallet-history-state { display:grid; justify-items:end; gap:8px; text-align:end; }
+.wallet-history-status { font-size:12px; color:var(--account-muted); }
+.wallet-history-success .wallet-history-status { color:var(--account-gold-bright); }
+.wallet-history-waiting { border-color:var(--account-gold); }
+.wallet-history-muted .wallet-history-main { opacity:.65; }
+.wallet-history-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:0 18px; padding:12px 0 16px; border-top:1px solid var(--account-line); }
+.wallet-history-time { color:var(--account-muted); font-variant-numeric:tabular-nums; }
+.wallet-history-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.wallet-history-actions form { margin:0; }
+.wallet-history-inactive { display:inline-block; margin-top:20px; color:var(--account-muted); font-size:13px; text-underline-offset:4px; }
+.wallet-history-row [aria-disabled="true"] { opacity:.5; cursor:default; }
+@media(max-width:650px) { .wallet-history-main { padding:14px; gap:10px; flex-wrap:wrap; } .wallet-history-main .account-wallet-entry-details { flex-basis:calc(100% - 60px); } .wallet-history-state { width:100%; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; } .wallet-history-footer { margin:0 14px; } .wallet-history-actions { width:100%; } .wallet-history-actions > * { flex:1; } .wallet-history-actions .account-button { width:100%; justify-content:center; } }

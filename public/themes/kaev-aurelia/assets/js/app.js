@@ -4,6 +4,11 @@
     const navigationClass = 'public-is-navigating';
     const readyAttribute = 'data-aurelia-ready';
     let monitorCleanup = null;
+    let particlesCleanup = null;
+    let particlesCanvas = null;
+    let pageInitialized = false;
+    let initializedContent = null;
+    let pageEntryAnimation = null;
     let statisticsAbortController = null;
 
     const isPlainPrimaryClick = (event) => event.button === 0
@@ -255,13 +260,204 @@
         };
     };
 
+    const initializeHeroParticles = () => {
+        const canvas = document.querySelector('[data-hero-particles]');
+        const hero = canvas?.closest('.aurelia-scene-frame, .hero');
+        const scene = canvas?.closest('[data-aurelia-scene]');
+        const context = canvas?.getContext('2d');
+        if (!hero || !context) {
+            return () => {};
+        }
+
+        const controller = new AbortController();
+        const { signal } = controller;
+        const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const palette = ['255,215,0', '245,158,11', '255,244,204', '212,175,55'];
+        let width = 0;
+        let height = 0;
+        let particles = [];
+        let frame = null;
+        let previousTime = null;
+        let disposed = false;
+        const initialBounds = hero.getBoundingClientRect();
+        let inView = initialBounds.bottom > 0 && initialBounds.top < window.innerHeight;
+        const mouse = { x: 0, y: 0, active: false };
+
+        const createParticle = (initial) => ({
+            x: Math.random() * width,
+            y: initial ? Math.random() * height : height + 10,
+            size: .8 + Math.random() * 2.2,
+            speed: .25 + Math.random() * .45,
+            sway: Math.random() * Math.PI * 2,
+            swaySpeed: .008 + Math.random() * .02,
+            amplitude: .4 + Math.random() * 1.2,
+            pulse: Math.random() * Math.PI * 2,
+            pulseSpeed: .01 + Math.random() * .03,
+            opacity: .25 + Math.random() * .65,
+            color: palette[Math.floor(Math.random() * palette.length)],
+            glint: Math.random() > .82,
+            spin: Math.random() * Math.PI,
+            spinSpeed: (Math.random() - .5) * .02,
+        });
+
+        const draw = (step) => {
+            context.clearRect(0, 0, width, height);
+            particles.forEach((particle) => {
+                if (step > 0) {
+                    particle.y -= particle.speed * step;
+                    particle.sway += particle.swaySpeed * step;
+                    particle.pulse += particle.pulseSpeed * step;
+                    particle.spin += particle.spinSpeed * step;
+                    particle.x += Math.sin(particle.sway) * particle.amplitude * step;
+                    if (mouse.active) {
+                        const dx = particle.x - mouse.x;
+                        const dy = particle.y - mouse.y;
+                        const distance = Math.hypot(dx, dy);
+                        if (distance > 1 && distance < 180) {
+                            const force = (1 - distance / 180) * 1.5 * step;
+                            particle.x += dx / distance * force * 1.8;
+                            particle.y -= force * .8;
+                        }
+                    }
+                    if (particle.y < -15 || particle.x < -30 || particle.x > width + 30) {
+                        Object.assign(particle, createParticle(false));
+                    }
+                }
+                const opacity = (.2 + .8 * (Math.sin(particle.pulse) + 1) / 2) * particle.opacity;
+                context.save();
+                context.translate(particle.x, particle.y);
+                context.fillStyle = `rgba(${particle.color},${opacity})`;
+                context.shadowColor = `rgba(${particle.color},${opacity * .9})`;
+                context.shadowBlur = particle.size * 5;
+                context.beginPath();
+                if (particle.glint) {
+                    context.rotate(particle.spin);
+                    const radius = particle.size * 2.8;
+                    context.moveTo(0, -radius);
+                    context.quadraticCurveTo(0, 0, radius, 0);
+                    context.quadraticCurveTo(0, 0, 0, radius);
+                    context.quadraticCurveTo(0, 0, -radius, 0);
+                    context.quadraticCurveTo(0, 0, 0, -radius);
+                } else {
+                    context.arc(0, 0, particle.size, 0, Math.PI * 2);
+                }
+                context.fill();
+                context.restore();
+            });
+        };
+
+        const stop = () => {
+            if (frame !== null) window.cancelAnimationFrame(frame);
+            frame = null;
+            previousTime = null;
+        };
+        const tick = (time) => {
+            frame = null;
+            if (disposed || motion.matches || document.hidden || !inView || (scene && scene.dataset.mode !== 'home')) return;
+            const step = previousTime === null ? 1 : Math.min((time - previousTime) / (1000 / 60), 2);
+            previousTime = time;
+            draw(step);
+            frame = window.requestAnimationFrame(tick);
+        };
+        const sync = () => {
+            stop();
+            if (disposed || document.hidden || !inView || (scene && scene.dataset.mode !== 'home')) return;
+            draw(0);
+            if (!motion.matches) frame = window.requestAnimationFrame(tick);
+        };
+        const resize = () => {
+            const bounds = hero.getBoundingClientRect();
+            width = bounds.width;
+            height = bounds.height;
+            const ratio = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.round(width * ratio);
+            canvas.height = Math.round(height * ratio);
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            const limit = width < 768 ? 40 : 95;
+            particles = Array.from({ length: Math.min(limit, Math.floor(width * height / 12000)) }, () => createParticle(true));
+            sync();
+        };
+
+        // The stage is replaced during navigation, while the scene is persisted.
+        // Bind its pointer tracking to the document so it survives a round trip.
+        const pointerSurface = scene ? document : hero;
+        pointerSurface.addEventListener('pointermove', (event) => {
+            if (event.pointerType !== 'mouse') return;
+            const bounds = hero.getBoundingClientRect();
+            mouse.x = event.clientX - bounds.left;
+            mouse.y = event.clientY - bounds.top;
+            mouse.active = (!scene || scene.dataset.mode === 'home')
+                && mouse.x >= 0 && mouse.x <= bounds.width && mouse.y >= 0 && mouse.y <= bounds.height;
+        }, { signal });
+        pointerSurface.addEventListener('pointerleave', () => { mouse.active = false; }, { signal });
+        document.addEventListener('visibilitychange', sync, { signal });
+        motion.addEventListener('change', sync, { signal });
+        const resizeObserver = new ResizeObserver(resize);
+        const visibilityObserver = new IntersectionObserver(([entry]) => {
+            inView = entry.isIntersecting;
+            sync();
+        });
+        resize();
+        resizeObserver.observe(hero);
+        visibilityObserver.observe(hero);
+        const modeObserver = new MutationObserver(sync);
+        if (scene) modeObserver.observe(scene, { attributes: true, attributeFilter: ['data-mode'] });
+
+        return () => {
+            disposed = true;
+            stop();
+            controller.abort();
+            resizeObserver.disconnect();
+            visibilityObserver.disconnect();
+            modeObserver.disconnect();
+        };
+    };
+
     const initializePage = () => {
+        const content = document.querySelector('#public-content');
+        const scene = document.querySelector('[data-aurelia-scene]');
+        const heading = content?.querySelector('.hero, .page-hero');
+        if (scene) {
+            const mode = heading?.classList.contains('hero') ? 'home' : heading ? 'page' : 'hidden';
+            // Keep the artwork and veil outside the animated content. In particular,
+            // page-to-page navigation must never replay an opacity transition.
+            if (scene.dataset.mode !== mode) scene.dataset.mode = mode;
+        }
+        // DOMContentLoaded and Livewire's initial navigated event describe the
+        // same document. Never fade already-painted content back to transparent.
+        if (content && content === initializedContent) {
+            content.removeAttribute('aria-busy');
+            document.documentElement.classList.remove(navigationClass);
+            return;
+        }
         monitorCleanup?.();
         monitorCleanup = initializeServerMonitor();
+        const canvas = document.querySelector('[data-hero-particles]');
+        if (canvas !== particlesCanvas) {
+            particlesCleanup?.();
+            particlesCleanup = initializeHeroParticles();
+            particlesCanvas = canvas;
+        }
         initializeHeader();
 
-        const content = document.querySelector('#public-content');
         content?.removeAttribute('aria-busy');
+        pageEntryAnimation?.cancel();
+        pageEntryAnimation = null;
+        if (pageInitialized && content && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            pageEntryAnimation = content.animate([{ opacity: 0 }, { opacity: 1 }], {
+                duration: 180,
+                easing: 'ease-out',
+            });
+        } else if (!pageInitialized && content && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            // A document entry is deliberately subtle: never blank the screen
+            // while changing layouts or replay this on Livewire's bootstrap event.
+            document.body.animate([{ opacity: .88 }, { opacity: 1 }], {
+                duration: 160,
+                easing: 'ease-out',
+            });
+        }
+        pageInitialized = true;
+        initializedContent = content;
 
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove(navigationClass);
@@ -275,8 +471,16 @@
     };
 
     const cleanupPage = () => {
+        initializedContent = null;
         monitorCleanup?.();
         monitorCleanup = null;
+        if (!particlesCanvas?.closest('[data-aurelia-scene]')) {
+            particlesCleanup?.();
+            particlesCleanup = null;
+            particlesCanvas = null;
+        }
+        pageEntryAnimation?.cancel();
+        pageEntryAnimation = null;
     };
 
     document.addEventListener('click', (event) => {

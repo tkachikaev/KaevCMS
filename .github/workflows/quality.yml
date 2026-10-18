@@ -52,9 +52,12 @@ jobs:
         run: composer quality
 
   windows-quality:
-    name: Windows quality entrypoint
+    name: Windows quality entrypoint (${{ matrix.shell }})
     runs-on: windows-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        shell: [powershell, pwsh]
 
     steps:
       - name: Checkout
@@ -72,21 +75,27 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Prepare application
-        shell: powershell
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path storage/framework/cache/data, storage/framework/cache/phpstan, storage/framework/sessions, storage/framework/views, storage/logs, bootstrap/cache | Out-Null
           Copy-Item .env.example .env -Force
           php artisan key:generate
 
-      - name: Run official Windows quality gate
+      - name: Run official Windows PowerShell quality gate
+        if: matrix.shell == 'powershell'
         shell: powershell
+        run: .\deployment\windows\quality.ps1
+
+      - name: Run official PowerShell 7 quality gate
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
         run: .\deployment\windows\quality.ps1
 
       - name: Upload Windows diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-quality-diagnostics
+          name: windows-quality-diagnostics-${{ matrix.shell }}
           if-no-files-found: ignore
           path: |
             storage/logs

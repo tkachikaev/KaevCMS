@@ -59,3 +59,7 @@ public/uploads/game-assets/items/common/{icon_key}.webp
 ```
 
 Shared item icons use `items/common`, while server-specific overrides use `items/servers/{server_id}`. Character avatars are shared by all chronicles and use `characters/common/{race}/{gender}/{archetype}.webp`; server overrides use `characters/servers/{server_id}`. The old `public/game-assets` and chronicle-specific avatar folders are not used.
+
+## RUSaCis GameServer — 0.47.40 RC
+
+Independent RUSaCis schema, characters, online statistics, PvP/PK/level/play-time rankings, active heroes and castle owners. `characters.obj_Id`, `heroes.char_id` and nullable `deletetime` are handled by RUSaCis-specific code. Character rescue remains intentionally disabled until the live GameServer confirms `lastAccess` time units. Reward delivery still uses only the neutral queue `kaev_reward_queue`.

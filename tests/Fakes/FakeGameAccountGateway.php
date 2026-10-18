@@ -56,7 +56,7 @@ class FakeGameAccountGateway implements GameAccountGateway
         return $gameServer->driver === 'l2j_mobius';
     }
 
-    public function prepareAccount(string $login, string $password, string $email): PreparedGameAccount
+    public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount
     {
         return new PreparedGameAccount(trim($login), $password, strtolower(trim($email)));
     }

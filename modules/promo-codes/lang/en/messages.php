@@ -85,7 +85,7 @@ return [
     'inventory_status_available' => 'Available in web inventory',
     'inventory_status_reserved' => 'Reserved for queue verification',
     'inventory_status_transferred' => 'Written to GameServer queue',
-    'inventory_note' => 'Rewards are permanently bound to the promo code game server and cannot be moved to another server.',
+    'inventory_note' => 'Rewards stay on the promo code server and cannot be transferred.',
     'item_id' => 'Item ID',
     'item_id_number' => 'Item ID — reward :number',
     'journal_description' => 'Successful activations with the CMS account, server, rewards and inventory grant.',

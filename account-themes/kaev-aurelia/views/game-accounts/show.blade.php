@@ -2,19 +2,20 @@
 @section('title', $account->game_login)
 @section('inline-validation-errors', '1')
 @section('content')
+<x-account-page>
 @php($gameServers = $account->loginServer->gameServers)
-<section class="account-detail-hero">
+<x-account-panel layout="row" class="account-detail-hero">
     <div class="account-detail-hero-back">
-        @if ($accountCount > 1)<a wire:navigate href="{{ public_route('game-accounts.index') }}">← {{ __('My accounts') }}</a>@endif
+        <a wire:navigate href="{{ public_route('game-accounts.index') }}">← {{ __('My accounts') }}</a>
     </div>
     <div class="account-detail-identity">
         <x-game-account-icon :large="true" aria-hidden="true" />
-        <div><span class="account-eyebrow">{{ __('Game account') }}</span><div class="account-title-row"><h1>{{ $account->game_login }}</h1>@if(is_array($summary))<span class="account-chip {{ $summary['status'] === 'active' ? 'success' : 'danger' }}">{{ $summary['status'] === 'active' ? __('Active') : __('Blocked') }}</span>@endif</div><p>{{ $gameServers->map(static fn ($gameServer): string => $gameServer->nameFor())->implode(' · ') }}</p></div>
+        <div><div class="account-title-row">@if(is_array($summary))<span class="account-chip {{ $summary['status'] === 'active' ? 'success' : 'danger' }}">{{ $summary['status'] === 'active' ? __('Active') : __('Blocked') }}</span>@endif</div><p>{{ $gameServers->map(static fn ($gameServer): string => $gameServer->nameFor())->implode(' · ') }}</p></div>
     </div>
     @if ($canCreateAccount)<a wire:navigate.hover class="account-button secondary account-button-create" href="{{ public_route('game-accounts.create') }}">{{ __('Create game account') }}</a>@endif
-</section>
+</x-account-panel>
 
-<section class="account-summary-card">
+<x-account-panel class="account-summary-card">
     <dl>
         <div><dt>{{ $gameServers->count() > 1 ? __('Servers') : __('Server') }}</dt><dd>@forelse ($gameServers as $gameServer)<span>{{ $gameServer->nameFor() }}</span>@if (! $loop->last)<br>@endif @empty — @endforelse</dd></div>
         <div><dt>{{ __('Linked to CMS') }}</dt><dd>{{ $account->created_at?->format('d.m.Y H:i') }}</dd></div>
@@ -22,9 +23,9 @@
         <div><dt>{{ __('Available worlds') }}</dt><dd>{{ count($worlds) }}</dd></div>
     </dl>
     @if($summaryUnavailable)<div class="account-inline-warning">{{ __('Game account data is temporarily unavailable. The account link remains safe in the personal account.') }}</div>@endif
-</section>
+</x-account-panel>
 
-<section class="account-section account-detail-worlds-section">
+<x-account-panel class="account-section account-detail-worlds-section">
     <div class="account-section-heading"><div><span class="account-eyebrow">{{ __('Characters') }}</span><h2>{{ __('Characters by world') }}</h2><p>{{ __('Characters linked to this login on every available GameServer.') }}</p></div></div>
     @forelse($worlds as $world)
         <article class="world-card">
@@ -47,12 +48,13 @@
             @endif
         </article>
     @empty
-        <div class="account-empty small"><h3>{{ __('No available game worlds') }}</h3><p>{{ __('Ask the administrator to configure a GameServer connection.') }}</p></div>
+        <x-account-empty class="account-empty small"><h3>{{ __('No available game worlds') }}</h3><p>{{ __('Ask the administrator to configure a GameServer connection.') }}</p></x-account-empty>
     @endforelse
-</section>
+</x-account-panel>
 
-<section class="account-section password-section account-detail-password-section">
+<x-account-panel class="account-section password-section account-detail-password-section">
     <div class="account-section-heading"><div><span class="account-eyebrow">{{ __('Security') }}</span><h2>{{ __('Change game password') }}</h2><p>{{ __('Confirm the operation with the password from your personal account.') }}</p></div></div>
     <livewire:account.game-account-password-form :account-id="$account->id" />
-</section>
+</x-account-panel>
+</x-account-page>
 @endsection

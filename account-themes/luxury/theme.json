@@ -1,9 +1,9 @@
 {
   "name": "L2 Obsidian Luxury",
   "slug": "luxury",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "author": "KaevCMS",
-  "cms_min": "0.47.29",
+  "cms_min": "0.48.4",
   "description": "Премиальный тёмный шаблон личного кабинета с обзором, каталогом персонажей, настраиваемым возвратом в город, выбором аватара и адаптивным интерфейсом.",
   "preview": "assets/images/preview.svg"
 }

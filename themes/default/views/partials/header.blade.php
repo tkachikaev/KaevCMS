@@ -19,6 +19,9 @@
             @foreach ($headerPages ?? [] as $menuPage)
                 <a class="{{ request()->routeIs('pages.show', 'localized.pages.show') && (($page ?? null) instanceof \App\Models\Page) && $page->is($menuPage) ? 'active' : '' }}" href="{{ page_url($menuPage) }}">{{ $menuPage->titleFor() }}</a>
             @endforeach
+            @foreach ($headerCustomLinks ?? [] as $customLink)
+                <a href="{{ $customLink->url }}" @if ($customLink->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $customLink->titleFor() }}</a>
+            @endforeach
             @auth
                 <a class="mobile-account-link {{ request()->routeIs('account', 'localized.account') ? 'active' : '' }}" href="{{ public_route('account') }}">{{ __('Account') }}</a>
             @else

@@ -48,7 +48,7 @@ class PromoCodesModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_promo_codes', 'deleted_at'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'promo-codes',
-            'version' => '1.4.1',
+            'version' => '1.4.2',
             'enabled' => true,
         ]);
 
