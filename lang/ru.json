@@ -1,4 +1,9 @@
 {
+    "Transfer to game": "Перевод в игру",
+    "Send to a character": "Передать персонажу",
+    "Select items and a character to send them to the game.": "Выберите предметы и своего персонажа для передачи в игру.",
+    "Items ready to send to your character.": "Предметы, готовые к передаче вашему персонажу.",
+    "Wallet transfer": "Перевод из кошелька",
     "1 minute": "1 минута",
     "2 minutes": "2 минуты",
     "2FA disabled": "2FA отключена",

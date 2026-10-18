@@ -398,6 +398,7 @@
         beginNavigation();
     });
     document.addEventListener('livewire:navigated', finishNavigation);
+    document.addEventListener('wallet:history-updated', initializeHistoryTimes);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', finishNavigation, { once: true });

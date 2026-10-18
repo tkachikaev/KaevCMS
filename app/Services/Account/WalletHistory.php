@@ -48,7 +48,8 @@ final class WalletHistory
             }
             $credit = $entry->direction === 'credit';
             $rows[] = array_replace([
-                'key' => 'wallet-'.$id, 'title' => $credit ? __('Coins received') : __('Coins spent'),
+                'key' => 'wallet-'.$id, 'title' => $entry->source === 'donation_exchange'
+                    ? __('Transfer to game') : ($credit ? __('Coins received') : __('Coins spent')),
                 'amount' => ($credit ? '+' : '−').$appearance->label($entry->amount),
                 'date' => $entry->occurred_at, 'detail' => null, 'status' => null,
                 'tone' => $credit ? 'success' : 'neutral', 'url' => null,

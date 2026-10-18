@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Open player coin transfers in a shared Donations dialog from the wallet menu and wallet page, simplify the form, and show success with an inventory hand-off. Keep exchange history in the wallet journal and compact the inventory character-transfer controls.
+
 - Add a direct game-coin exchange link to the shared player wallet menu when a server has exchange enabled, independently of wallet top-up availability. Use the current wallet coin icon for history entries in both account themes.
 
 - Make Donations exchange settings visual with the current wallet coin, server-aware item names and compact inline icon previews, and one atomic Save settings action for all servers. Preserve per-server exchange rules and read-only administrator access.

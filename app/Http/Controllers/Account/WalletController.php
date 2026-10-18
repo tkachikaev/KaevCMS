@@ -30,6 +30,7 @@ final class WalletController extends Controller
             'includeInactive' => $request->boolean('inactive'),
             'canShowInactive' => app()->bound(WalletTopUpHistory::class),
             'topUpUrl' => $topUpLink !== null ? route($topUpLink['route']) : null,
+            'walletLinks' => $navigation->walletLinks(),
         ]);
     }
 }

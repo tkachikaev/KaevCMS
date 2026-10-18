@@ -5,11 +5,12 @@ namespace KaevCMS\Modules\Donations\Http\Controllers;
 use App\Exceptions\WalletOperationException;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\GameAssets\GameItemCatalog;
 use App\Services\Wallet\WalletAccountReadService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use InvalidArgumentException;
@@ -17,28 +18,30 @@ use KaevCMS\Modules\Donations\Services\DonationGameExchange;
 
 final class DonationGameExchangeController extends Controller
 {
-    public function index(Request $request, DonationGameExchange $exchange, WalletAccountReadService $wallets): View
+    public function index(Request $request, DonationGameExchange $exchange, WalletAccountReadService $wallets, GameItemCatalog $items): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         $servers = $exchange->available();
+        foreach ($servers as &$server) {
+            $server['item'] = $items->findForServer($server['server_id'], $server['item_id']);
+        }
+        unset($server);
 
         /** @var view-string $view */
-        $view = 'module-donations::account.exchange';
+        $view = $request->boolean('dialog') ? 'module-donations::account.exchange-form' : 'module-donations::account.exchange';
 
         return view($view, [
             'user' => $user, 'walletView' => $wallets->forUser($user),
             'servers' => $servers, 'requestUuid' => (string) Str::uuid(),
             'maxCoins' => DonationGameExchange::MAX_COINS,
             'maxGameItems' => DonationGameExchange::MAX_GAME_ITEMS,
-            'history' => DB::table('module_donation_game_exchanges as e')
-                ->join('game_servers as s', 's.id', '=', 'e.game_server_id')
-                ->where('e.user_id', $user->getKey())->orderByDesc('e.id')->limit(15)
-                ->get(['e.coins', 'e.game_amount', 'e.item_id', 'e.created_at', 's.name as server_name']),
+            'successInventoryUrl' => session('exchange_inventory_url'),
         ]);
     }
 
-    public function store(Request $request, DonationGameExchange $exchange): RedirectResponse
+    public function store(Request $request, DonationGameExchange $exchange,
+        WalletAccountReadService $wallets, GameItemCatalog $items): RedirectResponse|JsonResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -52,10 +55,27 @@ final class DonationGameExchangeController extends Controller
         } catch (AuthorizationException $exception) {
             throw $exception;
         } catch (InvalidArgumentException|WalletOperationException $exception) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('module-donations::messages.exchange_failed')], 422);
+            }
+
             return back()->withInput()->withErrors(['exchange' => __('module-donations::messages.exchange_failed')]);
         }
 
+        $inventoryUrl = public_route('web-inventory.index', ['server' => $result['server_id']]);
+        if ($request->expectsJson()) {
+            $item = $items->findForServer($result['server_id'], $result['item_id']);
+
+            return response()->json([
+                'message' => __('module-donations::messages.exchange_success_title'),
+                'received' => $item['name'].' × '.number_format($result['game_amount'], 0, '.', ' '),
+                'inventory_url' => $inventoryUrl,
+                'wallet' => $wallets->forUser($user),
+            ]);
+        }
+
         return redirect()->route('modules.donations.exchange.index')
+            ->with('exchange_inventory_url', $inventoryUrl)
             ->with('status', __('module-donations::messages.exchange_success', ['amount' => $result['game_amount']]));
     }
 }

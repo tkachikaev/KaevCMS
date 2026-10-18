@@ -4,23 +4,83 @@
     root.dataset.exchangeBound = '1';
     const server = root.querySelector('[data-exchange-server]');
     const coins = root.querySelector('[data-exchange-coins]');
-    const output = root.querySelector('[data-exchange-summary]');
+    const output = root.querySelector('[data-exchange-receive]');
+    const preview = root.querySelector('[data-exchange-preview]');
+    const icon = root.querySelector('[data-exchange-item-icon]');
+    const submit = root.querySelector('button[type="submit"]');
+    const blocked = submit.disabled;
     const maxCoins = Number(root.dataset.maxCoins || 1000000);
     const maxItems = Number(root.dataset.maxGameItems || 2000000000);
     const update = () => {
       const option = server?.selectedOptions?.[0];
       const factor = Number(option?.dataset.factor || 0);
       const amount = Number(coins?.value || 0);
-      const limit = factor > 0 ? Math.min(maxCoins, Math.floor(maxItems / factor)) : 0;
-      if (coins) coins.max = String(limit);
+      const limit = factor > 0 ? Math.min(maxCoins, Number(root.dataset.balance), Math.floor(maxItems / factor)) : 0;
+      if (coins) coins.max = String(Math.max(1, limit));
+      submit.disabled = blocked || limit < 1;
+      if (icon) {
+        icon.hidden = !option?.dataset.icon;
+        if (option?.dataset.icon) icon.src = option.dataset.icon;
+      }
       if (!Number.isSafeInteger(amount) || amount < 1 || amount > limit) {
-        output.textContent = '—';
+        preview.hidden = true;
         return;
       }
-      output.textContent = `${amount.toLocaleString()} × ${factor.toLocaleString()} = ${(amount * factor).toLocaleString()}`;
+      preview.hidden = false;
+      output.textContent = `${option.dataset.name} × ${(amount * factor).toLocaleString()}`;
     };
     server?.addEventListener('change', update);
     coins?.addEventListener('input', update);
+    root.addEventListener('submit', async event => {
+      const content = root.closest('[data-exchange-content]');
+      if (!content) return;
+      event.preventDefault();
+      if (root.getAttribute('aria-busy') === 'true') return;
+      const body = new FormData(root);
+      const controls = Array.from(root.elements).filter(control => !control.disabled);
+      const error = root.querySelector('[data-exchange-error]');
+      root.setAttribute('aria-busy', 'true');
+      controls.forEach(control => { control.disabled = true; });
+      error.hidden = true;
+      try {
+        const response = await fetch(root.action, { method: 'POST', credentials: 'same-origin', body, headers: { Accept: 'application/json' } });
+        const payload = await response.json();
+        if (!response.ok) {
+          const validation = Object.values(payload.errors || {}).flat()[0];
+          throw new Error(response.status === 422 ? (validation || payload.message || root.dataset.failed) : root.dataset.failed);
+        }
+        const success = content.querySelector('[data-exchange-success]');
+        success.querySelector('[data-exchange-received]').textContent = payload.received;
+        success.querySelector('[data-exchange-inventory]').href = payload.inventory_url;
+        root.hidden = true;
+        success.hidden = false;
+        document.querySelectorAll('[data-wallet-balance-label]').forEach(label => { label.textContent = payload.wallet.label; });
+        document.querySelectorAll('[data-wallet-balance-amount]').forEach(label => { label.textContent = payload.wallet.formatted; });
+        document.querySelectorAll('[data-account-wallet-menu] summary').forEach(summary => { summary.setAttribute('aria-label', `${root.dataset.walletMenuLabel}: ${payload.wallet.label}`); });
+        success.querySelector('[data-exchange-success-title]').focus();
+        const history = document.querySelector('[data-wallet-history]');
+        if (history) {
+          const historyUrl = location.href;
+          fetch(historyUrl, { credentials: 'same-origin', cache: 'no-store' })
+            .then(response => response.ok ? response.text() : null)
+            .then(markup => {
+              if (!markup || !history.isConnected || location.href !== historyUrl) return;
+              const updated = new DOMParser().parseFromString(markup, 'text/html').querySelector('[data-wallet-history]');
+              if (updated) {
+                history.replaceWith(document.importNode(updated, true));
+                document.dispatchEvent(new Event('wallet:history-updated'));
+              }
+            }).catch(() => {});
+        }
+      } catch (exception) {
+        error.textContent = exception instanceof SyntaxError || exception instanceof TypeError ? root.dataset.failed : exception.message;
+        error.hidden = false;
+      } finally {
+        root.removeAttribute('aria-busy');
+        controls.forEach(control => { control.disabled = false; });
+        update();
+      }
+    });
     update();
   }
   function activateAdmin(row) {
@@ -84,5 +144,6 @@
   }
   document.addEventListener('DOMContentLoaded', boot);
   document.addEventListener('livewire:navigated', boot);
+  document.addEventListener('donations:content-loaded', boot);
   boot();
 })();

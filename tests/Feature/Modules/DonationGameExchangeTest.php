@@ -95,6 +95,51 @@ final class DonationGameExchangeTest extends TestCase
         }
     }
 
+    public function test_dialog_fragment_is_simple_and_wallet_page_has_its_own_exchange_action(): void
+    {
+        [, $user] = $this->setupExchange();
+        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            $page = $this->actingAs($user)->get('/account/wallet')->assertOk()
+                ->assertSee('data-kind="exchange"', false)->assertSee('data-wallet-exchange', false)
+                ->assertSee('account-wallet-actions', false);
+            $this->assertSame(2, substr_count($page->getContent(), 'data-wallet-exchange'));
+        }
+        $this->get('/modules/donations/exchange?dialog=1')->assertOk()
+            ->assertSee('data-exchange-content', false)->assertSee('Количество монет')
+            ->assertSee('data-exchange-inventory', false)->assertDontSee('<html', false)
+            ->assertDontSee('data-exchange-summary', false)->assertDontSee('Последние переводы')
+            ->assertDontSee('CMS перевести');
+    }
+
+    public function test_json_transfer_returns_inventory_and_updated_balance_and_retries_only_once(): void
+    {
+        [, $user, $server] = $this->setupExchange();
+        $payload = ['server_id' => $server->id, 'coins' => 5, 'request_uuid' => (string) Str::uuid()];
+        foreach ([1, 2] as $attempt) {
+            $this->actingAs($user)->postJson('/modules/donations/exchange', $payload)->assertOk()
+                ->assertJsonPath('inventory_url', public_route('web-inventory.index', ['server' => $server->id]))
+                ->assertJsonPath('wallet.balance', 95)->assertJsonPath('message', 'Монеты переведены')
+                ->assertJsonStructure(['received']);
+        }
+        $this->assertDatabaseCount('module_donation_game_exchanges', 1);
+        $this->assertDatabaseHas('reward_inventory_items', ['game_server_id' => $server->id, 'amount' => 50]);
+        $this->get('/account/wallet')->assertOk()->assertSee('Перевод в игру')->assertSee('−5');
+    }
+
+    public function test_dialog_transfer_validation_and_insufficient_balance_do_not_debit(): void
+    {
+        [, $user, $server] = $this->setupExchange();
+        $this->actingAs($user)->postJson('/modules/donations/exchange', [
+            'server_id' => $server->id, 'coins' => 0, 'request_uuid' => (string) Str::uuid(),
+        ])->assertUnprocessable()->assertJsonValidationErrors('coins');
+        $this->postJson('/modules/donations/exchange', [
+            'server_id' => $server->id, 'coins' => 101, 'request_uuid' => (string) Str::uuid(),
+        ])->assertUnprocessable()->assertJsonPath('message', __('module-donations::messages.exchange_failed'));
+        $this->assertDatabaseHas('wallets', ['user_id' => $user->id, 'balance' => 100]);
+        $this->assertDatabaseCount('module_donation_game_exchanges', 0);
+    }
+
     public function test_existing_exchange_replays_original_terms_after_rate_change(): void
     {
         [$admin, $user, $server] = $this->setupExchange();
