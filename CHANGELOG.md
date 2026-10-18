@@ -3,6 +3,7 @@
 ## 0.50.14 - 2026-10-18
 
 - Keep the player exchange dialog stable while editing the amount: the received-item preview remains visible at zero and invalid submissions stay disabled.
+- Keep reward history and section descriptions within the account viewport on mobile, including long promo codes.
 
 - Open player coin transfers in a shared Donations dialog from the wallet menu and wallet page, simplify the form, and show success with an inventory hand-off. Keep exchange history in the wallet journal and compact the inventory character-transfer controls.
 
