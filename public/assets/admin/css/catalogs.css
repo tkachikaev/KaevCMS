@@ -97,7 +97,10 @@
 .module-catalog-preview {
     width: 124px;
     height: 124px;
-    background: #071325;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .theme-catalog-preview {
