@@ -16,14 +16,13 @@
         {!! __('No modules found. Copy a module directory containing <code>module.json</code> into the <code>modules</code> directory.') !!}
     </div>
 @else
-    <div class="admin-catalog-list module-list" data-module-list data-testid="module-catalog" data-layout="single-column">
+    <div class="admin-catalog-list module-list module-cards" data-module-list data-testid="module-catalog" data-layout="grid">
         @foreach ($modules as $module)
             <article
                 data-module-id="{{ $module['id'] }}"
                 data-testid="module-card"
                 @class([
-                    'admin-card-row',
-                    'admin-catalog-row',
+                    'module-tile',
                     'module-card',
                     'active' => $module['enabled'],
                     'invalid' => in_array($module['status'], ['invalid', 'missing', 'migration_modified'], true),
@@ -35,43 +34,51 @@
                         <p>{{ \App\Support\Modules\ModulePresentation::text($module, 'description') ?: __('No module description.') }}</p>
                     </div>
 
-                    <div class="admin-catalog-meta module-meta">
-                        <span>{{ __('Version :version', ['version' => $module['version']]) }}</span>
-                        <span>{{ __('Author: :author', ['author' => $module['author']]) }}</span>
-                        <span>{{ __('Identifier: :id', ['id' => $module['id']]) }}</span>
-                        <span>{{ __('CMS compatibility: :range', ['range' => ($module['cms_min'] ?: '—').' — '.($module['cms_max'] ?: '∞')]) }}</span>
-                        @if ($module['has_migrations'])
-                            <span>{{ __('Database migrations: :applied applied, :pending pending', [
-                                'applied' => $module['applied_count'],
-                                'pending' => $module['pending_count'],
-                            ]) }}</span>
-                        @endif
-                    </div>
+                    <details class="module-details" name="module-technical-details">
+                        <summary aria-label="{{ __('Technical details: :module', ['module' => \App\Support\Modules\ModulePresentation::text($module, 'name')]) }}" title="{{ __('Technical details') }}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                        </summary>
+                        <div class="module-details-panel">
+                            <h3>{{ __('Technical details') }}</h3>
+                            <div class="admin-catalog-meta module-meta">
+                                <span>{{ __('Version :version', ['version' => $module['version']]) }}</span>
+                                <span>{{ __('Author: :author', ['author' => $module['author']]) }}</span>
+                                <span>{{ __('Identifier: :id', ['id' => $module['id']]) }}</span>
+                                <span>{{ __('CMS compatibility: :range', ['range' => ($module['cms_min'] ?: '—').' — '.($module['cms_max'] ?: '∞')]) }}</span>
+                                @if ($module['has_migrations'])
+                                    <span>{{ __('Database migrations: :applied applied, :pending pending', [
+                                        'applied' => $module['applied_count'],
+                                        'pending' => $module['pending_count'],
+                                    ]) }}</span>
+                                @endif
+                            </div>
 
-                    @if ($module['capabilities'] !== [])
-                        <div class="module-capabilities" aria-label="{{ __('Module capabilities') }}">
-                            @foreach ($module['capabilities'] as $capability)
-                                <span>{{ match($capability) {
-                                    'autoload' => __('PSR-4 autoload'),
-                                    'bootstrap' => __('Bootstrap services'),
-                                    'views' => __('Views'),
-                                    'lang' => __('Translations'),
-                                    'migrations' => __('Database migrations'),
-                                    'web_routes' => __('Public routes'),
-                                    'admin_routes' => __('Administrator routes'),
-                                    default => $capability,
-                                } }}</span>
-                            @endforeach
+                            @if ($module['capabilities'] !== [])
+                                <div class="module-capabilities" aria-label="{{ __('Module capabilities') }}">
+                                    @foreach ($module['capabilities'] as $capability)
+                                        <span>{{ match($capability) {
+                                            'autoload' => __('PSR-4 autoload'),
+                                            'bootstrap' => __('Bootstrap services'),
+                                            'views' => __('Views'),
+                                            'lang' => __('Translations'),
+                                            'migrations' => __('Database migrations'),
+                                            'web_routes' => __('Public routes'),
+                                            'admin_routes' => __('Administrator routes'),
+                                            default => $capability,
+                                        } }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if ($module['update_available'])
+                                <div class="notice notice-warning"><p>{{ __('Module files contain version :available, while version :stored was last enabled.', ['available' => $module['version'], 'stored' => $module['stored_version']]) }}</p></div>
+                            @endif
+
+                            @if ($module['pending_count'] > 0)
+                                <div class="notice notice-warning"><p>{{ trans_choice(':count module database migration is pending.|:count module database migrations are pending.', $module['pending_count'], ['count' => $module['pending_count']]) }}</p></div>
+                            @endif
                         </div>
-                    @endif
-
-                    @if ($module['update_available'])
-                        <div class="notice notice-warning"><p>{{ __('Module files contain version :available, while version :stored was last enabled.', ['available' => $module['version'], 'stored' => $module['stored_version']]) }}</p></div>
-                    @endif
-
-                    @if ($module['pending_count'] > 0)
-                        <div class="notice notice-warning"><p>{{ trans_choice(':count module database migration is pending.|:count module database migrations are pending.', $module['pending_count'], ['count' => $module['pending_count']]) }}</p></div>
-                    @endif
+                    </details>
 
                     @if ($module['modified_migrations'] !== [] || $module['missing_migrations'] !== [])
                         <div class="notice notice-error"><p>{{ __('Applied module migration files must never be edited or removed. Add a new migration instead.') }}</p></div>

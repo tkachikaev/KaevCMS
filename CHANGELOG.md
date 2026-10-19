@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Present modules in a responsive card grid with four columns on wide screens. Keep controls and errors visible, and move technical metadata, capabilities and migration counts into the three-dot disclosure.
 - Replace all four bundled module icons with the supplied artwork, add Donations artwork, support square 320×320 and 512×512 WebP covers, and refresh cached catalogue images when their contents change.
 
 ## 0.50.14 - 2026-10-18

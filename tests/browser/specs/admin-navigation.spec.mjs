@@ -414,7 +414,7 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(page.getByText(/Включайте только доверенные модули/)).toHaveCount(0);
 
     const moduleCatalog = page.getByTestId('module-catalog');
-    await expect(moduleCatalog).toHaveAttribute('data-layout', 'single-column');
+    await expect(moduleCatalog).toHaveAttribute('data-layout', 'grid');
     await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(4);
 
     const promoModule = page.locator('[data-module-id="promo-codes"]');
@@ -432,6 +432,24 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(supportModule.getByRole('heading', { name: 'Техническая поддержка' })).toBeVisible();
     await expect(supportModule.locator('img[src*="/modules/support-tickets/image"]')).toBeVisible();
     await expect(supportModule.locator('.admin-catalog-side')).toBeVisible();
+
+    const technicalDetails = donationsModule.locator('.module-details');
+    await expect(technicalDetails.locator('.module-details-panel')).toBeHidden();
+    await technicalDetails.locator('summary').click();
+    await expect(technicalDetails.locator('.module-details-panel')).toBeVisible();
+    await expect(technicalDetails.getByText('Автозагрузка PSR-4', { exact: true })).toBeVisible();
+    await technicalDetails.locator('summary').click();
+
+    for (const width of [1440, 1040, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expectNoDocumentHorizontalOverflow(page, `module grid ${width}px`);
+        const columns = await moduleCatalog.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+        expect(columns).toBe(width >= 1360 ? 4 : width >= 640 ? 2 : 1);
+        await technicalDetails.locator('summary').click();
+        await expect(technicalDetails.locator('.module-details-panel')).toBeVisible();
+        await expectNoDocumentHorizontalOverflow(page, `module details ${width}px`);
+        await technicalDetails.locator('summary').click();
+    }
 });
 
 test('theme catalogues expose semantic single-column catalogues', async ({ page }) => {

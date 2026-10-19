@@ -1,4 +1,6 @@
 {
+    "Technical details": "Технические сведения",
+    "Technical details: :module": "Технические сведения: :module",
     "Transfer to game": "Перевод в игру",
     "Send to a character": "Передать персонажу",
     "Select items and a character to send them to the game.": "Выберите предметы и своего персонажа для передачи в игру.",

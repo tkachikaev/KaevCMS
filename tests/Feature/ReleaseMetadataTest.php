@@ -358,7 +358,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('data-module-id="{{ $module[\'id\'] }}"', $moduleCatalogue);
         $this->assertStringContainsString('data-testid="module-catalog"', $moduleCatalogue);
         $this->assertStringContainsString('data-testid="module-card"', $moduleCatalogue);
-        $this->assertStringContainsString('data-layout="single-column"', $moduleCatalogue);
+        $this->assertStringContainsString('data-layout="grid"', $moduleCatalogue);
 
         $this->assertFileExists(base_path('modules/README.md'));
         $this->assertFileExists(base_path('docs/MODULES.md'));
