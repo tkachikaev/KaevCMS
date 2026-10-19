@@ -558,7 +558,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('max-width: 100%', $supportCss);
 
         $this->assertFileExists(base_path('modules/support-tickets/assets/module.webp'));
-        $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/support-tickets/assets/module.webp')), 0, 2));
+        $this->assertSame([320, 320], array_slice((array) getimagesize(base_path('modules/support-tickets/assets/module.webp')), 0, 2));
     }
 
     public function test_web_inventory_release_artifacts_are_shipped(): void
@@ -699,8 +699,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileDoesNotExist(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
         $this->assertFileExists(base_path('modules/promo-codes/assets/module.webp'));
         $this->assertFileExists(base_path('modules/daily-rewards/assets/module.webp'));
-        $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/promo-codes/assets/module.webp')), 0, 2));
-        $this->assertSame([512, 512], array_slice((array) getimagesize(base_path('modules/daily-rewards/assets/module.webp')), 0, 2));
+        $this->assertSame([320, 320], array_slice((array) getimagesize(base_path('modules/promo-codes/assets/module.webp')), 0, 2));
+        $this->assertSame([320, 320], array_slice((array) getimagesize(base_path('modules/daily-rewards/assets/module.webp')), 0, 2));
         $this->assertFileExists(resource_path('views/components/account-operation-modal.blade.php'));
         $adminLayout = $this->readReleaseFile('resources/views/admin/layouts/app.blade.php');
         $this->assertStringContainsString('assets/admin/css/', $adminLayout);

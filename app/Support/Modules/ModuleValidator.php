@@ -252,8 +252,8 @@ final class ModuleValidator
         $image = @getimagesize($path);
         if (
             $image === false
-            || $image[0] !== 512
-            || $image[1] !== 512
+            || ! in_array($image[0], [320, 512], true)
+            || $image[1] !== $image[0]
             || $image['mime'] !== 'image/webp'
         ) {
             return;

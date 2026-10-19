@@ -9,7 +9,7 @@ The bundled `promo-codes` module grants one or more server-bound rewards to the 
 The bundled `daily-rewards` module adds separate monthly calendars for game servers. The current day reward is granted once per eligible game account through the core Web Inventory. See [Daily Rewards](DAILY_REWARDS.md).
 
 
-A module may provide optional catalogue artwork at `assets/module.webp`. KaevCMS auto-discovers it when it is a valid 512×512 WebP file no larger than 2 MB; otherwise the administration catalogue keeps the letter placeholder.
+A module may provide optional catalogue artwork at `assets/module.webp`. KaevCMS auto-discovers it when it is a valid 320×320 / 512×512 WebP file no larger than 2 MB; otherwise the administration catalogue keeps the letter placeholder.
 
 Promo Codes and Daily Rewards use the shared account operation dialog for success and failure results, including granted item icons and amounts.
 

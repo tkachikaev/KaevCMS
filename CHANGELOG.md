@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Replace all four bundled module icons with the supplied artwork, add Donations artwork, support square 320×320 and 512×512 WebP covers, and refresh cached catalogue images when their contents change.
+
 ## 0.50.14 - 2026-10-18
 
 - Keep the player exchange dialog stable while editing the amount: the received-item preview remains visible at zero and invalid submissions stay disabled.

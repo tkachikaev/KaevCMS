@@ -170,7 +170,7 @@ return [
     'notification_new_ticket_message' => 'A player created a new support ticket.',
     'notification_player_reply_title' => 'New player reply in :number',
     'notification_player_reply_message' => 'A player replied in an existing support ticket.',
-    'module_image_note' => 'The module includes a 512×512 WebP image at assets/module.webp.',
+    'module_image_note' => 'The module includes a 320×320 WebP image at assets/module.webp.',
     'categories' => [
         'gameplay' => 'Gameplay',
         'game_account' => 'Game account',

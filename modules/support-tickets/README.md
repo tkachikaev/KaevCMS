@@ -7,6 +7,6 @@ Bundled version: **1.7.2** for KaevCMS **0.45.1+**. Usage and text limits are co
 
 Встроенная версия: **1.7.2** для KaevCMS **0.45.1+**. Лимиты настраиваются владельцем. Закрытые незащищённые обращения владелец может удалять вручную, а retention-очистка удаляет старые закрытые обращения пакетами. Поле поиска в админке использует общий дизайн полей KaevCMS и поддерживает поиск по номеру обращения.
 
-The bundled 512×512 WebP module artwork is stored at `assets/module.webp` and is discovered automatically by KaevCMS.
+The bundled 320×320 WebP module artwork is stored at `assets/module.webp` and is discovered automatically by KaevCMS.
 
-Комплектное изображение модуля WebP 512×512 хранится по пути `assets/module.webp` и автоматически обнаруживается KaevCMS.
+Комплектное изображение модуля WebP 320×320 хранится по пути `assets/module.webp` и автоматически обнаруживается KaevCMS.

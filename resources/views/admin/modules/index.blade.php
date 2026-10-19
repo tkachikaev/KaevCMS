@@ -94,7 +94,7 @@
 
                 <div class="admin-catalog-preview module-catalog-preview" aria-hidden="true">
                     @if($module['image_path'])
-                        <img src="{{ route('admin.modules.image', ['adminPath' => request()->route('adminPath'), 'module' => $module['id']]) }}?v={{ rawurlencode((string) $module['version']) }}" alt="" width="512" height="512">
+                        <img src="{{ route('admin.modules.image', ['adminPath' => request()->route('adminPath'), 'module' => $module['id']]) }}?v={{ rawurlencode((string) $module['version']) }}-{{ substr((string) hash_file('sha256', $module['image_path']), 0, 12) }}" alt="" width="512" height="512">
                     @else
                         <div class="admin-catalog-preview-placeholder"><span>{{ mb_strtoupper(mb_substr(\App\Support\Modules\ModulePresentation::text($module, 'name'), 0, 1)) }}</span></div>
                     @endif

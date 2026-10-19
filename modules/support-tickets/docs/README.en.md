@@ -119,7 +119,7 @@ The bundled module image is stored at the shared module path:
 modules/support-tickets/assets/module.webp
 ```
 
-The file is WebP, 512×512 and no larger than 2 MB. KaevCMS validates it before display; no `module.json` field is required.
+The file is WebP, 320×320 / 512×512 and no larger than 2 MB. KaevCMS validates it before display; no `module.json` field is required.
 
 ## Tables
 

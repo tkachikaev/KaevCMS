@@ -119,7 +119,7 @@ php artisan kaevcms:support-tickets-cleanup --vacuum
 modules/support-tickets/assets/module.webp
 ```
 
-Формат WebP, 512×512, не более 2 МБ. KaevCMS проверяет изображение перед выводом; поле в `module.json` не требуется.
+Формат WebP, 320×320 / 512×512, не более 2 МБ. KaevCMS проверяет изображение перед выводом; поле в `module.json` не требуется.
 
 ## Таблицы
 

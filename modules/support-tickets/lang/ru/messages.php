@@ -170,7 +170,7 @@ return [
     'notification_new_ticket_message' => 'Игрок создал новое обращение в техническую поддержку.',
     'notification_player_reply_title' => 'Новый ответ игрока в :number',
     'notification_player_reply_message' => 'Игрок ответил в существующем обращении.',
-    'module_image_note' => 'В комплект модуля входит изображение WebP 512×512 по пути assets/module.webp.',
+    'module_image_note' => 'В комплект модуля входит изображение WebP 320×320 по пути assets/module.webp.',
     'categories' => [
         'gameplay' => 'Игровой процесс',
         'game_account' => 'Игровой аккаунт',

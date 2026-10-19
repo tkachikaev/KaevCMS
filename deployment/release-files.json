@@ -269,6 +269,7 @@
     "modules/daily-rewards/src/Http/Controllers/DailyRewardController.php",
     "modules/daily-rewards/src/Services/DailyRewardClaimService.php",
     "modules/donations/README.md",
+    "modules/donations/assets/module.webp",
     "modules/donations/bootstrap.php",
     "modules/donations/database/migrations/2026_10_15_230000_create_module_donation_settings_table.php",
     "modules/donations/database/migrations/2026_10_16_000000_create_module_donation_currency_rates_table.php",

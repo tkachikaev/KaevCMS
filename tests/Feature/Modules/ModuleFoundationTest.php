@@ -184,7 +184,7 @@ class ModuleFoundationTest extends TestCase
     {
         $owner = $this->createAdmin(AdminRole::Owner, 'artwork-owner@example.test');
 
-        foreach (['daily-rewards', 'promo-codes', 'support-tickets'] as $moduleId) {
+        foreach (['daily-rewards', 'donations', 'promo-codes', 'support-tickets'] as $moduleId) {
             $module = app(ModuleManager::class)->inspect($moduleId);
 
             $this->assertIsString($module['image_path']);
@@ -192,7 +192,7 @@ class ModuleFoundationTest extends TestCase
                 'modules'.DIRECTORY_SEPARATOR.$moduleId.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'module.webp',
                 $module['image_path'],
             );
-            $this->assertSame([512, 512], array_slice((array) getimagesize($module['image_path']), 0, 2));
+            $this->assertSame([320, 320], array_slice((array) getimagesize($module['image_path']), 0, 2));
 
             $response = $this->actingAs($owner, 'admin')
                 ->get('/admin/modules/'.$moduleId.'/image')

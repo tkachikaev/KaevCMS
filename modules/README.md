@@ -18,4 +18,4 @@ See `docs/en/MODULES.md`.
 
 ## Module artwork
 
-A module may provide an administrator catalog image at `assets/module.webp` inside its own directory. KaevCMS discovers it automatically; no manifest field is required. The file must be a square 512×512 WebP image and no larger than 2 MB. If the file is missing or invalid, the module catalog uses the standard letter placeholder.
+A module may provide an administrator catalog image at `assets/module.webp` inside its own directory. KaevCMS discovers it automatically; no manifest field is required. The file must be a square 320×320 / 512×512 WebP image and no larger than 2 MB. If the file is missing or invalid, the module catalog uses the standard letter placeholder.
