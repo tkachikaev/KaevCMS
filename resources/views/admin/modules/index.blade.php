@@ -54,20 +54,27 @@
                             </div>
 
                             @if ($module['capabilities'] !== [])
-                                <div class="module-capabilities" aria-label="{{ __('Module capabilities') }}">
-                                    @foreach ($module['capabilities'] as $capability)
-                                        <span>{{ match($capability) {
-                                            'autoload' => __('PSR-4 autoload'),
-                                            'bootstrap' => __('Bootstrap services'),
-                                            'views' => __('Views'),
-                                            'lang' => __('Translations'),
-                                            'migrations' => __('Database migrations'),
-                                            'web_routes' => __('Public routes'),
-                                            'admin_routes' => __('Administrator routes'),
-                                            default => $capability,
-                                        } }}</span>
-                                    @endforeach
-                                </div>
+                                <details class="module-capabilities-disclosure">
+                                    <summary>
+                                        <span>{{ __('Details') }}</span>
+                                        <span class="module-capabilities-count">{{ count($module['capabilities']) }}</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>
+                                    </summary>
+                                    <div class="module-capabilities" aria-label="{{ __('Module capabilities') }}">
+                                        @foreach ($module['capabilities'] as $capability)
+                                            <span>{{ match($capability) {
+                                                'autoload' => __('PSR-4 autoload'),
+                                                'bootstrap' => __('Bootstrap services'),
+                                                'views' => __('Views'),
+                                                'lang' => __('Translations'),
+                                                'migrations' => __('Database migrations'),
+                                                'web_routes' => __('Public routes'),
+                                                'admin_routes' => __('Administrator routes'),
+                                                default => $capability,
+                                            } }}</span>
+                                        @endforeach
+                                    </div>
+                                </details>
                             @endif
 
                             @if ($module['update_available'])

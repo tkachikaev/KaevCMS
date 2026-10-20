@@ -434,21 +434,25 @@ test('module foundation is available from the administrator sidebar', async ({ p
     await expect(supportModule.locator('.admin-catalog-side')).toBeVisible();
 
     const technicalDetails = donationsModule.locator('.module-details');
+    const technicalSummary = technicalDetails.locator(':scope > summary');
     await expect(technicalDetails.locator('.module-details-panel')).toBeHidden();
-    await technicalDetails.locator('summary').click();
+    await technicalSummary.click();
     await expect(technicalDetails.locator('.module-details-panel')).toBeVisible();
-    await expect(technicalDetails.getByText('Автозагрузка PSR-4', { exact: true })).toBeVisible();
-    await technicalDetails.locator('summary').click();
+    const capabilities = technicalDetails.locator('.module-capabilities-disclosure');
+    await expect(capabilities.getByText('Автозагрузка PSR-4', { exact: true })).toBeHidden();
+    await capabilities.locator(':scope > summary').click();
+    await expect(capabilities.getByText('Автозагрузка PSR-4', { exact: true })).toBeVisible();
+    await technicalSummary.click();
 
     for (const width of [1440, 1040, 390]) {
         await page.setViewportSize({ width, height: 900 });
         await expectNoDocumentHorizontalOverflow(page, `module grid ${width}px`);
         const columns = await moduleCatalog.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
         expect(columns).toBe(width >= 1360 ? 4 : width >= 640 ? 2 : 1);
-        await technicalDetails.locator('summary').click();
+        await technicalSummary.click();
         await expect(technicalDetails.locator('.module-details-panel')).toBeVisible();
         await expectNoDocumentHorizontalOverflow(page, `module details ${width}px`);
-        await technicalDetails.locator('summary').click();
+        await technicalSummary.click();
     }
 });
 

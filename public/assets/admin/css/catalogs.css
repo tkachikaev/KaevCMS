@@ -396,7 +396,33 @@
 }
 .module-details-panel h3 { margin: 0 0 12px; font-size: 13px; }
 .module-details-panel .module-meta { display: grid; gap: 8px; margin: 0; font-size: 11px; }
-.module-details-panel .module-capabilities { margin-top: 14px; }
+.module-capabilities-disclosure { margin-top: 14px; border-top: 1px solid var(--admin-border); padding-top: 10px; }
+.module-capabilities-disclosure > summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 4px 0;
+    list-style: none;
+    color: var(--admin-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.module-capabilities-disclosure > summary::-webkit-details-marker { display: none; }
+.module-capabilities-disclosure > summary:hover { color: var(--admin-primary); }
+.module-capabilities-disclosure > summary:focus-visible { outline: 3px solid var(--admin-focus-ring); outline-offset: 2px; border-radius: 4px; }
+.module-capabilities-disclosure > summary svg { transition: transform .15s ease; }
+.module-capabilities-disclosure[open] > summary svg { transform: rotate(180deg); }
+.module-capabilities-count {
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--admin-surface-muted);
+    font-size: 10px;
+    text-align: center;
+}
+.module-details-panel .module-capabilities { margin-top: 8px; }
 .module-details-panel .module-capabilities span { padding: 4px 6px; font-size: 10px; }
 .module-details-panel .notice { margin-top: 12px; padding: 10px; font-size: 11px; }
 .modules-toolbar .admin-overview-stat { min-width: 0; }
