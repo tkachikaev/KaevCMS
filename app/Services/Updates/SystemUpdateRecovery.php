@@ -22,6 +22,7 @@ final class SystemUpdateRecovery
         private readonly AuditLogger $auditLogger,
         private readonly RuntimeDirectoryManager $runtimeDirectories,
         private readonly Application $application,
+        private readonly UpdateDependencyBundle $dependencies,
     ) {}
 
     public function recover(SystemUpdate $update): SystemUpdate
@@ -77,15 +78,33 @@ final class SystemUpdateRecovery
                 $this->filesystem->rollback($verifiedFileBackup, $log);
             }
 
+            $dependencyState = $this->dependencies->state($backupRoot);
+            $dependenciesRestored = $dependencyState !== null && ($dependencyState['swapped'] ?? false) === true;
+            if ($dependencyState !== null) {
+                $this->dependencies->restore($backupRoot, $log);
+            }
+
             $this->installedVersion->mark($update->from_version);
             $this->runtimeDirectories->ensure(true);
-            $this->runArtisan('optimize:clear', $log);
-            $this->runtimeDirectories->ensure(true);
-            $log->write('Runtime directories recreated and write-tested after recovery cache clear.');
-            $this->runArtisan('queue:restart', $log);
+            if ($dependenciesRestored) {
+                // The previous vendor tree is back while this process runs the replaced one, so
+                // the console is not booted again; restore() already dropped bootstrap caches.
+                foreach (['down', 'maintenance.php'] as $marker) {
+                    $path = storage_path('framework'.DIRECTORY_SEPARATOR.$marker);
+                    if (is_file($path)) {
+                        @unlink($path);
+                    }
+                }
+                $log->write('Maintenance mode lifted without Artisan after restoring the previous dependencies.');
+            } else {
+                $this->runArtisan('optimize:clear', $log);
+                $this->runtimeDirectories->ensure(true);
+                $log->write('Runtime directories recreated and write-tested after recovery cache clear.');
+                $this->runArtisan('queue:restart', $log);
 
-            if ($this->application->isDownForMaintenance()) {
-                $this->runArtisan('up', $log);
+                if ($this->application->isDownForMaintenance()) {
+                    $this->runArtisan('up', $log);
+                }
             }
 
             if (function_exists('opcache_reset')) {

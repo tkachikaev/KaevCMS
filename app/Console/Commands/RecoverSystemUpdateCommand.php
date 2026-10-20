@@ -88,6 +88,10 @@ final class RecoverSystemUpdateCommand extends Command
         }
 
         $this->warn("Update {$update->uuid} ({$update->from_version} → {$update->target_version}) was interrupted during: ".($update->phase ?? 'unknown phase').'.');
+        if ($update->awaitsFinalization()) {
+            $this->line('Its Composer dependencies were already replaced. To finish the update instead of rolling it back, run:');
+            $this->line("  php artisan kaevcms:update-finalize {$update->uuid}");
+        }
         $this->line('Recovery restores the database and files from the verified update backup, records the previous version and lifts maintenance mode.');
         if (! $this->confirmed('Roll back this interrupted update now?')) {
             return self::FAILURE;

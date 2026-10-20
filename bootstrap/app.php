@@ -27,6 +27,9 @@ $application = Application::configure(basePath: dirname(__DIR__))
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
 
         $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify']);
+        // The maintenance bypass cookie is read before cookie decryption and carries its own
+        // HMAC, exactly as Laravel issues it; the updater sets it for the finalisation step.
+        $middleware->encryptCookies(except: ['laravel_maintenance']);
         $middleware->appendToGroup('web', AuthenticatePlayerSession::class);
         $middleware->appendToGroup('web', SetApplicationLocale::class);
         $middleware->appendToGroup('web', SecurityHeaders::class);

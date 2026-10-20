@@ -256,6 +256,23 @@ final class UpdateFilesystemTransaction
     }
 
     /**
+     * Applies the VDS deployment-owner/web-group modes to a whole directory tree, e.g. a
+     * replaced vendor directory. No-op outside VDS agent execution.
+     *
+     * @param  array<string, mixed>|null  $permissions
+     */
+    public function secureTree(string $absolute, string $logicalTarget, ?array $permissions): void
+    {
+        if ($permissions === null || PHP_OS_FAMILY === 'Windows') {
+            return;
+        }
+
+        $this->assertDeploymentPermissions($permissions);
+        /** @var array{deployment_user: string, deployment_uid: int, web_group: string, web_gid: int} $permissions */
+        $this->securePathRecursively($absolute, $logicalTarget, $permissions);
+    }
+
+    /**
      * @param  array<string, mixed>|null  $permissions
      */
     private function assertDeploymentPermissions(?array $permissions): void

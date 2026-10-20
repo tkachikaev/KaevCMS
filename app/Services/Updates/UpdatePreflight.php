@@ -92,10 +92,24 @@ final class UpdatePreflight
             $affectedBytes += $this->pathBytes($this->layout->resolveTarget($target));
         }
 
+        // The new vendor tree is unpacked beside the live one, and the previous tree is kept
+        // until the update completes.
+        $dependencyBytes = $package->dependencies === null ? 0 : $package->dependencies['bytes'] * 2;
+        if ($package->dependencies !== null) {
+            $vendorParent = $this->layout->coreRoot();
+            $checks[] = $this->check(
+                __('Composer dependencies'),
+                $delegateFilesystemChecks || is_writable($vendorParent),
+                $delegateFilesystemChecks
+                    ? __('The VDS agent will replace the vendor directory as the deployment owner.')
+                    : __('The vendor directory will be replaced (:count files).', ['count' => $package->dependencies['files']]),
+            );
+        }
+
         $databaseBytes = $this->estimatedDatabaseBytes($driver);
         $requiredBytes = max(
             104857600,
-            ($payloadBytes * 2) + $affectedBytes + (($databaseBytes ?? 0) * 3),
+            ($payloadBytes * 2) + $affectedBytes + $dependencyBytes + (($databaseBytes ?? 0) * 3),
         );
         $freeBytes = @disk_free_space(storage_path());
         $checks[] = $this->check(

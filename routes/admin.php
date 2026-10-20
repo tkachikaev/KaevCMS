@@ -271,6 +271,9 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.system.updates.show');
         Route::post('/settings/system/updates/{systemUpdate}/apply', [AdminSystemUpdateController::class, 'apply'])
             ->name('settings.system.updates.apply');
+        Route::get('/settings/system/updates/{systemUpdate}/finalize', [AdminSystemUpdateController::class, 'finalize'])
+            ->middleware('signed')
+            ->name('settings.system.updates.finalize');
         Route::post('/settings/system/updates/{systemUpdate}/recover', [AdminSystemUpdateController::class, 'recover'])
             ->name('settings.system.updates.recover');
         Route::delete('/settings/system/updates/{systemUpdate}', [AdminSystemUpdateController::class, 'destroy'])

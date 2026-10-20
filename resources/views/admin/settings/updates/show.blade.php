@@ -191,6 +191,23 @@
     @endif
 @endif
 
+@if($update->awaitsFinalization() && $canManageUpdates)
+    <section class="form-card update-finalize-card" data-testid="update-finalize">
+        <div class="system-section-heading">
+            <div>
+                <h2>{{ __('Finish the update') }}</h2>
+                <p>{{ __('The Composer dependencies were replaced. Finish the update to apply migrations and bring the site back online.') }}</p>
+            </div>
+        </div>
+        @if($update->isAgentExecution())
+            <p>{{ __('Run on the server as the project owner:') }}</p>
+            <code>php artisan kaevcms:update-finalize {{ $update->uuid }}</code>
+        @else
+            <a class="button button-primary" href="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('admin.settings.system.updates.finalize', now()->addHours(2), ['systemUpdate' => $update]) }}">{{ __('Finish the update') }}</a>
+        @endif
+    </section>
+@endif
+
 @if($update->status === \App\Models\SystemUpdate::STATUS_APPLYING)
     <section class="form-card update-recovery-card" data-update-status="applying">
         <div class="system-section-heading">

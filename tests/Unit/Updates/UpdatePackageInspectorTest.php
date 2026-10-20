@@ -129,11 +129,103 @@ class UpdatePackageInspectorTest extends TestCase
         $archive = $this->package(changeComposerLock: true);
 
         $this->expectException(RuntimeException::class);
+        // A lock change without a vendor bundle must still be refused: files alone cannot
+        // bring the dependencies to the new lock.
         $this->expectExceptionMessage(
-            __('This update changes Composer dependencies. Web Updater 1.0 requires a full deployment for dependency changes.'),
+            __('This update changes Composer dependencies, but the package does not include them. Use the cumulative update package from the official release.'),
         );
 
         $this->inspector()->inspect($archive, '0.32.0');
+    }
+
+    public function test_lock_change_with_a_matching_vendor_bundle_is_accepted_and_staged(): void
+    {
+        $archive = $this->package(changeComposerLock: true, vendorFiles: $this->vendorFixture());
+
+        $package = $this->inspector()->inspect($archive, '0.32.0');
+        $this->temporaryDirectories[] = $package->stagingPath;
+
+        $this->assertTrue($package->replacesDependencies());
+        $this->assertNotNull($package->dependencies);
+        $this->assertSame(3, $package->dependencies['files']);
+        $this->assertFileExists($package->dependencies['bundle_path']);
+        $this->assertSame(hash('sha256', "{\"changed\":true}\n"), $package->dependencies['composer_lock_sha256']);
+        $this->assertCount(1, $package->warnings);
+    }
+
+    public function test_unchanged_lock_ignores_the_vendor_bundle(): void
+    {
+        $archive = $this->package(
+            vendorFiles: $this->vendorFixture(),
+            composerLock: (string) file_get_contents(base_path('composer.lock')),
+        );
+
+        $package = $this->inspector()->inspect($archive, '0.32.0');
+        $this->temporaryDirectories[] = $package->stagingPath;
+
+        $this->assertFalse($package->replacesDependencies());
+        $this->assertSame([], $package->warnings);
+    }
+
+    public function test_bundle_built_for_another_lock_is_rejected(): void
+    {
+        $archive = $this->package(changeComposerLock: true, vendorFiles: $this->vendorFixture(), sectionOverrides: [
+            'composer_lock_sha256' => str_repeat('a', 64),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(__('The dependency bundle was built for a different composer.lock than the one in this package.'));
+
+        $this->inspector()->inspect($archive, '0.32.0');
+    }
+
+    public function test_tampered_vendor_bundle_is_rejected(): void
+    {
+        $archive = $this->package(changeComposerLock: true, vendorFiles: $this->vendorFixture(), sectionOverrides: [
+            'sha256' => str_repeat('b', 64),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(__('The dependency bundle checksum does not match the manifest.'));
+
+        $this->inspector()->inspect($archive, '0.32.0');
+    }
+
+    public function test_bundle_requiring_a_newer_php_is_rejected_before_anything_changes(): void
+    {
+        $archive = $this->package(changeComposerLock: true, vendorFiles: $this->vendorFixture(), sectionOverrides: [
+            'platform' => ['php_version_id' => 990000, 'extensions' => []],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(__('The new Composer dependencies require PHP :version or newer; this server runs PHP :current.', [
+            'version' => '99.0.0',
+            'current' => PHP_VERSION,
+        ]));
+
+        $this->inspector()->inspect($archive, '0.32.0');
+    }
+
+    public function test_bundle_requiring_a_missing_extension_is_rejected(): void
+    {
+        $archive = $this->package(changeComposerLock: true, vendorFiles: $this->vendorFixture(), sectionOverrides: [
+            'platform' => ['php_version_id' => 80300, 'extensions' => ['kaevcms_missing_extension']],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(__('The new Composer dependencies require the PHP :extension extension.', ['extension' => 'kaevcms_missing_extension']));
+
+        $this->inspector()->inspect($archive, '0.32.0');
+    }
+
+    /** @return array<string, string> */
+    private function vendorFixture(): array
+    {
+        return [
+            'autoload.php' => "<?php\nreturn 'new';\n",
+            'composer/installed.json' => "{\"packages\":[]}\n",
+            'composer/autoload_real.php' => "<?php\n",
+        ];
     }
 
     public function test_package_outside_the_supported_source_range_is_rejected(): void
@@ -164,11 +256,32 @@ class UpdatePackageInspectorTest extends TestCase
 
     /**
      * @param  array<string, string>  $extraEntries
+     * @param  array<string, string>|null  $vendorFiles  vendor-relative path => contents
+     * @param  array<string, mixed>  $sectionOverrides
      */
     private function package(
         array $extraEntries = [],
         ?string $checksumOverride = null,
         bool $changeComposerLock = false,
+        ?array $vendorFiles = null,
+        array $sectionOverrides = [],
+        ?string $composerLock = null,
+    ): string {
+        return $this->buildPackage($extraEntries, $checksumOverride, $changeComposerLock, $vendorFiles, $sectionOverrides, $composerLock);
+    }
+
+    /**
+     * @param  array<string, string>  $extraEntries
+     * @param  array<string, string>|null  $vendorFiles
+     * @param  array<string, mixed>  $sectionOverrides
+     */
+    private function buildPackage(
+        array $extraEntries,
+        ?string $checksumOverride,
+        bool $changeComposerLock,
+        ?array $vendorFiles,
+        array $sectionOverrides,
+        ?string $composerLock,
     ): string {
         $archive = tempnam(sys_get_temp_dir(), 'kaevcms-inspector-');
         $this->assertIsString($archive);
@@ -181,8 +294,8 @@ class UpdatePackageInspectorTest extends TestCase
             'payload/core/VERSION' => "0.33.0\n",
             'payload/public/assets/update-test.txt' => "payload\n",
         ];
-        if ($changeComposerLock) {
-            $payloads['payload/core/composer.lock'] = "{\"changed\":true}\n";
+        if ($changeComposerLock || $composerLock !== null) {
+            $payloads['payload/core/composer.lock'] = $composerLock ?? "{\"changed\":true}\n";
         }
 
         $files = [];
@@ -219,6 +332,32 @@ class UpdatePackageInspectorTest extends TestCase
             'delete' => [],
             'changelog' => ['Inspector test'],
         ];
+
+        if ($vendorFiles !== null) {
+            $bundlePath = tempnam(sys_get_temp_dir(), 'kaevcms-vendor-bundle-');
+            $this->assertIsString($bundlePath);
+            $this->temporaryArchives[] = $bundlePath;
+            $bundle = new ZipArchive;
+            $this->assertTrue($bundle->open($bundlePath, ZipArchive::CREATE | ZipArchive::OVERWRITE));
+            $bytes = 0;
+            foreach ($vendorFiles as $relative => $contents) {
+                $this->assertTrue($bundle->addFromString('vendor/'.$relative, $contents));
+                $bytes += strlen($contents);
+            }
+            $this->assertTrue($bundle->close());
+
+            $this->assertTrue($zip->addFile($bundlePath, 'dependencies/vendor.zip'));
+            $manifest['dependencies'] = array_replace([
+                'schema' => 1,
+                'archive' => 'dependencies/vendor.zip',
+                'sha256' => hash_file('sha256', $bundlePath),
+                'size' => filesize($bundlePath),
+                'files' => count($vendorFiles),
+                'bytes' => $bytes,
+                'composer_lock_sha256' => hash('sha256', $payloads['payload/core/composer.lock'] ?? ''),
+                'platform' => ['php_version_id' => 80300, 'extensions' => ['json']],
+            ], $sectionOverrides);
+        }
 
         $encoded = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $this->assertIsString($encoded);
