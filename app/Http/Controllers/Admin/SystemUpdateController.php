@@ -18,9 +18,12 @@ use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
 use App\Services\Updates\UpdatePreflight;
 use App\Services\Updates\VdsUpdateAgent;
+use Illuminate\Foundation\Http\MaintenanceModeBypassCookie;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use RuntimeException;
@@ -193,6 +196,7 @@ final class SystemUpdateController extends Controller
                 'agentInstallCommand' => $vdsAgent->installCommand(),
                 'agentDiagnosticsCommand' => $vdsAgent->diagnosticsCommand(),
                 'useVdsAgent' => $useVdsAgent,
+                'canManageUpdates' => $admin->hasPermission(AdminPermission::SystemUpdatesManage),
             ]);
         } finally {
             if ($package instanceof InspectedUpdatePackage) {
@@ -250,7 +254,17 @@ final class SystemUpdateController extends Controller
                 throw new RuntimeException(__('The update preflight checks did not pass.'));
             }
 
-            $installer->apply($systemUpdate, $maintenanceSecret);
+            // Prepared before the update starts: once vendor/ is swapped this request must not
+            // autoload anything else, so the hand-off redirect and the maintenance bypass
+            // cookie for the fresh finalisation request are built while only the old tree exists.
+            $finalizeResponse = redirect()
+                ->to(URL::temporarySignedRoute('admin.settings.system.updates.finalize', now()->addHours(2), ['systemUpdate' => $systemUpdate]))
+                ->withCookie(MaintenanceModeBypassCookie::create($maintenanceSecret));
+
+            $applied = $installer->apply($systemUpdate, $maintenanceSecret);
+            if ($applied->awaitsFinalization()) {
+                return $finalizeResponse;
+            }
         } catch (Throwable $exception) {
             $fresh = $systemUpdate->fresh();
             if (! $fresh instanceof SystemUpdate || $fresh->status !== SystemUpdate::STATUS_APPLYING) {
@@ -268,6 +282,37 @@ final class SystemUpdateController extends Controller
             if ($package instanceof InspectedUpdatePackage) {
                 $this->removeDirectory($package->stagingPath);
             }
+        }
+
+        $request->session()->forget($this->maintenanceSessionKey($systemUpdate));
+
+        return redirect()
+            ->route('admin.settings.system.updates.show', $systemUpdate)
+            ->with('status', __('KaevCMS was updated successfully.'));
+    }
+
+    /**
+     * Second half of a dependency-changing update, reached through a signed redirect so it
+     * runs in a new PHP request that loads only the new vendor tree.
+     */
+    public function finalize(Request $request, SystemUpdate $systemUpdate, SystemUpdateInstaller $installer): RedirectResponse
+    {
+        $this->owner();
+
+        if (! $systemUpdate->awaitsFinalization()) {
+            return redirect()->route('admin.settings.system.updates.show', $systemUpdate);
+        }
+
+        try {
+            $installer->finalize($systemUpdate);
+        } catch (Throwable $exception) {
+            $request->session()->forget($this->maintenanceSessionKey($systemUpdate));
+
+            return redirect()
+                ->route('admin.settings.system.updates.show', $systemUpdate)
+                ->withErrors([
+                    'update' => __('The update failed: :message', ['message' => $exception->getMessage()]),
+                ]);
         }
 
         $request->session()->forget($this->maintenanceSessionKey($systemUpdate));

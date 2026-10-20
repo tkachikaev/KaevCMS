@@ -97,10 +97,12 @@ class WebUpdaterReleaseTest extends TestCase
             'hash_equals',
             'minimum_version',
             'maximum_version',
-            'Web Updater 1.0 requires a full deployment',
+            'dependencies/vendor.zip',
+            'composer_lock_sha256',
         ] as $required) {
             $this->assertStringContainsString($required, $inspector);
         }
+        $this->assertStringNotContainsString('Web Updater 1.0 requires a full deployment', $inspector);
 
         $installer = File::get(app_path('Services/Updates/SystemUpdateInstaller.php'));
         foreach ([

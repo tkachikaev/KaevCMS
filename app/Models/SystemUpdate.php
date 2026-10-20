@@ -54,6 +54,9 @@ class SystemUpdate extends Model
 
     public const PHASE_FILES = 'files';
 
+    /** vendor/ was replaced; a fresh PHP process finishes the update (migrations onwards). */
+    public const PHASE_DEPENDENCIES = 'dependencies';
+
     public const PHASE_MIGRATIONS = 'migrations';
 
     public const PHASE_FINALIZING = 'finalizing';
@@ -143,6 +146,7 @@ class SystemUpdate extends Model
         return match ($this->phase) {
             self::PHASE_PREPARING => __('Preparing backups'),
             self::PHASE_FILES => __('Replacing files'),
+            self::PHASE_DEPENDENCIES => __('Replacing Composer dependencies'),
             self::PHASE_MIGRATIONS => __('Applying migrations'),
             self::PHASE_FINALIZING => __('Finalizing update'),
             self::PHASE_COMPLETED => __('Completed'),
@@ -154,9 +158,16 @@ class SystemUpdate extends Model
     {
         return $this->phase === null || in_array($this->phase, [
             self::PHASE_FILES,
+            self::PHASE_DEPENDENCIES,
             self::PHASE_MIGRATIONS,
             self::PHASE_FINALIZING,
         ], true);
+    }
+
+    /** True while the update waits for a fresh PHP process to finish it after the vendor swap. */
+    public function awaitsFinalization(): bool
+    {
+        return $this->status === self::STATUS_APPLYING && $this->phase === self::PHASE_DEPENDENCIES;
     }
 
     public function databaseMayHaveChanged(): bool

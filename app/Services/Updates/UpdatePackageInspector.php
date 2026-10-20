@@ -54,7 +54,10 @@ final class UpdatePackageInspector
             $manifest = $this->decodeManifest($zip);
             $validated = $this->validateManifest($zip, $manifest, $currentVersion);
             $this->extractPayload($zip, $validated['files'], $stagingPath);
-            $warnings = $this->dependencyWarnings($validated['files'], $stagingPath);
+            $dependencies = $this->dependencyPlan($zip, $validated, $stagingPath);
+            $warnings = $dependencies === null ? [] : [
+                __('This update replaces the Composer dependencies (:count files). The previous vendor directory is kept until the update completes.', ['count' => $dependencies['files']]),
+            ];
         } catch (Throwable $exception) {
             $this->removeDirectory($stagingPath);
             $zip->close();
@@ -80,6 +83,7 @@ final class UpdatePackageInspector
             archivePath: $archivePath,
             archiveSha256: $archiveSha256,
             stagingPath: $stagingPath,
+            dependencies: $dependencies,
         );
     }
 
@@ -213,7 +217,8 @@ final class UpdatePackageInspector
      *     maximum_version: string,
      *     files: list<array{source: string, target: string, sha256: string, size: int}>,
      *     delete: list<string>,
-     *     migrate: bool
+     *     migrate: bool,
+     *     dependencies: array{archive: string, sha256: string, size: int, files: int, bytes: int, composer_lock_sha256: string, php_version_id: int, extensions: list<string>}|null
      * }
      */
     private function validateManifest(ZipArchive $zip, array $manifest, string $currentVersion): array
@@ -332,7 +337,12 @@ final class UpdatePackageInspector
             throw new RuntimeException(__('The update package must contain core/VERSION.'));
         }
 
-        $this->validateDeclaredEntries($zip, array_keys($sourcePaths));
+        $dependencyBundle = $this->validateDependencySection($zip, $manifest, $files);
+        $declaredEntries = array_keys($sourcePaths);
+        if ($dependencyBundle !== null) {
+            $declaredEntries[] = strtolower($dependencyBundle['archive']);
+        }
+        $this->validateDeclaredEntries($zip, $declaredEntries);
 
         $delete = [];
         $deletePaths = [];
@@ -376,6 +386,77 @@ final class UpdatePackageInspector
             'files' => $files,
             'delete' => $delete,
             'migrate' => $this->manifestBoolean($manifest, 'migrate', true),
+            'dependencies' => $dependencyBundle,
+        ];
+    }
+
+    /**
+     * Validates the optional production vendor bundle. It must describe the composer.lock
+     * shipped in the same package, so a bundle can never be paired with other dependencies.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @param  list<array{source: string, target: string, sha256: string, size: int}>  $files
+     * @return array{archive: string, sha256: string, size: int, files: int, bytes: int, composer_lock_sha256: string, php_version_id: int, extensions: list<string>}|null
+     */
+    private function validateDependencySection(ZipArchive $zip, array $manifest, array $files): ?array
+    {
+        $section = $manifest['dependencies'] ?? null;
+        if ($section === null) {
+            return null;
+        }
+
+        if (! is_array($section) || ($section['schema'] ?? null) !== 1 || ($section['archive'] ?? null) !== 'dependencies/vendor.zip') {
+            throw new RuntimeException(__('The update dependency bundle section is invalid.'));
+        }
+
+        $sha256 = strtolower((string) ($section['sha256'] ?? ''));
+        $lockSha256 = strtolower((string) ($section['composer_lock_sha256'] ?? ''));
+        $size = $section['size'] ?? null;
+        $fileCount = $section['files'] ?? null;
+        $bytes = $section['bytes'] ?? null;
+        $platform = $section['platform'] ?? null;
+        $phpVersionId = is_array($platform) ? ($platform['php_version_id'] ?? null) : null;
+        $extensions = is_array($platform) ? ($platform['extensions'] ?? null) : null;
+        if (preg_match('/\A[a-f0-9]{64}\z/', $sha256) !== 1
+            || preg_match('/\A[a-f0-9]{64}\z/', $lockSha256) !== 1
+            || ! is_int($size) || $size < 1
+            || ! is_int($fileCount) || $fileCount < 1 || $fileCount > max(1, (int) config('cms.updates.maximum_dependency_files', 60000))
+            || ! is_int($bytes) || $bytes < 1 || $bytes > max(1, (int) config('cms.updates.maximum_uncompressed_bytes', 1073741824))
+            || ! is_int($phpVersionId) || $phpVersionId < 80300
+            || ! is_array($extensions)) {
+            throw new RuntimeException(__('The update dependency bundle section is invalid.'));
+        }
+
+        foreach ($extensions as $extension) {
+            if (! is_string($extension) || preg_match('/\A[a-z0-9_-]+\z/i', $extension) !== 1) {
+                throw new RuntimeException(__('The update dependency bundle section is invalid.'));
+            }
+        }
+
+        $packagedLock = null;
+        foreach ($files as $file) {
+            if ($file['target'] === 'core/composer.lock') {
+                $packagedLock = $file['sha256'];
+            }
+        }
+        if ($packagedLock === null || ! hash_equals($packagedLock, $lockSha256)) {
+            throw new RuntimeException(__('The dependency bundle was built for a different composer.lock than the one in this package.'));
+        }
+
+        $stat = $zip->statName('dependencies/vendor.zip');
+        if ($stat === false || $stat['size'] !== $size || ! hash_equals($sha256, $this->hashArchiveEntry($zip, 'dependencies/vendor.zip'))) {
+            throw new RuntimeException(__('The dependency bundle checksum does not match the manifest.'));
+        }
+
+        return [
+            'archive' => 'dependencies/vendor.zip',
+            'sha256' => $sha256,
+            'size' => $size,
+            'files' => $fileCount,
+            'bytes' => $bytes,
+            'composer_lock_sha256' => $lockSha256,
+            'php_version_id' => $phpVersionId,
+            'extensions' => array_values($extensions),
         ];
     }
 
@@ -490,21 +571,24 @@ final class UpdatePackageInspector
     }
 
     /**
-     * @param  list<array{source: string, target: string, sha256: string, size: int}>  $files
-     * @return list<string>
+     * Decides whether this site needs the package's vendor bundle. Sites whose installed
+     * composer.lock already matches keep their vendor directory untouched.
+     *
+     * @param  array{files: list<array{source: string, target: string, sha256: string, size: int}>, dependencies: array{archive: string, sha256: string, size: int, files: int, bytes: int, composer_lock_sha256: string, php_version_id: int, extensions: list<string>}|null}  $validated
+     * @return array{bundle_path: string, files: int, bytes: int, composer_lock_sha256: string}|null
      */
-    private function dependencyWarnings(array $files, string $stagingPath): array
+    private function dependencyPlan(ZipArchive $zip, array $validated, string $stagingPath): ?array
     {
-        $currentLock = base_path('composer.lock');
+        $currentLock = $this->layout->coreRoot().DIRECTORY_SEPARATOR.'composer.lock';
         $targetLock = null;
-        foreach ($files as $file) {
+        foreach ($validated['files'] as $file) {
             if ($file['target'] === 'core/composer.lock') {
                 $targetLock = $stagingPath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file['source']);
             }
         }
 
         if ($targetLock === null || ! is_file($currentLock)) {
-            return [];
+            return null;
         }
 
         $currentHash = hash_file('sha256', $currentLock);
@@ -514,10 +598,52 @@ final class UpdatePackageInspector
         }
 
         if (hash_equals($currentHash, $targetHash)) {
-            return [];
+            return null;
         }
 
-        throw new RuntimeException(__('This update changes Composer dependencies. Web Updater 1.0 requires a full deployment for dependency changes.'));
+        $bundle = $validated['dependencies'];
+        if ($bundle === null) {
+            throw new RuntimeException(__('This update changes Composer dependencies, but the package does not include them. Use the cumulative update package from the official release.'));
+        }
+
+        if ($bundle['php_version_id'] > PHP_VERSION_ID) {
+            throw new RuntimeException(__('The new Composer dependencies require PHP :version or newer; this server runs PHP :current.', [
+                'version' => intdiv($bundle['php_version_id'], 10000).'.'.intdiv($bundle['php_version_id'] % 10000, 100).'.'.($bundle['php_version_id'] % 100),
+                'current' => PHP_VERSION,
+            ]));
+        }
+
+        foreach ($bundle['extensions'] as $extension) {
+            if (! extension_loaded($extension)) {
+                throw new RuntimeException(__('The new Composer dependencies require the PHP :extension extension.', ['extension' => $extension]));
+            }
+        }
+
+        $destination = $stagingPath.DIRECTORY_SEPARATOR.'dependencies'.DIRECTORY_SEPARATOR.'vendor.zip';
+        if (! is_dir(dirname($destination)) && ! mkdir(dirname($destination), 0770, true) && ! is_dir(dirname($destination))) {
+            throw new RuntimeException(__('Unable to create an update staging subdirectory.'));
+        }
+
+        $source = $zip->getStream($bundle['archive']);
+        $target = fopen($destination, 'wb');
+        if (! is_resource($source) || ! is_resource($target)) {
+            throw new RuntimeException(__('Unable to stage update payload: :source', ['source' => $bundle['archive']]));
+        }
+        $copied = stream_copy_to_stream($source, $target);
+        fclose($source);
+        fclose($target);
+
+        $stagedHash = hash_file('sha256', $destination);
+        if ($copied !== $bundle['size'] || ! is_string($stagedHash) || ! hash_equals($bundle['sha256'], $stagedHash)) {
+            throw new RuntimeException(__('The staged update payload failed integrity verification: :source', ['source' => $bundle['archive']]));
+        }
+
+        return [
+            'bundle_path' => $destination,
+            'files' => $bundle['files'],
+            'bytes' => $bundle['bytes'],
+            'composer_lock_sha256' => $bundle['composer_lock_sha256'],
+        ];
     }
 
     private function hashArchiveEntry(ZipArchive $zip, string $path): string

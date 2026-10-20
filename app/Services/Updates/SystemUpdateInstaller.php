@@ -31,6 +31,7 @@ final class SystemUpdateInstaller
         private readonly VdsUpdateAgent $vdsUpdateAgent,
         private readonly AdminNotificationCenter $notifications,
         private readonly Application $application,
+        private readonly UpdateDependencyBundle $dependencies,
     ) {}
 
     public function apply(SystemUpdate $update, string $maintenanceSecret): SystemUpdate
@@ -60,6 +61,8 @@ final class SystemUpdateInstaller
         $installationStarted = false;
         $filesMayHaveChanged = false;
         $databaseMayHaveChanged = false;
+        $dependenciesMayHaveChanged = false;
+        $handedOff = false;
         $backupRoot = storage_path('app/kaevcms/update-backups/'.$update->uuid);
 
         try {
@@ -129,40 +132,38 @@ final class SystemUpdateInstaller
                 $deploymentPermissions,
             );
 
-            if ($package->migrate) {
-                $this->setPhase($update, SystemUpdate::PHASE_MIGRATIONS, $log);
-                $databaseMayHaveChanged = true;
-                $this->runArtisan('migrate', ['--force' => true], $log);
-            }
+            if ($package->dependencies !== null) {
+                // This process already loaded the previous framework classes, so after the
+                // vendor swap it hands the remaining steps to a fresh PHP process.
+                $this->setPhase($update, SystemUpdate::PHASE_DEPENDENCIES, $log);
+                $dependenciesMayHaveChanged = true;
+                $staged = $this->dependencies->stage($package->dependencies, $log);
+                $this->filesystem->secureTree($staged, 'core/vendor', $deploymentPermissions);
+                $this->dependencies->swap($staged, $backupRoot, $update->uuid, [
+                    'from_version' => $currentVersion,
+                    'target_version' => $package->targetVersion,
+                    'package_id' => $package->packageId,
+                    'migrate' => $package->migrate,
+                    'maintenance_activated' => $maintenanceActivated,
+                    'archive_path' => $package->archivePath,
+                ], $log);
 
-            $this->setPhase($update, SystemUpdate::PHASE_FINALIZING, $log);
-            $this->runArtisan('optimize:clear', [], $log);
-            $this->runtimeDirectories->ensure(true);
-            $log->write('Runtime directories recreated and write-tested after cache clear.');
-            $this->runArtisan('queue:restart', [], $log);
-            $this->installedVersion->mark($package->targetVersion);
+                if (function_exists('opcache_reset')) {
+                    @opcache_reset();
+                }
 
-            if ($maintenanceActivated) {
-                $this->runArtisan('up', [], $log);
+                $handedOff = true;
+                $log->write('Remaining update steps continue in a fresh PHP process with the new dependencies.');
+            } else {
+                $this->complete($update, $package->migrate, $package->targetVersion, $maintenanceActivated, $log, $databaseMayHaveChanged);
                 $maintenanceActivated = false;
-            }
 
-            if (function_exists('opcache_reset')) {
-                @opcache_reset();
+                $log->write("KaevCMS {$package->targetVersion} installed successfully.");
+                if (! @unlink($package->archivePath) && is_file($package->archivePath)) {
+                    $log->write('Unable to remove the installed update package.', 'WARN');
+                }
+                $this->recordSuccessAudit($package->packageId, $package->installationType, $package->targetVersion, $currentVersion, $log);
             }
-
-            $update->forceFill([
-                'status' => SystemUpdate::STATUS_SUCCEEDED,
-                'phase' => SystemUpdate::PHASE_COMPLETED,
-                'completed_at' => now(),
-                'error_summary' => null,
-            ])->save();
-
-            $log->write("KaevCMS {$package->targetVersion} installed successfully.");
-            if (! @unlink($package->archivePath) && is_file($package->archivePath)) {
-                $log->write('Unable to remove the installed update package.', 'WARN');
-            }
-            $this->recordSuccessAudit($package, $currentVersion, $log);
         } catch (Throwable $exception) {
             $log->write($exception->getMessage(), 'ERROR');
 
@@ -170,94 +171,275 @@ final class SystemUpdateInstaller
                 throw new RuntimeException($exception->getMessage(), previous: $exception);
             }
 
-            $rollbackErrors = [];
-            $rollbackReady = true;
-
-            if ($databaseMayHaveChanged) {
-                if (! is_array($databaseBackup)) {
-                    $rollbackErrors[] = 'Database rollback: required backup is missing.';
-                    $rollbackReady = false;
-                } else {
-                    try {
-                        $this->databaseBackup->verify($databaseBackup);
-                    } catch (Throwable $rollbackException) {
-                        $rollbackErrors[] = 'Database rollback: '.$rollbackException->getMessage();
-                        $rollbackReady = false;
-                    }
-                }
-            }
-            if ($filesMayHaveChanged) {
-                if (! is_array($fileBackup)) {
-                    $rollbackErrors[] = 'File rollback: required backup is missing.';
-                    $rollbackReady = false;
-                } else {
-                    try {
-                        $this->filesystem->verifyBackup($fileBackup);
-                    } catch (Throwable $rollbackException) {
-                        $rollbackErrors[] = 'File rollback: '.$rollbackException->getMessage();
-                        $rollbackReady = false;
-                    }
-                }
+            $this->failAndRollBack(
+                $update,
+                $currentVersion,
+                $exception,
+                $log,
+                $backupRoot,
+                $databaseMayHaveChanged ? $databaseBackup : false,
+                $filesMayHaveChanged ? $fileBackup : false,
+                $dependenciesMayHaveChanged,
+                $deploymentPermissions,
+            );
+        } finally {
+            if (! $handedOff && ! $wasDown && ($maintenanceActivated || $this->application->isDownForMaintenance())) {
+                $this->leaveMaintenance($log);
             }
 
-            if (! $rollbackReady) {
-                foreach ($rollbackErrors as $rollbackError) {
-                    $log->write($rollbackError, 'ERROR');
-                }
-                $log->write('Automatic rollback was not started because a required backup is missing.', 'ERROR');
-            } else {
-                if ($databaseMayHaveChanged && is_array($databaseBackup)) {
-                    try {
-                        $this->databaseBackup->restore($databaseBackup, $log);
-                    } catch (Throwable $rollbackException) {
-                        $rollbackMessage = 'Database rollback: '.$rollbackException->getMessage();
-                        $rollbackErrors[] = $rollbackMessage;
-                        $log->write($rollbackMessage, 'ERROR');
-                    }
-                }
-
-                if ($filesMayHaveChanged && is_array($fileBackup)) {
-                    try {
-                        $this->filesystem->rollback($fileBackup, $log, $deploymentPermissions);
-                    } catch (Throwable $rollbackException) {
-                        $rollbackMessage = 'File rollback: '.$rollbackException->getMessage();
-                        $rollbackErrors[] = $rollbackMessage;
-                        $log->write($rollbackMessage, 'ERROR');
-                    }
-                }
-
-                if ($rollbackErrors === []) {
-                    try {
-                        $this->installedVersion->mark($currentVersion);
-                    } catch (Throwable $rollbackException) {
-                        $rollbackMessage = 'Version rollback: '.$rollbackException->getMessage();
-                        $rollbackErrors[] = $rollbackMessage;
-                        $log->write($rollbackMessage, 'ERROR');
-                    }
-                }
+            if ($package instanceof InspectedUpdatePackage) {
+                $this->removeDirectory($package->stagingPath);
             }
 
-            $summary = Str::limit($exception->getMessage(), 400, '');
-            if ($rollbackErrors !== []) {
-                $summary .= ' '.__('Automatic rollback requires attention.');
+            $this->updateLock->release($lock);
+        }
+
+        $fresh = $update->fresh();
+
+        return $fresh instanceof SystemUpdate ? $fresh : $update;
+    }
+
+    /**
+     * Finishes an update after its vendor swap. Must run in a PHP process started after the
+     * swap (new artisan process or new HTTP request), so only the new dependencies are loaded.
+     */
+    public function finalize(SystemUpdate $update): SystemUpdate
+    {
+        if (! $update->awaitsFinalization()) {
+            throw new RuntimeException(__('This update is not waiting to be finalized.'));
+        }
+
+        ignore_user_abort(true);
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+
+        $lock = $this->updateLock->acquire();
+        $log = new UpdateLog($update->uuid);
+        $backupRoot = $this->backupRootFor($update);
+        $state = null;
+        $databaseMayHaveChanged = false;
+        $maintenanceActivated = false;
+        $deploymentPermissions = null;
+
+        try {
+            $state = $this->dependencies->state($backupRoot);
+            if (! is_array($state) || ($state['swapped'] ?? false) !== true || ($state['uuid'] ?? null) !== $update->uuid) {
+                throw new RuntimeException(__('The dependency update state is missing; recover the update instead.'));
             }
 
+            $maintenanceActivated = (bool) ($state['maintenance_activated'] ?? false);
+            if ($update->isAgentExecution()) {
+                $deploymentPermissions = $this->vdsUpdateAgent->deploymentPermissions();
+            }
+
+            $log->write('Finalizing the update in a fresh PHP process with the new dependencies.');
+            $target = (string) ($state['target_version'] ?? $update->target_version);
+            $this->complete($update, (bool) ($state['migrate'] ?? true), $target, $maintenanceActivated, $log, $databaseMayHaveChanged);
+            $maintenanceActivated = false;
+
+            $this->dependencies->discardPrevious($log);
+            $log->write("KaevCMS {$target} installed successfully.");
+            $archive = (string) ($state['archive_path'] ?? '');
+            if ($archive !== '' && is_file($archive) && ! @unlink($archive)) {
+                $log->write('Unable to remove the installed update package.', 'WARN');
+            }
+            $this->recordSuccessAudit($update->package_id, $update->installation_type, $target, $update->from_version, $log);
+        } catch (Throwable $exception) {
+            $log->write($exception->getMessage(), 'ERROR');
+            $databaseBackup = null;
+            $fileBackup = null;
             try {
-                SystemUpdate::query()->where('uuid', $update->uuid)->update([
-                    'status' => SystemUpdate::STATUS_FAILED,
-                    'phase' => $update->phase,
-                    'completed_at' => now(),
-                    'error_summary' => Str::limit($summary, 500, ''),
-                    'log_path' => $log->relativePath(),
-                    'backup_path' => $this->relativeStoragePath($backupRoot),
-                    'updated_at' => now(),
-                ]);
-            } catch (Throwable) {
-                // The file log remains the final recovery source if the database itself cannot be restored.
+                $databaseBackup = $this->databaseBackup->load($backupRoot.'/database');
+                $fileBackup = $this->filesystem->loadBackup($backupRoot);
+            } catch (Throwable $loadException) {
+                $log->write('Unable to load the update backups: '.$loadException->getMessage(), 'ERROR');
             }
 
-            $this->recordFailureAudit($update, $currentVersion, $rollbackErrors, $log);
+            $this->failAndRollBack(
+                $update,
+                $update->from_version,
+                $exception,
+                $log,
+                $backupRoot,
+                $databaseMayHaveChanged ? $databaseBackup : false,
+                $fileBackup,
+                $state !== null,
+                $deploymentPermissions,
+            );
+        } finally {
+            if ($maintenanceActivated || ($state !== null && ($state['maintenance_activated'] ?? false) && $this->application->isDownForMaintenance())) {
+                // After a failure the previous vendor tree is back on disk while this process
+                // still runs the new one, so the console must not be booted again here.
+                $this->leaveMaintenance($log, useArtisan: false);
+            }
 
+            $this->updateLock->release($lock);
+        }
+
+        $fresh = $update->fresh();
+
+        return $fresh instanceof SystemUpdate ? $fresh : $update;
+    }
+
+    /**
+     * Migrations, cache clearing and version marking shared by both update paths.
+     */
+    private function complete(
+        SystemUpdate $update,
+        bool $migrate,
+        string $targetVersion,
+        bool $maintenanceActivated,
+        UpdateLog $log,
+        bool &$databaseMayHaveChanged,
+    ): void {
+        if ($migrate) {
+            $this->setPhase($update, SystemUpdate::PHASE_MIGRATIONS, $log);
+            $databaseMayHaveChanged = true;
+            $this->runArtisan('migrate', ['--force' => true], $log);
+        }
+
+        $this->setPhase($update, SystemUpdate::PHASE_FINALIZING, $log);
+        $this->runArtisan('optimize:clear', [], $log);
+        $this->runtimeDirectories->ensure(true);
+        $log->write('Runtime directories recreated and write-tested after cache clear.');
+        $this->runArtisan('queue:restart', [], $log);
+        $this->installedVersion->mark($targetVersion);
+
+        if ($maintenanceActivated) {
+            $this->runArtisan('up', [], $log);
+        }
+
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
+        $update->forceFill([
+            'status' => SystemUpdate::STATUS_SUCCEEDED,
+            'phase' => SystemUpdate::PHASE_COMPLETED,
+            'completed_at' => now(),
+            'error_summary' => null,
+        ])->save();
+    }
+
+    /**
+     * Restores database, files and dependencies (each only when it may have changed and a
+     * verified backup exists), records the failure and rethrows a summarised error.
+     *
+     * @param  array{driver: string, path: string, sha256: string}|false|null  $databaseBackup  false: unchanged
+     * @param  array<string, mixed>|false|null  $fileBackup  false: unchanged
+     * @param  array<string, mixed>|null  $deploymentPermissions
+     */
+    private function failAndRollBack(
+        SystemUpdate $update,
+        ?string $currentVersion,
+        Throwable $exception,
+        UpdateLog $log,
+        string $backupRoot,
+        array|false|null $databaseBackup,
+        array|false|null $fileBackup,
+        bool $dependenciesMayHaveChanged,
+        ?array $deploymentPermissions,
+    ): never {
+        $rollbackErrors = [];
+        $rollbackReady = true;
+
+        if ($databaseBackup !== false) {
+            if (! is_array($databaseBackup)) {
+                $rollbackErrors[] = 'Database rollback: required backup is missing.';
+                $rollbackReady = false;
+            } else {
+                try {
+                    $this->databaseBackup->verify($databaseBackup);
+                } catch (Throwable $rollbackException) {
+                    $rollbackErrors[] = 'Database rollback: '.$rollbackException->getMessage();
+                    $rollbackReady = false;
+                }
+            }
+        }
+        if ($fileBackup !== false) {
+            if (! is_array($fileBackup)) {
+                $rollbackErrors[] = 'File rollback: required backup is missing.';
+                $rollbackReady = false;
+            } else {
+                try {
+                    $this->filesystem->verifyBackup($fileBackup);
+                } catch (Throwable $rollbackException) {
+                    $rollbackErrors[] = 'File rollback: '.$rollbackException->getMessage();
+                    $rollbackReady = false;
+                }
+            }
+        }
+
+        if (! $rollbackReady) {
+            foreach ($rollbackErrors as $rollbackError) {
+                $log->write($rollbackError, 'ERROR');
+            }
+            $log->write('Automatic rollback was not started because a required backup is missing.', 'ERROR');
+        } else {
+            if (is_array($databaseBackup)) {
+                try {
+                    $this->databaseBackup->restore($databaseBackup, $log);
+                } catch (Throwable $rollbackException) {
+                    $rollbackMessage = 'Database rollback: '.$rollbackException->getMessage();
+                    $rollbackErrors[] = $rollbackMessage;
+                    $log->write($rollbackMessage, 'ERROR');
+                }
+            }
+
+            if (is_array($fileBackup)) {
+                try {
+                    $this->filesystem->rollback($fileBackup, $log, $deploymentPermissions);
+                } catch (Throwable $rollbackException) {
+                    $rollbackMessage = 'File rollback: '.$rollbackException->getMessage();
+                    $rollbackErrors[] = $rollbackMessage;
+                    $log->write($rollbackMessage, 'ERROR');
+                }
+            }
+
+            if ($dependenciesMayHaveChanged) {
+                try {
+                    $this->dependencies->restore($backupRoot, $log);
+                } catch (Throwable $rollbackException) {
+                    $rollbackMessage = 'Dependency rollback: '.$rollbackException->getMessage();
+                    $rollbackErrors[] = $rollbackMessage;
+                    $log->write($rollbackMessage, 'ERROR');
+                }
+            }
+
+            if ($rollbackErrors === [] && is_string($currentVersion)) {
+                try {
+                    $this->installedVersion->mark($currentVersion);
+                } catch (Throwable $rollbackException) {
+                    $rollbackMessage = 'Version rollback: '.$rollbackException->getMessage();
+                    $rollbackErrors[] = $rollbackMessage;
+                    $log->write($rollbackMessage, 'ERROR');
+                }
+            }
+        }
+
+        $summary = Str::limit($exception->getMessage(), 400, '');
+        if ($rollbackErrors !== []) {
+            $summary .= ' '.__('Automatic rollback requires attention.');
+        }
+
+        try {
+            SystemUpdate::query()->where('uuid', $update->uuid)->update([
+                'status' => SystemUpdate::STATUS_FAILED,
+                'phase' => $update->phase,
+                'completed_at' => now(),
+                'error_summary' => Str::limit($summary, 500, ''),
+                'log_path' => $log->relativePath(),
+                'backup_path' => $this->relativeStoragePath($backupRoot),
+                'updated_at' => now(),
+            ]);
+        } catch (Throwable) {
+            // The file log remains the final recovery source if the database itself cannot be restored.
+        }
+
+        $this->recordFailureAudit($update, $currentVersion, $rollbackErrors, $log);
+
+        try {
             $this->notifications->notifyOnce(
                 new AdminNotificationData(
                     type: AdminNotificationType::SystemUpdateFailed,
@@ -271,27 +453,47 @@ final class SystemUpdateInstaller
                 "system-update-failed:{$update->uuid}",
                 AdminPermission::SystemUpdatesView,
             );
-
-            throw new RuntimeException($summary, previous: $exception);
-        } finally {
-            if (! $wasDown && ($maintenanceActivated || $this->application->isDownForMaintenance())) {
-                try {
-                    $this->runArtisan('up', [], $log);
-                } catch (Throwable $exception) {
-                    $log->write('Unable to leave maintenance mode: '.$exception->getMessage(), 'ERROR');
-                }
-            }
-
-            if ($package instanceof InspectedUpdatePackage) {
-                $this->removeDirectory($package->stagingPath);
-            }
-
-            $this->updateLock->release($lock);
+        } catch (Throwable $notificationException) {
+            $log->write('Unable to create the failure notification: '.$notificationException->getMessage(), 'WARN');
         }
 
-        $fresh = $update->fresh();
+        throw new RuntimeException($summary, previous: $exception);
+    }
 
-        return $fresh instanceof SystemUpdate ? $fresh : $update;
+    /**
+     * Leaves maintenance mode through Artisan, falling back to removing the maintenance
+     * marker directly when the console cannot run (e.g. right after a dependency rollback).
+     */
+    private function leaveMaintenance(UpdateLog $log, bool $useArtisan = true): void
+    {
+        if ($useArtisan) {
+            try {
+                $this->runArtisan('up', [], $log);
+            } catch (Throwable $exception) {
+                $log->write('Unable to leave maintenance mode through Artisan: '.$exception->getMessage(), 'ERROR');
+            }
+        }
+
+        foreach (['down', 'maintenance.php'] as $marker) {
+            $path = storage_path('framework'.DIRECTORY_SEPARATOR.$marker);
+            if (is_file($path) && ! @unlink($path)) {
+                $log->write("Unable to remove the maintenance file {$marker}.", 'ERROR');
+            }
+        }
+
+        if (! $useArtisan) {
+            $log->write('Maintenance mode lifted without Artisan after restoring the previous dependencies.');
+        }
+    }
+
+    private function backupRootFor(SystemUpdate $update): string
+    {
+        $relative = str_replace('\\', '/', (string) $update->backup_path);
+        if ($relative !== 'kaevcms/update-backups/'.$update->uuid) {
+            throw new RuntimeException(__('The update recovery backup path is invalid.'));
+        }
+
+        return storage_path('app'.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative));
     }
 
     private function assertPackageMatchesRecord(InspectedUpdatePackage $package, SystemUpdate $update): void
@@ -360,7 +562,9 @@ final class SystemUpdateInstaller
     }
 
     private function recordSuccessAudit(
-        InspectedUpdatePackage $package,
+        string $packageId,
+        string $installationType,
+        string $targetVersion,
         string $currentVersion,
         UpdateLog $log,
     ): void {
@@ -368,12 +572,12 @@ final class SystemUpdateInstaller
             $this->auditLogger->success(
                 category: 'system',
                 action: 'system.update_installed',
-                target: "KaevCMS {$package->targetVersion}",
+                target: "KaevCMS {$targetVersion}",
                 details: [
                     'from_version' => $currentVersion,
-                    'target_version' => $package->targetVersion,
-                    'package_id' => $package->packageId,
-                    'installation_type' => $package->installationType,
+                    'target_version' => $targetVersion,
+                    'package_id' => $packageId,
+                    'installation_type' => $installationType,
                 ],
             );
         } catch (Throwable $exception) {
