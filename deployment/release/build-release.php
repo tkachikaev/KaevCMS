@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+/** Newest release whose Web Updater cannot replace Composer dependencies. */
+const KAEV_RELEASE_LAST_LEGACY_UPDATER = '0.50.16';
+
 if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
     try {
         $artifacts = kaevReleaseBuild(getopt('', [
@@ -22,7 +25,7 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
 
 /**
  * @param  array<string, mixed>  $options
- * @return array{full:string,patch:string,cumulative:string,checksums:string}
+ * @return array{full:string,patch:string,cumulative:string,checksums:string,bridge?:string}
  */
 function kaevReleaseBuild(array $options): array
 {
@@ -154,6 +157,29 @@ function kaevReleaseBuild(array $options): array
         kaevReleaseValidateZip($cumulativePath);
 
         $artifacts = [$fullPath, $patchPath, $cumulativePath];
+
+        // Sites still running an updater that cannot replace dependencies (up to
+        // KAEV_RELEASE_LAST_LEGACY_UPDATER) install this bridge first, then the cumulative
+        // package. The bridge version sits between that range and the cumulative maximum.
+        $bridgePath = null;
+        if (version_compare($previousVersion, KAEV_RELEASE_LAST_LEGACY_UPDATER, '>')) {
+            $bridgeTarget = $previousVersion.'-bridge';
+            $bridgePath = $outputDirectory.'/KaevCMS-bridge-update-'.$cumulativeBase.'-'.KAEV_RELEASE_LAST_LEGACY_UPDATER.'-for-'.$version.'.zip';
+            kaevReleaseRunCommand([
+                PHP_BINARY,
+                $updateBuilder,
+                '--root='.$root,
+                '--output='.$bridgePath,
+                '--minimum='.$cumulativeBase,
+                '--maximum='.KAEV_RELEASE_LAST_LEGACY_UPDATER,
+                '--target='.$bridgeTarget,
+                '--name=KaevCMS '.$version.' bridge (install before the '.$version.' update)',
+                '--delete-file='.$root.'/deployment/updates/deletions.json',
+                '--bridge',
+            ], $root);
+            kaevReleaseValidateZip($bridgePath);
+            $artifacts[] = $bridgePath;
+        }
         $checksumLines = [];
         foreach ($artifacts as $artifact) {
             $hash = hash_file('sha256', $artifact);
@@ -166,12 +192,17 @@ function kaevReleaseBuild(array $options): array
             throw new RuntimeException('Unable to write the checksum file.');
         }
 
-        return [
+        $result = [
             'full' => $fullPath,
             'patch' => $patchPath,
             'cumulative' => $cumulativePath,
             'checksums' => $checksumPath,
         ];
+        if ($bridgePath !== null) {
+            $result['bridge'] = $bridgePath;
+        }
+
+        return $result;
     } finally {
         kaevReleaseRemoveTree($temporaryRoot);
     }

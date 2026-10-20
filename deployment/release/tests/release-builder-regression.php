@@ -159,7 +159,41 @@ try {
     assertFixture(in_array('composer.lock', fixtureZipEntries($first['patch']), true), 'Changed dependency lock must enter the direct patch.');
 
     $checksumLines = file($first['checksums'], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    assertFixture(is_array($checksumLines) && count($checksumLines) === 3, 'Checksum file must contain exactly three release artifacts.');
+    $expectedArtifacts = isset($first['bridge']) ? 4 : 3;
+    assertFixture(is_array($checksumLines) && count($checksumLines) === $expectedArtifacts, 'Checksum file must list every release artifact.');
+
+    // Bridge for sites whose updater cannot replace dependencies: current code, no lock, no vendor.
+    $bridgeTarget = $previousVersion.'-bridge';
+    $bridgePath = $temporaryRoot.'/bridge/bridge.zip';
+    kaevReleaseRunCommand([
+        PHP_BINARY,
+        $targetRoot.'/deployment/updates/build-package.php',
+        '--root='.$targetRoot,
+        '--output='.$bridgePath,
+        '--minimum='.syntheticOlderVersion(syntheticOlderVersion($previousVersion)),
+        '--maximum='.syntheticOlderVersion($previousVersion),
+        '--target='.$bridgeTarget,
+        '--delete-file='.$targetRoot.'/deployment/updates/deletions.json',
+        '--bridge',
+    ], $targetRoot);
+    $bridgeZip = new ZipArchive;
+    assertFixture($bridgeZip->open($bridgePath) === true, 'The bridge package must be readable.');
+    $bridgeManifest = json_decode((string) $bridgeZip->getFromName('kaevcms-update.json'), true);
+    $bridgeVersion = $bridgeZip->getFromName('payload/core/VERSION');
+    $bridgeEntries = [];
+    for ($index = 0; $index < $bridgeZip->numFiles; $index++) {
+        $bridgeEntries[] = (string) $bridgeZip->getNameIndex($index);
+    }
+    $bridgeZip->close();
+    assertFixture(is_array($bridgeManifest) && ($bridgeManifest['target_version'] ?? null) === $bridgeTarget, 'The bridge must target the bridge version.');
+    assertFixture($bridgeVersion === $bridgeTarget."\n", 'The bridge VERSION file must carry the bridge version.');
+    assertFixture(! in_array('payload/core/composer.lock', $bridgeEntries, true), 'The bridge must not change composer.lock.');
+    assertFixture(! isset($bridgeManifest['dependencies']), 'The bridge must not carry a dependency bundle.');
+    assertFixture(in_array('payload/core/app/Services/Updates/UpdateDependencyBundle.php', $bridgeEntries, true), 'The bridge must install the dependency-aware updater.');
+    $bridgeDeclared = array_column((array) ($bridgeManifest['files'] ?? []), 'source');
+    foreach ($bridgeEntries as $entry) {
+        assertFixture($entry === 'kaevcms-update.json' || in_array($entry, $bridgeDeclared, true), 'Older updaters reject undeclared bridge entries: '.$entry);
+    }
 
     $validTargetRelease = readFixtureJson($targetRoot.'/release.json');
 
@@ -263,6 +297,9 @@ function buildFixtureRelease(string $root, string $previousArchive, string $outp
         'cumulative' => $outputDirectory.'/KaevCMS-cumulative-update-'.$range.'-to-'.$version.'.zip',
         'checksums' => $outputDirectory.'/KaevCMS-'.$version.'-SHA256SUMS.txt',
     ];
+    if (version_compare($previousVersion, KAEV_RELEASE_LAST_LEGACY_UPDATER, '>')) {
+        $expected['bridge'] = $outputDirectory.'/KaevCMS-bridge-update-'.$base.'-'.KAEV_RELEASE_LAST_LEGACY_UPDATER.'-for-'.$version.'.zip';
+    }
     assertFixture(
         array_keys($artifacts) === array_keys($expected),
         'Unified release builder returned unexpected artifact labels.',
