@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminSecurityHeaders;
+use App\Http\Middleware\AuthenticatePlayerSession;
 use App\Http\Middleware\EnforceAdminAccess;
 use App\Http\Middleware\EnsureAdminPath;
 use App\Http\Middleware\EnsureModuleEnabled;
@@ -26,6 +27,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
 
         $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify']);
+        $middleware->appendToGroup('web', AuthenticatePlayerSession::class);
         $middleware->appendToGroup('web', SetApplicationLocale::class);
         $middleware->appendToGroup('web', SecurityHeaders::class);
         $middleware->alias([
