@@ -7,6 +7,7 @@ use App\Models\SystemUpdate;
 use App\Services\Releases\InstalledVersion;
 use App\Services\Updates\SystemUpdateInstaller;
 use App\Services\Updates\UpdateInstallationLayout;
+use App\Services\Updates\UpdatePackageInspector;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -74,6 +75,7 @@ class DependencyUpdateFlowTest extends TestCase
         if (app()->isDownForMaintenance()) {
             Artisan::call('up');
         }
+        @unlink(storage_path('framework/maintenance.php'));
         DB::purge('dependency_flow');
         config(['database.default' => $this->originalConnection]);
         foreach ([$this->root, ...$this->cleanup] as $path) {
@@ -87,6 +89,9 @@ class DependencyUpdateFlowTest extends TestCase
     {
         $update = $this->stagedUpdate();
         $installer = $this->app->make(SystemUpdateInstaller::class);
+        // A copy left by an older updater that installed the bundle as a plain file.
+        mkdir($this->root.'/core/deployment/updates/dependency-bundle', 0777, true);
+        file_put_contents($this->root.'/core/deployment/updates/dependency-bundle/vendor.zip', 'stale');
 
         $handedOff = $installer->apply($update, Str::random(40));
 
@@ -108,6 +113,7 @@ class DependencyUpdateFlowTest extends TestCase
         $this->assertFalse(app()->isDownForMaintenance());
         $this->assertDirectoryDoesNotExist($this->root.'/core/vendor.kaevcms-previous');
         $this->assertStringContainsString('new tree', (string) file_get_contents($this->root.'/core/vendor/autoload.php'));
+        $this->assertFileDoesNotExist($this->root.'/core/deployment/updates/dependency-bundle/vendor.zip');
     }
 
     public function test_failed_finalization_rolls_back_files_dependencies_and_lifts_maintenance(): void
@@ -266,7 +272,9 @@ class DependencyUpdateFlowTest extends TestCase
             $zip->addFromString($source, $contents);
             $files[] = ['source' => $source, 'target' => substr($source, 8), 'sha256' => hash('sha256', $contents), 'size' => strlen($contents)];
         }
-        $zip->addFile($vendorBundle, 'dependencies/vendor.zip');
+        $bundleSource = 'payload/'.UpdatePackageInspector::DEPENDENCY_BUNDLE_TARGET;
+        $zip->addFile($vendorBundle, $bundleSource);
+        $files[] = ['source' => $bundleSource, 'target' => UpdatePackageInspector::DEPENDENCY_BUNDLE_TARGET, 'sha256' => hash_file('sha256', $vendorBundle), 'size' => filesize($vendorBundle)];
         $manifest = [
             'schema' => 1,
             'package_id' => 'kaevcms-1.1.0',
@@ -281,7 +289,7 @@ class DependencyUpdateFlowTest extends TestCase
             'changelog' => ['Dependency flow test'],
             'dependencies' => [
                 'schema' => 1,
-                'archive' => 'dependencies/vendor.zip',
+                'archive' => $bundleSource,
                 'sha256' => hash_file('sha256', $vendorBundle),
                 'size' => filesize($vendorBundle),
                 'files' => count($vendorFiles),

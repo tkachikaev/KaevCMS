@@ -8,6 +8,7 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
             'root::',
             'previous:',
             'output-dir::',
+            'vendor::',
         ]));
 
         foreach ($artifacts as $label => $path) {
@@ -133,6 +134,22 @@ function kaevReleaseBuild(array $options): array
             '--delete-file='.$root.'/deployment/updates/deletions.json',
             '--previous-root='.$previousRoot,
         ];
+
+        // Sites updating from older releases may have other dependencies; the cumulative
+        // package carries the production vendor tree so Web Update can replace it.
+        $vendorOption = trim((string) ($options['vendor'] ?? ''));
+        if ($vendorOption !== '') {
+            $vendorDirectory = realpath($vendorOption);
+            if (! is_string($vendorDirectory) || ! is_dir($vendorDirectory)) {
+                throw new RuntimeException('--vendor must point to a production vendor directory.');
+            }
+            $bundlePath = $temporaryRoot.'/vendor.zip';
+            kaevReleaseCreateVendorBundle($vendorDirectory, $root.'/composer.lock', $bundlePath, $releaseTimestamp);
+            $command[] = '--dependency-bundle='.$bundlePath;
+        } else {
+            fwrite(STDOUT, "WARNING: no --vendor given; the cumulative package cannot cross a composer.lock change.\n");
+        }
+
         kaevReleaseRunCommand($command, $root);
         kaevReleaseValidateZip($cumulativePath);
 
@@ -400,6 +417,83 @@ function kaevReleaseCreateZip(string $root, array $files, string $output, int $t
             }
             $zip->setMtimeName($relative, $timestamp);
             $zip->setCompressionName($relative, ZipArchive::CM_DEFLATE, 9);
+        }
+    } finally {
+        $zip->close();
+    }
+}
+
+/**
+ * Zips a production vendor tree deterministically (sorted entries, fixed timestamps) after
+ * checking it was installed without dev packages from exactly the given composer.lock.
+ */
+function kaevReleaseCreateVendorBundle(string $vendorDirectory, string $composerLock, string $output, int $timestamp): void
+{
+    $installed = kaevReleaseReadJson($vendorDirectory.'/composer/installed.json');
+    if (($installed['dev'] ?? null) !== false) {
+        throw new RuntimeException('The vendor directory must be installed with composer install --no-dev.');
+    }
+
+    $lock = kaevReleaseReadJson($composerLock);
+    $expected = [];
+    foreach ((array) ($lock['packages'] ?? []) as $package) {
+        if (is_array($package) && is_string($package['name'] ?? null)) {
+            $expected[$package['name']] = (string) ($package['version'] ?? '');
+        }
+    }
+    $actual = [];
+    foreach ((array) ($installed['packages'] ?? []) as $package) {
+        if (is_array($package) && is_string($package['name'] ?? null)) {
+            $actual[$package['name']] = (string) ($package['version'] ?? '');
+        }
+    }
+    ksort($expected);
+    ksort($actual);
+    if ($expected === [] || $expected !== $actual) {
+        throw new RuntimeException('The vendor directory does not match composer.lock (run composer install --no-dev from this lock).');
+    }
+
+    foreach (['autoload.php', 'composer/autoload_real.php', 'composer/installed.json'] as $required) {
+        if (! is_file($vendorDirectory.'/'.$required)) {
+            throw new RuntimeException('The vendor directory is incomplete: vendor/'.$required);
+        }
+    }
+
+    $files = [];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($vendorDirectory, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST,
+    );
+    $base = rtrim(str_replace('\\', '/', $vendorDirectory), '/');
+    foreach ($iterator as $file) {
+        if ($file->isLink()) {
+            throw new RuntimeException('The vendor directory contains a symbolic link: '.$file->getPathname());
+        }
+        if (! $file->isFile()) {
+            continue;
+        }
+        $relative = substr(str_replace('\\', '/', $file->getPathname()), strlen($base) + 1);
+        if (! kaevReleaseSafeRelativePath($relative)) {
+            throw new RuntimeException('Unsafe vendor path: '.$relative);
+        }
+        $files[] = $relative;
+    }
+    sort($files, SORT_STRING);
+
+    $zip = new ZipArchive;
+    if ($zip->open($output, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        throw new RuntimeException('Unable to create the dependency bundle.');
+    }
+    try {
+        foreach ($files as $relative) {
+            $entry = 'vendor/'.$relative;
+            if (! $zip->addFile($base.'/'.$relative, $entry)) {
+                throw new RuntimeException('Unable to add a vendor file: '.$relative);
+            }
+            $zip->setMtimeName($entry, $timestamp);
+            $zip->setCompressionName($entry, ZipArchive::CM_DEFLATE, 9);
+            // Keep entries mode-neutral; the updater applies owner/group modes itself.
+            $zip->setExternalAttributesName($entry, ZipArchive::OPSYS_UNIX, 0100644 << 16);
         }
     } finally {
         $zip->close();

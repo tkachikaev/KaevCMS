@@ -94,7 +94,16 @@ When several updates need attention the command lists them; pass the identifier:
 
 ## Dependency changes
 
-When a release changes `composer.lock`, deploy the complete release and run:
+From KaevCMS 0.51.0 the cumulative update package carries the production dependencies (`vendor`) built exactly from that release's `composer.lock`. When the site's dependencies differ, the Web Updater and the VDS agent replace them themselves — on a VDS, on shared hosting without SSH or Composer, and on servers without internet access:
+
+1. Before anything changes, the PHP version and extensions required by the new dependencies are checked. If something is missing, the update does not start.
+2. The new tree is unpacked beside the live one (`vendor.kaevcms-next`), the CMS files are applied, and the directories are swapped with two renames. The previous tree is kept as `vendor.kaevcms-previous` until the update completes.
+3. Migrations and finalisation run in a fresh PHP process that loads only the new dependencies: the VDS agent starts it itself, and in the panel the browser is redirected to the finalisation step automatically.
+4. On any failure the database, files and dependencies are restored together.
+
+If the browser was closed between the two steps, open the update page and choose "Finish the update", or run `php artisan kaevcms:update-finalize <uuid>` as the project owner. `php artisan kaevcms:update-recover <uuid>` rolls such an update back instead.
+
+Sites on releases before 0.51.0 run the update with their old Web Updater, which cannot replace dependencies. When a package changes `composer.lock` for them, deploy the complete release once and run:
 
 ```bash
 composer install --no-dev --optimize-autoloader --no-interaction
