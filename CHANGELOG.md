@@ -1,3 +1,8 @@
+## 0.50.16 - 2026-10-20
+
+- Fix HTTP 500 on **Settings → System updates** after a completed update on MySQL 8. Every update record stores the full package manifest (about 290 KB for a cumulative package), and sorting the history by `created_at` exceeded MySQL's default 256 KB sort buffer (`Out of sort memory`, error 1038). The update lists and the diagnostic package now sort by record id, which MySQL reads straight from the primary key without a filesort. Bundled module and theme versions are unchanged from 0.50.15.
+- **If the System updates page already shows 500 on your site**, the page cannot be used to upload this fix. Install it once with the CLI updater as the project owner (`php artisan kaevcms:update /path/KaevCMS-cumulative-update-….zip`), or temporarily raise MySQL `sort_buffer_size` to 1M, update from the panel and restore the setting.
+
 ## 0.50.15 - 2026-10-20
 
 Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Support Tickets 1.7.3, Kaev Aurelia Account 1.6.9, L2 Obsidian Luxury 1.6.7. Updated modules ask the Owner to apply their update in **Modules** after the site update. No new database migrations; `composer.lock` is unchanged.
