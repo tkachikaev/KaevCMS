@@ -30,6 +30,21 @@ class MySqlBackupValueEncoderTest extends TestCase
         $this->assertSame('0x'.bin2hex('blob'), $encoder->literal('blob', 'LONGBLOB'));
     }
 
+    public function test_native_bit_integers_and_floats_round_trip_exactly(): void
+    {
+        $encoder = new MySqlBackupValueEncoder;
+
+        // mysqlnd returns BIT(8) b'10100101' as int(165); hex of "165" would overflow the column.
+        $this->assertSame('165', $encoder->literal(165, 'bit'));
+        $this->assertSame('0', $encoder->literal(0, 'bit'));
+
+        $double = 0.12345678901234568;
+        $literal = $encoder->literal($double, 'double');
+        $this->assertSame('CONVERT(0x'.bin2hex(var_export($double, true)).' USING utf8mb4)', $literal);
+        $this->assertSame($double, (float) var_export($double, true));
+        $this->assertNotSame((string) $double, var_export($double, true));
+    }
+
     public function test_null_and_empty_values_produce_valid_sql(): void
     {
         $encoder = new MySqlBackupValueEncoder;

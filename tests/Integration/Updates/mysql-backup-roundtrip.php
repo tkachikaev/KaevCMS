@@ -81,7 +81,7 @@ $pdo->exec("SET SESSION sql_mode = REPLACE(@@SESSION.sql_mode, 'NO_AUTO_VALUE_ON
 DB::table('backup_values')->insert([
     [
         'id' => 5, 'parent_id' => 7, 'small_number' => 5, 'big_number' => '18446744073709551615',
-        'money' => '12.50', 'ratio' => 0.1, 'flag' => 1, 'bits' => DB::raw("b'10100101'"),
+        'money' => '12.50', 'ratio' => 0.12345678901234568, 'flag' => 1, 'bits' => DB::raw("b'10100101'"),
         'title' => 'Привет, мир — «кавычки» \' " \\ ; DROP TABLE x; --', 'legacy_text' => 'café',
         'body' => str_repeat('Длинный текст ', 2000), 'payload' => '{"coins": 5, "name": "Тест", "list": [1, 2]}',
         'raw_bytes' => "\x00\xff\x10\x00", 'blob_bytes' => random_bytes(64), 'status' => 'live',
@@ -103,7 +103,11 @@ $snapshot = static function (): array {
         $tables[$table] = array_map(static function (object $row): array {
             $values = (array) $row;
             foreach ($values as $key => $value) {
-                $values[$key] = $value === null ? null : bin2hex((string) $value);
+                $values[$key] = match (true) {
+                    $value === null => null,
+                    is_float($value) => var_export($value, true),
+                    default => bin2hex((string) $value),
+                };
             }
 
             return $values;

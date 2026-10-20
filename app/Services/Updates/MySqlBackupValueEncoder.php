@@ -38,8 +38,20 @@ final class MySqlBackupValueEncoder
             return 'NULL';
         }
 
-        $bytes = is_bool($value) ? (string) (int) $value : (string) $value;
-        $binary = in_array(strtolower($dataType), self::BINARY_TYPES, true);
+        $type = strtolower($dataType);
+
+        // PDO with native types returns BIT columns as integers; restore them numerically.
+        if ($type === 'bit' && is_int($value)) {
+            return (string) $value;
+        }
+
+        $bytes = match (true) {
+            is_bool($value) => (string) (int) $value,
+            // (string) on a float keeps only `precision` (14) digits; var_export round-trips exactly.
+            is_float($value) => var_export($value, true),
+            default => (string) $value,
+        };
+        $binary = in_array($type, self::BINARY_TYPES, true);
 
         // A bare "0x" is a MySQL syntax error, so empty values need their own literal.
         if ($bytes === '') {
