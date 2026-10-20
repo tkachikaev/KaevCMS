@@ -234,8 +234,9 @@ final class DiagnosticPackageBuilder
                 return ['available' => false, 'updates' => [], 'error_class' => null];
             }
 
+            // Primary-key order avoids a filesort over rows carrying large package manifests.
             $updates = SystemUpdate::query()
-                ->latest()
+                ->latest('id')
                 ->limit(20)
                 ->get()
                 ->map(fn (SystemUpdate $update): array => $this->redactor->arrayValue([

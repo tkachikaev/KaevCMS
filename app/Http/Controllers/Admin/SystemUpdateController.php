@@ -43,13 +43,15 @@ final class SystemUpdateController extends Controller
             'currentVersion' => $this->currentVersion($installedVersion),
             'installationType' => $layout->type(),
             'zipAvailable' => $inspector->available(),
+            // Order by the primary key: each record carries the full package manifest, and a
+            // created_at filesort over such rows exceeds MySQL 8's default sort buffer (error 1038).
             'stagedUpdates' => SystemUpdate::query()
                 ->where('status', SystemUpdate::STATUS_STAGED)
-                ->latest()
+                ->latest('id')
                 ->get(),
             'history' => SystemUpdate::query()
                 ->where('status', '!=', SystemUpdate::STATUS_STAGED)
-                ->latest()
+                ->latest('id')
                 ->limit(30)
                 ->get(),
             'admin' => $admin,

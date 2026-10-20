@@ -8,6 +8,7 @@ use App\Services\Releases\InstalledVersion;
 use App\Services\Updates\VdsUpdateAgent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
 use ZipArchive;
@@ -73,6 +74,42 @@ class SystemUpdateAdminTest extends TestCase
         $this->actingAs($administrator, 'admin')
             ->get('/admin/settings/system/updates')
             ->assertForbidden();
+    }
+
+    public function test_update_lists_are_ordered_by_primary_key_not_by_a_filesort(): void
+    {
+        // Each record stores the full package manifest (~290 KB for a cumulative package). On MySQL 8
+        // ORDER BY created_at over such rows overflows the default 256 KB sort buffer (error 1038).
+        $owner = Admin::factory()->create();
+        foreach ([SystemUpdate::STATUS_SUCCEEDED, SystemUpdate::STATUS_STAGED] as $index => $status) {
+            SystemUpdate::query()->create([
+                'uuid' => sprintf('6ea55e61-a1b6-4f68-91c2-fb7d4c979f6%d', $index),
+                'admin_id' => $owner->id,
+                'package_id' => 'kaevcms-large-manifest-'.$index,
+                'from_version' => cms_version(),
+                'target_version' => cms_version(),
+                'status' => $status,
+                'installation_type' => 'standard',
+                'package_path' => 'kaevcms/updates/packages/missing-'.$index.'.zip',
+                'file_count' => 1,
+                'delete_count' => 0,
+                'manifest' => ['schema' => 1, 'files' => array_fill(0, 2000, str_repeat('a', 160))],
+            ]);
+        }
+
+        DB::enableQueryLog();
+        $this->actingAs($owner, 'admin')->get('/admin/settings/system/updates')->assertOk();
+        $updateQueries = array_values(array_filter(
+            array_column(DB::getQueryLog(), 'query'),
+            static fn (string $sql): bool => str_contains($sql, 'from "system_updates"') && str_contains($sql, 'order by'),
+        ));
+        DB::disableQueryLog();
+
+        $this->assertNotEmpty($updateQueries);
+        foreach ($updateQueries as $sql) {
+            $this->assertStringContainsString('order by "id" desc', $sql);
+            $this->assertStringNotContainsString('order by "created_at"', $sql);
+        }
     }
 
     public function test_auditor_can_inspect_updates_without_creating_a_recovery_secret(): void
