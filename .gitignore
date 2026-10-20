@@ -13,6 +13,7 @@
 /storage/app/kaevcms/installed-version.json
 /storage/app/kaevcms/installed-version.json.tmp.*
 /storage/app/kaevcms/installed-version.json.bak.*
+/storage/app/kaevcms/updates/
 /vendor
 .env
 .env.backup
