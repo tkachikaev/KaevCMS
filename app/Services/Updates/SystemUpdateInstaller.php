@@ -32,6 +32,7 @@ final class SystemUpdateInstaller
         private readonly AdminNotificationCenter $notifications,
         private readonly Application $application,
         private readonly UpdateDependencyBundle $dependencies,
+        private readonly UpdateInstallationLayout $layout,
     ) {}
 
     public function apply(SystemUpdate $update, string $maintenanceSecret): SystemUpdate
@@ -314,6 +315,8 @@ final class SystemUpdateInstaller
             @opcache_reset();
         }
 
+        $this->removeStoredDependencyBundle($log);
+
         $update->forceFill([
             'status' => SystemUpdate::STATUS_SUCCEEDED,
             'phase' => SystemUpdate::PHASE_COMPLETED,
@@ -483,6 +486,26 @@ final class SystemUpdateInstaller
 
         if (! $useArtisan) {
             $log->write('Maintenance mode lifted without Artisan after restoring the previous dependencies.');
+        }
+    }
+
+    /**
+     * Web Updaters older than dependency bundles copy the bundle archive into the project
+     * as a plain file; it is never needed afterwards.
+     */
+    private function removeStoredDependencyBundle(UpdateLog $log): void
+    {
+        try {
+            $path = $this->layout->resolveTarget(UpdatePackageInspector::DEPENDENCY_BUNDLE_TARGET);
+        } catch (Throwable) {
+            return;
+        }
+
+        if (is_file($path) && ! is_link($path)) {
+            if (@unlink($path)) {
+                @rmdir(dirname($path));
+                $log->write('Removed a dependency bundle copied into the project by an earlier updater.');
+            }
         }
     }
 

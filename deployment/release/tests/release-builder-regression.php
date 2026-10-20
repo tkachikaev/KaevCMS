@@ -98,8 +98,39 @@ try {
     }
     kaevReleaseCreateZip($previousRoot, $previousFiles, $previousArchive, $releaseTimestamp);
 
-    $first = buildFixtureRelease($targetRoot, $previousArchive, $firstOutput);
-    $second = buildFixtureRelease($targetRoot, $previousArchive, $secondOutput);
+    $vendorRoot = $temporaryRoot.'/production-vendor';
+    writeFixtureVendor($vendorRoot, $targetRoot.'/composer.lock');
+
+    $first = buildFixtureRelease($targetRoot, $previousArchive, $firstOutput, $vendorRoot);
+    $second = buildFixtureRelease($targetRoot, $previousArchive, $secondOutput, $vendorRoot);
+
+    // The cumulative Web Update carries the production vendor tree for its composer.lock.
+    $cumulativeZip = new ZipArchive;
+    assertFixture($cumulativeZip->open($first['cumulative']) === true, 'The cumulative package must be readable.');
+    $cumulativeManifest = json_decode((string) $cumulativeZip->getFromName('kaevcms-update.json'), true);
+    $bundleBytes = $cumulativeZip->getFromName('payload/core/deployment/updates/dependency-bundle/vendor.zip');
+    $cumulativeZip->close();
+    assertFixture(is_string($bundleBytes) && $bundleBytes !== '', 'The cumulative package must include the dependency bundle.');
+    $dependencies = is_array($cumulativeManifest) ? ($cumulativeManifest['dependencies'] ?? null) : null;
+    assertFixture(is_array($dependencies), 'The cumulative manifest must describe the dependency bundle.');
+    assertFixture(($dependencies['composer_lock_sha256'] ?? null) === hash_file('sha256', $targetRoot.'/composer.lock'), 'The dependency bundle must be bound to the packaged composer.lock.');
+    assertFixture(($dependencies['sha256'] ?? null) === hash('sha256', (string) $bundleBytes), 'The dependency bundle checksum must match its bytes.');
+    assertFixture(($dependencies['platform']['php_version_id'] ?? null) === 80300, 'PHP requirement must come from platform_check.php.');
+    $requiredExtensions = (array) ($dependencies['platform']['extensions'] ?? []);
+    assertFixture(in_array('mbstring', $requiredExtensions, true), 'Extension checks from platform_check.php must be kept.');
+    assertFixture(in_array('openssl', $requiredExtensions, true), 'ext-* requirements of locked packages must be collected.');
+    assertFixture(! in_array('ctype', $requiredExtensions, true), 'Extensions provided by a locked polyfill must not be required.');
+    assertFixture(! in_array('deployment/updates/dependency-bundle/vendor.zip', fixtureZipEntries($first['full']), true), 'The full release must stay without vendor.');
+
+    $mismatchedVendor = $temporaryRoot.'/mismatched-vendor';
+    writeFixtureVendor($mismatchedVendor, $targetRoot.'/composer.lock', 'v0.0.0-not-locked');
+    assertFixtureBuildFails(
+        $targetRoot,
+        $previousArchive,
+        $temporaryRoot.'/mismatched-vendor-output',
+        'The vendor directory does not match composer.lock',
+        $mismatchedVendor,
+    );
 
     foreach (['full', 'patch', 'cumulative', 'checksums'] as $artifact) {
         assertFixture(isset($first[$artifact]) && is_file($first[$artifact]), 'Missing first '.$artifact.' artifact.');
@@ -189,14 +220,37 @@ try {
     kaevReleaseRemoveTree($temporaryRoot);
 }
 
-/** @return array{full:string,patch:string,cumulative:string,checksums:string} */
-function buildFixtureRelease(string $root, string $previousArchive, string $outputDirectory): array
+/**
+ * A minimal production vendor tree whose installed.json matches the given composer.lock.
+ */
+function writeFixtureVendor(string $vendorRoot, string $composerLock, ?string $versionOverride = null): void
 {
-    $artifacts = kaevReleaseBuild([
+    $lock = readFixtureJson($composerLock);
+    $packages = [];
+    foreach ((array) ($lock['packages'] ?? []) as $package) {
+        if (is_array($package) && is_string($package['name'] ?? null)) {
+            $packages[] = ['name' => $package['name'], 'version' => $versionOverride ?? (string) ($package['version'] ?? '')];
+        }
+    }
+    writeFixtureJson($vendorRoot.'/composer/installed.json', ['packages' => $packages, 'dev' => false, 'dev-package-names' => []]);
+    writeFixture($vendorRoot.'/autoload.php', "<?php\nreturn require __DIR__.'/composer/autoload_real.php';\n");
+    writeFixture($vendorRoot.'/composer/autoload_real.php', "<?php\n");
+    writeFixture($vendorRoot.'/composer/platform_check.php', "<?php\n\$issues = array();\nif (!(PHP_VERSION_ID >= 80300)) {\n    \$issues[] = 'php';\n}\nif (!extension_loaded('mbstring')) {\n    \$issues[] = 'mbstring';\n}\n");
+    writeFixture($vendorRoot.'/acme/library/src/Library.php', "<?php\n");
+}
+
+/** @return array{full:string,patch:string,cumulative:string,checksums:string} */
+function buildFixtureRelease(string $root, string $previousArchive, string $outputDirectory, ?string $vendor = null): array
+{
+    $options = [
         'root' => $root,
         'previous' => $previousArchive,
         'output-dir' => $outputDirectory,
-    ]);
+    ];
+    if ($vendor !== null) {
+        $options['vendor'] = $vendor;
+    }
+    $artifacts = kaevReleaseBuild($options);
 
     $release = readFixtureJson($root.'/release.json');
     $version = requiredFixtureVersion($release['version'] ?? null);
@@ -228,13 +282,15 @@ function assertFixtureBuildFails(
     string $previousArchive,
     string $outputDirectory,
     string $expectedMessage,
+    ?string $vendor = null,
 ): void {
     try {
-        kaevReleaseBuild([
+        kaevReleaseBuild(array_filter([
             'root' => $root,
             'previous' => $previousArchive,
             'output-dir' => $outputDirectory,
-        ]);
+            'vendor' => $vendor,
+        ], static fn (?string $value): bool => $value !== null));
     } catch (RuntimeException $exception) {
         assertFixture(
             str_contains($exception->getMessage(), $expectedMessage),

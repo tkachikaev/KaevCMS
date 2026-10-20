@@ -13,6 +13,7 @@ $options = getopt('', [
     'previous-root::',
     'update-history',
     'changelog-file::',
+    'dependency-bundle::',
 ]);
 
 if (! class_exists(ZipArchive::class)) {
@@ -29,6 +30,7 @@ $name = trim((string) ($options['name'] ?? ''));
 $deleteFile = (string) ($options['delete-file'] ?? '');
 $previousRootOption = trim((string) ($options['previous-root'] ?? ''));
 $updateHistory = array_key_exists('update-history', $options);
+$dependencyBundleOption = trim((string) ($options['dependency-bundle'] ?? ''));
 
 if (! is_string($root) || ! is_dir($root)) {
     fwrite(STDERR, "--root must point to an extracted KaevCMS release.\n");
@@ -189,6 +191,28 @@ try {
         'changelog' => $changelog,
     ];
 
+    if ($dependencyBundleOption !== '') {
+        // Declared as an ordinary payload file: older Web Updaters reject undeclared entries
+        // but accept (and merely copy) this one; current updaters consume it for vendor/.
+        $bundleTarget = 'core/deployment/updates/dependency-bundle/vendor.zip';
+        $bundleSource = 'payload/'.$bundleTarget;
+        $section = dependencySection($dependencyBundleOption, $root.'/composer.lock');
+        $section['archive'] = $bundleSource;
+        if (isset($manifestTargets[strtolower($bundleTarget)]) || ! $zip->addFile($dependencyBundleOption, $bundleSource)) {
+            throw new RuntimeException('Unable to add the dependency bundle to the update package.');
+        }
+        $zip->setMtimeName($bundleSource, $releaseTimestamp);
+        // Already deflated; storing it again keeps the build fast and the size unchanged.
+        $zip->setCompressionName($bundleSource, ZipArchive::CM_STORE);
+        $manifest['files'][] = [
+            'source' => $bundleSource,
+            'target' => $bundleTarget,
+            'sha256' => $section['sha256'],
+            'size' => $section['size'],
+        ];
+        $manifest['dependencies'] = $section;
+    }
+
     $encoded = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     if (! is_string($encoded) || ! $zip->addFromString('kaevcms-update.json', $encoded."\n")) {
         throw new RuntimeException('Unable to write the update package manifest.');
@@ -210,6 +234,122 @@ fwrite(STDOUT, 'Files: '.count($manifestFiles)."\n");
 fwrite(STDOUT, 'Deletions: '.count($validatedDelete)."\n");
 fwrite(STDOUT, 'New deletions detected: '.count($automaticDelete)."\n");
 fwrite(STDOUT, "SHA256: {$archiveHash}\n");
+
+/**
+ * Describes a production vendor bundle for the update manifest. Platform requirements come
+ * from Composer's own vendor/composer/platform_check.php, so the updater can refuse a
+ * server whose PHP would make the new dependencies fail at boot.
+ *
+ * @return array<string, mixed>
+ */
+function dependencySection(string $bundlePath, string $composerLock): array
+{
+    $bundle = realpath($bundlePath);
+    if (! is_string($bundle) || ! is_file($bundle) || ! is_file($composerLock)) {
+        throw new RuntimeException('--dependency-bundle must point to a vendor ZIP and the release must contain composer.lock.');
+    }
+
+    $zip = new ZipArchive;
+    if ($zip->open($bundle, ZipArchive::RDONLY) !== true) {
+        throw new RuntimeException('The dependency bundle is not a readable ZIP archive.');
+    }
+
+    $bytes = 0;
+    $phpVersionId = 80300;
+    $extensions = [];
+    try {
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $stat = $zip->statIndex($index);
+            if ($stat === false || ! str_starts_with($stat['name'], 'vendor/')) {
+                throw new RuntimeException('The dependency bundle may contain only vendor/ entries.');
+            }
+            $bytes += $stat['size'];
+        }
+
+        $platformCheck = $zip->getFromName('vendor/composer/platform_check.php');
+        if (is_string($platformCheck)) {
+            if (preg_match('/PHP_VERSION_ID\s*>=\s*(\d{5,6})/', $platformCheck, $match) === 1) {
+                $phpVersionId = max($phpVersionId, (int) $match[1]);
+            }
+            preg_match_all("/extension_loaded\\('([a-z0-9_-]+)'\\)/i", $platformCheck, $matches);
+            $extensions = array_map('strtolower', $matches[1]);
+        }
+        // Composer's default platform check covers only the PHP version, so the extensions
+        // required by the locked packages are collected from composer.lock itself.
+        $extensions = array_values(array_unique([...$extensions, ...lockedExtensionRequirements($composerLock)]));
+        sort($extensions, SORT_STRING);
+        $fileCount = $zip->numFiles;
+    } finally {
+        $zip->close();
+    }
+
+    $bundleHash = hash_file('sha256', $bundle);
+    $lockHash = hash_file('sha256', $composerLock);
+    $size = filesize($bundle);
+    if (! is_string($bundleHash) || ! is_string($lockHash) || ! is_int($size)) {
+        throw new RuntimeException('Unable to read the dependency bundle metadata.');
+    }
+
+    return [
+        'schema' => 1,
+        'archive' => '',
+        'sha256' => $bundleHash,
+        'size' => $size,
+        'files' => $fileCount,
+        'bytes' => $bytes,
+        'composer_lock_sha256' => $lockHash,
+        'platform' => [
+            'php_version_id' => $phpVersionId,
+            'extensions' => $extensions,
+        ],
+    ];
+}
+
+/**
+ * ext-* requirements of the production packages in composer.lock (and the root
+ * composer.json next to it), minus extensions a locked package provides as a polyfill.
+ *
+ * @return list<string>
+ */
+function lockedExtensionRequirements(string $composerLock): array
+{
+    $lock = json_decode((string) file_get_contents($composerLock), true);
+    if (! is_array($lock)) {
+        throw new RuntimeException('composer.lock is not valid JSON.');
+    }
+
+    $required = [];
+    $provided = [];
+    $collect = static function (array $links, array &$target): void {
+        foreach (array_keys($links) as $name) {
+            if (is_string($name) && str_starts_with(strtolower($name), 'ext-')) {
+                $target[] = strtolower(substr($name, 4));
+            }
+        }
+    };
+
+    foreach ((array) ($lock['packages'] ?? []) as $package) {
+        if (! is_array($package)) {
+            continue;
+        }
+        $collect((array) ($package['require'] ?? []), $required);
+        $collect((array) ($package['provide'] ?? []), $provided);
+        $collect((array) ($package['replace'] ?? []), $provided);
+    }
+
+    $composerJson = dirname($composerLock).'/composer.json';
+    if (is_file($composerJson)) {
+        $root = json_decode((string) file_get_contents($composerJson), true);
+        if (is_array($root)) {
+            $collect((array) ($root['require'] ?? []), $required);
+        }
+    }
+
+    $extensions = array_values(array_diff(array_unique($required), $provided));
+    sort($extensions, SORT_STRING);
+
+    return array_values(array_filter($extensions, static fn (string $extension): bool => preg_match('/\A[a-z0-9_-]+\z/', $extension) === 1));
+}
 
 /** @return list<string> */
 function collectReleaseFiles(string $root, string $output): array

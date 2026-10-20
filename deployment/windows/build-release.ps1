@@ -41,13 +41,43 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 }
 $OutputDirectory = [System.IO.Path]::GetFullPath($OutputDirectory)
 
-php $builder `
-    "--root=$ProjectRoot" `
-    "--previous=$($previous.Path)" `
-    "--output-dir=$OutputDirectory"
+# The cumulative Web Update carries a production vendor tree built from composer.lock, so
+# sites coming from releases with other dependencies can be updated from the panel.
+$vendorBuild = Join-Path ([System.IO.Path]::GetTempPath()) ('kaevcms-release-vendor-' + [Guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $vendorBuild | Out-Null
+try {
+    foreach ($item in @('composer.json', 'composer.lock')) {
+        Copy-Item -LiteralPath (Join-Path $ProjectRoot $item) -Destination $vendorBuild
+    }
+    # Optimized autoload classmaps include the application namespaces, so their sources must exist.
+    foreach ($item in @('app', 'database\factories', 'database\seeders')) {
+        $source = Join-Path $ProjectRoot $item
+        if (Test-Path -LiteralPath $source) {
+            $destination = Join-Path $vendorBuild $item
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            Copy-Item -LiteralPath $source -Destination $destination -Recurse
+        }
+    }
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Release build failed with exit code $LASTEXITCODE."
+    Write-Host 'Preparing production Composer dependencies for the cumulative Web Update...' -ForegroundColor Cyan
+    composer install --working-dir="$vendorBuild" --no-dev --no-scripts --optimize-autoloader --no-interaction --no-progress --prefer-dist
+    if ($LASTEXITCODE -ne 0) {
+        throw "Production Composer preparation failed with exit code $LASTEXITCODE."
+    }
+
+    php $builder `
+        "--root=$ProjectRoot" `
+        "--previous=$($previous.Path)" `
+        "--output-dir=$OutputDirectory" `
+        "--vendor=$(Join-Path $vendorBuild 'vendor')"
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Release build failed with exit code $LASTEXITCODE."
+    }
+} finally {
+    if (Test-Path -LiteralPath $vendorBuild) {
+        Remove-Item -LiteralPath $vendorBuild -Recurse -Force
+    }
 }
 
 Write-Host "Release artifacts are ready in $OutputDirectory" -ForegroundColor Green

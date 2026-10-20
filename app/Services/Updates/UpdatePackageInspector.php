@@ -9,6 +9,13 @@ use ZipArchive;
 
 final class UpdatePackageInspector
 {
+    /**
+     * The vendor bundle is declared as an ordinary payload file so that Web Updaters which
+     * predate dependency bundles still accept the package (they reject undeclared entries)
+     * and merely copy the archive. This updater consumes it instead of installing it.
+     */
+    public const DEPENDENCY_BUNDLE_TARGET = 'core/deployment/updates/dependency-bundle/vendor.zip';
+
     public function __construct(
         private readonly UpdateInstallationLayout $layout,
         private readonly UpdatePathPolicy $pathPolicy,
@@ -337,12 +344,13 @@ final class UpdatePackageInspector
             throw new RuntimeException(__('The update package must contain core/VERSION.'));
         }
 
-        $dependencyBundle = $this->validateDependencySection($zip, $manifest, $files);
-        $declaredEntries = array_keys($sourcePaths);
-        if ($dependencyBundle !== null) {
-            $declaredEntries[] = strtolower($dependencyBundle['archive']);
-        }
-        $this->validateDeclaredEntries($zip, $declaredEntries);
+        $this->validateDeclaredEntries($zip, array_keys($sourcePaths));
+        $dependencyBundle = $this->validateDependencySection($manifest, $files);
+        // The bundle is consumed by the dependency swap, never installed as a project file.
+        $files = array_values(array_filter(
+            $files,
+            static fn (array $file): bool => $file['target'] !== self::DEPENDENCY_BUNDLE_TARGET,
+        ));
 
         $delete = [];
         $deletePaths = [];
@@ -398,14 +406,15 @@ final class UpdatePackageInspector
      * @param  list<array{source: string, target: string, sha256: string, size: int}>  $files
      * @return array{archive: string, sha256: string, size: int, files: int, bytes: int, composer_lock_sha256: string, php_version_id: int, extensions: list<string>}|null
      */
-    private function validateDependencySection(ZipArchive $zip, array $manifest, array $files): ?array
+    private function validateDependencySection(array $manifest, array $files): ?array
     {
         $section = $manifest['dependencies'] ?? null;
         if ($section === null) {
             return null;
         }
 
-        if (! is_array($section) || ($section['schema'] ?? null) !== 1 || ($section['archive'] ?? null) !== 'dependencies/vendor.zip') {
+        $archive = 'payload/'.self::DEPENDENCY_BUNDLE_TARGET;
+        if (! is_array($section) || ($section['schema'] ?? null) !== 1 || ($section['archive'] ?? null) !== $archive) {
             throw new RuntimeException(__('The update dependency bundle section is invalid.'));
         }
 
@@ -434,22 +443,26 @@ final class UpdatePackageInspector
         }
 
         $packagedLock = null;
+        $bundleFile = null;
         foreach ($files as $file) {
             if ($file['target'] === 'core/composer.lock') {
                 $packagedLock = $file['sha256'];
+            }
+            if ($file['target'] === self::DEPENDENCY_BUNDLE_TARGET) {
+                $bundleFile = $file;
             }
         }
         if ($packagedLock === null || ! hash_equals($packagedLock, $lockSha256)) {
             throw new RuntimeException(__('The dependency bundle was built for a different composer.lock than the one in this package.'));
         }
 
-        $stat = $zip->statName('dependencies/vendor.zip');
-        if ($stat === false || $stat['size'] !== $size || ! hash_equals($sha256, $this->hashArchiveEntry($zip, 'dependencies/vendor.zip'))) {
+        // The payload loop already verified the entry against its own file checksum.
+        if ($bundleFile === null || ! hash_equals($bundleFile['sha256'], $sha256) || $bundleFile['size'] !== $size) {
             throw new RuntimeException(__('The dependency bundle checksum does not match the manifest.'));
         }
 
         return [
-            'archive' => 'dependencies/vendor.zip',
+            'archive' => $archive,
             'sha256' => $sha256,
             'size' => $size,
             'files' => $fileCount,

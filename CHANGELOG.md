@@ -1,3 +1,10 @@
+## Unreleased
+
+- **Web Update can now cross Composer dependency changes.** The cumulative package carries the production `vendor` tree built from the release's `composer.lock` (about +11 MB compressed). When a site's dependencies differ, the updater checks PHP and extensions first, unpacks the new tree beside the live one, swaps it in with two renames, and finishes migrations in a fresh PHP process (VDS agent: `kaevcms:update-finalize`; panel: automatic signed redirect through maintenance mode). Database, files and dependencies roll back together on failure. Works on shared hosting without SSH or Composer. Sites whose dependencies already match keep their `vendor` untouched.
+- The bundle is declared as an ordinary payload file (`core/deployment/updates/dependency-bundle/vendor.zip`), so updaters before this release still accept the package when dependencies are unchanged; the new updater consumes it instead of installing it and removes copies left by older ones.
+- The release builder installs `composer install --no-dev` from `composer.lock` into a temporary directory, verifies the tree matches the lock, and packs it deterministically; required extensions are derived from the locked packages (polyfill-provided ones excluded).
+- New and documented commands: `kaevcms:update-finalize`; `kaevcms:update-recover` also restores `vendor`. The update page offers "Finish the update" if the browser was closed between steps.
+
 ## 0.50.16 - 2026-10-20
 
 - Fix HTTP 500 on **Settings → System updates** after a completed update on MySQL 8. Every update record stores the full package manifest (about 290 KB for a cumulative package), and sorting the history by `created_at` exceeded MySQL's default 256 KB sort buffer (`Out of sort memory`, error 1038). The update lists and the diagnostic package now sort by record id, which MySQL reads straight from the primary key without a filesort. Bundled module and theme versions are unchanged from 0.50.15.

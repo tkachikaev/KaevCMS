@@ -151,6 +151,24 @@ class UpdatePackageInspectorTest extends TestCase
         $this->assertFileExists($package->dependencies['bundle_path']);
         $this->assertSame(hash('sha256', "{\"changed\":true}\n"), $package->dependencies['composer_lock_sha256']);
         $this->assertCount(1, $package->warnings);
+        // The bundle is consumed by the swap and never installed as a project file.
+        $this->assertNotContains(UpdatePackageInspector::DEPENDENCY_BUNDLE_TARGET, array_column($package->files, 'target'));
+    }
+
+    public function test_bundle_is_a_declared_payload_file_so_older_updaters_accept_the_package(): void
+    {
+        $archive = $this->package(changeComposerLock: true, vendorFiles: $this->vendorFixture());
+
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($archive));
+        $manifest = json_decode((string) $zip->getFromName('kaevcms-update.json'), true);
+        $declared = array_column($manifest['files'], 'source');
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $name = (string) $zip->getNameIndex($index);
+            // Updaters before dependency bundles reject any entry missing from "files".
+            $this->assertTrue($name === 'kaevcms-update.json' || in_array($name, $declared, true), $name);
+        }
+        $zip->close();
     }
 
     public function test_unchanged_lock_ignores_the_vendor_bundle(): void
@@ -346,10 +364,17 @@ class UpdatePackageInspectorTest extends TestCase
             }
             $this->assertTrue($bundle->close());
 
-            $this->assertTrue($zip->addFile($bundlePath, 'dependencies/vendor.zip'));
+            $bundleSource = 'payload/'.UpdatePackageInspector::DEPENDENCY_BUNDLE_TARGET;
+            $this->assertTrue($zip->addFile($bundlePath, $bundleSource));
+            $manifest['files'][] = [
+                'source' => $bundleSource,
+                'target' => UpdatePackageInspector::DEPENDENCY_BUNDLE_TARGET,
+                'sha256' => hash_file('sha256', $bundlePath),
+                'size' => filesize($bundlePath),
+            ];
             $manifest['dependencies'] = array_replace([
                 'schema' => 1,
-                'archive' => 'dependencies/vendor.zip',
+                'archive' => $bundleSource,
                 'sha256' => hash_file('sha256', $bundlePath),
                 'size' => filesize($bundlePath),
                 'files' => count($vendorFiles),

@@ -97,7 +97,7 @@ class WebUpdaterReleaseTest extends TestCase
             'hash_equals',
             'minimum_version',
             'maximum_version',
-            'dependencies/vendor.zip',
+            'DEPENDENCY_BUNDLE_TARGET',
             'composer_lock_sha256',
         ] as $required) {
             $this->assertStringContainsString($required, $inspector);
