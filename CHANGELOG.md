@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Open the account balance menu and the profile menu from the same line in both account themes: on desktop the shorter balance pill now drops from the shared top-bar edge, and on phones both menus use the same fixed position.
+- Remove the redundant explanation under "Create your first game account" on the account overview in both themes.
+
 - Collapse the module capability list (autoload, services, views, translations, migrations, routes) behind a "Details" toggle with a count inside the module technical-details menu, so version, author and migration status stay readable at a glance.
 
 - Preserve transparent module artwork edges by removing the preview container background, border and clipping.
