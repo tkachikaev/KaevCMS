@@ -9,6 +9,7 @@ use App\Services\Updates\SystemUpdateInstaller;
 use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
 use App\Services\Updates\UpdatePreflight;
+use App\Support\Updates\FreshArtisanProcess;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -115,7 +116,18 @@ final class InstallSystemUpdateCommand extends Command
             $this->line('Do not close this terminal until the command finishes.');
             $this->newLine();
 
-            $installer->apply($update, $maintenanceSecret);
+            // Loaded now, while only the current vendor tree exists.
+            $basePath = base_path();
+            class_exists(FreshArtisanProcess::class);
+            $applied = $installer->apply($update, $maintenanceSecret);
+            if ($applied->awaitsFinalization()) {
+                $this->line('Composer dependencies replaced; finishing the update in a fresh process.');
+                if (FreshArtisanProcess::run($basePath, ['kaevcms:update-finalize', $update->uuid, '--no-ansi']) !== 0) {
+                    $this->error('The update could not be finalized; it was rolled back. See the update log.');
+
+                    return self::FAILURE;
+                }
+            }
             $this->newLine();
             $this->info("KaevCMS {$package->targetVersion} installed successfully.");
 
