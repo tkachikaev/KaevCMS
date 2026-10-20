@@ -14,6 +14,7 @@ $options = getopt('', [
     'update-history',
     'changelog-file::',
     'dependency-bundle::',
+    'bridge',
 ]);
 
 if (! class_exists(ZipArchive::class)) {
@@ -31,6 +32,10 @@ $deleteFile = (string) ($options['delete-file'] ?? '');
 $previousRootOption = trim((string) ($options['previous-root'] ?? ''));
 $updateHistory = array_key_exists('update-history', $options);
 $dependencyBundleOption = trim((string) ($options['dependency-bundle'] ?? ''));
+// A bridge carries the current code without composer.lock, so Web Updaters that cannot
+// replace dependencies accept it whatever their lock is; it installs the dependency-aware
+// updater, after which the regular cumulative package replaces vendor/.
+$bridge = array_key_exists('bridge', $options);
 
 if (! is_string($root) || ! is_dir($root)) {
     fwrite(STDERR, "--root must point to an extracted KaevCMS release.\n");
@@ -44,7 +49,13 @@ if ($output === '' || ! validVersion($minimum) || ! validVersion($maximum) || ve
 
 $releaseVersion = requiredReleaseVersionFromRoot($root);
 $releaseTimestamp = releaseTimestampFromRoot($root);
-if ($target === '') {
+if ($bridge) {
+    if (! str_ends_with($target, '-bridge') || ! validVersion($target) || version_compare($target, $releaseVersion, '>=')
+        || $dependencyBundleOption !== '' || $previousRootOption !== '' || $updateHistory) {
+        fwrite(STDERR, "A bridge needs --target=<version>-bridge older than the release and no dependency bundle, previous root or history update.\n");
+        exit(1);
+    }
+} elseif ($target === '') {
     $target = $releaseVersion;
 } elseif ($target !== $releaseVersion) {
     fwrite(STDERR, "The --target version does not match release.json.\n");
@@ -65,6 +76,9 @@ if (! is_dir($outputDirectory) && ! mkdir($outputDirectory, 0775, true) && ! is_
 }
 
 $files = collectReleaseFiles($root, $output);
+if ($bridge) {
+    $files = array_values(array_filter($files, static fn (string $relative): bool => $relative !== 'composer.lock'));
+}
 $targetLogicalPaths = logicalTargets($files);
 $deletionHistory = readDeletionHistory($deleteFile);
 $automaticDelete = [];
@@ -94,7 +108,8 @@ if ($previousRootOption !== '') {
 }
 
 $delete = filterActiveDeletions(
-    cumulativeDeletions($deletionHistory, $minimum, $target),
+    // The bridge payload is the full current tree, so it removes everything the release does.
+    cumulativeDeletions($deletionHistory, $minimum, $bridge ? $releaseVersion : $target),
     $targetLogicalPaths,
 );
 $delete[] = 'public/install';
@@ -129,14 +144,23 @@ try {
 
         $source = 'payload/'.$logicalTarget;
 
-        if (! $zip->addFile($absolute, $source)) {
-            throw new RuntimeException("Unable to add release file to update package: {$relative}");
+        if ($bridge && $logicalTarget === 'core/VERSION') {
+            // The installed version becomes the bridge version until the regular package runs.
+            $versionContents = $target."\n";
+            if (! $zip->addFromString($source, $versionContents)) {
+                throw new RuntimeException('Unable to add the bridge VERSION file.');
+            }
+            $hash = hash('sha256', $versionContents);
+            $size = strlen($versionContents);
+        } else {
+            if (! $zip->addFile($absolute, $source)) {
+                throw new RuntimeException("Unable to add release file to update package: {$relative}");
+            }
+            $hash = hash_file('sha256', $absolute);
+            $size = filesize($absolute);
         }
         $zip->setMtimeName($source, $releaseTimestamp);
         $zip->setCompressionName($source, ZipArchive::CM_DEFLATE, 9);
-
-        $hash = hash_file('sha256', $absolute);
-        $size = filesize($absolute);
         if (! is_string($hash) || ! is_int($size)) {
             throw new RuntimeException("Unable to read release file metadata: {$relative}");
         }
