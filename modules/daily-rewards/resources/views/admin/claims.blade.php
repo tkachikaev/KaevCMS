@@ -3,6 +3,7 @@
 @section('description', __('module-daily-rewards::messages.journal_description'))
 @section('content')
 @php($adminPath = request()->route('adminPath'))
+@include('module-daily-rewards::admin._tabs')
 <x-admin.filter-bar :action="route('admin.module-pages.daily-rewards.claims', ['adminPath' => $adminPath])" class="users-filters daily-reward-claim-filters">
     <div class="form-group"><label for="search">{{ __('module-daily-rewards::messages.search') }}</label><input id="search" name="search" type="search" value="{{ $search }}" placeholder="{{ __('module-daily-rewards::messages.search_placeholder') }}"></div>
     <div class="admin-row-actions"><x-admin.button type="submit" variant="primary">{{ __('module-daily-rewards::messages.filter') }}</x-admin.button><x-admin.button wire:navigate :href="route('admin.module-pages.daily-rewards.claims', ['adminPath' => $adminPath])">{{ __('module-daily-rewards::messages.reset') }}</x-admin.button></div>

@@ -2,6 +2,7 @@
 @section('title', __('module-promo-codes::messages.edit_title', ['code' => $promoCode->code]))
 @section('description', __('module-promo-codes::messages.edit_description'))
 @section('content')
+@include('module-promo-codes::admin._tabs')
 <form method="POST" action="{{ route('admin.module-pages.promo-codes.update', ['adminPath' => request()->route('adminPath'), 'promoCode' => $promoCode]) }}" class="content-editor">
     @include('module-promo-codes::admin._form')
 </form>

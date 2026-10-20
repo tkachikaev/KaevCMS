@@ -77,7 +77,7 @@ for (const width of [1440, 390]) {
         expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 
         // The module script must initialize again after Livewire navigation.
-        await page.getByRole('link', { name: 'Платёжные системы', exact: true }).click();
+        await page.getByTestId('donations-section-tabs').getByRole('link', { name: 'Платёжные системы', exact: true }).click();
         await expect(page).toHaveURL(/\/donations\/providers$/);
         const provider = page.locator('.donations-provider-card[data-provider="yoomoney"]');
         await expect(provider.getByRole('heading', { name: 'ЮMoney', exact: true })).toBeVisible();
@@ -94,7 +94,7 @@ for (const width of [1440, 390]) {
         // Merely visiting setup must never activate payments or create a transfer.
         await gotoWithLocalNetworkRetry(page, '/admin/extensions/donations/providers/yoomoney');
         await expect(simpleSettings.locator('[name="payment_enabled"][type="checkbox"]')).not.toBeChecked();
-        await page.locator('.donations-navigation').getByRole('link', { name: 'Настройки', exact: true }).click();
+        await page.getByTestId('donations-section-tabs').getByRole('link', { name: 'Настройки', exact: true }).click();
         await add(firstCode, '1.00');
         await page.getByTestId(`donations-rate-${firstCode}`).getByRole('button', { name: 'Удалить валюту', exact: true }).click();
         await expect(page.getByTestId(`donations-rate-${firstCode}`)).toHaveCount(0);

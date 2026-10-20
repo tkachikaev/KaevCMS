@@ -3,9 +3,7 @@
 @section('description', __('module-promo-codes::messages.journal_description'))
 @section('content')
 @php($adminPath = request()->route('adminPath'))
-<div class="admin-actions-panel">
-    <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.promo-codes.index', ['adminPath' => $adminPath]) }}">← {{ __('module-promo-codes::messages.back_to_codes') }}</a>
-</div>
+@include('module-promo-codes::admin._tabs')
 
 @if($activations->isEmpty())
     <div class="admin-empty-state empty-state">

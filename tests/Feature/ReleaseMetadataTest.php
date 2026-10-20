@@ -539,7 +539,9 @@ class ReleaseMetadataTest extends TestCase
 
         $settingsView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/settings.blade.php');
         $this->assertStringContainsString('<x-admin.tabs', $settingsView);
-        $this->assertStringContainsString('class="settings-section-tabs support-settings-tabs"', $settingsView);
+        $this->assertStringContainsString("@include('module-support-tickets::admin._tabs')", $settingsView);
+        $this->assertStringContainsString('subtle class="support-settings-tabs"', $settingsView);
+        $this->assertStringNotContainsString('back_to_tickets', $settingsView);
         $this->assertStringContainsString('data-testid="support-cleanup-panel"', $settingsView);
         $this->assertStringContainsString('support-settings-actions', $settingsView);
 

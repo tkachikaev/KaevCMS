@@ -1,10 +1,10 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.exchange_title'))
-@section('description', __('module-donations::messages.exchange_admin_help'))
+@section('description', __('module-donations::messages.exchange_admin_description'))
 @section('content')
 @include('module-donations::admin.navigation')
 <x-admin.card>
-    <x-admin.card-heading :title="__('module-donations::messages.exchange_rates_title')" :description="__('module-donations::messages.exchange_rates_help')" />
+    <x-admin.card-heading :title="__('module-donations::messages.exchange_rates_title')" :description="__('module-donations::messages.exchange_rates_help').' '.__('module-donations::messages.exchange_admin_help')" />
     @error('exchange')<p class="alert alert-danger" role="alert">{{ $message }}</p>@enderror
     @if($servers === [])
         <p>{{ __('module-donations::messages.exchange_no_servers') }}</p>

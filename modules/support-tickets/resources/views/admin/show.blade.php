@@ -2,6 +2,7 @@
 @section('title', $ticket->subject)
 @section('description', __('module-support-tickets::messages.ticket_number', ['number' => $ticket->number()]))
 @section('content')
+@include('module-support-tickets::admin._tabs')
 <livewire:support-tickets.admin-conversation :ticket-id="$ticket->id" :admin-path="$adminPath" />
 @endsection
 @push('head')

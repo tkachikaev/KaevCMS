@@ -5,6 +5,7 @@
 @section('content')
 @php($adminPath = request()->route('adminPath'))
 @php($previewUrl = route('admin.module-pages.daily-rewards.items.preview', ['adminPath' => $adminPath, 'calendar' => $calendar, 'item' => '__ITEM__']))
+@include('module-daily-rewards::admin._tabs')
 <form
     method="POST"
     action="{{ route('admin.module-pages.daily-rewards.update', ['adminPath' => $adminPath, 'calendar' => $calendar]) }}"

@@ -1,5 +1,6 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.providers_title'))
+@section('description', __('module-donations::messages.providers_admin_description'))
 @section('content')
 @include('module-donations::admin.navigation')
 <div class="donations-provider-grid" data-testid="donations-providers">

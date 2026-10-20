@@ -4,6 +4,8 @@ return [
     'navigation_label' => 'Ежедневные награды',
     'navigation_description' => 'Календарь наград за ежедневный вход.',
     'admin_navigation_label' => 'Ежедневные награды',
+    'admin_sections' => 'Разделы ежедневных наград',
+    'section_calendars' => 'Календари',
     'admin_navigation_description' => 'Настройка ежемесячных календарей наград.',
     'admin_title' => 'Ежедневные награды',
     'admin_description' => 'Создавайте отдельный календарь наград для каждого игрового сервера и месяца.',

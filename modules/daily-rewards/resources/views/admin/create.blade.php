@@ -3,6 +3,7 @@
 @section('description', __('module-daily-rewards::messages.create_description'))
 @section('content')
 @php($adminPath = request()->route('adminPath'))
+@include('module-daily-rewards::admin._tabs')
 <form method="POST" action="{{ route('admin.module-pages.daily-rewards.store', ['adminPath' => $adminPath]) }}" class="content-editor">
     @csrf
     <div class="editor-main">

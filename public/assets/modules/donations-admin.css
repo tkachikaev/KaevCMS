@@ -1,11 +1,5 @@
 /* Donations workspace; colours follow the shared administration theme. */
-.donations-navigation { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--admin-border); }
-.donations-navigation-tabs { display:flex; flex-wrap:wrap; gap:4px; }
-.donations-navigation-tabs a { display:block; padding:12px 16px; margin-bottom:-1px; border-bottom:2px solid transparent; color:var(--admin-text-muted); font-weight:600; }
-.donations-navigation-tabs a:hover { color:var(--admin-text); background:var(--admin-surface-subtle); }
-.donations-navigation-tabs a[aria-current="page"] { color:var(--admin-primary); border-bottom-color:var(--admin-primary); }
-.donations-back { color:var(--admin-text-muted); font-size:12px; white-space:nowrap; }
-.donations-navigation a:focus-visible, .donations-add-currency > summary:focus-visible { outline:2px solid var(--admin-primary); outline-offset:3px; border-radius:4px; }
+.donations-add-currency > summary:focus-visible { outline:2px solid var(--admin-primary); outline-offset:3px; border-radius:4px; }
 .donations-payment-status { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; margin-bottom:20px; }
 .donations-payment-status a { font-size:12px; color:var(--admin-text-muted); }
 .donations-payment-status a:hover { color:var(--admin-primary); }
@@ -84,9 +78,6 @@
     .donations-side { grid-template-columns:1fr 1fr; }
 }
 @media(max-width:640px) {
-    .donations-navigation { align-items:flex-start; flex-direction:column; gap:6px; padding-bottom:10px; }
-    .donations-navigation-tabs { width:100%; gap:0; }
-    .donations-navigation-tabs a { padding:10px 9px; font-size:12px; }
     .donations-side { grid-template-columns:1fr; }
     .donations-rate-row { padding:14px; }
     .donations-rate-fields { grid-template-columns:minmax(0,1fr) auto; }

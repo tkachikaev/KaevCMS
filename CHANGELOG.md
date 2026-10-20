@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Bring every bundled module's administration pages to the Settings/Mail canon: section tabs (`x-admin.tabs`) directly under a header that always has a title and a description, so the header no longer changes height between tabs.
+  - Donations: replace the custom underline navigation and "Back to modules" link with shared tabs; add header descriptions to Providers, Orders and Order detail, and a short Exchange description (the long help moves into the exchange card).
+  - Daily Rewards and Promo Codes: "Calendars"/"Promo codes" and journal tabs replace the "Open journal" and "Back" buttons; promo current/archive/all filters become subtle sub-tabs.
+  - Support Tickets: "Tickets"/"Settings" (owner only) tabs replace the Settings and "Back to tickets" buttons; the settings General/Cleanup tabs become subtle sub-tabs.
+- Fix the AdminPanelTest module-catalogue assertion, which still expected the pre-card `module-list` markup.
+
 - Smooth the mobile account menu in both account themes: the dim-and-blur backdrop now covers the whole page beneath the opaque drawer and fades in together with it (0.32 s ease-out, blur 0 → 3 px), instead of a crisp page under the sliding drawer and a sudden blurred strip beside it. The closed drawer is fully hidden, so its shadow no longer peeks at the screen edge. The Playwright layering regression now checks real hit-testing (drawer on top, backdrop under the rest of the page) rather than the old backdrop offset.
 
 - Open the account balance menu and the profile menu from the same line in both account themes: on desktop the shorter balance pill now drops from the shared top-bar edge, and on phones both menus use the same fixed position.

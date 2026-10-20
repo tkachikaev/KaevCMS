@@ -4,6 +4,8 @@ return [
     'navigation_label' => 'Technical support',
     'navigation_description' => 'Private support tickets and correspondence with the project team.',
     'admin_navigation_label' => 'Technical support',
+    'admin_sections' => 'Support sections',
+    'section_tickets' => 'Tickets',
     'admin_navigation_description' => 'Review and process player support tickets.',
     'account_title' => 'Technical support',
     'account_description' => 'Review your tickets and create a new one only when needed.',

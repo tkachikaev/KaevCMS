@@ -117,7 +117,7 @@ class AdminPanelTest extends TestCase
         }
 
         $this->assertStringContainsString(
-            'class="admin-catalog-list module-list"',
+            'class="admin-catalog-list module-list module-cards"',
             File::get(resource_path('views/admin/modules/index.blade.php')),
         );
         $this->assertStringContainsString(

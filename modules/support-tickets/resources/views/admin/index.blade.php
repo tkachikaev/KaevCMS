@@ -3,14 +3,12 @@
 @section('description', __('module-support-tickets::messages.admin_description'))
 @section('content')
 @php($hasFilters = ($filters['q'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['category'] ?? '') !== '' || ($filters['assigned'] ?? '') !== '')
+@include('module-support-tickets::admin._tabs')
 <div class="admin-overview content-toolbar support-ticket-stats">
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_new') }}</span><strong>{{ $counts['new'] }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_in_progress') }}</span><strong>{{ $counts['in_progress'] }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_awaiting_player') }}</span><strong>{{ $counts['awaiting_player'] }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-support-tickets::messages.total_closed') }}</span><strong>{{ $counts['closed'] }}</strong></div>
-    @if(auth('admin')->user()?->isOwner())
-        <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.settings', ['adminPath' => $adminPath]) }}">{{ __('module-support-tickets::messages.settings') }}</a>
-    @endif
 </div>
 
 <x-admin.filter-bar :action="route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath])" class="support-ticket-filters" data-testid="support-ticket-filters">

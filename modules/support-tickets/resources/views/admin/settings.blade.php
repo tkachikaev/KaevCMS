@@ -3,11 +3,9 @@
 @section('description', __('module-support-tickets::messages.settings_description'))
 @section('content')
 @php($activeTab = request()->query('tab') === 'cleanup' ? 'cleanup' : 'general')
-<div class="content-toolbar">
-    <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.support-tickets.index', ['adminPath' => $adminPath]) }}">← {{ __('module-support-tickets::messages.back_to_tickets') }}</a>
-</div>
+@include('module-support-tickets::admin._tabs')
 
-<x-admin.tabs :label="__('module-support-tickets::messages.settings_sections')" class="settings-section-tabs support-settings-tabs" data-testid="support-settings-tabs">
+<x-admin.tabs :label="__('module-support-tickets::messages.settings_sections')" subtle class="support-settings-tabs" data-testid="support-settings-tabs">
     <x-admin.tab
         wire:navigate
         :href="route('admin.module-pages.support-tickets.settings', ['adminPath' => $adminPath])"

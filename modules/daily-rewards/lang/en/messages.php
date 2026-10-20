@@ -4,6 +4,8 @@ return [
     'navigation_label' => 'Daily rewards',
     'navigation_description' => 'A reward calendar for daily visits.',
     'admin_navigation_label' => 'Daily rewards',
+    'admin_sections' => 'Daily rewards sections',
+    'section_calendars' => 'Calendars',
     'admin_navigation_description' => 'Manage monthly daily reward calendars.',
     'admin_title' => 'Daily rewards',
     'admin_description' => 'Create a separate reward calendar for every game server and month.',

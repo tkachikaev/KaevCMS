@@ -4,6 +4,8 @@ return [
     'navigation_label' => 'Техническая поддержка',
     'navigation_description' => 'Личные обращения и переписка с командой проекта.',
     'admin_navigation_label' => 'Техническая поддержка',
+    'admin_sections' => 'Разделы поддержки',
+    'section_tickets' => 'Обращения',
     'admin_navigation_description' => 'Просмотр и обработка обращений игроков.',
     'account_title' => 'Техническая поддержка',
     'account_description' => 'Просматривайте свои обращения и создавайте новое только при необходимости.',

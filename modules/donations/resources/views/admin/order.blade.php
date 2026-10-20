@@ -1,5 +1,6 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.order_title'))
+@section('description', __('module-donations::messages.order_admin_description'))
 @section('content')
 @include('module-donations::admin.navigation')
 <section class="form-card" data-testid="donations-admin-order-detail">

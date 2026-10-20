@@ -1,9 +1,9 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.orders_admin_title'))
+@section('description', __('module-donations::messages.orders_admin_description'))
 @section('content')
 @include('module-donations::admin.navigation')
 <section class="form-card" data-testid="donations-admin-orders">
-    <h2>{{ __('module-donations::messages.orders_admin_title') }}</h2>
     <form method="GET" action="{{ route('admin.module-pages.donations.orders.index', ['adminPath' => $adminPath]) }}" class="settings-form">
         <div class="settings-grid">
             <div class="form-group"><label for="orders-status">{{ __('module-donations::messages.order_status') }}</label><select id="orders-status" name="status"><option value="">{{ __('module-donations::messages.all_statuses') }}</option>@foreach(['draft','cancelled','expired','credited'] as $status)<option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ __('module-donations::messages.status_'.$status) }}</option>@endforeach</select></div>

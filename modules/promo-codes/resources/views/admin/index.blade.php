@@ -3,21 +3,19 @@
 @section('description', __('module-promo-codes::messages.admin_description'))
 @section('content')
 @php($adminPath = request()->route('adminPath'))
+@include('module-promo-codes::admin._tabs')
 <div class="admin-overview content-toolbar">
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.total') }}</span><strong>{{ $totalCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.enabled_count') }}</span><strong>{{ $enabledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.disabled_count') }}</span><strong>{{ $disabledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.archived_count') }}</span><strong>{{ $archivedCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-promo-codes::messages.activations') }}</span><strong>{{ number_format($activationsCount, 0, '.', ' ') }}</strong></div>
-    @if($canViewJournal)
-        <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.promo-codes.activations', ['adminPath' => $adminPath]) }}">{{ __('module-promo-codes::messages.open_journal') }}</a>
-    @endif
     @if($canManage)
         <a wire:navigate class="button button-primary" href="{{ route('admin.module-pages.promo-codes.create', ['adminPath' => $adminPath]) }}">{{ __('module-promo-codes::messages.create') }}</a>
     @endif
 </div>
 
-<x-admin.tabs :label="__('module-promo-codes::messages.list_sections')" class="settings-section-tabs promo-code-list-tabs" data-testid="promo-code-list-tabs">
+<x-admin.tabs :label="__('module-promo-codes::messages.list_sections')" subtle class="promo-code-list-tabs" data-testid="promo-code-list-tabs">
     <x-admin.tab
         wire:navigate
         :href="route('admin.module-pages.promo-codes.index', ['adminPath' => $adminPath])"
