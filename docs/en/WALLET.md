@@ -61,7 +61,7 @@ History queries are scoped using the authenticated CMS user relation only; URL p
 
 **Livewire header note:** the account sidebar remains persistent, but the account topbar was made nonpersistent so the balance and icon re-render on internal navigation (including return from wallet page). This changes the former topbar persistence contract; `AccountNavigationTest` now asserts the new live-value requirement, and `WalletPageTest` covers both themes. Check desktop and mobile widths and the page through `quality.ps1`, `browser-quality.ps1` during Windows acceptance.
 
-Theme versions: `kaev-aurelia` 1.6.8 and `luxury` 1.6.6, both require CMS 0.48.4. Core Wallet is display-only at this stage; real-currency prices and provider fees will be defined by a future Donations module.
+Theme versions: `kaev-aurelia` 1.6.9 and `luxury` 1.6.7, both require CMS 0.48.4. Core Wallet is display-only at this stage; real-currency prices and provider fees will be defined by a future Donations module.
 
 ## A6: wallet administration (0.48.5)
 

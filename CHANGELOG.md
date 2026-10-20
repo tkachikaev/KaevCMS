@@ -1,4 +1,6 @@
-## Unreleased
+## 0.50.15 - 2026-10-20
+
+Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Support Tickets 1.7.3, Kaev Aurelia Account 1.6.9, L2 Obsidian Luxury 1.6.7. Updated modules ask the Owner to apply their update in **Modules** after the site update. No new database migrations; `composer.lock` is unchanged.
 
 - Keep player pages responsive when a game or login database is down or stalled.
   - External connections now open with a bounded network read timeout (`EXTERNAL_DB_READ_TIMEOUT_SECONDS`, default 20 s, instead of the mysqlnd default of 24 h) and a shorter server-side row-lock wait (`EXTERNAL_DB_LOCK_WAIT_TIMEOUT_SECONDS`, default 10 s, always below the read timeout), so a blocked reward or rescue write is rejected cleanly by the server instead of being cut off mid-flight.

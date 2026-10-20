@@ -467,7 +467,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.7.2', $manifest['version']);
+        $this->assertSame('1.7.3', $manifest['version']);
         $this->assertSame('0.45.1', $manifest['cms_min']);
         $this->assertNull($manifest['cms_max']);
 
@@ -731,7 +731,7 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.6', 'kaev-aurelia' => '1.6.8'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.7', 'kaev-aurelia' => '1.6.9'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
@@ -772,7 +772,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
-        $this->assertSame('1.3.2', $dailyRewardsManifest['version']);
+        $this->assertSame('1.3.3', $dailyRewardsManifest['version']);
 
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),
@@ -780,7 +780,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.4.2', $manifest['version']);
+        $this->assertSame('1.4.3', $manifest['version']);
         $this->assertSame('0.36.2', $manifest['cms_min']);
         $this->assertSame('database/migrations', $manifest['migrations']);
 

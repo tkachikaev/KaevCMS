@@ -69,7 +69,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.7.2',
+            'version' => '1.7.3',
             'enabled' => true,
         ]);
 
