@@ -336,6 +336,9 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
     await expect(page.locator('html')).toHaveClass(/account-sidebar-open/);
     await expect(sidebar).toBeVisible();
     await expect(backdrop).toBeVisible();
+    // The drawer slides in; hit-test the settled layout, not a mid-animation frame.
+    await expect.poll(() => sidebar.evaluate(element => Math.round(element.getBoundingClientRect().left))).toBe(0);
+    await expect.poll(() => backdrop.evaluate(element => getComputedStyle(element).opacity)).toBe('1');
 
     const layers = await page.evaluate(() => {
         const sidebarElement = document.querySelector('[data-account-sidebar]');
@@ -348,13 +351,15 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
         const backdropStyle = getComputedStyle(backdropElement);
         const sidebarRect = sidebarElement.getBoundingClientRect();
         const sidebarHit = document.elementFromPoint(sidebarRect.left + sidebarRect.width / 2, sidebarRect.top + sidebarRect.height / 2);
-        const pageHit = document.elementFromPoint(window.innerWidth - 8, window.innerHeight / 2);
+        const backdropRect = backdropElement.getBoundingClientRect();
+        // Probe the visible strip between the open drawer and the backdrop's own right edge.
+        const pageHit = document.elementFromPoint((sidebarRect.right + backdropRect.right) / 2, backdropRect.top + backdropRect.height / 2);
 
         return {
             sidebarZ: Number.parseInt(sidebarStyle.zIndex || '0', 10),
             backdropZ: Number.parseInt(backdropStyle.zIndex || '0', 10),
             sidebarOnTop: sidebarHit instanceof Element && sidebarElement.contains(sidebarHit),
-            backdropCoversPage: pageHit === backdropElement,
+            backdropCoversPage: pageHit === backdropElement && backdropRect.left <= 0,
             sidebarFilter: sidebarStyle.filter,
             sidebarBackdropFilter: sidebarStyle.backdropFilter || sidebarStyle.webkitBackdropFilter || 'none',
             backdropPointerEvents: backdropStyle.pointerEvents,
