@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\SystemUpdate;
 use App\Services\Updates\SystemUpdateInstaller;
 use App\Services\Updates\VdsUpdateAgent;
+use App\Support\Updates\FreshArtisanProcess;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -78,13 +79,16 @@ final class RunVdsUpdateAgentCommand extends Command
             }
 
             $this->info("Applying KaevCMS {$update->from_version} -> {$update->target_version}.");
+            // Loaded now, while only the current vendor tree exists.
+            $basePath = base_path();
+            class_exists(FreshArtisanProcess::class);
             $applied = $installer->apply($update, $maintenanceSecret);
             if ($applied->awaitsFinalization()) {
                 // vendor/ was replaced: finish in a fresh PHP process so only the new
                 // dependencies are loaded. proc_open is used directly because this process
                 // must not autoload anything from the new tree.
                 $this->line('Composer dependencies replaced; finishing the update in a fresh process.');
-                $exitCode = self::runFreshArtisan(['kaevcms:update-finalize', $update->uuid, '--no-ansi']);
+                $exitCode = FreshArtisanProcess::run($basePath, ['kaevcms:update-finalize', $update->uuid, '--no-ansi']);
                 if ($exitCode !== 0) {
                     $this->error('The update could not be finalized; it was rolled back. See the update log.');
 
@@ -104,28 +108,6 @@ final class RunVdsUpdateAgentCommand extends Command
             $this->clearAgentSecrets($request['uuid']);
             $agent->touch();
         }
-    }
-
-    /**
-     * Runs artisan in a new PHP CLI process, streaming its output, and returns the exit code.
-     *
-     * @param  list<string>  $arguments
-     */
-    private static function runFreshArtisan(array $arguments): int
-    {
-        $process = proc_open(
-            [PHP_BINARY, base_path('artisan'), ...$arguments],
-            [0 => ['pipe', 'r'], 1 => STDOUT, 2 => STDERR],
-            $pipes,
-            base_path(),
-        );
-        if (! is_resource($process)) {
-            return 1;
-        }
-
-        fclose($pipes[0]);
-
-        return proc_close($process);
     }
 
     private function recordAgentFailure(?SystemUpdate $update, string $uuid, Throwable $exception): void
