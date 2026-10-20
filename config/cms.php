@@ -122,6 +122,12 @@ return [
     'external_database' => [
         'connect_timeout_seconds' => (int) env('EXTERNAL_DB_CONNECT_TIMEOUT_SECONDS', 3),
         'query_timeout_ms' => (int) env('EXTERNAL_DB_QUERY_TIMEOUT_MS', 3000),
+        // Network wait for any single response; ends a stalled connection instead of the
+        // mysqlnd default of 24 hours. Row-lock waits end earlier on the server side so a
+        // blocked write fails cleanly before the client gives up.
+        'read_timeout_seconds' => (int) env('EXTERNAL_DB_READ_TIMEOUT_SECONDS', 20),
+        'lock_wait_timeout_seconds' => (int) env('EXTERNAL_DB_LOCK_WAIT_TIMEOUT_SECONDS', 10),
+        'unavailable_cooldown_seconds' => (int) env('EXTERNAL_DB_UNAVAILABLE_COOLDOWN_SECONDS', 30),
         'character_limit' => (int) env('EXTERNAL_DB_CHARACTER_LIMIT', 50),
     ],
 

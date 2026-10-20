@@ -10,11 +10,13 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Services\GameAccounts\AccountCharacterDirectory;
 use App\Services\GameAccounts\GameAccountProvisioner;
 use App\Services\GameAccounts\GameAccountQuota;
 use App\Services\GameAccountSettings;
 use App\Services\GameAssets\CharacterAppearanceResolver;
 use App\Services\GameWorld\MobiusCharacterLabels;
+use App\Services\Servers\ExternalServerCooldown;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\GameAccountCreationFailure;
 use Illuminate\Database\Eloquent\Collection;
@@ -32,6 +34,8 @@ class GameAccountController extends Controller
         private readonly GameAccountQuota $quota,
         private readonly MobiusCharacterLabels $labels,
         private readonly CharacterAppearanceResolver $appearances,
+        private readonly AccountCharacterDirectory $characterDirectory,
+        private readonly ExternalServerCooldown $cooldown,
     ) {}
 
     public function index(Request $request, GameAccountSettings $settings): View
@@ -139,19 +143,31 @@ class GameAccountController extends Controller
         $summary = null;
         $summaryUnavailable = false;
 
-        try {
-            $summary = $this->gateway->accountSummary($account->loginServer, $account->game_login);
-        } catch (Throwable $exception) {
+        if ($this->cooldown->isCoolingDown(ExternalServerCooldown::LOGIN_SERVER, (int) $account->login_server_id)) {
             $summaryUnavailable = true;
-            Log::warning('Game account summary loading failed.', [
-                'exception_class' => $exception::class,
-                'login_server_id' => $account->login_server_id,
-            ]);
+        } else {
+            try {
+                $summary = $this->gateway->accountSummary($account->loginServer, $account->game_login);
+            } catch (Throwable $exception) {
+                $summaryUnavailable = true;
+                $this->cooldown->trip(ExternalServerCooldown::LOGIN_SERVER, (int) $account->login_server_id);
+                Log::warning('Game account summary loading failed.', [
+                    'exception_class' => $exception::class,
+                    'login_server_id' => $account->login_server_id,
+                ]);
+            }
         }
 
         $worlds = [];
         foreach ($account->loginServer->gameServers as $gameServer) {
             if (! $gameServer->connectionConfigured() || ! $this->gateway->supportsGameServer($gameServer)) {
+                continue;
+            }
+
+            $rows = $this->characterDirectory->characterRows($gameServer, $account);
+            if ($rows === null) {
+                $worlds[] = ['server' => $gameServer, 'characters' => [], 'available' => false];
+
                 continue;
             }
 
@@ -166,7 +182,7 @@ class GameAccountController extends Controller
                         'race_name' => $this->labels->raceName($race),
                         'gender_name' => $this->labels->genderName($gender),
                     ]);
-                }, $this->gateway->characters($gameServer, $account->game_login));
+                }, $rows);
                 $worlds[] = ['server' => $gameServer, 'characters' => $characters, 'available' => true];
             } catch (Throwable $exception) {
                 Log::warning('Game characters loading failed.', [

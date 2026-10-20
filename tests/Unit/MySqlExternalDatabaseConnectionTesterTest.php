@@ -59,6 +59,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
 
         $pdo->shouldReceive('getAttribute')->once()->with(PDO::ATTR_SERVER_VERSION)->andReturn('8.4.0');
         $database->shouldReceive('getPdo')->once()->andReturn($pdo);
+        $database->shouldReceive('unprepared')->once()->with('SET SESSION innodb_lock_wait_timeout = 10')->andReturnTrue();
         $database->shouldReceive('unprepared')->once()->with('SET SESSION max_execution_time = 3000')->andReturnTrue();
         $database->shouldReceive('selectOne')->once()->with('select 1 as kaevcms_health')->andReturn((object) ['kaevcms_health' => 1]);
         $database->shouldReceive('getSchemaBuilder')->once()->andReturn($schema);
@@ -92,6 +93,7 @@ class MySqlExternalDatabaseConnectionTesterTest extends TestCase
 
         $pdo->shouldReceive('getAttribute')->once()->with(PDO::ATTR_SERVER_VERSION)->andReturn('8.4.0');
         $database->shouldReceive('getPdo')->once()->andReturn($pdo);
+        $database->shouldReceive('unprepared')->once()->with('SET SESSION innodb_lock_wait_timeout = 10')->andReturnTrue();
         $database->shouldReceive('unprepared')->once()->with('SET SESSION max_execution_time = 3000')->andReturnTrue();
         $database->shouldReceive('selectOne')->once()->with('select 1 as kaevcms_health')->andReturn((object) ['kaevcms_health' => 1]);
         $database->shouldReceive('getSchemaBuilder')->once()->andReturn($schema);

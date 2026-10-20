@@ -55,7 +55,9 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 throw new RuntimeException('Unsupported external database connection type.');
             }
 
-            $serverVersionValue = $database->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION);
+            $serverVersionValue = $this->queryTimeout
+                ->withNetworkReadTimeout(static fn (): PDO => $database->getPdo())
+                ->getAttribute(PDO::ATTR_SERVER_VERSION);
             $serverVersion = is_scalar($serverVersionValue) ? (string) $serverVersionValue : null;
             $this->queryTimeout->apply($database, $serverVersion);
             $queryStartedAt = hrtime(true);

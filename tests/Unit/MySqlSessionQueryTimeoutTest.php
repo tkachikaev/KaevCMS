@@ -45,6 +45,10 @@ class MySqlSessionQueryTimeoutTest extends TestCase
         $database->shouldReceive('getPdo')->once()->andReturn($pdo);
         $database->shouldReceive('unprepared')
             ->once()
+            ->with('SET SESSION innodb_lock_wait_timeout = 10')
+            ->andReturn(true);
+        $database->shouldReceive('unprepared')
+            ->once()
             ->with('SET SESSION max_statement_time = 3.000')
             ->andReturn(true);
 
@@ -65,10 +69,66 @@ class MySqlSessionQueryTimeoutTest extends TestCase
         $database->shouldReceive('getPdo')->once()->andReturn($pdo);
         $database->shouldReceive('unprepared')
             ->once()
+            ->with('SET SESSION innodb_lock_wait_timeout = 10')
+            ->andThrow(new RuntimeException('Unknown system variable.'));
+        $database->shouldReceive('unprepared')
+            ->once()
             ->with('SET SESSION max_execution_time = 3000')
             ->andThrow(new RuntimeException('Unknown system variable.'));
 
         $this->assertFalse(app(MySqlSessionQueryTimeout::class)->apply($database));
+    }
+
+    public function test_connection_is_opened_with_a_bounded_network_read_timeout_that_is_then_restored(): void
+    {
+        if (ini_get('mysqlnd.net_read_timeout') === false) {
+            $this->markTestSkipped('mysqlnd is not available.');
+        }
+
+        config()->set('cms.external_database.read_timeout_seconds', 20);
+        $before = ini_get('mysqlnd.net_read_timeout');
+
+        $during = (new MySqlSessionQueryTimeout)->withNetworkReadTimeout(
+            static fn (): string|false => ini_get('mysqlnd.net_read_timeout'),
+        );
+
+        $this->assertSame('20', $during);
+        $this->assertSame($before, ini_get('mysqlnd.net_read_timeout'));
+    }
+
+    public function test_network_read_timeout_is_restored_when_connecting_fails(): void
+    {
+        if (ini_get('mysqlnd.net_read_timeout') === false) {
+            $this->markTestSkipped('mysqlnd is not available.');
+        }
+
+        $before = ini_get('mysqlnd.net_read_timeout');
+
+        try {
+            (new MySqlSessionQueryTimeout)->withNetworkReadTimeout(static function (): never {
+                throw new RuntimeException('Connection refused.');
+            });
+            $this->fail('The connection failure must propagate.');
+        } catch (RuntimeException) {
+            $this->assertSame($before, ini_get('mysqlnd.net_read_timeout'));
+        }
+    }
+
+    public function test_row_lock_wait_always_ends_before_the_network_read_timeout(): void
+    {
+        $timeout = new MySqlSessionQueryTimeout;
+
+        config()->set('cms.external_database.read_timeout_seconds', 20);
+        config()->set('cms.external_database.lock_wait_timeout_seconds', 10);
+        $this->assertSame('SET SESSION innodb_lock_wait_timeout = 10', $timeout->lockWaitStatement());
+
+        // A misconfigured lock wait longer than the read timeout is capped below it.
+        config()->set('cms.external_database.lock_wait_timeout_seconds', 120);
+        $this->assertSame(15, $timeout->lockWaitSeconds());
+
+        config()->set('cms.external_database.read_timeout_seconds', 1);
+        $this->assertSame(5, $timeout->readTimeoutSeconds());
+        $this->assertSame(1, $timeout->lockWaitSeconds());
     }
 
     public function test_unsupported_server_does_not_receive_an_invalid_statement(): void

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Keep player pages responsive when a game or login database is down or stalled.
+  - External connections now open with a bounded network read timeout (`EXTERNAL_DB_READ_TIMEOUT_SECONDS`, default 20 s, instead of the mysqlnd default of 24 h) and a shorter server-side row-lock wait (`EXTERNAL_DB_LOCK_WAIT_TIMEOUT_SECONDS`, default 10 s, always below the read timeout), so a blocked reward or rescue write is rejected cleanly by the server instead of being cut off mid-flight.
+  - A server-wide cooldown (`EXTERNAL_DB_UNAVAILABLE_COOLDOWN_SECONDS`, default 30 s) makes every player and game account skip an unavailable server instead of each waiting for the same timeout.
+  - The game account page reuses the character directory's short cache and cooldown instead of querying every game server on each view.
+
 - Sign out a player's other browsers after a password change or reset. A new `AuthenticatePlayerSession` middleware binds the player login to its password hash (also checked for remember-me cookies); the browser that changed the password stays signed in, sessions created before this release adopt the hash instead of being signed out, and an administrator login in the same browser is not affected.
 
 - Add `php artisan kaevcms:update-recover [uuid] [--yes]`, a server-side fallback for a stuck Web Update. Run as the project owner, it rolls back an interrupted update from the verified backup (the panel's recovery runs as PHP-FPM and cannot rewrite owner files on a VDS), cancels a VDS agent request that was never started, or lifts leftover maintenance mode. It refuses to run as a different user than the file owner and needs explicit confirmation. Documented in the RU/EN update guides.

@@ -705,6 +705,54 @@ class GameAccountCabinetTest extends TestCase
             ->assertSee('Данные персонажей временно недоступны.');
     }
 
+    public function test_unavailable_game_server_is_skipped_for_every_account_during_the_cooldown(): void
+    {
+        $user = $this->user();
+        $other = $this->user('second@example.com', 'second');
+        [$loginServer, $gameServer] = $this->servers();
+        $accounts = [];
+        foreach ([[$user, 'Down01'], [$other, 'Down02']] as [$owner, $login]) {
+            $accounts[] = UserGameAccount::query()->create([
+                'user_id' => $owner->id,
+                'login_server_id' => $loginServer->id,
+                'registration_game_server_id' => $gameServer->id,
+                'game_login' => $login,
+                'normalized_login' => strtolower($login),
+            ]);
+        }
+        $this->gateway->failCharacters = true;
+
+        $this->actingAs($user)->get('/account/game-accounts/'.$accounts[0]->id)
+            ->assertOk()
+            ->assertSee('Данные персонажей временно недоступны.');
+        $this->assertSame(1, $this->gateway->characterCalls);
+
+        // Another player, another game account, the character directory: no new waits on the dead server.
+        $this->actingAs($other)->get('/account/game-accounts/'.$accounts[1]->id)
+            ->assertOk()
+            ->assertSee('Данные персонажей временно недоступны.');
+        $this->actingAs($other)->get('/account/characters')->assertOk();
+        $this->assertSame(1, $this->gateway->characterCalls);
+    }
+
+    public function test_account_page_reuses_recently_loaded_characters(): void
+    {
+        $user = $this->user();
+        [$loginServer, $gameServer] = $this->servers();
+        $account = UserGameAccount::query()->create([
+            'user_id' => $user->id,
+            'login_server_id' => $loginServer->id,
+            'registration_game_server_id' => $gameServer->id,
+            'game_login' => 'Cached01',
+            'normalized_login' => 'cached01',
+        ]);
+
+        $this->actingAs($user)->get('/account/game-accounts/'.$account->id)->assertOk();
+        $this->actingAs($user)->get('/account/game-accounts/'.$account->id)->assertOk();
+
+        $this->assertSame(1, $this->gateway->characterCalls);
+    }
+
     public function test_player_cannot_change_another_users_game_account_password(): void
     {
         $owner = $this->user('owner@example.com', 'owner');

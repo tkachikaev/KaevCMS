@@ -10,6 +10,7 @@ use App\Models\UserGameAccount;
 use App\Services\GameAssets\CharacterAppearanceResolver;
 use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\GameWorld\MobiusCharacterLabels;
+use App\Services\Servers\ExternalServerCooldown;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -67,7 +68,58 @@ final class AccountCharacterDirectory
         private readonly CharacterAppearanceResolver $appearances,
         private readonly GameServerFeatureSettings $features,
         private readonly CharacterRescueGateway $rescueGateway,
+        private readonly ExternalServerCooldown $cooldown,
     ) {}
+
+    /**
+     * Raw character rows for one game account, cached briefly and protected by a
+     * server-wide cooldown. Returns null while the game server is unavailable.
+     *
+     * @return list<array<string,mixed>>|null
+     */
+    public function characterRows(GameServer $gameServer, UserGameAccount $account): ?array
+    {
+        $cacheKey = implode(':', [
+            'account-character-directory-v2',
+            $gameServer->id,
+            $gameServer->updated_at?->getTimestamp() ?? 0,
+            $account->id,
+            $account->updated_at?->getTimestamp() ?? 0,
+        ]);
+
+        $failureKey = $cacheKey.':unavailable';
+        if (Cache::has($failureKey)) {
+            return null;
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached)) {
+            /** @var list<array<string,mixed>> $cached */
+            return $cached;
+        }
+
+        if ($this->cooldown->isCoolingDown(ExternalServerCooldown::GAME_SERVER, (int) $gameServer->id)) {
+            return null;
+        }
+
+        try {
+            $rows = $this->gateway->characters($gameServer, $account->game_login);
+        } catch (Throwable $exception) {
+            Cache::put($failureKey, true, now()->addSeconds(self::FAILURE_COOLDOWN_SECONDS));
+            $this->cooldown->trip(ExternalServerCooldown::GAME_SERVER, (int) $gameServer->id);
+            Log::warning('Player character directory loading failed.', [
+                'exception_class' => $exception::class,
+                'game_server_id' => $gameServer->id,
+                'game_account_id' => $account->id,
+            ]);
+
+            return null;
+        }
+
+        Cache::put($cacheKey, $rows, now()->addMinutes(self::CACHE_MINUTES));
+
+        return $rows;
+    }
 
     /**
      * @return array{
@@ -179,27 +231,12 @@ final class AccountCharacterDirectory
      */
     private function characters(GameServer $gameServer, UserGameAccount $account, array $rescue): array
     {
-        $cacheKey = implode(':', [
-            'account-character-directory-v2',
-            $gameServer->id,
-            $gameServer->updated_at?->getTimestamp() ?? 0,
-            $account->id,
-            $account->updated_at?->getTimestamp() ?? 0,
-        ]);
-
-        $failureKey = $cacheKey.':unavailable';
-        if (Cache::has($failureKey)) {
+        $rows = $this->characterRows($gameServer, $account);
+        if ($rows === null) {
             return ['available' => false, 'characters' => []];
         }
 
         try {
-            /** @var list<array<string,mixed>> $rows */
-            $rows = Cache::remember(
-                $cacheKey,
-                now()->addMinutes(self::CACHE_MINUTES),
-                fn (): array => $this->gateway->characters($gameServer, $account->game_login),
-            );
-
             /** @var list<CharacterRow> $characters */
             $characters = array_map(
                 fn (array $character): array => $this->normalizeCharacter($character, $gameServer, $account, $rescue),
@@ -208,7 +245,6 @@ final class AccountCharacterDirectory
 
             return ['available' => true, 'characters' => $characters];
         } catch (Throwable $exception) {
-            Cache::put($failureKey, true, now()->addSeconds(self::FAILURE_COOLDOWN_SECONDS));
             Log::warning('Player character directory loading failed.', [
                 'exception_class' => $exception::class,
                 'game_server_id' => $gameServer->id,
