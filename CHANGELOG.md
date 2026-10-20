@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Smooth the mobile account menu in both account themes: the dim-and-blur backdrop now covers the whole page beneath the opaque drawer and fades in together with it (0.32 s ease-out, blur 0 → 3 px), instead of a crisp page under the sliding drawer and a sudden blurred strip beside it. The closed drawer is fully hidden, so its shadow no longer peeks at the screen edge. The Playwright layering regression now checks real hit-testing (drawer on top, backdrop under the rest of the page) rather than the old backdrop offset.
+
 - Open the account balance menu and the profile menu from the same line in both account themes: on desktop the shorter balance pill now drops from the shared top-bar edge, and on phones both menus use the same fixed position.
 - Remove the redundant explanation under "Create your first game account" on the account overview in both themes.
 

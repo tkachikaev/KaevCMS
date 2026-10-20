@@ -346,12 +346,15 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
 
         const sidebarStyle = getComputedStyle(sidebarElement);
         const backdropStyle = getComputedStyle(backdropElement);
+        const sidebarRect = sidebarElement.getBoundingClientRect();
+        const sidebarHit = document.elementFromPoint(sidebarRect.left + sidebarRect.width / 2, sidebarRect.top + sidebarRect.height / 2);
+        const pageHit = document.elementFromPoint(window.innerWidth - 8, window.innerHeight / 2);
 
         return {
             sidebarZ: Number.parseInt(sidebarStyle.zIndex || '0', 10),
             backdropZ: Number.parseInt(backdropStyle.zIndex || '0', 10),
-            sidebarRight: sidebarElement.getBoundingClientRect().right,
-            backdropLeft: backdropElement.getBoundingClientRect().left,
+            sidebarOnTop: sidebarHit instanceof Element && sidebarElement.contains(sidebarHit),
+            backdropCoversPage: pageHit === backdropElement,
             sidebarFilter: sidebarStyle.filter,
             sidebarBackdropFilter: sidebarStyle.backdropFilter || sidebarStyle.webkitBackdropFilter || 'none',
             backdropPointerEvents: backdropStyle.pointerEvents,
@@ -360,12 +363,16 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
 
     expect(layers).not.toBeNull();
     expect(layers.sidebarZ).toBeGreaterThan(layers.backdropZ);
-    expect(layers.backdropLeft).toBeGreaterThanOrEqual(layers.sidebarRight - 1);
+    expect(layers.sidebarOnTop).toBe(true);
+    expect(layers.backdropCoversPage).toBe(true);
     expect(layers.sidebarFilter).toBe('none');
     expect(layers.sidebarBackdropFilter).toBe('none');
     expect(layers.backdropPointerEvents).toBe('auto');
 
-    await backdrop.click();
+    // The backdrop spans the viewport beneath the drawer; close it from the visible strip beside the drawer.
+    const backdropBox = await backdrop.boundingBox();
+    expect(backdropBox).not.toBeNull();
+    await backdrop.click({ position: { x: backdropBox.width - 8, y: backdropBox.height / 2 } });
     await expect(page.locator('html')).not.toHaveClass(/account-sidebar-open/);
 
     await toggle.click();
