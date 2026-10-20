@@ -75,6 +75,23 @@ php artisan kaevcms:update /tmp/KaevCMS-update.zip --yes
 
 Do not run the CLI Updater as `www-data` and do not grant PHP-FPM write access to all source files.
 
+### When an update is stuck
+
+If the server rebooted or the process was killed during an update, the site can stay in maintenance mode and new updates stay blocked. The panel's recovery button runs as PHP-FPM and cannot rewrite program files on a VDS, so use the server-side fallback as the project owner:
+
+```bash
+cd /var/www/kaevcms
+sudo -u <project-owner> php artisan kaevcms:update-recover
+```
+
+The command detects the situation and asks for confirmation:
+
+- an interrupted update — restores the database and files from the verified update backup, records the previous version and lifts maintenance mode;
+- a request the agent never started — cancels it and returns the package to the verified state, so it can be started again or discarded from the panel;
+- nothing stuck but the site is still in maintenance mode — offers to bring the site back online.
+
+When several updates need attention the command lists them; pass the identifier: `php artisan kaevcms:update-recover <uuid>`. Add `--yes` for scripts. For a root-owned project run it as `root`.
+
 ## Dependency changes
 
 When a release changes `composer.lock`, deploy the complete release and run:

@@ -292,22 +292,42 @@ final class VdsUpdateAgent
                 'requested_at' => now()->utc()->toIso8601String(),
             ], 0660);
         } catch (Throwable $exception) {
-            DB::transaction(function () use ($queued): void {
-                $locked = SystemUpdate::query()->lockForUpdate()->find($queued->getKey());
-                if ($locked instanceof SystemUpdate && $locked->isQueuedForAgent()) {
-                    $locked->forceFill([
-                        'execution_mode' => SystemUpdate::EXECUTION_WEB,
-                        'maintenance_secret' => null,
-                        'agent_requested_at' => null,
-                        'agent_seen_at' => null,
-                    ])->save();
-                }
-            });
+            $this->cancelQueued($queued);
 
             throw $exception;
         }
 
         return $queued;
+    }
+
+    /**
+     * Return a queued-but-not-started agent update to the staged state and drop its
+     * request file, e.g. when the agent never picked it up. Returns false when the
+     * update is no longer waiting for the agent (it already started or finished).
+     */
+    public function cancelQueued(SystemUpdate $update): bool
+    {
+        $cancelled = DB::transaction(function () use ($update): bool {
+            $locked = SystemUpdate::query()->lockForUpdate()->find($update->getKey());
+            if (! $locked instanceof SystemUpdate || ! $locked->isQueuedForAgent()) {
+                return false;
+            }
+
+            $locked->forceFill([
+                'execution_mode' => SystemUpdate::EXECUTION_WEB,
+                'maintenance_secret' => null,
+                'agent_requested_at' => null,
+                'agent_seen_at' => null,
+            ])->save();
+
+            return true;
+        });
+
+        if ($cancelled) {
+            $this->removeRequest($this->requestPath($update->uuid));
+        }
+
+        return $cancelled;
     }
 
     /**
