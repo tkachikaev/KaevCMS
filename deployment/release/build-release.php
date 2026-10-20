@@ -349,6 +349,7 @@ function kaevReleaseExcluded(string $path): bool
     }
 
     foreach ([
+        '.claude/',
         '.git/',
         'dist/',
         'node_modules/',

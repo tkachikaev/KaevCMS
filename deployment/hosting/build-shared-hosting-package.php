@@ -161,7 +161,7 @@ function releaseVersion(string $projectRoot): string
 function sharedHostingCoreExclusions(): array
 {
     return [
-        '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
+        '.claude', '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
         'public', 'storage', 'tests', 'test-results', 'playwright-report', 'bootstrap/cache', 'database/database.sqlite',
         'phpunit.xml', 'phpstan.neon', 'package.json', 'package-lock.json',
         'playwright.config.mjs', '.phpunit.cache', '.phpunit.result.cache', 'npm-debug.log',

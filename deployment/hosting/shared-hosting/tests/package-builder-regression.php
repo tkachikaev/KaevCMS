@@ -69,7 +69,8 @@ try {
     );
     assertPackageBuilder(
         packagePathExcluded('test-results/.last-run.json', $productionExclusions)
-            && packagePathExcluded('playwright-report/index.html', $productionExclusions),
+            && packagePathExcluded('playwright-report/index.html', $productionExclusions)
+            && packagePathExcluded('.claude/launch.json', $productionExclusions),
         'Browser run artifacts must be excluded from production hosting packages.',
     );
     assertPackageBuilder(

@@ -283,6 +283,7 @@ function excluded(string $path): bool
     }
 
     foreach ([
+        '.claude/',
         '.git/',
         'node_modules/',
         'playwright-report/',
