@@ -1,4 +1,4 @@
-## Unreleased
+## 0.51.0 - 2026-10-20
 
 - **Web Update can now cross Composer dependency changes.** The cumulative package carries the production `vendor` tree built from the release's `composer.lock` (about +11 MB compressed). When a site's dependencies differ, the updater checks PHP and extensions first, unpacks the new tree beside the live one, swaps it in with two renames, and finishes migrations in a fresh PHP process (VDS agent: `kaevcms:update-finalize`; panel: automatic signed redirect through maintenance mode). Database, files and dependencies roll back together on failure. Works on shared hosting without SSH or Composer. Sites whose dependencies already match keep their `vendor` untouched.
 - The bundle is declared as an ordinary payload file (`core/deployment/updates/dependency-bundle/vendor.zip`), so updaters before this release still accept the package when dependencies are unchanged; the new updater consumes it instead of installing it and removes copies left by older ones.
