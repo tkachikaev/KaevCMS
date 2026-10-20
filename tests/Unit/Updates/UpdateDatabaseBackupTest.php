@@ -73,6 +73,28 @@ class UpdateDatabaseBackupTest extends TestCase
         $this->assertSame('before', DB::table('update_state')->value('value'));
     }
 
+    public function test_sqlite_restore_discards_stale_write_ahead_log_sidecars(): void
+    {
+        DB::statement('CREATE TABLE update_state (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+        DB::table('update_state')->insert(['id' => 1, 'value' => 'before']);
+
+        $log = new UpdateLog('database-test-'.bin2hex(random_bytes(4)));
+        $service = $this->app->make(UpdateDatabaseBackup::class);
+        $backup = $service->create($this->backupRoot, $log);
+
+        DB::table('update_state')->where('id', 1)->update(['value' => 'after']);
+        DB::purge('update_backup_test');
+        // Simulate sidecars left by a WAL-mode connection; replaying them would undo the restore.
+        file_put_contents($this->databasePath.'-wal', 'stale wal frames');
+        file_put_contents($this->databasePath.'-shm', 'stale shared memory');
+
+        $service->restore($backup, $log);
+
+        $this->assertFileDoesNotExist($this->databasePath.'-wal');
+        $this->assertFileDoesNotExist($this->databasePath.'-shm');
+        $this->assertSame('before', DB::table('update_state')->value('value'));
+    }
+
     private function removeDirectory(string $path): void
     {
         if (! is_dir($path)) {

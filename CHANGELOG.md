@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Fix MySQL/MariaDB Web Update rollback. Backups wrote every value as a bare `0x…` binary literal: MySQL 8 rejects those for JSON columns, numeric columns could restore the character code instead of the number, empty strings produced an invalid bare `0x`, and generated columns were inserted although the server must compute them. Character, numeric, temporal and JSON values are now restored through `CONVERT(0x… USING <connection charset>)`, binary/BIT/spatial columns keep raw hex (`X''` when empty), and generated columns are skipped. Restore validates the whole backup before dropping any table and keeps explicit zero AUTO_INCREMENT values. Older backups remain restorable as before. The fix protects updates started from this version onwards, because an update runs the installed version's backup code.
+- Discard stale SQLite `-wal`/`-shm`/`-journal` sidecars before restoring an update backup so they cannot be replayed onto the restored file.
+- Add `tests/Integration/Updates/mysql-backup-roundtrip.php`, a real MySQL/MariaDB backup-and-restore gate for a disposable test database.
+
 - Bring every bundled module's administration pages to the Settings/Mail canon: section tabs (`x-admin.tabs`) directly under a header that always has a title and a description, so the header no longer changes height between tabs.
   - Donations: replace the custom underline navigation and "Back to modules" link with shared tabs; add header descriptions to Providers, Orders and Order detail, and a short Exchange description (the long help moves into the exchange card).
   - Daily Rewards and Promo Codes: "Calendars"/"Promo codes" and journal tabs replace the "Open journal" and "Back" buttons; promo current/archive/all filters become subtle sub-tabs.

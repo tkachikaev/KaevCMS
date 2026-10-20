@@ -126,6 +126,7 @@ final class UpdateDatabaseBackup
     private function backupMysql(string $backupRoot, UpdateLog $log): array
     {
         $pdo = $this->pdo();
+        $encoder = new MySqlBackupValueEncoder((string) ($this->database->connection()->getConfig('charset') ?: 'utf8mb4'));
         $backupPath = $backupRoot.'/database.mysql.jsonl';
         $stream = fopen($backupPath, 'wb');
         if (! is_resource($stream)) {
@@ -153,17 +154,25 @@ final class UpdateDatabaseBackup
                 $this->writeSqlRecord($stream, "DROP TABLE IF EXISTS {$quotedTable}");
                 $this->writeSqlRecord($stream, $create[1]);
 
-                $rows = $pdo->query("SELECT * FROM {$quotedTable}");
+                $columnTypes = $this->mysqlStoredColumnTypes($pdo, $table);
+                if ($columnTypes === []) {
+                    continue;
+                }
+
+                $columns = implode(', ', array_map(fn (string $column): string => $this->quoteIdentifier($column), array_keys($columnTypes)));
+                $rows = $pdo->query("SELECT {$columns} FROM {$quotedTable}");
                 if ($rows === false) {
                     throw new RuntimeException(__('Unable to back up database rows from :table.', ['table' => $table]));
                 }
 
                 while (($row = $rows->fetch(PDO::FETCH_ASSOC)) !== false) {
-                    $columns = array_map(fn (string $column): string => $this->quoteIdentifier($column), array_keys($row));
-                    $values = array_map(fn (mixed $value): string => $this->mysqlLiteral($value), array_values($row));
+                    $values = [];
+                    foreach ($columnTypes as $column => $dataType) {
+                        $values[] = $encoder->literal($row[$column] ?? null, $dataType);
+                    }
                     $this->writeSqlRecord(
                         $stream,
-                        "INSERT INTO {$quotedTable} (".implode(', ', $columns).') VALUES ('.implode(', ', $values).')',
+                        "INSERT INTO {$quotedTable} ({$columns}) VALUES (".implode(', ', $values).')',
                     );
                 }
             }
@@ -193,6 +202,12 @@ final class UpdateDatabaseBackup
         }
 
         $this->database->purge();
+        // A leftover write-ahead log would be replayed onto the restored file.
+        foreach (['-wal', '-shm', '-journal'] as $suffix) {
+            if (is_file($databasePath.$suffix) && ! @unlink($databasePath.$suffix)) {
+                throw new RuntimeException(__('Unable to restore the SQLite update backup.'));
+            }
+        }
         if (! copy($backupPath, $databasePath)) {
             throw new RuntimeException(__('Unable to restore the SQLite update backup.'));
         }
@@ -222,8 +237,28 @@ final class UpdateDatabaseBackup
             throw new RuntimeException(__('The MySQL update backup header is invalid.'));
         }
 
+        // Validate every record before dropping anything: a damaged backup must leave the
+        // current database untouched instead of half-restored.
+        try {
+            $dataStart = ftell($stream);
+            while (($line = fgets($stream)) !== false) {
+                $this->decodeSqlRecord($line);
+            }
+            if ($dataStart === false || fseek($stream, $dataStart) !== 0) {
+                throw new RuntimeException(__('Unable to open the MySQL update backup.'));
+            }
+        } catch (Throwable $exception) {
+            fclose($stream);
+
+            throw $exception;
+        }
+
         $pdo = $this->pdo();
+        $sqlModeStatement = $pdo->query('SELECT @@SESSION.sql_mode');
+        $originalSqlMode = $sqlModeStatement !== false ? $sqlModeStatement->fetchColumn() : false;
         $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+        // Keep explicit zero values in AUTO_INCREMENT columns instead of renumbering them.
+        $pdo->exec("SET SESSION sql_mode = CONCAT_WS(',', NULLIF(@@SESSION.sql_mode, ''), 'NO_AUTO_VALUE_ON_ZERO')");
 
         try {
             foreach ($this->mysqlTables($pdo) as $table) {
@@ -231,27 +266,35 @@ final class UpdateDatabaseBackup
             }
 
             while (($line = fgets($stream)) !== false) {
-                $record = json_decode($line, true);
-                if (! is_array($record) || ($record['type'] ?? null) !== 'sql') {
-                    throw new RuntimeException(__('The MySQL update backup is invalid.'));
-                }
-
-                $encoded = $record['statement'] ?? null;
-                $statement = is_string($encoded) ? base64_decode($encoded, true) : false;
-                if (! is_string($statement) || $statement === '') {
-                    throw new RuntimeException(__('The MySQL update backup contains an invalid statement.'));
-                }
-
-                $pdo->exec($statement);
+                $pdo->exec($this->decodeSqlRecord($line));
             }
         } finally {
             fclose($stream);
             $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+            if (is_string($originalSqlMode)) {
+                $pdo->prepare('SET SESSION sql_mode = ?')->execute([$originalSqlMode]);
+            }
         }
 
         $this->database->purge();
         $this->database->reconnect();
         $log->write('MySQL database backup restored.', 'WARN');
+    }
+
+    private function decodeSqlRecord(string $line): string
+    {
+        $record = json_decode($line, true);
+        if (! is_array($record) || ($record['type'] ?? null) !== 'sql') {
+            throw new RuntimeException(__('The MySQL update backup is invalid.'));
+        }
+
+        $encoded = $record['statement'] ?? null;
+        $statement = is_string($encoded) ? base64_decode($encoded, true) : false;
+        if (! is_string($statement) || $statement === '') {
+            throw new RuntimeException(__('The MySQL update backup contains an invalid statement.'));
+        }
+
+        return $statement;
     }
 
     /** @return list<string> */
@@ -343,13 +386,31 @@ final class UpdateDatabaseBackup
         }
     }
 
-    private function mysqlLiteral(mixed $value): string
+    /**
+     * Stored (non-generated) columns in definition order, mapped to their data type.
+     * Generated columns are recomputed by the server and cannot be inserted.
+     *
+     * @return array<string, string>
+     */
+    private function mysqlStoredColumnTypes(PDO $pdo, string $table): array
     {
-        if ($value === null) {
-            return 'NULL';
+        $statement = $pdo->prepare(
+            'SELECT COLUMN_NAME, DATA_TYPE, EXTRA FROM information_schema.COLUMNS'
+            .' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
+        );
+        if ($statement === false || ! $statement->execute([$table])) {
+            throw new RuntimeException(__('Unable to read the database definition for :table.', ['table' => $table]));
         }
 
-        return '0x'.bin2hex((string) $value);
+        $columns = [];
+        while (($column = $statement->fetch(PDO::FETCH_NUM)) !== false) {
+            if (! is_string($column[0] ?? null) || MySqlBackupValueEncoder::isGenerated((string) ($column[2] ?? ''))) {
+                continue;
+            }
+            $columns[$column[0]] = (string) ($column[1] ?? '');
+        }
+
+        return $columns;
     }
 
     private function quoteIdentifier(string $identifier): string
