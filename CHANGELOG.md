@@ -1,3 +1,11 @@
+## 0.51.2 - 2026-10-20
+
+0.51.1 was used only for an internal dependency-swap test build and is skipped. Bundled module and theme versions are unchanged; `composer.lock` is unchanged.
+
+- **Bridge package for sites on 0.42.4–0.50.16**, including shared hosting without SSH. Their Web Updater cannot replace dependencies and refuses packages with another `composer.lock`. Each release now also ships `KaevCMS-bridge-update-0.42.4-0.50.16-for-<version>.zip`: it installs the current code and the dependency-aware updater without touching `composer.lock` or `vendor`, so old updaters accept it; the regular cumulative package installed right after replaces the dependencies. The current code was verified on the pre-0.50.11 dependencies (Laravel 13.19, Livewire 4.2): PHPUnit and the browser gate pass.
+- Fix the CLI updater (`kaevcms:update`) for dependency-changing packages: it now finishes the update in a fresh process like the VDS agent, instead of reporting success while the site stayed in maintenance.
+- Verified on a live MySQL 8.4 VDS: 0.50.16 → 0.51.0 through the legacy updater, a dependency swap (Laravel 13.37 → 13.38) through the VDS agent, and a forced migration failure rolled back database, files and `vendor` byte-identically.
+
 ## 0.51.0 - 2026-10-20
 
 - **Web Update can now cross Composer dependency changes.** The cumulative package carries the production `vendor` tree built from the release's `composer.lock` (about +11 MB compressed). When a site's dependencies differ, the updater checks PHP and extensions first, unpacks the new tree beside the live one, swaps it in with two renames, and finishes migrations in a fresh PHP process (VDS agent: `kaevcms:update-finalize`; panel: automatic signed redirect through maintenance mode). Database, files and dependencies roll back together on failure. Works on shared hosting without SSH or Composer. Sites whose dependencies already match keep their `vendor` untouched.

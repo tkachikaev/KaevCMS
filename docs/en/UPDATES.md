@@ -103,7 +103,22 @@ From KaevCMS 0.51.0 the cumulative update package carries the production depende
 
 If the browser was closed between the two steps, open the update page and choose "Finish the update", or run `php artisan kaevcms:update-finalize <uuid>` as the project owner. `php artisan kaevcms:update-recover <uuid>` rolls such an update back instead.
 
-Sites on releases before 0.51.0 run the update with their old Web Updater, which cannot replace dependencies. When a package changes `composer.lock` for them, deploy the complete release once and run:
+### Sites before 0.51.0: the bridge package
+
+Sites on 0.42.4 through 0.50.16 run their old Web Updater, which cannot replace dependencies and refuses packages with another `composer.lock`. Every release therefore includes a **bridge**, `KaevCMS-bridge-update-…-for-<version>.zip`:
+
+1. Upload the bridge in the panel. It installs the current CMS code and the new updater without touching `composer.lock` or `vendor`, so the old updater accepts it. The panel then shows a version such as `0.51.0-bridge`.
+2. Upload the regular cumulative package of the same release right after it. The new updater replaces the dependencies and finishes the update.
+
+The bridge also works on shared hosting without SSH. Sites on 0.51.0 or newer do not need it.
+
+If on MySQL 8 an older release's **System updates** page returns HTTP 500 (`Out of sort memory`, fixed in 0.50.16), first clear the stored manifests of past updates, e.g. in phpMyAdmin, then upload the bridge:
+
+```sql
+UPDATE system_updates SET manifest = '{}' WHERE status IN ('succeeded', 'failed', 'discarded');
+```
+
+Without the bridge you can deploy the complete release and run:
 
 ```bash
 composer install --no-dev --optimize-autoloader --no-interaction
