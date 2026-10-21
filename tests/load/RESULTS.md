@@ -78,3 +78,19 @@ The caches are now built by the site itself (`App\Support\FrameworkCache`); valu
 
 - Capacity at 20 users since the baseline: 6.6 → 14.8 requests per second (×2.2), median 2761 → 1145 ms. / С исходного замера пропускная способность выросла в 2,2 раза.
 - Left for later: the donations module reads its settings at boot to pick its menu link (about 3 ms); changing it needs a module version bump that owners approve. / Донатный модуль читает настройки при запуске; правка требует новой версии модуля.
+
+## 2026-10-21 — player cabinet with a game database / кабинет игрока с игровой базой (branch perf/load-testing)
+
+A production-mode copy of the site on a workstation (PHP built-in server, one request at a time), MariaDB 10.4 with an empty copy of the L2JMobius Interlude schema filled by `fake-game-world.php`: 1000 accounts, 4019 characters, 60 clans, 9 castles, 30 heroes; 200 test players linked to 401 game accounts; the avatar and item icon set from KaevCMS-image. / Копия сайта в боевом режиме на рабочей машине, игровая база с 4019 персонажами, 200 тестовых игроков.
+
+Game database queries with an empty cache / запросы к игровой базе при пустом кэше:
+
+| Page / страница | Before / было | After / стало |
+|---|---|---|
+| `/account/characters` | 63 | 8 (3 while the schema is remembered) |
+| `/` (top characters, statistics) | 64 | 9 |
+
+- The character list inspected the game schema column by column (55 `information_schema` queries) on every uncached load per game account; now one listing per table, remembered for 5 minutes and shared with statistics. / Проверка структуры игровой базы шла по одной колонке на каждую загрузку списка персонажей.
+- Avatars: up to 20 missing-file checks per character, starting with a server folder that usually does not exist; 19 avatars 10.5 → 0.4 ms. / Поиск аватарок: 10,5 → 0,4 мс на 19 персонажей.
+- 20 different players opening their characters with an empty cache for 30 s: 928 page views, 28 game database connections, 164 game queries, 0 errors. / 928 просмотров — 28 соединений с игровой базой, ошибок нет.
+- Signed-in cabinet pages (`/account`, characters, game accounts, wallet, web inventory) cost the same as public pages, about 30 ms each here; no sign-outs under load. / Страницы кабинета не тяжелее публичных, вылетов из аккаунта нет.
