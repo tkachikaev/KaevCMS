@@ -46,6 +46,7 @@ use App\Services\SiteSettings;
 use App\Services\Updates\VdsUpdateAgent;
 use App\Services\Wallet\CoreWalletGateway;
 use App\Support\Database\TableExistence;
+use App\Support\FrameworkCache;
 use App\Support\Modules\ModuleMigrationManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Events\MigrationsEnded;
@@ -173,14 +174,23 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureRateLimiters($securitySettings);
 
-        $defaultLocale = $languages->default();
-        $fallbackLocale = $languages->fallback();
-        config()->set('app.locale', $defaultLocale);
-        config()->set('app.fallback_locale', $fallbackLocale);
-        app()->setLocale($defaultLocale);
-        app('translator')->setFallback($fallbackLocale);
-        $siteSettings->applyConfiguredTimezone();
-        $mailSettings->applyConfiguration();
+        // Caching configuration stores it after boot: values from the database, including the
+        // decrypted mail password, must stay out of the cache file and keep following the admin.
+        if (! FrameworkCache::building($this->app)) {
+            $defaultLocale = $languages->default();
+            $fallbackLocale = $languages->fallback();
+            config()->set('app.locale', $defaultLocale);
+            config()->set('app.fallback_locale', $fallbackLocale);
+            app()->setLocale($defaultLocale);
+            app('translator')->setFallback($fallbackLocale);
+            $siteSettings->applyConfiguredTimezone();
+            $mailSettings->applyConfiguration();
+        }
+
+        $this->app->terminating(function (): void {
+            $this->app->make(FrameworkCache::class)->warm();
+        });
+
         URL::defaults(['adminPath' => $adminPathSettings->path()]);
 
         if (config('app.force_https')) {

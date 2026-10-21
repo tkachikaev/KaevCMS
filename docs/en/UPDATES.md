@@ -92,6 +92,9 @@ The command detects the situation and asks for confirmation:
 
 When several updates need attention the command lists them; pass the identifier: `php artisan kaevcms:update-recover <uuid>`. Add `--yes` for scripts. For a root-owned project run it as `root`.
 
+## Laravel caches
+
+On a production site (`APP_ENV=production`) KaevCMS keeps Laravel's configuration, event and route caches built by itself; there is no need to run `php artisan optimize`. Updates, installation and `php artisan optimize:clear` only remove the caches, and the first ordinary request after them builds new ones once the page has been sent. When `.env` is changed after the caches were built, or the site runs another CMS version, the caches are removed and built again. Values from the database (language, time zone, mail and its password) and module routes never go into the caches. If building fails the site keeps working without them, the error goes to the Laravel log, and the next attempt follows an hour later.
 ## Dependency changes
 
 From KaevCMS 0.51.0 the cumulative update package carries the production dependencies (`vendor`) built exactly from that release's `composer.lock`. When the site's dependencies differ, the Web Updater and the VDS agent replace them themselves — on a VDS, on shared hosting without SSH or Composer, and on servers without internet access:

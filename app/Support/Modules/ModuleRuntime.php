@@ -4,6 +4,7 @@ namespace App\Support\Modules;
 
 use App\Models\ModuleState;
 use App\Support\Database\TableExistence;
+use App\Support\FrameworkCache;
 use Illuminate\Foundation\Application;
 use Illuminate\Routing\CompiledRouteCollection;
 use Illuminate\Routing\RouteCollection;
@@ -129,13 +130,7 @@ final class ModuleRuntime
 
     private function shouldRegisterRoutes(): bool
     {
-        if (! $this->app->runningInConsole()) {
-            return true;
-        }
-
-        $arguments = array_map('strval', (array) ($_SERVER['argv'] ?? []));
-
-        return array_intersect(['route:cache', 'optimize'], $arguments) === [];
+        return ! FrameworkCache::building($this->app);
     }
 
     /** @param array<string, mixed> $module */

@@ -386,7 +386,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('\'migration_error\'', $moduleManager);
 
         $runtime = $this->readReleaseFile('app/Support/Modules/ModuleRuntime.php');
-        $this->assertStringContainsString('array_intersect([\'route:cache\', \'optimize\'], $arguments)', $runtime);
+        $this->assertStringContainsString('return ! FrameworkCache::building($this->app);', $runtime);
+        $this->assertStringContainsString('array_intersect([\'config:cache\', \'route:cache\', \'optimize\'], $arguments)', $this->readReleaseFile('app/Support/FrameworkCache.php'));
         $this->assertStringContainsString('$this->autoloader->register($module)', $runtime);
         $this->assertStringNotContainsString('private readonly Filesystem $files', $runtime);
 
