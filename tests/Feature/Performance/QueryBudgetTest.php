@@ -3,7 +3,9 @@
 namespace Tests\Feature\Performance;
 
 use App\Models\CmsSetting;
+use App\Models\Page;
 use App\Services\CmsSettings;
+use App\Services\Pages\DownloadPages;
 use App\Support\Database\TableExistence;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleMigrationManager;
@@ -95,9 +97,30 @@ class QueryBudgetTest extends TestCase
         $this->assertCount(1, $reads, 'Inspecting every module must read applied migrations once.');
     }
 
+    public function test_the_downloads_page_is_read_once_and_writes_are_visible(): void
+    {
+        $downloads = app(DownloadPages::class);
+        download_page_url('ru'); // Warm settings and languages that any page reads anyway.
+        $downloads->forget();
+
+        $queries = $this->countQueries(function (): void {
+            download_page_url('ru');
+            download_page_url('en');
+        });
+        $this->assertSame(2, $queries, 'The header and the footer must share one read of the page and its translations.');
+
+        $page = $downloads->selected();
+        $this->assertInstanceOf(Page::class, $page);
+        $page->translations()->where('locale', 'en')->firstOrFail()->update(['slug' => 'get-the-game']);
+        $this->assertSame('get-the-game', $downloads->selected()?->translation('en')?->slug, 'A translation write must be visible immediately.');
+
+        $page->delete();
+        $this->assertNull($downloads->selected(), 'A deleted page must not be remembered.');
+    }
+
     public function test_public_pages_stay_within_their_query_budget(): void
     {
-        foreach (['/' => 25, '/news' => 15, '/about' => 15, '/login' => 15] as $path => $budget) {
+        foreach (['/' => 16, '/news' => 8, '/about' => 8, '/login' => 8] as $path => $budget) {
             $this->get($path); // Warm per-request caches the way a first visitor would.
             $queries = $this->countQueries(fn () => $this->get($path)->assertOk());
             $this->assertLessThanOrEqual($budget, $queries, "{$path} used {$queries} queries; the budget is {$budget}.");

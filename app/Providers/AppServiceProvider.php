@@ -33,6 +33,7 @@ use App\Services\News\NewsImageStorage;
 use App\Services\Notifications\AdminNotificationCenter;
 use App\Services\Notifications\AdminNotificationSettings;
 use App\Services\Notifications\AdminNotificationSourceScanner;
+use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Services\Pages\PageImageStorage;
 use App\Services\Pages\PageNavigation;
@@ -98,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PageHtmlSanitizer::class);
         $this->app->singleton(PageImageStorage::class);
         $this->app->singleton(PageNavigation::class);
+        $this->app->singleton(DownloadPages::class);
         $this->app->singleton(RegistrationSettings::class);
         $this->app->singleton(EncryptionHealth::class);
         $this->app->singleton(SecurityLogMaintenance::class);

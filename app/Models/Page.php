@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
+use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Support\Database\TableExistence;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,6 +27,20 @@ use Throwable;
 class Page extends Model
 {
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(static fn () => self::forgetDownloadPage());
+        static::deleted(static fn () => self::forgetDownloadPage());
+    }
+
+    /** DownloadPages remembers the downloads page for the request; any page write refreshes it. */
+    public static function forgetDownloadPage(): void
+    {
+        if (app()->resolved(DownloadPages::class)) {
+            app(DownloadPages::class)->forget();
+        }
+    }
 
     protected $fillable = [
         'slug',
