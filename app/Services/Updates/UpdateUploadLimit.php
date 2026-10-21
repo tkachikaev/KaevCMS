@@ -36,6 +36,17 @@ final class UpdateUploadLimit
         return $this->bytes() < self::RECOMMENDED_BYTES;
     }
 
+    /**
+     * Size of one part for chunked uploads: comfortably below the limit (the multipart
+     * envelope and form fields also count toward post_max_size), at most 4 MB.
+     */
+    public function chunkBytes(): int
+    {
+        $limit = $this->bytes();
+
+        return max(64 * 1024, min(4 * 1024 * 1024, $limit - max(64 * 1024, intdiv($limit, 10))));
+    }
+
     public function label(): string
     {
         return self::format($this->bytes());

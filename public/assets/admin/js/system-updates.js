@@ -34,22 +34,98 @@
             cleanups.push(() => button.removeEventListener('click', copy));
         });
 
-        // A file above the PHP upload limit would be discarded by the server after a long
-        // upload; refuse it before sending.
-        document.querySelectorAll('input[type="file"][data-update-max-bytes]').forEach((input) => {
-            if (!(input instanceof HTMLInputElement)) return;
+        // Shared hosting often limits a request to 2-8 MB while a release package is larger.
+        // Send the file in parts below that limit; the server assembles and verifies it.
+        document.querySelectorAll('form[data-update-chunked-upload]').forEach((uploadForm) => {
+            if (!(uploadForm instanceof HTMLFormElement) || typeof window.fetch !== 'function' || typeof Blob.prototype.slice !== 'function') return;
 
-            const maximum = Number(input.dataset.updateMaxBytes || 0);
-            const check = () => {
-                const file = input.files?.[0];
-                const tooLarge = file !== undefined && maximum > 0 && file.size > maximum;
-                input.setCustomValidity(tooLarge ? (input.dataset.updateTooLarge || 'File is too large.') : '');
-                input.setAttribute('aria-invalid', tooLarge ? 'true' : 'false');
-                if (tooLarge) input.reportValidity();
+            const input = uploadForm.querySelector('input[type="file"]');
+            const errorBox = uploadForm.querySelector('[data-update-upload-error]');
+            const state = uploadForm.querySelector('[data-update-upload-state]');
+            const buttons = [...uploadForm.querySelectorAll('button[type="submit"]')];
+            const chunkBytes = Math.max(65536, Number(uploadForm.dataset.updateChunkBytes || 0));
+            let busy = false;
+
+            const showError = (text) => {
+                if (errorBox instanceof HTMLElement) {
+                    errorBox.querySelector('span').textContent = text;
+                    errorBox.hidden = false;
+                }
+                if (state instanceof HTMLElement) state.textContent = '';
             };
 
-            input.addEventListener('change', check);
-            cleanups.push(() => input.removeEventListener('change', check));
+            const randomId = () => [...window.crypto.getRandomValues(new Uint8Array(16))]
+                .map((byte) => byte.toString(16).padStart(2, '0')).join('');
+
+            const sendPart = async (body) => {
+                let lastError = null;
+                for (let attempt = 0; attempt < 3; attempt += 1) {
+                    try {
+                        const response = await fetch(uploadForm.dataset.updateChunkUrl, {
+                            method: 'POST',
+                            body,
+                            credentials: 'same-origin',
+                            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        });
+                        const result = await response.json().catch(() => ({}));
+                        if (response.ok) return result;
+                        // The server refused the part: retrying cannot help.
+                        throw Object.assign(new Error(result.message || uploadForm.dataset.updateInterrupted || ''), { final: true });
+                    } catch (error) {
+                        if (error.final) throw error;
+                        lastError = error;
+                        await new Promise((resolve) => window.setTimeout(resolve, 1000 * (attempt + 1)));
+                    }
+                }
+                throw lastError;
+            };
+
+            const upload = async (event) => {
+                const file = input instanceof HTMLInputElement ? input.files?.[0] : undefined;
+                if (file === undefined || busy) return;
+
+                event.preventDefault();
+                busy = true;
+                buttons.forEach((button) => { button.disabled = true; });
+                if (errorBox instanceof HTMLElement) errorBox.hidden = true;
+
+                const token = uploadForm.querySelector('input[name="_token"]')?.value || '';
+                const total = Math.max(1, Math.ceil(file.size / chunkBytes));
+                const uploadId = randomId();
+
+                try {
+                    for (let index = 0; index < total; index += 1) {
+                        if (state instanceof HTMLElement) {
+                            state.textContent = index === total - 1
+                                ? (uploadForm.dataset.updateVerifying || '')
+                                : (uploadForm.dataset.updateUploading || '').replace(':percent', String(Math.floor((index / total) * 100)));
+                        }
+
+                        const body = new FormData();
+                        body.append('_token', token);
+                        body.append('upload_id', uploadId);
+                        body.append('index', String(index));
+                        body.append('total', String(total));
+                        body.append('size', String(file.size));
+                        body.append('chunk', file.slice(index * chunkBytes, (index + 1) * chunkBytes), 'part.bin');
+
+                        const result = await sendPart(body);
+                        if (result.done && typeof result.redirect === 'string') {
+                            window.location.assign(result.redirect);
+                            return;
+                        }
+                    }
+                    showError(uploadForm.dataset.updateInterrupted || '');
+                } catch (error) {
+                    showError((error && error.message) || uploadForm.dataset.updateInterrupted || '');
+                }
+
+                busy = false;
+                buttons.forEach((button) => { button.disabled = false; });
+            };
+
+            uploadForm.addEventListener('submit', upload);
+            cleanups.push(() => uploadForm.removeEventListener('submit', upload));
         });
 
         const dialog = document.querySelector('[data-update-progress-dialog]');

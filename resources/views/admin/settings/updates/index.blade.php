@@ -72,26 +72,27 @@
             <strong>{{ __('The package was not uploaded: it is larger than this server accepts through the browser (:limit).', ['limit' => $uploadLimitLabel]) }}</strong>
             <span>{{ __('Raise upload_max_filesize and post_max_size to 64M in the hosting PHP settings, or place the ZIP in the upload folder below through FTP or the file manager.') }}</span>
         </div>
-    @elseif($uploadLimitLow)
-        <div class="notice notice-warning" role="status" data-update-upload-limit-low>
-            <strong>{{ __('This server accepts uploads up to :limit through the browser.', ['limit' => $uploadLimitLabel]) }}</strong>
-            <span>{{ __('Release packages that include dependencies can be larger. Raise upload_max_filesize and post_max_size to 64M in the hosting PHP settings, or place the ZIP in the upload folder below through FTP or the file manager.') }}</span>
-        </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.settings.system.updates.store') }}" enctype="multipart/form-data" class="update-upload-form">
+    {{-- The script sends the file in parts below the PHP upload limit; the plain form is the fallback. --}}
+    <form method="POST" action="{{ route('admin.settings.system.updates.store') }}" enctype="multipart/form-data" class="update-upload-form"
+        data-update-chunked-upload
+        data-update-chunk-url="{{ route('admin.settings.system.updates.chunk') }}"
+        data-update-chunk-bytes="{{ $uploadChunkBytes }}"
+        data-update-uploading="{{ __('Uploading the package: :percent%') }}"
+        data-update-verifying="{{ __('Verifying the package…') }}"
+        data-update-interrupted="{{ __('The upload was interrupted. Check the connection and try again.') }}">
         @csrf
         <x-admin.field
             for="update_package"
             name="package"
             :label="__('Update package')"
-            :hint="__('The package must contain a release manifest and per-file SHA256 checksums.').' '.__('Maximum upload size: :limit.', ['limit' => $uploadLimitLabel])"
+            :hint="__('The package must contain a release manifest and per-file SHA256 checksums.')"
         >
-            <input id="update_package" name="package" type="file" accept=".zip,application/zip" required
-                data-update-max-bytes="{{ $uploadLimitBytes }}"
-                data-update-too-large="{{ __('This file is larger than this server accepts through the browser (:limit). Raise the PHP upload limit or place the ZIP in the upload folder below.', ['limit' => $uploadLimitLabel]) }}"
-                @disabled(! $zipAvailable) @if($errors->has('package')) aria-invalid="true" @endif>
+            <input id="update_package" name="package" type="file" accept=".zip,application/zip" required @disabled(! $zipAvailable) @if($errors->has('package')) aria-invalid="true" @endif>
         </x-admin.field>
+        <div class="notice notice-error" role="alert" data-update-upload-error hidden><span></span></div>
+        <small class="update-command-state" data-update-upload-state aria-live="polite"></small>
         <button class="button button-primary" type="submit" @disabled(! $zipAvailable)>{{ __('Upload and verify') }}</button>
     </form>
 </section>

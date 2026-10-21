@@ -2823,10 +2823,6 @@
     "Unable to copy the update package from the upload folder.": "Не удалось скопировать пакет обновления из папки загрузки.",
     "The package was not uploaded: it is larger than this server accepts through the browser (:limit).": "Пакет не загружен: он больше, чем сервер принимает через браузер (:limit).",
     "Raise upload_max_filesize and post_max_size to 64M in the hosting PHP settings, or place the ZIP in the upload folder below through FTP or the file manager.": "Увеличьте upload_max_filesize и post_max_size до 64M в настройках PHP хостинга или положите ZIP в папку загрузки ниже через FTP или файловый менеджер.",
-    "This server accepts uploads up to :limit through the browser.": "Через браузер этот сервер принимает файлы до :limit.",
-    "Release packages that include dependencies can be larger. Raise upload_max_filesize and post_max_size to 64M in the hosting PHP settings, or place the ZIP in the upload folder below through FTP or the file manager.": "Пакеты релиза с библиотеками могут быть больше. Увеличьте upload_max_filesize и post_max_size до 64M в настройках PHP хостинга или положите ZIP в папку загрузки ниже через FTP или файловый менеджер.",
-    "Maximum upload size: :limit.": "Максимальный размер загрузки: :limit.",
-    "This file is larger than this server accepts through the browser (:limit). Raise the PHP upload limit or place the ZIP in the upload folder below.": "Файл больше, чем сервер принимает через браузер (:limit). Увеличьте лимит загрузки PHP или положите ZIP в папку загрузки ниже.",
     "Package from the server folder": "Пакет из папки на сервере",
     "For packages larger than the browser upload limit: copy the ZIP into this folder through FTP, SFTP or the hosting file manager, then reload this page. The package is checked exactly like an uploaded one.": "Для пакетов больше лимита загрузки через браузер: скопируйте ZIP в эту папку через FTP, SFTP или файловый менеджер хостинга и обновите страницу. Пакет проверяется так же, как загруженный.",
     "Path copied.": "Путь скопирован.",
@@ -2834,5 +2830,12 @@
     "Copy path": "Копировать путь",
     "The folder does not exist yet and PHP could not create it. Create it through FTP or the file manager.": "Папки ещё нет, и PHP не смог её создать. Создайте её через FTP или файловый менеджер.",
     "No ZIP files in the folder yet.": "В папке пока нет ZIP-файлов.",
-    "Verify package": "Проверить пакет"
+    "Verify package": "Проверить пакет",
+    "Uploading the package: :percent%": "Загрузка пакета: :percent%",
+    "Verifying the package…": "Проверка пакета…",
+    "The upload was interrupted. Check the connection and try again.": "Загрузка прервалась. Проверьте соединение и попробуйте ещё раз.",
+    "The upload was interrupted or arrived out of order. Start the upload again.": "Загрузка прервалась или части пришли не по порядку. Загрузите пакет заново.",
+    "An upload part is larger than this server accepts. Start the upload again.": "Часть загрузки больше, чем принимает сервер. Загрузите пакет заново.",
+    "The uploaded parts do not add up to the package size. Start the upload again.": "Загруженные части не совпадают с размером пакета. Загрузите пакет заново.",
+    "Unable to store the uploaded update package.": "Не удалось сохранить загруженный пакет обновления."
 }

@@ -267,6 +267,8 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.system.updates.index');
         Route::post('/settings/system/updates', [AdminSystemUpdateController::class, 'store'])
             ->name('settings.system.updates.store');
+        Route::post('/settings/system/updates/chunks', [AdminSystemUpdateController::class, 'chunk'])
+            ->name('settings.system.updates.chunk');
         Route::post('/settings/system/updates/incoming', [AdminSystemUpdateController::class, 'import'])
             ->name('settings.system.updates.import');
         Route::get('/settings/system/updates/{systemUpdate}', [AdminSystemUpdateController::class, 'show'])

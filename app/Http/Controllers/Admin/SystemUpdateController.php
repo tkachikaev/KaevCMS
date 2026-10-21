@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApplySystemUpdateRequest;
 use App\Http\Requests\Admin\ImportSystemUpdateRequest;
 use App\Http\Requests\Admin\RecoverSystemUpdateRequest;
+use App\Http\Requests\Admin\UploadSystemUpdateChunkRequest;
 use App\Http\Requests\Admin\UploadSystemUpdateRequest;
 use App\Models\Admin;
 use App\Models\SystemUpdate;
@@ -15,6 +16,7 @@ use App\Services\Releases\InstalledVersion;
 use App\Services\Updates\InspectedUpdatePackage;
 use App\Services\Updates\SystemUpdateInstaller;
 use App\Services\Updates\SystemUpdateRecovery;
+use App\Services\Updates\UpdateChunkedUpload;
 use App\Services\Updates\UpdateIncomingPackages;
 use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
@@ -70,9 +72,8 @@ final class SystemUpdateController extends Controller
             'agentRecommended' => $vdsAgent->recommended(),
             'agentInstallCommand' => $vdsAgent->installCommand(),
             'agentDiagnosticsCommand' => $vdsAgent->diagnosticsCommand(),
-            'uploadLimitBytes' => $uploadLimit->bytes(),
             'uploadLimitLabel' => $uploadLimit->label(),
-            'uploadLimitLow' => $uploadLimit->belowRecommended(),
+            'uploadChunkBytes' => $uploadLimit->chunkBytes(),
             // Set by the PostTooLargeException handler: PHP discarded the request body.
             'uploadTooLarge' => $request->query('upload') === 'too-large',
             'incomingDirectory' => $incoming->directory(),
@@ -100,6 +101,60 @@ final class SystemUpdateController extends Controller
                 $uploaded->move($directory, $fileName);
             },
         );
+    }
+
+    /**
+     * Receives one part of a package the browser sends in pieces below PHP's upload
+     * limits. The last part assembles the file, which is then staged like an upload.
+     */
+    public function chunk(
+        UploadSystemUpdateChunkRequest $request,
+        InstalledVersion $installedVersion,
+        UpdatePackageInspector $inspector,
+        UpdateChunkedUpload $chunks,
+    ): JsonResponse {
+        $uploadId = (string) $request->validated('upload_id');
+        $part = $request->file('chunk');
+
+        try {
+            if ($part === null) {
+                throw new RuntimeException(__('Select an update package.'));
+            }
+            $assembled = $chunks->append(
+                $uploadId,
+                (int) $request->validated('index'),
+                (int) $request->validated('total'),
+                (int) $request->validated('size'),
+                $part,
+            );
+        } catch (RuntimeException $exception) {
+            return response()->json([
+                'message' => __('The update package was rejected: :message', ['message' => $exception->getMessage()]),
+            ], 422);
+        }
+
+        if ($assembled === null) {
+            return response()->json(['done' => false]);
+        }
+
+        try {
+            $response = $this->stagePackage(
+                $installedVersion,
+                $inspector,
+                'package',
+                'upload',
+                static function (string $directory, string $fileName) use ($assembled): void {
+                    if (! @rename($assembled, $directory.DIRECTORY_SEPARATOR.$fileName)) {
+                        throw new RuntimeException(__('Unable to store the uploaded update package.'));
+                    }
+                },
+            );
+        } finally {
+            $chunks->discard($uploadId);
+        }
+
+        // Errors are flashed to the session like a regular upload; the browser follows the URL.
+        return response()->json(['done' => true, 'redirect' => $response->getTargetUrl()]);
     }
 
     /**

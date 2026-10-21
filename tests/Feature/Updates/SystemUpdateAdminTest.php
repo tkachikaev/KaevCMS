@@ -5,6 +5,7 @@ namespace Tests\Feature\Updates;
 use App\Models\Admin;
 use App\Models\SystemUpdate;
 use App\Services\Releases\InstalledVersion;
+use App\Services\Updates\UpdateChunkedUpload;
 use App\Services\Updates\UpdateIncomingPackages;
 use App\Services\Updates\UpdateUploadLimit;
 use App\Services\Updates\VdsUpdateAgent;
@@ -531,32 +532,140 @@ class SystemUpdateAdminTest extends TestCase
         $this->assertNull($fresh?->phase);
     }
 
-    public function test_page_shows_the_browser_upload_limit_and_warns_when_it_is_low(): void
+    public function test_upload_form_sends_parts_below_the_server_upload_limit(): void
     {
         $owner = Admin::factory()->create();
         $this->app->instance(UpdateUploadLimit::class, new UpdateUploadLimit([
-            'upload_max_filesize' => '8M',
-            'post_max_size' => '10M',
+            'upload_max_filesize' => '2M',
+            'post_max_size' => '8M',
         ]));
 
         $this->actingAs($owner, 'admin')
             ->get('/admin/settings/system/updates')
             ->assertOk()
-            ->assertSee('Максимальный размер загрузки: 8 MB.')
-            ->assertSee('data-update-max-bytes="8388608"', false)
-            ->assertSee('data-update-upload-limit-low', false)
-            ->assertSee('Через браузер этот сервер принимает файлы до 8 MB.');
+            ->assertSee('data-update-chunked-upload', false)
+            ->assertSee('/admin/settings/system/updates/chunks"', false)
+            ->assertSee('data-update-chunk-bytes="'.((2 * 1024 * 1024) - 209715).'"', false);
+    }
 
-        $this->app->instance(UpdateUploadLimit::class, new UpdateUploadLimit([
-            'upload_max_filesize' => '128M',
-            'post_max_size' => '0',
-        ]));
+    #[RequiresPhpExtension('zip')]
+    public function test_a_package_sent_in_parts_is_assembled_and_staged(): void
+    {
+        $owner = Admin::factory()->create();
+        $currentVersion = cms_version();
+        $targetVersion = $this->nextPatchVersion($currentVersion);
+        $archive = $this->createUpdatePackage(
+            targetVersion: $targetVersion,
+            minimumVersion: $currentVersion,
+            maximumVersion: $currentVersion,
+        );
+        $this->temporaryFiles[] = $archive;
+        $contents = (string) file_get_contents($archive);
+        $parts = str_split($contents, (int) ceil(strlen($contents) / 3));
+        $uploadId = str_repeat('a1', 16);
+
+        foreach ($parts as $index => $part) {
+            $response = $this->actingAs($owner, 'admin')
+                ->withHeader('Referer', 'http://localhost/admin/settings/system/updates')
+                ->postJson('/admin/settings/system/updates/chunks', [
+                    'upload_id' => $uploadId,
+                    'index' => $index,
+                    'total' => count($parts),
+                    'size' => strlen($contents),
+                    'chunk' => $this->uploadPart($part),
+                ])
+                ->assertOk();
+
+            if ($index < count($parts) - 1) {
+                $response->assertExactJson(['done' => false]);
+            }
+        }
+
+        $update = SystemUpdate::query()->firstOrFail();
+        $response->assertJson(['done' => true])
+            ->assertJsonPath('redirect', fn (string $url) => str_ends_with($url, '/admin/settings/system/updates/'.$update->id));
+        $this->assertSame($targetVersion, $update->target_version);
+        $this->assertSame(hash('sha256', $contents), $update->package_sha256);
+        $this->assertFileExists(storage_path('app/'.$update->package_path));
+        $this->assertFileDoesNotExist(app(UpdateChunkedUpload::class)->directory().'/'.$uploadId.'.part');
+    }
+
+    public function test_parts_out_of_order_or_of_the_wrong_size_are_refused(): void
+    {
+        $owner = Admin::factory()->create();
+        $uploadId = str_repeat('b2', 16);
+        $send = fn (int $index, string $part, int $size = 6) => $this->actingAs($owner, 'admin')
+            ->postJson('/admin/settings/system/updates/chunks', [
+                'upload_id' => $uploadId,
+                'index' => $index,
+                'total' => 2,
+                'size' => $size,
+                'chunk' => $this->uploadPart($part),
+            ]);
+
+        // The second part cannot start an upload.
+        $send(1, 'def')->assertStatus(422)->assertJsonPath('message', fn (string $message) => str_contains($message, 'Загрузите пакет заново'));
+
+        // Parts larger than the declared size discard the upload.
+        $send(0, 'abc')->assertOk()->assertExactJson(['done' => false]);
+        $send(1, 'defghi')->assertStatus(422);
+        $this->assertFileDoesNotExist(app(UpdateChunkedUpload::class)->directory().'/'.$uploadId.'.part');
+
+        // A short upload does not assemble into a package.
+        $send(0, 'abc', 10)->assertOk();
+        $send(1, 'de', 10)->assertStatus(422);
 
         $this->actingAs($owner, 'admin')
-            ->get('/admin/settings/system/updates')
+            ->postJson('/admin/settings/system/updates/chunks', ['upload_id' => '../../etc', 'index' => 0, 'total' => 1, 'size' => 3, 'chunk' => $this->uploadPart('abc')])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('upload_id');
+
+        $this->assertDatabaseCount('system_updates', 0);
+    }
+
+    #[RequiresPhpExtension('zip')]
+    public function test_a_rejected_package_sent_in_parts_returns_to_the_upload_form_with_the_reason(): void
+    {
+        $owner = Admin::factory()->create();
+        $currentVersion = cms_version();
+        $archive = $this->createUpdatePackage(
+            targetVersion: $this->nextPatchVersion($currentVersion),
+            minimumVersion: $currentVersion,
+            maximumVersion: $currentVersion,
+            extraTarget: 'core/.env',
+        );
+        $this->temporaryFiles[] = $archive;
+        $contents = (string) file_get_contents($archive);
+
+        $this->actingAs($owner, 'admin')
+            ->withHeader('Referer', 'http://localhost/admin/settings/system/updates')
+            ->postJson('/admin/settings/system/updates/chunks', [
+                'upload_id' => str_repeat('c3', 16),
+                'index' => 0,
+                'total' => 1,
+                'size' => strlen($contents),
+                'chunk' => $this->uploadPart($contents),
+            ])
             ->assertOk()
-            ->assertSee('Максимальный размер загрузки: 128 MB.')
-            ->assertDontSee('data-update-upload-limit-low', false);
+            ->assertJson(['done' => true, 'redirect' => 'http://localhost/admin/settings/system/updates'])
+            ->assertSessionHasErrors('package');
+
+        $this->assertDatabaseCount('system_updates', 0);
+    }
+
+    public function test_only_the_owner_can_send_upload_parts(): void
+    {
+        $administrator = Admin::factory()->administrator()->create();
+
+        $this->actingAs($administrator, 'admin')
+            ->postJson('/admin/settings/system/updates/chunks', [
+                'upload_id' => str_repeat('d4', 16),
+                'index' => 0,
+                'total' => 1,
+                'size' => 3,
+                'chunk' => $this->uploadPart('abc'),
+            ])
+            ->assertForbidden();
     }
 
     public function test_a_request_above_post_max_size_returns_to_the_updater_with_an_explanation(): void
@@ -697,6 +806,16 @@ class SystemUpdateAdminTest extends TestCase
             ->assertForbidden();
 
         $this->assertFileExists($incoming.'/KaevCMS-update.zip');
+    }
+
+    private function uploadPart(string $contents): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'kaevcms-update-part-');
+        $this->assertIsString($path);
+        file_put_contents($path, $contents);
+        $this->temporaryFiles[] = $path;
+
+        return new UploadedFile($path, 'part.bin', 'application/octet-stream', null, true);
     }
 
     private function useIncomingDirectory(): string

@@ -46,3 +46,29 @@ test('system updater has no horizontal overflow on a mobile viewport', async ({ 
 
     expect(widths.scroll).toBeLessThanOrEqual(widths.client + 1);
 });
+
+test('system updater uploads a package larger than the PHP limit in parts', async ({ page }) => {
+    await signIn(page);
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/system/updates');
+
+    const form = page.locator('form[data-update-chunked-upload]');
+    const chunkBytes = Number(await form.getAttribute('data-update-chunk-bytes'));
+    const parts = [];
+    page.on('request', (request) => {
+        if (request.method() === 'POST' && request.url().endsWith('/admin/settings/system/updates/chunks')) parts.push(request.url());
+    });
+
+    // Not a real package: it must reach package inspection (and be rejected there), not fail with HTTP 413.
+    await page.locator('#update_package').setInputFiles({
+        name: 'larger-than-upload-limit.zip',
+        mimeType: 'application/zip',
+        buffer: Buffer.alloc(chunkBytes * 2 + 1024, 1),
+    });
+    await form.getByRole('button', { name: 'Загрузить и проверить' }).click();
+
+    await expect(page).toHaveURL(/\/admin\/settings\/system\/updates$/, { timeout: 30000 });
+    // Assembled from its parts and rejected by the package inspector, not by the upload.
+    await expect(page.locator('.update-upload-form .admin-field-error')).toContainText('Пакет обновления отклонён: Загруженный файл не является доступным для чтения ZIP-архивом.');
+    await expect(page.getByText('Content Too Large', { exact: false })).toHaveCount(0);
+    expect(parts).toHaveLength(3);
+});
