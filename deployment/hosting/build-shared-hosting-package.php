@@ -47,7 +47,7 @@ $publicTarget = $packageDirectory.'/'.$publicDirectory;
 mkdir($coreTarget, 0775, true);
 mkdir($publicTarget, 0775, true);
 
-$excluded = sharedHostingCoreExclusions();
+$excluded = sharedHostingCoreExclusions($projectRoot);
 copyPackageTree($projectRoot, $coreTarget, $excluded);
 createCleanRuntimeSkeleton($coreTarget);
 copyPackageTree($projectRoot.'/public', $publicTarget, ['uploads', 'storage', 'hot']);
@@ -158,10 +158,10 @@ function releaseVersion(string $projectRoot): string
 }
 
 /** @return list<string> */
-function sharedHostingCoreExclusions(): array
+function sharedHostingCoreExclusions(?string $projectRoot = null): array
 {
-    return [
-        '.claude', '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
+    $excluded = [
+        '.env', '.git', '.github', 'auth.json', 'composer.phar', 'dist', 'node_modules',
         'public', 'storage', 'tests', 'test-results', 'playwright-report', 'bootstrap/cache', 'database/database.sqlite',
         'phpunit.xml', 'phpstan.neon', 'package.json', 'package-lock.json',
         'playwright.config.mjs', '.phpunit.cache', '.phpunit.result.cache', 'npm-debug.log',
@@ -170,6 +170,17 @@ function sharedHostingCoreExclusions(): array
         'deployment/hosting/shared-hosting/tests',
         'deployment/updates/tests-package-builder.php',
     ];
+
+    // Local tool and editor folders (any top-level dot-directory) never ship.
+    if ($projectRoot !== null) {
+        foreach (scandir($projectRoot) ?: [] as $entry) {
+            if ($entry !== '.' && $entry !== '..' && str_starts_with($entry, '.') && is_dir($projectRoot.'/'.$entry)) {
+                $excluded[] = $entry;
+            }
+        }
+    }
+
+    return array_values(array_unique($excluded));
 }
 
 /** @return array<string, string|bool> */

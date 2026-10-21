@@ -69,9 +69,17 @@ try {
     );
     assertPackageBuilder(
         packagePathExcluded('test-results/.last-run.json', $productionExclusions)
-            && packagePathExcluded('playwright-report/index.html', $productionExclusions)
-            && packagePathExcluded('.claude/launch.json', $productionExclusions),
+            && packagePathExcluded('playwright-report/index.html', $productionExclusions),
         'Browser run artifacts must be excluded from production hosting packages.',
+    );
+    mkdir($source.'/.idea', 0775, true);
+    mkdir($source.'/.local-tool', 0775, true);
+    $sourceExclusions = sharedHostingCoreExclusions($source);
+    assertPackageBuilder(
+        packagePathExcluded('.idea/workspace.xml', $sourceExclusions)
+            && packagePathExcluded('.local-tool/settings.json', $sourceExclusions)
+            && ! packagePathExcluded('.env.example', $sourceExclusions),
+        'Local tool and editor folders must be excluded from production hosting packages.',
     );
     assertPackageBuilder(
         packagePathExcluded('uploads/game-assets/items/common/57.webp', ['uploads', 'storage', 'hot'])

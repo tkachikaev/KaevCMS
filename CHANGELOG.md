@@ -90,7 +90,7 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 - Player chooses server and integer CMS coin quantity, sees recalculated amount and receives the corresponding ordinary game item in Web Inventory (not a direct game database credit). Existing reward queue / character delivery is unchanged.
 - Persistent immutable exchange snapshots, distinct trusted Wallet debit source, unique request UUID and atomic wallet debit + inventory grant + audit on primary CMS DB; failure rolls everything back.
 - Exchange can be used without live YooMoney payments and without the full Shop module. Existing Wallet transaction engine and all published migrations preserved; one additive Donations migration.
-- Automated feature regressions included; full PHPUnit/Playwright/MySQL concurrency still require user/Codex quality gates.
+- Automated feature regressions included; full PHPUnit/Playwright/MySQL concurrency still require the full quality gates.
 
 ## 0.50.12 - 2026-10-17
 
@@ -139,8 +139,8 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 - Kept RU/EN language switching on the same Donations page with calculator query parameters, without breaking existing Daily Rewards navigation or accepting unsafe encoded paths.
 - Isolated throttle buckets for language switching, payment callback and distinct Donations actions. Existing numeric limits remain unchanged. Browser regressions cover formerly competing requests and expected 429 responses.
 - Fixed MySQL/MariaDB payment-test setup to apply module schema before per-test transactions. Expanded concurrent signed callback tests via the full Laravel HTTP kernel, plus two themes and RU/EN on desktop/mobile.
-- Integrated Codex-reviewed fixes from the attached 0.50.7 candidate; published them under a new release and module version. Core Wallet, all published migrations, independent currency tariffs, and the four disabled production payment gates are unchanged.
-- Acceptance evidence: Codex reported 1121 passed / 11 skipped on Windows PHPUnit; 1132 passed on Linux; 41 payment tests each on MariaDB and MySQL; and 78 Playwright tests. These outcomes were recorded for the unreleased candidate, not independently reproduced against this packaged 0.50.8 tree. Live merchant/API payment was not tested.
+- Integrated reviewed fixes from the 0.50.7 candidate; published them under a new release and module version. Core Wallet, all published migrations, independent currency tariffs, and the four disabled production payment gates are unchanged.
+- Acceptance evidence: the candidate review reported 1121 passed / 11 skipped on Windows PHPUnit; 1132 passed on Linux; 41 payment tests each on MariaDB and MySQL; and 78 Playwright tests. These outcomes were recorded for the unreleased candidate, not independently reproduced against this packaged 0.50.8 tree. Live merchant/API payment was not tested.
 - **Next steps:** verify the final release ZIP with the Windows scripts and disposable Docker MySQL/MariaDB, then run a separately approved low-value live YooMoney transfer. Do not enable live payment gates for public users until this final validation succeeds.
 
 ## 0.50.7 - 2026-10-17
@@ -226,7 +226,7 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 - Verified notification persistence, amount/label/order matching, provider API reconciliation (including ambiguous/late events), idempotent Wallet credit, protected callbacks during module shutdown, actual test/live transfer, fees and chargeback handling. Run Windows/PHPUnit/Playwright and MySQL concurrency acceptance before any real payment activation.
 
-### Carried forward from Codex working-tree corrections before C2
+### Carried forward from working-tree corrections before C2
 
 
 - Passed the authenticated player to the Donations quote, order history and order detail views. These pages no longer fail with HTTP 500 when the account layout renders. Added coverage for both bundled account themes.

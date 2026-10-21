@@ -401,9 +401,12 @@ function kaevReleaseExcluded(string $path): bool
         return true;
     }
 
+    // Local tool and editor folders (any top-level dot-directory except .github) never ship.
+    if (preg_match('#\A\.(?!github/)[^/]+/#', $path) === 1) {
+        return true;
+    }
+
     foreach ([
-        '.claude/',
-        '.git/',
         'dist/',
         'node_modules/',
         'playwright-report/',

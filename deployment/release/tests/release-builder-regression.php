@@ -23,7 +23,8 @@ try {
     writeFixture($targetRoot.'/public/uploads/account-avatars/user.webp', 'runtime-avatar');
     writeFixture($targetRoot.'/node_modules/example/package.json', "{}\n");
     writeFixture($targetRoot.'/test-results/failure.txt', "failure\n");
-    writeFixture($targetRoot.'/.claude/launch.json', "{}\n");
+    writeFixture($targetRoot.'/.idea/workspace.xml', "<project/>\n");
+    writeFixture($targetRoot.'/.local-tool/settings.json', "{}\n");
 
     $targetRelease = readFixtureJson($targetRoot.'/release.json');
     $targetVersion = requiredFixtureVersion($targetRelease['version'] ?? null);
@@ -148,7 +149,8 @@ try {
         'public/uploads/account-avatars/user.webp',
         'node_modules/example/package.json',
         'test-results/failure.txt',
-        '.claude/launch.json',
+        '.idea/workspace.xml',
+        '.local-tool/settings.json',
     ] as $forbidden) {
         assertFixture(! in_array($forbidden, $fullEntries, true), 'Runtime file leaked into full release: '.$forbidden);
     }
