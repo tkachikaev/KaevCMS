@@ -96,6 +96,7 @@ class CharacterAppearanceResolverTest extends TestCase
 
             File::ensureDirectoryExists($root.'/characters/common/human/female');
             File::put($root.'/characters/common/human/female/mage.webp', 'shared');
+            app()->forgetScopedInstances(); // Lookups are remembered per request; this is the next one.
             $appearance = app(CharacterAppearanceResolver::class)->resolve(null, 0, 1, 10);
 
             $this->assertStringEndsWith(

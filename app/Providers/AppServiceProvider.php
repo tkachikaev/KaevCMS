@@ -81,8 +81,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WalletGateway::class, CoreWalletGateway::class);
         $this->app->singleton(GameAccountSettings::class);
         $this->app->singleton(GameItemProfileCatalog::class);
-        $this->app->singleton(GameAssetUrlResolver::class);
-        $this->app->singleton(GameItemCatalog::class);
+        // Request-scoped: both remember image lookups, which must not outlive a queue job.
+        $this->app->scoped(GameAssetUrlResolver::class);
+        $this->app->scoped(GameItemCatalog::class);
         $this->app->singleton(GameServerSettings::class);
         $this->app->singleton(RuntimeDiagnostics::class);
         $this->app->singleton(PublicUploadProtection::class);

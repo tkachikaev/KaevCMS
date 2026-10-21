@@ -3,7 +3,6 @@
 namespace App\Services\GameWorld;
 
 use Illuminate\Database\Connection;
-use Illuminate\Database\Schema\Builder;
 use RuntimeException;
 
 final class RusacisGameSchemaInspector
@@ -37,25 +36,34 @@ final class RusacisGameSchemaInspector
 
     public function inspect(Connection $connection): RusacisGameSchemaProfile
     {
+        // One column listing per table; an empty listing means the table does not exist.
         $schema = $connection->getSchemaBuilder();
-        $this->assertRequiredTable($schema, 'characters', self::CHARACTER_COLUMNS);
-        $this->assertRequiredTable($schema, 'clan_data', self::CLAN_COLUMNS);
+        $columns = [];
+        foreach (['characters', 'clan_data', 'heroes', 'castle'] as $table) {
+            $columns[$table] = array_map('strtolower', $schema->getColumnListing($table));
+        }
+
+        $this->assertRequiredTable($columns['characters'], 'characters', self::CHARACTER_COLUMNS);
+        $this->assertRequiredTable($columns['clan_data'], 'clan_data', self::CLAN_COLUMNS);
 
         return new RusacisGameSchemaProfile(
-            heroesAvailable: $this->hasColumns($schema, 'heroes', self::HERO_COLUMNS),
-            castlesAvailable: $this->hasColumns($schema, 'castle', self::CASTLE_COLUMNS),
+            heroesAvailable: $this->hasColumns($columns['heroes'], self::HERO_COLUMNS),
+            castlesAvailable: $this->hasColumns($columns['castle'], self::CASTLE_COLUMNS),
         );
     }
 
-    /** @param list<string> $columns */
-    private function assertRequiredTable(Builder $schema, string $table, array $columns): void
+    /**
+     * @param  list<string>  $existing  lower-case column names of the table
+     * @param  list<string>  $columns
+     */
+    private function assertRequiredTable(array $existing, string $table, array $columns): void
     {
-        if (! $schema->hasTable($table)) {
+        if ($existing === []) {
             throw new RuntimeException("The RUSaCis game database does not contain the required {$table} table.");
         }
         $missing = [];
         foreach ($columns as $column) {
-            if (! $schema->hasColumn($table, $column)) {
+            if (! in_array(strtolower($column), $existing, true)) {
                 $missing[] = $column;
             }
         }
@@ -68,14 +76,17 @@ final class RusacisGameSchemaInspector
         }
     }
 
-    /** @param list<string> $columns */
-    private function hasColumns(Builder $schema, string $table, array $columns): bool
+    /**
+     * @param  list<string>  $existing  lower-case column names; empty when the table is missing
+     * @param  list<string>  $columns
+     */
+    private function hasColumns(array $existing, array $columns): bool
     {
-        if (! $schema->hasTable($table)) {
+        if ($existing === []) {
             return false;
         }
         foreach ($columns as $column) {
-            if (! $schema->hasColumn($table, $column)) {
+            if (! in_array(strtolower($column), $existing, true)) {
                 return false;
             }
         }
