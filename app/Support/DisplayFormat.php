@@ -52,6 +52,26 @@ final class DisplayFormat
         return self::russian($locale) ? $number.self::NBSP.'%' : $number.'%';
     }
 
+    /**
+     * Money: whole units without decimals, otherwise two ("184 500 ₽", "99,50 ₽" / "₽184,500").
+     * The sign follows the number in Russian and precedes it in English; unknown currencies
+     * fall back to their ISO code after the number.
+     */
+    public static function money(int|float $amount, string $currency, ?string $locale = null): string
+    {
+        $currency = strtoupper($currency);
+        $decimals = abs($amount - round($amount)) < 0.005 ? 0 : 2;
+        $russian = self::russian($locale);
+        $number = number_format($amount, $decimals, $russian ? ',' : '.', $russian ? self::NBSP : ',');
+        $symbol = ['RUB' => '₽', 'USD' => '$', 'EUR' => '€', 'UAH' => '₴', 'KZT' => '₸', 'BYN' => 'Br'][$currency] ?? null;
+
+        if ($symbol === null || $russian) {
+            return $number.self::NBSP.($symbol ?? $currency);
+        }
+
+        return $symbol.$number;
+    }
+
     private static function russian(?string $locale): bool
     {
         return str_starts_with(strtolower($locale ?? app()->getLocale()), 'ru');

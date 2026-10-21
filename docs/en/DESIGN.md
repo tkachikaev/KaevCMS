@@ -58,11 +58,12 @@ Numbers in the interface go through the formatter, never through `number_format(
 | `format_number(1.61, 1)` | 1,6 | 1.6 |
 | `format_bytes($bytes)` | 1,2 МБ | 1.2 MB |
 | `format_percent(14.2)` | 14,2 % | 14.2% |
+| `format_money(184500, 'RUB')` | 184 500 ₽ | ₽184,500 |
 
-In PHP code use `App\Support\DisplayFormat::number()`, `::bytes()`, `::percent()`.
+In PHP code use `App\Support\DisplayFormat::number()`, `::bytes()`, `::percent()`, `::money()`.
 
 - A **no-break space** separates thousands (Russian) and the number from its unit, so "184 500 ₽" never breaks across lines.
-- At most one decimal place; insignificant zeros are dropped: "8 MB", not "8.00 MB".
+- At most one decimal place; insignificant zeros are dropped: "8 MB", not "8.00 MB". Money is the exception: whole amounts without decimals, otherwise two ("₽99.50").
 - **Currency:** Russian puts the sign after the number with a no-break space ("184 500 ₽"). Amounts in different currencies are never added together.
 - **Durations:** "12 d 4 h", "5 min", "18 ms".
 - **Dates:** "22 November 2026", in tables "22.11.2026 14:05", 24-hour time. Recent events: "5 min ago", "yesterday at 14:05".
@@ -99,6 +100,8 @@ All spacing is a multiple of 4 px (`--admin-space-1` … `--admin-space-12`: 4, 
 ## Charts
 
 - No third-party libraries: SVG with colours from the variables, correct in both themes.
+- Series lines use the chart palette `--admin-chart-1` … `--admin-chart-4` (blue, green, amber, violet), never status colours: red on a chart reads as an error.
+- Series with different units (online and registrations) are each scaled to their own maximum; exact values are in the hover tooltip.
 - Axis labels and legends use the caption size; grid lines are faint (`--admin-border`).
 - Every chart has a text alternative: a summary or table next to it and an `aria-label` stating the takeaway.
 - An empty chart is not drawn: show why there is no data yet and when it will appear.
@@ -124,6 +127,6 @@ Dangerous actions (maintenance mode, deletion, resets) are never placed next to 
 
 - Sizes, weights, spacing and colours come from the `--admin-*` variables.
 - The screen is checked in the light and dark themes and at phone width.
-- Numbers are printed with `format_number` / `format_bytes` / `format_percent`.
+- Numbers are printed with `format_number` / `format_bytes` / `format_percent` / `format_money`.
 - Russian and English texts match in meaning; Russian punctuation rules are followed.
 - Empty and error states exist.

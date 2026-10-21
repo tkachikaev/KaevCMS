@@ -41,6 +41,14 @@ class DisplayFormatTest extends TestCase
         $this->assertSame('14.2%', DisplayFormat::percent(14.2, 1, 'en'));
     }
 
+    public function test_money_shows_kopecks_only_when_present_and_places_the_sign_by_language(): void
+    {
+        $this->assertSame('184'.self::NBSP.'500'.self::NBSP.'₽', DisplayFormat::money(184500, 'rub', 'ru'));
+        $this->assertSame('99,50'.self::NBSP.'₽', DisplayFormat::money(99.5, 'RUB', 'ru'));
+        $this->assertSame('₽184,500', DisplayFormat::money(184500, 'RUB', 'en'));
+        $this->assertSame('12'.self::NBSP.'PLN', DisplayFormat::money(12, 'PLN', 'en'));
+    }
+
     public function test_template_helpers_use_the_application_locale(): void
     {
         app()->setLocale('ru');

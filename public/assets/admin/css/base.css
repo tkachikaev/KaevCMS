@@ -38,6 +38,12 @@
     --admin-radius-inner: 10px;
     --admin-radius-pill: 999px;
 
+    /* Chart palette: distinct series colours, never status colours (docs/en/DESIGN.md). */
+    --admin-chart-1: #2563eb;
+    --admin-chart-2: #10b981;
+    --admin-chart-3: #f59e0b;
+    --admin-chart-4: #8b5cf6;
+
     /* Typography and spacing canon: docs/en/DESIGN.md (RU: docs/ru/DESIGN.md). */
     --admin-font-sans: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --admin-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

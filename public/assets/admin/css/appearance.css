@@ -85,6 +85,10 @@ html[data-admin-color-scheme="dark"] {
     --admin-sidebar-hover: #152131;
     --admin-sidebar-text: #d5dbe5;
     --admin-sidebar-muted: #8290a5;
+    --admin-chart-1: #60a5fa;
+    --admin-chart-2: #34d399;
+    --admin-chart-3: #fbbf24;
+    --admin-chart-4: #a78bfa;
     --success: var(--admin-success);
     --success-bg: var(--admin-success-soft);
     --danger: var(--admin-danger);

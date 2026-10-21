@@ -98,6 +98,14 @@ if (! function_exists('format_bytes')) {
     }
 }
 
+if (! function_exists('format_money')) {
+    /** Locale-aware money: "184 500 ₽" / "₽184,500"; two decimals only when needed. */
+    function format_money(int|float $amount, string $currency): string
+    {
+        return DisplayFormat::money($amount, $currency);
+    }
+}
+
 if (! function_exists('format_percent')) {
     /** Locale-aware percent: "14,2 %" / "14.2%". */
     function format_percent(int|float $value, int $decimals = 1): string

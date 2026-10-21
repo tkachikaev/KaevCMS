@@ -329,7 +329,7 @@ test('active sidebar item keeps its selected color while hovered', async ({ page
 
     await expect(serverLinks).toHaveCount(2);
     await expect(serverLinks.nth(0)).toContainText('Игровые серверы');
-    await expect(serverLinks.nth(1)).toContainText('Логин серверы');
+    await expect(serverLinks.nth(1)).toContainText('Логин-серверы');
     await expect(gameServersLink).toHaveClass(/active/);
 
     const selectedBackground = await gameServersLink.evaluate((element) => getComputedStyle(element).backgroundColor);
