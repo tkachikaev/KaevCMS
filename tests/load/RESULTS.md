@@ -32,3 +32,26 @@ Measured locally (SQLite) with the same pages; the server measurement follows af
 - `CmsSettings` reads all settings with one query instead of one query per setting; model writes refresh it. / Все настройки одним запросом.
 - Applied module migrations are read once for all modules. / Миграции модулей одним запросом.
 - `tests/Feature/Performance/QueryBudgetTest.php` fails if public pages exceed their query budget again. / Тест следит за бюджетом запросов.
+
+Server after deployment (same pages, same stages) / сервер после установки:
+
+| Users | Req/s | p50 ms | p95 ms | p99 ms | Server p50/p95 ms | Errors |
+|---|---|---|---|---|---|---|
+| 5 | 7.2 | 481 | — | — | — | 0 |
+| 10 | 10.3 | 844 | — | — | — | 0 |
+| 20 | 8.9 | 1806 | — | — | — | 0 |
+
+## 2026-10-21 — Laravel caches with modules / кэши Laravel вместе с модулями (branch perf/load-testing)
+
+`php artisan optimize` (configuration, events, routes, views) used to remove every module route: Laravel loaded the core route cache after the modules had registered theirs and replaced the whole collection, so `/modules/donations` answered 404. The cache is now loaded where the uncached route files load, before the modules. Module boot no longer rebuilds all 237 cached route objects twice per module (1.3–2.7 ms each time on this server). / С кэшем маршрутов пропадали все маршруты модулей (404 на донатах). Исправлено; заодно модуль больше не пересоздаёт все 237 закэшированных маршрута дважды на каждый запрос.
+
+| Users | Req/s | p50 ms | p95 ms | p99 ms | Server p50/p95 ms | Errors |
+|---|---|---|---|---|---|---|
+| 5 | 9.1 | 426 | 559 | 1271 | 426/543 | 0 |
+| 10 | 10.3 | 751 | 1620 | 1823 | 746/1553 | 0 |
+| 20 | 12.3 | 1478 | 1836 | 2473 | 1472/1805 | 0 |
+
+- Capacity at 20 users: 6.6 → 12.3 requests per second since the baseline (+86 %), median 2761 → 1478 ms. / Пропускная способность почти удвоилась с исходного замера.
+- The single core is still the limit at 20 users (`id` 0); at 5–10 users it is 70–75 % busy. / Предел по-прежнему одно ядро.
+- Single requests without load: `/news` 148 → 85 ms, `/statistics` 190 → 117 ms, `/login` 131 → 112 ms. / Одиночные запросы стали быстрее на 25–45 %.
+- `ModuleFoundationTest::test_module_routes_are_added_after_a_cached_core_route_file` boots a fresh application with a route cache and fails if module routes disappear again. / Тест ловит возврат ошибки.

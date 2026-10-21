@@ -11,12 +11,22 @@ use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Composer\Autoload\ClassLoader;
+use Illuminate\Container\Container;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Bootstrap\LoadConfiguration;
+use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
+use Illuminate\Foundation\Bootstrap\RegisterFacades;
+use Illuminate\Foundation\Bootstrap\RegisterProviders;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\RedirectController;
+use Illuminate\Routing\Route as LaravelRoute;
+use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -479,6 +489,61 @@ PHP);
 
         $this->assertSame($routeCount, Route::getRoutes()->count());
         $this->assertFalse(Route::has('modules.cached-route-fixture.cached'));
+    }
+
+    public function test_module_routes_are_added_after_a_cached_core_route_file(): void
+    {
+        $id = 'route-cache-survivor';
+        $root = $this->createModule($id, [
+            'name' => 'Route Cache Survivor',
+            'routes' => ['web' => 'routes/web.php'],
+        ]);
+        $files = new Filesystem;
+        $files->ensureDirectoryExists($root.'/routes');
+        $files->put($root.'/routes/web.php', <<<'PHP'
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/survivor', fn () => response('module-route'))->name('survivor');
+PHP);
+        app(ModuleManager::class)->refresh();
+        app(ModuleManager::class)->enable($id);
+
+        // The same file `php artisan route:cache` writes, holding one core route.
+        $core = new RouteCollection;
+        $core->add((new LaravelRoute(['GET', 'HEAD'], 'core-cached', ['uses' => RedirectController::class]))->name('core.cached'));
+        // Relative to the base path: Laravel treats only "/" and "\" prefixes as absolute, not "C:\".
+        $relativeCachePath = 'storage/framework/testing/routes-'.bin2hex(random_bytes(4)).'.php';
+        $cachePath = base_path($relativeCachePath);
+        $files->ensureDirectoryExists(dirname($cachePath));
+        $files->put($cachePath, "<?php\n\napp('router')->setCompiledRoutes(".var_export($core->compile(), true).");\n");
+
+        $pdo = DB::connection()->getPdo();
+        $original = $this->app;
+        $_ENV['APP_ROUTES_CACHE'] = $_SERVER['APP_ROUTES_CACHE'] = $relativeCachePath;
+
+        try {
+            /** @var Application $fresh */
+            $fresh = require base_path('bootstrap/app.php');
+            $fresh->instance('request', Request::create('/'));
+            $fresh->bootstrapWith([LoadEnvironmentVariables::class, LoadConfiguration::class, RegisterFacades::class, RegisterProviders::class]);
+            // The fresh application must see the module enabled in this test's in-memory database.
+            $fresh['db']->connection()->setPdo($pdo);
+            $fresh->boot();
+
+            $this->assertTrue($fresh->routesAreCached());
+            $routes = $fresh['router']->getRoutes();
+            $this->assertTrue($routes->hasNamedRoute('core.cached'), 'The cached core routes must load.');
+            $this->assertTrue($routes->hasNamedRoute('modules.route-cache-survivor.survivor'), 'Module routes must survive the core route cache.');
+            $this->assertSame('modules.route-cache-survivor.survivor', $routes->match(Request::create('/modules/route-cache-survivor/survivor'))->getName());
+        } finally {
+            unset($_ENV['APP_ROUTES_CACHE'], $_SERVER['APP_ROUTES_CACHE']);
+            Container::setInstance($original);
+            Facade::clearResolvedInstances();
+            Facade::setFacadeApplication($original);
+            $files->delete($cachePath);
+        }
     }
 
     public function test_broken_enabled_module_is_isolated_reported_and_retried_after_fix(): void

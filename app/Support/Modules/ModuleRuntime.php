@@ -5,6 +5,8 @@ namespace App\Support\Modules;
 use App\Models\ModuleState;
 use App\Support\Database\TableExistence;
 use Illuminate\Foundation\Application;
+use Illuminate\Routing\CompiledRouteCollection;
+use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -84,8 +86,6 @@ final class ModuleRuntime
         // They are added after the cached/core routes on every normal request,
         // so disabling or replacing a module cannot leave executable stale routes.
         if ($this->shouldRegisterRoutes()) {
-            $routes = Route::getRoutes();
-            $routeCountBeforeModule = count($routes->getRoutes());
             $routePaths = (array) ($module['route_paths'] ?? []);
             if (isset($routePaths['web']) && is_string($routePaths['web'])) {
                 Route::middleware(['web', 'module.enabled:'.$id])
@@ -102,17 +102,29 @@ final class ModuleRuntime
                     ->group($routePaths['admin']);
             }
 
-            // Module routes are registered after Laravel finishes its normal route boot.
-            // Fluent ->name() calls happen after a route is initially added, so re-adding
-            // only the newly registered routes updates named/action lookups for both the
-            // normal and compiled route collections without touching cached core routes.
-            foreach (array_slice($routes->getRoutes(), $routeCountBeforeModule) as $route) {
-                $routes->add($route);
-            }
+            $this->refreshRouteLookups();
         }
 
         $this->booted[$id] = true;
         $this->clearFailure($id);
+    }
+
+    /**
+     * Module routes are registered after Laravel finishes its normal route boot, and fluent
+     * ->name() calls happen after a route is added, so the name and action lookups must be
+     * rebuilt. With the core route cache the module routes live in the compiled collection's
+     * small fallback collection, whose refresh Laravel skips; rebuilding it directly avoids
+     * creating every cached route object again on each request.
+     */
+    private function refreshRouteLookups(): void
+    {
+        $routes = Route::getRoutes();
+        if ($routes instanceof CompiledRouteCollection) {
+            $routes = (fn (): RouteCollection => $this->routes)->call($routes);
+        }
+
+        $routes->refreshNameLookups();
+        $routes->refreshActionLookups();
     }
 
     private function shouldRegisterRoutes(): bool
