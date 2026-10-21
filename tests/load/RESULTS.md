@@ -94,3 +94,20 @@ Game database queries with an empty cache / запросы к игровой б�
 - Avatars: up to 20 missing-file checks per character, starting with a server folder that usually does not exist; 19 avatars 10.5 → 0.4 ms. / Поиск аватарок: 10,5 → 0,4 мс на 19 персонажей.
 - 20 different players opening their characters with an empty cache for 30 s: 928 page views, 28 game database connections, 164 game queries, 0 errors. / 928 просмотров — 28 соединений с игровой базой, ошибок нет.
 - Signed-in cabinet pages (`/account`, characters, game accounts, wallet, web inventory) cost the same as public pages, about 30 ms each here; no sign-outs under load. / Страницы кабинета не тяжелее публичных, вылетов из аккаунта нет.
+
+## 2026-10-21 — registration bursts with e-mail verification / массовая регистрация с подтверждением почты
+
+The same production-mode copy on MariaDB, registration open with e-mail verification, delivery mode `database` switched on through the real probe, `schedule:run` every minute as cron does, and `smtp-sink.php` as the mail provider. Bursts sent with `register-burst.php`. / Режим «очередь в базе», cron раз в минуту, письма принимает `smtp-sink.php`.
+
+| Burst / сколько разом | Provider / почтовый сервер | Registered / зарегистрировано | Mail delivered / писем дошло | Last mail after the burst / последнее письмо |
+|---|---|---|---|---|
+| 100 | fast / быстрый | 100 | 100 | next cron minute, 4.4 s to send all |
+| 200 | fast / быстрый | 200 | 200 | about 1.5 min (100 per cron run) |
+| 200 | 1 s per message | 200 | 200 | 4 min 12 s (about 50 per minute) |
+| 20 | down / недоступен | 20 | 0 — all 20 in `failed_jobs` after 3 tries, about 4.5 min | not resent by itself / сами не дошлются |
+| 10 | hangs / зависает | 10 | about 1 attempt per minute | the queue nearly stops / очередь почти встаёт |
+
+- The cron drain sends at most 100 mails per minute (`kaevcms:queue-drain`, 100 jobs / 50 s). / Не больше 100 писем в минуту.
+- A provider that hangs instead of refusing costs about 45 s per attempt (several 15 s socket timeouts), so one mail is tried per minute; password-reset mail waits in the same queue. / Зависший почтовый сервер почти останавливает очередь, письма сброса пароля ждут там же.
+- Mail that used up its 3 tries stays in `failed_jobs`; it is sent again only from the admin queue page or when the player asks for a new link. / Неудавшиеся письма повторяются только вручную.
+- Registration itself: one argon2id hash (64 MB, time 4) costs 387 ms on the 1 vCPU test server, so about 2 sign-ups per second; 200 at once would keep the last visitors waiting past nginx's default 60 s `fastcgi_read_timeout`. / Хеш пароля — 387 мс на сервере; 200 регистраций разом упрутся в таймаут nginx.

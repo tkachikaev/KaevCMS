@@ -23,6 +23,15 @@ php tests/load/fake-game-world.php --config=game-db.json --accounts=1000
 
 `game-db.json` holds `game_db_host`, `game_db_port`, `game_db_database`, `game_db_username` and `game_db_password`. The generator refuses database names without `load` or `test`, so a live game database is never touched. Point the test site's LoginServer and GameServer at that database and link test players to the `lt_00001`… accounts. / Генератор отказывается работать с базой, в имени которой нет `load` или `test`. Подключите к этой базе логин- и игровой сервер тестового сайта и привяжите тестовых игроков к аккаунтам `lt_00001`….
 
+Registration bursts and mail / Массовая регистрация и почта:
+
+```bash
+php tests/load/smtp-sink.php --port=2525 --delay-ms=0 --log=smtp.log      # accepts mail, delivers nothing
+php tests/load/register-burst.php --base=http://127.0.0.1:8010 --count=200 --concurrency=200
+```
+
+Point the TEST site's mail settings at `127.0.0.1:2525` without encryption. `--delay-ms` makes the sink a slow provider (a value above 15000 makes it hang past the mail timeout). Each registration uses a fresh session and a unique `burst<run>x<n>@load.test` address. / Укажите в почтовых настройках тестового сайта `127.0.0.1:2525` без шифрования; `--delay-ms` изображает медленного провайдера.
+
 Rules / Правила:
 
 - Only a test server. Never a production site with players: they would feel the load. / Только тестовый сервер, не живой сайт с игроками.
