@@ -35,6 +35,39 @@
     --admin-shadow-raised: 0 14px 34px rgba(15, 23, 42, .1);
     --admin-radius-card: 12px;
     --admin-radius-control: 8px;
+    --admin-radius-inner: 10px;
+    --admin-radius-pill: 999px;
+
+    /* Typography and spacing canon: docs/en/DESIGN.md (RU: docs/ru/DESIGN.md). */
+    --admin-font-sans: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --admin-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --admin-text-caption: 12px;      /* minimum size: badges, meta, overlines */
+    --admin-text-small: 13px;        /* secondary text, dense tables */
+    --admin-text-body: 14px;         /* default text, controls */
+    --admin-text-title-sm: 16px;     /* card titles (h3) */
+    --admin-text-title: 20px;        /* section titles (h2) */
+    --admin-text-page: 26px;         /* page title (h1) */
+    --admin-text-metric: 28px;       /* KPI numbers */
+    --admin-leading-caption: 16px;
+    --admin-leading-small: 20px;
+    --admin-leading-body: 22px;
+    --admin-leading-title-sm: 24px;
+    --admin-leading-title: 28px;
+    --admin-leading-page: 32px;
+    --admin-leading-metric: 32px;
+    --admin-weight-regular: 400;
+    --admin-weight-medium: 500;
+    --admin-weight-semibold: 600;
+    --admin-weight-bold: 700;
+    --admin-space-1: 4px;
+    --admin-space-2: 8px;
+    --admin-space-3: 12px;
+    --admin-space-4: 16px;
+    --admin-space-5: 20px;
+    --admin-space-6: 24px;
+    --admin-space-8: 32px;
+    --admin-space-10: 40px;
+    --admin-space-12: 48px;
     --admin-sidebar-bg: #101827;
     --admin-sidebar-hover: #1d2939;
     --admin-sidebar-text: #d5dbe5;
@@ -62,7 +95,9 @@
 
 * { box-sizing: border-box; }
 html { min-width: 320px; background: var(--bg); scrollbar-gutter: stable; }
-body { margin: 0; color: var(--text); background: var(--bg); font: 14px/1.5 Inter, "Segoe UI", Arial, sans-serif; }
+body { margin: 0; color: var(--text); background: var(--bg); font: var(--admin-text-body)/1.5 var(--admin-font-sans); }
+/* Numbers that are compared or aligned (tables, KPIs, counters) keep equal digit widths. */
+.admin-num { font-variant-numeric: tabular-nums; }
 a { color: inherit; text-decoration: none; }
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }

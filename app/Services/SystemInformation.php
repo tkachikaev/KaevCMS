@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Infrastructure\RuntimeDiagnostics;
 use App\Services\Security\EncryptionHealth;
 use App\Services\Servers\ExternalDatabaseInformation;
+use App\Support\DisplayFormat;
 use App\Support\KaevCMS;
 use App\Support\PasswordHashing;
 use App\Support\TrustedProxyConfiguration;
@@ -139,7 +140,7 @@ final class SystemInformation
             } elseif ($configuredPath !== '') {
                 $databasePath = $this->relativeProjectPath($configuredPath);
                 $databaseSize = is_file($configuredPath)
-                    ? $this->formatBytes((int) filesize($configuredPath))
+                    ? DisplayFormat::bytes((int) filesize($configuredPath))
                     : __('File not found');
             }
         }
@@ -498,28 +499,6 @@ final class SystemInformation
         }
 
         return basename($normalized);
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes < 1024) {
-            return __(':bytes B', ['bytes' => $bytes]);
-        }
-
-        $units = [__('KB'), __('MB'), __('GB'), __('TB')];
-        $value = $bytes / 1024;
-        $unit = $units[0];
-
-        foreach (array_slice($units, 1) as $nextUnit) {
-            if ($value < 1024) {
-                break;
-            }
-
-            $value /= 1024;
-            $unit = $nextUnit;
-        }
-
-        return number_format($value, $value >= 10 ? 1 : 2, app()->getLocale() === 'ru' ? ',' : '.', app()->getLocale() === 'ru' ? ' ' : ',').' '.$unit;
     }
 
     /**

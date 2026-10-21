@@ -9,6 +9,7 @@ use App\Services\MailSettings;
 use App\Services\Pages\DownloadPages;
 use App\Services\RegistrationSettings;
 use App\Services\SiteSettings;
+use App\Support\DisplayFormat;
 use App\Support\KaevCMS;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
@@ -78,6 +79,30 @@ if (! function_exists('site_footer_text')) {
     function site_footer_text(?string $locale = null): string
     {
         return app(SiteSettings::class)->footerText($locale);
+    }
+}
+
+if (! function_exists('format_number')) {
+    /** Locale-aware number: "184 500", "1,5" (ru) / "184,500", "1.5" (en). See docs/en/DESIGN.md. */
+    function format_number(int|float $value, int $decimals = 0): string
+    {
+        return DisplayFormat::number($value, $decimals);
+    }
+}
+
+if (! function_exists('format_bytes')) {
+    /** Locale-aware size: "1,2 МБ" / "1.2 MB". */
+    function format_bytes(int $bytes): string
+    {
+        return DisplayFormat::bytes($bytes);
+    }
+}
+
+if (! function_exists('format_percent')) {
+    /** Locale-aware percent: "14,2 %" / "14.2%". */
+    function format_percent(int|float $value, int $decimals = 1): string
+    {
+        return DisplayFormat::percent($value, $decimals);
     }
 }
 

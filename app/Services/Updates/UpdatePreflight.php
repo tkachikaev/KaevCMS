@@ -2,6 +2,7 @@
 
 namespace App\Services\Updates;
 
+use App\Support\DisplayFormat;
 use Illuminate\Database\DatabaseManager;
 use Throwable;
 use ZipArchive;
@@ -118,8 +119,8 @@ final class UpdatePreflight
             $freeBytes === false
                 ? __('Could not determine')
                 : __(':free available; approximately :required required.', [
-                    'free' => $this->formatBytes((int) $freeBytes),
-                    'required' => $this->formatBytes($requiredBytes),
+                    'free' => DisplayFormat::bytes((int) $freeBytes),
+                    'required' => DisplayFormat::bytes($requiredBytes),
                 ]),
         );
 
@@ -266,19 +267,5 @@ final class UpdatePreflight
         }
 
         return null;
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $value = max(0, $bytes);
-        $unit = 0;
-
-        while ($value >= 1024 && $unit < count($units) - 1) {
-            $value /= 1024;
-            $unit++;
-        }
-
-        return number_format($value, $unit === 0 ? 0 : 1, '.', ' ').' '.$units[$unit];
     }
 }

@@ -20,6 +20,7 @@ KaevCMS is a Laravel CMS for Lineage II servers. The public website, player acco
 - [Updates](UPDATES.md)
 - [Operations runbook](OPERATIONS.md)
 - [Development and quality](DEVELOPMENT.md)
+- [Administration design canon](DESIGN.md)
 - [Roadmap](ROADMAP.md)
 
 ## Supported release

@@ -20,6 +20,7 @@ KaevCMS — CMS на Laravel для серверов Lineage II. Здесь оп
 - [Обновления](UPDATES.md)
 - [Эксплуатационные инструкции](OPERATIONS.md)
 - [Разработка и проверки](DEVELOPMENT.md)
+- [Канон оформления админки](DESIGN.md)
 - [План развития](ROADMAP.md)
 
 ## Актуальная версия

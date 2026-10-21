@@ -2837,5 +2837,6 @@
     "The upload was interrupted or arrived out of order. Start the upload again.": "The upload was interrupted or arrived out of order. Start the upload again.",
     "An upload part is larger than this server accepts. Start the upload again.": "An upload part is larger than this server accepts. Start the upload again.",
     "The uploaded parts do not add up to the package size. Start the upload again.": "The uploaded parts do not add up to the package size. Start the upload again.",
-    "Unable to store the uploaded update package.": "Unable to store the uploaded update package."
+    "Unable to store the uploaded update package.": "Unable to store the uploaded update package.",
+    "B": "B"
 }
