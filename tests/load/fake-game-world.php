@@ -33,23 +33,50 @@ $pdo = new PDO(
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
 );
 
-// Interlude classes by race: [race => [class ids]] (first, second and third professions).
+// Interlude classes by race and profession tier: base (1-19), first (20-39), second (40-75), third (76-80).
 $classes = [
-    0 => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
-    1 => [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 99, 100, 101, 102, 103, 104, 105],
-    2 => [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 106, 107, 108, 109, 110, 111, 112],
-    3 => [44, 45, 46, 47, 48, 49, 50, 51, 52, 113, 114, 115, 116],
-    4 => [53, 54, 55, 56, 57, 117, 118],
+    0 => [[0, 10], [1, 4, 7, 11, 15], [2, 3, 5, 6, 8, 9, 12, 13, 14, 16, 17], range(88, 98)],
+    1 => [[18, 25], [19, 22, 26, 29], [20, 21, 23, 24, 27, 28, 30], range(99, 105)],
+    2 => [[31, 38], [32, 35, 39, 42], [33, 34, 36, 37, 40, 41, 43], range(106, 112)],
+    3 => [[44, 49], [45, 47, 50], [46, 48, 51, 52], range(113, 116)],
+    4 => [[53], [54, 56], [55, 57], [117, 118]],
 ];
-$syllables = ['ka', 'ev', 'ra', 'th', 'or', 'el', 'dra', 'mir', 'zan', 'tor', 'lin', 'vex', 'shi', 'gar', 'nu', 'ul', 'bel', 'ash', 'kor', 'ien'];
-$name = static function (int $seed) use ($syllables): string {
-    $value = '';
-    for ($part = 0; $part < 3; $part++) {
-        $value .= $syllables[($seed >> ($part * 4)) % count($syllables)];
-    }
+// A young x1 server: most characters are low, few have reached the third profession.
+$levelFor = static function (): array {
+    $roll = mt_rand(1, 100);
 
-    return ucfirst($value).$seed;
+    return match (true) {
+        $roll <= 30 => [mt_rand(1, 19), 0],
+        $roll <= 62 => [mt_rand(20, 39), 1],
+        $roll <= 96 => [mt_rand(40, 75), 2],
+        default => [mt_rand(76, 80), 3],
+    };
 };
+$firstParts = ['Dark', 'Shadow', 'Storm', 'Iron', 'Silver', 'Night', 'Blood', 'Frost', 'Fire', 'Wild', 'Raven', 'Wolf', 'Dragon', 'Stone',
+    'Light', 'Sky', 'Ghost', 'Rune', 'Ash', 'Crimson', 'Moon', 'Sun', 'Grim', 'Gold', 'Black', 'White', 'Thunder', 'Star', 'Steel', 'Mist'];
+$secondParts = ['blade', 'heart', 'fang', 'wing', 'born', 'walker', 'rider', 'bane', 'claw', 'song', 'fury', 'hammer', 'shade', 'soul',
+    'hunter', 'guard', 'storm', 'mage', 'lord', 'star', 'arrow', 'shield', 'flame', 'thorn', 'veil', 'whisper', 'reaver', 'spark'];
+$nicknames = ['Kerberos', 'Valkyrie', 'Moonlight', 'Nightmare', 'Morgana', 'Lilith', 'Ragnar', 'Kassandra', 'Freya', 'Thorin', 'Elendil',
+    'Arwen', 'Zephyr', 'Nyx', 'Hecate', 'Fenrir', 'Sigurd', 'Brunhild', 'Azazel', 'Seraphim', 'Mordred', 'Gawain', 'Isolde', 'Lucian',
+    'Selene', 'Orion', 'Draven', 'Vesper', 'Kaida', 'Ezra', 'Riven', 'Solace', 'Eclipse', 'Tempest', 'Wraith', 'Aurora', 'Nemesis'];
+$used = [];
+$name = static function () use ($firstParts, $secondParts, $nicknames, &$used): string {
+    do {
+        $base = mt_rand(0, 3) === 0
+            ? $nicknames[array_rand($nicknames)]
+            : $firstParts[array_rand($firstParts)].$secondParts[array_rand($secondParts)];
+        $candidate = isset($used[$base]) ? substr($base, 0, 13).mt_rand(1, 999) : $base;
+    } while (isset($used[$candidate]));
+    $used[$candidate] = true;
+
+    return $candidate;
+};
+$clanNames = ['Legion', 'Phoenix', 'Immortals', 'DarkSide', 'Valhalla', 'Vendetta', 'Templars', 'Exodus', 'Avalon', 'Revenant',
+    'NightWatch', 'Insomnia', 'Imperium', 'Requiem', 'Paladins', 'BloodMoon', 'Ascension', 'Brotherhood', 'Eternity', 'Nemesis',
+    'Spartans', 'Wolfpack', 'Crusaders', 'Dominion', 'Inquisition', 'Mercenaries', 'Outlaws', 'Rebellion', 'Sentinels', 'Titans',
+    'Vanguard', 'Warlords', 'Zealots', 'Apocalypse', 'Bastion', 'Covenant', 'Dynasty', 'Empire', 'Fearless', 'Guardians',
+    'Harbingers', 'Hellfire', 'Kingdom', 'Leviathan', 'Monarchy', 'Nightfall', 'Oblivion', 'Pantheon', 'Ravenloft', 'Sanctuary',
+    'Tribunal', 'Underworld', 'Vikings', 'Wardens', 'Xenon', 'Yggdrasil', 'Zenith', 'Avengers', 'Berserkers', 'Chimera'];
 $insert = static function (PDO $pdo, string $table, array $rows): void {
     foreach (array_chunk($rows, 500) as $chunk) {
         $columns = array_keys($chunk[0]);
@@ -85,13 +112,13 @@ for ($index = 1; $index <= $accounts; $index++) {
     $count = mt_rand(1, 7);
     for ($slot = 0; $slot < $count; $slot++) {
         $race = array_rand($classes);
-        $classId = $classes[$race][array_rand($classes[$race])];
-        $level = $classId >= 88 ? mt_rand(76, 80) : ($classId % 9 === 0 ? mt_rand(1, 19) : mt_rand(20, 75));
+        [$level, $tier] = $levelFor();
+        $classId = $classes[$race][$tier][array_rand($classes[$race][$tier])];
         $characterId++;
         $characterRows[] = [
             'account_name' => $login,
             'charId' => $characterId,
-            'char_name' => $name($characterId - 268_480_000),
+            'char_name' => $name(),
             'level' => $level,
             'maxHp' => 100 + $level * 40, 'curHp' => 100 + $level * 40,
             'maxCp' => 50 + $level * 20, 'curCp' => 50 + $level * 20,
@@ -102,9 +129,9 @@ for ($index = 1; $index <= $accounts; $index++) {
             'exp' => $level * $level * 10_000,
             'sp' => $level * 1_000,
             'karma' => 0,
-            'pvpkills' => mt_rand(0, 3) === 0 ? mt_rand(0, 2_000) : 0,
-            'pkkills' => mt_rand(0, 10) === 0 ? mt_rand(0, 300) : 0,
-            'clanid' => mt_rand(0, 9) < 4 ? 1_000 + mt_rand(1, 60) : 0,
+            'pvpkills' => $level >= 40 && mt_rand(0, 2) === 0 ? mt_rand(0, $level * 12) : 0,
+            'pkkills' => $level >= 30 && mt_rand(0, 12) === 0 ? mt_rand(0, $level * 2) : 0,
+            'clanid' => $level >= 20 && mt_rand(0, 9) < 5 ? 1_000 + mt_rand(1, 60) : 0,
             'race' => $race,
             'classid' => $classId,
             'base_class' => $classId,
@@ -112,7 +139,7 @@ for ($index = 1; $index <= $accounts; $index++) {
             'title' => '',
             'accesslevel' => 0,
             'online' => mt_rand(0, 19) === 0 ? 1 : 0,
-            'onlinetime' => mt_rand(0, 3_000_000),
+            'onlinetime' => $level * mt_rand(9_000, 30_000),
             'char_slot' => $slot,
             'lastAccess' => ($now - mt_rand(0, 86_400 * 30)) * 1000,
             'nobless' => $classId >= 88 && mt_rand(0, 4) === 0 ? 1 : 0,
@@ -128,23 +155,40 @@ $clanRows = [];
 for ($clan = 1; $clan <= 60; $clan++) {
     $clanRows[] = [
         'clan_id' => 1_000 + $clan,
-        'clan_name' => 'Clan'.$name($clan * 7),
+        'clan_name' => $clanNames[$clan - 1],
         'clan_level' => mt_rand(1, 8),
         'reputation_score' => mt_rand(0, 50_000),
         'hasCastle' => $clan <= count($castles) ? $clan : 0,
-        'leader_id' => $characterRows[array_rand($characterRows)]['charId'],
+        'leader_id' => 0,
     ];
 }
+// The strongest member leads each clan.
+foreach ($characterRows as $row) {
+    $index = $row['clanid'] - 1_001;
+    if ($index >= 0 && ($clanRows[$index]['leader_level'] ?? 0) < $row['level']) {
+        $clanRows[$index]['leader_id'] = $row['charId'];
+        $clanRows[$index]['leader_level'] = $row['level'];
+    }
+}
+$clanRows = array_map(static function (array $clan): array {
+    unset($clan['leader_level']);
+
+    return $clan;
+}, $clanRows);
 $insert($pdo, 'clan_data', $clanRows);
 $insert($pdo, 'castle', array_map(
     static fn (int $index): array => ['id' => $index + 1, 'name' => $castles[$index], 'taxPercent' => 10, 'treasury' => mt_rand(0, 900_000_000)],
     array_keys($castles),
 ));
 
+// One hero per third-profession class, as the Olympiad crowns them.
 $heroes = [];
-foreach (array_rand($characterRows, 30) as $key) {
-    $heroes[] = ['charId' => $characterRows[$key]['charId'], 'class_id' => $characterRows[$key]['classid'], 'count' => 1, 'played' => 1, 'claimed' => 'true', 'message' => ''];
+foreach ($characterRows as $row) {
+    if ($row['classid'] >= 88 && ! isset($heroes[$row['classid']])) {
+        $heroes[$row['classid']] = ['charId' => $row['charId'], 'class_id' => $row['classid'], 'count' => 1, 'played' => 1, 'claimed' => 'true', 'message' => ''];
+    }
 }
+$heroes = array_values($heroes);
 $insert($pdo, 'heroes', $heroes);
 
 printf("accounts %d, characters %d, online %d, clans %d, castles %d, heroes %d\n",
