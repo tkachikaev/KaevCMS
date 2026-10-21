@@ -34,7 +34,7 @@ Ubuntu 24.04 выбрана как базовая система KaevCMS, пот
 
 ```text
 example.com              на свой домен, если он уже есть
-192.168.50.111           на фактический IP сервера
+192.168.1.10             на фактический IP сервера
 admin@example.com        на свой email для Let's Encrypt
 KaevCmsDbPasswordHere    на длинный уникальный пароль MySQL
 ```
@@ -327,7 +327,7 @@ sudo nginx -T | grep -A4 -B4 '/var/www/kaevcms/public'
 Если домена пока нет, укажите в конфигурации nginx фактический IP сервера:
 
 ```nginx
-server_name 192.168.50.111;
+server_name 192.168.1.10;
 ```
 
 ## 10. Настройте HTTPS при наличии домена
@@ -371,7 +371,7 @@ https://example.com/install/
 Без домена откройте IP-адрес сервера:
 
 ```text
-http://192.168.50.111/install/
+http://192.168.1.10/install/
 ```
 
 Замените пример на фактический IP. На шаге базы укажите созданные ранее реквизиты и используйте пустую базу `kaevcms`. Предупреждение об HTTP не блокирует проверку базы или завершение установки.
@@ -632,7 +632,7 @@ sudo nano /var/www/kaevcms/.env
 Укажите фактический адрес и отключите принудительный HTTPS:
 
 ```env
-APP_URL=http://192.168.50.112
+APP_URL=http://192.168.1.11
 APP_FORCE_HTTPS=false
 SESSION_SECURE_COOKIE=false
 ```
@@ -646,7 +646,7 @@ sudo nano /etc/nginx/sites-available/kaevcms
 ```
 
 ```nginx
-server_name 192.168.50.112;
+server_name 192.168.1.11;
 ```
 
 Примените изменения:
@@ -734,7 +734,7 @@ sudo -u www-data php artisan kaevcms:runtime-directories --probe
 Проверьте `/var/www/kaevcms/.env`:
 
 ```env
-APP_URL=http://192.168.50.111
+APP_URL=http://192.168.1.10
 APP_FORCE_HTTPS=false
 SESSION_SECURE_COOKIE=false
 SESSION_DOMAIN=

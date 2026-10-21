@@ -63,7 +63,7 @@ class GameAccountCabinetTest extends TestCase
             'level' => 78,
             'class_id' => 88,
             'online' => true,
-            'clan' => 'L2Forge',
+            'clan' => 'Valhalla',
             'last_access' => 0,
             'created_at' => CarbonImmutable::parse('2024-04-05'),
         ]];
@@ -640,7 +640,7 @@ class GameAccountCabinetTest extends TestCase
             'level' => 78,
             'class_id' => 88,
             'online' => true,
-            'clan' => 'L2Forge',
+            'clan' => 'Valhalla',
             'last_access' => 0,
             'created_at' => CarbonImmutable::parse('2024-04-05'),
         ]];
@@ -651,7 +651,7 @@ class GameAccountCabinetTest extends TestCase
             ->assertSee('Interlude x10')
             ->assertSee('Bubi')
             ->assertSee('Дуэлист')
-            ->assertSee('L2Forge')
+            ->assertSee('Valhalla')
             ->assertSee('Создан: 05.04.2024')
             ->assertSee('Текущий пароль от личного кабинета');
     }
@@ -998,7 +998,7 @@ class GameAccountCabinetTest extends TestCase
             'gender' => 1,
             'title' => 'Champion',
             'online' => true,
-            'clan' => 'L2Forge',
+            'clan' => 'Valhalla',
             'last_access' => 1784320000000,
             'play_time_seconds' => 90000,
             'pvp_kills' => 25,

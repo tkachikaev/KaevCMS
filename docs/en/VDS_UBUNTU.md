@@ -34,7 +34,7 @@ Replace these examples:
 
 ```text
 example.com              with your domain, when available
-192.168.50.111           with the actual server IP
+192.168.1.10             with the actual server IP
 admin@example.com        with your Let's Encrypt email
 KaevCmsDbPasswordHere    with a long unique MySQL password
 ```
@@ -327,7 +327,7 @@ sudo nginx -T | grep -A4 -B4 '/var/www/kaevcms/public'
 When no domain is available, use the actual server IP in nginx:
 
 ```nginx
-server_name 192.168.50.111;
+server_name 192.168.1.10;
 ```
 
 ## 10. Configure HTTPS when a domain is available
@@ -371,7 +371,7 @@ https://example.com/install/
 Without a domain, open the server IP address:
 
 ```text
-http://192.168.50.111/install/
+http://192.168.1.10/install/
 ```
 
 Replace the example with the actual IP. Enter the database credentials created above and use the empty `kaevcms` database. The HTTP warning does not block the database check or final installation.
@@ -632,7 +632,7 @@ sudo nano /var/www/kaevcms/.env
 Set the actual address and disable forced HTTPS:
 
 ```env
-APP_URL=http://192.168.50.112
+APP_URL=http://192.168.1.11
 APP_FORCE_HTTPS=false
 SESSION_SECURE_COOKIE=false
 ```
@@ -646,7 +646,7 @@ sudo nano /etc/nginx/sites-available/kaevcms
 ```
 
 ```nginx
-server_name 192.168.50.112;
+server_name 192.168.1.11;
 ```
 
 Apply the changes:
@@ -734,7 +734,7 @@ sudo -u www-data php artisan kaevcms:runtime-directories --probe
 Check `/var/www/kaevcms/.env`:
 
 ```env
-APP_URL=http://192.168.50.111
+APP_URL=http://192.168.1.10
 APP_FORCE_HTTPS=false
 SESSION_SECURE_COOKIE=false
 SESSION_DOMAIN=

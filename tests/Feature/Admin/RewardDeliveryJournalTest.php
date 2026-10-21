@@ -43,8 +43,8 @@ class RewardDeliveryJournalTest extends TestCase
         App::setLocale('ru');
         $admin = Admin::factory()->create(['role' => AdminRole::Owner]);
         $user = User::factory()->create([
-            'name' => 'tkachikaev',
-            'email' => 'tkachikaev@gmail.com',
+            'name' => 'player-one',
+            'email' => 'player-one@example.test',
         ]);
         $server = GameServer::factory()->create(['name' => 'Эллада']);
         $grant = app(RewardInventoryService::class)->grant(
@@ -63,8 +63,8 @@ class RewardDeliveryJournalTest extends TestCase
             'game_server_id' => $server->id,
             'user_game_account_id' => null,
             'character_id' => 100,
-            'character_name' => 'Booogz',
-            'account_login' => 'booogz',
+            'character_name' => 'Aldric',
+            'account_login' => 'aldric',
             'status' => RewardDelivery::STATUS_QUEUED,
             'requested_at' => now(),
             'queued_at' => now(),
@@ -82,9 +82,9 @@ class RewardDeliveryJournalTest extends TestCase
             ->assertSee('audit-table-wrap', false)
             ->assertSee('audit-table reward-queue-table', false)
             ->assertSee('audit-date', false)
-            ->assertSee('tkachikaev@gmail.com')
-            ->assertSee('Booogz')
-            ->assertSee('booogz')
+            ->assertSee('player-one@example.test')
+            ->assertSee('Aldric')
+            ->assertSee('aldric')
             ->assertSee('Адена')
             ->assertSee('ID 57')
             ->assertSee('10 000 000')

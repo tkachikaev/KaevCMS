@@ -104,7 +104,7 @@ try {
     $relative = absolutePackagePath('dist', '/tmp/example');
     assertPackageBuilder(str_ends_with(str_replace('\\', '/', $relative), '/tmp/example/dist'), 'Relative output paths must resolve against the working directory.');
     assertPackageBuilder(absolutePackagePath('dist/../dist/release', '/tmp/example') === '/tmp/example/dist/release', 'Output paths must be canonicalized before recursive cleanup.');
-    assertPackageBuilder(absolutePackagePath('C:\\Projects\\KaevCMS\\dist\\..\\release', 'C:\\ignored') === 'C:/Projects/KaevCMS/release', 'Windows output paths must be canonicalized before recursive cleanup.');
+    assertPackageBuilder(absolutePackagePath('C:\\Sites\\Demo\\dist\\..\\release', 'C:\\ignored') === 'C:/Sites/Demo/release', 'Windows output paths must be canonicalized before recursive cleanup.');
 
     assertPackageBuilder(packageRelativePath('/srv/kaevcms', '/srv/kaevcms/dist/package') === 'dist/package', 'Paths inside the project must be converted to relative paths.');
     assertPackageBuilder(packageRelativePath('/srv/kaevcms', '/srv/releases/package') === null, 'Paths outside the project must remain external.');
@@ -112,11 +112,11 @@ try {
     assertPackageBuilder(! packageOutputAllowed('/srv/kaevcms', '/srv/kaevcms/build-output'), 'Arbitrary output directories inside the source tree must be rejected.');
     assertPackageBuilder(packageOutputAllowed('/srv/kaevcms', '/srv/releases'), 'An output directory outside the source tree must be accepted.');
     assertPackageBuilder(
-        portablePackageRelativePath('C:\\Projects\\KaevCMS\\package', 'C:\\Projects\\KaevCMS\\package\\nested\\file.txt') === 'nested/file.txt',
+        portablePackageRelativePath('C:\\Sites\\Demo\\package', 'C:\\Sites\\Demo\\package\\nested\\file.txt') === 'nested/file.txt',
         'Windows package paths must be converted to portable ZIP entry names.',
     );
     assertPackageBuilder(
-        portablePackageRelativePath('C:/Projects/KaevCMS/package', 'C:\\Projects\\KaevCMS\\package\\nested\\file.txt') === 'nested/file.txt',
+        portablePackageRelativePath('C:/Sites/Demo/package', 'C:\\Sites\\Demo\\package\\nested\\file.txt') === 'nested/file.txt',
         'Mixed Windows path separators must not affect ZIP prefix removal.',
     );
 

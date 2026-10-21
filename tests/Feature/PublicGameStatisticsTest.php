@@ -159,7 +159,7 @@ class PublicGameStatisticsTest extends TestCase
         $this->get('/statistics/'.$server->id.'?section=pk')
             ->assertOk()
             ->assertSee('Эльфачка')
-            ->assertDontSee('Timur')
+            ->assertDontSee('Lyra')
             ->assertDontSee('DeletedChampion');
     }
 
@@ -176,7 +176,7 @@ class PublicGameStatisticsTest extends TestCase
             ->assertOk()
             ->assertSee('Dion')
             ->assertSee('Васельки')
-            ->assertSee('Timur');
+            ->assertSee('Lyra');
     }
 
     public function test_each_ranking_uses_its_own_limit_and_heroes_are_not_limited(): void
@@ -504,7 +504,7 @@ class PublicGameStatisticsTest extends TestCase
             [
                 'account_name' => 'test',
                 'charId' => 268474651,
-                'char_name' => 'Timur',
+                'char_name' => 'Lyra',
                 'level' => 58,
                 'exp' => 102265326,
                 'classid' => 9,

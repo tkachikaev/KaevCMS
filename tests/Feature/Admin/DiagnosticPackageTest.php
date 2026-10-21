@@ -26,7 +26,7 @@ class DiagnosticPackageTest extends TestCase
         $originalLog = File::exists($logPath) ? File::get($logPath) : null;
         File::ensureDirectoryExists(dirname($logPath));
         File::put($logPath, implode(PHP_EOL, [
-            '[2026-08-01 01:30:00] production.ERROR: RuntimeException: Failed for Timur Person owner@example.com at 192.0.2.25 password=PlainPassword token=SecretToken APP_KEY=base64:SecretApplicationKey123456789=',
+            '[2026-08-01 01:30:00] production.ERROR: RuntimeException: Failed for Alex Person owner@example.com at 192.0.2.25 password=PlainPassword token=SecretToken APP_KEY=base64:SecretApplicationKey123456789=',
             '#0 '.base_path('app/Example.php').'(42): App\\Example->run()',
             '#1 {main}',
         ]).PHP_EOL);
@@ -101,7 +101,7 @@ class DiagnosticPackageTest extends TestCase
                 'QueueSecret',
                 'owner@example.com',
                 '192.0.2.25',
-                'Timur Person',
+                'Alex Person',
                 base_path(),
             ] as $forbidden) {
                 $this->assertStringNotContainsString($forbidden, $contents);

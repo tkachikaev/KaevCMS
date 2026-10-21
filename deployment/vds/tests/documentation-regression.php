@@ -58,8 +58,8 @@ foreach ($guides as $language => $path) {
     }
 
     $httpInstallerExample = $language === 'English'
-        ? 'http://192.168.50.111/install/'
-        : 'http://192.168.50.111/install/';
+        ? 'http://192.168.1.10/install/'
+        : 'http://192.168.1.10/install/';
     if (! str_contains($contents, $httpInstallerExample)) {
         throw new RuntimeException("{$language} VDS guide does not document installation by IP over HTTP.");
     }

@@ -42,7 +42,7 @@ composer install --no-dev --optimize-autoloader
 The primary site address is stored in `.env` as `APP_URL`. For HTTP, forced HTTPS and secure-only cookies must also be disabled:
 
 ```env
-APP_URL=http://192.168.50.111
+APP_URL=http://192.168.1.10
 APP_FORCE_HTTPS=false
 SESSION_SECURE_COOKIE=false
 ```

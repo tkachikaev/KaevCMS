@@ -125,13 +125,13 @@ try {
     $_SERVER = [
         'HTTPS' => 'off',
         'SERVER_PORT' => '80',
-        'HTTP_HOST' => '192.168.50.111',
-        'REMOTE_ADDR' => '192.168.50.10',
+        'HTTP_HOST' => '192.168.1.10',
+        'REMOTE_ADDR' => '192.168.1.20',
     ];
     $privateHttpDatabase = databaseBody($text, [
         'csrf' => 'token',
         'database' => ['host' => '127.0.0.1', 'port' => 3306, 'database' => '', 'username' => '', 'password' => ''],
-        'site' => ['url' => 'http://192.168.50.111', 'name' => 'KaevCMS'],
+        'site' => ['url' => 'http://192.168.1.10', 'name' => 'KaevCMS'],
     ]);
     assertInstaller(str_contains($privateHttpDatabase, $text['https_warning']), 'Private HTTP installation must use the same generic transport warning.');
     assertInstaller(str_contains(administratorBody($text, ['csrf' => 'token']), 'value="install"'), 'HTTP installation must keep the final install action available.');

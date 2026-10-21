@@ -62,8 +62,8 @@ class VdsDocumentationReleaseTest extends TestCase
 
         $this->assertStringContainsString('Ubuntu 26.04 LTS ships PHP 8.5', $english);
         $this->assertStringContainsString('Ubuntu 26.04 LTS поставляется с PHP 8.5', $russian);
-        $this->assertStringContainsString('http://192.168.50.111/install/', $english);
-        $this->assertStringContainsString('http://192.168.50.111/install/', $russian);
+        $this->assertStringContainsString('http://192.168.1.10/install/', $english);
+        $this->assertStringContainsString('http://192.168.1.10/install/', $russian);
         $this->assertStringContainsString('The HTTP warning does not block the database check or final installation.', $english);
         $this->assertStringContainsString('requests `sudo` when the current account needs elevated rights', $english);
         $this->assertStringContainsString('Предупреждение об HTTP не блокирует проверку базы или завершение установки.', $russian);
