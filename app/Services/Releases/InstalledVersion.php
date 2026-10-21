@@ -3,7 +3,7 @@
 namespace App\Services\Releases;
 
 use App\Models\CmsSetting;
-use Illuminate\Support\Facades\Schema;
+use App\Support\Database\TableExistence;
 use RuntimeException;
 use Throwable;
 
@@ -48,7 +48,7 @@ final class InstalledVersion
     public function databaseVersion(): ?string
     {
         try {
-            if (! Schema::hasTable('cms_settings')) {
+            if (! app(TableExistence::class)->has('cms_settings')) {
                 return null;
             }
 
@@ -74,7 +74,7 @@ final class InstalledVersion
             throw new RuntimeException("Invalid installed version: {$version}");
         }
 
-        if (! Schema::hasTable('cms_settings')) {
+        if (! app(TableExistence::class)->has('cms_settings')) {
             throw new RuntimeException('CMS settings table is not available. Run database migrations first.');
         }
 

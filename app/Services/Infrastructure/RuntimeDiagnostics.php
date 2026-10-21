@@ -4,10 +4,10 @@ namespace App\Services\Infrastructure;
 
 use App\Models\SystemHeartbeat;
 use App\Services\MailSettings;
+use App\Support\Database\TableExistence;
 use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -147,7 +147,7 @@ final class RuntimeDiagnostics
     public function clearQueueRestartRequired(): void
     {
         try {
-            if (Schema::hasTable('system_heartbeats')) {
+            if (app(TableExistence::class)->has('system_heartbeats')) {
                 SystemHeartbeat::query()->whereKey(self::QUEUE_RESTART_REQUIRED)->delete();
             }
         } catch (Throwable) {
@@ -548,7 +548,7 @@ final class RuntimeDiagnostics
     private function touchQueue(string $queue, string $state, array $metadata): void
     {
         try {
-            if (! Schema::hasTable('system_heartbeats')) {
+            if (! app(TableExistence::class)->has('system_heartbeats')) {
                 return;
             }
 
@@ -585,7 +585,7 @@ final class RuntimeDiagnostics
     private function touch(string $key, array $metadata): void
     {
         try {
-            if (! Schema::hasTable('system_heartbeats')) {
+            if (! app(TableExistence::class)->has('system_heartbeats')) {
                 return;
             }
 
@@ -604,7 +604,7 @@ final class RuntimeDiagnostics
     private function clearSatisfiedRestartRequest(): void
     {
         try {
-            if (! Schema::hasTable('system_heartbeats')) {
+            if (! app(TableExistence::class)->has('system_heartbeats')) {
                 return;
             }
 
@@ -625,7 +625,7 @@ final class RuntimeDiagnostics
     private function heartbeatRecord(string $key): ?SystemHeartbeat
     {
         try {
-            if (! Schema::hasTable('system_heartbeats')) {
+            if (! app(TableExistence::class)->has('system_heartbeats')) {
                 return null;
             }
 
@@ -639,7 +639,7 @@ final class RuntimeDiagnostics
     private function queueHeartbeatRecords(): array
     {
         try {
-            if (! Schema::hasTable('system_heartbeats')) {
+            if (! app(TableExistence::class)->has('system_heartbeats')) {
                 return [];
             }
 

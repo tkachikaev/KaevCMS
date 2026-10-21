@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Admin;
 use App\Models\NavigationLink;
 use App\Services\Localization\LanguageManager;
+use App\Support\Database\TableExistence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -133,6 +134,7 @@ class AdminNavigationManagementTest extends TestCase
     {
         Schema::drop('navigation_link_translations');
         Schema::drop('navigation_links');
+        app(TableExistence::class)->forget();
 
         $this->get('/ru')->assertOk();
     }

@@ -12,6 +12,7 @@ use App\Http\Middleware\RequireConfiguredEmailVerification;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetApplicationLocale;
 use App\Http\Middleware\TrustProxies;
+use App\Support\FrameworkCache;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -68,6 +69,8 @@ $application = Application::configure(basePath: dirname(__DIR__))
             'password_confirmation',
         ]);
     })->create();
+
+FrameworkCache::discardStale($application);
 
 $publicPathConfig = __DIR__.'/kaevcms-public-path.php';
 if (is_file($publicPathConfig)) {

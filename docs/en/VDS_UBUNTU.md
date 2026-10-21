@@ -288,6 +288,9 @@ server {
     location = /index.php {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        # Sign-in and registration hash passwords slowly on purpose: during a sign-up burst
+        # requests can wait for the CPU longer than nginx's default 60 seconds.
+        fastcgi_read_timeout 120s;
     }
 
     location = /install/index.php {

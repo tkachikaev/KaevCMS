@@ -651,6 +651,8 @@ class PromoCodesModuleTest extends TestCase
 
             File::ensureDirectoryExists($root.'/items/servers/'.$server->id);
             File::put($root.'/items/servers/'.$server->id.'/57.png', 'server');
+            app()->forgetScopedInstances(); // Lookups are remembered per request; this is the next one.
+            $resolver = app(GameAssetUrlResolver::class);
             $this->assertStringEndsWith('/uploads/game-assets/items/servers/'.$server->id.'/57.png', $resolver->itemIcon($server, 57));
             $this->assertNull($resolver->itemIcon($server, 0));
         } finally {

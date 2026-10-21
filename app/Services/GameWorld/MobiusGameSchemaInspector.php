@@ -2,12 +2,16 @@
 
 namespace App\Services\GameWorld;
 
+use App\Models\GameServer;
+use Closure;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Schema\Builder;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
 final class MobiusGameSchemaInspector
 {
+    private const CACHE_MINUTES = 5;
+
     private const CHARACTER_COLUMNS = [
         'account_name',
         'charId',
@@ -70,14 +74,49 @@ final class MobiusGameSchemaInspector
         ];
     }
 
+    /**
+     * The profile of a saved game server, remembered for a few minutes: inspecting reads
+     * information_schema, which is slow on a remote or busy game database. Editing the server
+     * changes updated_at and therefore the key.
+     *
+     * @param  Closure(): MobiusGameSchemaProfile  $inspect
+     */
+    public function remembered(GameServer $server, Closure $inspect): MobiusGameSchemaProfile
+    {
+        if (! $server->exists) {
+            return $inspect();
+        }
+
+        $cacheKey = implode(':', [
+            'mobius-game-schema-v1',
+            $server->id,
+            $server->updated_at?->getTimestamp() ?? 0,
+        ]);
+
+        /** @var array{name:string,reputation_column:string,heroes_available:bool,castles_available:bool,character_rescue_available:bool} $profile */
+        $profile = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(self::CACHE_MINUTES),
+            static fn (): array => $inspect()->toArray(),
+        );
+
+        return MobiusGameSchemaProfile::fromArray($profile);
+    }
+
     public function inspect(Connection $connection, ?string $chronicle = null): MobiusGameSchemaProfile
     {
+        // One column listing per table; an empty listing means the table does not exist.
         $schema = $connection->getSchemaBuilder();
-        $this->assertRequiredTable($schema, 'characters', self::CHARACTER_COLUMNS);
-        $this->assertRequiredTable($schema, 'clan_data', self::CLAN_COLUMNS);
+        $columns = [];
+        foreach (['characters', 'clan_data', 'heroes', 'castle'] as $table) {
+            $columns[$table] = array_map('strtolower', $schema->getColumnListing($table));
+        }
 
-        $hasKarma = $schema->hasColumn('characters', 'karma');
-        $hasReputation = $schema->hasColumn('characters', 'reputation');
+        $this->assertRequiredTable($columns['characters'], 'characters', self::CHARACTER_COLUMNS);
+        $this->assertRequiredTable($columns['clan_data'], 'clan_data', self::CLAN_COLUMNS);
+
+        $hasKarma = in_array('karma', $columns['characters'], true);
+        $hasReputation = in_array('reputation', $columns['characters'], true);
 
         if (! $hasKarma && ! $hasReputation) {
             throw new RuntimeException('The Mobius characters table must contain either karma or reputation.');
@@ -86,9 +125,9 @@ final class MobiusGameSchemaInspector
         $profile = $this->profileForColumns(
             hasKarma: $hasKarma,
             hasReputation: $hasReputation,
-            heroesAvailable: $this->tableHasColumns($schema, 'heroes', self::HERO_COLUMNS),
-            castlesAvailable: $this->tableHasColumns($schema, 'castle', self::CASTLE_COLUMNS),
-            characterRescueAvailable: $this->tableHasColumns($schema, 'characters', [
+            heroesAvailable: $this->hasColumns($columns['heroes'], self::HERO_COLUMNS),
+            castlesAvailable: $this->hasColumns($columns['castle'], self::CASTLE_COLUMNS),
+            characterRescueAvailable: $this->hasColumns($columns['characters'], [
                 ...self::CHARACTER_COLUMNS,
                 ...self::CHARACTER_RESCUE_COLUMNS,
             ]),
@@ -158,16 +197,19 @@ final class MobiusGameSchemaInspector
         return MobiusGameSchemaProfile::MODERN;
     }
 
-    /** @param list<string> $columns */
-    private function assertRequiredTable(Builder $schema, string $table, array $columns): void
+    /**
+     * @param  list<string>  $existing  lower-case column names of the table
+     * @param  list<string>  $columns
+     */
+    private function assertRequiredTable(array $existing, string $table, array $columns): void
     {
-        if (! $schema->hasTable($table)) {
+        if ($existing === []) {
             throw new RuntimeException("The Mobius game database does not contain the required {$table} table.");
         }
 
         $missingColumns = [];
         foreach ($columns as $column) {
-            if (! $schema->hasColumn($table, $column)) {
+            if (! in_array(strtolower($column), $existing, true)) {
                 $missingColumns[] = $column;
             }
         }
@@ -181,15 +223,18 @@ final class MobiusGameSchemaInspector
         }
     }
 
-    /** @param list<string> $columns */
-    private function tableHasColumns(Builder $schema, string $table, array $columns): bool
+    /**
+     * @param  list<string>  $existing  lower-case column names; empty when the table is missing
+     * @param  list<string>  $columns
+     */
+    private function hasColumns(array $existing, array $columns): bool
     {
-        if (! $schema->hasTable($table)) {
+        if ($existing === []) {
             return false;
         }
 
         foreach ($columns as $column) {
-            if (! $schema->hasColumn($table, $column)) {
+            if (! in_array(strtolower($column), $existing, true)) {
                 return false;
             }
         }

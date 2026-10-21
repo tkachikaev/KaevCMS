@@ -7,14 +7,11 @@ use App\Contracts\GameWorldDriver;
 use App\Models\GameServer;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 final class MobiusGameWorldDriver implements GameWorldDriver
 {
     private const RANKINGS = ['level', 'pvp', 'pk', 'play_time'];
-
-    private const SCHEMA_CACHE_MINUTES = 5;
 
     public function __construct(
         private readonly GameServerDatabaseGateway $database,
@@ -165,24 +162,7 @@ final class MobiusGameWorldDriver implements GameWorldDriver
 
     private function schemaProfile(GameServer $server): MobiusGameSchemaProfile
     {
-        if (! $server->exists) {
-            return $this->inspectSchema($server);
-        }
-
-        $cacheKey = implode(':', [
-            'mobius-game-schema-v1',
-            $server->id,
-            $server->updated_at?->getTimestamp() ?? 0,
-        ]);
-
-        /** @var array{name:string,reputation_column:string,heroes_available:bool,castles_available:bool,character_rescue_available:bool} $profile */
-        $profile = Cache::remember(
-            $cacheKey,
-            now()->addMinutes(self::SCHEMA_CACHE_MINUTES),
-            fn (): array => $this->inspectSchema($server)->toArray(),
-        );
-
-        return MobiusGameSchemaProfile::fromArray($profile);
+        return $this->schemas->remembered($server, fn (): MobiusGameSchemaProfile => $this->inspectSchema($server));
     }
 
     private function inspectSchema(GameServer $server): MobiusGameSchemaProfile
