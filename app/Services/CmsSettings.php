@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\CmsSetting;
+use App\Support\Database\TableExistence;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -13,23 +13,17 @@ final class CmsSettings
     /** @var array<string, string|null> */
     private array $loaded = [];
 
+    /**
+     * All rows are read with one query on first use: a page needs dozens of settings and
+     * reading them one by one cost a query each. The table is small (key/value rows).
+     */
+    private bool $allLoaded = false;
+
+    public function __construct(private readonly TableExistence $tables) {}
+
     public function get(string $key, ?string $default = null): ?string
     {
-        if (array_key_exists($key, $this->loaded)) {
-            return $this->loaded[$key] ?? $default;
-        }
-
-        if (! $this->tableExists()) {
-            return $default;
-        }
-
-        try {
-            $value = CmsSetting::query()->where('key', $key)->value('value');
-        } catch (Throwable) {
-            return $default;
-        }
-
-        $this->loaded[$key] = is_string($value) ? $value : null;
+        $this->loadAll();
 
         return $this->loaded[$key] ?? $default;
     }
@@ -40,31 +34,11 @@ final class CmsSettings
      */
     public function getMany(array $defaults): array
     {
-        $missingKeys = array_values(array_filter(
-            array_keys($defaults),
-            fn (string $key): bool => ! array_key_exists($key, $this->loaded),
-        ));
-
-        if ($missingKeys !== [] && $this->tableExists()) {
-            try {
-                $storedValues = CmsSetting::query()
-                    ->whereIn('key', $missingKeys)
-                    ->pluck('value', 'key');
-
-                foreach ($missingKeys as $key) {
-                    $value = $storedValues->get($key);
-                    $this->loaded[$key] = is_string($value) ? $value : null;
-                }
-            } catch (Throwable) {
-                // The application can still use safe defaults while the database is unavailable.
-            }
-        }
+        $this->loadAll();
 
         $values = [];
         foreach ($defaults as $key => $default) {
-            $values[$key] = array_key_exists($key, $this->loaded)
-                ? ($this->loaded[$key] ?? $default)
-                : $default;
+            $values[$key] = $this->loaded[$key] ?? $default;
         }
 
         return $values;
@@ -78,7 +52,7 @@ final class CmsSettings
     /** @param array<string, string|null> $values */
     public function setMany(array $values): void
     {
-        if (! $this->tableExists()) {
+        if (! $this->tables->has('cms_settings')) {
             throw new RuntimeException('CMS settings table is not available. Run database migrations first.');
         }
 
@@ -96,12 +70,34 @@ final class CmsSettings
         }
     }
 
-    private function tableExists(): bool
+    /**
+     * Drops the remembered values; the next read loads them again. Called when a setting is
+     * written outside this service and after migrations.
+     */
+    public function forget(): void
     {
+        $this->loaded = [];
+        $this->allLoaded = false;
+    }
+
+    private function loadAll(): void
+    {
+        if ($this->allLoaded) {
+            return;
+        }
+
+        if (! $this->tables->has('cms_settings')) {
+            // Before installation: safe defaults, and the table is checked again next time.
+            return;
+        }
+
         try {
-            return Schema::hasTable('cms_settings');
+            foreach (CmsSetting::query()->pluck('value', 'key') as $key => $value) {
+                $this->loaded[(string) $key] = is_string($value) ? $value : null;
+            }
+            $this->allLoaded = true;
         } catch (Throwable) {
-            return false;
+            // The application can still use safe defaults while the database is unavailable.
         }
     }
 }

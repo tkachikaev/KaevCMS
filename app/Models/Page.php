@@ -4,12 +4,12 @@ namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
 use App\Services\Pages\PageHtmlSanitizer;
+use App\Support\Database\TableExistence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -173,7 +173,7 @@ class Page extends Model
     private function translationsTableExists(): bool
     {
         try {
-            return Schema::hasTable('page_translations');
+            return app(TableExistence::class)->has('page_translations');
         } catch (Throwable) {
             return false;
         }

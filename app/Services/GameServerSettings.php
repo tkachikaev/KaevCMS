@@ -8,9 +8,9 @@ use App\Models\GameServer;
 use App\Models\GameServerTranslation;
 use App\Models\UserGameAccount;
 use App\Services\Localization\LanguageManager;
+use App\Support\Database\TableExistence;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -329,7 +329,7 @@ final class GameServerSettings
         array $maintenanceMessages,
         string $defaultName,
     ): void {
-        if (! Schema::hasTable('game_server_translations')) {
+        if (! app(TableExistence::class)->has('game_server_translations')) {
             return;
         }
 
@@ -384,7 +384,7 @@ final class GameServerSettings
     private function tableExists(): bool
     {
         try {
-            return Schema::hasTable('game_servers');
+            return app(TableExistence::class)->has('game_servers');
         } catch (Throwable) {
             return false;
         }

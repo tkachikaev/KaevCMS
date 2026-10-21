@@ -5,6 +5,7 @@ namespace Tests\Feature\Modules;
 use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\ModuleState;
+use App\Support\Database\TableExistence;
 use App\Support\KaevCMS;
 use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleManager;
@@ -79,6 +80,7 @@ class ModuleFoundationTest extends TestCase
         $this->createTableMigration($root, $migration, $table);
 
         Schema::drop('cms_module_migrations');
+        app(TableExistence::class)->forget();
 
         $modules = app(ModuleManager::class);
         $modules->refresh();

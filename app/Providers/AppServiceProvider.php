@@ -12,6 +12,7 @@ use App\Services\Admin\AdminPathSettings;
 use App\Services\AdminLoginService;
 use App\Services\AdminTwoFactorAuthentication;
 use App\Services\AuditLogger;
+use App\Services\CmsSettings;
 use App\Services\GameAccountSettings;
 use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\GameAssets\GameItemCatalog;
@@ -44,12 +45,16 @@ use App\Services\Settings\SettingsImageStorage;
 use App\Services\SiteSettings;
 use App\Services\Updates\VdsUpdateAgent;
 use App\Services\Wallet\CoreWalletGateway;
+use App\Support\Database\TableExistence;
+use App\Support\Modules\ModuleMigrationManager;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -63,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->extend('auth.password', fn ($manager, $app): UtcPasswordBrokerManager => new UtcPasswordBrokerManager($app));
         $this->app->scoped(AccountAvatarCatalog::class);
+        $this->app->singleton(TableExistence::class);
         $this->app->singleton(AdminPathSettings::class);
         $this->app->singleton(AdminLoginService::class);
         $this->app->singleton(AdminNotificationSettings::class);
@@ -111,6 +117,15 @@ class AppServiceProvider extends ServiceProvider
         PublicUploadProtection $publicUploadProtection,
     ): void {
         $publicUploadProtection->ensure();
+
+        // Remembered table existence and settings must not outlive a schema change.
+        Event::listen(MigrationsEnded::class, function (): void {
+            $this->app->make(TableExistence::class)->forget();
+            $this->app->make(CmsSettings::class)->forget();
+            if ($this->app->resolved(ModuleMigrationManager::class)) {
+                $this->app->make(ModuleMigrationManager::class)->forgetApplied();
+            }
+        });
 
         Livewire::addPersistentMiddleware([
             RequireAdminAuthentication::class,

@@ -3,10 +3,10 @@
 namespace App\Support\Modules;
 
 use App\Models\ModuleState;
+use App\Support\Database\TableExistence;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Translation\Translator;
 use RuntimeException;
@@ -139,7 +139,7 @@ final class ModuleRuntime
         ]);
 
         try {
-            if (Schema::hasTable('cms_modules')) {
+            if (app(TableExistence::class)->has('cms_modules')) {
                 ModuleState::query()->whereKey($id)->update([
                     'last_error' => mb_substr($stage.': '.$exception::class, 0, 190),
                     'last_error_at' => now(),
@@ -153,7 +153,7 @@ final class ModuleRuntime
     private function clearFailure(string $id): void
     {
         try {
-            if (Schema::hasTable('cms_modules')) {
+            if (app(TableExistence::class)->has('cms_modules')) {
                 ModuleState::query()
                     ->whereKey($id)
                     ->whereNotNull('last_error')

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Modules\ModuleMigrationManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -26,6 +27,19 @@ class ModuleMigration extends Model
         'batch',
         'ran_at',
     ];
+
+    protected static function booted(): void
+    {
+        // ModuleMigrationManager reads applied migrations once per request; writes refresh it.
+        $forget = static function (): void {
+            if (app()->resolved(ModuleMigrationManager::class)) {
+                app(ModuleMigrationManager::class)->forgetApplied();
+            }
+        };
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
 
     protected function casts(): array
     {

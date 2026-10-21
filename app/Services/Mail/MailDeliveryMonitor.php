@@ -3,8 +3,8 @@
 namespace App\Services\Mail;
 
 use App\Models\MailDelivery;
+use App\Support\Database\TableExistence;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 final class MailDeliveryMonitor
@@ -132,7 +132,7 @@ final class MailDeliveryMonitor
     private function available(): bool
     {
         try {
-            return Schema::hasTable('mail_deliveries');
+            return app(TableExistence::class)->has('mail_deliveries');
         } catch (Throwable) {
             return false;
         }

@@ -16,3 +16,19 @@ Pages / страницы: `/`, `/news`, `/statistics`, `/downloads`, `/about`, `
 - One page costs 135–710 ms on the server itself without network. About two thirds of a request is the application bootstrap, not the page. / Одна страница стоит на самом сервере 135–710 мс; около 2/3 — запуск приложения, а не страница.
 - Database work per home page view (measured locally): 34 queries during bootstrap (12 identical `cms_settings` table-exists checks, 11 single-setting reads, 8 module migration reads) plus 31 while rendering (6–10 more table-exists checks). / На главной 34 запроса при запуске и 31 при выводе страницы, из них около 20 — проверки существования таблиц.
 - No errors at any stage: under load the site slows down instead of failing. / Ошибок нет: под нагрузкой сайт замедляется, а не падает.
+
+## 2026-10-21 — fewer queries per request / меньше запросов на запрос (branch perf/load-testing)
+
+Measured locally (SQLite) with the same pages; the server measurement follows after deployment. / Замер локальный, повторный замер на сервере — после установки.
+
+| | Before / было | After / стало |
+|---|---|---|
+| Queries during bootstrap / при запуске | 34 | 6 |
+| Home page view (bootstrap + page) / главная | 65 | 24 |
+| News list / новости | 52 | 14 |
+| Sign-in page / вход | 51 | 13 |
+
+- `TableExistence` remembers tables that exist for the request (only "exists"; missing tables are checked again, migrations flush it). / Запоминается только «таблица есть».
+- `CmsSettings` reads all settings with one query instead of one query per setting; model writes refresh it. / Все настройки одним запросом.
+- Applied module migrations are read once for all modules. / Миграции модулей одним запросом.
+- `tests/Feature/Performance/QueryBudgetTest.php` fails if public pages exceed their query budget again. / Тест следит за бюджетом запросов.

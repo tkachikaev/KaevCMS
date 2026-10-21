@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
+use App\Support\Database\TableExistence;
 use Database\Factories\GameServerFactory;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Collection;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -295,7 +295,7 @@ class GameServer extends Model
     private function translationsTableExists(): bool
     {
         try {
-            return Schema::hasTable('game_server_translations');
+            return app(TableExistence::class)->has('game_server_translations');
         } catch (Throwable) {
             return false;
         }

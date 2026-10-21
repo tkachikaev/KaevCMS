@@ -3,8 +3,8 @@
 namespace App\Services\Pages;
 
 use App\Models\Page;
+use App\Support\Database\TableExistence;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 final class PageNavigation
@@ -25,7 +25,7 @@ final class PageNavigation
     private function forLocation(string $column): Collection
     {
         try {
-            if (! Schema::hasTable('pages') || ! Schema::hasTable('page_translations')) {
+            if (! app(TableExistence::class)->has('pages') || ! app(TableExistence::class)->has('page_translations')) {
                 return collect();
             }
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\CmsSetting;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Support\Database\TableExistence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -182,6 +183,7 @@ class UpgradeGameServerMigrationTest extends TestCase
     public function test_legacy_071_settings_are_copied_to_the_first_game_server(): void
     {
         Schema::drop('game_servers');
+        app(TableExistence::class)->forget();
 
         CmsSetting::query()->updateOrCreate(['key' => 'server.name'], ['value' => 'Legacy x7']);
         CmsSetting::query()->updateOrCreate(['key' => 'server.rates'], ['value' => 'x7']);
