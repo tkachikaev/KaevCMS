@@ -259,6 +259,7 @@ class AdminRoleAccessTest extends TestCase
             ['post', '/admin/news', []],
             ['post', '/admin/settings/system/queue/cleanup', []],
             ['post', '/admin/settings/system/updates', []],
+            ['post', '/admin/settings/system/updates/incoming', ['incoming' => 'KaevCMS-update.zip']],
         ] as [$method, $path, $data]) {
             $this->actingAs($auditor, 'admin')->{$method}($path, $data)->assertForbidden();
         }

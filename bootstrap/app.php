@@ -15,7 +15,9 @@ use App\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Middleware\TrustProxies as LaravelTrustProxies;
+use Illuminate\Http\Request;
 
 $application = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -45,6 +47,18 @@ $application = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // An update package above post_max_size arrives as an empty request before the session
+        // starts; return to the updater with an explanation instead of a bare HTTP 413 page.
+        $exceptions->render(function (PostTooLargeException $exception, Request $request) {
+            // Routing has not run yet; the admin path is configurable, so match the path itself.
+            if (! $request->isMethod('POST') || preg_match('#\Aadmin(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?/settings/system/updates\z#', $request->path()) !== 1) {
+                return null;
+            }
+
+            // GET on the same address is the updates page.
+            return redirect($request->url().'?upload=too-large');
+        });
+
         $exceptions->dontFlash([
             'database_password',
             'game_password',

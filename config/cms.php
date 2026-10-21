@@ -11,6 +11,8 @@ return [
 
     'updates' => [
         'maximum_upload_kilobytes' => 524288,
+        // Folder for packages placed through FTP or the file manager; null = storage/app/kaevcms/updates/incoming.
+        'incoming_directory' => null,
         'maximum_archive_files' => 20000,
         'maximum_uncompressed_bytes' => 1073741824,
         'vds_agent_supported' => null,

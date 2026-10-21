@@ -9,7 +9,7 @@
 
             const targetId = button.dataset.copyTarget;
             const target = targetId ? document.getElementById(targetId) : null;
-            const container = button.closest('.update-agent-card') ?? button.parentElement;
+            const container = button.closest('.update-agent-card, .update-incoming-card') ?? button.parentElement;
             const state = container?.querySelector('[data-copy-state]');
             if (!(target instanceof HTMLElement)) return;
 
@@ -32,6 +32,24 @@
 
             button.addEventListener('click', copy);
             cleanups.push(() => button.removeEventListener('click', copy));
+        });
+
+        // A file above the PHP upload limit would be discarded by the server after a long
+        // upload; refuse it before sending.
+        document.querySelectorAll('input[type="file"][data-update-max-bytes]').forEach((input) => {
+            if (!(input instanceof HTMLInputElement)) return;
+
+            const maximum = Number(input.dataset.updateMaxBytes || 0);
+            const check = () => {
+                const file = input.files?.[0];
+                const tooLarge = file !== undefined && maximum > 0 && file.size > maximum;
+                input.setCustomValidity(tooLarge ? (input.dataset.updateTooLarge || 'File is too large.') : '');
+                input.setAttribute('aria-invalid', tooLarge ? 'true' : 'false');
+                if (tooLarge) input.reportValidity();
+            };
+
+            input.addEventListener('change', check);
+            cleanups.push(() => input.removeEventListener('change', check));
         });
 
         const dialog = document.querySelector('[data-update-progress-dialog]');

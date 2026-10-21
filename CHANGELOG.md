@@ -1,6 +1,7 @@
 ## Unreleased
 
 - **Composer dependencies change only with the owner's explicit approval.** `composer.json` opens with a bilingual STOP warning (a top-level key: `extra` is part of `composer.lock`'s content-hash). The approved fingerprint lives in `deployment/dependencies/approved-dependencies.json`; `deployment/dependencies/dependency-guard.php` fails the Windows quality gate, GitHub Actions and release builds on any unapproved change to `composer.json` or `composer.lock`. Approval is typed by the owner in an interactive terminal (`--approve --reason=...`). `composer install` from the approved lock is not affected; dependencies and `composer.lock` are unchanged.
+- **Web Update copes with small PHP upload limits.** Shared hosts often accept only 2–8 MB through the browser, while a cumulative package with dependencies is about 16 MB; uploading it showed a bare "413 Content Too Large" page. The updates page now shows the server's effective limit and warns below 64 MB, refuses a too-large file in the browser before uploading, and a request above `post_max_size` returns to the page with instructions. New **Package from the server folder**: copy the ZIP through FTP or the file manager into `storage/app/kaevcms/updates/incoming` and verify it from the panel — same inspection as an upload, no PHP upload limit.
 
 ## 0.51.2 - 2026-10-20
 

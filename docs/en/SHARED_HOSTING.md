@@ -121,6 +121,17 @@ Use the cumulative Web Update from the administrator panel on shared hosting. On
 
 The supported version range is meaningful only when the package is accepted by the oldest Web Updater in that range. Release validation must include a direct staging test from the oldest retained shared-hosting baseline.
 
+### Upload limit and packages through FTP
+
+A cumulative package with dependencies is about 16 MB, while many hosts accept only 2–8 MB through the browser by default (`upload_max_filesize`, `post_max_size`). **Settings → System updates** shows the server's actual limit and warns when it is below 64 MB. A file that is too large is refused in the browser before upload. If a request still exceeds PHP's limit, the panel returns to the updates page with an explanation instead of HTTP `413`.
+
+There are two ways forward:
+
+1. Raise the limit in the hosting PHP settings: `upload_max_filesize = 64M`, `post_max_size = 70M`. If the panel has no such section, create `.user.ini` with these lines in the site's public directory (hosts pick it up within a few minutes).
+2. Skip the browser upload: copy the ZIP through FTP or the file manager into the folder shown in **Package from the server folder** (by default `<core>/storage/app/kaevcms/updates/incoming`), reload the page and choose **Verify package**. The package passes the same inspection as an uploaded one; the source file is removed from the folder once it is verified.
+
+Older releases can only use the first way: the server-folder option appears once a release that supports it is installed.
+
 
 ### Why an arbitrary public-directory name is safe
 

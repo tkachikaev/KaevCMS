@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Auth\AdminPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApplySystemUpdateRequest;
+use App\Http\Requests\Admin\ImportSystemUpdateRequest;
 use App\Http\Requests\Admin\RecoverSystemUpdateRequest;
 use App\Http\Requests\Admin\UploadSystemUpdateRequest;
 use App\Models\Admin;
@@ -14,10 +15,13 @@ use App\Services\Releases\InstalledVersion;
 use App\Services\Updates\InspectedUpdatePackage;
 use App\Services\Updates\SystemUpdateInstaller;
 use App\Services\Updates\SystemUpdateRecovery;
+use App\Services\Updates\UpdateIncomingPackages;
 use App\Services\Updates\UpdateInstallationLayout;
 use App\Services\Updates\UpdatePackageInspector;
 use App\Services\Updates\UpdatePreflight;
+use App\Services\Updates\UpdateUploadLimit;
 use App\Services\Updates\VdsUpdateAgent;
+use Closure;
 use Illuminate\Foundation\Http\MaintenanceModeBypassCookie;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -34,13 +38,17 @@ final class SystemUpdateController extends Controller
     public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(
+        Request $request,
         InstalledVersion $installedVersion,
         UpdateInstallationLayout $layout,
         UpdatePackageInspector $inspector,
         VdsUpdateAgent $vdsAgent,
+        UpdateUploadLimit $uploadLimit,
+        UpdateIncomingPackages $incoming,
     ): View {
         $admin = $this->viewer();
         $agentStatus = $vdsAgent->status();
+        $incomingReady = $admin->isOwner() && $incoming->ensureDirectory();
 
         return view('admin.settings.updates.index', [
             'currentVersion' => $this->currentVersion($installedVersion),
@@ -62,6 +70,14 @@ final class SystemUpdateController extends Controller
             'agentRecommended' => $vdsAgent->recommended(),
             'agentInstallCommand' => $vdsAgent->installCommand(),
             'agentDiagnosticsCommand' => $vdsAgent->diagnosticsCommand(),
+            'uploadLimitBytes' => $uploadLimit->bytes(),
+            'uploadLimitLabel' => $uploadLimit->label(),
+            'uploadLimitLow' => $uploadLimit->belowRecommended(),
+            // Set by the PostTooLargeException handler: PHP discarded the request body.
+            'uploadTooLarge' => $request->query('upload') === 'too-large',
+            'incomingDirectory' => $incoming->directory(),
+            'incomingReady' => $incomingReady,
+            'incomingPackages' => $admin->isOwner() ? $incoming->packages() : [],
         ]);
     }
 
@@ -70,30 +86,84 @@ final class SystemUpdateController extends Controller
         InstalledVersion $installedVersion,
         UpdatePackageInspector $inspector,
     ): RedirectResponse {
+        $uploaded = $request->file('package');
+        if ($uploaded === null) {
+            return back()->withErrors(['package' => __('Select an update package.')]);
+        }
+
+        return $this->stagePackage(
+            $installedVersion,
+            $inspector,
+            'package',
+            'upload',
+            static function (string $directory, string $fileName) use ($uploaded): void {
+                $uploaded->move($directory, $fileName);
+            },
+        );
+    }
+
+    /**
+     * Stages a package the owner placed in the upload folder through FTP or the file
+     * manager, so packages larger than PHP's browser upload limit can still be installed.
+     */
+    public function import(
+        ImportSystemUpdateRequest $request,
+        InstalledVersion $installedVersion,
+        UpdatePackageInspector $inspector,
+        UpdateIncomingPackages $incoming,
+    ): RedirectResponse {
+        try {
+            $source = $incoming->path((string) $request->validated('incoming'));
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['incoming' => $exception->getMessage()]);
+        }
+
+        return $this->stagePackage(
+            $installedVersion,
+            $inspector,
+            'incoming',
+            'incoming',
+            static function (string $directory, string $fileName) use ($source): void {
+                if (! @copy($source, $directory.DIRECTORY_SEPARATOR.$fileName)) {
+                    throw new RuntimeException(__('Unable to copy the update package from the upload folder.'));
+                }
+            },
+            // The verified copy is kept with the other staged packages; the source is no longer needed.
+            static fn () => @unlink($source),
+        );
+    }
+
+    /**
+     * @param  Closure(string, string): void  $place  writes the archive as $fileName into $directory
+     * @param  (Closure(): mixed)|null  $afterStaged
+     */
+    private function stagePackage(
+        InstalledVersion $installedVersion,
+        UpdatePackageInspector $inspector,
+        string $errorKey,
+        string $source,
+        Closure $place,
+        ?Closure $afterStaged = null,
+    ): RedirectResponse {
         $admin = $this->owner();
         $currentVersion = $this->currentVersion($installedVersion);
         $updatesDirectory = storage_path('app/kaevcms/updates');
         $directory = $updatesDirectory.DIRECTORY_SEPARATOR.'packages';
         foreach ([$updatesDirectory, $directory] as $runtimeDirectory) {
             if (! is_dir($runtimeDirectory) && ! mkdir($runtimeDirectory, 0770, true) && ! is_dir($runtimeDirectory)) {
-                return back()->withErrors(['package' => __('Unable to create the update package directory.')]);
+                return back()->withErrors([$errorKey => __('Unable to create the update package directory.')]);
             }
         }
         if (! is_writable($directory)) {
-            return back()->withErrors(['package' => __('The update package directory is not writable by PHP-FPM.')]);
+            return back()->withErrors([$errorKey => __('The update package directory is not writable by PHP-FPM.')]);
         }
 
         $uuid = (string) Str::uuid();
         $archivePath = $directory.'/'.$uuid.'.zip';
-        $uploaded = $request->file('package');
-        if ($uploaded === null) {
-            return back()->withErrors(['package' => __('Select an update package.')]);
-        }
-
         $package = null;
 
         try {
-            $uploaded->move($directory, $uuid.'.zip');
+            $place($directory, $uuid.'.zip');
             if (PHP_OS_FAMILY !== 'Windows' && ! @chmod($archivePath, 0660)) {
                 throw new RuntimeException(__('Unable to secure the uploaded update package.'));
             }
@@ -124,6 +194,7 @@ final class SystemUpdateController extends Controller
                         'package_id' => $package->packageId,
                         'from_version' => $package->currentVersion,
                         'target_version' => $package->targetVersion,
+                        'source' => $source,
                     ],
                 );
             } catch (Throwable $exception) {
@@ -133,12 +204,16 @@ final class SystemUpdateController extends Controller
             @unlink($archivePath);
 
             return back()->withErrors([
-                'package' => __('The update package was rejected: :message', ['message' => $exception->getMessage()]),
+                $errorKey => __('The update package was rejected: :message', ['message' => $exception->getMessage()]),
             ]);
         } finally {
             if ($package instanceof InspectedUpdatePackage) {
                 $this->removeDirectory($package->stagingPath);
             }
+        }
+
+        if ($afterStaged !== null) {
+            $afterStaged();
         }
 
         return redirect()

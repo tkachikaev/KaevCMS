@@ -67,19 +67,82 @@
         <span class="status-badge status-badge-muted">ZIP</span>
     </div>
 
+    @if($uploadTooLarge)
+        <div class="notice notice-error" role="alert" data-update-upload-too-large>
+            <strong>{{ __('The package was not uploaded: it is larger than this server accepts through the browser (:limit).', ['limit' => $uploadLimitLabel]) }}</strong>
+            <span>{{ __('Raise upload_max_filesize and post_max_size to 64M in the hosting PHP settings, or place the ZIP in the upload folder below through FTP or the file manager.') }}</span>
+        </div>
+    @elseif($uploadLimitLow)
+        <div class="notice notice-warning" role="status" data-update-upload-limit-low>
+            <strong>{{ __('This server accepts uploads up to :limit through the browser.', ['limit' => $uploadLimitLabel]) }}</strong>
+            <span>{{ __('Release packages that include dependencies can be larger. Raise upload_max_filesize and post_max_size to 64M in the hosting PHP settings, or place the ZIP in the upload folder below through FTP or the file manager.') }}</span>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('admin.settings.system.updates.store') }}" enctype="multipart/form-data" class="update-upload-form">
         @csrf
         <x-admin.field
             for="update_package"
             name="package"
             :label="__('Update package')"
-            :hint="__('The package must contain a release manifest and per-file SHA256 checksums.')"
+            :hint="__('The package must contain a release manifest and per-file SHA256 checksums.').' '.__('Maximum upload size: :limit.', ['limit' => $uploadLimitLabel])"
         >
-            <input id="update_package" name="package" type="file" accept=".zip,application/zip" required @disabled(! $zipAvailable) @if($errors->has('package')) aria-invalid="true" @endif>
+            <input id="update_package" name="package" type="file" accept=".zip,application/zip" required
+                data-update-max-bytes="{{ $uploadLimitBytes }}"
+                data-update-too-large="{{ __('This file is larger than this server accepts through the browser (:limit). Raise the PHP upload limit or place the ZIP in the upload folder below.', ['limit' => $uploadLimitLabel]) }}"
+                @disabled(! $zipAvailable) @if($errors->has('package')) aria-invalid="true" @endif>
         </x-admin.field>
         <button class="button button-primary" type="submit" @disabled(! $zipAvailable)>{{ __('Upload and verify') }}</button>
     </form>
 </section>
+
+@if($admin->isOwner())
+<section class="form-card update-incoming-card" data-update-incoming>
+    <div class="system-section-heading">
+        <div>
+            <h2>{{ __('Package from the server folder') }}</h2>
+            <p>{{ __('For packages larger than the browser upload limit: copy the ZIP into this folder through FTP, SFTP or the hosting file manager, then reload this page. The package is checked exactly like an uploaded one.') }}</p>
+        </div>
+        <span class="status-badge status-badge-muted">FTP</span>
+    </div>
+
+    <div class="update-agent-command">
+        <code id="update-incoming-directory">{{ $incomingDirectory }}</code>
+        <button class="button button-secondary" type="button" data-copy-command data-copy-target="update-incoming-directory" data-copy-success="{{ __('Path copied.') }}" data-copy-error="{{ __('Could not copy the path.') }}">{{ __('Copy path') }}</button>
+    </div>
+    <small class="update-command-state" data-copy-state aria-live="polite"></small>
+
+    @if(! $incomingReady)
+        <div class="notice notice-warning" role="alert">
+            <span>{{ __('The folder does not exist yet and PHP could not create it. Create it through FTP or the file manager.') }}</span>
+        </div>
+    @endif
+
+    @error('incoming')
+        <div class="notice notice-error" role="alert"><span>{{ $message }}</span></div>
+    @enderror
+
+    @if($incomingPackages === [])
+        <div class="empty-state"><p>{{ __('No ZIP files in the folder yet.') }}</p></div>
+    @else
+        <div class="update-card-list">
+            @foreach($incomingPackages as $incomingPackage)
+                <article class="admin-card-row update-row">
+                    <div>
+                        <strong>{{ $incomingPackage['name'] }}</strong>
+                        <small>{{ \App\Services\Updates\UpdateUploadLimit::format($incomingPackage['size']) }} · {{ date('d.m.Y H:i', $incomingPackage['modified_at']) }}</small>
+                    </div>
+                    <form method="POST" action="{{ route('admin.settings.system.updates.import') }}">
+                        @csrf
+                        <input type="hidden" name="incoming" value="{{ $incomingPackage['name'] }}">
+                        <button class="button button-primary" type="submit" @disabled(! $zipAvailable)>{{ __('Verify package') }}</button>
+                    </form>
+                </article>
+            @endforeach
+        </div>
+    @endif
+</section>
+@endif
 
 @if($stagedUpdates->isNotEmpty())
 <section class="form-card">

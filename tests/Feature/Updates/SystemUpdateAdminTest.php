@@ -5,8 +5,13 @@ namespace Tests\Feature\Updates;
 use App\Models\Admin;
 use App\Models\SystemUpdate;
 use App\Services\Releases\InstalledVersion;
+use App\Services\Updates\UpdateIncomingPackages;
+use App\Services\Updates\UpdateUploadLimit;
 use App\Services\Updates\VdsUpdateAgent;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -524,6 +529,184 @@ class SystemUpdateAdminTest extends TestCase
         $fresh = $update->fresh();
         $this->assertSame(SystemUpdate::STATUS_STAGED, $fresh?->status);
         $this->assertNull($fresh?->phase);
+    }
+
+    public function test_page_shows_the_browser_upload_limit_and_warns_when_it_is_low(): void
+    {
+        $owner = Admin::factory()->create();
+        $this->app->instance(UpdateUploadLimit::class, new UpdateUploadLimit([
+            'upload_max_filesize' => '8M',
+            'post_max_size' => '10M',
+        ]));
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates')
+            ->assertOk()
+            ->assertSee('Максимальный размер загрузки: 8 MB.')
+            ->assertSee('data-update-max-bytes="8388608"', false)
+            ->assertSee('data-update-upload-limit-low', false)
+            ->assertSee('Через браузер этот сервер принимает файлы до 8 MB.');
+
+        $this->app->instance(UpdateUploadLimit::class, new UpdateUploadLimit([
+            'upload_max_filesize' => '128M',
+            'post_max_size' => '0',
+        ]));
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates')
+            ->assertOk()
+            ->assertSee('Максимальный размер загрузки: 128 MB.')
+            ->assertDontSee('data-update-upload-limit-low', false);
+    }
+
+    public function test_a_request_above_post_max_size_returns_to_the_updater_with_an_explanation(): void
+    {
+        $handler = $this->app->make(ExceptionHandler::class);
+
+        $response = $handler->render(
+            Request::create('http://localhost/admin/settings/system/updates', 'POST'),
+            new PostTooLargeException,
+        );
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame('http://localhost/admin/settings/system/updates?upload=too-large', $response->headers->get('Location'));
+
+        // A custom admin path is handled the same way; other requests keep the regular 413.
+        $custom = $handler->render(
+            Request::create('http://localhost/admin-secret-panel/settings/system/updates', 'POST'),
+            new PostTooLargeException,
+        );
+        $this->assertSame('http://localhost/admin-secret-panel/settings/system/updates?upload=too-large', $custom->headers->get('Location'));
+        $this->assertSame(413, $handler->render(Request::create('http://localhost/admin/news', 'POST'), new PostTooLargeException)->getStatusCode());
+
+        $owner = Admin::factory()->create();
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates?upload=too-large')
+            ->assertOk()
+            ->assertSee('data-update-upload-too-large', false)
+            ->assertSee('Пакет не загружен: он больше, чем сервер принимает через браузер');
+    }
+
+    public function test_a_file_dropped_by_php_upload_limits_gets_an_actionable_message(): void
+    {
+        $owner = Admin::factory()->create();
+        $path = tempnam(sys_get_temp_dir(), 'kaevcms-update-too-large-');
+        $this->assertIsString($path);
+        $this->temporaryFiles[] = $path;
+
+        $this->actingAs($owner, 'admin')
+            ->from('/admin/settings/system/updates')
+            ->post('/admin/settings/system/updates', [
+                'package' => new UploadedFile($path, 'KaevCMS-update.zip', 'application/zip', UPLOAD_ERR_INI_SIZE, true),
+            ])
+            ->assertRedirect('/admin/settings/system/updates')
+            ->assertSessionHasErrors(['package' => __('The update package is larger than this server accepts through the browser (:limit). Raise the PHP upload limit or place the ZIP in the upload folder through FTP or the file manager.', [
+                'limit' => app(UpdateUploadLimit::class)->label(),
+            ])]);
+
+        $this->assertDatabaseCount('system_updates', 0);
+    }
+
+    #[RequiresPhpExtension('zip')]
+    public function test_owner_can_stage_a_package_placed_in_the_upload_folder(): void
+    {
+        $owner = Admin::factory()->create();
+        $incoming = $this->useIncomingDirectory();
+        $currentVersion = cms_version();
+        $targetVersion = $this->nextPatchVersion($currentVersion);
+        $archive = $this->createUpdatePackage(
+            targetVersion: $targetVersion,
+            minimumVersion: $currentVersion,
+            maximumVersion: $currentVersion,
+        );
+        $this->assertTrue(rename($archive, $incoming.'/KaevCMS-update-to-'.$targetVersion.'.zip'));
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/settings/system/updates')
+            ->assertOk()
+            ->assertSee('Пакет из папки на сервере')
+            ->assertSee(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $incoming))
+            ->assertSee('KaevCMS-update-to-'.$targetVersion.'.zip');
+
+        $response = $this->actingAs($owner, 'admin')
+            ->post('/admin/settings/system/updates/incoming', [
+                'incoming' => 'KaevCMS-update-to-'.$targetVersion.'.zip',
+            ]);
+
+        $update = SystemUpdate::query()->firstOrFail();
+        $response->assertRedirect('/admin/settings/system/updates/'.$update->id);
+        $this->assertSame($targetVersion, $update->target_version);
+        $this->assertSame(SystemUpdate::STATUS_STAGED, $update->status);
+        $this->assertFileExists(storage_path('app/'.$update->package_path));
+        $this->assertFileDoesNotExist($incoming.'/KaevCMS-update-to-'.$targetVersion.'.zip');
+    }
+
+    #[RequiresPhpExtension('zip')]
+    public function test_a_rejected_package_from_the_upload_folder_is_kept_and_reported(): void
+    {
+        $owner = Admin::factory()->create();
+        $incoming = $this->useIncomingDirectory();
+        $currentVersion = cms_version();
+        $archive = $this->createUpdatePackage(
+            targetVersion: $this->nextPatchVersion($currentVersion),
+            minimumVersion: $currentVersion,
+            maximumVersion: $currentVersion,
+            extraTarget: 'core/.env',
+        );
+        $this->assertTrue(rename($archive, $incoming.'/unsafe.zip'));
+
+        $this->actingAs($owner, 'admin')
+            ->from('/admin/settings/system/updates')
+            ->post('/admin/settings/system/updates/incoming', ['incoming' => 'unsafe.zip'])
+            ->assertRedirect('/admin/settings/system/updates')
+            ->assertSessionHasErrors('incoming');
+
+        $this->assertDatabaseCount('system_updates', 0);
+        $this->assertFileExists($incoming.'/unsafe.zip');
+    }
+
+    public function test_upload_folder_selection_cannot_leave_the_folder(): void
+    {
+        $owner = Admin::factory()->create();
+        $incoming = $this->useIncomingDirectory();
+        mkdir($incoming.'/nested');
+        file_put_contents($incoming.'/nested/inner.zip', 'zip');
+        file_put_contents($incoming.'/notes.txt', 'text');
+        file_put_contents(dirname($incoming).'/outside.zip', 'zip');
+        $this->temporaryFiles[] = dirname($incoming).'/outside.zip';
+
+        foreach (['../outside.zip', '..\\outside.zip', 'nested/inner.zip', 'notes.txt', 'missing.zip', '.zip', $incoming.'/nested/inner.zip'] as $name) {
+            $this->actingAs($owner, 'admin')
+                ->from('/admin/settings/system/updates')
+                ->post('/admin/settings/system/updates/incoming', ['incoming' => $name])
+                ->assertRedirect('/admin/settings/system/updates')
+                ->assertSessionHasErrors(['incoming' => __('The selected update package was not found in the upload folder.')]);
+        }
+
+        $this->assertDatabaseCount('system_updates', 0);
+        $this->assertSame([], app(UpdateIncomingPackages::class)->packages());
+    }
+
+    public function test_only_the_owner_can_stage_a_package_from_the_upload_folder(): void
+    {
+        $administrator = Admin::factory()->administrator()->create();
+        $incoming = $this->useIncomingDirectory();
+        file_put_contents($incoming.'/KaevCMS-update.zip', 'zip');
+
+        $this->actingAs($administrator, 'admin')
+            ->post('/admin/settings/system/updates/incoming', ['incoming' => 'KaevCMS-update.zip'])
+            ->assertForbidden();
+
+        $this->assertFileExists($incoming.'/KaevCMS-update.zip');
+    }
+
+    private function useIncomingDirectory(): string
+    {
+        $parent = storage_path('framework/testing/system-update-incoming-'.bin2hex(random_bytes(8)));
+        mkdir($parent.'/incoming', 0777, true);
+        $this->temporaryDirectories[] = $parent;
+        config(['cms.updates.incoming_directory' => $parent.'/incoming']);
+
+        return $parent.'/incoming';
     }
 
     private function bindVdsAgent(bool $ready): VdsUpdateAgent

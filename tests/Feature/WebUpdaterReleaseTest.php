@@ -12,6 +12,7 @@ class WebUpdaterReleaseTest extends TestCase
     {
         foreach ([
             'admin.settings.system.updates.store',
+            'admin.settings.system.updates.import',
             'admin.settings.system.updates.apply',
             'admin.settings.system.updates.recover',
             'admin.settings.mail.delivery-probe',

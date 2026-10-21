@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Services\Updates;
+
+/**
+ * The largest update package a browser upload can deliver on this server: PHP's
+ * upload_max_filesize and post_max_size (often 8M on shared hosting) and the CMS limit.
+ */
+final class UpdateUploadLimit
+{
+    /** Below this, release packages (about 16 MB with dependencies) may not fit. */
+    public const RECOMMENDED_BYTES = 64 * 1024 * 1024;
+
+    /**
+     * @param  array<string, string>|null  $iniOverride  ini values used instead of the running PHP's (tests)
+     */
+    public function __construct(private readonly ?array $iniOverride = null) {}
+
+    public function bytes(): int
+    {
+        $limits = [max(1024, (int) config('cms.updates.maximum_upload_kilobytes', 524288)) * 1024];
+
+        foreach (['upload_max_filesize', 'post_max_size'] as $directive) {
+            $bytes = self::parse($this->ini($directive));
+            // 0 disables the limit for that directive.
+            if ($bytes > 0) {
+                $limits[] = $bytes;
+            }
+        }
+
+        return min($limits);
+    }
+
+    public function belowRecommended(): bool
+    {
+        return $this->bytes() < self::RECOMMENDED_BYTES;
+    }
+
+    public function label(): string
+    {
+        return self::format($this->bytes());
+    }
+
+    /**
+     * Parses php.ini shorthand such as 8M, 512K or 1G.
+     */
+    public static function parse(string $value): int
+    {
+        $value = trim($value);
+        if (preg_match('/\A(\d+)\s*([KMG]?)\z/i', $value, $matches) !== 1) {
+            return 0;
+        }
+
+        $multiplier = match (strtoupper($matches[2])) {
+            'K' => 1024,
+            'M' => 1024 ** 2,
+            'G' => 1024 ** 3,
+            default => 1,
+        };
+
+        return (int) $matches[1] * $multiplier;
+    }
+
+    public static function format(int $bytes): string
+    {
+        if ($bytes >= 1024 ** 3) {
+            return rtrim(rtrim(number_format($bytes / 1024 ** 3, 1, '.', ''), '0'), '.').' GB';
+        }
+        if ($bytes >= 1024 ** 2) {
+            return rtrim(rtrim(number_format($bytes / 1024 ** 2, 1, '.', ''), '0'), '.').' MB';
+        }
+
+        return max(1, (int) round($bytes / 1024)).' KB';
+    }
+
+    private function ini(string $directive): string
+    {
+        if ($this->iniOverride !== null) {
+            return $this->iniOverride[$directive] ?? '0';
+        }
+
+        return (string) ini_get($directive);
+    }
+}

@@ -32,6 +32,8 @@ Use the Web Updater in the administration panel. It validates the version range,
 
 The Web Updater requires write access to the installed files. Do not assign `0777` to the whole project merely to pass preflight.
 
+If a package exceeds the host's PHP upload limit (often 2–8 MB), raise `upload_max_filesize` and `post_max_size` to 64M or copy the ZIP through FTP into the folder shown in **Package from the server folder** — see [Shared hosting](SHARED_HOSTING.md#upload-limit-and-packages-through-ftp).
+
 In split/shared-hosting layouts, the actual public directory is read from the generated runtime configuration. Public entrypoints are layout-neutral and `kaevcms-path.php` is protected from package replacement or deletion, so technical-domain and custom directory names remain valid after cumulative updates.
 
 ## Ubuntu VDS
