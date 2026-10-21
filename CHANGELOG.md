@@ -1,7 +1,11 @@
-## Unreleased
+## 0.51.3 - 2026-10-21
 
+0.51.2 was never published; this release supersedes it. Bundled module and theme versions are unchanged; `composer.lock` is unchanged (Laravel 13.37, Livewire 4.4.7).
+
+- **Uploading an update no longer fails with HTTP 413 on shared hosting.** Hosts often accept only 2–8 MB per request (`upload_max_filesize`, `post_max_size`), while the cumulative package with dependencies is about 16 MB. The updates page now sends the package in parts below the server's limit and the server assembles it before the usual inspection, so no PHP settings need changing. Verified locally with a 2 MB limit: the 15.6 MB cumulative package arrived in 9 parts and was staged. Sites on 0.42.4–0.50.16 get this uploader from the bridge package, which is small enough for default limits.
 - **Composer dependencies change only with the owner's explicit approval.** `composer.json` opens with a bilingual STOP warning (a top-level key: `extra` is part of `composer.lock`'s content-hash). The approved fingerprint lives in `deployment/dependencies/approved-dependencies.json`; `deployment/dependencies/dependency-guard.php` fails the Windows quality gate, GitHub Actions and release builds on any unapproved change to `composer.json` or `composer.lock`. Approval is typed by the owner in an interactive terminal (`--approve --reason=...`). `composer install` from the approved lock is not affected; dependencies and `composer.lock` are unchanged.
-- **Web Update copes with small PHP upload limits.** Shared hosts often accept only 2–8 MB through the browser, while a cumulative package with dependencies is about 16 MB; uploading it showed a bare "413 Content Too Large" page. The updates page now shows the server's effective limit and warns below 64 MB, refuses a too-large file in the browser before uploading, and a request above `post_max_size` returns to the page with instructions. New **Package from the server folder**: copy the ZIP through FTP or the file manager into `storage/app/kaevcms/updates/incoming` and verify it from the panel — same inspection as an upload, no PHP upload limit.
+- New **Package from the server folder** on the updates page: copy the ZIP through FTP or the file manager into `storage/app/kaevcms/updates/incoming` and verify it from the panel — same inspection as an upload. Without JavaScript, a request above `post_max_size` returns to the updates page with instructions instead of a bare "413 Content Too Large" page.
+- The cumulative package also accepts sites on 0.51.1 (an internal test build) and 0.51.2.
 
 ## 0.51.2 - 2026-10-20
 
