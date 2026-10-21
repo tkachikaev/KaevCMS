@@ -55,3 +55,26 @@ Server after deployment (same pages, same stages) / сервер после ус
 - The single core is still the limit at 20 users (`id` 0); at 5–10 users it is 70–75 % busy. / Предел по-прежнему одно ядро.
 - Single requests without load: `/news` 148 → 85 ms, `/statistics` 190 → 117 ms, `/login` 131 → 112 ms. / Одиночные запросы стали быстрее на 25–45 %.
 - `ModuleFoundationTest::test_module_routes_are_added_after_a_cached_core_route_file` boots a fresh application with a route cache and fails if module routes disappear again. / Тест ловит возврат ошибки.
+
+## 2026-10-21 — less work per request / меньше работы на каждый запрос (branch perf/load-testing)
+
+The caches are now built by the site itself (`App\Support\FrameworkCache`); values from the database and stored secrets never reach them. Measured inside PHP-FPM with OPcache, home page: / Замер внутри PHP-FPM, главная:
+
+| Step / этап | Before / было | After / стало |
+|---|---|---|
+| `AppServiceProvider` boot | 15.6 ms | 6.4 ms |
+| Module boot / запуск модулей | 18.0 ms | 11.7 ms |
+| Whole request / весь запрос | 107 ms | 77 ms |
+
+- Every request decoded `en.json` three times and `ru.json` once (over 1 MB) to show translation coverage, which only the languages settings page needs. / Каждый запрос разбирал файлы переводов ради процента, нужного одной странице админки.
+- Every request ran an `UPDATE` per enabled module and scanned the module directories twice. / Запись в базу и двойное сканирование модулей на каждом запросе.
+- The header and the footer each read the downloads page: two queries on every public page. / Два лишних запроса на каждой публичной странице.
+
+| Users | Req/s | p50 ms | p95 ms | p99 ms | Server p50/p95 ms | Errors |
+|---|---|---|---|---|---|---|
+| 5 | 9.8 | 387 | 521 | 1256 | 387/500 | 0 |
+| 10 | 14.2 | 559 | 1293 | 2032 | 558/1194 | 0 |
+| 20 | 14.8 | 1145 | 2146 | 2423 | 1136/2044 | 0 |
+
+- Capacity at 20 users since the baseline: 6.6 → 14.8 requests per second (×2.2), median 2761 → 1145 ms. / С исходного замера пропускная способность выросла в 2,2 раза.
+- Left for later: the donations module reads its settings at boot to pick its menu link (about 3 ms); changing it needs a module version bump that owners approve. / Донатный модуль читает настройки при запуске; правка требует новой версии модуля.
