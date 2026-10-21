@@ -388,7 +388,8 @@ final class MailSettings
                 'port' => $values['port'],
                 'username' => $values['username'] !== '' ? $values['username'] : null,
                 'password' => $password !== '' ? $password : null,
-                'timeout' => 15,
+                // A provider that hangs costs this per socket wait; queued mail pauses after one.
+                'timeout' => 10,
                 'local_domain' => parse_url((string) config('app.url', 'http://localhost'), PHP_URL_HOST),
                 'auto_tls' => $values['encryption'] !== 'none',
             ],
