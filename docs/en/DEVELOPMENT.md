@@ -36,6 +36,26 @@ Build every official artifact with one command:
 
 The builder proves that previous full plus patch exactly matches the target tree, keeps the cumulative baseline at `0.42.4`, excludes runtime-owned files, and writes verified SHA256 values. GitHub Actions separately runs PHP, official Windows quality, official Windows browser quality, and release-contract jobs.
 
+## Composer dependencies: owner approval only
+
+**Do not update Laravel, Livewire or any Composer dependency, and do not change `composer.json` or `composer.lock`, without prior explicit approval from the KaevCMS owner.** This applies to new features, bug fixes, security audits and release preparation alike. Every release package delivers `composer.lock` to all sites, and sites on older releases can only cross a dependency change through the bridge package.
+
+The approved state is recorded in `deployment/dependencies/approved-dependencies.json` (SHA-256 of both files, key package versions, who approved and why). `php deployment/dependencies/dependency-guard.php` compares the working tree with it. The Windows quality gate, every GitHub Actions job, `build-release.ps1`, `build-release.php` and `build-web-update-package.ps1` run the guard and fail on any unapproved change. `composer install` from the approved `composer.lock` is never blocked: the guard is not a Composer hook.
+
+To approve a dependency change agreed with the owner:
+
+1. Make the change (`composer update <package>`) on a separate branch.
+2. The owner reviews it and runs, in an interactive terminal:
+
+   ```powershell
+   php deployment/dependencies/dependency-guard.php --approve --reason="Laravel 13.39 security fix"
+   ```
+
+   The command lists the changed files and the old and new Laravel and Livewire versions, then asks the owner to type a confirmation phrase bound to these exact files. Without an interactive terminal (CI, scripts, automated assistants) approval is refused.
+3. Commit `approved-dependencies.json` together with `composer.json` and `composer.lock`, and update `composer_lock.current_sha256` in `release.json` for the next release.
+
+To discard an unapproved change instead: `git checkout -- composer.json composer.lock`.
+
 ## Front-end asset architecture
 
 The administration layout loads the following stylesheets in this exact order:

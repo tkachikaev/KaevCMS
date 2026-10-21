@@ -1,4 +1,16 @@
 {
+  "_WARNING_READ_BEFORE_CHANGING_DEPENDENCIES": [
+    "==============================================================================",
+    "STOP! DEPENDENCY CHANGES REQUIRE EXPLICIT OWNER APPROVAL.",
+    "Do NOT update Laravel, Livewire or any Composer dependency, and do NOT change composer.json or composer.lock, without prior explicit approval from the KaevCMS owner.",
+    "This applies to every task: new features, bug fixes, security audits and release preparation.",
+    "Release builds and CI fail on unapproved changes: php deployment/dependencies/dependency-guard.php",
+    "------------------------------------------------------------------------------",
+    "СТОП! КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО обновлять Laravel, Livewire, Composer-зависимости или изменять composer.lock без предварительного явного согласования с владельцем KaevCMS.",
+    "Это касается любых изменений — разработки новых функций, исправления ошибок, аудита безопасности и подготовки релизов.",
+    "Сборка релиза и CI завершаются ошибкой при несогласованном изменении: php deployment/dependencies/dependency-guard.php",
+    "=============================================================================="
+  ],
   "name": "kaevcms/cms",
   "type": "project",
   "description": "KaevCMS — open-source CMS for Lineage II servers.",

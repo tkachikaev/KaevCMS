@@ -26,6 +26,9 @@ jobs:
           coverage: none
           tools: composer:v2
 
+      - name: Require owner-approved Composer dependencies
+        run: php deployment/dependencies/dependency-guard.php
+
       - name: Cache Composer packages
         uses: actions/cache@v4
         with:
@@ -163,6 +166,12 @@ jobs:
           php-version: '8.3'
           extensions: zip
           coverage: none
+
+      - name: Require owner-approved Composer dependencies
+        run: php deployment/dependencies/dependency-guard.php
+
+      - name: Run dependency approval guard regression
+        run: php deployment/dependencies/tests/dependency-guard-regression.php
 
       - name: Run release builder regression
         run: php deployment/release/tests/release-builder-regression.php

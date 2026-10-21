@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "composer_json_sha256": "d7266e9d89f17195b8022cdf916f0dfbc8abe66e064edd804ebcfe3be8c720d9",
+  "composer_lock_sha256": "29699d0c954319367e4ed34de93139dd498a5f2c1f786dc8c2cfe579b8ee33b5",
+  "key_packages": {
+    "laravel/framework": "v13.37.0",
+    "livewire/livewire": "v4.4.7"
+  },
+  "approved_by": "KaevCMS owner",
+  "approved_at": "2026-10-21",
+  "reason": "Initial baseline: the dependencies shipped in KaevCMS 0.51.2, recorded when the owner introduced the dependency approval guard."
+}

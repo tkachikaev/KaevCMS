@@ -5,6 +5,8 @@ declare(strict_types=1);
 /** Newest release whose Web Updater cannot replace Composer dependencies. */
 const KAEV_RELEASE_LAST_LEGACY_UPDATER = '0.50.16';
 
+require_once dirname(__DIR__).'/dependencies/dependency-guard.php';
+
 if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
     try {
         $artifacts = kaevReleaseBuild(getopt('', [
@@ -45,6 +47,9 @@ function kaevReleaseBuild(array $options): array
     if (! is_string($previousArchive) || ! is_file($previousArchive)) {
         throw new RuntimeException('--previous must point to the direct previous full release ZIP.');
     }
+
+    // Release packages deliver composer.lock to every site, so it must be owner-approved.
+    kaevDependencyAssertApproved($root);
 
     $release = kaevReleaseReadJson($root.'/release.json');
     $version = kaevReleaseRequireVersion($release['version'] ?? null, 'version');

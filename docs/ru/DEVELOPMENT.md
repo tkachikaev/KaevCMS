@@ -36,6 +36,26 @@ Windows quality поддерживает Windows PowerShell 5.1 и PowerShell 7;
 
 Сборщик проверяет, что предыдущий full плюс patch точно совпадает с новым деревом, cumulative начинается с baseline `0.42.4`, runtime-файлы не попадают в архивы, а SHA256 соответствует результату. GitHub Actions отдельно запускает PHP, официальный Windows quality, официальный Windows browser quality и release-contract jobs.
 
+## Composer-зависимости: только с согласия владельца
+
+**Категорически запрещено обновлять Laravel, Livewire, Composer-зависимости или изменять `composer.json` и `composer.lock` без предварительного явного согласования с владельцем KaevCMS.** Это касается разработки новых функций, исправления ошибок, аудита безопасности и подготовки релизов. Каждый пакет релиза доставляет `composer.lock` на все сайты, а сайты на старых версиях проходят смену зависимостей только через пакет-мост.
+
+Утверждённое состояние записано в `deployment/dependencies/approved-dependencies.json`: SHA-256 обоих файлов, версии ключевых пакетов, кто и почему согласовал. `php deployment/dependencies/dependency-guard.php` сравнивает с ним рабочую копию. Windows quality, все задания GitHub Actions, `build-release.ps1`, `build-release.php` и `build-web-update-package.ps1` запускают эту проверку и завершаются ошибкой при любом несогласованном изменении. Обычный `composer install` по утверждённому `composer.lock` не блокируется: проверка не подключена к Composer.
+
+Как оформить изменение, согласованное с владельцем:
+
+1. Выполните изменение (`composer update <пакет>`) в отдельной ветке.
+2. Владелец проверяет его и сам запускает в интерактивном терминале:
+
+   ```powershell
+   php deployment/dependencies/dependency-guard.php --approve --reason="Laravel 13.39: исправление безопасности"
+   ```
+
+   Команда покажет изменённые файлы и старые и новые версии Laravel и Livewire, затем попросит ввести фразу подтверждения, привязанную именно к этим файлам. Без интерактивного терминала (CI, скрипты, автоматические помощники) согласование отклоняется.
+3. Закоммитьте `approved-dependencies.json` вместе с `composer.json` и `composer.lock`, а к следующему релизу обновите `composer_lock.current_sha256` в `release.json`.
+
+Чтобы отменить несогласованное изменение: `git checkout -- composer.json composer.lock`.
+
 ## Структура фронтенд-ассетов
 
 Административный layout подключает CSS строго в таком порядке:

@@ -19,6 +19,11 @@ if (-not (Get-Command composer -ErrorAction SilentlyContinue)) {
     throw 'Composer was not found in PATH.'
 }
 
+php deployment/dependencies/dependency-guard.php
+if ($LASTEXITCODE -ne 0) {
+    throw 'Composer dependencies are not approved by the KaevCMS owner. See the message above.'
+}
+
 composer lint
 if ($LASTEXITCODE -ne 0) {
     throw "Release lint preflight failed with exit code $LASTEXITCODE."

@@ -36,6 +36,12 @@ $hadComposerNetworkSetting = $null -ne $previousComposerNetworkSetting
 try {
     Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value '1'
 
+    php deployment/dependencies/dependency-guard.php
+    if ($LASTEXITCODE -ne 0) { throw 'Composer dependencies are not approved by the KaevCMS owner. See the message above.' }
+
+    php deployment/dependencies/tests/dependency-guard-regression.php
+    if ($LASTEXITCODE -ne 0) { throw "Dependency approval guard regression checks failed with exit code $LASTEXITCODE." }
+
     & "$PSScriptRoot\tests\update-workflow.ps1"
     & "$PSScriptRoot\tests\composer-audit-policy.ps1"
 
@@ -78,7 +84,7 @@ try {
     php artisan route:clear
     if ($LASTEXITCODE -ne 0) { throw "Route cache cleanup failed with exit code $LASTEXITCODE." }
 
-    Write-Host 'Offline quality checks completed successfully: PowerShell updater, audit policy, Web Installer, shared-hosting, Web Updater, unified release builder and Ubuntu VDS documentation regressions, Composer validation, Pint, PHPStan, PHPUnit and route cache.' -ForegroundColor Green
+    Write-Host 'Offline quality checks completed successfully: owner-approved Composer dependencies, PowerShell updater, audit policy, Web Installer, shared-hosting, Web Updater, unified release builder and Ubuntu VDS documentation regressions, Composer validation, Pint, PHPStan, PHPUnit and route cache.' -ForegroundColor Green
     Write-Host 'Run .\deployment\windows\security-audit.ps1 separately when internet access is available.' -ForegroundColor DarkGray
 } finally {
     if ($hadComposerNetworkSetting) {

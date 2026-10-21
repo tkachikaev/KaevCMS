@@ -25,6 +25,10 @@ if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
 $targetReleaseRootFullPath = [System.IO.Path]::GetFullPath($TargetReleaseRoot)
 $targetRelease = Get-KaevCmsReleaseContract -ProjectRoot $targetReleaseRootFullPath
 Assert-KaevCmsRequiredReleaseFiles -ProjectRoot $targetReleaseRootFullPath
+php deployment/dependencies/dependency-guard.php "--root=$targetReleaseRootFullPath"
+if ($LASTEXITCODE -ne 0) {
+    throw 'Composer dependencies of the target release are not approved by the KaevCMS owner. See the message above.'
+}
 $targetVersion = [string]$targetRelease.version
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $ProjectRoot "dist\KaevCMS-cumulative-update-$MinimumVersion-$MaximumVersion-to-$targetVersion.zip"

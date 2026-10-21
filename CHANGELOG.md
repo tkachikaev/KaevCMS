@@ -1,3 +1,7 @@
+## Unreleased
+
+- **Composer dependencies change only with the owner's explicit approval.** `composer.json` opens with a bilingual STOP warning (a top-level key: `extra` is part of `composer.lock`'s content-hash). The approved fingerprint lives in `deployment/dependencies/approved-dependencies.json`; `deployment/dependencies/dependency-guard.php` fails the Windows quality gate, GitHub Actions and release builds on any unapproved change to `composer.json` or `composer.lock`. Approval is typed by the owner in an interactive terminal (`--approve --reason=...`). `composer install` from the approved lock is not affected; dependencies and `composer.lock` are unchanged.
+
 ## 0.51.2 - 2026-10-20
 
 0.51.1 was used only for an internal dependency-swap test build and is skipped. Bundled module and theme versions are unchanged; `composer.lock` is unchanged.
