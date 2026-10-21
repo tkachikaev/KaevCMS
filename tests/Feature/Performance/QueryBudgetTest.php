@@ -5,10 +5,13 @@ namespace Tests\Feature\Performance;
 use App\Models\CmsSetting;
 use App\Models\Page;
 use App\Services\CmsSettings;
+use App\Services\Localization\LanguageManager;
 use App\Services\Pages\DownloadPages;
 use App\Support\Database\TableExistence;
+use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleMigrationManager;
+use App\Support\Modules\ModuleRuntime;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -116,6 +119,33 @@ class QueryBudgetTest extends TestCase
 
         $page->delete();
         $this->assertNull($downloads->selected(), 'A deleted page must not be remembered.');
+    }
+
+    public function test_booting_healthy_modules_neither_writes_nor_rescans_them(): void
+    {
+        $manager = app(ModuleManager::class);
+        $manager->enable('daily-rewards');
+        $manager->refresh();
+
+        $sql = [];
+        DB::listen(static function ($query) use (&$sql): void {
+            $sql[] = strtolower($query->sql);
+        });
+        (new ModuleRuntime(app(), app(ModuleAutoloader::class)))->bootEnabled($manager);
+        $writes = array_filter($sql, static fn (string $query): bool => ! str_starts_with($query, 'select'));
+        $this->assertSame([], array_values($writes), 'A module without a stored error must not be written on every request.');
+
+        $queries = $this->countQueries(fn () => $manager->enabled());
+        $this->assertSame(0, $queries, 'Booting healthy modules must keep the scanned module list.');
+    }
+
+    public function test_translation_coverage_is_computed_only_for_the_languages_page(): void
+    {
+        $languages = app(LanguageManager::class);
+
+        $this->assertArrayNotHasKey('coverage', $languages->installed()['ru'], 'Every request reads installed languages; coverage parses all JSON files.');
+        $this->assertSame(100, $languages->installedWithCoverage()['en']['coverage']);
+        $this->assertGreaterThan(90, $languages->installedWithCoverage()['ru']['coverage']);
     }
 
     public function test_public_pages_stay_within_their_query_budget(): void

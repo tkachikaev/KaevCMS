@@ -32,9 +32,15 @@ final class ModuleRuntime
                 $this->bootModule($module);
             } catch (Throwable $exception) {
                 $this->reportFailure($module, $exception, 'boot');
-            } finally {
-                // A partially registered route must immediately see runtime_error,
-                // while a recovered module must stop exposing an old error state.
+                // A partially registered route must immediately see runtime_error.
+                $modules->refresh();
+
+                continue;
+            }
+
+            // A recovered module must stop exposing its old error state. Refreshing
+            // otherwise would only make the next caller scan every module again.
+            if ($this->hadFailure($module)) {
                 $modules->refresh();
             }
         }
@@ -107,7 +113,15 @@ final class ModuleRuntime
         }
 
         $this->booted[$id] = true;
-        $this->clearFailure($id);
+        if ($this->hadFailure($module)) {
+            $this->clearFailure($id);
+        }
+    }
+
+    /** @param array<string, mixed> $module */
+    private function hadFailure(array $module): bool
+    {
+        return is_string($module['last_error'] ?? null) && $module['last_error'] !== '';
     }
 
     /**
