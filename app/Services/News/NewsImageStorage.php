@@ -32,11 +32,6 @@ final class NewsImageStorage
         $this->delete($path, 'news/covers/');
     }
 
-    public function deleteContent(?string $path): void
-    {
-        $this->delete($path, 'news/content/');
-    }
-
     public function deleteIfUnreferenced(?string $path): bool
     {
         $path = $this->normalizeNewsPath($path);

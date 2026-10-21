@@ -160,11 +160,6 @@ class News extends Model
         return app(NewsHtmlSanitizer::class)->sanitize($this->bodyFor($locale));
     }
 
-    public function bodyAsPlainText(?string $locale = null): string
-    {
-        return app(NewsHtmlSanitizer::class)->plainText($this->bodyFor($locale));
-    }
-
     public function coverUrl(): ?string
     {
         $previewUrl = $this->getAttribute('preview_cover_url');

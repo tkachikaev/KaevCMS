@@ -291,7 +291,6 @@
     "modules/donations/resources/views/account/exchange.blade.php",
     "modules/donations/resources/views/account/index.blade.php",
     "modules/donations/resources/views/account/order.blade.php",
-    "modules/donations/resources/views/account/orders.blade.php",
     "modules/donations/resources/views/admin/exchange.blade.php",
     "modules/donations/resources/views/admin/index.blade.php",
     "modules/donations/resources/views/admin/navigation.blade.php",

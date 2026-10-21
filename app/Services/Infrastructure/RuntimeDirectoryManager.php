@@ -19,12 +19,6 @@ final class RuntimeDirectoryManager
         'storage/logs',
     ];
 
-    /** @return list<string> */
-    public function relativeDirectories(): array
-    {
-        return self::DIRECTORIES;
-    }
-
     /**
      * @return list<string>
      */

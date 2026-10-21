@@ -97,13 +97,6 @@ final class SupportTicketSettings
         ];
     }
 
-    public function cleanupConfigurationFailure(): ?string
-    {
-        $this->load();
-
-        return $this->configurationFailure;
-    }
-
     public function editorCanView(): bool
     {
         return (bool) $this->values()['allow_editor_view'];
@@ -126,11 +119,6 @@ final class SupportTicketSettings
     public function retentionMonths(): int
     {
         return (int) $this->values()['retention_months'];
-    }
-
-    public function automaticCleanupEnabled(): bool
-    {
-        return (bool) $this->values()['automatic_cleanup_enabled'];
     }
 
     public function maxTicketsPerDay(): int

@@ -47,14 +47,6 @@ final class RuntimeDiagnostics
         ]);
     }
 
-    /**
-     * Compatibility wrapper retained for integrations added in 0.23.7.
-     */
-    public function recordQueueWorker(string $connection, ?string $queue): void
-    {
-        $this->recordQueueStarted($connection, $queue);
-    }
-
     public function recordQueueStarted(
         string $connection,
         ?string $queue,

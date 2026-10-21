@@ -8,9 +8,6 @@ namespace App\Services\Updates;
  */
 final class UpdateUploadLimit
 {
-    /** Below this, release packages (about 16 MB with dependencies) may not fit. */
-    public const RECOMMENDED_BYTES = 64 * 1024 * 1024;
-
     /**
      * @param  array<string, string>|null  $iniOverride  ini values used instead of the running PHP's (tests)
      */
@@ -29,11 +26,6 @@ final class UpdateUploadLimit
         }
 
         return min($limits);
-    }
-
-    public function belowRecommended(): bool
-    {
-        return $this->bytes() < self::RECOMMENDED_BYTES;
     }
 
     /**

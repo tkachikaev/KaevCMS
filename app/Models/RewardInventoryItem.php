@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Services\GameAssets\GameItemCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -69,12 +68,6 @@ class RewardInventoryItem extends Model
     public function gameServer(): BelongsTo
     {
         return $this->belongsTo(GameServer::class);
-    }
-
-    /** @return HasMany<RewardDeliveryItem, $this> */
-    public function deliveryItems(): HasMany
-    {
-        return $this->hasMany(RewardDeliveryItem::class);
     }
 
     public function displayName(GameServer|int|null $server = null): string

@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'name' => 'KaevCMS',
     'theme' => env('CMS_THEME', 'default'),
     'themes_path' => base_path('themes'),
     'account_theme' => env('CMS_ACCOUNT_THEME', 'luxury'),
@@ -142,7 +141,6 @@ return [
         'chronicle' => env('GAME_CHRONICLE', 'High Five'),
         'rates' => env('GAME_RATES', 'x1'),
         'mode' => env('GAME_MODE', 'PvP'),
-        'max_online' => (int) env('GAME_MAX_ONLINE', 5000),
     ],
 
     'server_monitor' => [

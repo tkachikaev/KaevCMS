@@ -91,11 +91,6 @@ class Admin extends Authenticatable
         return $this->role->isReadOnly();
     }
 
-    public function isAuditor(): bool
-    {
-        return $this->role === AdminRole::Auditor;
-    }
-
     public function roleLabel(): string
     {
         return $this->role->label();

@@ -86,12 +86,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(RewardDelivery::class);
     }
 
-    /** @return HasOne<UserCharacterPreference, $this> */
-    public function characterPreference(): HasOne
-    {
-        return $this->hasOne(UserCharacterPreference::class);
-    }
-
     public function sendEmailVerificationNotification(): void
     {
         app(MailDeliveryDispatcher::class)->send($this, new VerifyEmailNotification, 'email_verification');

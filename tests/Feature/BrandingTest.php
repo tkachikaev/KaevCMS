@@ -17,7 +17,7 @@ class BrandingTest extends TestCase
         $cmsConfig = (string) file_get_contents(config_path('cms.php'));
 
         $this->assertStringContainsString("env('APP_NAME', 'KaevCMS')", $appConfig);
-        $this->assertStringContainsString("'name' => 'KaevCMS'", $cmsConfig);
+        $this->assertStringContainsString("'name' => env('SITE_NAME', env('APP_NAME', 'KaevCMS'))", $cmsConfig);
         $this->assertStringContainsString("'© 2026 KaevCMS'", $cmsConfig);
 
         config()->set('app.name', 'KaevCMS');

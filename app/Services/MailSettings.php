@@ -348,21 +348,6 @@ final class MailSettings
         return $this->normalizeProbeMode($mode) === self::MODE_DATABASE ? 90 : 15;
     }
 
-    public function beginBackgroundProbe(): string
-    {
-        return $this->beginProbe(self::MODE_BACKGROUND);
-    }
-
-    public function completeBackgroundProbe(string $token): void
-    {
-        $this->completeProbe(self::MODE_BACKGROUND, $token);
-    }
-
-    public function failBackgroundProbe(string $token, string $errorClass): void
-    {
-        $this->failProbe(self::MODE_BACKGROUND, $token, $errorClass);
-    }
-
     public function backgroundSupported(): bool
     {
         return $this->modeSupported(self::MODE_BACKGROUND);

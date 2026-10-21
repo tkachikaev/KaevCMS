@@ -100,11 +100,6 @@ class UserGameAccount extends Model
         return $this->creation_status === self::STATUS_ACTIVE;
     }
 
-    public function isPending(): bool
-    {
-        return $this->creation_status === self::STATUS_PENDING;
-    }
-
     public function isFailed(): bool
     {
         return $this->creation_status === self::STATUS_FAILED;

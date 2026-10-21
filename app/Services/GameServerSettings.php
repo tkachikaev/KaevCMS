@@ -84,12 +84,6 @@ final class GameServerSettings
         }
     }
 
-    /** @return array<string, mixed>|null */
-    public function primary(?string $locale = null): ?array
-    {
-        return $this->all($locale)[0] ?? null;
-    }
-
     /** @param array{name: string, rates?: string|null, chronicle?: string|null, mode?: string|null, translations?:array<string,string>, maintenance_enabled?: bool, maintenance_messages?:array<string,string>, statistics_enabled?: bool, statistics_level_enabled?: bool, statistics_pvp_enabled?: bool, statistics_pk_enabled?: bool, statistics_play_time_enabled?: bool, statistics_heroes_enabled?: bool, statistics_castles_enabled?: bool, statistics_level_limit?: int, statistics_pvp_limit?: int, statistics_pk_limit?: int, statistics_play_time_limit?: int} $values */
     public function create(array $values): GameServer
     {

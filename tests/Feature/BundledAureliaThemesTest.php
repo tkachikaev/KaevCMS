@@ -258,7 +258,6 @@ class BundledAureliaThemesTest extends TestCase
     private function publicThemeFiles(): array
     {
         return [
-            'auth/account.blade.php',
             'auth/forgot-password.blade.php',
             'auth/login.blade.php',
             'auth/register.blade.php',

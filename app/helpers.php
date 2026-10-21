@@ -81,20 +81,6 @@ if (! function_exists('site_footer_text')) {
     }
 }
 
-if (! function_exists('registration_enabled')) {
-    function registration_enabled(): bool
-    {
-        return app(RegistrationSettings::class)->enabled();
-    }
-}
-
-if (! function_exists('email_verification_required')) {
-    function email_verification_required(): bool
-    {
-        return app(RegistrationSettings::class)->emailVerificationRequired();
-    }
-}
-
 if (! function_exists('registration_available')) {
     function registration_available(): bool
     {
@@ -105,25 +91,6 @@ if (! function_exists('registration_available')) {
         }
 
         return ! $registration->emailVerificationRequired() || app(MailSettings::class)->isReady();
-    }
-}
-
-if (! function_exists('game_server_settings')) {
-    /**
-     * @return array{
-     *     id: int,
-     *     name: string,
-     *     rates: string,
-     *     chronicle: string,
-     *     mode: string,
-     *     show_rates: bool,
-     *     show_chronicle: bool,
-     *     show_mode: bool
-     * }|null
-     */
-    function game_server_settings(): ?array
-    {
-        return app(GameServerSettings::class)->primary();
     }
 }
 

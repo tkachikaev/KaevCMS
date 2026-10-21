@@ -101,12 +101,6 @@ final class SupportTicket extends Model
         return $this->belongsTo(Admin::class, 'assigned_admin_id');
     }
 
-    /** @return BelongsTo<Admin, $this> */
-    public function closedByAdmin(): BelongsTo
-    {
-        return $this->belongsTo(Admin::class, 'closed_by_admin_id');
-    }
-
     /** @return HasMany<SupportTicketMessage, $this> */
     public function messages(): HasMany
     {

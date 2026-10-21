@@ -685,5 +685,11 @@
   ],
   "0.51.3": [
     "core/deployment/windows/apply-0.51.2.ps1"
+  ],
+  "0.51.4": [
+    "core/modules/donations/resources/views/account/orders.blade.php",
+    "core/themes/default/views/auth/account.blade.php",
+    "core/themes/kaev-aurelia/views/auth/account.blade.php",
+    "public/themes/kaev-aurelia/assets/images/kaev-logo-gold.png"
   ]
 }

@@ -27,12 +27,6 @@ class UpdateUploadLimitTest extends TestCase
         $this->assertSame(524288 * 1024, (new UpdateUploadLimit(['upload_max_filesize' => '0', 'post_max_size' => '0']))->bytes());
     }
 
-    public function test_low_limits_are_flagged_against_the_recommended_size(): void
-    {
-        $this->assertTrue((new UpdateUploadLimit(['upload_max_filesize' => '8M', 'post_max_size' => '8M']))->belowRecommended());
-        $this->assertFalse((new UpdateUploadLimit(['upload_max_filesize' => '64M', 'post_max_size' => '70M']))->belowRecommended());
-    }
-
     public function test_upload_parts_stay_below_the_limit(): void
     {
         $twoMegabytes = 2 * 1024 * 1024;

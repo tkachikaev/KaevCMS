@@ -39,9 +39,4 @@ final readonly class RewardQueueWriteResult
     {
         return $this->status === self::STATUS_FAILED;
     }
-
-    public function isUnknown(): bool
-    {
-        return $this->status === self::STATUS_UNKNOWN;
-    }
 }

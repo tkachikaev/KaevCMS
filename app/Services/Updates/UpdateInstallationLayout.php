@@ -47,23 +47,6 @@ final class UpdateInstallationLayout
         throw new RuntimeException(__('Update target must use the core/ or public/ prefix.'));
     }
 
-    public function relativeForDisplay(string $absolutePath): string
-    {
-        $path = $this->normalize($absolutePath);
-        $base = $this->normalize($this->coreRoot());
-        $public = $this->normalize($this->publicRoot());
-
-        if (str_starts_with($path.'/', $public.'/')) {
-            return 'public/'.ltrim(substr($path, strlen($public)), '/');
-        }
-
-        if (str_starts_with($path.'/', $base.'/')) {
-            return 'core/'.ltrim(substr($path, strlen($base)), '/');
-        }
-
-        return basename($path);
-    }
-
     private function join(string $root, string $relative): string
     {
         $relative = str_replace('/', DIRECTORY_SEPARATOR, $relative);
