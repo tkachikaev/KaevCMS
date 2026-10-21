@@ -4,9 +4,12 @@ KaevCMS разделяет собственную базу CMS и внешние
 
 ## Драйверы
 
-GameServer-драйвер L2J Mobius использует канонический идентификатор `l2j_mobius`. LoginServer и GameServer намеренно используют одинаковый идентификатор в двух отдельных реестрах. Legacy-вариант LoginServer для C1/C4 сохраняет идентификатор `l2j_mobius_legacy`.
+KaevCMS поддерживает два семейства игровых серверов:
 
-KaevCMS использует один GameServer-драйвер с профилями схем вместо дублирования драйвера для каждой хроники. Inspector выбирает legacy-профиль при наличии `characters.karma` и modern-профиль при использовании `characters.reputation`. Обязательные игровые таблицы: `characters` и `clan_data`. Полные таблицы `heroes` и `castle` включают соответствующие необязательные разделы статистики; отсутствие или неполная структура этих таблиц не отключают рейтинги персонажей.
+- **L2J Mobius** — идентификатор `l2j_mobius`. LoginServer и GameServer намеренно используют одинаковый идентификатор в двух отдельных реестрах. Legacy-вариант LoginServer для C1/C4 сохраняет идентификатор `l2j_mobius_legacy`.
+- **RUSaCis** — идентификатор `rusacis`, со своими драйверами LoginServer и GameServer. См. раздел [RUSaCis GameServer](#rusacis-gameserver) ниже.
+
+GameServer-драйвер L2J Mobius использует профили схем вместо дублирования драйвера для каждой хроники. Inspector выбирает legacy-профиль при наличии `characters.karma` и modern-профиль при использовании `characters.reputation`. Обязательные игровые таблицы: `characters` и `clan_data`. Полные таблицы `heroes` и `castle` включают соответствующие необязательные разделы статистики; отсутствие или неполная структура этих таблиц не отключают рейтинги персонажей.
 
 Проверка подключения и runtime-запросы используют единый контракт обязательных таблиц и колонок, не выводя реквизиты. Публичная статистика включается отдельно для каждого GameServer и имеет независимые лимиты рейтингов уровня, PvP, PK и игрового времени.
 
@@ -51,6 +54,10 @@ KaevCMS использует один GameServer-драйвер с профил�
 public/uploads/game-assets
 ```
 
+KaevCMS не включает иконки предметов и изображения персонажей. Содержимое каталога не входит в full, patch, cumulative и shared-hosting архивы и не перезаписывается обновлениями. Рекомендуется WebP; также поддерживаются PNG, JPG и JPEG. Старый каталог `public/game-assets` и разбиение изображений по хроникам больше не используются.
+
+### Иконки предметов
+
 Общие иконки предметов ищутся сначала по числовому ID, затем по ключу иконки из каталога профиля:
 
 ```text
@@ -58,8 +65,65 @@ public/uploads/game-assets/items/common/{item_id}.webp
 public/uploads/game-assets/items/common/{icon_key}.webp
 ```
 
-Общие иконки предметов размещаются в `items/common`, а переопределения конкретного сервера — в `items/servers/{server_id}`. Аватары персонажей общие для всех хроник и используют `characters/common/{race}/{gender}/{archetype}.webp`; серверные переопределения размещаются в `characters/servers/{server_id}`. Старый `public/game-assets` и разбиение аватаров по хроникам больше не используются.
+Примеры:
 
-## RUSaCis GameServer — 0.47.40 RC
+```text
+public/uploads/game-assets/items/common/57.webp
+public/uploads/game-assets/items/common/etc_adena_i00.webp
+public/uploads/game-assets/items/common/armor_t45_g_i00.webp
+```
+
+Переопределение для конкретного сервера имеет приоритет:
+
+```text
+public/uploads/game-assets/items/servers/{server_id}/{item_id}.webp
+public/uploads/game-assets/items/servers/{server_id}/{icon_key}.webp
+```
+
+Каталоги предметов остаются отдельными для хроник (`interlude`, `classic`, `high-five`, `shine-maker`), но файлы иконок лежат в одном общем пуле.
+
+### Аватары персонажей
+
+Аватары персонажей общие для всех хроник и используют структуру `раса/пол/архетип`:
+
+```text
+public/uploads/game-assets/characters/common/{race}/{gender}/{archetype}.webp
+```
+
+Пример полного пути:
+
+```text
+public/uploads/game-assets/characters/common/human/female/mage.webp
+```
+
+Поддерживаемые файлы внутри `characters/common`:
+
+```text
+human/male/warrior.webp      human/male/mage.webp
+human/female/warrior.webp    human/female/mage.webp
+elf/male/warrior.webp        elf/male/mage.webp
+elf/female/warrior.webp      elf/female/mage.webp
+dark_elf/male/warrior.webp   dark_elf/male/mage.webp
+dark_elf/female/warrior.webp dark_elf/female/mage.webp
+orc/male/warrior.webp        orc/male/mage.webp
+orc/female/warrior.webp      orc/female/mage.webp
+dwarf/male/default.webp      dwarf/female/default.webp
+kamael/male/default.webp     kamael/female/default.webp
+ertheia/male/warrior.webp    ertheia/male/mage.webp
+ertheia/female/warrior.webp  ertheia/female/mage.webp
+sylph/male/default.webp      sylph/female/default.webp
+fallback/male/default.webp   fallback/female/default.webp
+fallback/neutral/default.webp
+```
+
+Например, нейтральная замена — `characters/common/fallback/neutral/default.webp`. Переопределение для сервера: `characters/servers/{server_id}/{race}/{gender}/{archetype}.webp`. Порядок поиска:
+
+1. Изображение конкретного сервера.
+2. Общее изображение из `characters/common`.
+3. Встроенная текстовая замена.
+
+Используйте квадратные изображения одинакового размера.
+
+## RUSaCis GameServer
 
 Отдельная схема RUSaCis: персонажи, онлайн, рейтинги по уровню/PvP/PK/времени, активные герои и владельцы замков. Учтены `characters.obj_Id`, `heroes.char_id` и `deletetime IS NULL`. Возврат в город отключён до подтверждения единиц времени `lastAccess` на реальном GameServer. Выдача наград по-прежнему только через нейтральную `kaev_reward_queue`.

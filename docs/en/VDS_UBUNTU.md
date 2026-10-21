@@ -374,7 +374,7 @@ Without a domain, open the server IP address:
 http://192.168.1.10/install/
 ```
 
-Replace the example with the actual IP. Enter the database credentials created above and use the empty `kaevcms` database. The HTTP warning does not block the database check or final installation.
+Replace the example with the actual IP. Enter the database credentials created above and use the empty `kaevcms_db` database. The HTTP warning does not block the database check or final installation.
 
 After installation, verify that Web Installer removed the public `/install` directory automatically, then sign in to the administrator panel. If the final page reports a cleanup failure, remove the directory manually.
 
@@ -610,7 +610,7 @@ php artisan kaevcms:update /tmp/KaevCMS-update.zip --yes
 
 Intermediate releases do not need to be installed one by one when the package supports the installed-version range.
 
-When a release changes Composer dependencies, deploy the full release and run `composer install` with the supplied `composer.lock`. Never run `composer update` on production.
+When a release changes Composer dependencies, the cumulative package still works: since 0.51.0 it carries the production dependencies (`vendor`) and the updater replaces them itself. See [Dependency changes](UPDATES.md#dependency-changes). Manual fallback only: deploy the full release and run `composer install --no-dev --optimize-autoloader --no-interaction` with the supplied `composer.lock`. Never run `composer update` on production.
 
 ## Changing the site address after installation
 
@@ -713,7 +713,6 @@ sudo -u www-data test -w /var/www/kaevcms/public/uploads && echo uploads-writabl
 
 Do not fix this with `chmod -R 777 /var/www/kaevcms`.
 
-
 If Laravel reports `storage/framework/cache/data/...: No such file or directory`, recreate and write-test the runtime tree as the PHP-FPM account:
 
 ```bash
@@ -808,7 +807,7 @@ sudo journalctl -u kaevcms-queue -n 100 --no-pager
 - [Install and configure MySQL](https://ubuntu.com/server/docs/install-and-configure-a-mysql-server).
 - [Ubuntu firewall documentation](https://documentation.ubuntu.com/server/how-to/security/firewalls/).
 - [Obtain TLS certificates on Ubuntu](https://ubuntu.com/server/docs/how-to/security/obtain-tls-certificates/).
-- [Laravel deployment](https://laravel.com/docs/11.x/deployment) — serve only `public/index.php`.
+- [Laravel deployment](https://laravel.com/docs/13.x/deployment) — serve only `public/index.php`.
 - [Composer install command](https://getcomposer.org/doc/03-cli.md#install-i).
 - [Certbot nginx instructions](https://certbot.eff.org/instructions?ws=nginx&os=snap).
 

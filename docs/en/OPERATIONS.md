@@ -60,7 +60,6 @@ For `failed`:
 
 Use the CMS operation UUID, reward-grant operation UUID, GameServer ID, inventory grant ID, and item composition to correlate the reward journals with the audit log. Preserve application logs and the external consumer log. Never include database passwords or raw connection strings in a support report.
 
-
 ## Administrator notifications
 
 The scheduled scan normally runs every minute. To run it manually after fixing Scheduler or while validating a deployment:

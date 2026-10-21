@@ -361,7 +361,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('data-layout="grid"', $moduleCatalogue);
 
         $this->assertFileExists(base_path('modules/README.md'));
-        $this->assertFileExists(base_path('docs/MODULES.md'));
+        $this->assertFileExists(base_path('docs/en/MODULES.md'));
+        $this->assertFileExists(base_path('docs/ru/MODULES.md'));
 
         $schema = json_decode(
             $this->readReleaseFile('resources/schemas/module.schema.json'),
@@ -574,7 +575,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(app_path('Services/Rewards/RewardInventoryService.php'));
         $this->assertFileExists(app_path('Services/Rewards/RewardTransferService.php'));
         $this->assertFileExists(database_path('migrations/2026_07_21_000100_create_reward_inventory_tables.php'));
-        $this->assertFileExists(base_path('docs/WEB_INVENTORY.md'));
+        $this->assertFileExists(base_path('docs/en/GAME_INTEGRATION.md'));
+        $this->assertFileExists(base_path('docs/ru/GAME_INTEGRATION.md'));
         $this->assertFileExists(base_path('integrations/reward-queue/install.sql'));
         $this->assertFileExists(base_path('integrations/reward-queue/consumer-template.sql'));
         $this->assertFileExists(base_path('integrations/reward-queue/pending.sql'));
@@ -668,11 +670,9 @@ class ReleaseMetadataTest extends TestCase
 
         $sharedHostingBuilder = $this->readReleaseFile('deployment/hosting/build-shared-hosting-package.php');
         $this->assertStringNotContainsString('str_starts_with(strtolower($path), \'game-assets/\')', $sharedHostingBuilder);
-        $this->assertFileExists(base_path('docs/GAME_ITEMS.md'));
         $this->assertFileExists(app_path('Services/GameAssets/CharacterAppearanceResolver.php'));
         $this->assertFileExists(config_path('character-appearances.php'));
         $this->assertFileExists(resource_path('views/components/game-character-avatar.blade.php'));
-        $this->assertFileExists(base_path('docs/CHARACTER_AVATARS.md'));
         $this->assertFileExists(app_path('Support/Modules/ModuleNavigationRegistry.php'));
         $this->assertFileExists(app_path('Support/Modules/ModuleGameServerDependencyRegistry.php'));
         $this->assertFileExists(base_path('modules/promo-codes/module.json'));
@@ -682,8 +682,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('modules/promo-codes/database/migrations/2026_07_21_100200_create_module_promo_code_activations_table.php'));
         $this->assertFileExists(base_path('modules/promo-codes/database/migrations/2026_07_21_100300_add_deleted_at_to_module_promo_codes_table.php'));
         $this->assertFileExists(base_path('modules/promo-codes/src/Services/PromoCodeActivationService.php'));
-        $this->assertFileExists(base_path('docs/PROMO_CODES.md'));
-        $this->assertFileExists(base_path('docs/GAME_ASSETS.md'));
+        $this->assertFileDoesNotExist(base_path('docs/GAME_ASSETS.md'));
+        $this->assertFileDoesNotExist(base_path('docs/CHARACTER_AVATARS.md'));
         $this->assertFileExists(public_path('uploads/game-assets/items/common/.gitkeep'));
         $this->assertFileExists(public_path('uploads/game-assets/items/servers/.gitkeep'));
         $this->assertFileExists(public_path('uploads/game-assets/characters/common/human/female/.gitkeep'));
@@ -887,11 +887,13 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('\'archetype\'', $appearanceResolver);
         $this->assertStringContainsString('fallback/neutral/default', $appearanceResolver);
 
-        $avatarGuide = $this->readReleaseFile('docs/CHARACTER_AVATARS.md');
-        $this->assertStringContainsString('public/uploads/game-assets/characters/common/human/female/mage.webp', $avatarGuide);
-        $this->assertStringContainsString('characters/common/fallback/neutral/default.webp', $avatarGuide);
-        $this->assertStringNotContainsString('characters/{profile}', $avatarGuide);
-        $this->assertStringContainsString('/common/', $avatarGuide);
+        foreach (['docs/en/GAME_INTEGRATION.md', 'docs/ru/GAME_INTEGRATION.md'] as $avatarGuidePath) {
+            $avatarGuide = $this->readReleaseFile($avatarGuidePath);
+            $this->assertStringContainsString('public/uploads/game-assets/characters/common/human/female/mage.webp', $avatarGuide);
+            $this->assertStringContainsString('characters/common/fallback/neutral/default.webp', $avatarGuide);
+            $this->assertStringNotContainsString('characters/{profile}', $avatarGuide);
+            $this->assertStringContainsString('/common/', $avatarGuide);
+        }
     }
 
     public function test_external_database_diagnostics_artifacts_are_shipped(): void
@@ -935,7 +937,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('account-themes/luxury/views/security/edit.blade.php'));
         $this->assertFileExists(base_path('account-themes/kaev-aurelia/views/partials/settings-tabs.blade.php'));
         $this->assertFileExists(base_path('account-themes/luxury/views/partials/settings-tabs.blade.php'));
-        $this->assertFileExists(base_path('docs/ACCOUNT_AVATARS.md'));
+        $this->assertStringContainsString('public/uploads/account-avatars', $this->readReleaseFile('docs/en/CONTENT_THEMES.md'));
+        $this->assertStringContainsString('public/uploads/account-avatars', $this->readReleaseFile('docs/ru/CONTENT_THEMES.md'));
 
         $routes = $this->readReleaseFile('routes/account.php');
         $this->assertStringContainsString('/account/profile', $routes);

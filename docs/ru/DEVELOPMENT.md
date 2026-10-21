@@ -21,7 +21,7 @@ Windows quality поддерживает Windows PowerShell 5.1 и PowerShell 7;
 
 - Меняйте историю релиза только через проверяемые контракты, затем обновляйте зеркало `VERSION`, `README.md` и `CHANGELOG.md`.
 - Не зашивайте текущую или предыдущую версию в текстовые фрагменты регрессионных тестов.
-- Выпускайте full, patch, Web Update и SHA256.
+- Выпускайте full, patch, cumulative Web Update, мост (пока поддерживаются сайты на версиях с 0.42.4 по 0.50.16) и SHA256.
 - Проверяйте целостность ZIP и переносимые разделители путей.
 - Подтверждайте, что предыдущий релиз плюс патч совпадает с полным новым релизом.
 - Явно фиксируйте изменения миграций и Composer/npm lock-файлов.
@@ -30,9 +30,11 @@ Windows quality поддерживает Windows PowerShell 5.1 и PowerShell 7;
 
 ```powershell
 .\deployment\windows\build-release.ps1 `
-    -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.14"
+    -PreviousFullArchive "C:\Releases\KaevCMS-<предыдущая>-full.zip" `
+    -OutputDirectory "C:\Releases\<версия>"
 ```
+
+Полный список артефактов приведён в [deployment/release/README.md](../../deployment/release/README.md).
 
 Сборщик проверяет, что предыдущий full плюс patch точно совпадает с новым деревом, cumulative начинается с baseline `0.42.4`, runtime-файлы не попадают в архивы, а SHA256 соответствует результату. GitHub Actions отдельно запускает PHP, официальный Windows quality, официальный Windows browser quality и release-contract jobs.
 
@@ -93,6 +95,9 @@ npm run build:editor
 
 В релиз обязательно включаются исходник, bundle и `public/assets/admin/js/news-editor.LICENSE.txt`. Не разрешайте произвольные `style` или `class`: редактор, `SafeHtmlSanitizer` и CSS обеих публичных тем образуют единый контракт безопасных `data-*` токенов.
 
+## Компоненты личного кабинета
+
+Страницы кабинета и модули используют общие компоненты `<x-account-*>` и класс `.account-tabs`. Правила описаны в разделе [Контент и шаблоны](CONTENT_THEMES.md#компоненты-шаблонов-кабинета).
 
 ## Переходы Aurelia между сайтом и ЛК
 
@@ -103,4 +108,3 @@ npm run build:editor
 Инициализация публичной Aurelia учитывает, что DOMContentLoaded и начальный livewire:navigated относятся к одной странице. Повторное уведомление не запускает появление контента заново и не пересоздаёт частицы/мониторинг. После настоящего livewire:navigating runtime освобождает ресурсы и допускает инициализацию нового контента.
 
 Регрессии: `aurelia-navigation.spec.mjs` проверяет начальную инициализацию и реальные замены контента; `player-character-directory.spec.mjs` проверяет переходы сайт ↔ ЛК с задержкой CSS 350 мс, отсутствие больших залитых SVG на кадрах, desktop/mobile и reduced-motion. На мобильном возврат на сайт выполняется через открытое боковое меню.
-Проверено 15.10.2026 без повышения версии 0.48.6: 21 PHP-тест тем/навигации/кошелька (1198 assertions), shared-runtime contract и синтаксис JS прошли; полный browser-quality.ps1 — 72 теста успешно. Повторный mysql-concurrency.php на отдельной одноразовой MariaDB также прошёл, тестовая БД удалена.

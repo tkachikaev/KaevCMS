@@ -4,10 +4,10 @@ KaevCMS is distributed as:
 
 - a complete source release;
 - a Windows patch from the previous version;
-- a cumulative Update ZIP covering a supported installed-version range.
+- a cumulative Update ZIP covering a supported installed-version range;
+- a bridge Update ZIP for sites still on 0.42.4 through 0.50.16.
 
-The public cumulative line starts at `0.42.4`. The `KaevCMS-cumulative-update-0.42.4-0.44.13-to-0.44.14.zip` package updates supported releases from 0.42.4 through 0.44.13 directly to 0.44.14.
-
+The public cumulative line starts at `0.42.4`. The `KaevCMS-cumulative-update-0.42.4-<previous>-to-<version>.zip` package updates any supported release from 0.42.4 through the previous one directly to the new version. Sites on 0.42.4 through 0.50.16 first need the bridge package `KaevCMS-bridge-update-0.42.4-0.50.16-for-<version>.zip` (see [below](#sites-before-0510-the-bridge-package)).
 
 The cumulative archive is validated against the oldest Web Updater included in its declared source range, not only against the newest updater. Releases older than `0.42.4` are outside the public update line. Clean-install templates and runtime-owned upload files are excluded from the payload. Missing upload protection is recreated idempotently by the updated application after installation.
 
@@ -40,16 +40,14 @@ In split/shared-hosting layouts, the actual public directory is read from the ge
 
 On a VDS, source files belong to the SSH/deployment user while PHP-FPM may write only to runtime directories.
 
-For the first upgrade from a release older than `0.47.0`, use the manual CLI Updater because older releases do not contain the agent. After installing `0.47.0`, install the agent once and future compatible updates can be started from the panel.
-
-Install the local agent once to start verified packages from the administration panel:
+To start verified packages from the administration panel, install the local agent once. Releases older than `0.47.0` do not contain the agent, so do the first upgrade from them with the manual CLI Updater (see below), then install the agent after `0.47.0`:
 
 ```bash
 cd /var/www/kaevcms
 bash deployment/vds/install-update-agent.sh
 ```
 
-The script requests `sudo` when needed, detects the project owner and PHP-FPM identity, repairs permissions, and configures the service. The same command works for root-owned and regular-user-owned projects. Non-standard installations can use `--project-user`, `--web-user`, and `--web-group`.
+The script requests `sudo` when needed, detects the project owner and PHP-FPM identity, repairs permissions, and configures the service. The same command works for root-owned and regular-user-owned projects; for a root-owned project the script warns that the selected archive will be applied with root rights. In both cases PHP-FPM gets access only to the dedicated request directory, not to all source files. Non-standard installations can use `--project-user`, `--web-user`, and `--web-group`. If the PHP-FPM group is not `www-data`, pass it with `--web-group` or the variable, for example: `KAEVCMS_WEB_GROUP=nginx bash deployment/vds/install-update-agent.sh`.
 
 The Web Updater continues to upload and inspect the ZIP, while installation is delegated to a one-shot systemd agent running as the project owner. When the agent is absent, the page displays the exact command and blocks installation without blocking package upload and verification.
 

@@ -4,9 +4,12 @@ KaevCMS separates CMS data from external LoginServer and GameServer databases.
 
 ## Drivers
 
-The L2J Mobius GameServer driver uses the canonical identifier `l2j_mobius`. LoginServer and GameServer drivers intentionally use the same identifier in their separate registries. The legacy C1/C4 LoginServer variant remains `l2j_mobius_legacy`.
+KaevCMS includes two game-server families:
 
-KaevCMS uses one GameServer driver with schema profiles instead of duplicating a driver per chronicle. The inspector selects the legacy profile when `characters.karma` is used and the modern profile when `characters.reputation` is used. Required game tables are `characters` and `clan_data`. Complete `heroes` and `castle` tables enable the corresponding optional statistics sections; missing or incomplete optional tables do not disable character rankings.
+- **L2J Mobius** — identifier `l2j_mobius`. LoginServer and GameServer drivers intentionally use the same identifier in their separate registries. The legacy C1/C4 LoginServer variant remains `l2j_mobius_legacy`.
+- **RUSaCis** — identifier `rusacis`, with its own LoginServer and GameServer drivers. See [RUSaCis GameServer](#rusacis-gameserver) below.
+
+The L2J Mobius GameServer driver uses schema profiles instead of duplicating a driver per chronicle. The inspector selects the legacy profile when `characters.karma` is used and the modern profile when `characters.reputation` is used. Required game tables are `characters` and `clan_data`. Complete `heroes` and `castle` tables enable the corresponding optional statistics sections; missing or incomplete optional tables do not disable character rankings.
 
 Connection tests and runtime queries use the same required-table and column contract without displaying credentials. Server statistics are enabled per GameServer and use independent limits for level, PvP, PK, and play-time rankings.
 
@@ -51,6 +54,10 @@ Image binaries are owner-managed runtime data under one canonical root:
 public/uploads/game-assets
 ```
 
+KaevCMS does not include item icons or character artwork. Full, patch, cumulative, and shared-hosting release archives do not include the contents of this directory, and updates do not overwrite it. WebP is recommended; PNG, JPG, and JPEG are also supported. The old `public/game-assets` directory and chronicle-specific image folders are not used.
+
+### Item icons
+
 Shared item icons are resolved by numeric ID and then by the profile catalog icon key:
 
 ```text
@@ -58,8 +65,65 @@ public/uploads/game-assets/items/common/{item_id}.webp
 public/uploads/game-assets/items/common/{icon_key}.webp
 ```
 
-Shared item icons use `items/common`, while server-specific overrides use `items/servers/{server_id}`. Character avatars are shared by all chronicles and use `characters/common/{race}/{gender}/{archetype}.webp`; server overrides use `characters/servers/{server_id}`. The old `public/game-assets` and chronicle-specific avatar folders are not used.
+Examples:
 
-## RUSaCis GameServer — 0.47.40 RC
+```text
+public/uploads/game-assets/items/common/57.webp
+public/uploads/game-assets/items/common/etc_adena_i00.webp
+public/uploads/game-assets/items/common/armor_t45_g_i00.webp
+```
+
+A server-specific override has priority:
+
+```text
+public/uploads/game-assets/items/servers/{server_id}/{item_id}.webp
+public/uploads/game-assets/items/servers/{server_id}/{icon_key}.webp
+```
+
+Item catalogs stay chronicle-specific (`interlude`, `classic`, `high-five`, `shine-maker`), but the icon files are one shared pool.
+
+### Character avatars
+
+Character avatars are shared by all chronicles and use `race/gender/archetype`:
+
+```text
+public/uploads/game-assets/characters/common/{race}/{gender}/{archetype}.webp
+```
+
+Example full path:
+
+```text
+public/uploads/game-assets/characters/common/human/female/mage.webp
+```
+
+Supported files inside `characters/common`:
+
+```text
+human/male/warrior.webp      human/male/mage.webp
+human/female/warrior.webp    human/female/mage.webp
+elf/male/warrior.webp        elf/male/mage.webp
+elf/female/warrior.webp      elf/female/mage.webp
+dark_elf/male/warrior.webp   dark_elf/male/mage.webp
+dark_elf/female/warrior.webp dark_elf/female/mage.webp
+orc/male/warrior.webp        orc/male/mage.webp
+orc/female/warrior.webp      orc/female/mage.webp
+dwarf/male/default.webp      dwarf/female/default.webp
+kamael/male/default.webp     kamael/female/default.webp
+ertheia/male/warrior.webp    ertheia/male/mage.webp
+ertheia/female/warrior.webp  ertheia/female/mage.webp
+sylph/male/default.webp      sylph/female/default.webp
+fallback/male/default.webp   fallback/female/default.webp
+fallback/neutral/default.webp
+```
+
+For example, the neutral fallback is `characters/common/fallback/neutral/default.webp`. A server-specific override uses `characters/servers/{server_id}/{race}/{gender}/{archetype}.webp`. Resolution order:
+
+1. Server-specific image.
+2. Shared image from `characters/common`.
+3. Built-in text fallback.
+
+Use square images with consistent dimensions.
+
+## RUSaCis GameServer
 
 Independent RUSaCis schema, characters, online statistics, PvP/PK/level/play-time rankings, active heroes and castle owners. `characters.obj_Id`, `heroes.char_id` and nullable `deletetime` are handled by RUSaCis-specific code. Character rescue remains intentionally disabled until the live GameServer confirms `lastAccess` time units. Reward delivery still uses only the neutral queue `kaev_reward_queue`.

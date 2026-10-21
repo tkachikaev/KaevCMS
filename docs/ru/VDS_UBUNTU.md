@@ -374,7 +374,7 @@ https://example.com/install/
 http://192.168.1.10/install/
 ```
 
-Замените пример на фактический IP. На шаге базы укажите созданные ранее реквизиты и используйте пустую базу `kaevcms`. Предупреждение об HTTP не блокирует проверку базы или завершение установки.
+Замените пример на фактический IP. На шаге базы укажите созданные ранее реквизиты и используйте пустую базу `kaevcms_db`. Предупреждение об HTTP не блокирует проверку базы или завершение установки.
 
 После завершения установки убедитесь, что Web Installer автоматически удалил публичную папку `/install`, затем войдите в административную панель. Если итоговая страница сообщает об ошибке удаления, удалите каталог вручную.
 
@@ -610,7 +610,7 @@ php artisan kaevcms:update /tmp/KaevCMS-update.zip --yes
 
 Устанавливать промежуточные версии по очереди не нужно: пакет должен поддерживать диапазон от текущей версии до целевой.
 
-Если релиз меняет Composer-зависимости, используйте полный релиз и `composer install` по поставленному `composer.lock`. Никогда не запускайте `composer update` на production-сервере.
+Если релиз меняет Composer-зависимости, накопительный пакет всё равно подходит: начиная с 0.51.0 он содержит готовые production-библиотеки (`vendor`), и Updater заменяет их сам. Подробнее в разделе [Изменение зависимостей](UPDATES.md#изменение-зависимостей). Только как ручной запасной вариант: установите полный релиз и выполните `composer install --no-dev --optimize-autoloader --no-interaction` по поставленному `composer.lock`. Никогда не запускайте `composer update` на production-сервере.
 
 ## Как изменить адрес сайта после установки
 
@@ -713,7 +713,6 @@ sudo -u www-data test -w /var/www/kaevcms/public/uploads && echo uploads-writabl
 
 Не исправляйте проблему командой `chmod -R 777 /var/www/kaevcms`.
 
-
 Если Laravel пишет `storage/framework/cache/data/...: No such file or directory`, восстановите runtime-каталоги и проверьте запись от пользователя PHP-FPM:
 
 ```bash
@@ -808,7 +807,7 @@ sudo journalctl -u kaevcms-queue -n 100 --no-pager
 - [Установка и настройка MySQL](https://ubuntu.com/server/docs/install-and-configure-a-mysql-server).
 - [Документация Ubuntu по firewall](https://documentation.ubuntu.com/server/how-to/security/firewalls/).
 - [Получение TLS-сертификатов в Ubuntu](https://ubuntu.com/server/docs/how-to/security/obtain-tls-certificates/).
-- [Развёртывание Laravel](https://laravel.com/docs/11.x/deployment) — наружу должен смотреть только `public/index.php`.
+- [Развёртывание Laravel](https://laravel.com/docs/13.x/deployment) — наружу должен смотреть только `public/index.php`.
 - [Команда Composer install](https://getcomposer.org/doc/03-cli.md#install-i).
 - [Инструкция Certbot для nginx](https://certbot.eff.org/instructions?ws=nginx&os=snap).
 

@@ -55,16 +55,19 @@ class MailDeliveryModeTest extends TestCase
         $this->assertSame(MailSettings::MODE_SYNC, app(MailSettings::class)->deliveryMode());
     }
 
-    public function test_linux_vds_mail_queue_documentation_covers_supervisor_and_cron(): void
+    public function test_linux_vds_mail_queue_documentation_covers_worker_and_cron(): void
     {
-        $documentation = (string) file_get_contents(base_path('docs/MAIL.md'));
+        $documentation = (string) file_get_contents(base_path('docs/ru/MAIL_AND_QUEUES.md'));
+        $vdsGuide = (string) file_get_contents(base_path('docs/ru/VDS_UBUNTU.md'));
 
         $this->assertStringContainsString('Настройка асинхронной очереди на Linux VDS', $documentation);
-        $this->assertStringContainsString('/etc/supervisor/conf.d/kaevcms-mail.conf', $documentation);
+        $this->assertStringContainsString('kaevcms-queue', $documentation);
         $this->assertStringContainsString('kaevcms:queue-drain', $documentation);
         $this->assertStringContainsString('mail-probe,mail,default', $documentation);
         $this->assertStringContainsString('php artisan queue:restart', $documentation);
         $this->assertStringContainsString('php artisan schedule:run', $documentation);
+        $this->assertStringContainsString('/etc/systemd/system/kaevcms-queue.service', $vdsGuide);
+        $this->assertStringContainsString('--queue=mail-probe,mail,default', $vdsGuide);
     }
 
     public function test_laravel_background_and_database_connections_resolve_real_queue_drivers(): void

@@ -6,7 +6,7 @@ Main areas:
 
 - Dashboard with server availability, mail/runtime diagnostics, a server-disk usage bar, safe KaevCMS database size statistics, and the external-database health snapshot.
 - Administrators, roles, two-factor authentication, and sign-in history.
-- CMS users, account status, verification, and password-reset mail.
+- CMS users: search, details, disabling and re-enabling accounts (users are not deleted), verification, and password-reset mail.
 - General settings, languages, themes, registration, and security.
 - LoginServer and GameServer connections, active schema profiles, driver capabilities, and table state.
 - News, pages, navigation, and media.
@@ -14,6 +14,10 @@ Main areas:
 - Modules, reward journal, failed jobs, audit log, and manual updater.
 
 The administrator path can be changed by the owner. Never expose database credentials in screenshots, support messages, or audit notes.
+
+Administrator sign-in is rate-limited and supports two-factor authentication with recovery codes. Passwords are hashed with Argon2id (bcrypt when Argon2id is unavailable), and older hashes are upgraded at the next sign-in. Changing an administrator's role or access ends that administrator's old sessions. Sign-ins and security changes are recorded in the audit log; sensitive values are redacted from audit records.
+
+**Settings → System information** shows the version, scheduler, queues, encryption health, database safety, proxy configuration, and redacted LoginServer/GameServer diagnostics: availability, last successful connection, a safe error class, `SELECT 1` latency, schema profile, driver capabilities, and the state of required and optional tables.
 
 ## Auditor role
 

@@ -4,23 +4,13 @@ KaevCMS поддерживает синхронную отправку, фоно
 
 ## Настройка асинхронной очереди на Linux VDS
 
-Создайте `/etc/supervisor/conf.d/kaevcms-mail.conf`:
+На Ubuntu VDS используйте systemd-службу `kaevcms-queue` из [инструкции Ubuntu VDS, шаг 14](VDS_UBUNTU.md#14-queue-worker-для-асинхронной-почты). Она обрабатывает очереди `mail-probe,mail,default` в этом порядке и нужна только после включения асинхронной отправки.
 
-```ini
-[program:kaevcms-mail]
-command=php /var/www/kaevcms/artisan queue:work database --queue=mail-probe,mail,default --sleep=1 --tries=3 --timeout=120
-directory=/var/www/kaevcms
-autostart=true
-autorestart=true
-user=www-data
-redirect_stderr=true
-stdout_logfile=/var/log/kaevcms-mail.log
-```
-
-После обновления выполните:
+После каждого обновления перезапустите worker:
 
 ```bash
 php artisan queue:restart
+sudo systemctl restart kaevcms-queue
 ```
 
 ## Планировщик
@@ -30,5 +20,7 @@ php artisan queue:restart
 ```cron
 * * * * * cd /var/www/kaevcms && php artisan schedule:run >> /dev/null 2>&1
 ```
+
+На VDS используйте cron-файл из [инструкции Ubuntu VDS, шаг 13](VDS_UBUNTU.md#13-настройте-планировщик).
 
 На хостинге без постоянного worker команда `kaevcms:queue-drain` обрабатывает очереди `mail-probe,mail,default` в порядке приоритета. Runtime-диагностика показывает heartbeat планировщика, ожидающие задания, ошибки и состояние доставки, не раскрывая payload.

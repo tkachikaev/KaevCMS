@@ -21,7 +21,7 @@ Do not weaken a regression to obtain a green result. Add tests for every bug fix
 
 - Change release lineage only in the validated contracts, then update the `VERSION` mirror, `README.md`, and `CHANGELOG.md`.
 - Never hard-code current or previous versions into regression source snippets.
-- Ship full, patch, Web Update, and SHA256 artifacts.
+- Ship full, patch, cumulative Web Update, bridge (while sites on 0.42.4 through 0.50.16 are supported), and SHA256 artifacts.
 - Verify ZIP integrity and portable path separators.
 - Confirm previous release plus patch equals the full target release.
 - Record changed migrations and Composer/npm locks explicitly.
@@ -30,9 +30,11 @@ Build every official artifact with one command:
 
 ```powershell
 .\deployment\windows\build-release.ps1 `
-    -PreviousFullArchive "C:\Releases\KaevCMS-0.44.8-full.zip" `
-    -OutputDirectory "C:\Releases\0.44.14"
+    -PreviousFullArchive "C:\Releases\KaevCMS-<previous>-full.zip" `
+    -OutputDirectory "C:\Releases\<version>"
 ```
+
+See [deployment/release/README.md](../../deployment/release/README.md) for the full list of artifacts.
 
 The builder proves that previous full plus patch exactly matches the target tree, keeps the cumulative baseline at `0.42.4`, excludes runtime-owned files, and writes verified SHA256 values. GitHub Actions separately runs PHP, official Windows quality, official Windows browser quality, and release-contract jobs.
 
@@ -93,6 +95,9 @@ npm run build:editor
 
 A release must include the source, bundle, and `public/assets/admin/js/news-editor.LICENSE.txt`. Do not allow arbitrary `style` or `class` attributes: the editor, `SafeHtmlSanitizer`, and both public-theme stylesheets form one safe `data-*` token contract.
 
+## Player account components
+
+Account pages and module views use the shared `<x-account-*>` components and the `.account-tabs` class. The contract is described in [Content and themes](CONTENT_THEMES.md#account-theme-components).
 
 ## Aurelia navigation between the website and player account
 
@@ -102,5 +107,4 @@ Aurelia document entry gently animates body opacity from .88 to 1 over 160 ms on
 
 Public initialization treats DOMContentLoaded and the initial livewire:navigated event as one page initialization. Repeated bootstrap notifications do not replay the content fade or recreate particles/monitoring. A real livewire:navigating event releases the resources and allows initialization of new content.
 
-Browser coverage checks initial notifications, actual content replacement, site/account round trips with a 350 ms stylesheet delay, SVG paint dimensions/fill, desktop/mobile and reduced-motion. Mobile return links are exercised after opening the sidebar.
-Verified 2026-10-15 without changing CMS 0.48.6: 21 related PHP tests (1,198 assertions), shared account runtime contract and JS syntax passed; full browser-quality.ps1 passed all 72 tests. The wallet concurrency script also passed again in an isolated disposable MariaDB schema, which was removed afterwards.
+Regressions: `aurelia-navigation.spec.mjs` checks the initial initialization and real content replacement; `player-character-directory.spec.mjs` checks site ↔ account round trips with a 350 ms stylesheet delay, the absence of large filled SVG shapes, desktop/mobile and reduced-motion. On mobile the return link to the website is exercised after opening the sidebar.

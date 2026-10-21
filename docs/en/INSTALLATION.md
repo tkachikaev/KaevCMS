@@ -10,10 +10,11 @@
 
 KaevCMS public entry points display a readable bilingual error on old PHP versions before Laravel or the Web Installer is loaded.
 
+`pdo_mysql` is required for MySQL/MariaDB and for Lineage II database connections. `pdo_sqlite` is required only when the CMS database itself uses SQLite. On a MySQL/MariaDB installation a missing `pdo_sqlite` extension is informational and is not reported as a critical requirement.
+
 ## VDS or configurable Document Root
 
 For a complete Ubuntu 24.04 LTS, nginx, PHP 8.3-FPM, MySQL, HTTPS, permissions, scheduler, and queue-worker walkthrough, see [Ubuntu VDS installation](VDS_UBUNTU.md).
-
 
 1. Extract the full release outside the web root.
 2. Point the domain Document Root to the release `public/` directory.
@@ -25,7 +26,9 @@ composer install --no-dev --optimize-autoloader
 
 4. Open `/install/` through the available address. Over HTTP the installer shows a warning but still allows the database check and installation. Configure HTTPS before opening a public website to users.
 5. Use a new empty database. The installer refuses to reuse an existing KaevCMS owner account.
-6. After a successful installation, Web Installer removes the public `/install` directory automatically. If the final page reports a cleanup failure, remove it manually before opening the website to users.
+6. After a successful installation, Web Installer removes the public `/install` directory automatically. If the final page reports a cleanup failure, remove it manually before opening the website to users. Even then, `storage/app/installed.lock` blocks a repeated installation.
+
+The installer checks PHP, extensions, the deployment layout, write access, database privileges, owner creation, and the final security state. It creates the required news, page, settings, avatar, and game-asset upload directories when they are missing.
 
 ## Windows development installation
 

@@ -1,16 +1,12 @@
 # KaevCMS 0.51.3
 
-Donations 1.16.1: configure YooMoney completely in the CMS administration panel. New installations default to **payments off**. Owner/Administrator may enable a **single-player pilot** or **all-player live** after automated local checks (HTTPS, MySQL, enabled RUB pricing, provider credentials and production settings). No DONATIONS_* `.env` variables or PHP editing. Signed callback processing for in-flight payments is independent of new checkout availability; Wallet Core and existing migrations are unchanged.
-
-Для запуска ЮMoney откройте **Пожертвования → Платёжные системы → ЮMoney**: настройте реквизиты, выберите «Контрольный платёж» или «Рабочий режим». Никаких изменений `.env` и команд Artisan. После включения контрольного режима самостоятельно проведите небольшой платёж и проверьте его поступление. Подробности: `docs/ru/DONATIONS.md`.
-
 [English](#english) · [Русский](#русский)
 
 ## English
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Version 0.50.8 (Donations C5 QA, module 1.11.1) integrates the reviewed fixes for Administrator payment-review access, checkout no-referrer and single heading, persistent language navigation, and independent per-action rate-limit buckets without relaxing limits. Additional checkout, security, MySQL/MariaDB, concurrency, RU/EN and responsive browser regression tests are included. All four payment gates remain OFF in this release; live payment acceptance is not enabled. Core Wallet and all published migrations remain unchanged. RUSaCis requires live game-client verification before production. Cumulative update baseline: 0.42.4.
+Changes in each release are listed in [CHANGELOG.md](CHANGELOG.md). Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -57,7 +53,9 @@ Documentation:
 - [Updates](docs/en/UPDATES.md)
 - [Shared hosting](docs/en/SHARED_HOSTING.md)
 - [Character rescue](docs/en/CHARACTER_RESCUE.md)
-- [Core Wallet (A7 wallet restrictions)](docs/en/WALLET.md)
+- [Wallet: balances, history, manual corrections and spending blocks](docs/en/WALLET.md)
+- [Donations and YooMoney](docs/en/DONATIONS.md)
+- [Daily Rewards](docs/en/DAILY_REWARDS.md)
 - [Security and permissions](docs/en/SECURITY.md)
 - [Operations runbook](docs/en/OPERATIONS.md)
 - [Administration and diagnostic package](docs/en/ADMINISTRATION.md)
@@ -75,12 +73,13 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Multilingual news, pages, settings, mail templates, and localized routes.
 - Owner, administrator, editor, and trusted Auditor roles; two-factor authentication and recovery codes.
 - Encrypted infrastructure credentials, redacted audit logs, a downloadable sanitized diagnostic package, and personal actionable administrator notifications.
-- One L2JMobius game driver with compatible schema profiles.
+- L2J Mobius game driver with compatible schema profiles and a separate RUSaCis driver.
 - Player game-account creation, password management, and configurable offline character rescue.
 - Public game statistics with caching and failure cooldowns.
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
 - Trusted modules with strict manifests and immutable migration tracking.
-- Bundled Promo Codes, Daily Rewards and Support Tickets modules.
+- Bundled Promo Codes, Daily Rewards, Support Tickets and Donations modules.
+- A coin wallet for every CMS account, with YooMoney top-ups through Donations.
 - Versioned chronicle item catalogs with localized manual overrides and one owner-managed icon pool under `public/uploads/game-assets`.
 - Cumulative Web Updater for shared hosting, a local VDS update agent for browser-started deployments, and a deployment-user CLI fallback, with hashes, backups, recovery, and path policy.
 
@@ -102,7 +101,7 @@ See [Development and quality](docs/en/DEVELOPMENT.md).
 
 KaevCMS — открытая CMS на Laravel для серверов Lineage II. Она включает публичный сайт, личный кабинет игрока, административную панель, подключения LoginServer/GameServer, публичную статистику, веб-инвентарь наград, доверенные модули, шаблоны, локализацию, почту, runtime-диагностику, кумулятивные Web Updates для shared-hosting, локальный агент обновлений VDS и резервное CLI-обновление.
 
-Версия 0.50.8 (Donations C5 QA, модуль 1.11.1) включает исправления: права Administrator на ручные сообщения, no-referrer и единый заголовок checkout, сохранение страницы при переключении языка, раздельные ограничители частоты запросов без увеличения лимитов. Дополнены тесты оплаты, безопасности, конкурентности MySQL/MariaDB и браузерные сценарии RU/EN для обеих тем. Все четыре переключателя live-оплаты и начислений остаются выключены. Wallet Core и опубликованные миграции не изменены. Для RUSaCis необходима проверка игровым клиентом перед production. База cumulative update — 0.42.4.
+Изменения каждого релиза перечислены в [CHANGELOG.md](CHANGELOG.md). База cumulative update — 0.42.4.
 
 ### Требования
 
@@ -149,6 +148,9 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - [Обновления](docs/ru/UPDATES.md)
 - [Обычный хостинг](docs/ru/SHARED_HOSTING.md)
 - [Возврат персонажа в город](docs/ru/CHARACTER_RESCUE.md)
+- [Кошелёк: балансы, история, ручные корректировки и блокировка расходов](docs/ru/WALLET.md)
+- [Donations и ЮMoney](docs/ru/DONATIONS.md)
+- [Ежедневные награды](docs/ru/DAILY_REWARDS.md)
 - [Безопасность и права](docs/ru/SECURITY.md)
 - [Эксплуатационные инструкции](docs/ru/OPERATIONS.md)
 - [Администрирование и диагностический пакет](docs/ru/ADMINISTRATION.md)
@@ -164,14 +166,15 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Раздельные публичные шаблоны и шаблоны личного кабинета, включая Kaev Aurelia Account.
 - Постоянная Livewire-навигация в административной панели и кабинете игрока.
 - Многоязычные новости, страницы, настройки, почтовые шаблоны и маршруты.
-- Роли владельца, администратора, редактора, доверенного аудитора и ограниченной демонстрации; двухфакторная защита и recovery codes.
-- Шифрование инфраструктурных реквизитов, очистка аудита от секретов и скачиваемый обезличенный диагностический пакет.
-- Один драйвер L2JMobius с совместимыми профилями схем.
-- Создание игровых аккаунтов и изменение игровых паролей.
+- Роли владельца, администратора, редактора и доверенного аудитора; двухфакторная защита и recovery codes.
+- Шифрование инфраструктурных реквизитов, очистка аудита от секретов, скачиваемый обезличенный диагностический пакет и персональные уведомления администраторов о событиях, требующих действий.
+- Драйвер L2J Mobius с совместимыми профилями схем и отдельный драйвер RUSaCis.
+- Создание игровых аккаунтов, изменение игровых паролей и настраиваемый возврат персонажа в город (когда персонаж не в игре).
 - Публичная статистика с кешем и cooldown при сбоях.
 - Веб-инвентарь с привязкой к GameServer и нейтральной `kaev_reward_queue`.
 - Доверенные модули со строгим manifest и неизменяемой историей миграций.
-- Встроенные модули Promo Codes, Daily Rewards и технической поддержки.
+- Встроенные модули Promo Codes, Daily Rewards, технической поддержки (Support Tickets) и Donations.
+- Кошелёк монет для каждой учётной записи CMS с пополнением через ЮMoney в модуле Donations.
 - Версионируемые каталоги предметов по хроникам с ручными переводами и единым внешним пулом иконок под исходными именами.
 - Кумулятивный Web Updater для shared-hosting, локальный агент для запуска обновлений VDS из браузера и резервный CLI-способ от deployment-пользователя с хешами, резервными копиями, восстановлением и политикой путей.
 
@@ -190,7 +193,3 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 ## License / Лицензия
 
 MIT.
-
-### Donations game coin exchange (0.50.13)
-
-Donations now optionally converts CMS coins into a per-server game item in Web Inventory, configurable from the admin panel. This works without live YooMoney or the future Shop; existing reward-queue transfer remains unchanged. See docs/ru/DONATIONS.md and docs/en/DONATIONS.md.

@@ -78,7 +78,6 @@ parent-directory/
 
 The domain must never point to `kaevcms-core`.
 
-
 ## HTTPS during installation
 
 Web Installer allows installation over both HTTPS and HTTP. On an unencrypted connection it shows one visible warning but does not block the MySQL check, owner creation, or final installation. After a successful installation, Web Installer removes the `/install` directory from the domain public directory automatically. If hosting permissions block deletion, the final page shows the manual fallback.
@@ -128,7 +127,6 @@ A cumulative package with dependencies is about 16 MB, while many hosts accept o
 Sites on 0.42.4–0.50.16 get this uploader with the bridge package, which is about 5 MB and fits common hosting limits. If a host does not accept even the bridge, raise the limit in the hosting PHP settings (`upload_max_filesize = 64M`, `post_max_size = 70M`) or create `.user.ini` with these lines in the site's public directory (hosts pick it up within a few minutes).
 
 As a fallback, use **Package from the server folder**: copy the ZIP through FTP or the file manager into the folder shown on the page (by default `<core>/storage/app/kaevcms/updates/incoming`), reload the page and choose **Verify package**. The package passes the same inspection as an uploaded one; the source file is removed from the folder once it is verified.
-
 
 ### Why an arbitrary public-directory name is safe
 

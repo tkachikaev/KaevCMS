@@ -1,6 +1,6 @@
 # KaevCMS documentation
 
-KaevCMS is a Laravel CMS for Lineage II servers. The public website, player account, administration panel, game-server connections, statistics, web inventory, modules, themes, mail delivery, and manual web updates are documented here.
+KaevCMS is a Laravel CMS for Lineage II servers. The public website, player account, administration panel, game-server connections, statistics, web inventory, wallet, modules, themes, mail delivery, and updates (the panel updater with the VDS agent, the bridge package for older sites, and chunked package upload) are documented here.
 
 ## Start here
 
@@ -11,11 +11,12 @@ KaevCMS is a Laravel CMS for Lineage II servers. The public website, player acco
 - [Administration](ADMINISTRATION.md)
 - [Game integration](GAME_INTEGRATION.md)
 - [Character rescue](CHARACTER_RESCUE.md)
-- [Core Wallet (A1 schema)](WALLET.md)
+- [Wallet](WALLET.md)
 - [Content and themes](CONTENT_THEMES.md)
 - [Mail and queues](MAIL_AND_QUEUES.md)
 - [Modules](MODULES.md)
 - [Daily Rewards](DAILY_REWARDS.md)
+- [Donations and YooMoney](DONATIONS.md)
 - [Updates](UPDATES.md)
 - [Operations runbook](OPERATIONS.md)
 - [Development and quality](DEVELOPMENT.md)
@@ -23,4 +24,4 @@ KaevCMS is a Laravel CMS for Lineage II servers. The public website, player acco
 
 ## Supported release
 
-These guides describe KaevCMS 0.44.14. PHP 8.3 or newer is required.
+These guides describe the current KaevCMS release; the exact version is in the `VERSION` file and in the administration panel. PHP 8.3 or newer is required. Release notes are in [CHANGELOG.md](../../CHANGELOG.md).

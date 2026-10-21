@@ -4,25 +4,13 @@ KaevCMS supports synchronous delivery, a background process connection, and a da
 
 ## Linux VDS worker
 
-Example Supervisor configuration:
+On an Ubuntu VDS use the systemd service `kaevcms-queue` described in [Ubuntu VDS, step 14](VDS_UBUNTU.md#14-queue-worker-for-asynchronous-mail). It processes the queues `mail-probe,mail,default` in this order and is needed only after asynchronous delivery is enabled.
 
-```ini
-[program:kaevcms-mail]
-command=php /var/www/kaevcms/artisan queue:work database --queue=mail-probe,mail,default --sleep=1 --tries=3 --timeout=120
-directory=/var/www/kaevcms
-autostart=true
-autorestart=true
-user=www-data
-redirect_stderr=true
-stdout_logfile=/var/log/kaevcms-mail.log
-```
-
-Use the real directive `directory=/var/www/kaevcms` instead of the localized label shown above when copying the file to `/etc/supervisor/conf.d/kaevcms-mail.conf`.
-
-After deployment:
+After each update, restart the worker:
 
 ```bash
 php artisan queue:restart
+sudo systemctl restart kaevcms-queue
 ```
 
 ## Scheduler
@@ -33,4 +21,6 @@ Run every minute:
 * * * * * cd /var/www/kaevcms && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-On hosting without a persistent worker, the scheduler command `kaevcms:queue-drain` processes the configured database queues in priority order. Runtime diagnostics report scheduler heartbeat, pending jobs, failures, and mail delivery state without exposing payloads.
+On a VDS, use the cron file from [Ubuntu VDS, step 13](VDS_UBUNTU.md#13-configure-the-scheduler).
+
+On hosting without a persistent worker, the scheduler command `kaevcms:queue-drain` processes the database queues `mail-probe,mail,default` in priority order. Runtime diagnostics report scheduler heartbeat, pending jobs, failures, and mail delivery state without exposing payloads.
