@@ -2908,5 +2908,8 @@
     "5 hours": "5 часов",
     "1 hour": "1 час",
     "Open": "Открыть",
+    "Disable module?": "Отключить модуль?",
+    "Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.": "Его разделы пропадут из меню админки и из кабинета игрока. Данные модуля в базе сохранятся, и его можно будет включить снова.",
+    "Yes, disable": "Да, отключить",
     "Average online": "Среднее"
 }
