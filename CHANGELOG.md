@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **The About the server page is editable.** `/about` showed fixed theme text ending with "its content will be editable in the CMS later". It now shows an editable RU/EN page from **Pages** (reserved `about` address, created once on install or upgrade) above the game server cards, which still come from the game server settings. Without a published page `/about` shows the cards alone; a deleted page is not recreated by upgrades and can be restored with **Create about page** in the page list. `/ru/pages/about` redirects to `/about`.
+- **Language choice on phones.** Both public themes hid the header actions on phones, including the RU / EN switcher, and the menu had no replacement. The phone menu now ends with the same switcher. Theme versions: Kaev Aurelia 1.0.13, L2 Dark Classic 0.8.5 (so browsers load the new styles).
 
 ## 0.52.0 - 2026-10-22
 

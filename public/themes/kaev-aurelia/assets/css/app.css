@@ -170,6 +170,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .main-nav a:hover::after,
 .main-nav a.active::after { width: 26px; }
 .mobile-account-link { display: none !important; }
+.mobile-language-switcher { display: none !important; }
 .header-actions { display: flex; align-items: center; gap: 9px; }
 .header-logout-form { margin: 0; }
 .menu-toggle { display: none; }
@@ -1277,6 +1278,34 @@ body.kaev-aurelia::before {
 
     .kaev-aurelia .main-nav {
         top: 76px;
+    }
+
+    /* Language choice at the foot of the phone menu, styled like the desktop switcher. */
+    .kaev-aurelia .mobile-language-switcher {
+        display: inline-flex !important;
+        align-self: center;
+        margin: 10px 0 4px;
+    }
+
+    .kaev-aurelia .main-nav .mobile-language-switcher a {
+        min-width: 44px;
+        min-height: 0;
+        padding: 9px 12px;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        color: var(--muted);
+    }
+
+    .kaev-aurelia .main-nav .mobile-language-switcher a.active,
+    .kaev-aurelia .main-nav .mobile-language-switcher a:hover {
+        background: var(--ink);
+        color: #fffdf8;
+    }
+
+    .kaev-aurelia .main-nav .mobile-language-switcher a::after {
+        display: none;
     }
 
     .kaev-aurelia .hero-content {

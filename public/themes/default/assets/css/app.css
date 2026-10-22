@@ -202,6 +202,13 @@
     .language-switcher { margin-inline-start: auto; }
 }
 
+/* Language choice at the foot of the phone menu (the header actions are hidden there). */
+.mobile-language-switcher { display: none !important; }
+@media (max-width: 780px) {
+    .mobile-language-switcher { display: inline-flex !important; align-self: center; margin: 10px 0 4px; }
+    .main-nav .mobile-language-switcher a { min-height: 0; padding: 9px 12px; border-bottom: 0; text-transform: none; }
+}
+
 /* CMS content pages */
 .cms-page { max-width: 980px; }
 .cms-page-prose { padding: clamp(24px, 4vw, 48px); }
