@@ -2,7 +2,7 @@
 @section('title', __('rewards.queue.journal.title'))
 @section('description', __('rewards.queue.journal.description'))
 @section('content')
-<div class="admin-overview audit-summary reward-queue-summary" data-testid="reward-queue-summary">
+<div class="admin-overview reward-queue-summary" data-testid="reward-queue-summary">
     <div class="admin-overview-stat"><span>{{ __('rewards.queue.journal.total') }}</span><strong>{{ $totalCount }}</strong></div>
     @foreach(\App\Models\RewardDelivery::STATUSES as $summaryStatus)
         <div class="admin-overview-stat">
@@ -13,11 +13,12 @@
     <p class="admin-overview-copy">{{ __('rewards.queue.journal.boundary') }}</p>
 </div>
 
-<form class="admin-filter-form" method="GET" action="{{ route('admin.rewards.index') }}">
-    <label><span>{{ __('rewards.queue.journal.server') }}</span><select name="server"><option value="0">{{ __('All servers') }}</option>@foreach($servers as $server)<option value="{{ $server->id }}" @selected($activeServerId === $server->id)>{{ $server->nameFor() }}</option>@endforeach</select></label>
-    <label><span>{{ __('rewards.queue.journal.status') }}</span><select name="status"><option value="">{{ __('All statuses') }}</option>@foreach(\App\Models\RewardDelivery::STATUSES as $filterStatus)<option value="{{ $filterStatus }}" @selected($activeStatus === $filterStatus)>{{ \App\Models\RewardDelivery::statusLabelFor($filterStatus) }}</option>@endforeach</select></label>
-    <button class="button button-secondary" type="submit">{{ __('Apply') }}</button>
-</form>
+<x-admin.filter-bar :action="route('admin.rewards.index')" class="reward-queue-filters">
+    <div><label for="reward-queue-server">{{ __('rewards.queue.journal.server') }}</label><select id="reward-queue-server" name="server"><option value="0">{{ __('All servers') }}</option>@foreach($servers as $server)<option value="{{ $server->id }}" @selected($activeServerId === $server->id)>{{ $server->nameFor() }}</option>@endforeach</select></div>
+    <div><label for="reward-queue-status">{{ __('rewards.queue.journal.status') }}</label><select id="reward-queue-status" name="status"><option value="">{{ __('All statuses') }}</option>@foreach(\App\Models\RewardDelivery::STATUSES as $filterStatus)<option value="{{ $filterStatus }}" @selected($activeStatus === $filterStatus)>{{ \App\Models\RewardDelivery::statusLabelFor($filterStatus) }}</option>@endforeach</select></div>
+    <x-admin.button type="submit" variant="primary">{{ __('Apply') }}</x-admin.button>
+    @if ($activeServerId || $activeStatus)<x-admin.button wire:navigate :href="route('admin.rewards.index')">{{ __('Reset') }}</x-admin.button>@endif
+</x-admin.filter-bar>
 
 <section class="reward-queue-capability" data-testid="reward-queue-capability">
     <strong>{{ __('rewards.queue.journal.queue_check_title') }}</strong>

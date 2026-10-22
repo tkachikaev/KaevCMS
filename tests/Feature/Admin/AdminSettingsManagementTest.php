@@ -233,8 +233,8 @@ class AdminSettingsManagementTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get('/admin/settings/login-server')
             ->assertOk()
-            ->assertSee('Логин серверы')
-            ->assertSee('Добавить логин сервер')
+            ->assertSee('Логин-серверы')
+            ->assertSee('Добавить логин-сервер')
             ->assertSee('L2J Mobius')
             ->assertSee('RUSaCis');
     }

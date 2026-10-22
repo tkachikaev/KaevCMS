@@ -91,7 +91,8 @@ body.account-body .account-tabs svg { display: block; width: 18px; height: 18px;
     .account-stat { flex: 1; min-width: 120px; padding: 12px; }
     body.account-body .account-tabs > :is(a, button) { flex: 1; padding: 10px 12px; }
 }
-.reward-item-list, .reward-history-list { display: grid; gap: 10px; }
+/* minmax(0, 1fr): a long one-line reward list is cut with an ellipsis instead of widening the page. */
+.reward-item-list, .reward-history-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .reward-item-row { position: relative; display: grid; grid-template-columns: 22px 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--account-line); border-radius: var(--account-shared-reward-item-radius); background: var(--account-panel); cursor: pointer; transition: border-color .16s ease, transform .16s ease, background .16s ease; }
 .reward-item-row:hover { border-color: rgba(212, 173, 103, 0.35); transform: translateY(-1px); }
 .reward-item-row input { position: absolute; opacity: 0; pointer-events: none; }

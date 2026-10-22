@@ -700,11 +700,36 @@ class MailDeliveryModeTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('Отправка почты')
-            ->assertSee('Асинхронный с очередью в базе данных')
-            ->assertSee('Ожидание')
-            ->assertSee('Ошибок за 7 дней')
-            ->assertSee('Письмо ожидает отправки больше двух минут');
+            ->assertSee('Почта')
+            ->assertSee('1 письмо ждёт')
+            ->assertSee('dash-system-dot dash-system-danger', false)
+            // A stuck queue outranks the failed email, so only the stuck queue is listed.
+            ->assertSee('Письма застряли в очереди')
+            ->assertDontSee('1 письмо не отправилось за 7 дней')
+            ->assertSee('href="'.route('admin.settings.mail').'"', false);
+    }
+
+    public function test_dashboard_lists_recently_failed_mail_when_the_queue_is_moving(): void
+    {
+        $admin = $this->createAdmin();
+        $this->enableMode(MailSettings::MODE_DATABASE);
+        MailDelivery::query()->create([
+            'type' => 'password_reset',
+            'recipient' => 'failed@example.com',
+            'mode' => MailSettings::MODE_DATABASE,
+            'status' => MailDelivery::STATUS_FAILED,
+            'queued_at' => now()->subMinutes(4),
+            'failed_at' => now()->subMinute(),
+            'error_class' => 'RuntimeException',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('Очередь пуста')
+            ->assertSee('dash-system-dot dash-system-warning', false)
+            ->assertSee('1 письмо не отправилось за 7 дней')
+            ->assertDontSee('Письма застряли в очереди');
     }
 
     private function enableMode(string $mode): void

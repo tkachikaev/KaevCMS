@@ -3,21 +3,21 @@
 .admin-appearance-switcher {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 3px;
+    gap: 0;
+    padding: 0;
     border: 1px solid var(--admin-border);
-    border-radius: 9px;
-    background: var(--admin-surface-muted);
+    border-radius: var(--admin-radius-inner);
+    background: transparent;
 }
 
 .admin-appearance-switcher button {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border: 0;
-    border-radius: 6px;
+    border-radius: 0;
     background: transparent;
     color: var(--admin-text-muted);
     font: inherit;
@@ -25,14 +25,14 @@
 }
 
 .admin-appearance-switcher button:hover {
-    background: var(--admin-surface);
+    background: transparent;
     color: var(--admin-text);
 }
 
 .admin-appearance-switcher button.active {
-    background: var(--admin-surface);
-    color: var(--admin-primary);
-    box-shadow: var(--admin-shadow-card);
+    background: transparent;
+    color: var(--admin-text);
+    box-shadow: inset 0 -2px 0 var(--admin-primary);
 }
 
 .admin-appearance-switcher button:focus-visible {
@@ -45,7 +45,7 @@
     height: 16px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.8;
+    stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
@@ -79,12 +79,16 @@ html[data-admin-color-scheme="dark"] {
     --admin-info-soft: #12233e;
     --admin-info-border: #294d82;
     --admin-focus-ring: rgba(79, 140, 255, .25);
-    --admin-shadow-card: 0 1px 2px rgba(0, 0, 0, .22), 0 8px 24px rgba(0, 0, 0, .16);
+    --admin-shadow-card: none;
     --admin-shadow-raised: 0 14px 34px rgba(0, 0, 0, .34);
     --admin-sidebar-bg: #080d14;
     --admin-sidebar-hover: #152131;
     --admin-sidebar-text: #d5dbe5;
     --admin-sidebar-muted: #8290a5;
+    --admin-chart-1: #60a5fa;
+    --admin-chart-2: #34d399;
+    --admin-chart-3: #fbbf24;
+    --admin-chart-4: #a78bfa;
     --success: var(--admin-success);
     --success-bg: var(--admin-success-soft);
     --danger: var(--admin-danger);
@@ -137,8 +141,6 @@ html[data-admin-color-scheme="dark"] .admin-account-dropdown > a:hover,
 html[data-admin-color-scheme="dark"] .admin-account-dropdown form button:hover,
 html[data-admin-color-scheme="dark"] .server-drawer-tab:hover,
 html[data-admin-color-scheme="dark"] .server-drawer-tab.active,
-html[data-admin-color-scheme="dark"] .dashboard-monitor-row:hover,
-html[data-admin-color-scheme="dark"] .dashboard-player-metric-link:hover,
 html[data-admin-color-scheme="dark"] .pagination-page:hover,
 html[data-admin-color-scheme="dark"] .rich-editor-toolbar button:hover,
 html[data-admin-color-scheme="dark"] .rich-editor-toolbar button.is-active,
@@ -171,10 +173,7 @@ html[data-admin-color-scheme="dark"] .server-statistics-heading,
 html[data-admin-color-scheme="dark"] .server-statistics-row.disabled,
 html[data-admin-color-scheme="dark"] .server-statistics-unavailable,
 html[data-admin-color-scheme="dark"] .mail-delivery-probe,
-html[data-admin-color-scheme="dark"] .dashboard-mail-metric,
 html[data-admin-color-scheme="dark"] .admin-path-input > span,
-html[data-admin-color-scheme="dark"] .dashboard-storage-metrics > div,
-html[data-admin-color-scheme="dark"] .dashboard-storage-metrics > a,
 html[data-admin-color-scheme="dark"] .security-stat-list > div,
 html[data-admin-color-scheme="dark"] .admin-notification-filters,
 html[data-admin-color-scheme="dark"] .admin-notification-actions,
@@ -216,8 +215,7 @@ html[data-admin-color-scheme="dark"] .field-help-tooltip-content {
 }
 
 html[data-admin-color-scheme="dark"] .admin-account-menu > summary,
-html[data-admin-color-scheme="dark"] .admin-notification-menu > summary,
-html[data-admin-color-scheme="dark"] .admin-language-switcher {
+html[data-admin-color-scheme="dark"] .admin-notification-menu > summary {
     border-color: var(--admin-border);
     background: var(--admin-surface-subtle);
 }
@@ -231,8 +229,6 @@ html[data-admin-color-scheme="dark"] .settings-placeholder-mark,
 html[data-admin-color-scheme="dark"] .settings-disabled-notice,
 html[data-admin-color-scheme="dark"] .system-overview,
 html[data-admin-color-scheme="dark"] .mail-delivery-description,
-html[data-admin-color-scheme="dark"] .dashboard-storage-note,
-html[data-admin-color-scheme="dark"] .dashboard-storage-unavailable,
 html[data-admin-color-scheme="dark"] .notice-info,
 html[data-admin-color-scheme="dark"] .admin-notification-notice,
 html[data-admin-color-scheme="dark"] .rich-editor-canvas blockquote {
@@ -274,9 +270,7 @@ html[data-admin-color-scheme="dark"] .theme-state.error,
 html[data-admin-color-scheme="dark"] .status-badge-danger,
 html[data-admin-color-scheme="dark"] .database-test-report.failed,
 html[data-admin-color-scheme="dark"] .server-card-test-result.failed,
-html[data-admin-color-scheme="dark"] .dashboard-mail-warning,
-html[data-admin-color-scheme="dark"] .admin-path-danger,
-html[data-admin-color-scheme="dark"] .dashboard-storage-unavailable-danger {
+html[data-admin-color-scheme="dark"] .admin-path-danger {
     background: var(--admin-danger-soft);
     color: var(--admin-danger);
     border-color: var(--admin-danger-border);
@@ -368,10 +362,7 @@ html[data-admin-color-scheme="dark"] .server-summary-meta dd,
 html[data-admin-color-scheme="dark"] .server-card-menu > summary,
 html[data-admin-color-scheme="dark"] .server-drawer-close,
 html[data-admin-color-scheme="dark"] .dashboard-monitor-toolbar small,
-html[data-admin-color-scheme="dark"] .dashboard-monitor-name,
-html[data-admin-color-scheme="dark"] .dashboard-monitor-online,
 html[data-admin-color-scheme="dark"] .server-advanced-settings > summary,
-html[data-admin-color-scheme="dark"] .dashboard-monitor-name-wrap small,
 html[data-admin-color-scheme="dark"] .server-drawer-tab,
 html[data-admin-color-scheme="dark"] .server-statistics-quantity input,
 html[data-admin-color-scheme="dark"] .server-statistics-fixed-value,
@@ -379,12 +370,8 @@ html[data-admin-color-scheme="dark"] .server-statistics-unavailable strong,
 html[data-admin-color-scheme="dark"] .server-statistics-unavailable p,
 html[data-admin-color-scheme="dark"] .mail-delivery-option strong,
 html[data-admin-color-scheme="dark"] .mail-delivery-probe-heading > strong,
-html[data-admin-color-scheme="dark"] .dashboard-mail-metric strong,
 html[data-admin-color-scheme="dark"] .admin-path-current code,
-html[data-admin-color-scheme="dark"] .admin-path-input > span,
-html[data-admin-color-scheme="dark"] .dashboard-storage-heading strong,
-html[data-admin-color-scheme="dark"] .dashboard-storage-summary strong,
-html[data-admin-color-scheme="dark"] .dashboard-storage-metrics strong {
+html[data-admin-color-scheme="dark"] .admin-path-input > span {
     color: var(--admin-text);
 }
 

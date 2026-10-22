@@ -359,6 +359,8 @@
 .module-cards .module-actions { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; gap: 8px; width: 100%; margin: 0; }
 .module-cards .module-actions form,
 .module-cards .module-actions .button { width: 100%; min-width: 0; }
+/* An enabled module with its own section: "Open" beside the module's other action. */
+.module-cards .module-actions-pair { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
 .module-cards .notice-error { margin-top: 12px; padding: 10px 12px; font-size: 12px; overflow-wrap: anywhere; }
 .module-details > summary {
     position: absolute;

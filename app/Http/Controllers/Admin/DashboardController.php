@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Auth\AdminPermission;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\Dashboard\AdminDashboardOverview;
+use App\Services\Dashboard\DashboardAttention;
+use App\Services\Dashboard\DashboardTrends;
 use App\Services\Infrastructure\DashboardPlayerOverview;
 use App\Services\Infrastructure\RuntimeDiagnostics;
 use App\Services\Infrastructure\StorageOverview;
@@ -28,24 +31,31 @@ class DashboardController extends Controller
         RuntimeDiagnostics $runtimeDiagnostics,
         StorageOverview $storageOverview,
         DashboardPlayerOverview $playerOverview,
+        AdminDashboardOverview $dashboardOverview,
+        DashboardAttention $attention,
     ): View {
         $admin = Auth::guard('admin')->user();
+        abort_unless($admin instanceof Admin, 403);
+
+        $overview = $dashboardOverview->forAdmin($admin);
+        $monitor = $statuses->get();
+        $mailDelivery = $mailDeliveries->overview();
+        $runtime = $admin->hasPermission(AdminPermission::SystemView) ? $runtimeDiagnostics->overview() : null;
+        $storage = $admin->hasPermission(AdminPermission::SystemView) ? $storageOverview->collect() : null;
+        $players = $admin->hasPermission(AdminPermission::UsersView) ? $playerOverview->forAdmin($admin) : null;
 
         return view('admin.dashboard', [
             'admin' => $admin,
-            'monitor' => $statuses->get(),
+            'overview' => $overview,
+            'chartWidgets' => DashboardTrends::widgets($overview['registrations'], $overview['online'], $overview['donations']),
+            'attention' => $attention->collect($admin, $monitor, $players, $overview, $mailDelivery, $runtime, $storage),
+            'monitor' => $monitor,
             'monitorRefreshDue' => $monitorCoordinator->isDue(),
             'mailSettings' => $mailSettings->values(),
-            'mailDelivery' => $mailDeliveries->overview(),
-            'runtime' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::SystemView)
-                ? $runtimeDiagnostics->overview()
-                : null,
-            'storageOverview' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::SystemView)
-                ? $storageOverview->collect()
-                : null,
-            'playerOverview' => $admin instanceof Admin && $admin->hasPermission(AdminPermission::UsersView)
-                ? $playerOverview->forAdmin($admin)
-                : null,
+            'mailDelivery' => $mailDelivery,
+            'runtime' => $runtime,
+            'storageOverview' => $storage,
+            'playerOverview' => $players,
         ]);
     }
 

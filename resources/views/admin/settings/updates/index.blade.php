@@ -131,7 +131,7 @@
                 <article class="admin-card-row update-row">
                     <div>
                         <strong>{{ $incomingPackage['name'] }}</strong>
-                        <small>{{ \App\Services\Updates\UpdateUploadLimit::format($incomingPackage['size']) }} · {{ date('d.m.Y H:i', $incomingPackage['modified_at']) }}</small>
+                        <small>{{ format_bytes($incomingPackage['size']) }} · {{ date('d.m.Y H:i', $incomingPackage['modified_at']) }}</small>
                     </div>
                     <form method="POST" action="{{ route('admin.settings.system.updates.import') }}">
                         @csrf

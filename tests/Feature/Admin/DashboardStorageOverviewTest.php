@@ -3,6 +3,8 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Admin;
+use App\Services\Dashboard\DashboardAttention;
+use App\Services\Infrastructure\StorageOverview;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,25 +12,20 @@ class DashboardStorageOverviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_administrator_dashboard_shows_disk_and_database_storage_overview(): void
+    public function test_administrator_dashboard_shows_disk_and_database_summary(): void
     {
         $administrator = Admin::factory()->administrator()->create();
 
         $this->actingAs($administrator, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('Хранилище')
-            ->assertSee('Диск сервера')
-            ->assertSee('База данных KaevCMS')
-            ->assertSee('Общий размер')
-            ->assertSee('Данные')
-            ->assertSee('Индексы')
-            ->assertSee('Таблицы')
-            ->assertSee('data-testid="dashboard-storage-card"', false)
-            ->assertSee('role="progressbar"', false);
+            ->assertSee('data-testid="dashboard-system"', false)
+            ->assertSee('Диск')
+            ->assertSee('База данных · SQLite')
+            ->assertSee('href="'.route('admin.settings.system').'"', false);
     }
 
-    public function test_auditor_can_view_storage_overview_without_exposing_database_credentials(): void
+    public function test_auditor_can_view_storage_summary_without_exposing_database_credentials(): void
     {
         config()->set([
             'database.connections.sqlite.username' => 'hidden-storage-user',
@@ -39,8 +36,7 @@ class DashboardStorageOverviewTest extends TestCase
         $this->actingAs($auditor, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('Хранилище')
-            ->assertSee('База данных KaevCMS')
+            ->assertSee('База данных · SQLite')
             ->assertDontSee('hidden-storage-user')
             ->assertDontSee('hidden-storage-password');
     }
@@ -52,26 +48,30 @@ class DashboardStorageOverviewTest extends TestCase
         $this->actingAs($editor, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertDontSee('data-testid="dashboard-storage-card"', false)
-            ->assertDontSee('База данных KaevCMS');
+            ->assertDontSee('data-testid="dashboard-system"', false)
+            ->assertDontSee('База данных · SQLite');
     }
 
-    public function test_dashboard_storage_uses_existing_card_and_status_components(): void
+    public function test_low_disk_space_is_listed_as_needing_attention(): void
     {
-        $view = file_get_contents(resource_path('views/admin/dashboard.blade.php'));
-        $css = file_get_contents(public_path('assets/admin/css/infrastructure.css'));
+        $administrator = Admin::factory()->administrator()->create();
+        $storage = app(StorageOverview::class)->collect();
+        $storage['disk'] = [...$storage['disk'], 'available' => true, 'state' => 'danger', 'free' => '1,2 ГБ'];
 
-        $this->assertIsString($view);
-        $this->assertIsString($css);
-        $this->assertStringContainsString('admin-data-card dashboard-monitor-card dashboard-storage-card', $view);
-        $this->assertStringContainsString('status-badge status-badge-', $view);
-        $this->assertStringContainsString('dashboard-storage-progress', $css);
-        $this->assertStringContainsString('<progress', $view);
-        $this->assertStringContainsString('value="{{ $diskPercentCss }}"', $view);
-        $this->assertStringNotContainsString('style="width: {{ $diskPercentCss }}%;"', $view);
-        $this->assertStringContainsString('::-webkit-progress-value', $css);
-        $this->assertStringContainsString('::-moz-progress-bar', $css);
-        $this->assertStringNotContainsString('<canvas', $view);
-        $this->assertStringNotContainsString('<svg', $view);
+        $attention = app(DashboardAttention::class)->collect(
+            $administrator,
+            ['game_servers' => [], 'login_servers' => []],
+            null,
+            null,
+            ['stale' => false, 'failed_recent' => 0],
+            null,
+            $storage,
+        );
+
+        $this->assertSame([[
+            'level' => 'danger',
+            'title' => 'Мало места на диске: свободно 1,2 ГБ',
+            'url' => route('admin.settings.system'),
+        ]], $attention);
     }
 }

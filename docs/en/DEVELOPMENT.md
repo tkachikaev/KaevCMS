@@ -60,6 +60,8 @@ To discard an unapproved change instead: `git checkout -- composer.json composer
 
 ## Front-end asset architecture
 
+Typography, spacing, colours, number formatting and screen states of the administration panel are defined in the [design canon](DESIGN.md); new and redesigned screens follow it.
+
 The administration layout loads the following stylesheets in this exact order:
 
 ```text

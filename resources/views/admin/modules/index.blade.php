@@ -130,7 +130,12 @@
                         @default<span class="theme-state error">{{ __('Damaged') }}</span>
                     @endswitch
 
-                    <div class="admin-row-actions admin-catalog-actions module-actions">
+                    @php $section = $module['enabled'] ? ($moduleSections[$module['id']] ?? null) : null; @endphp
+                    <div @class(['admin-row-actions', 'admin-catalog-actions', 'module-actions', 'module-actions-pair' => $section !== null])>
+                        @if ($section !== null)
+                            <a class="button button-primary" wire:navigate href="{{ route($section) }}" data-testid="module-open">{{ __('Open') }}</a>
+                        @endif
+
                         @if ($module['can_enable'])
                             <form method="POST" action="{{ route('admin.modules.enable', ['module' => $module['id']]) }}">
                                 @csrf
@@ -147,10 +152,11 @@
                         @endif
 
                         @if ($module['can_disable'])
+                            {{-- Asks for confirmation first; without scripts the form still submits. --}}
                             <form method="POST" action="{{ route('admin.modules.disable', ['module' => $module['id']]) }}">
                                 @csrf
                                 @method('DELETE')
-                                <button class="button button-danger" type="submit">{{ __('Disable') }}</button>
+                                <button class="button button-danger" type="submit" data-module-disable-open data-module-disable-title="{{ \App\Support\Modules\ModulePresentation::text($module, 'name') }}">{{ __('Disable') }}</button>
                             </form>
                         @endif
 
@@ -162,5 +168,26 @@
             </article>
         @endforeach
     </div>
+
+    <dialog class="confirm-dialog" data-module-disable-dialog aria-labelledby="disable-module-title">
+        <div class="confirm-dialog-card">
+            <div class="confirm-dialog-copy">
+                <span class="confirm-dialog-mark" aria-hidden="true">!</span>
+                <div>
+                    <h2 id="disable-module-title">{{ __('Disable module?') }}</h2>
+                    <p>{{ __('Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.') }}</p>
+                    <strong class="confirm-dialog-target" data-module-disable-title></strong>
+                </div>
+            </div>
+            <div class="confirm-dialog-actions">
+                <button class="button button-secondary" type="button" data-module-disable-cancel>{{ __('Cancel') }}</button>
+                <button class="button button-danger" type="button" data-module-disable-confirm>{{ __('Yes, disable') }}</button>
+            </div>
+        </div>
+    </dialog>
 @endif
 @endsection
+
+@push('scripts')
+<script src="{{ asset('assets/admin/js/module-actions.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+@endpush

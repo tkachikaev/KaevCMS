@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Services\AuditLogger;
+use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleManager;
+use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModulePresentation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,12 +21,23 @@ class ModuleController extends Controller
 {
     public function __construct(private readonly AuditLogger $auditLogger) {}
 
-    public function index(ModuleManager $modules): View
+    public function index(ModuleManager $modules, ModuleNavigationRegistry $navigation, ModuleAdminAccessRegistry $access): View
     {
         $installedModules = $modules->installed();
+        $admin = Auth::guard('admin')->user();
+
+        // Each module card links to the module's own section, the same one the menu opens;
+        // only enabled modules register sections, and only those this administrator may see.
+        $sections = [];
+        if ($admin instanceof Admin) {
+            foreach ($navigation->availableAdminLinks($admin, $access) as $link) {
+                $sections[$link['module_id']] ??= $link['route'];
+            }
+        }
 
         return view('admin.modules.index', [
             'modules' => $installedModules,
+            'moduleSections' => $sections,
             'enabledCount' => collect($installedModules)->where('enabled', true)->count(),
             'problemCount' => collect($installedModules)
                 ->whereIn('status', [

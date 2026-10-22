@@ -2,6 +2,8 @@
 
 namespace App\Services\Updates;
 
+use App\Support\DisplayFormat;
+
 /**
  * The largest update package a browser upload can deliver on this server: PHP's
  * upload_max_filesize and post_max_size (often 8M on shared hosting) and the CMS limit.
@@ -41,7 +43,7 @@ final class UpdateUploadLimit
 
     public function label(): string
     {
-        return self::format($this->bytes());
+        return DisplayFormat::bytes($this->bytes());
     }
 
     /**
@@ -62,18 +64,6 @@ final class UpdateUploadLimit
         };
 
         return (int) $matches[1] * $multiplier;
-    }
-
-    public static function format(int $bytes): string
-    {
-        if ($bytes >= 1024 ** 3) {
-            return rtrim(rtrim(number_format($bytes / 1024 ** 3, 1, '.', ''), '0'), '.').' GB';
-        }
-        if ($bytes >= 1024 ** 2) {
-            return rtrim(rtrim(number_format($bytes / 1024 ** 2, 1, '.', ''), '0'), '.').' MB';
-        }
-
-        return max(1, (int) round($bytes / 1024)).' KB';
     }
 
     private function ini(string $directive): string

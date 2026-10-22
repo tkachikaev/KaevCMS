@@ -82,7 +82,7 @@ test('player and administrator complete the support ticket conversation flow wit
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
     await expect(page.locator('[data-testid="support-ticket-filters"]')).toHaveCSS('display', 'grid');
     await expect(page.locator('.support-ticket-search-field')).toHaveClass(/admin-field/);
-    await expect(page.locator('#support-ticket-search')).toHaveCSS('border-radius', '8px');
+    await expect(page.locator('#support-ticket-search')).toHaveCSS('border-radius', await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--admin-radius-control').trim()));
     await expect(page.getByRole('heading', { name: 'Фильтры', exact: true })).toHaveCount(0);
     const ticketRow = page.locator('.support-admin-ticket-row').filter({ hasText: subject });
     await expect(ticketRow).toHaveCount(1);

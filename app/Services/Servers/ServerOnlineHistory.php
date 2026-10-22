@@ -1,0 +1,191 @@
+<?php
+
+namespace App\Services\Servers;
+
+use App\Models\GameServer;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+/**
+ * History of online players for the dashboard chart. The server monitor records the
+ * counted online once per five-minute bucket; buckets are shared by all servers, so the
+ * total online at a moment is the sum of one bucket.
+ */
+final class ServerOnlineHistory
+{
+    public const BUCKET_SECONDS = 300;
+
+    public const RETENTION_DAYS = 35;
+
+    public function record(GameServer $server, int $players, ?CarbonImmutable $at = null): void
+    {
+        $bucket = $this->bucket($at ?? CarbonImmutable::now());
+
+        try {
+            DB::table('server_online_samples')->upsert(
+                [['game_server_id' => $server->id, 'bucket_at' => $bucket, 'players' => max(0, $players)]],
+                ['game_server_id', 'bucket_at'],
+                ['players'],
+            );
+
+            // History must never grow without bound; prune at most once an hour.
+            if (Cache::add('server-online-history:pruned', true, now()->addHour())) {
+                $this->prune();
+            }
+        } catch (Throwable $exception) {
+            // The monitor's main job is the current status; a lost sample is acceptable.
+            Log::warning('Server online sample was not recorded.', [
+                'game_server_id' => $server->id,
+                'exception_class' => $exception::class,
+            ]);
+        }
+    }
+
+    public function prune(): int
+    {
+        return DB::table('server_online_samples')
+            ->where('bucket_at', '<', CarbonImmutable::now()->subDays(self::RETENTION_DAYS))
+            ->delete();
+    }
+
+    /**
+     * Highest total online per day for the last $days days (null for days without samples).
+     *
+     * @return array{days:list<array{date:CarbonImmutable,peak:int|null,average:int|null}>,peak:int|null,peak_at:CarbonImmutable|null,average_peak:float|null}
+     */
+    public function dailyPeaks(int $days = 30): array
+    {
+        $today = CarbonImmutable::now()->startOfDay();
+        $start = $today->subDays($days - 1);
+
+        // 30 days are 8640 buckets: they are grouped by the "Y-m-d" prefix of the stored
+        // time; a date object is built only for the peak.
+        $peaks = [];
+        $sums = [];
+        $counts = [];
+        $peak = null;
+        $peakAt = null;
+        DB::table('server_online_samples')
+            ->where('bucket_at', '>=', $start)
+            ->groupBy('bucket_at')
+            ->orderBy('bucket_at')
+            ->get(['bucket_at', DB::raw('SUM(players) as players')])
+            ->each(static function (object $row) use (&$peaks, &$sums, &$counts, &$peak, &$peakAt): void {
+                $key = substr((string) $row->bucket_at, 0, 10);
+                $players = (int) $row->players;
+                $peaks[$key] = max($peaks[$key] ?? 0, $players);
+                $sums[$key] = ($sums[$key] ?? 0) + $players;
+                $counts[$key] = ($counts[$key] ?? 0) + 1;
+                if ($peak === null || $players > $peak) {
+                    $peak = $players;
+                    $peakAt = (string) $row->bucket_at;
+                }
+            });
+
+        $series = [];
+        for ($day = $start; $day->lte($today); $day = $day->addDay()) {
+            $key = $day->toDateString();
+            $series[] = [
+                'date' => $day,
+                'peak' => $peaks[$key] ?? null,
+                'average' => isset($sums[$key]) ? (int) round($sums[$key] / $counts[$key]) : null,
+            ];
+        }
+
+        return [
+            'days' => $series,
+            'peak' => $peak,
+            'peak_at' => $peakAt === null ? null : CarbonImmutable::parse($peakAt),
+            'average_peak' => $peaks === [] ? null : (float) (array_sum($peaks) / count($peaks)),
+        ];
+    }
+
+    /**
+     * Highest and average total online per hour for the last $hours hours, oldest first
+     * (null for hours without samples).
+     *
+     * @return list<array{peak:int|null,average:int|null}>
+     */
+    public function hourly(int $hours = 24): array
+    {
+        $currentHour = CarbonImmutable::now()->startOfHour();
+        $start = $currentHour->subHours($hours - 1);
+
+        $peaks = [];
+        $sums = [];
+        $counts = [];
+        DB::table('server_online_samples')
+            ->where('bucket_at', '>=', $start)
+            ->groupBy('bucket_at')
+            ->get(['bucket_at', DB::raw('SUM(players) as players')])
+            ->each(static function (object $row) use (&$peaks, &$sums, &$counts): void {
+                $key = substr((string) $row->bucket_at, 0, 13);
+                $players = (int) $row->players;
+                $peaks[$key] = max($peaks[$key] ?? 0, $players);
+                $sums[$key] = ($sums[$key] ?? 0) + $players;
+                $counts[$key] = ($counts[$key] ?? 0) + 1;
+            });
+
+        $series = [];
+        for ($hour = $start; $hour->lte($currentHour); $hour = $hour->addHour()) {
+            $key = $hour->format('Y-m-d H');
+            $series[] = [
+                'peak' => $peaks[$key] ?? null,
+                'average' => isset($sums[$key]) ? (int) round($sums[$key] / $counts[$key]) : null,
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
+     * Total online for each of the last $count five-minute buckets, oldest first (null for
+     * buckets without samples).
+     *
+     * @return list<int|null>
+     */
+    public function recent(int $count = 60): array
+    {
+        $buckets = self::recentBuckets($count);
+
+        $totals = [];
+        DB::table('server_online_samples')
+            ->where('bucket_at', '>=', $buckets[0])
+            ->groupBy('bucket_at')
+            ->get(['bucket_at', DB::raw('SUM(players) as players')])
+            ->each(static function (object $row) use (&$totals): void {
+                $totals[self::bucketKey((string) $row->bucket_at)] = (int) $row->players;
+            });
+
+        return array_map(static fn (CarbonImmutable $bucket): ?int => $totals[$bucket->format('Y-m-d H:i')] ?? null, $buckets);
+    }
+
+    /**
+     * Starts of the last $count five-minute buckets, oldest first; the last one is current.
+     *
+     * @return list<CarbonImmutable>
+     */
+    public static function recentBuckets(int $count): array
+    {
+        $now = CarbonImmutable::now();
+        $current = $now->setTime((int) $now->format('H'), intdiv((int) $now->format('i'), 5) * 5);
+
+        return array_map(static fn (int $index): CarbonImmutable => $current->subMinutes(($count - 1 - $index) * 5), range(0, $count - 1));
+    }
+
+    /** "Y-m-d H:i" of the five-minute bucket a stored "Y-m-d H:i:s" time falls in. */
+    public static function bucketKey(string $time): string
+    {
+        return substr($time, 0, 14).sprintf('%02d', intdiv((int) substr($time, 14, 2), 5) * 5);
+    }
+
+    private function bucket(CarbonImmutable $at): CarbonImmutable
+    {
+        $timestamp = $at->getTimestamp();
+
+        return CarbonImmutable::createFromTimestamp($timestamp - ($timestamp % self::BUCKET_SECONDS), $at->getTimezone());
+    }
+}

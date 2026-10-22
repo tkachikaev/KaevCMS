@@ -2,6 +2,7 @@
 
 namespace App\Services\Infrastructure;
 
+use App\Support\DisplayFormat;
 use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use PDO;
@@ -107,9 +108,9 @@ final class StorageOverview
             'free_bytes' => $freeBytes,
             'used_percent' => $usedPercent,
             'free_percent' => $freePercent,
-            'total' => $this->formatBytes($totalBytes),
-            'used' => $this->formatBytes($usedBytes),
-            'free' => $this->formatBytes($freeBytes),
+            'total' => DisplayFormat::bytes($totalBytes),
+            'used' => DisplayFormat::bytes($usedBytes),
+            'free' => DisplayFormat::bytes($freeBytes),
             'state' => $state,
         ];
     }
@@ -177,9 +178,9 @@ final class StorageOverview
             'data_bytes' => $dataBytes,
             'index_bytes' => $indexBytes,
             'table_count' => $statistics['table_count'],
-            'total' => $totalBytes !== null ? $this->formatBytes($totalBytes) : null,
-            'data' => $dataBytes !== null ? $this->formatBytes($dataBytes) : null,
-            'indexes' => $indexBytes !== null ? $this->formatBytes($indexBytes) : null,
+            'total' => $totalBytes !== null ? DisplayFormat::bytes($totalBytes) : null,
+            'data' => $dataBytes !== null ? DisplayFormat::bytes($dataBytes) : null,
+            'indexes' => $indexBytes !== null ? DisplayFormat::bytes($indexBytes) : null,
             'error' => $error,
         ];
     }
@@ -315,32 +316,5 @@ final class StorageOverview
             'sqlsrv' => 'SQL Server',
             default => strtoupper($driver),
         };
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes < 1024) {
-            return __(':bytes B', ['bytes' => $bytes]);
-        }
-
-        $units = [__('KB'), __('MB'), __('GB'), __('TB')];
-        $value = $bytes / 1024;
-        $unit = $units[0];
-
-        foreach (array_slice($units, 1) as $nextUnit) {
-            if ($value < 1024) {
-                break;
-            }
-
-            $value /= 1024;
-            $unit = $nextUnit;
-        }
-
-        return number_format(
-            $value,
-            $value >= 10 ? 1 : 2,
-            app()->getLocale() === 'ru' ? ',' : '.',
-            app()->getLocale() === 'ru' ? ' ' : ',',
-        ).' '.$unit;
     }
 }

@@ -50,7 +50,7 @@ final class DashboardPlayerOverviewTest extends TestCase
         });
     }
 
-    public function test_administrator_dashboard_shows_player_counts_without_exposing_private_data(): void
+    public function test_administrator_dashboard_shows_player_counts_and_newest_master_accounts(): void
     {
         $administrator = Admin::factory()->administrator()->create();
         $users = User::factory()->count(3)->create();
@@ -64,16 +64,18 @@ final class DashboardPlayerOverviewTest extends TestCase
         $this->actingAs($administrator, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('data-testid="dashboard-players-card"', false)
-            ->assertSee('Игроки')
-            ->assertSee('Зарегистрировано')
+            ->assertSee('data-testid="dashboard-kpis"', false)
+            ->assertSee('Мастер-аккаунты')
             ->assertSee('Игровые аккаунты')
-            ->assertSee('Персонажи')
-            ->assertSee('>3<', false)
-            ->assertSee('>1<', false)
-            ->assertSee('>2<', false)
-            ->assertDontSee($users[0]->email)
-            ->assertDontSee($users[0]->name);
+            ->assertSee('Персонажи в игре')
+            // Three master accounts, one active game account (the failed one is not
+            // counted), two playable characters (deleted and GM characters are not).
+            ->assertSee('<strong class="dash-kpi-value admin-num">3</strong>', false)
+            ->assertSee('<strong class="dash-kpi-value admin-num">1</strong>', false)
+            ->assertSee('/ 2', false)
+            ->assertSee('data-testid="dashboard-players-card"', false)
+            ->assertSee($users[2]->name)
+            ->assertSee('href="'.route('admin.users.show', $users[0]).'"', false);
     }
 
     public function test_support_metric_uses_the_enabled_module_navigation_badge(): void
@@ -100,31 +102,34 @@ final class DashboardPlayerOverviewTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('Требуют ответа')
+            ->assertSee('1 обращение ждёт ответа')
             ->assertSee('href="'.route('admin.module-pages.support-tickets.index').'"', false);
     }
 
     public function test_editor_dashboard_does_not_expose_player_administration_summary(): void
     {
         $editor = Admin::factory()->editor()->create();
-        User::factory()->create();
+        $user = User::factory()->create();
 
         $this->actingAs($editor, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertDontSee('data-testid="dashboard-players-card"', false);
+            ->assertDontSee('data-testid="dashboard-players-card"', false)
+            ->assertDontSee('Мастер-аккаунты')
+            ->assertDontSee($user->email);
     }
 
-    public function test_dashboard_reuses_existing_cards_metrics_and_links(): void
+    public function test_dashboard_charts_are_drawn_without_inline_styles_or_canvas(): void
     {
         $view = file_get_contents(resource_path('views/admin/dashboard.blade.php'));
-        $css = file_get_contents(public_path('assets/admin/css/infrastructure.css'));
+        $script = file_get_contents(public_path('assets/admin/js/dashboard-charts.js'));
 
         $this->assertIsString($view);
-        $this->assertIsString($css);
-        $this->assertStringContainsString('admin-data-card dashboard-monitor-card dashboard-players-card', $view);
-        $this->assertStringContainsString('dashboard-storage-metrics dashboard-player-metrics', $view);
-        $this->assertStringContainsString('dashboard-player-metric-link', $css);
+        $this->assertIsString($script);
+        // The admin CSP blocks inline style attributes; charts are SVG built by the script.
+        $this->assertStringNotContainsString('style="', $view);
         $this->assertStringNotContainsString('<canvas', $view);
+        $this->assertStringContainsString('data-dash-widget-data', $view);
+        $this->assertStringContainsString('data-dash-widget-data', $script);
     }
 }

@@ -37,12 +37,4 @@ class UpdateUploadLimitTest extends TestCase
         $this->assertSame(4 * 1024 * 1024, (new UpdateUploadLimit(['upload_max_filesize' => '64M', 'post_max_size' => '70M']))->chunkBytes());
         $this->assertSame(64 * 1024, (new UpdateUploadLimit(['upload_max_filesize' => '100K', 'post_max_size' => '100K']))->chunkBytes());
     }
-
-    public function test_sizes_are_formatted_for_people(): void
-    {
-        $this->assertSame('8 MB', UpdateUploadLimit::format(8 * 1024 ** 2));
-        $this->assertSame('15.6 MB', UpdateUploadLimit::format((int) (15.6 * 1024 ** 2)));
-        $this->assertSame('1 GB', UpdateUploadLimit::format(1024 ** 3));
-        $this->assertSame('512 KB', UpdateUploadLimit::format(512 * 1024));
-    }
 }

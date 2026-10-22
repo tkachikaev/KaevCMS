@@ -1,7 +1,7 @@
 @extends('admin.layouts.panel')
 
 @section('title', __('Dashboard'))
-@section('description', __('Server availability, mail delivery and system operations.'))
+@section('description', __('Accounts, servers, payments and what needs attention.'))
 
 @section('content')
 @php
@@ -22,312 +22,322 @@
         'offline' => __('Unavailable'),
         'unknown' => __('Status pending'),
     ];
-    $adminUser = auth('admin')->user();
-    $canRefreshMonitor = ! $adminUser->isReadOnly() && $adminUser->hasPermission(\App\Auth\AdminPermission::DashboardRefresh);
-    $canViewServers = $adminUser->hasPermission(\App\Auth\AdminPermission::ServersView);
-    $canViewMail = $adminUser->hasPermission(\App\Auth\AdminPermission::MailView);
-    $canViewSystem = $adminUser->hasPermission(\App\Auth\AdminPermission::SystemView);
-    $canViewUsers = $adminUser->hasPermission(\App\Auth\AdminPermission::UsersView);
-    $hasDashboardMain = ($canViewSystem && $storageOverview !== null) || ($canViewUsers && $playerOverview !== null);
-    $hasDashboardSide = $canViewServers || $canViewMail;
+    $canRefreshMonitor = ! $admin->isReadOnly() && $admin->hasPermission(\App\Auth\AdminPermission::DashboardRefresh);
+    $canViewServers = $admin->hasPermission(\App\Auth\AdminPermission::ServersView);
+    $canViewMail = $admin->hasPermission(\App\Auth\AdminPermission::MailView);
+    $canViewSystem = $admin->hasPermission(\App\Auth\AdminPermission::SystemView);
+
+    $masterAccounts = $overview['master_accounts'];
+    $gameAccounts = $overview['game_accounts'];
+    $latestMasterAccounts = $overview['latest_master_accounts'];
+    $donations = $overview['donations'];
+    $characters = $playerOverview['characters'] ?? null;
+    $onlineNow = $canViewServers
+        ? collect($monitor['game_servers'])->pluck('players')->filter(static fn ($players) => $players !== null)
+        : collect();
+    $mainTotal = $donations['totals'][0] ?? null;
 @endphp
 
 <div
-    class="admin-dashboard-stack"
+    class="dash"
     data-server-monitor-dashboard
     data-refresh-url="{{ route('admin.server-monitor.status') }}"
-    data-auto-refresh="{{ $monitorRefreshDue && ! $adminUser->isReadOnly() ? '1' : '0' }}"
+    data-auto-refresh="{{ $monitorRefreshDue && ! $admin->isReadOnly() ? '1' : '0' }}"
 >
-    <div class="dashboard-monitor-toolbar" data-testid="dashboard-monitor-toolbar">
-        <small data-monitor-partial @if(! $monitor['partial']) hidden @endif>{{ __('Partial data') }}</small>
-        <span data-monitor-updated>
-            {{ $monitor['checked_at']
-                ? __('Updated :time', ['time' => $monitor['checked_at']->diffForHumans()])
-                : __('Not checked yet') }}
-        </span>
-        @if($canRefreshMonitor)
-            <form method="POST" action="{{ route('admin.server-monitor.refresh') }}">
-                @csrf
-                <button class="button button-secondary button-compact" type="submit">{{ __('Check now') }}</button>
-            </form>
+    {{-- Key figures: master account → game accounts → characters, then money --}}
+    <div class="dash-kpis" data-testid="dashboard-kpis">
+        @if($masterAccounts !== null)
+            <article class="dash-card dash-kpi">
+                <header>
+                    <h2 class="dash-kpi-label">{{ __('Master accounts') }}</h2>
+                    @if($masterAccounts['new_today'] > 0)
+                        <span class="dash-badge dash-badge-success">{{ __('+:count today', ['count' => format_number($masterAccounts['new_today'])]) }}</span>
+                    @endif
+                </header>
+                <strong class="dash-kpi-value admin-num">{{ format_number($masterAccounts['total']) }}</strong>
+                <footer class="dash-kpi-foot">
+                    <span>{{ __('Email confirmed') }}</span>
+                    <strong class="dash-accent-success">{{ $masterAccounts['verified_percent'] !== null ? format_percent($masterAccounts['verified_percent'], 0) : '—' }}</strong>
+                </footer>
+            </article>
+        @endif
+
+        @if($gameAccounts !== null)
+            <article class="dash-card dash-kpi">
+                <header>
+                    <h2 class="dash-kpi-label">{{ __('Game accounts') }}</h2>
+                    @if($gameAccounts['new_today'] > 0)
+                        <span class="dash-badge dash-badge-success">{{ __('+:count today', ['count' => format_number($gameAccounts['new_today'])]) }}</span>
+                    @endif
+                </header>
+                <strong class="dash-kpi-value admin-num">{{ format_number($gameAccounts['total']) }}</strong>
+                <footer class="dash-kpi-foot">
+                    <span>{{ __('Per master account') }}</span>
+                    <strong class="dash-accent-primary">{{ $gameAccounts['per_player'] !== null ? format_number($gameAccounts['per_player'], 1) : '—' }}</strong>
+                </footer>
+            </article>
+        @endif
+
+        @if($playerOverview !== null || $canViewServers)
+            <article class="dash-card dash-kpi">
+                <header>
+                    <h2 class="dash-kpi-label" title="{{ __('Characters online / total') }}">{{ __('Characters in game') }}</h2>
+                </header>
+                <strong class="dash-kpi-value admin-num">
+                    <span class="dash-accent-success">{{ $onlineNow->isNotEmpty() ? format_number($onlineNow->sum()) : '—' }}</span>
+                    <span class="dash-kpi-total">/ {{ $characters !== null ? format_number($characters) : '—' }}</span>
+                </strong>
+                <footer class="dash-kpi-foot">
+                    @if(($overview['online']['peak'] ?? null) !== null)
+                        <span>{{ __('Peak in 30 days: :count', ['count' => format_number($overview['online']['peak'])]) }}</span>
+                    @else
+                        <span>{{ $characters !== null ? __('Characters on game servers') : __('Appears after a game database is connected') }}</span>
+                    @endif
+                    @if($canViewServers && $onlineNow->isNotEmpty())
+                        <strong class="dash-accent-success"><span class="dash-live" aria-hidden="true"></span>{{ __('Live') }}</strong>
+                    @endif
+                </footer>
+            </article>
+        @endif
+
+        @if($donations !== null)
+            <article class="dash-card dash-kpi">
+                <header>
+                    <h2 class="dash-kpi-label">{{ __('Top-ups in 30 days') }}</h2>
+                    @if($mainTotal !== null && $mainTotal['previous'] > 0)
+                        @php $change = ($mainTotal['amount'] - $mainTotal['previous']) / $mainTotal['previous'] * 100; @endphp
+                        <span class="dash-badge {{ $change < 0 ? 'dash-badge-danger' : 'dash-badge-success' }}">{{ ($change >= 0 ? '+' : '−').format_percent(abs($change), 0) }}</span>
+                    @endif
+                </header>
+                <strong class="dash-kpi-value admin-num">{{ $mainTotal !== null ? format_money($mainTotal['amount'], $mainTotal['currency']) : ($donations['currency'] !== null ? format_money(0, $donations['currency']) : '—') }}</strong>
+                <footer class="dash-kpi-foot">
+                    <span>{{ trans_choice('{1} :count payment|[2,*] :count payments', $donations['payments'], ['count' => format_number($donations['payments'])]) }}</span>
+                    <strong>{{ $donations['average'] !== null ? __('average :amount', ['amount' => format_money($donations['average'], $donations['currency'])]) : '' }}</strong>
+                </footer>
+            </article>
         @endif
     </div>
 
-    @if($hasDashboardMain || $hasDashboardSide)
-    <div class="dashboard-monitor-grid {{ ! $hasDashboardMain || ! $hasDashboardSide ? 'dashboard-monitor-grid-single' : '' }}">
-        @if($hasDashboardMain)
-        <div class="dashboard-monitor-main">
-            @if($canViewSystem && $storageOverview !== null)
-            @php
-                $disk = $storageOverview['disk'];
-                $databaseStorage = $storageOverview['database'];
-                $diskPercent = $disk['used_percent'] !== null
-                    ? number_format($disk['used_percent'], 1, app()->getLocale() === 'ru' ? ',' : '.', '')
-                    : null;
-                $diskPercentCss = $disk['used_percent'] !== null
-                    ? number_format($disk['used_percent'], 1, '.', '')
-                    : '0';
-            @endphp
-            <section class="admin-data-card dashboard-monitor-card dashboard-storage-card" data-testid="dashboard-storage-card">
-                <header>
-                    <h2>{{ __('Storage') }}</h2>
-                    <a wire:navigate href="{{ route('admin.settings.system') }}">{{ __('System information') }}</a>
+    {{-- One small chart per metric; lines inside a widget share a unit and a scale --}}
+    @if($chartWidgets !== [])
+    <div class="dash-row dash-row-charts" data-testid="dashboard-trends">
+        @foreach($chartWidgets as $widget)
+            <section class="dash-card dash-widget" data-testid="dashboard-chart-{{ $widget['key'] }}" data-dash-widget>
+                <header class="dash-widget-header">
+                    <h2>{{ $widget['title'] }}</h2>
+                    <span class="dash-period">
+                        <select data-dash-period aria-label="{{ __('Period') }}">
+                            <option value="30" selected>{{ __('30 days') }}</option>
+                            <option value="7">{{ __('7 days') }}</option>
+                            <option value="24">{{ __('24 hours') }}</option>
+                            <option value="5h">{{ __('5 hours') }}</option>
+                            <option value="1h">{{ __('1 hour') }}</option>
+                        </select>
+                    </span>
                 </header>
-
-                <div class="dashboard-storage-body">
-                    <article class="dashboard-storage-section" data-testid="dashboard-disk-storage">
-                        <div class="dashboard-storage-heading">
-                            <div>
-                                <strong>{{ __('Server disk') }}</strong>
-                                <small>{{ __('Space used by KaevCMS files, logs, backups and other data on this filesystem.') }}</small>
-                            </div>
-                            @if($disk['available'])
-                                <span class="status-badge status-badge-{{ $disk['state'] === 'danger' ? 'danger' : ($disk['state'] === 'warning' ? 'warning' : 'success') }}">{{ $diskPercent }}%</span>
-                            @else
-                                <span class="status-badge status-badge-muted">{{ __('Unavailable') }}</span>
-                            @endif
-                        </div>
-
-                        @if($disk['available'])
-                            <progress
-                                class="dashboard-storage-progress dashboard-storage-progress-{{ $disk['state'] }}"
-                                data-testid="dashboard-disk-progress"
-                                role="progressbar"
-                                aria-label="{{ __('Server disk usage') }}"
-                                aria-valuemin="0"
-                                aria-valuemax="100"
-                                aria-valuenow="{{ $diskPercentCss }}"
-                                max="100"
-                                value="{{ $diskPercentCss }}"
-                            >{{ $diskPercent }}%</progress>
-                            <div class="dashboard-storage-summary">
-                                <span>{{ __('Used :used of :total', ['used' => $disk['used'], 'total' => $disk['total']]) }}</span>
-                                <strong>{{ __('Free: :free', ['free' => $disk['free']]) }}</strong>
-                            </div>
-                        @else
-                            <p class="dashboard-storage-unavailable">{{ __('Disk space statistics are unavailable on this server.') }}</p>
-                        @endif
-                    </article>
-
-                    <article class="dashboard-storage-section" data-testid="dashboard-database-storage">
-                        <div class="dashboard-storage-heading">
-                            <div>
-                                <strong>{{ __('KaevCMS database') }}</strong>
-                                <small>
-                                    {{ $databaseStorage['driver_label'] }}
-                                    @if($databaseStorage['version'])
-                                        · {{ __('Version :version', ['version' => $databaseStorage['version']]) }}
-                                    @endif
-                                </small>
-                            </div>
-                            <span class="status-badge {{ $databaseStorage['connected'] ? 'status-badge-success' : 'status-badge-danger' }}">
-                                {{ $databaseStorage['connected'] ? __('Connected') : __('Connection failed') }}
-                            </span>
-                        </div>
-
-                        @if($databaseStorage['connected'] && $databaseStorage['statistics_available'])
-                            <div class="dashboard-storage-metrics">
-                                <div><span>{{ __('Total size') }}</span><strong>{{ $databaseStorage['total'] ?? '—' }}</strong></div>
-                                <div><span>{{ __('Data') }}</span><strong>{{ $databaseStorage['data'] ?? '—' }}</strong></div>
-                                <div><span>{{ __('Indexes') }}</span><strong>{{ $databaseStorage['indexes'] ?? '—' }}</strong></div>
-                                <div><span>{{ __('Tables') }}</span><strong>{{ $databaseStorage['table_count'] !== null ? number_format($databaseStorage['table_count'], 0, '.', ' ') : '—' }}</strong></div>
-                            </div>
-                            @if($databaseStorage['driver'] === 'sqlite' && ($databaseStorage['data'] === null || $databaseStorage['indexes'] === null))
-                                <p class="dashboard-storage-note">{{ __('Separate data and index sizes are not available for this SQLite build.') }}</p>
-                            @endif
-                        @elseif($databaseStorage['connected'])
-                            <p class="dashboard-storage-unavailable">{{ __('Database size statistics are unavailable with the current hosting permissions.') }}</p>
-                        @else
-                            <p class="dashboard-storage-unavailable dashboard-storage-unavailable-danger">{{ __('Could not read database storage statistics because the CMS database is unavailable.') }}</p>
-                        @endif
-                    </article>
-                </div>
+                <div class="dash-widget-series" data-dash-legend role="group" aria-label="{{ __('Visible lines') }}"></div>
+                <div class="dash-widget-chart" data-dash-chart></div>
+                <script type="application/json" data-dash-widget-data>@json($widget)</script>
             </section>
-            @endif
-
-            @if($canViewUsers && $playerOverview !== null)
-            <section class="admin-data-card dashboard-monitor-card dashboard-players-card" data-testid="dashboard-players-card">
-                <header>
-                    <h2>{{ __('Players') }}</h2>
-                    <a wire:navigate href="{{ route('admin.users.index') }}">{{ __('Users') }}</a>
-                </header>
-
-                <div class="dashboard-storage-section">
-                    <div class="dashboard-storage-metrics dashboard-player-metrics">
-                        <div>
-                            <span>{{ __('Registered users') }}</span>
-                            <strong>{{ number_format($playerOverview['registered_users'], 0, '.', ' ') }}</strong>
-                        </div>
-                        <div>
-                            <span>{{ __('Game accounts') }}</span>
-                            <strong>{{ number_format($playerOverview['game_accounts'], 0, '.', ' ') }}</strong>
-                        </div>
-                        <div>
-                            <span>{{ __('Characters') }}</span>
-                            <strong>{{ $playerOverview['characters'] !== null ? number_format($playerOverview['characters'], 0, '.', ' ') : '—' }}</strong>
-                        </div>
-                        @if($playerOverview['support_attention'] !== null && $playerOverview['support_route'])
-                            <a wire:navigate class="dashboard-player-metric-link" href="{{ route($playerOverview['support_route']) }}">
-                                <span>{{ __('Support requests requiring attention') }}</span>
-                                <strong>{{ number_format($playerOverview['support_attention'], 0, '.', ' ') }}</strong>
-                            </a>
-                        @endif
-                    </div>
-
-                    @if($playerOverview['characters_partial'])
-                        <p class="dashboard-storage-note">{{ __('Character count is shown only for game databases currently available to KaevCMS.') }}</p>
-                    @elseif($playerOverview['characters'] === null)
-                        <p class="dashboard-storage-note">{{ __('Character statistics will appear after a game database is configured and available.') }}</p>
-                    @endif
-                </div>
-            </section>
-            @endif
-        </div>
-        @endif
-
-        @if($hasDashboardSide)
-        <div class="dashboard-monitor-side">
-        @if($canViewServers)
-        <section class="admin-data-card dashboard-monitor-card" data-testid="dashboard-game-servers-card">
-            <header>
-                <h2>{{ __('Game servers') }}</h2>
-                <a wire:navigate href="{{ route('admin.settings.game-server') }}">{{ __('Settings') }}</a>
-            </header>
-
-            <div class="admin-compact-list dashboard-monitor-list">
-                @forelse($monitor['game_servers'] as $server)
-                    <a wire:navigate class="admin-compact-row dashboard-monitor-row" data-monitor-admin-game="{{ $server['id'] }}" href="{{ route('admin.settings.game-server') }}">
-                        <span class="dashboard-monitor-dot {{ $server['state'] }}" data-monitor-dot aria-hidden="true"></span>
-                        <span class="dashboard-monitor-name-wrap"><span class="dashboard-monitor-name">{{ $server['name'] }}</span><small data-monitor-details>{{ __('Database: :database · Service: :service', ['database' => $databaseStateLabels[$server['database_state']], 'service' => $serviceStateLabels[$server['service_state']]]) }}</small></span>
-                        <span class="dashboard-monitor-state" data-monitor-state>{{ $stateLabels[$server['state']] }}</span>
-                        <strong class="dashboard-monitor-online" data-monitor-online>
-                            {{ $server['players'] !== null
-                                ? __(':count online', ['count' => number_format($server['players'], 0, '.', ' ')])
-                                : '—' }}
-                        </strong>
-                    </a>
-                @empty
-                    <p class="dashboard-monitor-empty">{{ __('No game servers configured.') }}</p>
-                @endforelse
-            </div>
-        </section>
-
-        <section class="admin-data-card dashboard-monitor-card" data-testid="dashboard-login-servers-card">
-            <header>
-                <h2>{{ __('Login servers') }}</h2>
-                <a wire:navigate href="{{ route('admin.settings.login-server') }}">{{ __('Settings') }}</a>
-            </header>
-
-            <div class="admin-compact-list dashboard-monitor-list">
-                @forelse($monitor['login_servers'] as $server)
-                    <a wire:navigate class="admin-compact-row dashboard-monitor-row dashboard-monitor-row-login" data-monitor-admin-login="{{ $server['id'] }}" href="{{ route('admin.settings.login-server') }}">
-                        <span class="dashboard-monitor-dot {{ $server['state'] }}" data-monitor-dot aria-hidden="true"></span>
-                        <span class="dashboard-monitor-name-wrap"><span class="dashboard-monitor-name">{{ $server['name'] }}</span><small data-monitor-details>{{ __('Database: :database · Service: :service', ['database' => $databaseStateLabels[$server['database_state']], 'service' => $serviceStateLabels[$server['service_state']]]) }}</small></span>
-                        <span class="dashboard-monitor-state" data-monitor-state>{{ $stateLabels[$server['state']] }}</span>
-                    </a>
-                @empty
-                    <p class="dashboard-monitor-empty">{{ __('No login servers configured.') }}</p>
-                @endforelse
-            </div>
-        </section>
-        @endif
-
-        @if($canViewMail)
-        <section class="admin-data-card dashboard-monitor-card">
-            <header>
-                <h2>{{ __('Mail delivery') }}</h2>
-                <a wire:navigate href="{{ route('admin.settings.mail') }}">{{ __('Settings') }}</a>
-            </header>
-            <div class="dashboard-mail-card-body">
-                <div class="dashboard-mail-status">
-                    <span>{{ __('Mode') }}</span>
-                    @if($mailSettings['delivery_mode'] === 'background')
-                        <span class="status-badge {{ $mailSettings['background_supported'] ? 'status-badge-success' : 'status-badge-danger' }}">{{ __('Asynchronous') }}</span>
-                    @elseif($mailSettings['delivery_mode'] === 'database')
-                        <span class="status-badge {{ $mailSettings['database_supported'] ? 'status-badge-success' : 'status-badge-danger' }}">{{ __('Asynchronous with database queue') }}</span>
-                    @else
-                        <span class="status-badge status-badge-muted">{{ __('Synchronous') }}</span>
-                    @endif
-                </div>
-
-                <div class="dashboard-mail-metrics">
-                    <div class="dashboard-mail-metric"><span>{{ __('Waiting') }}</span><strong>{{ $mailDelivery['pending'] }}</strong></div>
-                    <div class="dashboard-mail-metric"><span>{{ __('Errors in 7 days') }}</span><strong>{{ $mailDelivery['failed_recent'] }}</strong></div>
-                </div>
-
-                <div class="dashboard-mail-meta">
-                    <span>{{ $mailDelivery['oldest_pending_at'] ? __('Oldest waiting: :time', ['time' => $mailDelivery['oldest_pending_at']->diffForHumans()]) : __('No emails are waiting.') }}</span>
-                    <span>{{ $mailDelivery['last_sent_at'] ? __('Last successful email: :time', ['time' => $mailDelivery['last_sent_at']->diffForHumans()]) : __('No successful automatic emails recorded yet.') }}</span>
-                </div>
-
-                @if($mailDelivery['stale'])
-                    <p class="dashboard-mail-warning">{{ __('An email has been waiting for more than two minutes. Check the delivery mode and SMTP settings.') }}</p>
-                @elseif($mailSettings['delivery_mode'] === 'background' && ! $mailSettings['background_supported'])
-                    <p class="dashboard-mail-warning">{{ __('The selected asynchronous mode has not passed its support test. Switch to synchronous mode.') }}</p>
-                @elseif($mailSettings['delivery_mode'] === 'database' && ! $mailSettings['database_supported'])
-                    <p class="dashboard-mail-warning">{{ __('The selected asynchronous mode has not passed its support test. Switch to synchronous mode.') }}</p>
-                @endif
-            </div>
-        </section>
-        @endif
-        </div>
-        @endif
+        @endforeach
     </div>
     @endif
 
-    @if($canViewSystem && $runtime !== null)
-        <section class="admin-data-card dashboard-runtime-card">
-            <header>
-                <div>
-                    <h2>{{ __('System operations') }}</h2>
-                    <p>{{ __('Scheduler, queues and jobs that require administrator attention.') }}</p>
-                </div>
-                <a wire:navigate href="{{ route('admin.settings.system.queue') }}">{{ __('Queue details') }}</a>
+    {{-- What needs a decision, live servers, newest accounts --}}
+    <div class="dash-row dash-row-three">        <section class="dash-card dash-attention" data-testid="dashboard-attention">
+            <header class="dash-card-header">
+                <h2>{{ __('Needs attention') }}</h2>
+                @if($attention !== [])
+                    <span class="dash-badge dash-badge-{{ $attention[0]['level'] }} admin-num">{{ format_number(count($attention)) }}</span>
+                @endif
             </header>
-
-            <div class="dashboard-runtime-statuses">
-                @foreach([
-                    __('Laravel scheduler') => $runtime['scheduler'],
-                    __('Queue processing') => $runtime['queue'],
-                ] as $label => $status)
-                    <article class="dashboard-runtime-status">
-                        <span class="system-status-dot {{ $status['state'] }}" aria-hidden="true"></span>
-                        <div>
-                            <strong>{{ $label }}</strong>
-                            <small>{{ $status['details'] }}</small>
-                        </div>
-                        <span class="status-badge status-badge-{{ $status['state'] === 'success' ? 'success' : ($status['state'] === 'danger' ? 'danger' : 'warning') }}">{{ $status['status'] }}</span>
-                    </article>
-                @endforeach
-            </div>
-
-            <div class="dashboard-runtime-metrics">
-                <div><span>{{ __('Pending jobs') }}</span><strong>{{ $runtime['jobs']['pending'] }}</strong></div>
-                <div><span>{{ __('Failed jobs') }}</span><strong>{{ $runtime['jobs']['failed'] }}</strong></div>
-                <div>
-                    <span>{{ __('Oldest pending job') }}</span>
-                    <strong class="dashboard-runtime-time">{{ $runtime['jobs']['oldest_pending_at'] ? $runtime['jobs']['oldest_pending_at']->diffForHumans() : '—' }}</strong>
-                </div>
-                <div>
-                    <span>{{ __('Last successful job') }}</span>
-                    <strong class="dashboard-runtime-time">{{ $runtime['queue']['last_succeeded_at']?->diffForHumans() ?? '—' }}</strong>
-                </div>
-            </div>
-
-            @if($runtime['warnings'] !== [])
-                <div class="dashboard-runtime-warnings">
-                    @foreach($runtime['warnings'] as $warning)
-                        <p>{{ $warning }}</p>
-                    @endforeach
+            @if($attention === [])
+                <div class="dash-attention-ok">
+                    <span class="dash-attention-ok-mark" aria-hidden="true">✓</span>
+                    <div>
+                        <strong>{{ __('Everything is fine') }}</strong>
+                        <p>{{ __('Servers, mail, background jobs and player requests do not need you right now.') }}</p>
+                    </div>
                 </div>
             @else
-                <p class="dashboard-runtime-ok">{{ __('No Scheduler or queue problems detected.') }}</p>
+                <ul class="dash-attention-list">
+                    @foreach($attention as $item)
+                        <li>
+                            <a wire:navigate href="{{ $item['url'] }}" class="dash-attention-item dash-attention-{{ $item['level'] }}">
+                                <span class="dash-attention-dot" aria-hidden="true"></span>
+                                <span>{{ $item['title'] }}</span>
+                                <span class="dash-attention-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
             @endif
         </section>
-    @endif
+
+        @if($canViewServers)
+            <section class="dash-card" data-testid="dashboard-game-servers-card">
+                <header class="dash-card-header">
+                    <h2>{{ __('Servers') }}</h2>
+                    <div class="dash-monitor" data-testid="dashboard-monitor-toolbar">
+                        <small data-monitor-partial @if(! $monitor['partial']) hidden @endif>{{ __('Partial data') }}</small>
+                        <small data-monitor-updated>{{ $monitor['checked_at'] ? __('Updated :time', ['time' => $monitor['checked_at']->diffForHumans()]) : __('Not checked yet') }}</small>
+                        @if($canRefreshMonitor)
+                            <form method="POST" action="{{ route('admin.server-monitor.refresh') }}">
+                                @csrf
+                                <button class="dash-icon-button" type="submit" title="{{ __('Check now') }}" aria-label="{{ __('Check now') }}">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </header>
+                <div class="dash-list" data-testid="dashboard-login-servers-card">
+                    @forelse($monitor['game_servers'] as $server)
+                        <a wire:navigate class="dash-list-row" data-monitor-admin-game="{{ $server['id'] }}" href="{{ route('admin.settings.game-server') }}">
+                            <span class="dashboard-monitor-dot {{ $server['state'] }}" data-monitor-dot aria-hidden="true"></span>
+                            <span class="dash-list-main">
+                                <strong>{{ $server['name'] }}</strong>
+                                <small data-monitor-details>{{ __('Database: :database · Service: :service', ['database' => $databaseStateLabels[$server['database_state']], 'service' => $serviceStateLabels[$server['service_state']]]) }}</small>
+                            </span>
+                            <span class="dash-list-side">
+                                <strong class="admin-num" data-monitor-online>{{ $server['players'] !== null ? __(':count online', ['count' => format_number($server['players'])]) : '—' }}</strong>
+                                <small data-monitor-state>{{ $stateLabels[$server['state']] }}</small>
+                            </span>
+                        </a>
+                    @empty
+                        <p class="dash-empty">{{ __('No game servers configured.') }}</p>
+                    @endforelse
+                    @foreach($monitor['login_servers'] as $server)
+                        <a wire:navigate class="dash-list-row" data-monitor-admin-login="{{ $server['id'] }}" href="{{ route('admin.settings.login-server') }}">
+                            <span class="dashboard-monitor-dot {{ $server['state'] }}" data-monitor-dot aria-hidden="true"></span>
+                            <span class="dash-list-main">
+                                <strong>{{ $server['name'] }}</strong>
+                                <small data-monitor-details>{{ __('Database: :database · Service: :service', ['database' => $databaseStateLabels[$server['database_state']], 'service' => $serviceStateLabels[$server['service_state']]]) }}</small>
+                            </span>
+                            <span class="dash-list-side">
+                                <strong>{{ __('Login server') }}</strong>
+                                <small data-monitor-state>{{ $stateLabels[$server['state']] }}</small>
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if($latestMasterAccounts !== null)
+            <section class="dash-card" data-testid="dashboard-players-card">
+                <header class="dash-card-header">
+                    <h2>{{ __('New master accounts') }}</h2>
+                    <a wire:navigate href="{{ route('admin.users.index') }}">{{ __('All') }}</a>
+                </header>
+                <div class="dash-list">
+                    @forelse($latestMasterAccounts as $account)
+                        @php
+                            $accountState = ! $account['verified'] ? 'warning' : ($account['game_accounts'] === 0 ? 'muted' : 'success');
+                        @endphp
+                        {{-- The state sits under the address so names keep their width in narrow cards --}}
+                        <a wire:navigate class="dash-list-row dash-list-row-account" href="{{ route('admin.users.show', $account['id']) }}">
+                            <span class="dash-state-dot dash-state-{{ $accountState }}" aria-hidden="true"></span>
+                            <span class="dash-list-main">
+                                <strong>{{ $account['name'] }}</strong>
+                                <small>{{ $account['email'] }} · {{ $account['created_at']->diffForHumans() }}</small>
+                                <span class="dash-list-state dash-badge-{{ $accountState }}">
+                                    @if(! $account['verified'])
+                                        {{ __('Email not confirmed') }}
+                                    @elseif($account['game_accounts'] === 0)
+                                        {{ __('No game account') }}
+                                    @else
+                                        {{ trans_choice('{1} :count game account|[2,*] :count game accounts', $account['game_accounts'], ['count' => format_number($account['game_accounts'])]) }}
+                                    @endif
+                                </span>
+                            </span>
+                        </a>
+                    @empty
+                        <p class="dash-empty">{{ __('No master accounts yet. They appear after the first registration on the site.') }}</p>
+                    @endforelse
+                </div>
+            </section>
+        @endif
+    </div>
+    {{-- Money and the system summary --}}
+    <div class="dash-row dash-row-pair">
+        @if($donations !== null)
+            <section class="dash-card" data-testid="dashboard-donations-card">
+                <header class="dash-card-header">
+                    <h2>{{ __('Latest top-ups') }}</h2>
+                    <a wire:navigate href="{{ route($donations['orders_route'] ?? $donations['route']) }}">{{ __('All') }}</a>
+                </header>
+                <div class="dash-list">
+                    @forelse($donations['latest'] as $payment)
+                        <div class="dash-list-row">
+                            <span class="dash-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($payment['player'], 0, 1)) }}</span>
+                            <span class="dash-list-main">
+                                <strong>{{ $payment['player'] }}</strong>
+                                <small>{{ $payment['credited_at']->diffForHumans() }}</small>
+                            </span>
+                            <span class="dash-list-side">
+                                <strong class="dash-amount admin-num">{{ format_money($payment['amount'], $payment['currency']) }}</strong>
+                            </span>
+                        </div>
+                    @empty
+                        <p class="dash-empty">{{ __('No payments yet. They appear here once players top up their balance.') }}</p>
+                    @endforelse
+                </div>
+            </section>
+        @endif
+
+        {{-- System summary: details live on the system pages --}}
+        @if(($canViewSystem && ($runtime !== null || $storageOverview !== null)) || $canViewMail)
+            <section class="dash-card dash-system" data-testid="dashboard-system">
+                <header class="dash-card-header">
+                    <h2>{{ __('System') }}</h2>
+                    @if($canViewSystem)
+                        <a wire:navigate href="{{ route('admin.settings.system') }}">{{ __('System information') }}</a>
+                    @endif
+                </header>
+                <ul class="dash-system-items">
+                    @if($canViewSystem && $runtime !== null)
+                        @foreach([__('Laravel scheduler') => $runtime['scheduler'], __('Queue processing') => $runtime['queue']] as $label => $status)
+                            <li class="dash-system-item">
+                                <span class="dash-system-dot dash-system-{{ $status['state'] === 'success' ? 'success' : ($status['state'] === 'danger' ? 'danger' : 'warning') }}" aria-hidden="true"></span>
+                                <span><small>{{ $label }}</small><strong>{{ $status['status'] }}</strong></span>
+                            </li>
+                        @endforeach
+                    @endif
+                    @if($canViewMail)
+                        <li class="dash-system-item">
+                            <span class="dash-system-dot dash-system-{{ $mailDelivery['stale'] ? 'danger' : ($mailDelivery['failed_recent'] > 0 ? 'warning' : 'success') }}" aria-hidden="true"></span>
+                            <span>
+                                <small>{{ __('Mail') }}</small>
+                                <strong>{{ $mailDelivery['pending'] > 0 ? trans_choice('{1} :count waiting|[2,*] :count waiting', $mailDelivery['pending'], ['count' => format_number($mailDelivery['pending'])]) : __('Nothing waiting') }}</strong>
+                            </span>
+                        </li>
+                    @endif
+                    @if($canViewSystem && $storageOverview !== null)
+                        @php $disk = $storageOverview['disk']; $database = $storageOverview['database']; @endphp
+                        <li class="dash-system-item">
+                            <span class="dash-system-dot dash-system-{{ ! $disk['available'] ? 'muted' : ($disk['state'] === 'danger' ? 'danger' : ($disk['state'] === 'warning' ? 'warning' : 'success')) }}" aria-hidden="true"></span>
+                            <span>
+                                <small>{{ __('Disk') }}</small>
+                                <strong>{{ $disk['available'] ? __(':free free', ['free' => $disk['free']]) : __('Unavailable') }}</strong>
+                            </span>
+                        </li>
+                        <li class="dash-system-item">
+                            <span class="dash-system-dot dash-system-{{ $database['connected'] ? 'success' : 'danger' }}" aria-hidden="true"></span>
+                            <span>
+                                <small>{{ __('Database') }} · {{ $database['driver_label'] }}</small>
+                                <strong>{{ $database['connected'] ? ($database['total'] ?? __('Connected')) : __('Connection failed') }}</strong>
+                            </span>
+                        </li>
+                    @endif
+                </ul>
+            </section>
+        @endif
+    </div>
 </div>
 @endsection
 
 @push('scripts')
 <script src="{{ asset('assets/admin/js/server-monitor.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+<script src="{{ asset('assets/admin/js/dashboard-charts.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
 @endpush

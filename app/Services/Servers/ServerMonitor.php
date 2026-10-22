@@ -18,6 +18,7 @@ final class ServerMonitor
         private readonly ServerDriverRegistry $drivers,
         private readonly ServerConnectionTester $connections,
         private readonly ServerDatabaseState $databaseState,
+        private readonly ServerOnlineHistory $onlineHistory,
     ) {}
 
     /** @return array{login_servers:int,game_servers:int} */
@@ -93,6 +94,7 @@ final class ServerMonitor
                 'online_players' => $players,
                 'online_checked_at' => now(),
             ])->save();
+            $this->onlineHistory->record($gameServer, $players);
         } catch (Throwable $exception) {
             $gameServer->forceFill([
                 'online_players' => null,

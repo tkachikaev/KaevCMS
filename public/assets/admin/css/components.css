@@ -30,29 +30,12 @@
     background: var(--admin-sidebar-bg);
 }
 
-.admin-menu-group-summary {
-    color: var(--admin-sidebar-muted);
-}
-
-.admin-menu-item {
-    border: 1px solid transparent;
-}
-
-a.admin-menu-item:hover {
-    border-color: rgba(148, 163, 184, .08);
-}
-
-.admin-menu-item.active,
-.admin-menu-item[data-current] {
-    border-color: rgba(255, 255, 255, .08);
-    background: var(--admin-primary);
-    box-shadow: 0 5px 16px rgba(37, 99, 235, .24);
-}
-
-a.admin-menu-item.active:hover,
-a.admin-menu-item[data-current]:hover {
-    border-color: rgba(255, 255, 255, .08);
-    background: var(--admin-primary);
+/* Menu entries and groups share one weight and colour; the active entry is marked by a thin
+   accent line on the left (layout.css), not a filled block. */
+.admin-menu-group-summary,
+.admin-menu > .admin-menu-item {
+    color: var(--admin-sidebar-text);
+    font-weight: var(--admin-weight-medium);
 }
 
 .admin-card,
@@ -473,7 +456,9 @@ a.admin-data-card:hover {
 .admin-filter-bar input,
 .admin-filter-bar select {
     min-height: 42px !important;
-    border-color: var(--admin-border-strong) !important;
+    /* A full border: search fields otherwise keep the browser's 2px inset frame. */
+    border: 1px solid var(--admin-border-strong) !important;
+    padding: 0 12px;
     border-radius: var(--admin-radius-control) !important;
     background: var(--admin-surface) !important;
     color: var(--admin-text) !important;
@@ -664,7 +649,6 @@ a.admin-data-card:hover {
 
 /* Existing special cards now consume the shared surface hierarchy. */
 .theme-card,
-.dashboard-monitor-card,
 .system-overview,
 .audit-summary,
 .users-summary,

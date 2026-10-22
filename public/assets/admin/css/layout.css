@@ -34,28 +34,38 @@
 
 /* Panel */
 .admin-shell { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); min-height: 100vh; }
-.admin-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; padding: 22px 16px; overflow-y: auto; overscroll-behavior: contain; background: var(--sidebar); color: var(--sidebar-text); contain: layout paint; }
+/* The gutter is reserved up front: an opening menu group that overflows must not narrow the
+   menu and shift it sideways when the scrollbar appears. */
+.admin-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; padding: 22px 10px 22px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(148,163,184,.28) transparent; background: var(--sidebar); color: var(--sidebar-text); contain: layout paint; }
 .admin-brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.admin-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 800; }
+.admin-brand-mark { display: grid; flex: none; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(79,140,255,.45); border-radius: 4px; background: rgba(79,140,255,.1); color: #8ab4ff; font-size: 15px; font-weight: 600; }
 .admin-brand strong, .admin-brand small { display: block; }
-.admin-brand strong { color: #fff; font-size: 16px; }
-.admin-brand small { color: #9ca3af; font-size: 11px; }
+.admin-brand strong { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.admin-brand small { color: var(--sidebar-muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
 .admin-menu { display: grid; gap: 4px; margin-top: 20px; }
 .admin-menu-group { margin: 1px 0; }
-.admin-menu-group-summary { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 0 10px; border-radius: 7px; color: var(--sidebar-muted); cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; user-select: none; }
+.admin-menu-group-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 0 10px 0 12px; border-left: 2px solid transparent; color: var(--sidebar-text); cursor: pointer; font-size: 13px; font-weight: 500; user-select: none; }
 .admin-menu-group-summary::-webkit-details-marker { display: none; }
 .admin-menu-group-summary::marker { content: ''; }
-.admin-menu-group-summary:hover, .admin-menu-group:has(.admin-menu-item.active) > .admin-menu-group-summary { background: rgba(255,255,255,.04); color: #d1d5db; }
-.admin-menu-group-chevron { font-size: 14px; line-height: 1; transition: transform .16s ease; }
+.admin-menu-group-summary > span:first-child { display: inline-flex; align-items: center; gap: 12px; }
+.admin-menu-group-summary:hover { background: rgba(255,255,255,.04); color: #fff; }
+.admin-menu-group:has(.admin-menu-item.active) > .admin-menu-group-summary { color: #fff; }
+.admin-menu-group-chevron { color: var(--sidebar-muted); font-size: 13px; line-height: 1; transition: transform .16s ease; }
 .admin-menu-group[open] > .admin-menu-group-summary .admin-menu-group-chevron { transform: rotate(180deg); }
-.admin-menu-group-items { display: grid; gap: 4px; padding: 4px 0 5px 8px; }
-.admin-menu-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; padding: 0 11px; border-radius: 7px; color: var(--sidebar-text); }
+.admin-menu-group-items { display: grid; gap: 2px; margin: 2px 0 6px 21px; padding: 0; border-left: 1px solid rgba(148,163,184,.16); }
+.admin-menu-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 38px; padding: 0 11px 0 12px; border-left: 2px solid transparent; color: var(--sidebar-text); font-size: 13px; }
+.admin-menu-item > span:first-child { display: inline-flex; align-items: center; gap: 12px; }
+.admin-menu-group-items .admin-menu-item { min-height: 34px; margin-left: -1px; padding-left: 16px; border-left-width: 1px; color: #b3bccb; }
+.admin-menu-icon { flex: none; width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .78; }
+.admin-menu-group-items .admin-menu-item > span:first-child { gap: 10px; }
+.admin-menu-group-items .admin-menu-icon { width: 15px; height: 15px; opacity: .55; }
 .admin-menu-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
 .admin-menu-badge[hidden] { display: none; }
 
-a.admin-menu-item:hover { background: var(--sidebar-hover); color: #fff; }
-.admin-menu-item.active, .admin-menu-item[data-current] { background: var(--accent); color: #fff; }
-a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { background: var(--accent); color: #fff; }
+a.admin-menu-item:hover { background: rgba(255,255,255,.04); color: #fff; }
+.admin-menu-item.active, .admin-menu-item[data-current] { border-left-color: #4f8cff; background: linear-gradient(90deg, rgba(79,140,255,.16), transparent 78%); color: #fff; }
+.admin-menu-item.active .admin-menu-icon, .admin-menu-item[data-current] .admin-menu-icon, .admin-menu-group:has(.admin-menu-item.active) > .admin-menu-group-summary .admin-menu-icon { color: #8ab4ff; opacity: 1; }
+a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { background: linear-gradient(90deg, rgba(79,140,255,.2), transparent 78%); color: #fff; }
 .admin-menu-item.disabled { color: #6b7280; }
 .admin-menu-item small { font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
 .admin-sidebar-footer { display: grid; gap: 7px; margin-top: auto; padding: 18px 8px 0; border-top: 1px solid rgba(255,255,255,.08); color: #9ca3af; font-size: 11px; }
@@ -64,7 +74,7 @@ a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { backgrou
 .admin-mobile-toolbar, .admin-sidebar-close, .admin-sidebar-backdrop { display: none; }
 .admin-main { min-width: 0; min-height: 100vh; padding: 0 34px 48px; opacity: 1; transition: opacity .12s ease; }
 .admin-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px; min-height: 96px; border-bottom: 1px solid var(--border); }
-.admin-header h1 { margin: 0; font-size: 26px; line-height: 1.2; }
+.admin-header h1 { margin: 0; font-size: var(--admin-text-page); line-height: var(--admin-leading-page); font-weight: var(--admin-weight-semibold); letter-spacing: var(--admin-tracking-tight); }
 .admin-header p { margin: 6px 0 0; color: var(--muted); }
 .admin-user { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; max-width: 100%; margin-left: auto; gap: 16px; }
 .admin-user > div { text-align: right; }
@@ -161,7 +171,7 @@ a.admin-section-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(
     .admin-mobile-menu-icon { display: grid; gap: 4px; }
     .admin-mobile-menu-icon i { display: block; width: 18px; height: 2px; border-radius: 999px; background: currentColor; }
     .admin-mobile-brand { display: inline-flex; align-items: center; min-width: 0; gap: 9px; margin-left: 11px; }
-    .admin-mobile-brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; }
+    .admin-mobile-brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(79,140,255,.45); border-radius: 4px; background: rgba(79,140,255,.1); color: #8ab4ff; font-size: 14px; font-weight: 600; }
     .admin-mobile-brand strong,
     .admin-mobile-brand small { display: block; }
     .admin-mobile-brand strong { overflow: hidden; color: #fff; font-size: 14px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
