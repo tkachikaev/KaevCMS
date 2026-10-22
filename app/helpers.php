@@ -6,6 +6,7 @@ use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
 use App\Services\Localization\LocalizedContentResolver;
 use App\Services\MailSettings;
+use App\Services\Pages\AboutPages;
 use App\Services\Pages\DownloadPages;
 use App\Services\RegistrationSettings;
 use App\Services\SiteSettings;
@@ -294,6 +295,10 @@ if (! function_exists('page_url')) {
             ->pageTranslation($page, $locale);
 
         if ($translation !== null && $languages->isEnabled($translation->locale)) {
+            if (app(AboutPages::class)->selectedId() === $page->id) {
+                return route('localized.about', ['locale' => $translation->locale]);
+            }
+
             return route('localized.pages.show', [
                 'locale' => $translation->locale,
                 'slug' => $translation->slug,

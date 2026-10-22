@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use App\Services\Localization\LanguageManager;
 use App\Services\Localization\LocalizedContentResolver;
+use App\Services\Pages\AboutPages;
 use App\Services\Pages\DownloadPages;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -40,6 +41,11 @@ final class PageController
         /** @var Page $page */
         $page = $matchedTranslation->page()->with('translations')->firstOrFail();
         abort_unless($page->isLive(), 404);
+
+        // The About page lives at /about, above the game server cards.
+        if (app(AboutPages::class)->selectedId() === $page->id) {
+            return redirect()->route('localized.about', ['locale' => $locale], 301);
+        }
 
         $translation = $resolver->pageTranslation($page, $locale);
         abort_if($translation === null, 404);

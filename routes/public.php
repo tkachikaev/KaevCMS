@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -43,7 +44,7 @@ $registerPublicRoutes = static function (bool $localized = false): void {
     }
 
     Route::get('/downloads', DownloadController::class)->name($namePrefix.'downloads');
-    Route::view('/about', 'theme::pages.about')->name($namePrefix.'about');
+    Route::get('/about', AboutController::class)->name($namePrefix.'about');
 
     Route::middleware('guest')->group(function () use ($namePrefix): void {
         Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name($namePrefix.'login');

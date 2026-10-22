@@ -16,6 +16,12 @@
                 <p class="form-hint">{{ __('Keep the downloads address in the default language to connect this page to Download client. The title and text can be changed freely.') }}</p>
             </section>
         @endif
+        @if ($isAboutPage ?? false)
+            <section class="form-card" data-about-page-editor>
+                <div class="settings-card-heading"><div><h2>{{ __('About the server page') }}</h2><p>{{ __('This text opens at /about. The chronicle, rates and mode of each game server are shown below it automatically from the game server settings.') }}</p></div></div>
+                <p class="form-hint">{{ __('Keep the about address in the default language to connect this page to /about. The title and text can be changed freely.') }}</p>
+            </section>
+        @endif
         <section class="form-card translation-editor" data-locale-tabs>
             <div class="settings-card-heading">
                 <div>
@@ -78,7 +84,15 @@
             </x-admin.field>
         </section>
 
-        @if ($pageItem->exists)
+        @if ($pageItem->exists && ($isAboutPage ?? false))
+            <section class="form-card form-card-muted">
+                <h2>{{ __('Page addresses') }}</h2>
+                <code>/about</code>
+                @foreach ($languages as $code => $language)
+                    <code>/{{ $code }}/about</code>
+                @endforeach
+            </section>
+        @elseif ($pageItem->exists)
             <section class="form-card form-card-muted">
                 <h2>{{ __('Page addresses') }}</h2>
                 <code>/pages/{{ $pageItem->slug }}</code>

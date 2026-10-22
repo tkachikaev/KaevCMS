@@ -7,6 +7,7 @@ use App\Models\CmsSetting;
 use App\Models\Page;
 use App\Models\User;
 use App\Services\Html\SafeHtmlSanitizer;
+use App\Services\Pages\AboutPages;
 use App\Services\Pages\DownloadPages;
 use App\Support\Themes\ThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -170,7 +171,8 @@ class ManagedDownloadsTest extends TestCase
         CmsSetting::query()->where('key', DownloadPages::KEY)->delete();
         app(DownloadPages::class)->initialize();
         $this->assertSame($before, $page->fresh()->load('translations')->toArray());
-        $this->assertSame(1, Page::count());
+        // No second downloads page; the only other page is the managed About page.
+        $this->assertSame(1, Page::query()->where('slug', '!=', AboutPages::SLUG)->count());
     }
 
     public function test_content_managers_can_edit_the_whole_page_while_auditors_and_guests_cannot(): void

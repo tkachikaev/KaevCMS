@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
+use App\Services\Pages\AboutPages;
 use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Support\Database\TableExistence;
@@ -30,15 +31,17 @@ class Page extends Model
 
     protected static function booted(): void
     {
-        static::saved(static fn () => self::forgetDownloadPage());
-        static::deleted(static fn () => self::forgetDownloadPage());
+        static::saved(static fn () => self::forgetManagedPages());
+        static::deleted(static fn () => self::forgetManagedPages());
     }
 
-    /** DownloadPages remembers the downloads page for the request; any page write refreshes it. */
-    public static function forgetDownloadPage(): void
+    /** The downloads and about pages are remembered for the request; any page write refreshes them. */
+    public static function forgetManagedPages(): void
     {
-        if (app()->resolved(DownloadPages::class)) {
-            app(DownloadPages::class)->forget();
+        foreach ([DownloadPages::class, AboutPages::class] as $managed) {
+            if (app()->resolved($managed)) {
+                app($managed)->forget();
+            }
         }
     }
 

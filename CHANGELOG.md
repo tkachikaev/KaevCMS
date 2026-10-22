@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **The About the server page is editable.** `/about` showed fixed theme text ending with "its content will be editable in the CMS later". It now shows an editable RU/EN page from **Pages** (reserved `about` address, created once on install or upgrade) above the game server cards, which still come from the game server settings. Without a published page `/about` shows the cards alone; a deleted page is not recreated by upgrades and can be restored with **Create about page** in the page list. `/ru/pages/about` redirects to `/about`.
+
 ## 0.52.0 - 2026-10-22
 
 Bundled module and theme versions are unchanged; `composer.lock` is unchanged (Laravel 13.37, Livewire 4.4.7). Two new migrations run automatically: the online history table and the timestamp repair below.

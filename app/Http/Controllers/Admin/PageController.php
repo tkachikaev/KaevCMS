@@ -8,6 +8,7 @@ use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Services\AuditLogger;
 use App\Services\Localization\LanguageManager;
+use App\Services\Pages\AboutPages;
 use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Services\Pages\PageImageStorage;
@@ -43,26 +44,35 @@ final class PageController extends Controller
             'languages' => $this->languages->enabled(),
             'downloadPageId' => app(DownloadPages::class)->selectedId(),
             'downloadPage' => app(DownloadPages::class)->selected(),
+            'aboutPageId' => app(AboutPages::class)->selectedId(),
+            'aboutPage' => app(AboutPages::class)->selected(),
         ]);
     }
 
     public function create(): View|RedirectResponse
     {
-        $downloads = app(DownloadPages::class);
-        $isDownloadPage = request()->query('template') === DownloadPages::SLUG;
-        if ($isDownloadPage && ($existing = $downloads->selected()) !== null) {
+        // ?template=downloads|about starts a managed page with its fixed address and starter text.
+        $template = match (request()->query('template')) {
+            DownloadPages::SLUG => app(DownloadPages::class),
+            AboutPages::SLUG => app(AboutPages::class),
+            default => null,
+        };
+        if ($template !== null && ($existing = $template->selected()) !== null) {
             return redirect()->route('admin.pages.edit', $existing);
         }
+        $isDownloadPage = $template instanceof DownloadPages;
 
         return view('admin.pages.create', [
             'pageItem' => new Page([
-                'is_published' => $isDownloadPage,
+                'is_published' => $template !== null,
                 'show_in_header' => false,
-                'show_in_footer' => true,
+                // The site menu already links to /about.
+                'show_in_footer' => ! $template instanceof AboutPages,
                 'sort_order' => 100,
             ]),
-            'translations' => $isDownloadPage ? array_replace($this->emptyTranslations(), $downloads->templateTranslations()) : $this->emptyTranslations(),
+            'translations' => $template !== null ? array_replace($this->emptyTranslations(), $template->templateTranslations()) : $this->emptyTranslations(),
             'isDownloadPage' => $isDownloadPage,
+            'isAboutPage' => $template instanceof AboutPages,
             'languages' => $this->languages->enabled(),
             'defaultLocale' => $this->languages->default(),
         ]);
@@ -144,6 +154,11 @@ final class PageController extends Controller
             ]),
         ]));
 
+        if ($preview->slug === AboutPages::SLUG) {
+            return response()->view('theme::pages.about', ['page' => $preview, 'isPreview' => true, 'previewKind' => 'page'])
+                ->header('X-Robots-Tag', 'noindex, nofollow, noarchive');
+        }
+
         $isDownloadPage = $preview->slug === DownloadPages::SLUG;
 
         return response()->view('theme::pages.show', [
@@ -161,6 +176,7 @@ final class PageController extends Controller
         return view('admin.pages.edit', [
             'pageItem' => $page,
             'isDownloadPage' => app(DownloadPages::class)->selectedId() === $page->id,
+            'isAboutPage' => app(AboutPages::class)->selectedId() === $page->id,
             'translations' => $this->translationValues($page),
             'languages' => $this->languages->enabled(),
             'defaultLocale' => $this->languages->default(),

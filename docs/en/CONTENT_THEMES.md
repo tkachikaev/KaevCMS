@@ -43,3 +43,9 @@ Use `.account-tabs` both for navigation links and for Livewire tab buttons; mark
 Installation or the first upgrade creates an editable RU/EN download page with the reserved `downloads` address. Bundled theme download buttons resolve its localized address with `download_page_url()`. All page content, including card headings, descriptions and buttons, lives in the visual editor under **Pages**. Click button text and choose **Link** to set its address and appearance. **Cards**, **Add card**, and **Delete card** manage the layout without HTML. An empty button address stays inactive. Removing cards removes them from the website, with no extra template content appended. An additive upgrade moves the previous cards and saved URLs into each translation exactly once while preserving owner text.
 
 Deleted pages are not recreated by subsequent upgrades. Create a normal page with the `downloads` address in the default language, or use the prefilled form offered in the page list. Missing or unpublished pages show a files-unavailable message. Upgrades preserve existing downloads content and URLs.
+
+## About page
+
+Installation or the first upgrade with this feature creates an editable RU/EN About page with the reserved `about` address. It opens at `/about`: the page text first, then the game server cards (chronicle, rates, mode) from the game server settings. Edit the text under **Pages** like any other page. Addresses such as `/ru/pages/about` redirect to `/about`.
+
+An unpublished or deleted page does not break `/about`: it then shows only the server cards. Deleted pages are not recreated by later upgrades; the page list offers **Create about page** with the starter text and the reserved address.

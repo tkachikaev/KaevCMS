@@ -8,6 +8,12 @@
         @else<a wire:navigate href="{{ route('admin.pages.create', ['template' => 'downloads']) }}">{{ __('Create download page') }}</a>@endif
     </div>
 @endif
+@if (! $aboutPage || ! $aboutPage->isLive())
+    <div class="admin-notice" role="status" data-testid="about-page-notice"><strong>{{ __('About page has no text') }}</strong><p>{{ __('About the server shows only the game server cards.') }}</p>
+        @if ($aboutPage)<a wire:navigate href="{{ route('admin.pages.edit', $aboutPage) }}">{{ __('Edit about page') }}</a>
+        @else<a wire:navigate href="{{ route('admin.pages.create', ['template' => 'about']) }}">{{ __('Create about page') }}</a>@endif
+    </div>
+@endif
 <div class="admin-overview content-toolbar">
     <div class="admin-overview-stat content-stat"><span>{{ __('Total') }}</span><strong>{{ $totalCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('Published') }}</span><strong>{{ $publishedCount }}</strong></div>
@@ -36,9 +42,10 @@
                 </a>
                 <div class="content-row-main">
                     <a wire:navigate class="content-row-title" href="{{ route('admin.pages.edit', $item) }}">{{ $itemTitle }}</a>
-                    <p>/pages/{{ $item->slug }}</p>
+                    <p>{{ $item->id === $aboutPageId ? '/about' : '/pages/'.$item->slug }}</p>
                     <div class="content-row-meta">
                         @if ($item->id === $downloadPageId)<span>{{ __('Download page') }}</span>@endif
+                        @if ($item->id === $aboutPageId)<span>{{ __('About page') }}</span>@endif
                         <span>{{ __('Languages') }}: {{ implode(', ', array_map('strtoupper', $translationCodes)) }}</span>
                         <span>{{ __('Order') }}: {{ $item->sort_order }}</span>
                         @if ($item->show_in_header)<span>{{ __('Header') }}</span>@endif
