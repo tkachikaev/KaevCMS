@@ -265,10 +265,34 @@
                     tooltip.hidden = true;
                     markers.forEach((dot) => { dot.hidden = true; });
                 };
+                // Height of a line, in pixels, at a horizontal position: straight between its two
+                // neighbouring points (null where the line has a gap).
+                const lineYAt = (points, ratio, box) => {
+                    const position = ratio * (labels.length - 1);
+                    const left = points[Math.floor(position)];
+                    const right = points[Math.ceil(position)];
+                    if (!left && !right) return null;
+                    if (!left || !right) return ((left || right).y / HEIGHT) * box.height;
+                    const y = left.y + (right.y - left.y) * (position - Math.floor(position));
+                    return (y / HEIGHT) * box.height;
+                };
                 const show = (event) => {
                     const box = plot.getBoundingClientRect();
                     if (box.width === 0) return;
                     const ratio = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
+                    // The details appear only near a line, not anywhere in the chart's field;
+                    // a finger gets a wider reach than a mouse.
+                    const reach = event.pointerType === 'touch' ? 28 : 16;
+                    const pointerY = event.clientY - box.top;
+                    const nearLine = geometry.some((points) => {
+                        const y = lineYAt(points, ratio, box);
+                        return y !== null && Math.abs(y - pointerY) <= reach;
+                    });
+                    plot.classList.toggle('is-pointing', nearLine);
+                    if (!nearLine) {
+                        hide();
+                        return;
+                    }
                     const index = Math.round(ratio * (labels.length - 1));
                     let highest = HEIGHT;
                     markers.forEach((dot, line) => {
@@ -300,7 +324,10 @@
                 };
                 plot.addEventListener('pointermove', show);
                 plot.addEventListener('pointerdown', show);
-                plot.addEventListener('pointerleave', hide);
+                plot.addEventListener('pointerleave', () => {
+                    plot.classList.remove('is-pointing');
+                    hide();
+                });
 
                 const axis = html('div', 'dash-chart-axis-labels');
                 axis.setAttribute('aria-hidden', 'true');

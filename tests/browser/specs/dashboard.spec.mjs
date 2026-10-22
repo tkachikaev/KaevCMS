@@ -62,6 +62,18 @@ test('dashboard charts switch periods and lines', async ({ page }) => {
     await period.selectOption('7');
     await expect(registrations.locator('.dash-chart-axis-labels')).toContainText('Сегодня');
 
+    // Details appear near a line only, not anywhere in the chart's field. With no
+    // registrations the lines lie on the bottom axis.
+    const plot = registrations.locator('.dash-widget-plot');
+    const tooltip = registrations.locator('.dash-chart-tooltip');
+    const box = await plot.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + 5);
+    await expect(tooltip).toBeHidden();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * (134 / 140));
+    await expect(tooltip).toBeVisible();
+    await page.mouse.move(box.x + box.width / 2, box.y - 40);
+    await expect(tooltip).toBeHidden();
+
     // The choice is remembered per widget.
     await page.reload();
     await expect(page.getByTestId('dashboard-chart-registrations').getByRole('combobox', { name: 'Период' })).toHaveValue('7');
