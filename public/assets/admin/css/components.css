@@ -456,7 +456,9 @@ a.admin-data-card:hover {
 .admin-filter-bar input,
 .admin-filter-bar select {
     min-height: 42px !important;
-    border-color: var(--admin-border-strong) !important;
+    /* A full border: search fields otherwise keep the browser's 2px inset frame. */
+    border: 1px solid var(--admin-border-strong) !important;
+    padding: 0 12px;
     border-radius: var(--admin-radius-control) !important;
     background: var(--admin-surface) !important;
     color: var(--admin-text) !important;

@@ -19,6 +19,9 @@ const signIn = async (page) => {
     await expect(page).toHaveURL(/\/admin$/);
 };
 
+// Shapes come from the design tokens in base.css, so a design change does not need new numbers here.
+const designToken = (page, name) => page.evaluate((token) => getComputedStyle(document.documentElement).getPropertyValue(token).trim(), name);
+
 for (const appearance of ['light', 'dark']) {
     test(`editor link dialog uses shared controls and preserves safe link editing (${appearance})`, async ({ page }) => {
         await page.setViewportSize(appearance === 'dark' ? { width: 390, height: 844 } : { width: 1280, height: 900 });
@@ -124,7 +127,7 @@ test('shared admin fields keep the security-page control dimensions', async ({ p
 
     expect(styles.height).toBeGreaterThanOrEqual(42);
     expect(styles.borderWidth).toBe('1px');
-    expect(parseFloat(styles.borderRadius)).toBeGreaterThanOrEqual(7);
+    expect(styles.borderRadius).toBe(await designToken(page, '--admin-radius-control'));
 });
 
 test('content publication uses the same modern toggle without mobile overflow', async ({ page }) => {
@@ -160,13 +163,14 @@ test('shared cards tabs buttons and filters keep one visual contract', async ({ 
     const search = filter.locator('input[type="search"]');
     const submit = filter.getByRole('button', { name: 'Применить', exact: true });
     await expect(filter).toBeVisible();
-    await expect(search).toHaveCSS('border-radius', '8px');
+    await expect(search).toHaveCSS('border-radius', await designToken(page, '--admin-radius-control'));
+    await expect(search).toHaveCSS('border-top-style', 'solid');
     await expect(submit).toHaveClass(/button-primary/);
 
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets/settings');
     const card = page.locator('.admin-card').first();
     await expect(card).toBeVisible();
-    await expect(card).toHaveCSS('border-radius', '12px');
+    await expect(card).toHaveCSS('border-radius', await designToken(page, '--admin-radius-card'));
     await expect(page.locator('label[for="allow_editor_view"] strong')).toHaveCSS('display', 'block');
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
