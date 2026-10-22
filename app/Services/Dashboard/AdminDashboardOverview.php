@@ -279,7 +279,11 @@ final class AdminDashboardOverview
                 }
             }
             usort($totals, static fn (array $left, array $right): int => $right['amount'] <=> $left['amount']);
-            $main = $totals[0]['currency'] ?? null;
+            // Before the first payment the chart still shows, in a currency players can pay in.
+            $main = $totals[0]['currency'] ?? ($this->tables->has('module_donation_currency_rates')
+                ? DB::table('module_donation_currency_rates')->where('enabled', true)->orderBy('currency_code')->value('currency_code')
+                : null);
+            $main = is_string($main) ? strtoupper($main) : null;
 
             $daily = [];
             $startAt = $start->format('Y-m-d H:i:s');

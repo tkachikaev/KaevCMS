@@ -152,6 +152,39 @@ final class DashboardOverviewTest extends TestCase
         $this->assertSame('Donator', $donations['latest'][0]['player']);
     }
 
+    public function test_top_ups_chart_is_shown_before_the_first_payment(): void
+    {
+        $module = app(ModuleManager::class)->enable('donations');
+        app(ModuleRuntime::class)->bootModule($module);
+        $owner = Admin::factory()->create();
+
+        // No currency players can pay in yet: the chart is there and says there is no data.
+        $overview = app(AdminDashboardOverview::class)->forAdmin($owner);
+        $widget = collect(DashboardTrends::widgets(null, null, $overview['donations']))->firstWhere('key', 'donations');
+        $this->assertNotNull($widget);
+        $this->assertSame('number', $widget['format']);
+        $this->assertSame([], array_filter($widget['series'][0]['days'], static fn ($value) => $value !== null));
+
+        // With an enabled currency it is a zero line in that currency, and the card shows zero.
+        DB::table('module_donation_currency_rates')->insert([
+            ['currency_code' => 'USD', 'exponent' => 2, 'unit_price_minor' => 10, 'enabled' => false, 'created_at' => now(), 'updated_at' => now()],
+            ['currency_code' => 'RUB', 'exponent' => 2, 'unit_price_minor' => 1000, 'enabled' => true, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $overview = app(AdminDashboardOverview::class)->forAdmin($owner);
+        $widget = collect(DashboardTrends::widgets(null, null, $overview['donations']))->firstWhere('key', 'donations');
+        $this->assertSame('RUB', $overview['donations']['currency']);
+        $this->assertSame('money', $widget['format']);
+        $this->assertSame(array_fill(0, 30, 0.0), $widget['series'][0]['days']);
+        $this->assertSame(0, $overview['donations']['payments']);
+        $this->assertNull($overview['donations']['average']);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('data-testid="dashboard-chart-donations"', false)
+            ->assertSee(format_money(0, 'RUB'));
+    }
+
     private function receipt(User $player, string $currency, int $amountMinor, string $status, ?string $creditedAt): void
     {
         $orderId = DB::table('module_donation_orders')->insertGetId([

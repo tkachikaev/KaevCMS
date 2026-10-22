@@ -39,9 +39,22 @@ final class DashboardTrends
             ]);
         }
 
-        if ($donations !== null && $donations['currency'] !== null) {
-            $widgets[] = self::widget('donations', self::text('Top-ups'), 'money', $donations['currency'], $labels, [
-                self::series('amount', self::text('Successful payments'), 'chart-2', 'sum', array_column($donations['days'], 'amount'), $donations['hours'], $donations['minutes'], true),
+        // The top-ups chart is always there while donations are on. Without any currency to
+        // pay in yet it says there is no data instead of drawing a line.
+        if ($donations !== null) {
+            $none = static fn (array $values): array => array_fill(0, count($values), null);
+            $priced = $donations['currency'] !== null;
+            $widgets[] = self::widget('donations', self::text('Top-ups'), $priced ? 'money' : 'number', $donations['currency'], $labels, [
+                self::series(
+                    'amount',
+                    self::text('Successful payments'),
+                    'chart-2',
+                    'sum',
+                    $priced ? array_column($donations['days'], 'amount') : $none($donations['days']),
+                    $priced ? $donations['hours'] : $none($donations['hours']),
+                    $priced ? $donations['minutes'] : $none($donations['minutes']),
+                    true,
+                ),
             ]);
         }
 

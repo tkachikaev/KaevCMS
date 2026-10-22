@@ -109,7 +109,7 @@
                         <span class="dash-badge {{ $change < 0 ? 'dash-badge-danger' : 'dash-badge-success' }}">{{ ($change >= 0 ? '+' : '−').format_percent(abs($change), 0) }}</span>
                     @endif
                 </header>
-                <strong class="dash-kpi-value admin-num">{{ $mainTotal !== null ? format_money($mainTotal['amount'], $mainTotal['currency']) : '—' }}</strong>
+                <strong class="dash-kpi-value admin-num">{{ $mainTotal !== null ? format_money($mainTotal['amount'], $mainTotal['currency']) : ($donations['currency'] !== null ? format_money(0, $donations['currency']) : '—') }}</strong>
                 <footer class="dash-kpi-foot">
                     <span>{{ trans_choice('{1} :count payment|[2,*] :count payments', $donations['payments'], ['count' => format_number($donations['payments'])]) }}</span>
                     <strong>{{ $donations['average'] !== null ? __('average :amount', ['amount' => format_money($donations['average'], $donations['currency'])]) : '' }}</strong>
