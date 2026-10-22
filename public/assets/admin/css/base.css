@@ -1,5 +1,16 @@
 /* KaevCMS administration stylesheet: Design tokens, reset, buttons and notices. */
 
+/* Inter ships with the CMS (SIL OFL, see ../fonts/inter-OFL.txt): the admin CSP allows fonts from
+   this site only, and every administrator should see the same type. Scripts Inter lacks (CJK,
+   Arabic, Hebrew) fall back glyph by glyph to the next fonts of --admin-font-sans. */
+@font-face {
+    font-family: Inter;
+    src: url("../fonts/inter-variable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     color-scheme: light;
 

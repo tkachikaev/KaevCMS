@@ -796,7 +796,7 @@
 .audit-date { white-space: nowrap; }
 .audit-date span { color: var(--muted); font-size: 11px; }
 .audit-muted { margin-top: 3px; color: var(--muted); font-size: 10px; }
-.audit-monospace { font-family: Consolas, "SFMono-Regular", monospace; font-size: 12px; white-space: nowrap; }
+.audit-monospace { font-family: var(--admin-font-mono); font-size: 12px; white-space: nowrap; }
 .audit-details-link { text-align: right !important; }
 .audit-details-link .button { min-height: 34px; padding: 6px 10px; font-size: 11px; }
 .audit-detail-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
@@ -1239,7 +1239,7 @@
 .user-activity-table td:nth-child(2) a { font-weight: 700; }
 .user-activity-table td:nth-child(2) a:hover { color: var(--accent); }
 .user-activity-table td:nth-child(2) code { margin-top: 2px; color: var(--muted); font-size: 10px; }
-.user-activity-monospace { font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; }
+.user-activity-monospace { font-family: var(--admin-font-mono); font-size: 11px; }
 .user-agent-cell { max-width: 220px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (max-width: 1240px) {
@@ -1322,7 +1322,7 @@
     background: #f8fafc;
     color: #1d4ed8;
     cursor: pointer;
-    font-family: Consolas, "SFMono-Regular", monospace;
+    font-family: var(--admin-font-mono);
     font-size: 11px;
 }
 .mail-template-variable:hover { border-color: #93c5fd; background: #eff6ff; }
