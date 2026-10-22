@@ -1,0 +1,81 @@
+import { expect, test } from '@playwright/test';
+import { submitLogin } from '../support/authentication.mjs';
+import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+
+const email = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
+const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'BrowserPassword123!';
+
+const signIn = async (page) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/login');
+    await page.locator('#email').fill(email);
+    await page.locator('#password').fill(password);
+    await submitLogin({
+        page,
+        postPath: '/admin/login',
+        label: 'Administrator login',
+        submit: () => page.getByRole('button', { name: 'Войти в панель' }).click(),
+    });
+    await expect(page).toHaveURL(/\/admin$/);
+};
+
+const expectNoHorizontalOverflow = async (page) => {
+    const widths = await page.evaluate(() => ({
+        client: document.documentElement.clientWidth,
+        scroll: document.documentElement.scrollWidth,
+    }));
+
+    expect(widths.scroll).toBeLessThanOrEqual(widths.client + 1);
+};
+
+test('dashboard shows key figures, the system summary and servers', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await signIn(page);
+
+    const kpis = page.getByTestId('dashboard-kpis');
+    await expect(kpis.getByRole('heading', { name: 'Мастер-аккаунты', exact: true })).toBeVisible();
+    await expect(kpis.getByRole('heading', { name: 'Игровые аккаунты', exact: true })).toBeVisible();
+    await expect(kpis.getByRole('heading', { name: 'Персонажи в игре', exact: true })).toBeVisible();
+
+    const system = page.getByTestId('dashboard-system');
+    await expect(system).toContainText('Диск');
+    await expect(system).toContainText(/База данных · (SQLite|MySQL|MariaDB)/);
+    await expect(system.getByRole('link', { name: 'Системная информация' })).toHaveAttribute('href', /\/admin\/settings\/system$/);
+
+    const toolbar = page.getByTestId('dashboard-monitor-toolbar');
+    await expect(toolbar.getByRole('button', { name: 'Проверить сейчас' })).toBeVisible();
+    expect((await toolbar.boundingBox()).height).toBeLessThanOrEqual(60);
+    await expect(page.getByTestId('dashboard-attention')).toBeVisible();
+});
+
+test('dashboard charts switch periods and lines', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await signIn(page);
+
+    const registrations = page.getByTestId('dashboard-chart-registrations');
+    await expect(registrations.locator('[data-dash-chart] svg')).toBeVisible();
+
+    const week = registrations.getByRole('button', { name: '7 дней' });
+    await week.click();
+    await expect(week).toHaveAttribute('aria-pressed', 'true');
+    await expect(registrations.getByRole('button', { name: '30 дней' })).toHaveAttribute('aria-pressed', 'false');
+
+    // Lines can be hidden, but the last visible line stays.
+    const lines = registrations.locator('.dash-metric');
+    await expect(lines).toHaveCount(2);
+    await lines.nth(1).click();
+    await expect(lines.nth(1)).toHaveAttribute('aria-pressed', 'false');
+    await lines.nth(0).click();
+    await expect(lines.nth(0)).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('dashboard remains readable without horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page);
+
+    await expect(page.getByTestId('dashboard-kpis')).toBeVisible();
+    await expect(page.getByTestId('dashboard-system')).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+
+    await page.setViewportSize({ width: 768, height: 900 });
+    await expectNoHorizontalOverflow(page);
+});

@@ -597,19 +597,14 @@ test('administrator role selector explains the selected access level', async ({ 
 test('dashboard shows administrator runtime diagnostics', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin');
 
-    const runtimeCard = page.locator('.dashboard-runtime-card');
-    await expect(runtimeCard).toBeVisible();
-    await expect(runtimeCard.getByText('Системные процессы')).toBeVisible();
-    await expect(runtimeCard.getByText('Планировщик Laravel')).toBeVisible();
-    await expect(runtimeCard.getByText('Обработка очереди')).toBeVisible();
-    await expect(runtimeCard.getByText('Ожидающие задания')).toBeVisible();
-    await expect(runtimeCard.getByText('Ошибки очереди')).toBeVisible();
-    await expect(runtimeCard.getByText('Очередь почты')).toHaveCount(0);
+    const system = page.getByTestId('dashboard-system');
+    await expect(system).toBeVisible();
+    await expect(system.getByText('Планировщик Laravel')).toBeVisible();
+    await expect(system.getByText('Обработка очереди')).toBeVisible();
 });
 
-test('queue management opens from dashboard diagnostics', async ({ page }) => {
-    await gotoWithLocalNetworkRetry(page, '/admin');
-    await page.locator('.dashboard-runtime-card').getByRole('link', { name: 'Подробнее об очередях' }).click();
+test('queue management shows the current queue state', async ({ page }) => {
+    await gotoWithLocalNetworkRetry(page, '/admin/settings/system/queue');
 
     await expect(page).toHaveURL(/\/admin\/settings\/system\/queue$/);
     await expect(page.getByRole('heading', { name: 'Управление очередями' }).first()).toBeVisible();

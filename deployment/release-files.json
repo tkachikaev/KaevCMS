@@ -599,7 +599,7 @@
     "tests/browser/specs/aurelia-navigation.spec.mjs",
     "tests/browser/specs/aurelia-particles.spec.mjs",
     "tests/browser/specs/content-editor.spec.mjs",
-    "tests/browser/specs/dashboard-storage.spec.mjs",
+    "tests/browser/specs/dashboard.spec.mjs",
     "tests/browser/specs/donations.spec.mjs",
     "tests/browser/specs/managed-downloads.spec.mjs",
     "tests/browser/specs/notification-settings.spec.mjs",

@@ -647,7 +647,6 @@ a.admin-data-card:hover {
 
 /* Existing special cards now consume the shared surface hierarchy. */
 .theme-card,
-.dashboard-monitor-card,
 .system-overview,
 .audit-summary,
 .users-summary,

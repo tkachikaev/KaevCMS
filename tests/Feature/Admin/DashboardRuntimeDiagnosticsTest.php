@@ -34,12 +34,33 @@ class DashboardRuntimeDiagnosticsTest extends TestCase
         $this->actingAs($administrator, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertSee('Системные процессы')
+            ->assertSee('data-testid="dashboard-system"', false)
             ->assertSee('Планировщик Laravel')
             ->assertSee('Обработка очереди')
-            ->assertSee('Ожидающие задания')
-            ->assertSee('Ошибки очереди')
-            ->assertDontSee('Очередь почты');
+            ->assertSee('href="'.route('admin.settings.system').'"', false);
+    }
+
+    public function test_failed_background_jobs_are_listed_as_needing_attention(): void
+    {
+        $administrator = Admin::factory()->administrator()->create();
+        SystemHeartbeat::query()->create([
+            'key' => RuntimeDiagnostics::SCHEDULER_HEARTBEAT,
+            'last_seen_at' => now(),
+        ]);
+        DB::table('failed_jobs')->insert([
+            'uuid' => 'dashboard-failed-job',
+            'connection' => 'database',
+            'queue' => 'default',
+            'payload' => '{}',
+            'exception' => 'RuntimeException',
+            'failed_at' => now(),
+        ]);
+
+        $this->actingAs($administrator, 'admin')
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('1 фоновая задача завершилась с ошибкой')
+            ->assertSee('href="'.route('admin.settings.system.queue').'"', false);
     }
 
     public function test_editor_dashboard_does_not_expose_runtime_diagnostics(): void
@@ -49,8 +70,7 @@ class DashboardRuntimeDiagnosticsTest extends TestCase
         $this->actingAs($editor, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertDontSee('Системные процессы')
             ->assertDontSee('Планировщик Laravel')
-            ->assertDontSee('Ожидающие задания');
+            ->assertDontSee('Обработка очереди');
     }
 }

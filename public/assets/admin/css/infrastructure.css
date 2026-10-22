@@ -635,42 +635,19 @@ small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c
 .dashboard-monitor-toolbar form { margin: 0; }
 .dashboard-monitor-toolbar small { padding: 4px 8px; border-radius: 999px; background: #f3f4f6; color: #6b7280; font-size: 10px; font-weight: 700; }
 .button-compact { min-height: 34px; padding: 6px 12px; font-size: 11px; }
-.dashboard-monitor-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .85fr); gap: 14px; align-items: start; }
-.dashboard-monitor-card { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-.dashboard-monitor-side { display: grid; gap: 14px; align-content: start; }
-.dashboard-monitor-card > header { display: flex; align-items: center; justify-content: space-between; min-height: 50px; padding: 0 16px; border-bottom: 1px solid var(--border); }
-.dashboard-monitor-card h2 { margin: 0; font-size: 15px; }
-.dashboard-monitor-card header a { color: var(--accent); font-size: 11px; font-weight: 700; }
-.dashboard-monitor-list { display: grid; }
-.dashboard-monitor-row { display: grid; grid-template-columns: 10px minmax(120px, 1fr) auto minmax(82px, auto); align-items: center; gap: 10px; min-height: 44px; padding: 8px 16px; border-bottom: 1px solid #eef0f3; }
-.dashboard-monitor-row:last-child { border-bottom: 0; }
-.dashboard-monitor-row:hover { background: #f8fafc; }
-.dashboard-monitor-row-login { grid-template-columns: 10px minmax(120px, 1fr) auto; }
 .dashboard-monitor-dot { width: 9px; height: 9px; border-radius: 999px; background: #9ca3af; }
 .dashboard-monitor-dot.online { background: #22c55e; box-shadow: 0 0 0 3px #dcfce7; }
 .dashboard-monitor-dot.offline { background: #ef4444; box-shadow: 0 0 0 3px #fee2e2; }
 .dashboard-monitor-dot.unknown { background: #9ca3af; box-shadow: 0 0 0 3px #f3f4f6; }
-.dashboard-monitor-name { min-width: 0; overflow: hidden; color: #111827; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.dashboard-monitor-state { color: var(--muted); font-size: 11px; }
-.dashboard-monitor-online { color: #374151; font-size: 11px; text-align: right; }
-.dashboard-monitor-empty { margin: 0; padding: 18px 16px; color: var(--muted); font-size: 12px; }
 .server-advanced-settings { margin-top: 16px; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
 .server-advanced-settings > summary { cursor: pointer; color: #374151; font-size: 12px; font-weight: 700; }
 .server-advanced-settings > p { margin: 8px 0 14px; color: var(--muted); font-size: 11px; }
 .server-advanced-settings .server-form-grid { margin-top: 0; }
 
-@media (max-width: 900px) {
-    .dashboard-monitor-grid { grid-template-columns: 1fr; }
-}
-
 @media (max-width: 680px) {
     .dashboard-monitor-toolbar { align-items: flex-end; flex-direction: column; }
-    .dashboard-monitor-row { grid-template-columns: 10px minmax(100px, 1fr) auto; }
-    .dashboard-monitor-row .dashboard-monitor-state { display: none; }
-    .dashboard-monitor-row-login { grid-template-columns: 10px minmax(100px, 1fr) auto; }
-    .dashboard-monitor-row-login .dashboard-monitor-state { display: block; }
 }
-.dashboard-monitor-name-wrap{display:flex;min-width:0;flex-direction:column}.dashboard-monitor-name-wrap small{overflow:hidden;color:#6b7280;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.dashboard-monitor-dot.configured{background:#d97706;box-shadow:0 0 0 3px #fef3c7}.dashboard-monitor-dot.not_configured{background:#ef4444;box-shadow:0 0 0 3px #fee2e2}.notice-info{border-color:#bfdbfe;background:#eff6ff;color:#1e40af}.security-cleanup-empty{margin:14px 0 0}.security-cleanup-empty p{margin:0}
+.dashboard-monitor-dot.configured{background:#d97706;box-shadow:0 0 0 3px #fef3c7}.dashboard-monitor-dot.not_configured{background:#ef4444;box-shadow:0 0 0 3px #fee2e2}.notice-info{border-color:#bfdbfe;background:#eff6ff;color:#1e40af}.security-cleanup-empty{margin:14px 0 0}.security-cleanup-empty p{margin:0}
 .dashboard-monitor-dot.maintenance{background:#f59e0b;box-shadow:0 0 0 3px #fef3c7}
 
 /* Game server settings tabs and statistics limits 0.16.0 */
@@ -803,14 +780,6 @@ small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c
 .field-info { position: relative; display: inline-grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border: 1px solid var(--border); border-radius: 999px; background: #fff; color: var(--accent); font-size: 12px; font-weight: 800; cursor: help; }
 .field-info::after { position: absolute; z-index: 40; top: calc(100% + 8px); right: 0; width: min(320px, 76vw); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #111827; color: #fff; content: attr(data-tooltip); font-size: 11px; font-weight: 500; line-height: 1.45; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease; }
 .field-info:hover::after, .field-info:focus::after { opacity: 1; transform: translateY(0); }
-.dashboard-mail-card-body { display: grid; gap: 12px; padding: 14px 16px 16px; }
-.dashboard-mail-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.dashboard-mail-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.dashboard-mail-metric { padding: 10px; border: 1px solid #eef0f3; border-radius: 8px; background: #f8fafc; }
-.dashboard-mail-metric span { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
-.dashboard-mail-metric strong { color: #111827; font-size: 16px; }
-.dashboard-mail-meta { display: grid; gap: 5px; color: var(--muted); font-size: 11px; }
-.dashboard-mail-warning { margin: 0; padding: 9px 10px; border: 1px solid #fecaca; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 11px; }
 @media (max-width: 720px) {
     .mail-delivery-options { grid-template-columns: 1fr; }
     .mail-delivery-probes { grid-template-columns: 1fr; }
@@ -843,54 +812,6 @@ small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c
     .admin-path-settings-controls .button { width: 100%; }
     .admin-path-current { display: block; margin-top: 8px; }
 }
-
-/* Settings navigation uses the shared .admin-tabs component. */
-
-
-/* Dashboard storage overview 0.46.2 */
-.dashboard-monitor-main { display: grid; gap: 14px; align-content: start; min-width: 0; }
-.dashboard-monitor-grid-single { grid-template-columns: minmax(0, 1fr); }
-.dashboard-storage-body { display: grid; }
-.dashboard-storage-section { display: grid; gap: 12px; padding: 15px 16px; }
-.dashboard-storage-section + .dashboard-storage-section { border-top: 1px solid var(--border); }
-.dashboard-storage-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.dashboard-storage-heading > div { display: grid; min-width: 0; gap: 3px; }
-.dashboard-storage-heading strong { color: #111827; font-size: 13px; }
-.dashboard-storage-heading small { color: var(--muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
-.dashboard-storage-progress { display: block; width: 100%; height: 9px; overflow: hidden; border: 0; border-radius: 999px; appearance: none; -webkit-appearance: none; background: #e5e7eb; color: var(--accent); }
-.dashboard-storage-progress::-webkit-progress-bar { border-radius: inherit; background: #e5e7eb; }
-.dashboard-storage-progress::-webkit-progress-value { border-radius: inherit; background: var(--accent); }
-.dashboard-storage-progress::-moz-progress-bar { border-radius: inherit; background: var(--accent); }
-.dashboard-storage-progress-warning { color: #d97706; }
-.dashboard-storage-progress-warning::-webkit-progress-value { background: #d97706; }
-.dashboard-storage-progress-warning::-moz-progress-bar { background: #d97706; }
-.dashboard-storage-progress-danger { color: #dc2626; }
-.dashboard-storage-progress-danger::-webkit-progress-value { background: #dc2626; }
-.dashboard-storage-progress-danger::-moz-progress-bar { background: #dc2626; }
-.dashboard-storage-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; }
-.dashboard-storage-summary strong { color: #374151; font-size: 11px; text-align: right; }
-.dashboard-storage-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.dashboard-storage-metrics > div,
-.dashboard-storage-metrics > a { min-width: 0; padding: 10px; border: 1px solid #eef0f3; border-radius: 8px; background: #f8fafc; }
-.dashboard-storage-metrics span { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
-.dashboard-storage-metrics strong { display: block; overflow: hidden; color: #111827; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
-.dashboard-storage-note,
-.dashboard-storage-unavailable { margin: 0; padding: 9px 10px; border: 1px solid #dbeafe; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: 11px; line-height: 1.45; }
-.dashboard-storage-unavailable-danger { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
-@media (max-width: 720px) {
-    .dashboard-storage-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 460px) {
-    .dashboard-storage-heading,
-    .dashboard-storage-summary { align-items: flex-start; flex-direction: column; }
-    .dashboard-storage-summary strong { text-align: left; }
-}
-
-/* Dashboard players overview 0.46.4 */
-.dashboard-player-metrics { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-.dashboard-player-metric-link { display: block; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
-.dashboard-player-metric-link:hover { border-color: #bfdbfe; background: #eff6ff; transform: translateY(-1px); }
-.dashboard-player-metric-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ------------------------------------------------------------------
    Dashboard (design canon: docs/en/DESIGN.md). Tokens only, both themes.

@@ -89,7 +89,7 @@
                 </strong>
                 <footer class="dash-kpi-foot">
                     @if(($overview['online']['peak'] ?? null) !== null)
-                        <span>{{ __('Peak: :count', ['count' => format_number($overview['online']['peak'])]) }}</span>
+                        <span>{{ __('Peak in 30 days: :count', ['count' => format_number($overview['online']['peak'])]) }}</span>
                     @else
                         <span>{{ $characters !== null ? __('Characters on game servers') : __('Appears after a game database is connected') }}</span>
                     @endif

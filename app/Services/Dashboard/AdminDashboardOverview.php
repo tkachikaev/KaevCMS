@@ -8,12 +8,12 @@ use App\Models\RewardDelivery;
 use App\Models\User;
 use App\Models\UserGameAccount;
 use App\Services\Servers\ServerOnlineHistory;
+use App\Support\Database\TableExistence;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -29,6 +29,7 @@ final class AdminDashboardOverview
         private readonly ModuleNavigationRegistry $moduleNavigation,
         private readonly ModuleAdminAccessRegistry $moduleAccess,
         private readonly ServerOnlineHistory $onlineHistory,
+        private readonly TableExistence $tables,
     ) {}
 
     /**
@@ -99,8 +100,11 @@ final class AdminDashboardOverview
         $today = CarbonImmutable::now()->startOfDay();
         $start = $today->subDays(self::SERIES_DAYS - 1);
 
-        $masterTimes = User::query()->where('created_at', '>=', $start)->pluck('created_at')->all();
+        // Raw "Y-m-d H:i:s" strings: a busy month has tens of thousands of registrations,
+        // and building a date object for each of them made the dashboard slow.
+        $masterTimes = User::query()->toBase()->where('created_at', '>=', $start)->pluck('created_at')->all();
         $gameTimes = UserGameAccount::query()
+            ->toBase()
             ->where('creation_status', UserGameAccount::STATUS_ACTIVE)
             ->where('created_at', '>=', $start)
             ->pluck('created_at')
@@ -141,24 +145,29 @@ final class AdminDashboardOverview
      */
     private function countByDay(array $timestamps): array
     {
-        $counts = [];
-        foreach ($timestamps as $timestamp) {
-            $key = CarbonImmutable::parse($timestamp)->toDateString();
-            $counts[$key] = ($counts[$key] ?? 0) + 1;
-        }
+        return $this->countByPrefix($timestamps, 10);
+    }
 
-        return $counts;
+    /**
+     * Keys are "Y-m-d H", the first 13 characters of a stored timestamp.
+     *
+     * @param  list<mixed>  $timestamps
+     * @return array<string, int>
+     */
+    private function countByHour(array $timestamps): array
+    {
+        return $this->countByPrefix($timestamps, 13);
     }
 
     /**
      * @param  list<mixed>  $timestamps
      * @return array<string, int>
      */
-    private function countByHour(array $timestamps): array
+    private function countByPrefix(array $timestamps, int $length): array
     {
         $counts = [];
         foreach ($timestamps as $timestamp) {
-            $key = CarbonImmutable::parse($timestamp)->format('Y-m-d H');
+            $key = substr((string) $timestamp, 0, $length);
             $counts[$key] = ($counts[$key] ?? 0) + 1;
         }
 
@@ -203,7 +212,7 @@ final class AdminDashboardOverview
                 break;
             }
         }
-        if ($route === null || ! Schema::hasTable('module_donation_payment_receipts')) {
+        if ($route === null || ! $this->tables->has('module_donation_payment_receipts')) {
             return null;
         }
 
@@ -221,18 +230,20 @@ final class AdminDashboardOverview
             $payments = (clone $credited)
                 ->where('receipts.credited_at', '>=', $now->subDays(60))
                 ->get(['receipts.currency_code as currency', 'orders.exponent as exponent', 'receipts.received_amount_minor as amount_minor', 'receipts.credited_at as credited_at'])
+                // Times stay "Y-m-d H:i:s" strings, compared as text, like registrations.
                 ->map(static fn (object $row): array => [
                     'currency' => strtoupper((string) $row->currency),
                     'amount' => (int) $row->amount_minor / (10 ** (int) $row->exponent),
-                    'at' => CarbonImmutable::parse((string) $row->credited_at),
+                    'at' => (string) $row->credited_at,
                 ]);
 
             $totals = [];
             $count = [];
+            $monthAgo = $now->subDays(30)->format('Y-m-d H:i:s');
             foreach ($payments as $payment) {
                 $currency = $payment['currency'];
                 $totals[$currency] ??= ['currency' => $currency, 'amount' => 0.0, 'previous' => 0.0];
-                if ($payment['at']->gte($now->subDays(30))) {
+                if ($payment['at'] >= $monthAgo) {
                     $totals[$currency]['amount'] += $payment['amount'];
                     $count[$currency] = ($count[$currency] ?? 0) + 1;
                 } else {
@@ -243,9 +254,10 @@ final class AdminDashboardOverview
             $main = $totals[0]['currency'] ?? null;
 
             $daily = [];
+            $startAt = $start->format('Y-m-d H:i:s');
             foreach ($payments as $payment) {
-                if ($payment['currency'] === $main && $payment['at']->gte($start)) {
-                    $key = $payment['at']->toDateString();
+                if ($payment['currency'] === $main && $payment['at'] >= $startAt) {
+                    $key = substr($payment['at'], 0, 10);
                     $daily[$key] = ($daily[$key] ?? 0.0) + $payment['amount'];
                 }
             }
@@ -255,9 +267,10 @@ final class AdminDashboardOverview
             }
             $hourly = [];
             $currentHour = $now->startOfHour();
+            $firstHourAt = $currentHour->subHours(23)->format('Y-m-d H:i:s');
             foreach ($payments as $payment) {
-                if ($payment['currency'] === $main && $payment['at']->gte($currentHour->subHours(23))) {
-                    $key = $payment['at']->format('Y-m-d H');
+                if ($payment['currency'] === $main && $payment['at'] >= $firstHourAt) {
+                    $key = substr($payment['at'], 0, 13);
                     $hourly[$key] = ($hourly[$key] ?? 0.0) + $payment['amount'];
                 }
             }
@@ -286,7 +299,9 @@ final class AdminDashboardOverview
 
             return [
                 'totals' => $totals,
-                'payments' => array_sum($count),
+                // The card shows the main currency's total and average, so the count beside
+                // them is of the same payments.
+                'payments' => $mainCount,
                 'average' => $mainCount > 0 ? $totals[0]['amount'] / $mainCount : null,
                 'currency' => $main,
                 'days' => $days,

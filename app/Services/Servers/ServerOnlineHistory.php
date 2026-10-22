@@ -61,31 +61,29 @@ final class ServerOnlineHistory
         $today = CarbonImmutable::now()->startOfDay();
         $start = $today->subDays($days - 1);
 
-        $totals = [];
-        DB::table('server_online_samples')
-            ->where('bucket_at', '>=', $start)
-            ->groupBy('bucket_at')
-            ->orderBy('bucket_at')
-            ->get(['bucket_at', DB::raw('SUM(players) as players')])
-            ->each(static function (object $row) use (&$totals): void {
-                $totals[] = ['at' => CarbonImmutable::parse((string) $row->bucket_at), 'players' => (int) $row->players];
-            });
-
+        // 30 days are 8640 buckets: they are grouped by the "Y-m-d" prefix of the stored
+        // time; a date object is built only for the peak.
         $peaks = [];
         $sums = [];
         $counts = [];
         $peak = null;
         $peakAt = null;
-        foreach ($totals as $total) {
-            $key = $total['at']->toDateString();
-            $peaks[$key] = max($peaks[$key] ?? 0, $total['players']);
-            $sums[$key] = ($sums[$key] ?? 0) + $total['players'];
-            $counts[$key] = ($counts[$key] ?? 0) + 1;
-            if ($peak === null || $total['players'] > $peak) {
-                $peak = $total['players'];
-                $peakAt = $total['at'];
-            }
-        }
+        DB::table('server_online_samples')
+            ->where('bucket_at', '>=', $start)
+            ->groupBy('bucket_at')
+            ->orderBy('bucket_at')
+            ->get(['bucket_at', DB::raw('SUM(players) as players')])
+            ->each(static function (object $row) use (&$peaks, &$sums, &$counts, &$peak, &$peakAt): void {
+                $key = substr((string) $row->bucket_at, 0, 10);
+                $players = (int) $row->players;
+                $peaks[$key] = max($peaks[$key] ?? 0, $players);
+                $sums[$key] = ($sums[$key] ?? 0) + $players;
+                $counts[$key] = ($counts[$key] ?? 0) + 1;
+                if ($peak === null || $players > $peak) {
+                    $peak = $players;
+                    $peakAt = (string) $row->bucket_at;
+                }
+            });
 
         $series = [];
         for ($day = $start; $day->lte($today); $day = $day->addDay()) {
@@ -100,8 +98,8 @@ final class ServerOnlineHistory
         return [
             'days' => $series,
             'peak' => $peak,
-            'peak_at' => $peakAt,
-            'average_peak' => $peaks === [] ? null : array_sum($peaks) / count($peaks),
+            'peak_at' => $peakAt === null ? null : CarbonImmutable::parse($peakAt),
+            'average_peak' => $peaks === [] ? null : (float) (array_sum($peaks) / count($peaks)),
         ];
     }
 
@@ -124,7 +122,7 @@ final class ServerOnlineHistory
             ->groupBy('bucket_at')
             ->get(['bucket_at', DB::raw('SUM(players) as players')])
             ->each(static function (object $row) use (&$peaks, &$sums, &$counts): void {
-                $key = CarbonImmutable::parse((string) $row->bucket_at)->startOfHour()->format('Y-m-d H');
+                $key = substr((string) $row->bucket_at, 0, 13);
                 $players = (int) $row->players;
                 $peaks[$key] = max($peaks[$key] ?? 0, $players);
                 $sums[$key] = ($sums[$key] ?? 0) + $players;
