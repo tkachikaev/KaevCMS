@@ -3,10 +3,13 @@
 namespace App\Support\Modules;
 
 use App\Models\ModuleState;
+use App\Support\Database\TableExistence;
+use App\Support\FrameworkCache;
 use Illuminate\Foundation\Application;
+use Illuminate\Routing\CompiledRouteCollection;
+use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Translation\Translator;
 use RuntimeException;
@@ -29,9 +32,15 @@ final class ModuleRuntime
                 $this->bootModule($module);
             } catch (Throwable $exception) {
                 $this->reportFailure($module, $exception, 'boot');
-            } finally {
-                // A partially registered route must immediately see runtime_error,
-                // while a recovered module must stop exposing an old error state.
+                // A partially registered route must immediately see runtime_error.
+                $modules->refresh();
+
+                continue;
+            }
+
+            // A recovered module must stop exposing its old error state. Refreshing
+            // otherwise would only make the next caller scan every module again.
+            if ($this->hadFailure($module)) {
                 $modules->refresh();
             }
         }
@@ -84,8 +93,6 @@ final class ModuleRuntime
         // They are added after the cached/core routes on every normal request,
         // so disabling or replacing a module cannot leave executable stale routes.
         if ($this->shouldRegisterRoutes()) {
-            $routes = Route::getRoutes();
-            $routeCountBeforeModule = count($routes->getRoutes());
             $routePaths = (array) ($module['route_paths'] ?? []);
             if (isset($routePaths['web']) && is_string($routePaths['web'])) {
                 Route::middleware(['web', 'module.enabled:'.$id])
@@ -102,28 +109,42 @@ final class ModuleRuntime
                     ->group($routePaths['admin']);
             }
 
-            // Module routes are registered after Laravel finishes its normal route boot.
-            // Fluent ->name() calls happen after a route is initially added, so re-adding
-            // only the newly registered routes updates named/action lookups for both the
-            // normal and compiled route collections without touching cached core routes.
-            foreach (array_slice($routes->getRoutes(), $routeCountBeforeModule) as $route) {
-                $routes->add($route);
-            }
+            $this->refreshRouteLookups();
         }
 
         $this->booted[$id] = true;
-        $this->clearFailure($id);
+        if ($this->hadFailure($module)) {
+            $this->clearFailure($id);
+        }
+    }
+
+    /** @param array<string, mixed> $module */
+    private function hadFailure(array $module): bool
+    {
+        return is_string($module['last_error'] ?? null) && $module['last_error'] !== '';
+    }
+
+    /**
+     * Module routes are registered after Laravel finishes its normal route boot, and fluent
+     * ->name() calls happen after a route is added, so the name and action lookups must be
+     * rebuilt. With the core route cache the module routes live in the compiled collection's
+     * small fallback collection, whose refresh Laravel skips; rebuilding it directly avoids
+     * creating every cached route object again on each request.
+     */
+    private function refreshRouteLookups(): void
+    {
+        $routes = Route::getRoutes();
+        if ($routes instanceof CompiledRouteCollection) {
+            $routes = (fn (): RouteCollection => $this->routes)->call($routes);
+        }
+
+        $routes->refreshNameLookups();
+        $routes->refreshActionLookups();
     }
 
     private function shouldRegisterRoutes(): bool
     {
-        if (! $this->app->runningInConsole()) {
-            return true;
-        }
-
-        $arguments = array_map('strval', (array) ($_SERVER['argv'] ?? []));
-
-        return array_intersect(['route:cache', 'optimize'], $arguments) === [];
+        return ! FrameworkCache::building($this->app);
     }
 
     /** @param array<string, mixed> $module */
@@ -139,7 +160,7 @@ final class ModuleRuntime
         ]);
 
         try {
-            if (Schema::hasTable('cms_modules')) {
+            if (app(TableExistence::class)->has('cms_modules')) {
                 ModuleState::query()->whereKey($id)->update([
                     'last_error' => mb_substr($stage.': '.$exception::class, 0, 190),
                     'last_error_at' => now(),
@@ -153,7 +174,7 @@ final class ModuleRuntime
     private function clearFailure(string $id): void
     {
         try {
-            if (Schema::hasTable('cms_modules')) {
+            if (app(TableExistence::class)->has('cms_modules')) {
                 ModuleState::query()
                     ->whereKey($id)
                     ->whereNotNull('last_error')

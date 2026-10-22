@@ -3,8 +3,8 @@
 namespace App\Services\Navigation;
 
 use App\Models\NavigationLink;
+use App\Support\Database\TableExistence;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 final class NavigationLinks
@@ -25,7 +25,7 @@ final class NavigationLinks
     private function forLocation(string $column): Collection
     {
         try {
-            if (! Schema::hasTable('navigation_links') || ! Schema::hasTable('navigation_link_translations')) {
+            if (! app(TableExistence::class)->has('navigation_links') || ! app(TableExistence::class)->has('navigation_link_translations')) {
                 return collect();
             }
 

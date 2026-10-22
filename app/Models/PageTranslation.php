@@ -28,6 +28,12 @@ final class PageTranslation extends Model
         'seo_description',
     ];
 
+    protected static function booted(): void
+    {
+        self::saved(static fn () => Page::forgetDownloadPage());
+        self::deleted(static fn () => Page::forgetDownloadPage());
+    }
+
     /** @return BelongsTo<Page, $this> */
     public function page(): BelongsTo
     {

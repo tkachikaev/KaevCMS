@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\GameServer;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\MobiusGameSchemaProfile;
 use Illuminate\Database\Schema\Blueprint;
@@ -37,6 +38,41 @@ class MobiusGameSchemaInspectorTest extends TestCase
         $this->assertSame('karma', $profile->reputationColumn);
         $this->assertTrue($profile->heroesAvailable);
         $this->assertTrue($profile->castlesAvailable);
+    }
+
+    public function test_inspection_reads_one_column_listing_per_table_and_is_remembered_per_server(): void
+    {
+        $this->createCharactersTable('karma');
+        $this->createClanTable();
+        $this->createHeroesTable();
+        $this->createCastleTable();
+        $inspector = app(MobiusGameSchemaInspector::class);
+
+        $queries = 0;
+        DB::listen(static function () use (&$queries): void {
+            $queries++;
+        });
+        $inspector->inspect(DB::connection(), 'Interlude');
+        // Asking column by column cost 55 information_schema queries on a real game database. One
+        // listing per table is 4 queries on MySQL; SQLite needs two statements per listing.
+        $this->assertLessThanOrEqual(8, $queries, 'Inspecting must read each table\'s columns once.');
+
+        $server = GameServer::factory()->create(['chronicle' => 'Interlude']);
+        $inspections = 0;
+        $inspect = static function () use (&$inspections, $inspector): MobiusGameSchemaProfile {
+            $inspections++;
+
+            return $inspector->inspect(DB::connection(), 'Interlude');
+        };
+        $inspector->remembered($server, $inspect);
+        $profile = $inspector->remembered($server, $inspect);
+        $this->assertSame(1, $inspections, 'The character list and statistics must share one remembered profile.');
+        $this->assertSame('karma', $profile->reputationColumn);
+
+        $this->travel(5)->seconds(); // The key holds updated_at to the second.
+        $server->forceFill(['name' => 'Renamed'])->save();
+        $inspector->remembered($server->fresh(), $inspect);
+        $this->assertSame(2, $inspections, 'Editing the server must inspect its database again.');
     }
 
     public function test_inspector_detects_modern_schema_without_optional_tables(): void

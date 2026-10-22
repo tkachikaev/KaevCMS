@@ -13,6 +13,7 @@ use App\Support\Modules\ModuleRuntime;
 use App\Support\Modules\ModuleValidator;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
 use Illuminate\Support\ServiceProvider;
 
 class ModuleServiceProvider extends ServiceProvider
@@ -39,6 +40,14 @@ class ModuleServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleAdminAuthorizer::class);
         $this->app->singleton(ModuleNavigationRegistry::class);
         $this->app->singleton(ModuleGameServerDependencyRegistry::class);
+
+        // Laravel requires the core route cache in an app-booted callback registered after the
+        // module callback below, and the cache replaces the whole route collection, so module
+        // routes vanished after `route:cache`. Load the cache when the route provider boots,
+        // where uncached route files are loaded too; module routes are then added after it.
+        RouteServiceProvider::loadCachedRoutesUsing(static function (Application $app): void {
+            require $app->getCachedRoutesPath();
+        });
     }
 
     public function boot(ModuleManager $modules, ModuleRuntime $runtime): void

@@ -5,13 +5,13 @@ namespace App\Models;
 use App\Services\Localization\LanguageManager;
 use App\Services\News\NewsHtmlSanitizer;
 use App\Services\News\NewsImageStorage;
+use App\Support\Database\TableExistence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -184,7 +184,7 @@ class News extends Model
     private function translationsTableExists(): bool
     {
         try {
-            return Schema::hasTable('news_translations');
+            return app(TableExistence::class)->has('news_translations');
         } catch (Throwable) {
             return false;
         }

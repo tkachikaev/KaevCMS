@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
+use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
+use App\Support\Database\TableExistence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -26,6 +27,20 @@ use Throwable;
 class Page extends Model
 {
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(static fn () => self::forgetDownloadPage());
+        static::deleted(static fn () => self::forgetDownloadPage());
+    }
+
+    /** DownloadPages remembers the downloads page for the request; any page write refreshes it. */
+    public static function forgetDownloadPage(): void
+    {
+        if (app()->resolved(DownloadPages::class)) {
+            app(DownloadPages::class)->forget();
+        }
+    }
 
     protected $fillable = [
         'slug',
@@ -173,7 +188,7 @@ class Page extends Model
     private function translationsTableExists(): bool
     {
         try {
-            return Schema::hasTable('page_translations');
+            return app(TableExistence::class)->has('page_translations');
         } catch (Throwable) {
             return false;
         }

@@ -4,17 +4,21 @@ namespace App\Support\Modules;
 
 use App\Models\ModuleMigration;
 use App\Models\ModuleState;
+use App\Support\Database\TableExistence;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use ReflectionMethod;
 use RuntimeException;
 use Throwable;
 
 final class ModuleMigrationManager
 {
+    /** @var array<string, Collection<string, ModuleMigration>>|null */
+    private ?array $appliedByModule = null;
+
     public function __construct(
         private readonly int $lockSeconds,
         private readonly Filesystem $files,
@@ -53,11 +57,7 @@ final class ModuleMigrationManager
         }
 
         try {
-            $applied = ModuleMigration::query()
-                ->where('module_id', (string) $module['id'])
-                ->orderBy('id')
-                ->get()
-                ->keyBy('migration');
+            $applied = $this->appliedFor((string) $module['id']);
         } catch (Throwable) {
             if ($declared) {
                 $result['tracking_available'] = false;
@@ -345,10 +345,34 @@ final class ModuleMigrationManager
         return $checksum;
     }
 
+    /**
+     * Applied migrations of every module, read with one query per request: inspecting each
+     * module at boot otherwise cost a query per module. ModuleMigration writes reset it.
+     *
+     * @return Collection<string, ModuleMigration>
+     */
+    private function appliedFor(string $moduleId): Collection
+    {
+        if ($this->appliedByModule === null) {
+            $grouped = [];
+            foreach (ModuleMigration::query()->orderBy('id')->get() as $migration) {
+                $grouped[$migration->module_id][$migration->migration] = $migration;
+            }
+            $this->appliedByModule = array_map(static fn (array $rows): Collection => new Collection($rows), $grouped);
+        }
+
+        return $this->appliedByModule[$moduleId] ?? new Collection;
+    }
+
+    public function forgetApplied(): void
+    {
+        $this->appliedByModule = null;
+    }
+
     private function trackingTableExists(): bool
     {
         try {
-            return Schema::hasTable('cms_module_migrations');
+            return app(TableExistence::class)->has('cms_module_migrations');
         } catch (Throwable) {
             return false;
         }

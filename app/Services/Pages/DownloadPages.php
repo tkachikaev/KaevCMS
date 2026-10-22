@@ -14,6 +14,9 @@ final class DownloadPages
 
     public const EDITABLE_KEY = 'content.downloads_editable_blocks_initialized';
 
+    /** The header and the footer both link to this page; false = not read yet in this request. */
+    private Page|false|null $selected = false;
+
     public function selectedId(): ?int
     {
         return $this->selected()?->id;
@@ -21,7 +24,17 @@ final class DownloadPages
 
     public function selected(): ?Page
     {
-        return Page::query()->with('translations')->where('slug', self::SLUG)->first();
+        if ($this->selected === false) {
+            $this->selected = Page::query()->with('translations')->where('slug', self::SLUG)->first();
+        }
+
+        return $this->selected;
+    }
+
+    /** Page and translation writes call this, so a changed page is read again. */
+    public function forget(): void
+    {
+        $this->selected = false;
     }
 
     /** Install once. An intentionally cleared or deleted page is never recreated by an update. */

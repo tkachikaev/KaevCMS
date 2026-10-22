@@ -22,6 +22,7 @@ foreach ($guides as $language => $path) {
         'composer check-platform-reqs --no-dev',
         'client_max_body_size 512m',
         'fastcgi_pass unix:/run/php/php8.3-fpm.sock;',
+        'fastcgi_read_timeout 120s;',
         'location = /index.php',
         'location = /install/index.php',
         'location ^~ /uploads/',

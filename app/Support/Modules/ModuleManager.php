@@ -3,11 +3,11 @@
 namespace App\Support\Modules;
 
 use App\Models\ModuleState;
+use App\Support\Database\TableExistence;
 use Carbon\CarbonInterface;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -318,7 +318,7 @@ final class ModuleManager
     private function stateTableExists(): bool
     {
         try {
-            return Schema::hasTable('cms_modules');
+            return app(TableExistence::class)->has('cms_modules');
         } catch (Throwable) {
             return false;
         }

@@ -288,6 +288,9 @@ server {
     location = /index.php {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        # Вход и регистрация намеренно хешируют пароль медленно: при всплеске регистраций
+        # запросы ждут процессор дольше стандартных 60 секунд nginx.
+        fastcgi_read_timeout 120s;
     }
 
     location = /install/index.php {

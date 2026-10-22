@@ -24,3 +24,9 @@ Run every minute:
 On a VDS, use the cron file from [Ubuntu VDS, step 13](VDS_UBUNTU.md#13-configure-the-scheduler).
 
 On hosting without a persistent worker, the scheduler command `kaevcms:queue-drain` processes the database queues `mail-probe,mail,default` in priority order. Runtime diagnostics report scheduler heartbeat, pending jobs, failures, and mail delivery state without exposing payloads.
+
+## When the mail provider is unavailable
+
+A queued message keeps trying for 30 minutes: up to five real failures with pauses of 1, 3, 5 and 10 minutes. As soon as the provider does not answer, all queued mail pauses for a minute without using up its tries, so a provider that hangs does not block the other jobs. The provider gets 10 seconds to answer. Messages that are still not sent after 30 minutes stay in failed jobs: retry them on the admin queue page, or the player requests a new link.
+
+Without a persistent worker `kaevcms:queue-drain` sends at most 100 messages per minute. During a sign-up burst mail arrives a few minutes late but is not lost (measurements: `tests/load/RESULTS.md`).

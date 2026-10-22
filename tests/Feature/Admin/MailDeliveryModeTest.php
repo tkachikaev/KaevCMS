@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\BackgroundQueue;
 use Illuminate\Queue\DatabaseQueue;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -470,6 +471,63 @@ class MailDeliveryModeTest extends TestCase
             'id' => $deliveryId,
             'status' => MailDelivery::STATUS_SENT,
         ]);
+    }
+
+    public function test_queued_mail_pauses_for_an_unreachable_provider_without_failing_and_sends_afterwards(): void
+    {
+        // A port nothing listens on: the provider refuses like a server that is down.
+        $probe = stream_socket_server('tcp://127.0.0.1:0');
+        $this->assertNotFalse($probe);
+        $port = (int) substr((string) strrchr((string) stream_socket_get_name($probe, false), ':'), 1);
+        fclose($probe);
+        app(MailSettings::class)->update([
+            'host' => '127.0.0.1', 'port' => $port, 'encryption' => 'none', 'username' => '', 'password' => null,
+            'from_address' => 'noreply@example.test', 'from_name' => 'KaevCMS', 'admin_email' => '',
+        ]);
+
+        $monitor = app(MailDeliveryMonitor::class);
+        $deliveries = [];
+        foreach (range(1, 3) as $index) {
+            $user = User::query()->create(['name' => 'player'.$index, 'email' => "player{$index}@example.com", 'password' => Hash::make('Password123')]);
+            $deliveries[] = $deliveryId = $monitor->start($user->id, 'email_verification', $user->email, MailSettings::MODE_DATABASE);
+            dispatch(new SendUserMailNotification($user, new VerifyEmailNotification, $deliveryId))->onConnection('database')->onQueue('mail');
+        }
+
+        $this->artisan('queue:work', ['connection' => 'database', '--queue' => 'mail', '--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0]);
+
+        $this->assertTrue(Cache::has(SendUserMailNotification::PROVIDER_PAUSE_KEY), 'The first refusal must pause queued mail.');
+        $this->assertSame(3, DB::table('jobs')->where('queue', 'mail')->count(), 'Paused and failed-once mail stays queued.');
+        $this->assertSame(0, DB::table('failed_jobs')->count(), 'A provider outage must not use up the messages.');
+        $this->assertSame(3, DB::table('mail_deliveries')->whereIn('id', $deliveries)->where('status', MailDelivery::STATUS_PENDING)->count());
+
+        // The provider is back and the pause is over.
+        Cache::forget(SendUserMailNotification::PROVIDER_PAUSE_KEY);
+        DB::table('jobs')->update(['available_at' => now()->getTimestamp()]);
+        Notification::fake();
+        $this->artisan('queue:work', ['connection' => 'database', '--queue' => 'mail', '--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0]);
+
+        $this->assertSame(0, DB::table('jobs')->where('queue', 'mail')->count());
+        $this->assertSame(3, DB::table('mail_deliveries')->whereIn('id', $deliveries)->where('status', MailDelivery::STATUS_SENT)->count());
+    }
+
+    public function test_queued_mail_keeps_trying_for_half_an_hour_and_sync_mail_ignores_the_pause(): void
+    {
+        $user = $this->createUser();
+        $job = new SendUserMailNotification($user, new VerifyEmailNotification, null);
+        $this->assertSame(5, $job->maxExceptions);
+        $this->assertEqualsWithDelta(now()->addMinutes(30)->getTimestamp(), $job->retryUntil()->getTimestamp(), 5);
+
+        dispatch($job)->onConnection('database')->onQueue('mail');
+        $payload = json_decode((string) DB::table('jobs')->value('payload'), true);
+        $this->assertSame(5, $payload['maxExceptions']);
+        $this->assertNotNull($payload['retryUntil'], 'The deadline is fixed when the mail is queued.');
+
+        // Synchronous delivery answers the request itself and never waits for the pause.
+        Cache::put(SendUserMailNotification::PROVIDER_PAUSE_KEY, true, 60);
+        Notification::fake();
+        $deliveryId = app(MailDeliveryMonitor::class)->start($user->id, 'email_verification', $user->email, MailSettings::MODE_SYNC);
+        (new SendUserMailNotification($user, new VerifyEmailNotification, $deliveryId))->handle(app(MailSettings::class), app(MailDeliveryMonitor::class));
+        Notification::assertSentTo($user, VerifyEmailNotification::class);
     }
 
     public function test_sensitive_mail_job_payload_is_encrypted_in_database_and_failed_queue_storage(): void

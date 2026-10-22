@@ -19,7 +19,26 @@ final class LanguageManager
 
     public function __construct(private readonly CmsSettings $settings) {}
 
-    /** @return array<string, array{code:string,name:string,native_name:string,direction:string,fallback:string,author:string,built_in:bool,coverage:int}> */
+    /**
+     * Translation coverage parses every JSON translation file (over a megabyte), so it is
+     * computed only for the languages settings page, never on ordinary requests.
+     *
+     * @return array<string, array{code:string,name:string,native_name:string,direction:string,fallback:string,author:string,built_in:bool,coverage:int}>
+     */
+    public function installedWithCoverage(): array
+    {
+        $reference = $this->translationKeys('en');
+        if ($reference === []) {
+            $reference = $this->translationKeys('ru');
+        }
+
+        return array_map(
+            fn (array $language): array => $language + ['coverage' => $this->coverageAgainst($reference, $language['code'])],
+            $this->installed(),
+        );
+    }
+
+    /** @return array<string, array{code:string,name:string,native_name:string,direction:string,fallback:string,author:string,built_in:bool}> */
     public function installed(): array
     {
         if ($this->installedCache !== null) {
@@ -60,7 +79,6 @@ final class LanguageManager
                 'fallback' => $this->normalizeCode((string) ($metadata['fallback'] ?? 'en')) ?? 'en',
                 'author' => trim((string) ($metadata['author'] ?? '')),
                 'built_in' => in_array($code, (array) config('localization.built_in', ['ru', 'en']), true),
-                'coverage' => $this->coverage($code),
             ];
         }
 
@@ -257,6 +275,12 @@ final class LanguageManager
             $reference = $this->translationKeys('ru');
         }
 
+        return $this->coverageAgainst($reference, $locale);
+    }
+
+    /** @param array<int, string> $reference */
+    private function coverageAgainst(array $reference, string $locale): int
+    {
         if ($reference === []) {
             return 100;
         }

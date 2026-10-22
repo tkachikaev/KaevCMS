@@ -8,6 +8,7 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
+use App\Services\GameWorld\MobiusGameSchemaProfile;
 use App\Services\Servers\MySqlSessionQueryTimeout;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\ExternalGameAccountState;
@@ -18,6 +19,7 @@ use Closure;
 use DateTimeInterface;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PDO;
@@ -140,8 +142,10 @@ final class ExternalGameAccountGateway implements GameAccountGateway
         return $this->withGameConnection(
             $gameServer,
             function (Connection $database) use ($gameServer, $login, $limit, $createdAtColumn): array {
-                $schema = $database->getSchemaBuilder();
-                $profile = $this->schemas->inspect($database, (string) $gameServer->chronicle);
+                $profile = $this->schemas->remembered(
+                    $gameServer,
+                    fn (): MobiusGameSchemaProfile => $this->schemas->inspect($database, (string) $gameServer->chronicle),
+                );
                 $query = $database->table('characters')
                     ->where('characters.account_name', $login)
                     ->where('characters.deletetime', 0)
@@ -159,7 +163,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
                     $query->selectRaw('0 as hero');
                 }
 
-                if ($createdAtColumn !== null && $schema->hasColumn('characters', $createdAtColumn)) {
+                if ($createdAtColumn !== null && $this->hasCharacterColumn($database, $gameServer, $createdAtColumn)) {
                     $query->addSelect('characters.'.$createdAtColumn.' as character_created_at');
                 } else {
                     $query->selectRaw('NULL as character_created_at');
@@ -317,6 +321,20 @@ final class ExternalGameAccountGateway implements GameAccountGateway
         $driverCode = $exception->errorInfo[1] ?? null;
 
         return (string) $exception->getCode() === '23000' && (int) $driverCode === 1062;
+    }
+
+    /** Remembered like the schema profile: checking reads information_schema on the game database. */
+    private function hasCharacterColumn(Connection $database, GameServer $gameServer, string $column): bool
+    {
+        if (! $gameServer->exists) {
+            return $database->getSchemaBuilder()->hasColumn('characters', $column);
+        }
+
+        return (bool) Cache::remember(
+            implode(':', ['mobius-character-column-v1', $gameServer->id, $gameServer->updated_at?->getTimestamp() ?? 0, $column]),
+            now()->addMinutes(5),
+            static fn (): bool => $database->getSchemaBuilder()->hasColumn('characters', $column),
+        );
     }
 
     private function characterCreatedAtColumn(GameServer $gameServer): ?string

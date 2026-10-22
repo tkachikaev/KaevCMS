@@ -19,7 +19,7 @@ class LanguageSettingsController extends Controller
     public function languages(LanguageManager $languages): View
     {
         return view('admin.settings.languages', [
-            'installedLanguages' => $languages->installed(),
+            'installedLanguages' => $languages->installedWithCoverage(),
             'enabledLocales' => $languages->enabledCodes(),
             'defaultLocale' => $languages->default(),
             'fallbackLocale' => $languages->fallback(),

@@ -9,6 +9,18 @@ final class GameAssetUrlResolver
 {
     private const EXTENSIONS = ['webp', 'png', 'jpg', 'jpeg'];
 
+    /**
+     * Characters of one race, gender and archetype share an avatar, and an absent server folder
+     * would otherwise cost every candidate file check again. The resolver is request-scoped,
+     * so a newly uploaded image is seen by the next request.
+     *
+     * @var array<string, string|null>
+     */
+    private array $resolved = [];
+
+    /** @var array<string, bool> */
+    private array $directories = [];
+
     public function __construct(private readonly GameItemProfileCatalog $catalogs) {}
 
     public function itemIcon(GameServer|int $server, int $itemId): ?string
@@ -88,6 +100,17 @@ final class GameAssetUrlResolver
     /** @param list<string> $keys */
     private function resolveUploaded(string $category, ?int $serverId, array $keys): ?string
     {
+        $memoKey = $category.'|'.($serverId ?? 0).'|'.implode('|', $keys);
+        if (array_key_exists($memoKey, $this->resolved)) {
+            return $this->resolved[$memoKey];
+        }
+
+        return $this->resolved[$memoKey] = $this->findUploaded($category, $serverId, $keys);
+    }
+
+    /** @param list<string> $keys */
+    private function findUploaded(string $category, ?int $serverId, array $keys): ?string
+    {
         $scopeBases = [];
         if ($serverId !== null && $serverId > 0) {
             $scopeBases[] = $category.'/servers/'.$serverId;
@@ -95,6 +118,11 @@ final class GameAssetUrlResolver
         $scopeBases[] = $category.'/common';
 
         foreach ($scopeBases as $scopeBase) {
+            $directory = $this->rootPath().DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $scopeBase);
+            if (! ($this->directories[$directory] ??= File::isDirectory($directory))) {
+                continue;
+            }
+
             foreach ($keys as $key) {
                 foreach (self::EXTENSIONS as $extension) {
                     $relativePath = $scopeBase.'/'.$key.'.'.$extension;

@@ -5,13 +5,13 @@ namespace App\Services\Notifications;
 use App\Auth\AdminPermission;
 use App\Models\Admin;
 use App\Models\AdminNotification;
+use App\Support\Database\TableExistence;
 use App\Support\Notifications\AdminNotificationData;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Throwable;
@@ -23,7 +23,7 @@ final class AdminNotificationCenter
     public function available(): bool
     {
         try {
-            return Schema::hasTable('admin_notifications');
+            return app(TableExistence::class)->has('admin_notifications');
         } catch (Throwable) {
             return false;
         }

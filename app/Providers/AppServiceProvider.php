@@ -12,6 +12,7 @@ use App\Services\Admin\AdminPathSettings;
 use App\Services\AdminLoginService;
 use App\Services\AdminTwoFactorAuthentication;
 use App\Services\AuditLogger;
+use App\Services\CmsSettings;
 use App\Services\GameAccountSettings;
 use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\GameAssets\GameItemCatalog;
@@ -32,6 +33,7 @@ use App\Services\News\NewsImageStorage;
 use App\Services\Notifications\AdminNotificationCenter;
 use App\Services\Notifications\AdminNotificationSettings;
 use App\Services\Notifications\AdminNotificationSourceScanner;
+use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Services\Pages\PageImageStorage;
 use App\Services\Pages\PageNavigation;
@@ -44,12 +46,19 @@ use App\Services\Settings\SettingsImageStorage;
 use App\Services\SiteSettings;
 use App\Services\Updates\VdsUpdateAgent;
 use App\Services\Wallet\CoreWalletGateway;
+use App\Support\Database\MySqlConnection;
+use App\Support\Database\TableExistence;
+use App\Support\FrameworkCache;
+use App\Support\Modules\ModuleMigrationManager;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -61,8 +70,12 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Old MariaDB and MySQL 5.7 must create timestamps like MySQL 8; see MySqlSchemaGrammar.
+        Connection::resolverFor('mysql', static fn ($pdo, string $database, string $prefix, array $config): MySqlConnection => new MySqlConnection($pdo, $database, $prefix, $config));
+
         $this->app->extend('auth.password', fn ($manager, $app): UtcPasswordBrokerManager => new UtcPasswordBrokerManager($app));
         $this->app->scoped(AccountAvatarCatalog::class);
+        $this->app->singleton(TableExistence::class);
         $this->app->singleton(AdminPathSettings::class);
         $this->app->singleton(AdminLoginService::class);
         $this->app->singleton(AdminNotificationSettings::class);
@@ -73,8 +86,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WalletGateway::class, CoreWalletGateway::class);
         $this->app->singleton(GameAccountSettings::class);
         $this->app->singleton(GameItemProfileCatalog::class);
-        $this->app->singleton(GameAssetUrlResolver::class);
-        $this->app->singleton(GameItemCatalog::class);
+        // Request-scoped: both remember image lookups, which must not outlive a queue job.
+        $this->app->scoped(GameAssetUrlResolver::class);
+        $this->app->scoped(GameItemCatalog::class);
         $this->app->singleton(GameServerSettings::class);
         $this->app->singleton(RuntimeDiagnostics::class);
         $this->app->singleton(PublicUploadProtection::class);
@@ -91,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PageHtmlSanitizer::class);
         $this->app->singleton(PageImageStorage::class);
         $this->app->singleton(PageNavigation::class);
+        $this->app->singleton(DownloadPages::class);
         $this->app->singleton(RegistrationSettings::class);
         $this->app->singleton(EncryptionHealth::class);
         $this->app->singleton(SecurityLogMaintenance::class);
@@ -111,6 +126,15 @@ class AppServiceProvider extends ServiceProvider
         PublicUploadProtection $publicUploadProtection,
     ): void {
         $publicUploadProtection->ensure();
+
+        // Remembered table existence and settings must not outlive a schema change.
+        Event::listen(MigrationsEnded::class, function (): void {
+            $this->app->make(TableExistence::class)->forget();
+            $this->app->make(CmsSettings::class)->forget();
+            if ($this->app->resolved(ModuleMigrationManager::class)) {
+                $this->app->make(ModuleMigrationManager::class)->forgetApplied();
+            }
+        });
 
         Livewire::addPersistentMiddleware([
             RequireAdminAuthentication::class,
@@ -158,14 +182,23 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureRateLimiters($securitySettings);
 
-        $defaultLocale = $languages->default();
-        $fallbackLocale = $languages->fallback();
-        config()->set('app.locale', $defaultLocale);
-        config()->set('app.fallback_locale', $fallbackLocale);
-        app()->setLocale($defaultLocale);
-        app('translator')->setFallback($fallbackLocale);
-        $siteSettings->applyConfiguredTimezone();
-        $mailSettings->applyConfiguration();
+        // Caching configuration stores it after boot: values from the database, including the
+        // decrypted mail password, must stay out of the cache file and keep following the admin.
+        if (! FrameworkCache::building($this->app)) {
+            $defaultLocale = $languages->default();
+            $fallbackLocale = $languages->fallback();
+            config()->set('app.locale', $defaultLocale);
+            config()->set('app.fallback_locale', $fallbackLocale);
+            app()->setLocale($defaultLocale);
+            app('translator')->setFallback($fallbackLocale);
+            $siteSettings->applyConfiguredTimezone();
+            $mailSettings->applyConfiguration();
+        }
+
+        $this->app->terminating(function (): void {
+            $this->app->make(FrameworkCache::class)->warm();
+        });
+
         URL::defaults(['adminPath' => $adminPathSettings->path()]);
 
         if (config('app.force_https')) {
