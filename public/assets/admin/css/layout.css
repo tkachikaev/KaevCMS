@@ -34,7 +34,9 @@
 
 /* Panel */
 .admin-shell { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); min-height: 100vh; }
-.admin-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; padding: 22px 16px; overflow-y: auto; overscroll-behavior: contain; background: var(--sidebar); color: var(--sidebar-text); contain: layout paint; }
+/* The gutter is reserved up front: an opening menu group that overflows must not narrow the
+   menu and shift it sideways when the scrollbar appears. */
+.admin-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; padding: 22px 10px 22px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(148,163,184,.28) transparent; background: var(--sidebar); color: var(--sidebar-text); contain: layout paint; }
 .admin-brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
 .admin-brand-mark { display: grid; flex: none; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(79,140,255,.45); border-radius: 4px; background: rgba(79,140,255,.1); color: #8ab4ff; font-size: 15px; font-weight: 600; }
 .admin-brand strong, .admin-brand small { display: block; }
