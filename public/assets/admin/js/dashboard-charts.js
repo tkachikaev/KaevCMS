@@ -311,11 +311,15 @@
                     guide.hidden = false;
                     tooltip.hidden = false;
 
-                    // Stay on the current side while there is room; switch only at an edge.
+                    // Stay on the current side while there is room; switch only when the other
+                    // side has room. In a chart too narrow for either side the details stay
+                    // put (clamped to the chart) instead of flipping on every move.
                     const gap = 12;
                     const width = tooltip.offsetWidth;
-                    if (side === 'right' && x + gap + width > box.width) side = 'left';
-                    else if (side === 'left' && x - gap - width < 0) side = 'right';
+                    const fitsRight = x + gap + width <= box.width;
+                    const fitsLeft = x - gap - width >= 0;
+                    if (side === 'right' && !fitsRight && fitsLeft) side = 'left';
+                    else if (side === 'left' && !fitsLeft && fitsRight) side = 'right';
                     const left = side === 'right' ? x + gap : x - gap - width;
                     tooltip.style.left = `${Math.min(box.width - width, Math.max(0, left))}px`;
                     // The first placement is instant; later ones glide (see .is-placed).

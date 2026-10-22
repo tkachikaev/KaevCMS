@@ -74,6 +74,28 @@ test('dashboard charts switch periods and lines', async ({ page }) => {
     await page.mouse.move(box.x + box.width / 2, box.y - 40);
     await expect(tooltip).toBeHidden();
 
+    // Sweeping along the line, the details glide with it and change sides at most once
+    // each way, even in a chart too narrow for them on either side.
+    await page.setViewportSize({ width: 1100, height: 1000 });
+    const sweepBox = await plot.boundingBox();
+    const sweepY = sweepBox.y + sweepBox.height * (134 / 140);
+    const guide = registrations.locator('.dash-chart-guide');
+    let flips = 0;
+    let previousSide = null;
+    const steps = [...Array(60).keys()].map((step) => step / 59);
+    for (const ratio of [...steps, ...steps.reverse()]) {
+        await page.mouse.move(sweepBox.x + sweepBox.width * ratio, sweepY);
+        if (await tooltip.isHidden()) continue;
+        const tooltipBox = await tooltip.boundingBox();
+        const guideX = (await guide.boundingBox()).x;
+        const side = tooltipBox.x + tooltipBox.width / 2 >= guideX ? 'right' : 'left';
+        if (previousSide !== null && side !== previousSide) flips += 1;
+        previousSide = side;
+    }
+    expect(flips).toBeLessThanOrEqual(2);
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.mouse.move(box.x + box.width / 2, box.y - 40);
+
     // A click pins the details; they stay after the pointer leaves until clicked again.
     const lineY = box.y + box.height * (134 / 140);
     await page.mouse.click(box.x + box.width / 2, lineY);
