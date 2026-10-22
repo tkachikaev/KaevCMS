@@ -46,10 +46,12 @@ use App\Services\Settings\SettingsImageStorage;
 use App\Services\SiteSettings;
 use App\Services\Updates\VdsUpdateAgent;
 use App\Services\Wallet\CoreWalletGateway;
+use App\Support\Database\MySqlConnection;
 use App\Support\Database\TableExistence;
 use App\Support\FrameworkCache;
 use App\Support\Modules\ModuleMigrationManager;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
@@ -68,6 +70,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Old MariaDB and MySQL 5.7 must create timestamps like MySQL 8; see MySqlSchemaGrammar.
+        Connection::resolverFor('mysql', static fn ($pdo, string $database, string $prefix, array $config): MySqlConnection => new MySqlConnection($pdo, $database, $prefix, $config));
+
         $this->app->extend('auth.password', fn ($manager, $app): UtcPasswordBrokerManager => new UtcPasswordBrokerManager($app));
         $this->app->scoped(AccountAvatarCatalog::class);
         $this->app->singleton(TableExistence::class);
