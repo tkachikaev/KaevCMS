@@ -686,7 +686,7 @@
   "0.51.3": [
     "core/deployment/windows/apply-0.51.2.ps1"
   ],
-  "0.51.4": [
+  "0.52.0": [
     "core/deployment/windows/apply-0.51.3.ps1",
     "core/docs/ACCOUNT_AVATARS.md",
     "core/docs/ACCOUNT_THEMES.md",

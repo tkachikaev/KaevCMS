@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.52.0 - 2026-10-22
+
+Bundled module and theme versions are unchanged; `composer.lock` is unchanged (Laravel 13.37, Livewire 4.4.7). Two new migrations run automatically: the online history table and the timestamp repair below.
+
+- **Donations installs and updates on MariaDB before 10.10 and MySQL 5.7.** These servers run with `explicit_defaults_for_timestamp` off, which kept the Donations module from installing in 0.51.3 and silently added `ON UPDATE CURRENT_TIMESTAMP` to ten timestamp columns (mail queue, reward requests and grants, daily reward claims, promo code activations, support tickets and service records). The MySQL schema grammar now declares such columns the MySQL 8 way, and a migration removes the accidental auto-update; values already overwritten cannot be recovered. MySQL 8 and MariaDB 10.10+ were not affected.
+- **Faster site.** Remembered table checks, settings read in one query, module migrations read once, the downloads page read once per request, no translation-file parsing or module state writes per request, game database schema read once per table, remembered avatar and item icon lookups. On a 1 vCPU test server 20 concurrent visitors get 14.8 pages per second instead of 6.6, with no errors; a cold characters page needs 8 game database queries instead of 63.
+- **Laravel caches are built automatically on production sites.** Administrators no longer run `php artisan optimize`; installs and updates clear the caches and the next request rebuilds them. Database values and stored secrets never reach the caches, and module pages survive the route cache (they returned 404 after `php artisan optimize` before).
+- **The mail queue survives a provider outage.** An unreachable SMTP provider pauses the queue instead of stalling it, mail is retried for 30 minutes, and the SMTP timeout is 10 seconds. The mail and VDS guides describe provider outages and the nginx `fastcgi_read_timeout`.
+- **New administration look.** Inter is shipped with the CMS; hairline borders instead of shadows, larger titles and figures, line icons for every menu entry, menu groups slide open, and the menu no longer shifts when it starts to scroll. `docs/*/DESIGN.md` describes the design rules; numbers, sizes and percentages follow Russian typography.
+- **New dashboard.** Key figures for master accounts, game accounts, characters in game and top-ups; charts for online players, registrations and top-ups with periods from 30 days to 1 hour, toggleable lines and details that can be pinned with a click; a "Needs attention" list, servers, newest master accounts, latest top-ups and a system summary. Online history is recorded every five minutes and kept for 35 days.
+- **Modules:** enabled module cards have an Open button, and disabling a module asks for confirmation.
+- Fixed: search fields in admin filter bars, the reward queue overview and filters, currency names breaking apart in the Donations settings, and the promo code history widening the player account on phones.
+- Unused code, views and assets were removed; 33 documentation stubs were merged into the main guides and history before 0.42.4 moved to `docs/CHANGELOG-ARCHIVE.md`.
+
 ## 0.51.3 - 2026-10-21
 
 0.51.2 was never published; this release supersedes it. Bundled module and theme versions are unchanged; `composer.lock` is unchanged (Laravel 13.37, Livewire 4.4.7).
