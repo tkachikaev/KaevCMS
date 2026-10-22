@@ -173,7 +173,11 @@
             };
 
             const picker = card.querySelector('select[data-dash-period]');
+            // Document-level listeners of the current drawing, removed before the next one.
+            const renderCleanups = [];
+            cleanups.push(() => renderCleanups.splice(0).forEach((cleanup) => cleanup()));
             const render = () => {
+                renderCleanups.splice(0).forEach((cleanup) => cleanup());
                 if (picker) picker.value = state.period;
 
                 const { labels, series } = slice();
@@ -257,13 +261,65 @@
                     plot.append(dot);
                     return dot;
                 });
+                const guide = html('span', 'dash-chart-guide');
+                guide.hidden = true;
+                plot.prepend(guide);
                 const tooltip = html('div', 'dash-chart-tooltip');
                 tooltip.hidden = true;
                 plot.append(tooltip);
 
+                // The details sit at the top of the chart beside a vertical guide, so they never
+                // cover the pointer or the points they describe. A click pins them to a point;
+                // another click (or Escape) releases them.
+                let shownIndex = null;
+                let side = 'right';
+                let pinned = false;
                 const hide = () => {
+                    shownIndex = null;
                     tooltip.hidden = true;
+                    tooltip.classList.remove('is-placed');
+                    guide.hidden = true;
                     markers.forEach((dot) => { dot.hidden = true; });
+                };
+                const setPinned = (value) => {
+                    pinned = value;
+                    plot.classList.toggle('is-pinned', pinned);
+                    tooltip.classList.toggle('is-pinned', pinned);
+                };
+                const place = (index, box) => {
+                    if (index !== shownIndex) {
+                        markers.forEach((dot, line) => {
+                            const point = geometry[line][index];
+                            dot.hidden = point === null;
+                            if (point) {
+                                dot.style.left = `${(point.x / WIDTH) * 100}%`;
+                                dot.style.top = `${(point.y / HEIGHT) * 100}%`;
+                            }
+                        });
+                        tooltip.replaceChildren(html('strong', '', labels[index].long));
+                        visible.forEach((line) => {
+                            const row = html('div', `dash-chart-tooltip-row ${seriesClass(line)}`);
+                            const name = html('span');
+                            name.append(html('i'), document.createTextNode(line.label));
+                            row.append(name, html('b', '', format(line.values[index])));
+                            tooltip.append(row);
+                        });
+                        shownIndex = index;
+                    }
+                    const x = (xFor(index) / WIDTH) * box.width;
+                    guide.style.left = `${x}px`;
+                    guide.hidden = false;
+                    tooltip.hidden = false;
+
+                    // Stay on the current side while there is room; switch only at an edge.
+                    const gap = 12;
+                    const width = tooltip.offsetWidth;
+                    if (side === 'right' && x + gap + width > box.width) side = 'left';
+                    else if (side === 'left' && x - gap - width < 0) side = 'right';
+                    const left = side === 'right' ? x + gap : x - gap - width;
+                    tooltip.style.left = `${Math.min(box.width - width, Math.max(0, left))}px`;
+                    // The first placement is instant; later ones glide (see .is-placed).
+                    window.requestAnimationFrame(() => tooltip.classList.add('is-placed'));
                 };
                 // Height of a line, in pixels, at a horizontal position: straight between its two
                 // neighbouring points (null where the line has a gap).
@@ -276,57 +332,58 @@
                     const y = left.y + (right.y - left.y) * (position - Math.floor(position));
                     return (y / HEIGHT) * box.height;
                 };
-                const show = (event) => {
+                // The point under the pointer, or null when the pointer is away from every line.
+                // Details appear within `reach` of a line; once shown they stay within a wider
+                // reach, so a small wobble around a jagged line does not make them blink.
+                const pointedIndex = (event) => {
                     const box = plot.getBoundingClientRect();
-                    if (box.width === 0) return;
+                    if (box.width === 0) return null;
                     const ratio = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
-                    // The details appear only near a line, not anywhere in the chart's field;
-                    // a finger gets a wider reach than a mouse.
-                    const reach = event.pointerType === 'touch' ? 28 : 16;
+                    const touch = event.pointerType === 'touch';
+                    const reach = shownIndex === null ? (touch ? 28 : 16) : (touch ? 40 : 32);
                     const pointerY = event.clientY - box.top;
                     const nearLine = geometry.some((points) => {
                         const y = lineYAt(points, ratio, box);
                         return y !== null && Math.abs(y - pointerY) <= reach;
                     });
-                    plot.classList.toggle('is-pointing', nearLine);
-                    if (!nearLine) {
+                    return nearLine ? Math.round(ratio * (labels.length - 1)) : null;
+                };
+                const follow = (event) => {
+                    if (pinned) return;
+                    const index = pointedIndex(event);
+                    plot.classList.toggle('is-pointing', index !== null);
+                    if (index === null) {
                         hide();
                         return;
                     }
-                    const index = Math.round(ratio * (labels.length - 1));
-                    let highest = HEIGHT;
-                    markers.forEach((dot, line) => {
-                        const point = geometry[line][index];
-                        dot.hidden = point === null;
-                        if (point) {
-                            dot.style.left = `${(point.x / WIDTH) * 100}%`;
-                            dot.style.top = `${(point.y / HEIGHT) * 100}%`;
-                            highest = Math.min(highest, point.y);
-                        }
-                    });
-
-                    tooltip.replaceChildren(html('strong', '', labels[index].long));
-                    visible.forEach((line) => {
-                        const row = html('div', `dash-chart-tooltip-row ${seriesClass(line)}`);
-                        const name = html('span');
-                        name.append(html('i'), document.createTextNode(line.label));
-                        row.append(name, html('b', '', format(line.values[index])));
-                        tooltip.append(row);
-                    });
-                    tooltip.hidden = false;
-
-                    const x = (xFor(index) / WIDTH) * box.width;
-                    const y = (highest / HEIGHT) * box.height;
-                    const width = tooltip.offsetWidth;
-                    const height = tooltip.offsetHeight;
-                    tooltip.style.left = `${Math.min(box.width - width, Math.max(0, x - width / 2))}px`;
-                    tooltip.style.top = `${y - height - 10 >= 0 ? y - height - 10 : Math.min(box.height - height, y + 10)}px`;
+                    place(index, plot.getBoundingClientRect());
                 };
-                plot.addEventListener('pointermove', show);
-                plot.addEventListener('pointerdown', show);
+                plot.addEventListener('pointermove', follow);
+                plot.addEventListener('pointerdown', follow);
                 plot.addEventListener('pointerleave', () => {
                     plot.classList.remove('is-pointing');
-                    hide();
+                    if (!pinned) hide();
+                });
+                plot.addEventListener('click', (event) => {
+                    if (pinned) {
+                        setPinned(false);
+                        follow(event);
+                    } else if (shownIndex !== null) {
+                        setPinned(true);
+                    }
+                });
+                const release = (event) => {
+                    if (!pinned) return;
+                    if (event.type === 'keydown' ? event.key === 'Escape' : !plot.contains(event.target)) {
+                        setPinned(false);
+                        hide();
+                    }
+                };
+                document.addEventListener('keydown', release);
+                document.addEventListener('pointerdown', release);
+                renderCleanups.push(() => {
+                    document.removeEventListener('keydown', release);
+                    document.removeEventListener('pointerdown', release);
                 });
 
                 const axis = html('div', 'dash-chart-axis-labels');

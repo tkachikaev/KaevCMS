@@ -74,6 +74,20 @@ test('dashboard charts switch periods and lines', async ({ page }) => {
     await page.mouse.move(box.x + box.width / 2, box.y - 40);
     await expect(tooltip).toBeHidden();
 
+    // A click pins the details; they stay after the pointer leaves until clicked again.
+    const lineY = box.y + box.height * (134 / 140);
+    await page.mouse.click(box.x + box.width / 2, lineY);
+    await expect(tooltip).toHaveClass(/is-pinned/);
+    await page.mouse.move(box.x + box.width / 2, box.y - 40);
+    await expect(tooltip).toBeVisible();
+    await page.mouse.click(box.x + box.width / 2, lineY);
+    await expect(tooltip).not.toHaveClass(/is-pinned/);
+    await page.mouse.move(box.x + box.width / 2, box.y - 40);
+    await expect(tooltip).toBeHidden();
+    await page.mouse.click(box.x + box.width / 2, lineY);
+    await page.keyboard.press('Escape');
+    await expect(tooltip).toBeHidden();
+
     // The choice is remembered per widget.
     await page.reload();
     await expect(page.getByTestId('dashboard-chart-registrations').getByRole('combobox', { name: 'Период' })).toHaveValue('7');
