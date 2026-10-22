@@ -58,6 +58,59 @@
         settingsLink.toggleAttribute('data-current', isInsideSettings && !isExcludedSection);
     };
 
+    // Menu groups slide open and closed instead of jumping. A second click during the
+    // animation reverses it from where it is; reduced motion keeps the instant toggle.
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const groupAnimations = new WeakMap();
+    const closedFrame = { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 };
+    const frameOf = (element) => {
+        const style = window.getComputedStyle(element);
+
+        return {
+            height: `${element.getBoundingClientRect().height}px`,
+            marginTop: style.marginTop,
+            marginBottom: style.marginBottom,
+            paddingTop: style.paddingTop,
+            paddingBottom: style.paddingBottom,
+            opacity: Number(style.opacity),
+        };
+    };
+
+    const toggleMenuGroup = (group) => {
+        const items = group.querySelector('.admin-menu-group-items');
+        const running = groupAnimations.get(group);
+        const opening = running ? !running.opening : !group.open;
+
+        if (!(items instanceof HTMLElement) || reducedMotion.matches || typeof items.animate !== 'function') {
+            group.open = opening;
+
+            return;
+        }
+
+        const from = running ? frameOf(items) : (opening ? closedFrame : frameOf(items));
+        running?.animation.cancel();
+
+        let to = closedFrame;
+        if (opening) {
+            group.open = true;
+            to = { ...frameOf(items), opacity: 1 };
+        }
+
+        items.style.overflow = 'hidden';
+        // fill: forwards holds the last frame until the group is really closed, so the full
+        // list never flashes for a frame between the animation's end and the close.
+        const animation = items.animate([from, to], { duration: 200, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'forwards' });
+        groupAnimations.set(group, { animation, opening });
+        animation.addEventListener('finish', () => {
+            groupAnimations.delete(group);
+            if (!opening) {
+                group.open = false;
+            }
+            animation.cancel();
+            items.style.overflow = '';
+        });
+    };
+
     const menuIsOpen = () => document.documentElement.classList.contains('admin-mobile-menu-open');
 
     const synchronizeDrawerAccessibility = () => {
@@ -176,6 +229,14 @@
     document.addEventListener('click', (event) => {
         const target = event.target instanceof Element ? event.target : null;
         if (!target) {
+            return;
+        }
+
+        const groupSummary = target.closest('[data-admin-sidebar] [data-admin-menu-group] > summary');
+        if (groupSummary) {
+            event.preventDefault();
+            toggleMenuGroup(groupSummary.parentElement);
+
             return;
         }
 
