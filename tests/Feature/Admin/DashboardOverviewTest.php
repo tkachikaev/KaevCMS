@@ -7,6 +7,7 @@ use App\Models\GameServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
 use App\Services\Dashboard\AdminDashboardOverview;
+use App\Services\Dashboard\DashboardTrends;
 use App\Services\Servers\ServerOnlineHistory;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
@@ -56,6 +57,13 @@ final class DashboardOverviewTest extends TestCase
         $this->assertCount(24, $registrations['hours']);
         $this->assertSame(['masters' => 2, 'games' => 1], $registrations['hours'][23]);
         $this->assertSame(['masters' => 1, 'games' => 0], $registrations['hours'][17]);
+        // Five-minute steps for the last 5 hours; the last step starts at 15:30.
+        $this->assertCount(60, $registrations['minutes']);
+        $this->assertSame(['masters' => 1, 'games' => 0], $registrations['minutes'][54]);
+        $this->assertSame(['masters' => 1, 'games' => 0], $registrations['minutes'][57]);
+        $this->assertSame(['masters' => 0, 'games' => 1], $registrations['minutes'][58]);
+        $this->assertSame(['masters' => 0, 'games' => 0], $registrations['minutes'][59]);
+        $this->assertSame(2, array_sum(array_column($registrations['minutes'], 'masters')));
     }
 
     public function test_online_history_sums_servers_per_bucket(): void
@@ -82,6 +90,33 @@ final class DashboardOverviewTest extends TestCase
         $this->assertSame(['peak' => 150, 'average' => 135], $hourly[18]);
         $this->assertSame(['peak' => 30, 'average' => 30], $hourly[7]);
         $this->assertSame(['peak' => null, 'average' => null], $hourly[23]);
+
+        $history->record($first, 40, CarbonImmutable::parse('2026-10-22 15:31:00'));
+        $history->record($second, 2, CarbonImmutable::parse('2026-10-22 15:32:00'));
+        $history->record($first, 35, CarbonImmutable::parse('2026-10-22 15:22:00'));
+        $recent = $history->recent(60);
+
+        $this->assertCount(60, $recent);
+        $this->assertSame([35, null, 42], array_slice($recent, 57));
+        // 10:00 is 5.5 hours ago, outside the last 5 hours.
+        $this->assertSame([], array_filter(array_slice($recent, 0, 57), static fn ($value) => $value !== null));
+    }
+
+    public function test_chart_widgets_offer_five_minute_steps_for_the_last_hours(): void
+    {
+        $overview = app(AdminDashboardOverview::class)->forAdmin(Admin::factory()->create());
+
+        $widgets = DashboardTrends::widgets($overview['registrations'], $overview['online'], $overview['donations']);
+
+        $this->assertSame(['online', 'registrations'], array_column($widgets, 'key'));
+        $this->assertCount(60, $widgets[0]['labels']['minutes']);
+        $this->assertSame(['short' => '15:30', 'long' => '22 октября, 15:30'], $widgets[0]['labels']['minutes'][59]);
+        $this->assertSame('10:35', $widgets[0]['labels']['minutes'][0]['short']);
+        foreach ($widgets as $widget) {
+            foreach ($widget['series'] as $series) {
+                $this->assertCount(60, $series['minutes']);
+            }
+        }
     }
 
     public function test_donation_payment_count_belongs_to_the_main_currency(): void
@@ -110,6 +145,8 @@ final class DashboardOverviewTest extends TestCase
         $this->assertSame(200.0, $donations['average']);
         $this->assertSame(100.0, $donations['days'][29]['amount']);
         $this->assertSame(100.0, $donations['hours'][20]);
+        $this->assertSame(100.0, array_sum($donations['minutes']));
+        $this->assertSame(100.0, $donations['minutes'][17]);
         $this->assertSame(1, $donations['review']);
         $this->assertCount(5, $donations['latest']);
         $this->assertSame('Donator', $donations['latest'][0]['player']);

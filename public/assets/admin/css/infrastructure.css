@@ -873,10 +873,13 @@ small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c
 .dash-series-1 .dash-metric-swatch, .dash-series-2 .dash-metric-swatch, .dash-series-3 .dash-metric-swatch { border-top-style: dashed; }
 .dash-metric-value { color: var(--admin-text); font-size: 24px; line-height: 30px; font-weight: var(--admin-weight-semibold); letter-spacing: -.02em; }
 .dash-metric[aria-pressed="false"] { opacity: .4; }
-.dash-segmented { display: inline-flex; flex: none; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-inner); }
-.dash-segmented button { padding: 5px var(--admin-space-3); border: 0; background: transparent; color: var(--admin-text-muted); font-size: var(--admin-text-caption); line-height: var(--admin-leading-caption); font-weight: var(--admin-weight-medium); letter-spacing: .02em; white-space: nowrap; cursor: pointer; }
-.dash-segmented button:hover { color: var(--admin-text); }
-.dash-segmented button[aria-pressed="true"] { color: var(--admin-text); box-shadow: inset 0 -2px 0 var(--admin-primary); }
+/* Period picker: a hairline native select; the chevron is drawn in CSS (no images). */
+.dash-period { position: relative; display: inline-flex; flex: none; }
+.dash-period::after { position: absolute; top: 50%; right: 10px; width: 5px; height: 5px; border-right: 1.3px solid var(--admin-text-muted); border-bottom: 1.3px solid var(--admin-text-muted); content: ""; pointer-events: none; transform: translateY(-70%) rotate(45deg); }
+.dash-period select { width: auto; min-height: 0; margin: 0; padding: 5px 28px 5px var(--admin-space-3); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-inner); appearance: none; -webkit-appearance: none; background: transparent; box-shadow: none; color: var(--admin-text); font: inherit; font-size: var(--admin-text-caption); line-height: var(--admin-leading-caption); font-weight: var(--admin-weight-medium); letter-spacing: .02em; cursor: pointer; }
+.dash-period select:hover { border-color: var(--admin-border-strong); }
+.dash-period select:focus-visible { outline: 2px solid var(--admin-focus-ring); outline-offset: 2px; }
+.dash-period option { background: var(--admin-surface); color: var(--admin-text); }
 .dash-widget-chart { margin-top: auto; }
 .dash-widget-plot { position: relative; height: 150px; touch-action: pan-y; }
 .dash-widget-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }

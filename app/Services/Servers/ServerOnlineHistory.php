@@ -141,6 +141,47 @@ final class ServerOnlineHistory
         return $series;
     }
 
+    /**
+     * Total online for each of the last $count five-minute buckets, oldest first (null for
+     * buckets without samples).
+     *
+     * @return list<int|null>
+     */
+    public function recent(int $count = 60): array
+    {
+        $buckets = self::recentBuckets($count);
+
+        $totals = [];
+        DB::table('server_online_samples')
+            ->where('bucket_at', '>=', $buckets[0])
+            ->groupBy('bucket_at')
+            ->get(['bucket_at', DB::raw('SUM(players) as players')])
+            ->each(static function (object $row) use (&$totals): void {
+                $totals[self::bucketKey((string) $row->bucket_at)] = (int) $row->players;
+            });
+
+        return array_map(static fn (CarbonImmutable $bucket): ?int => $totals[$bucket->format('Y-m-d H:i')] ?? null, $buckets);
+    }
+
+    /**
+     * Starts of the last $count five-minute buckets, oldest first; the last one is current.
+     *
+     * @return list<CarbonImmutable>
+     */
+    public static function recentBuckets(int $count): array
+    {
+        $now = CarbonImmutable::now();
+        $current = $now->setTime((int) $now->format('H'), intdiv((int) $now->format('i'), 5) * 5);
+
+        return array_map(static fn (int $index): CarbonImmutable => $current->subMinutes(($count - 1 - $index) * 5), range(0, $count - 1));
+    }
+
+    /** "Y-m-d H:i" of the five-minute bucket a stored "Y-m-d H:i:s" time falls in. */
+    public static function bucketKey(string $time): string
+    {
+        return substr($time, 0, 14).sprintf('%02d', intdiv((int) substr($time, 14, 2), 5) * 5);
+    }
+
     private function bucket(CarbonImmutable $at): CarbonImmutable
     {
         $timestamp = $at->getTimestamp();

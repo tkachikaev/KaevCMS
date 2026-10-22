@@ -25,6 +25,9 @@ final class AdminDashboardOverview
 {
     public const SERIES_DAYS = 30;
 
+    /** Five-minute buckets for the short chart periods: the last 5 hours. */
+    public const RECENT_BUCKETS = 60;
+
     public function __construct(
         private readonly ModuleNavigationRegistry $moduleNavigation,
         private readonly ModuleAdminAccessRegistry $moduleAccess,
@@ -36,10 +39,10 @@ final class AdminDashboardOverview
      * @return array{
      *     master_accounts: array{total:int,new_today:int,verified_percent:float|null}|null,
      *     game_accounts: array{total:int,new_today:int,per_player:float|null}|null,
-     *     registrations: array{days:list<array{date:CarbonImmutable,count:int,game_accounts:int}>,hours:list<array{masters:int,games:int}>,total:int,last_7_days:int,game_accounts_total:int,max:int}|null,
+     *     registrations: array{days:list<array{date:CarbonImmutable,count:int,game_accounts:int}>,hours:list<array{masters:int,games:int}>,minutes:list<array{masters:int,games:int}>,total:int,last_7_days:int,game_accounts_total:int,max:int}|null,
      *     latest_master_accounts: list<array{id:int,name:string,email:string,verified:bool,game_accounts:int,created_at:CarbonImmutable}>|null,
-     *     online: array{days:list<array{date:CarbonImmutable,peak:int|null,average:int|null}>,hours:list<array{peak:int|null,average:int|null}>,peak:int|null,peak_at:CarbonImmutable|null,average_peak:float|null}|null,
-     *     donations: array{totals:list<array{currency:string,amount:float,previous:float}>,payments:int,average:float|null,currency:string|null,days:list<array{date:CarbonImmutable,amount:float}>,hours:list<float>,max:float,latest:list<array{player:string,amount:float,currency:string,credited_at:CarbonImmutable,order_uuid:string}>,route:string,orders_route:string|null,review:int}|null,
+     *     online: array{days:list<array{date:CarbonImmutable,peak:int|null,average:int|null}>,hours:list<array{peak:int|null,average:int|null}>,minutes:list<int|null>,peak:int|null,peak_at:CarbonImmutable|null,average_peak:float|null}|null,
+     *     donations: array{totals:list<array{currency:string,amount:float,previous:float}>,payments:int,average:float|null,currency:string|null,days:list<array{date:CarbonImmutable,amount:float}>,hours:list<float>,minutes:list<float>,max:float,latest:list<array{player:string,amount:float,currency:string,credited_at:CarbonImmutable,order_uuid:string}>,route:string,orders_route:string|null,review:int}|null,
      *     rewards_attention: int|null
      * }
      */
@@ -53,7 +56,7 @@ final class AdminDashboardOverview
             'registrations' => $canViewUsers ? $this->registrations() : null,
             'latest_master_accounts' => $canViewUsers ? $this->latestMasterAccounts() : null,
             'online' => $admin->hasPermission(AdminPermission::ServersView)
-                ? [...$this->onlineHistory->dailyPeaks(self::SERIES_DAYS), 'hours' => $this->onlineHistory->hourly(24)]
+                ? [...$this->onlineHistory->dailyPeaks(self::SERIES_DAYS), 'hours' => $this->onlineHistory->hourly(24), 'minutes' => $this->onlineHistory->recent(self::RECENT_BUCKETS)]
                 : null,
             'donations' => $this->donations($admin),
             'rewards_attention' => $admin->hasPermission(AdminPermission::RewardsView)
@@ -93,7 +96,7 @@ final class AdminDashboardOverview
      * New master accounts per day for the last 30 days, with the game accounts created
      * on the same days, so the step from site registration to the game is visible.
      *
-     * @return array{days:list<array{date:CarbonImmutable,count:int,game_accounts:int}>,hours:list<array{masters:int,games:int}>,total:int,last_7_days:int,game_accounts_total:int,max:int}
+     * @return array{days:list<array{date:CarbonImmutable,count:int,game_accounts:int}>,hours:list<array{masters:int,games:int}>,minutes:list<array{masters:int,games:int}>,total:int,last_7_days:int,game_accounts_total:int,max:int}
      */
     private function registrations(): array
     {
@@ -119,6 +122,13 @@ final class AdminDashboardOverview
             $key = $hour->format('Y-m-d H');
             $hours[] = ['masters' => $masterHours[$key] ?? 0, 'games' => $gameHours[$key] ?? 0];
         }
+        $masterMinutes = $this->countByFiveMinutes($masterTimes);
+        $gameMinutes = $this->countByFiveMinutes($gameTimes);
+        $minutes = [];
+        foreach (ServerOnlineHistory::recentBuckets(self::RECENT_BUCKETS) as $bucket) {
+            $key = $bucket->format('Y-m-d H:i');
+            $minutes[] = ['masters' => $masterMinutes[$key] ?? 0, 'games' => $gameMinutes[$key] ?? 0];
+        }
 
         $days = [];
         for ($day = $start; $day->lte($today); $day = $day->addDay()) {
@@ -132,6 +142,7 @@ final class AdminDashboardOverview
         return [
             'days' => $days,
             'hours' => $hours,
+            'minutes' => $minutes,
             'total' => array_sum($values),
             'last_7_days' => array_sum(array_slice($values, -7)),
             'game_accounts_total' => array_sum($gameValues),
@@ -157,6 +168,23 @@ final class AdminDashboardOverview
     private function countByHour(array $timestamps): array
     {
         return $this->countByPrefix($timestamps, 13);
+    }
+
+    /**
+     * Keys are "Y-m-d H:i" of the five-minute bucket.
+     *
+     * @param  list<mixed>  $timestamps
+     * @return array<string, int>
+     */
+    private function countByFiveMinutes(array $timestamps): array
+    {
+        $counts = [];
+        foreach ($timestamps as $timestamp) {
+            $key = ServerOnlineHistory::bucketKey((string) $timestamp);
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+        }
+
+        return $counts;
     }
 
     /**
@@ -201,7 +229,7 @@ final class AdminDashboardOverview
      * Credited donations for the last 30 days, compared with the 30 days before, with daily
      * sums for the main currency. Amounts in different currencies are never added together.
      *
-     * @return array{totals:list<array{currency:string,amount:float,previous:float}>,payments:int,average:float|null,currency:string|null,days:list<array{date:CarbonImmutable,amount:float}>,hours:list<float>,max:float,latest:list<array{player:string,amount:float,currency:string,credited_at:CarbonImmutable,order_uuid:string}>,route:string,orders_route:string|null,review:int}|null
+     * @return array{totals:list<array{currency:string,amount:float,previous:float}>,payments:int,average:float|null,currency:string|null,days:list<array{date:CarbonImmutable,amount:float}>,hours:list<float>,minutes:list<float>,max:float,latest:list<array{player:string,amount:float,currency:string,credited_at:CarbonImmutable,order_uuid:string}>,route:string,orders_route:string|null,review:int}|null
      */
     private function donations(Admin $admin): ?array
     {
@@ -278,6 +306,17 @@ final class AdminDashboardOverview
             for ($hour = $currentHour->subHours(23); $hour->lte($currentHour); $hour = $hour->addHour()) {
                 $hours[] = $hourly[$hour->format('Y-m-d H')] ?? 0.0;
             }
+            $recent = [];
+            foreach ($payments as $payment) {
+                if ($payment['currency'] === $main) {
+                    $key = ServerOnlineHistory::bucketKey($payment['at']);
+                    $recent[$key] = ($recent[$key] ?? 0.0) + $payment['amount'];
+                }
+            }
+            $minutes = array_map(
+                static fn (CarbonImmutable $bucket): float => $recent[$bucket->format('Y-m-d H:i')] ?? 0.0,
+                ServerOnlineHistory::recentBuckets(self::RECENT_BUCKETS),
+            );
 
             $latest = (clone $credited)
                 ->join('users', 'users.id', '=', 'orders.user_id')
@@ -306,6 +345,7 @@ final class AdminDashboardOverview
                 'currency' => $main,
                 'days' => $days,
                 'hours' => $hours,
+                'minutes' => $minutes,
                 'max' => max([0.0, ...array_column($days, 'amount')]),
                 'latest' => $latest,
                 'route' => $route,

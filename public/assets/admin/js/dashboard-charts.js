@@ -2,8 +2,8 @@
     'use strict';
 
     // Dashboard chart widgets (design canon: charts). One widget per metric; its lines share
-    // a unit and a scale. Each widget keeps its own period (30 days, 7 days, 24 hours) and
-    // visible lines. Missing values (null) break a line instead of dropping it to zero.
+    // a unit and a scale. Each widget keeps its own period and visible lines. Missing values
+    // (null) break a line instead of dropping it to zero.
     // Markup carries no inline styles because the admin CSP forbids them; positions are set
     // through the CSSOM here.
     const SVG = 'http://www.w3.org/2000/svg';
@@ -12,6 +12,15 @@
     const TOP = 10;
     const BOTTOM = 134;
     const STORAGE_KEY = 'kaevcms.dashboard.widgets';
+    // Period → the server's series it reads (days, hours, five-minute steps) and how many
+    // of its last points it shows.
+    const PERIODS = {
+        30: { scale: 'days', points: 30 },
+        7: { scale: 'days', points: 7 },
+        24: { scale: 'hours', points: 24 },
+        '5h': { scale: 'minutes', points: 60 },
+        '1h': { scale: 'minutes', points: 12 },
+    };
 
     const svg = (name, attributes = {}) => {
         const element = document.createElementNS(SVG, name);
@@ -139,19 +148,19 @@
 
             const saved = readStorage()[widget.key] || {};
             const state = {
-                period: ['30', '7', '24'].includes(saved.period) ? saved.period : '30',
+                period: Object.hasOwn(PERIODS, saved.period) ? saved.period : '30',
                 hidden: new Set(Array.isArray(saved.hidden) ? saved.hidden.filter((key) => widget.series.some((series) => series.key === key)) : widget.series.filter((series) => !series.visible).map((series) => series.key)),
             };
             if (state.hidden.size >= widget.series.length) state.hidden.clear();
             const persist = () => writeStorage(widget.key, { period: state.period, hidden: [...state.hidden] });
 
             const slice = () => {
-                const hourly = state.period === '24';
-                const labels = hourly ? widget.labels.hours : widget.labels.days;
-                const start = state.period === '7' ? Math.max(0, labels.length - 7) : 0;
+                const { scale, points } = PERIODS[state.period];
+                const labels = widget.labels[scale];
+                const start = Math.max(0, labels.length - points);
                 return {
                     labels: labels.slice(start),
-                    series: widget.series.map((series) => ({ ...series, values: (hourly ? series.hours : series.days).slice(start) })),
+                    series: widget.series.map((series) => ({ ...series, values: series[scale].slice(start) })),
                 };
             };
 
@@ -163,10 +172,9 @@
                 return present.reduce((sum, value) => sum + value, 0);
             };
 
+            const picker = card.querySelector('select[data-dash-period]');
             const render = () => {
-                card.querySelectorAll('[data-dash-period]').forEach((button) => {
-                    button.setAttribute('aria-pressed', button.dataset.dashPeriod === state.period ? 'true' : 'false');
-                });
+                if (picker) picker.value = state.period;
 
                 const { labels, series } = slice();
                 const visible = series.filter((line) => !state.hidden.has(line.key));
@@ -299,21 +307,20 @@
                 axis.append(
                     html('span', '', labels[0].short),
                     html('span', '', labels[Math.floor((labels.length - 1) / 2)].short),
-                    html('span', '', state.period === '24' ? widget.i18n.now : widget.i18n.today),
+                    html('span', '', PERIODS[state.period].scale === 'days' ? widget.i18n.today : widget.i18n.now),
                 );
 
                 target.replaceChildren(plot, axis);
             };
 
-            const onClick = (event) => {
-                const button = event.target.closest('[data-dash-period]');
-                if (!button) return;
-                state.period = button.dataset.dashPeriod;
+            const onChange = () => {
+                if (!picker || !Object.hasOwn(PERIODS, picker.value)) return;
+                state.period = picker.value;
                 persist();
                 render();
             };
-            card.addEventListener('click', onClick);
-            cleanups.push(() => card.removeEventListener('click', onClick));
+            picker?.addEventListener('change', onChange);
+            cleanups.push(() => picker?.removeEventListener('change', onChange));
             render();
         });
 

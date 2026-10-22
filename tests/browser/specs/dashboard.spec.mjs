@@ -54,10 +54,17 @@ test('dashboard charts switch periods and lines', async ({ page }) => {
     const registrations = page.getByTestId('dashboard-chart-registrations');
     await expect(registrations.locator('[data-dash-chart] svg')).toBeVisible();
 
-    const week = registrations.getByRole('button', { name: '7 дней' });
-    await week.click();
-    await expect(week).toHaveAttribute('aria-pressed', 'true');
-    await expect(registrations.getByRole('button', { name: '30 дней' })).toHaveAttribute('aria-pressed', 'false');
+    const period = registrations.getByRole('combobox', { name: 'Период' });
+    await expect(period).toHaveValue('30');
+    await expect(period.locator('option')).toHaveText(['30 дней', '7 дней', '24 часа', '5 часов', '1 час']);
+    await period.selectOption('1h');
+    await expect(registrations.locator('.dash-chart-axis-labels')).toContainText('Сейчас');
+    await period.selectOption('7');
+    await expect(registrations.locator('.dash-chart-axis-labels')).toContainText('Сегодня');
+
+    // The choice is remembered per widget.
+    await page.reload();
+    await expect(page.getByTestId('dashboard-chart-registrations').getByRole('combobox', { name: 'Период' })).toHaveValue('7');
 
     // Lines can be hidden, but the last visible line stays.
     const lines = registrations.locator('.dash-metric');
