@@ -722,6 +722,7 @@
     "core/docs/development/QUALITY.md",
     "core/docs/development/TESTING.md",
     "core/modules/donations/resources/views/account/orders.blade.php",
+    "core/tests/browser/specs/dashboard-storage.spec.mjs",
     "core/themes/default/views/auth/account.blade.php",
     "core/themes/kaev-aurelia/views/auth/account.blade.php",
     "public/themes/kaev-aurelia/assets/images/kaev-logo-gold.png"
