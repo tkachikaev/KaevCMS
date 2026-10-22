@@ -134,6 +134,9 @@
                 return numberFormat.format(value);
             };
 
+            // The first line is the accent line, the others are muted dashed lines.
+            const seriesClass = (line) => `dash-series-${Math.min(3, widget.series.findIndex((candidate) => candidate.key === line.key))}`;
+
             const saved = readStorage()[widget.key] || {};
             const state = {
                 period: ['30', '7', '24'].includes(saved.period) ? saved.period : '30',
@@ -168,29 +171,27 @@
                 const { labels, series } = slice();
                 const visible = series.filter((line) => !state.hidden.has(line.key));
 
-                // Checkbox per line with its total for the selected period.
+                // A toggle per line: its line sample, name and total for the selected period.
                 legend.replaceChildren(...series.map((line) => {
-                    const label = html('label', `dash-metric dash-tone-${line.tone}`);
-                    const input = html('input');
-                    input.type = 'checkbox';
-                    input.checked = !state.hidden.has(line.key);
-                    input.disabled = series.length === 1;
-                    input.addEventListener('change', () => {
-                        if (input.checked) {
+                    const toggle = html('button', `dash-metric ${seriesClass(line)}`);
+                    toggle.type = 'button';
+                    toggle.setAttribute('aria-pressed', state.hidden.has(line.key) ? 'false' : 'true');
+                    toggle.disabled = series.length === 1;
+                    toggle.addEventListener('click', () => {
+                        if (state.hidden.has(line.key)) {
                             state.hidden.delete(line.key);
                         } else if (series.length - state.hidden.size > 1) {
                             state.hidden.add(line.key);
                         } else {
-                            input.checked = true; // At least one line stays visible.
-                            return;
+                            return; // At least one line stays visible.
                         }
                         persist();
                         render();
                     });
                     const name = html('span', 'dash-metric-name');
-                    name.append(html('span', 'dash-metric-box'), document.createTextNode(line.label));
-                    label.append(input, name, html('strong', 'dash-metric-value admin-num', format(summarize(line))));
-                    return label;
+                    name.append(html('i', 'dash-metric-swatch'), document.createTextNode(line.label));
+                    toggle.append(name, html('strong', 'dash-metric-value admin-num', format(summarize(line))));
+                    return toggle;
                 }));
 
                 if (!visible.some((line) => line.values.some((value) => value !== null))) {
@@ -216,19 +217,24 @@
                 canvas.append(svg('line', { class: 'dash-chart-axis', x1: 0, x2: WIDTH, y1: BOTTOM + 0.5, y2: BOTTOM + 0.5 }));
 
                 visible.forEach((line, index) => {
+                    const lineClass = seriesClass(line);
+                    // Only the accent line gets the faint fill; a second fill would muddy it.
+                    const filled = lineClass === 'dash-series-0';
                     const gradientId = `dash-gradient-${widget.key}-${line.key}`;
-                    const gradient = svg('linearGradient', { id: gradientId, x1: 0, x2: 0, y1: 0, y2: 1 });
-                    gradient.append(
-                        svg('stop', { offset: '0%', class: `dash-gradient-start dash-tone-${line.tone}` }),
-                        svg('stop', { offset: '100%', class: `dash-gradient-end dash-tone-${line.tone}` }),
-                    );
-                    defs.append(gradient);
+                    if (filled) {
+                        const gradient = svg('linearGradient', { id: gradientId, x1: 0, x2: 0, y1: 0, y2: 1 });
+                        gradient.append(
+                            svg('stop', { offset: '0%', class: `dash-gradient-start ${lineClass}` }),
+                            svg('stop', { offset: '100%', class: `dash-gradient-end ${lineClass}` }),
+                        );
+                        defs.append(gradient);
+                    }
                     segments(geometry[index]).forEach((segment) => {
                         const path = smoothPath(segment);
-                        if (segment.length > 1) {
+                        if (filled && segment.length > 1) {
                             canvas.append(svg('path', { class: 'dash-chart-area', d: `${path} L${segment.at(-1).x},${BOTTOM} L${segment[0].x},${BOTTOM} Z`, fill: `url(#${gradientId})` }));
                         }
-                        canvas.append(svg('path', { class: `dash-chart-line dash-tone-${line.tone}`, d: path }));
+                        canvas.append(svg('path', { class: `dash-chart-line ${lineClass}`, d: path }));
                     });
                 });
                 plot.append(canvas);
@@ -238,7 +244,7 @@
                 plot.append(topLabel);
 
                 const markers = visible.map((line) => {
-                    const dot = html('span', `dash-chart-dot dash-tone-${line.tone}`);
+                    const dot = html('span', `dash-chart-dot ${seriesClass(line)}`);
                     dot.hidden = true;
                     plot.append(dot);
                     return dot;
@@ -269,7 +275,7 @@
 
                     tooltip.replaceChildren(html('strong', '', labels[index].long));
                     visible.forEach((line) => {
-                        const row = html('div', `dash-chart-tooltip-row dash-tone-${line.tone}`);
+                        const row = html('div', `dash-chart-tooltip-row ${seriesClass(line)}`);
                         const name = html('span');
                         name.append(html('i'), document.createTextNode(line.label));
                         row.append(name, html('b', '', format(line.values[index])));

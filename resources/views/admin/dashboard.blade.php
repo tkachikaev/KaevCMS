@@ -81,17 +81,18 @@
         @if($playerOverview !== null || $canViewServers)
             <article class="dash-card dash-kpi">
                 <header>
-                    <h2 class="dash-kpi-label">{{ __('Characters online / total') }}</h2>
-                    @if(($overview['online']['peak'] ?? null) !== null)
-                        <span class="dash-badge dash-badge-primary">{{ __('Peak: :count', ['count' => format_number($overview['online']['peak'])]) }}</span>
-                    @endif
+                    <h2 class="dash-kpi-label" title="{{ __('Characters online / total') }}">{{ __('Characters in game') }}</h2>
                 </header>
                 <strong class="dash-kpi-value admin-num">
                     <span class="dash-accent-success">{{ $onlineNow->isNotEmpty() ? format_number($onlineNow->sum()) : '—' }}</span>
                     <span class="dash-kpi-total">/ {{ $characters !== null ? format_number($characters) : '—' }}</span>
                 </strong>
                 <footer class="dash-kpi-foot">
-                    <span>{{ $characters !== null ? __('Characters on game servers') : __('Appears after a game database is connected') }}</span>
+                    @if(($overview['online']['peak'] ?? null) !== null)
+                        <span>{{ __('Peak: :count', ['count' => format_number($overview['online']['peak'])]) }}</span>
+                    @else
+                        <span>{{ $characters !== null ? __('Characters on game servers') : __('Appears after a game database is connected') }}</span>
+                    @endif
                     @if($canViewServers && $onlineNow->isNotEmpty())
                         <strong class="dash-accent-success"><span class="dash-live" aria-hidden="true"></span>{{ __('Live') }}</strong>
                     @endif
@@ -227,21 +228,24 @@
                 </header>
                 <div class="dash-list">
                     @forelse($latestMasterAccounts as $account)
-                        <a wire:navigate class="dash-list-row" href="{{ route('admin.users.show', $account['id']) }}">
-                            <span class="dash-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($account['name'], 0, 1)) }}</span>
+                        @php
+                            $accountState = ! $account['verified'] ? 'warning' : ($account['game_accounts'] === 0 ? 'muted' : 'success');
+                        @endphp
+                        {{-- The state sits under the address so names keep their width in narrow cards --}}
+                        <a wire:navigate class="dash-list-row dash-list-row-account" href="{{ route('admin.users.show', $account['id']) }}">
+                            <span class="dash-state-dot dash-state-{{ $accountState }}" aria-hidden="true"></span>
                             <span class="dash-list-main">
                                 <strong>{{ $account['name'] }}</strong>
-                                <small>{{ $account['email'] }}</small>
-                            </span>
-                            <span class="dash-list-side">
-                                <small>{{ $account['created_at']->diffForHumans() }}</small>
-                                @if(! $account['verified'])
-                                    <span class="dash-badge dash-badge-warning">{{ __('Email not confirmed') }}</span>
-                                @elseif($account['game_accounts'] === 0)
-                                    <span class="dash-badge dash-badge-muted">{{ __('No game account') }}</span>
-                                @else
-                                    <span class="dash-badge dash-badge-success">{{ trans_choice('{1} :count game account|[2,*] :count game accounts', $account['game_accounts'], ['count' => format_number($account['game_accounts'])]) }}</span>
-                                @endif
+                                <small>{{ $account['email'] }} · {{ $account['created_at']->diffForHumans() }}</small>
+                                <span class="dash-list-state dash-badge-{{ $accountState }}">
+                                    @if(! $account['verified'])
+                                        {{ __('Email not confirmed') }}
+                                    @elseif($account['game_accounts'] === 0)
+                                        {{ __('No game account') }}
+                                    @else
+                                        {{ trans_choice('{1} :count game account|[2,*] :count game accounts', $account['game_accounts'], ['count' => format_number($account['game_accounts'])]) }}
+                                    @endif
+                                </span>
                             </span>
                         </a>
                     @empty

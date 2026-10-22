@@ -19,7 +19,7 @@
             ><span aria-hidden="true">×</span></button>
 
             <a wire:navigate.hover class="admin-brand" data-admin-menu-link href="{{ route('admin.dashboard') }}">
-                <span class="admin-brand-mark">L2</span>
+                <span class="admin-brand-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr((string) config('app.name'), 0, 1)) }}</span>
                 <span>
                     <strong>{{ config('app.name') }}</strong>
                     <small>{{ __('Control panel') }}</small>
@@ -57,7 +57,7 @@
                 <span class="admin-mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span>
             </button>
             <a wire:navigate class="admin-mobile-brand" href="{{ route('admin.dashboard') }}">
-                <span class="admin-mobile-brand-mark">L2</span>
+                <span class="admin-mobile-brand-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr((string) config('app.name'), 0, 1)) }}</span>
                 <span>
                     <strong>{{ config('app.name') }}</strong>
                     <small>{{ __('Control panel') }}</small>
