@@ -130,7 +130,12 @@
                         @default<span class="theme-state error">{{ __('Damaged') }}</span>
                     @endswitch
 
-                    <div class="admin-row-actions admin-catalog-actions module-actions">
+                    @php $section = $module['enabled'] ? ($moduleSections[$module['id']] ?? null) : null; @endphp
+                    <div @class(['admin-row-actions', 'admin-catalog-actions', 'module-actions', 'module-actions-pair' => $section !== null])>
+                        @if ($section !== null)
+                            <a class="button button-primary" wire:navigate href="{{ route($section) }}" data-testid="module-open">{{ __('Open') }}</a>
+                        @endif
+
                         @if ($module['can_enable'])
                             <form method="POST" action="{{ route('admin.modules.enable', ['module' => $module['id']]) }}">
                                 @csrf
