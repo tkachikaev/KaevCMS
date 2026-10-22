@@ -10,13 +10,21 @@
 .donations-layout .form-card { margin:0; width:100%; max-width:none; }
 .donations-side { display:grid; gap:20px; }
 .donations-layout .admin-card-heading { margin-bottom:20px; }
-.donations-rate-list { display:grid; gap:14px; }
+/* A currency row: the name on its own line, then price, availability and removal. Only a
+   card wide enough for all four keeps them on one line, so the name never breaks apart. */
+.donations-rate-list { display:grid; gap:14px; container-type:inline-size; }
 .donations-rate-row { padding:18px; border:1px solid var(--admin-border); border-radius:10px; background:var(--admin-surface); min-width:0; }
-.donations-rate-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(120px,160px) auto auto; align-items:end; gap:14px; border:0; padding:0; margin:0; min-width:0; }
+.donations-rate-fields { display:grid; grid-template-columns:minmax(120px,200px) auto auto; justify-content:start; align-items:end; gap:14px 18px; border:0; padding:0; margin:0; min-width:0; }
+.donations-rate-fields .donations-currency-identity { grid-column:1/-1; }
+.donations-rate-fields [data-donations-delete] { justify-self:start; }
+@container (min-width:720px) {
+    .donations-rate-fields { grid-template-columns:minmax(180px,1fr) minmax(120px,160px) auto auto; justify-content:stretch; }
+    .donations-rate-fields .donations-currency-identity { grid-column:auto; }
+}
 .donations-rate-fields[hidden], .donations-removal[hidden], [data-donations-empty][hidden] { display:none; }
 .donations-currency-identity { display:flex; align-items:center; gap:12px; align-self:center; min-width:0; }
 .donations-currency-code { display:grid; place-items:center; flex:0 0 48px; height:42px; border:1px solid var(--admin-border); border-radius:8px; background:var(--admin-surface-subtle); color:var(--admin-text); font-size:13px; font-weight:700; }
-.donations-currency-identity strong { display:block; color:var(--admin-text); font-size:14px; font-weight:600; overflow-wrap:anywhere; }
+.donations-currency-identity strong { display:block; color:var(--admin-text); font-size:14px; font-weight:600; overflow-wrap:break-word; }
 .donations-currency-identity small { color:var(--admin-text-muted); font-size:12px; }
 .donations-rate-fields .admin-field { margin:0; }
 .donations-rate-fields .button { margin:0; }
