@@ -72,7 +72,7 @@ final class DonationYooMoneyNotificationTestButtonTest extends TestCase
             ->postJson('/admin/extensions/donations/providers/yoomoney/notification-test', $payload);
     }
 
-    private function testStatus(string $token): string
+    private function dialogStatus(string $token): string
     {
         return (string) $this->actingAs($this->owner, 'admin')
             ->getJson('/admin/extensions/donations/providers/yoomoney/notification-test/'.$token)
@@ -82,44 +82,44 @@ final class DonationYooMoneyNotificationTestButtonTest extends TestCase
     public function test_signed_test_notification_is_confirmed_while_the_owner_waits(): void
     {
         $token = (string) $this->start()->assertOk()->json('token');
-        $this->assertSame('waiting', $this->testStatus($token));
+        $this->assertSame('waiting', $this->dialogStatus($token));
 
         $this->notify($this->yooMoneyTestBody())->assertOk();
 
-        $this->assertSame('received', $this->testStatus($token));
+        $this->assertSame('received', $this->dialogStatus($token));
         $this->assertDatabaseCount('module_donation_payment_receipts', 0);
         $this->assertDatabaseCount('wallet_entries', 0);
 
         // Once answered, the window no longer intercepts: the address behaves as before.
         $this->notify($this->yooMoneyTestBody())->assertStatus(400);
-        $this->assertSame('received', $this->testStatus($token));
+        $this->assertSame('received', $this->dialogStatus($token));
     }
 
     public function test_documented_sha1_signature_is_accepted_for_the_test(): void
     {
         $token = (string) $this->start()->assertOk()->json('token');
         $this->notify($this->yooMoneyTestBody(sha1: true))->assertOk();
-        $this->assertSame('received', $this->testStatus($token));
+        $this->assertSame('received', $this->dialogStatus($token));
     }
 
     public function test_a_new_secret_typed_in_the_form_is_the_one_tested(): void
     {
         $token = (string) $this->start(['secret' => 'new-secret-from-form'])->assertOk()->json('token');
         $this->notify($this->yooMoneyTestBody('new-secret-from-form'))->assertOk();
-        $this->assertSame('received', $this->testStatus($token));
+        $this->assertSame('received', $this->dialogStatus($token));
     }
 
     public function test_wrong_secret_is_reported_and_answered_as_before(): void
     {
         $token = (string) $this->start()->assertOk()->json('token');
         $this->notify($this->yooMoneyTestBody('another-secret'))->assertStatus(400);
-        $this->assertSame('signature_mismatch', $this->testStatus($token));
+        $this->assertSame('signature_mismatch', $this->dialogStatus($token));
     }
 
     public function test_without_a_waiting_owner_the_address_behaves_as_before(): void
     {
         $this->notify($this->yooMoneyTestBody())->assertStatus(400);
-        $this->assertSame('expired', $this->testStatus(str_repeat('a', 40)));
+        $this->assertSame('expired', $this->dialogStatus(str_repeat('a', 40)));
     }
 
     public function test_real_payment_keeps_its_usual_path_while_the_owner_waits(): void
@@ -135,7 +135,7 @@ final class DonationYooMoneyNotificationTestButtonTest extends TestCase
         // A test notification for one of our orders is still recorded, never credited.
         $this->notify($this->paymentNotification($order, 'true', '44012399'))->assertOk();
 
-        $this->assertSame('waiting', $this->testStatus($token));
+        $this->assertSame('waiting', $this->dialogStatus($token));
         $this->assertDatabaseHas('module_donation_payment_receipts', ['provider_payment_id' => '44012345', 'payer_amount_minor' => 12000]);
         $this->assertDatabaseHas('module_donation_payment_receipts', ['provider_payment_id' => '44012399', 'status' => 'test']);
     }

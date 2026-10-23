@@ -14,6 +14,9 @@ final class ModuleNavigationRegistry
     /** @var array<string, array<string, mixed>> */
     private array $accountLinks = [];
 
+    /** @var array<string, true> Modules whose account link stays out of the sidebar. */
+    private array $outsideSidebar = [];
+
     /** @var array<string, array<string, mixed>> */
     private array $walletLinks = [];
 
@@ -45,7 +48,12 @@ final class ModuleNavigationRegistry
             descriptionKey: $descriptionKey,
             sortOrder: $sortOrder,
             routePrefix: 'modules.'.$moduleId.'.',
-        ) + ['in_sidebar' => $inSidebar];
+        );
+        if ($inSidebar) {
+            unset($this->outsideSidebar[$moduleId]);
+        } else {
+            $this->outsideSidebar[$moduleId] = true;
+        }
     }
 
     /** @param Closure(): bool $visibleWhen */
@@ -112,7 +120,7 @@ final class ModuleNavigationRegistry
     {
         return array_values(array_filter(
             $this->accountLinks(),
-            static fn (array $link): bool => (bool) ($link['in_sidebar'] ?? true),
+            fn (array $link): bool => ! isset($this->outsideSidebar[$link['module_id']]),
         ));
     }
 
