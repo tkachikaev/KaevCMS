@@ -1745,7 +1745,9 @@
 
 /* "Wide logo": a neutral checkbox, softly highlighted for a moment when the chosen image is
    much wider than tall (settings.js). */
-.settings-logo-wide { margin-top: 4px; padding: 6px 8px; border-radius: var(--admin-radius-control); transition: background-color .3s ease, box-shadow .3s ease; }
+/* The negative margin keeps the box in line with "Remove current logo" while the padding
+   leaves room for the highlight. */
+.settings-logo-wide { margin: 0 -8px; padding: 6px 8px; border-radius: var(--admin-radius-control); transition: background-color .3s ease, box-shadow .3s ease; }
 .settings-logo-wide input { accent-color: var(--admin-primary); }
 .settings-logo-wide.is-suggested {
     background: color-mix(in srgb, var(--admin-primary) 10%, transparent);

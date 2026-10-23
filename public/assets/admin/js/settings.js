@@ -34,6 +34,16 @@
                     wideToggle.querySelector('input[type="checkbox"]')?.addEventListener('change', () => {
                         wideToggle.classList.remove('is-suggested');
                     });
+
+                    // The logo already saved gets the same hint when it is wide and the box is clear.
+                    const current = preview.querySelector('[data-settings-preview-image]');
+                    if (current instanceof HTMLImageElement) {
+                        if (current.complete) {
+                            suggestWideLogo(current);
+                        } else {
+                            current.addEventListener('load', () => suggestWideLogo(current), { once: true });
+                        }
+                    }
                 }
 
                 let objectUrl = null;
