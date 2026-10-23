@@ -55,6 +55,7 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(page.locator('[data-testid="support-ticket-create-form"]')).toHaveCount(0);
     await page.getByRole('button', { name: /Создать обращение/, exact: false }).click();
     await expect(page.locator('[data-testid="support-ticket-create-form"]')).toBeVisible();
+    await expect(page.locator('.support-create-ticket-button')).toHaveCount(0);
     await page.getByRole('radio', { name: 'Техническая проблема', exact: true }).check();
     await expect(page.locator('.support-category-chip:has(input:checked)')).toHaveCSS('border-top-left-radius', '12px');
     await page.locator('input[name="subject"]').fill(subject);

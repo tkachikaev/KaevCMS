@@ -2,7 +2,10 @@
     <x-account-panel class="account-section account-surface">
         <x-account-panel-header class="support-ticket-list-heading">
             <x-slot:summary><span class="support-ticket-open-count">{{ $openCount }} / {{ $limits['max_open_tickets_per_user'] }}</span></x-slot:summary>
-            <x-slot:actions><button class="account-button primary support-create-ticket-button" type="button" wire:click="openCreateForm" @disabled($creating || $openCount >= $limits['max_open_tickets_per_user'])>+ {{ __('module-support-tickets::messages.create_ticket') }}</button></x-slot:actions>
+            {{-- While the form is open its own submit button is the only "Create ticket". --}}
+            @unless($creating)
+                <x-slot:actions><button class="account-button primary support-create-ticket-button" type="button" wire:click="openCreateForm" @disabled($openCount >= $limits['max_open_tickets_per_user'])>+ {{ __('module-support-tickets::messages.create_ticket') }}</button></x-slot:actions>
+            @endunless
         </x-account-panel-header>
 
         @if($creating)
