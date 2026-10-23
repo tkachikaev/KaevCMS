@@ -25,12 +25,16 @@
     outline-offset: 2px;
 }
 
-/* The icon box fills the button so the sliding icons are clipped at its edges. */
-.admin-appearance-icon {
-    display: grid;
-    place-items: center;
+/* The icon box fills the button so the sliding icons are clipped at its edges. The doubled
+   class outranks the header's generic `.admin-user span` text rule. */
+.admin-appearance-toggle .admin-appearance-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    max-width: none;
     height: 100%;
+    color: inherit;
     view-transition-name: admin-appearance-icon;
 }
 
