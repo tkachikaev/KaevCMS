@@ -87,37 +87,29 @@ test('the whole download page is visually editable, responsive and recoverable w
         await page.locator(`[data-page-delete-url$="/pages/${pageId}"]`).click();
         await page.locator('[data-page-delete-dialog] button[type="submit"]').click();
         await expect(page.locator(`[data-page-delete-url$="/pages/${pageId}"]`)).toHaveCount(0);
-        await gotoWithLocalNetworkRetry(visitor, '/ru/downloads');
-        await expect(visitor.getByRole('heading', { name: 'Файлы пока недоступны' })).toBeVisible();
+        // Without a page the button's address answers "not found"; nothing is recreated for you.
+        const missing = await visitor.goto('/ru/downloads');
+        expect(missing?.status()).toBe(404);
         await gotoWithLocalNetworkRetry(page, '/admin/pages');
-        await page.getByRole('link', { name: 'Создать страницу скачивания', exact: true }).click();
-        await expect(page.locator('#page_slug_ru')).toHaveValue('downloads');
-        await expect(editorFor('ru').locator('[data-content-block="card"]')).toHaveCount(2);
+        await expect(page.getByText('Проверьте страницу скачивания')).toHaveCount(0);
+
+        // Any new page with the key "downloads" is picked up by the button.
+        await gotoWithLocalNetworkRetry(page, '/admin/pages/create');
+        await page.locator('#page_title_ru').fill('Мои файлы');
+        await page.locator('#page_slug_ru').fill('downloads');
+        const editor = editorFor('ru');
+        await expect(editor).toHaveAttribute('data-editor-ready', '1');
+        await editor.locator('.rich-editor-canvas').click();
+        await page.keyboard.type('Установите клиент и патч.');
+        await editor.locator('[data-editor-action="cards"]').click();
+        await expect(editor.locator('[data-content-block="card"]')).toHaveCount(2);
+        await page.locator('#is_published').check();
         await page.getByRole('button', { name: 'Создать страницу', exact: true }).click();
         await expect(page).toHaveURL(/\/admin\/pages$/);
         await gotoWithLocalNetworkRetry(visitor, '/ru/downloads');
-        await expect(visitor.locator('.cms-page a[aria-disabled="true"]')).toHaveCount(2);
-        await gotoWithLocalNetworkRetry(page, '/admin/pages');
-        await page.getByRole('link', { name: 'Редактировать: Скачать игру', exact: true }).click();
-        const editor = editorFor('ru');
-        const cards = editor.locator('[data-content-block="card"]');
-        for (let i = 0; i < 2; i++) {
-            await cards.first().locator('h2').click();
-            await editor.locator('[data-editor-action="deleteCard"]').click();
-        }
-        await expect(cards).toHaveCount(0);
-        await editor.locator('[data-editor-action="cards"]').click();
-        await expect(cards).toHaveCount(2);
-        for (let i = 0; i < 2; i++) {
-            await cards.first().locator('h2').click();
-            await editor.locator('[data-editor-action="deleteCard"]').click();
-        }
-        await page.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
-        await expect(page).toHaveURL(/\/admin\/pages$/);
-        await gotoWithLocalNetworkRetry(visitor, '/ru/pages/downloads');
-        await expect(visitor.locator('.cms-page [data-content-block="card"]')).toHaveCount(0);
-        await expect(visitor.locator('.cms-page')).toContainText('Всё готово для начала приключения');
-    } finally {
+        await expect(visitor).toHaveURL(/\/ru\/pages\/downloads$/);
+        await expect(visitor.locator('.cms-page')).toContainText('Установите клиент и патч.');
+        await expect(visitor.locator('.cms-page [data-content-block="card"]')).toHaveCount(2);    } finally {
         await activate(originalTheme);
         await visitor.close();
     }

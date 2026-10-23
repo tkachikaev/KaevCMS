@@ -109,7 +109,7 @@ class BundledAureliaThemesTest extends TestCase
     {
         app(ThemeManager::class)->activate('kaev-aurelia');
 
-        foreach (['/' => 'home', '/news' => 'page', '/about' => 'page', '/ru/pages/downloads' => 'page', '/login' => 'hidden'] as $path => $mode) {
+        foreach (['/' => 'home', '/news' => 'page', '/ru/pages/about' => 'page', '/ru/pages/downloads' => 'page', '/login' => 'hidden'] as $path => $mode) {
             $this->get($path)->assertOk()
                 ->assertSee('x-persist="aurelia-scene"', false)
                 ->assertSee('data-aurelia-scene data-mode="'.$mode.'"', false);
@@ -268,8 +268,6 @@ class BundledAureliaThemesTest extends TestCase
             'layouts/app.blade.php',
             'news/index.blade.php',
             'news/show.blade.php',
-            'pages/about.blade.php',
-            'pages/downloads.blade.php',
             'pages/show.blade.php',
             'partials/footer.blade.php',
             'partials/header.blade.php',

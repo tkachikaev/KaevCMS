@@ -2,20 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Localization\LocalizedContentResolver;
-use App\Services\Pages\AboutPages;
-use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
-/** /about: the editable About page text, if published, above the game server cards. */
+/** /about: kept for old links; opens the page whose address is "about". */
 final class AboutController
 {
-    public function __invoke(AboutPages $about, LocalizedContentResolver $resolver): View
+    public function __invoke(): RedirectResponse
     {
-        $page = $about->selected();
-        if ($page !== null && (! $page->isLive() || $resolver->pageTranslation($page, app()->getLocale()) === null)) {
-            $page = null;
-        }
-
-        return view('theme::pages.about', ['page' => $page]);
+        return redirect()->to(page_key_url('about'));
     }
 }

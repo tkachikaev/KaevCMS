@@ -15,7 +15,7 @@
             @if($statisticsNavigationAvailable ?? false)
                 <a class="{{ request()->routeIs('statistics.*', 'localized.statistics.*') ? 'active' : '' }}" href="{{ public_route('statistics.index') }}">{{ __('Statistics') }}</a>
             @endif
-            <a class="{{ request()->routeIs('about', 'localized.about') ? 'active' : '' }}" href="{{ public_route('about') }}">{{ __('About the server') }}</a>
+            <a class="{{ url()->current() === page_key_url('about') ? 'active' : '' }}" href="{{ page_key_url('about') }}">{{ __('About the server') }}</a>
             @foreach ($headerPages ?? [] as $menuPage)
                 <a class="{{ request()->routeIs('pages.show', 'localized.pages.show') && (($page ?? null) instanceof \App\Models\Page) && $page->is($menuPage) ? 'active' : '' }}" href="{{ page_url($menuPage) }}">{{ $menuPage->titleFor() }}</a>
             @endforeach

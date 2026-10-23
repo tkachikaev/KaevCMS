@@ -2,19 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Pages\DownloadPages;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 
+/** /downloads: kept for old links; opens the page whose address is "downloads". */
 final class DownloadController
 {
-    public function __invoke(DownloadPages $downloads): View|RedirectResponse
+    public function __invoke(): RedirectResponse
     {
-        $page = $downloads->selected();
-        if ($page !== null && $page->isLive() && $page->translation() !== null) {
-            return redirect()->to(page_url($page));
-        }
-
-        return view('theme::pages.downloads');
+        return redirect()->to(page_key_url('downloads'));
     }
 }

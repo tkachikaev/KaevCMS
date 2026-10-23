@@ -30,8 +30,8 @@ final class PageTranslation extends Model
 
     protected static function booted(): void
     {
-        self::saved(static fn () => Page::forgetManagedPages());
-        self::deleted(static fn () => Page::forgetManagedPages());
+        self::saved(static fn () => Page::forgetRememberedPages());
+        self::deleted(static fn () => Page::forgetRememberedPages());
     }
 
     /** @return BelongsTo<Page, $this> */

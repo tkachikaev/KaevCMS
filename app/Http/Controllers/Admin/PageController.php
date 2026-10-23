@@ -8,8 +8,6 @@ use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Services\AuditLogger;
 use App\Services\Localization\LanguageManager;
-use App\Services\Pages\AboutPages;
-use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
 use App\Services\Pages\PageImageStorage;
 use Illuminate\Http\RedirectResponse;
@@ -42,37 +40,20 @@ final class PageController extends Controller
                 ->where('show_in_header', true)
                 ->orWhere('show_in_footer', true))->count(),
             'languages' => $this->languages->enabled(),
-            'downloadPageId' => app(DownloadPages::class)->selectedId(),
-            'downloadPage' => app(DownloadPages::class)->selected(),
-            'aboutPageId' => app(AboutPages::class)->selectedId(),
-            'aboutPage' => app(AboutPages::class)->selected(),
         ]);
     }
 
-    public function create(): View|RedirectResponse
+    public function create(): View
     {
-        // ?template=downloads|about starts a managed page with its fixed address and starter text.
-        $template = match (request()->query('template')) {
-            DownloadPages::SLUG => app(DownloadPages::class),
-            AboutPages::SLUG => app(AboutPages::class),
-            default => null,
-        };
-        if ($template !== null && ($existing = $template->selected()) !== null) {
-            return redirect()->route('admin.pages.edit', $existing);
-        }
-        $isDownloadPage = $template instanceof DownloadPages;
-
         return view('admin.pages.create', [
+            // A new page goes live on save; untick to keep a draft.
             'pageItem' => new Page([
-                'is_published' => $template !== null,
+                'is_published' => true,
                 'show_in_header' => false,
-                // The site menu already links to /about.
-                'show_in_footer' => ! $template instanceof AboutPages,
+                'show_in_footer' => true,
                 'sort_order' => 100,
             ]),
-            'translations' => $template !== null ? array_replace($this->emptyTranslations(), $template->templateTranslations()) : $this->emptyTranslations(),
-            'isDownloadPage' => $isDownloadPage,
-            'isAboutPage' => $template instanceof AboutPages,
+            'translations' => $this->emptyTranslations(),
             'languages' => $this->languages->enabled(),
             'defaultLocale' => $this->languages->default(),
         ]);
@@ -154,18 +135,10 @@ final class PageController extends Controller
             ]),
         ]));
 
-        if ($preview->slug === AboutPages::SLUG) {
-            return response()->view('theme::pages.about', ['page' => $preview, 'isPreview' => true, 'previewKind' => 'page'])
-                ->header('X-Robots-Tag', 'noindex, nofollow, noarchive');
-        }
-
-        $isDownloadPage = $preview->slug === DownloadPages::SLUG;
-
         return response()->view('theme::pages.show', [
             'page' => $preview,
             'isPreview' => true,
             'previewKind' => 'page',
-            'isDownloadPage' => $isDownloadPage,
         ])->header('X-Robots-Tag', 'noindex, nofollow, noarchive');
     }
 
@@ -175,8 +148,6 @@ final class PageController extends Controller
 
         return view('admin.pages.edit', [
             'pageItem' => $page,
-            'isDownloadPage' => app(DownloadPages::class)->selectedId() === $page->id,
-            'isAboutPage' => app(AboutPages::class)->selectedId() === $page->id,
             'translations' => $this->translationValues($page),
             'languages' => $this->languages->enabled(),
             'defaultLocale' => $this->languages->default(),
@@ -275,6 +246,7 @@ final class PageController extends Controller
         $validated = $request->validated();
         $inputTranslations = is_array($validated['translations'] ?? null) ? $validated['translations'] : [];
         $translations = [];
+        $sharedSlug = $this->sharedSlug($inputTranslations);
 
         foreach ($this->languages->enabledCodes() as $locale) {
             $input = is_array($inputTranslations[$locale] ?? null) ? $inputTranslations[$locale] : [];
@@ -302,7 +274,7 @@ final class PageController extends Controller
                 ]);
             }
 
-            $slug = Str::slug($requestedSlug !== '' ? $requestedSlug : $title);
+            $slug = Str::slug($requestedSlug !== '' ? $requestedSlug : $sharedSlug);
             if ($slug === '') {
                 throw ValidationException::withMessages([
                     'translations.'.$locale.'.slug' => __('Enter a valid page address.'),
@@ -342,6 +314,29 @@ final class PageController extends Controller
                 $field => __('The formatted content is too large. Reduce the text, tables, or images and try again.'),
             ]);
         }
+    }
+
+    /**
+     * The address a language uses when its own field is empty: the address typed in another
+     * language (the default one first), otherwise one made from the default-language title.
+     * So a page keeps one key, such as "downloads", in every language unless told otherwise.
+     *
+     * @param  array<mixed>  $inputTranslations
+     */
+    private function sharedSlug(array $inputTranslations): string
+    {
+        $default = $this->languages->default();
+        $locales = array_values(array_unique([$default, ...$this->languages->enabledCodes()]));
+        foreach ($locales as $locale) {
+            $input = is_array($inputTranslations[$locale] ?? null) ? $inputTranslations[$locale] : [];
+            $slug = Str::slug(trim((string) ($input['slug'] ?? '')));
+            if ($slug !== '') {
+                return $slug;
+            }
+        }
+        $defaultInput = is_array($inputTranslations[$default] ?? null) ? $inputTranslations[$default] : [];
+
+        return Str::slug(trim((string) ($defaultInput['title'] ?? '')));
     }
 
     /** @param array<string,array{title:string,slug:string,body:string,seo_title:string,seo_description:string}> $translations */

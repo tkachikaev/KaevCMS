@@ -38,14 +38,11 @@ Actions belong inside the related panel. Main sections have no separate "Back to
 
 Use `.account-tabs` both for navigation links and for Livewire tab buttons; mark the active link with `aria-current` and the active button with `aria-selected`. The player sidebar footer contains only the return-to-site link. Theme names and build versions are shown only in administration.
 
-## Download page
+## Pages behind theme buttons
 
-Installation or the first upgrade creates an editable RU/EN download page with the reserved `downloads` address. Bundled theme download buttons resolve its localized address with `download_page_url()`. All page content, including card headings, descriptions and buttons, lives in the visual editor under **Pages**. Click button text and choose **Link** to set its address and appearance. **Cards**, **Add card**, and **Delete card** manage the layout without HTML. An empty button address stays inactive. Removing cards removes them from the website, with no extra template content appended. An additive upgrade moves the previous cards and saved URLs into each translation exactly once while preserving owner text.
+Theme buttons open an ordinary page by its address key, the page address in the default language: "About the server" opens the page with the address `about`, "Download client" the page with the address `downloads`. Themes call `page_key_url('about')`; `download_page_url()` is the same for `downloads`. Create a page with that address and the button picks it up; a theme can add a button for any other key the same way. Without a published page with the key, the button stays and its address answers "not found".
 
-Deleted pages are not recreated by subsequent upgrades. Create a normal page with the `downloads` address in the default language, or use the prefilled form offered in the page list. Missing or unpublished pages show a files-unavailable message. Upgrades preserve existing downloads content and URLs.
+A new installation creates two example pages, "About the server" (`about`) and "Download the game" (`downloads`). They are ordinary pages: edit, unpublish or delete them freely; upgrades never recreate a deleted page. The old `/about` and `/downloads` addresses redirect to the pages with these keys. A translation with an empty address takes the address typed in another language, so a page keeps one key in every language.
 
-## About page
+The download page content, including card headings, descriptions and buttons, lives in the visual editor. Click button text and choose **Link** to set its address and appearance; **Cards**, **Add card** and **Delete card** manage the layout without HTML, and a button without an address stays inactive.
 
-Installation or the first upgrade with this feature creates an editable RU/EN About page with the reserved `about` address. It opens at `/about`: the page text first, then the game server cards (chronicle, rates, mode) from the game server settings. Edit the text under **Pages** like any other page. Addresses such as `/ru/pages/about` redirect to `/about`.
-
-An unpublished or deleted page does not break `/about`: it then shows only the server cards. Deleted pages are not recreated by later upgrades; the page list offers **Create about page** with the starter text and the reserved address.

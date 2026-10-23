@@ -64,13 +64,13 @@ test('the language menu works in the header and the phone menu of both public th
             expect(await visitor.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 
             await phone.locator('a[hreflang="en"]').click();
-            await expect(visitor).toHaveURL(/\/en\/about$/);
+            await expect(visitor).toHaveURL(/\/en\/pages\/about$/);
             await expect(visitor.locator('html')).toHaveAttribute('lang', 'en');
 
             await visitor.locator('.menu-toggle').click();
             await visitor.locator('.main-nav .mobile-language-menu summary').click();
             await visitor.locator('.main-nav .mobile-language-menu a[hreflang="ru"]').click();
-            await expect(visitor).toHaveURL(/\/ru\/about$/);
+            await expect(visitor).toHaveURL(/\/ru\/pages\/about$/);
         }
     } finally {
         await activate(originalTheme);

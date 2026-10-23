@@ -3,9 +3,8 @@
 namespace App\Models;
 
 use App\Services\Localization\LanguageManager;
-use App\Services\Pages\AboutPages;
-use App\Services\Pages\DownloadPages;
 use App\Services\Pages\PageHtmlSanitizer;
+use App\Services\Pages\PageKeys;
 use App\Support\Database\TableExistence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -31,17 +30,15 @@ class Page extends Model
 
     protected static function booted(): void
     {
-        static::saved(static fn () => self::forgetManagedPages());
-        static::deleted(static fn () => self::forgetManagedPages());
+        static::saved(static fn () => self::forgetRememberedPages());
+        static::deleted(static fn () => self::forgetRememberedPages());
     }
 
-    /** The downloads and about pages are remembered for the request; any page write refreshes them. */
-    public static function forgetManagedPages(): void
+    /** Pages found by key are remembered for the request; any page write refreshes them. */
+    public static function forgetRememberedPages(): void
     {
-        foreach ([DownloadPages::class, AboutPages::class] as $managed) {
-            if (app()->resolved($managed)) {
-                app($managed)->forget();
-            }
+        if (app()->resolved(PageKeys::class)) {
+            app(PageKeys::class)->forget();
         }
     }
 

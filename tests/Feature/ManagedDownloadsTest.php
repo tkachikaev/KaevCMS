@@ -118,24 +118,21 @@ class ManagedDownloadsTest extends TestCase
         $this->get(page_url($new))->assertSee('Мои файлы')->assertSee('https://files.test/new.zip')->assertDontSee('Патч сервера');
     }
 
-    public function test_draft_and_deleted_pages_are_private_and_the_admin_can_create_a_prefilled_replacement(): void
+    public function test_draft_and_deleted_pages_are_private_and_a_new_downloads_page_is_picked_up(): void
     {
         $page = $this->downloads();
         $page->translations()->where('locale', 'ru')->update(['body' => '<p>Private draft marker</p>']);
         $page->update(['is_published' => false]);
-        $this->get('/ru/downloads')->assertOk()->assertSee('Файлы пока недоступны')->assertDontSee('Private draft marker');
-        $this->actingAs(Admin::factory()->create(), 'admin')->get('/admin/pages')->assertSee('Проверьте страницу скачивания');
-        $this->get('/admin/pages/create?template=downloads')->assertRedirect(route('admin.pages.edit', $page));
+        $this->get('/ru/downloads')->assertRedirect(route('pages.show', ['page' => 'downloads']));
+        $this->get('/pages/downloads')->assertNotFound();
+        $this->actingAs(Admin::factory()->create(), 'admin')->get('/admin/pages')->assertDontSee('Проверьте страницу скачивания');
         $this->assertFalse($page->fresh()->isLive());
         $this->delete('/admin/pages/'.$page->id)->assertRedirect();
         app(DownloadPages::class)->initialize();
-        $this->assertNull(app(DownloadPages::class)->selected());
-        $this->get('/en/downloads')->assertOk()->assertSee('Files are not available yet')->assertDontSee('Private draft marker');
-        $this->get('/admin/pages')->assertSee('Создать страницу скачивания');
-        $this->get('/admin/pages/create?template=downloads')->assertOk()->assertSee('value="downloads"', false)->assertSee('data-page-blocks="1"', false);
-        $this->assertNull(app(DownloadPages::class)->selected());
-        $this->post('/admin/pages', $this->payload($page))->assertSessionHasNoErrors();
-        $this->assertNotNull(app(DownloadPages::class)->selected());
+        $this->assertNull(Page::query()->where('slug', DownloadPages::SLUG)->first());
+        $this->post('/admin/pages', array_replace($this->payload($page), ['is_published' => true]))->assertSessionHasNoErrors();
+        $this->assertNotNull(Page::query()->where('slug', DownloadPages::SLUG)->first());
+        $this->get('/downloads')->assertRedirect(page_url($this->downloads()));
     }
 
     public function test_rerunning_migration_preserves_custom_pages_users_and_links_and_never_recreates_a_deleted_page(): void
@@ -152,7 +149,7 @@ class ManagedDownloadsTest extends TestCase
         $page->forceDelete();
         $remainingPages = Page::with('translations')->get()->toArray();
         $migration->up();
-        $this->assertNull(app(DownloadPages::class)->selectedId());
+        $this->assertNull(Page::query()->where('slug', DownloadPages::SLUG)->value('id'));
         $this->assertSame($remainingPages, Page::with('translations')->get()->toArray());
     }
 
@@ -177,7 +174,7 @@ class ManagedDownloadsTest extends TestCase
 
     public function test_content_managers_can_edit_the_whole_page_while_auditors_and_guests_cannot(): void
     {
-        $this->get('/admin/pages/create?template=downloads')->assertRedirect(route('admin.login'));
+        $this->get('/admin/pages/create')->assertRedirect(route('admin.login'));
         $page = $this->downloads();
         foreach (['owner', 'administrator', 'editor'] as $role) {
             $payload = $this->payload($page);
@@ -218,7 +215,7 @@ class ManagedDownloadsTest extends TestCase
         $this->assertNotNull($user->fresh());
         $page->forceDelete();
         $migration->up();
-        $this->assertNull(app(DownloadPages::class)->selected());
+        $this->assertNull(Page::query()->where('slug', DownloadPages::SLUG)->first());
     }
 
     public function test_visual_cards_are_available_on_ordinary_pages_and_never_forced_on_a_recreated_download_page(): void
@@ -233,7 +230,7 @@ class ManagedDownloadsTest extends TestCase
 
     private function downloads(): Page
     {
-        return app(DownloadPages::class)->selected() ?? throw new \RuntimeException('Default download page missing');
+        return Page::query()->with('translations')->where('slug', DownloadPages::SLUG)->first() ?? throw new \RuntimeException('Default download page missing');
     }
 
     private function otherPage(): Page

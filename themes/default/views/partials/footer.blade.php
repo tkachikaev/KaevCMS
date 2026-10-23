@@ -16,7 +16,7 @@
             <h3>{{ __('Sections') }}</h3>
             <div class="footer-section-links">
                 <a href="{{ public_route('news.index') }}">{{ __('News') }}</a>
-                <a href="{{ public_route('about') }}">{{ __('Server description') }}</a>
+                <a href="{{ page_key_url('about') }}">{{ __('Server description') }}</a>
                 @foreach ($footerPages ?? [] as $menuPage)
                     <a href="{{ page_url($menuPage) }}">{{ $menuPage->titleFor() }}</a>
                 @endforeach

@@ -6,8 +6,7 @@ use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
 use App\Services\Localization\LocalizedContentResolver;
 use App\Services\MailSettings;
-use App\Services\Pages\AboutPages;
-use App\Services\Pages\DownloadPages;
+use App\Services\Pages\PageKeys;
 use App\Services\RegistrationSettings;
 use App\Services\SiteSettings;
 use App\Support\DisplayFormat;
@@ -23,14 +22,18 @@ if (! function_exists('cms_version')) {
     }
 }
 
+if (! function_exists('page_key_url')) {
+    /** Link to the page with this address key ("about", "downloads", ...), as theme buttons use it. */
+    function page_key_url(string $key, ?string $locale = null): string
+    {
+        return app(PageKeys::class)->url($key, $locale);
+    }
+}
+
 if (! function_exists('download_page_url')) {
     function download_page_url(?string $locale = null): string
     {
-        $page = app(DownloadPages::class)->selected();
-
-        return $page !== null && $page->isLive() && $page->translation($locale) !== null
-            ? page_url($page, $locale)
-            : public_route('downloads');
+        return page_key_url('downloads', $locale);
     }
 }
 
@@ -302,10 +305,6 @@ if (! function_exists('page_url')) {
             ->pageTranslation($page, $locale);
 
         if ($translation !== null && $languages->isEnabled($translation->locale)) {
-            if (app(AboutPages::class)->selectedId() === $page->id) {
-                return route('localized.about', ['locale' => $translation->locale]);
-            }
-
             return route('localized.pages.show', [
                 'locale' => $translation->locale,
                 'slug' => $translation->slug,

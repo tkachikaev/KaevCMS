@@ -103,7 +103,8 @@ class RusacisGameWorldTest extends TestCase
             ->assertOk()
             ->assertSee('ActiveHero')
             ->assertDontSee('DeletedCharacter')
-            ->assertDontSee('GM');
+            // Visible text only: the random CSRF token in the page head may contain "GM".
+            ->assertDontSeeText('GM');
     }
 
     public function test_optional_tables_disable_optional_capabilities_without_blocking_rankings(): void

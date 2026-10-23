@@ -18,7 +18,7 @@
             @if($statisticsNavigationAvailable ?? false)
                 <a wire:navigate.hover wire:current="active" href="{{ public_route('statistics.index') }}">{{ __('Statistics') }}</a>
             @endif
-            <a wire:navigate.hover wire:current="active" href="{{ public_route('about') }}">{{ __('About the server') }}</a>
+            <a wire:navigate.hover wire:current="active" href="{{ page_key_url('about') }}">{{ __('About the server') }}</a>
             @foreach ($headerPages ?? [] as $menuPage)
                 <a wire:navigate.hover wire:current="active" href="{{ page_url($menuPage) }}">{{ $menuPage->titleFor() }}</a>
             @endforeach

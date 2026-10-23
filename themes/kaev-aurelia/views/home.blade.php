@@ -116,7 +116,7 @@
                         @if ($currentServer['show_mode'])
                             <div class="server-stat"><span class="server-stat-icon" aria-hidden="true">⚔</span><div><small>{{ __('Mode') }}</small><strong>{{ $currentServer['mode'] }}</strong></div></div>
                         @endif
-                        <a wire:navigate.hover class="server-arrow" href="{{ public_route('about') }}" aria-label="{{ __('About the server') }}">→</a>
+                        <a wire:navigate.hover class="server-arrow" href="{{ page_key_url('about') }}" aria-label="{{ __('About the server') }}">→</a>
                     </div>
                 @endforeach
             </div>

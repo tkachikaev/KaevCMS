@@ -14,7 +14,7 @@
         <h1>{{ $page->titleFor() }}</h1>
     </div>
 </section>
-<section @class(['container page-content cms-page', 'download-page-content' => $isDownloadPage ?? false])>
+<section class="container page-content cms-page">
     <article class="panel prose cms-page-prose">{!! $page->safeBodyHtml() !!}</article>
 </section>
 @endsection

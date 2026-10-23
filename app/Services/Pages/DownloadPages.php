@@ -6,6 +6,10 @@ use App\Models\CmsSetting;
 use App\Models\Page;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * The example "Download the game" page created on installation: an ordinary page with the
+ * address "downloads", which the theme's Download client buttons open.
+ */
 final class DownloadPages
 {
     public const KEY = 'content.downloads_initialized';
@@ -13,29 +17,6 @@ final class DownloadPages
     public const SLUG = 'downloads';
 
     public const EDITABLE_KEY = 'content.downloads_editable_blocks_initialized';
-
-    /** The header and the footer both link to this page; false = not read yet in this request. */
-    private Page|false|null $selected = false;
-
-    public function selectedId(): ?int
-    {
-        return $this->selected()?->id;
-    }
-
-    public function selected(): ?Page
-    {
-        if ($this->selected === false) {
-            $this->selected = Page::query()->with('translations')->where('slug', self::SLUG)->first();
-        }
-
-        return $this->selected;
-    }
-
-    /** Page and translation writes call this, so a changed page is read again. */
-    public function forget(): void
-    {
-        $this->selected = false;
-    }
 
     /** Install once. An intentionally cleared or deleted page is never recreated by an update. */
     public function initialize(): void
@@ -91,7 +72,8 @@ final class DownloadPages
             $inserted = CmsSetting::query()->insertOrIgnore([
                 'key' => self::EDITABLE_KEY, 'value' => '1', 'created_at' => now(), 'updated_at' => now(),
             ]);
-            if ($inserted !== 1 || ($page = $this->selected()) === null) {
+            $page = Page::query()->with('translations')->where('slug', self::SLUG)->first();
+            if ($inserted !== 1 || $page === null) {
                 return;
             }
             foreach ($page->translations as $translation) {
