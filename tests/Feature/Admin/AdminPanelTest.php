@@ -481,10 +481,10 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('prefers-color-scheme: dark', $appearanceScript);
         $this->assertStringContainsString('window.localStorage.setItem(storageKey, preference)', $appearanceScript);
         $this->assertStringContainsString('data-admin-color-scheme="dark"', $appearanceStyles);
-        $this->assertStringContainsString('--admin-page-bg: #0b111a;', $appearanceStyles);
+        $this->assertStringContainsString('--admin-page-bg: #0e0f11;', $appearanceStyles);
         $this->assertStringNotContainsString('html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab span,', $appearanceStyles);
         $this->assertStringContainsString('html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab:not(.active) span', $appearanceStyles);
-        $this->assertStringContainsString('background: #334155;', $appearanceStyles);
+        $this->assertStringContainsString('background: #2e3035;', $appearanceStyles);
         $contentStyles = file_get_contents(public_path('assets/admin/css/content.css'));
         $this->assertIsString($contentStyles);
         $this->assertStringContainsString('.audit-tabs .admin-tab { gap: 7px; }', $contentStyles);

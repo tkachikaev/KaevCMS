@@ -47,7 +47,7 @@
 
         const themeColor = document.querySelector('meta[name="theme-color"]');
         if (themeColor) {
-            themeColor.setAttribute('content', scheme === 'dark' ? '#0b111a' : '#f3f6fa');
+            themeColor.setAttribute('content', scheme === 'dark' ? '#0e0f11' : '#f3f6fa');
         }
 
         synchronizeControls();
