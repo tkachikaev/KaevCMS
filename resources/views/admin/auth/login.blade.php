@@ -14,7 +14,7 @@
             </div>
 
             <a class="login-brand-copy" href="{{ public_route('home') }}">
-                <strong>{{ config('app.name') }}</strong>
+                <strong>{{ site_name() }}</strong>
                 <small>CONTROL PANEL</small>
             </a>
         </div>

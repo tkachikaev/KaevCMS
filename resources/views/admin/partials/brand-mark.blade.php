@@ -3,5 +3,5 @@
 @if($brandLogoUrl)
     <span class="{{ $class }} has-logo" aria-hidden="true"><img src="{{ $brandLogoUrl }}" alt=""></span>
 @else
-    <span class="{{ $class }}" aria-hidden="true">{{ mb_strtoupper(mb_substr((string) config('app.name'), 0, 1)) }}</span>
+    <span class="{{ $class }}" aria-hidden="true">{{ mb_strtoupper(mb_substr(site_name(), 0, 1)) }}</span>
 @endif

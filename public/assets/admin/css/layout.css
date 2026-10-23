@@ -44,6 +44,9 @@
 :is(.admin-brand-mark, .admin-mobile-brand-mark).has-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .admin-brand strong, .admin-brand small { display: block; }
 .admin-brand strong { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+/* The site name from Settings → Site can be long; it ends with an ellipsis instead of widening the menu. */
+.admin-brand > span { min-width: 0; }
+.admin-brand strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-brand small { color: var(--sidebar-muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
 /* A logo marked wide in Settings → Site takes the whole row; the caption moves under it. */
 .admin-brand.has-wide-logo { flex-direction: column; align-items: flex-start; gap: 10px; }

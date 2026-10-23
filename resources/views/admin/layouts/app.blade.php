@@ -7,7 +7,7 @@
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#f3f6fa">
     <script src="{{ asset('assets/admin/js/appearance.js') }}?v={{ cms_version() }}" data-navigate-track data-navigate-once></script>
-    <title>@yield('title', __('Control panel')) — {{ config('app.name') }}</title>
+    <title>@yield('title', __('Control panel')) — {{ site_name() }}</title>
     @foreach ([
         'base',
         'layout',

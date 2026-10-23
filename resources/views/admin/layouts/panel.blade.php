@@ -22,12 +22,12 @@
             <a wire:navigate.hover @class(['admin-brand', 'has-wide-logo' => $wideBrandLogo]) data-admin-menu-link href="{{ route('admin.dashboard') }}">
                 @if($wideBrandLogo)
                     {{-- A wide logo carries the name itself, so it takes the whole row. --}}
-                    <span class="admin-brand-wide-logo"><img src="{{ site_logo_url() }}" alt="{{ config('app.name') }}"></span>
+                    <span class="admin-brand-wide-logo"><img src="{{ site_logo_url() }}" alt="{{ site_name() }}"></span>
                     <small>{{ __('Control panel') }}</small>
                 @else
                     @include('admin.partials.brand-mark', ['class' => 'admin-brand-mark'])
                     <span>
-                        <strong>{{ config('app.name') }}</strong>
+                        <strong>{{ site_name() }}</strong>
                         <small>{{ __('Control panel') }}</small>
                     </span>
                 @endif
@@ -65,11 +65,11 @@
             </button>
             <a wire:navigate @class(['admin-mobile-brand', 'has-wide-logo' => $wideBrandLogo]) href="{{ route('admin.dashboard') }}">
                 @if($wideBrandLogo)
-                    <span class="admin-brand-wide-logo"><img src="{{ site_logo_url() }}" alt="{{ config('app.name') }}"></span>
+                    <span class="admin-brand-wide-logo"><img src="{{ site_logo_url() }}" alt="{{ site_name() }}"></span>
                 @else
                     @include('admin.partials.brand-mark', ['class' => 'admin-mobile-brand-mark'])
                     <span>
-                        <strong>{{ config('app.name') }}</strong>
+                        <strong>{{ site_name() }}</strong>
                         <small>{{ __('Control panel') }}</small>
                     </span>
                 @endif
