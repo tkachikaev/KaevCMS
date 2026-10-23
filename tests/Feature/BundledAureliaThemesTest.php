@@ -34,7 +34,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertTrue($publicTheme['valid'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertTrue($publicTheme['compatible'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertSame('Kaev Aurelia', $publicTheme['name']);
-        $this->assertSame('1.0.13', $publicTheme['version']);
+        $this->assertSame('1.0.14', $publicTheme['version']);
         $this->assertNotNull($publicTheme['preview_url']);
 
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));

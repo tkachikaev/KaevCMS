@@ -1340,6 +1340,7 @@
     "No module description.": "Описание модуля отсутствует.",
     "No modules found. Copy a module directory containing <code>module.json</code> into the <code>modules</code> directory.": "Модули не найдены. Скопируйте каталог модуля с файлом <code>module.json</code> в каталог <code>modules</code>.",
     "No navigation links yet": "Ссылок пока нет",
+    "Announcements, updates and server events will appear here.": "Здесь появятся анонсы, обновления и события сервера.",
     "No news yet": "Новостей пока нет",
     "No notifications": "Нет уведомлений",
     "No optional avatars are available yet. The default avatar remains active.": "Дополнительные аватары пока не добавлены. Стандартный аватар остаётся доступен.",

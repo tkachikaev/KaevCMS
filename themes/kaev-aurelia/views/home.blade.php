@@ -148,7 +148,7 @@
                     </div>
                 </article>
             @empty
-                <div class="panel empty-state"><img src="{{ theme_asset('images/kaev-mark.png') }}" alt="" aria-hidden="true"><p class="empty">{{ __('There is no news yet.') }}</p></div>
+                @include('theme::partials.news-empty')
             @endforelse
         </div>
         @if($news->isNotEmpty())

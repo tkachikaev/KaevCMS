@@ -27,7 +27,7 @@
                 </div>
             </article>
         @empty
-            <div class="panel prose"><p>{{ __('There is no news yet.') }}</p></div>
+            @include('theme::partials.news-empty')
         @endforelse
     </div>
 
