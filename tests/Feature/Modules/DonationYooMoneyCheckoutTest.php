@@ -129,7 +129,7 @@ final class DonationYooMoneyCheckoutTest extends TestCase
         $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid)
             ->assertOk()->assertSee('data-testid="donations-start-checkout"', false);
         $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout?sum=0.01&receiver=41009999999999&paymentType=AC');
-        $response->assertOk()->assertHeader('Cache-Control', 'max-age=0, no-store, private')
+        $response->assertOk()->assertHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store, private')
             ->assertHeader('Referrer-Policy', 'no-referrer')
             ->assertSee('data-testid="donations-yoomoney-checkout"', false)
             ->assertSee('action="https://yoomoney.ru/quickpay/confirm"', false)

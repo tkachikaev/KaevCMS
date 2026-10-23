@@ -66,7 +66,7 @@ final class DonationTopUpDialogTest extends TestCase
         $payload = $this->payload() + ['sum' => '0.01', 'receiver' => '41009999999999', 'paymentType' => 'AC'];
         foreach (range(1, 2) as $attempt) {
             $this->actingAs($player)->postJson('/modules/donations/top-up', $payload)->assertOk()
-                ->assertHeader('Cache-Control', 'no-store, private')
+                ->assertHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store, private')
                 ->assertJsonPath('fields.sum', '125.00')->assertJsonPath('fields.receiver', '410012345678901')
                 ->assertJsonPath('fields.paymentType', 'PC')->assertJsonPath('method', 'POST')
                 ->assertJsonPath('action', 'https://yoomoney.ru/quickpay/confirm')

@@ -363,6 +363,20 @@ If `www` is not used and has no DNS record, remove the second `-d` and remove `w
 
 If no domain or A record is available yet, skip Certbot. Web Installer allows HTTP installation and only displays a warning. This is convenient for a test VDS, local IP, or private network. Configure a domain and HTTPS before opening a public website to users.
 
+### nginx security headers
+
+In the `http` section of `/etc/nginx/nginx.conf`, replace the existing `server_tokens` directive with `server_tokens off;`. This hides the detailed nginx version in response headers and standard error pages.
+
+After verifying the certificate and HTTP-to-HTTPS redirect, add this to every HTTPS `server` block for the site, including the `www` redirect:
+
+```nginx
+add_header Strict-Transport-Security "max-age=604800" always;
+```
+
+Do not add HSTS to an HTTP block or an IP-only installation. Start with one week; extend it after verifying certificate renewal. `includeSubDomains` and `preload` require a separate review of all subdomains. A nested `location` with its own `add_header` directives does not inherit parent headers: repeat HSTS there. Run `sudo nginx -t` before applying, then `sudo systemctl reload nginx`.
+
+The CMS supplies CSP for the website and player account and `no-store` for authenticated pages and login forms. Do not add a second CSP in nginx: browsers enforce both policies, potentially blocking UI or YooMoney checkout. Verify `curl -I https://example.com/`, the login page and an HTTPS 404 page afterward.
+
 ## 11. Run the Web Installer
 
 With a domain and certificate, open:
