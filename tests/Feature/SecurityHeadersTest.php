@@ -87,4 +87,21 @@ class SecurityHeadersTest extends TestCase
             ->assertHeader('Referrer-Policy', 'same-origin')
             ->assertHeader('Content-Security-Policy', "default-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
     }
+
+    public function test_templates_do_not_use_inline_handlers_blocked_by_the_policy(): void
+    {
+        $handler = '/\son(?:click|change|input|submit|reset|load|error|focus|blur|select|toggle|scroll|key\w+|mouse\w+|pointer\w+)\s*=|javascript:/i';
+        $offenders = [];
+
+        foreach (['resources/views', 'themes', 'account-themes', 'modules'] as $directory) {
+            $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path($directory), \FilesystemIterator::SKIP_DOTS));
+            foreach ($files as $file) {
+                if (str_ends_with($file->getFilename(), '.blade.php') && preg_match($handler, (string) file_get_contents($file->getPathname())) === 1) {
+                    $offenders[] = str_replace('\\', '/', substr($file->getPathname(), strlen(base_path()) + 1));
+                }
+            }
+        }
+
+        $this->assertSame([], $offenders, 'Inline handlers are silently blocked by CSP; attach behavior from a script file.');
+    }
 }

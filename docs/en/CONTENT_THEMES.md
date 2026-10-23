@@ -38,6 +38,8 @@ Actions belong inside the related panel. Main sections have no separate "Back to
 
 Use `.account-tabs` both for navigation links and for Livewire tab buttons; mark the active link with `aria-current` and the active button with `aria-selected`. The player sidebar footer contains only the return-to-site link. Theme names and build versions are shown only in administration.
 
+The site, account and administration Content Security Policy forbids inline scripts and handlers such as `onchange` and `onclick`: the browser silently blocks them. Attach behavior only through script files. To make a filter list submit its form immediately, add the `data-account-auto-submit` attribute to the `<select>` (the shared account runtime handles it) and keep a submit button inside `<noscript>` in the form.
+
 ## Pages behind theme buttons
 
 Theme buttons open an ordinary page by its address key, the page address in the default language: "About the server" opens the page with the address `about`, "Download client" the page with the address `downloads`. Themes call `page_key_url('about')`; `download_page_url()` is the same for `downloads`. Create a page with that address and the button picks it up; a theme can add a button for any other key the same way. Without a published page with the key, the button stays and its address answers "not found".

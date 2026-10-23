@@ -556,6 +556,26 @@ class DailyRewardsModuleTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_account_filters_submit_through_the_shared_runtime_instead_of_inline_handlers(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $user = User::factory()->create();
+        $account = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+
+        $html = $this->actingAs($user)
+            ->get('/modules/daily-rewards?calendar='.$calendar->id.'&account='.$account->id)
+            ->assertOk()
+            ->assertDontSee('onchange=', false)
+            ->getContent();
+
+        $this->assertSame(1, preg_match_all('/<select name="calendar" data-account-auto-submit\b/', (string) $html));
+        $this->assertSame(1, preg_match_all('/<select name="account" data-account-auto-submit\b/', (string) $html));
+        $this->assertStringContainsString('data-account-auto-submit', (string) file_get_contents(public_path('assets/account/js/navigation.js')));
+    }
+
     public function test_module_translation_keys_have_full_ru_en_parity(): void
     {
         $english = require base_path('modules/daily-rewards/lang/en/messages.php');

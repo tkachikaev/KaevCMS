@@ -361,6 +361,13 @@
         }
     });
 
+    // CSP forbids inline handlers such as onchange; filters opt in with this attribute.
+    document.addEventListener('change', (event) => {
+        if (event.target instanceof HTMLSelectElement && event.target.hasAttribute('data-account-auto-submit')) {
+            event.target.form?.requestSubmit();
+        }
+    });
+
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeMobileSidebar();

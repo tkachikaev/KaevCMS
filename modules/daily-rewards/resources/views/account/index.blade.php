@@ -18,7 +18,7 @@
         <form class="daily-reward-account-filters" method="GET" action="{{ route('modules.daily-rewards.index') }}">
             <label>
                 <span>{{ __('module-daily-rewards::messages.game_server') }}</span>
-                <select name="calendar" onchange="this.form.submit()">
+                <select name="calendar" data-account-auto-submit>
                     @foreach($calendars as $availableCalendar)
                         <option value="{{ $availableCalendar->id }}" @selected($calendar->id === $availableCalendar->id)>{{ $availableCalendar->gameServer->nameFor() }} · {{ $availableCalendar->periodLabel() }}</option>
                     @endforeach
@@ -26,7 +26,7 @@
             </label>
             <label>
                 <span>{{ __('module-daily-rewards::messages.game_account') }}</span>
-                <select name="account" onchange="this.form.submit()" @disabled($accounts->isEmpty())>
+                <select name="account" data-account-auto-submit @disabled($accounts->isEmpty())>
                     @if($accounts->isEmpty())
                         <option value="">{{ __('module-daily-rewards::messages.select_account') }}</option>
                     @else
