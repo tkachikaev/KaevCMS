@@ -37,6 +37,24 @@ body.account-body .account-panel .account-section-heading > div { min-width: 0; 
     body.account-body .account-shell { grid-template-columns: 260px minmax(0, 1fr); }
     body.account-body .account-shell > .account-sidebar { width: auto; padding-inline: 14px; }
 }
+/* Quiet scrollbars for the sidebar and inner scroll areas (the support chat uses the class
+   too): a thin thumb on a transparent track that takes the theme accent on hover. Reaching
+   the end of such an area does not scroll the page behind it. */
+body.account-body .account-sidebar,
+body.account-body .account-scroll-area {
+    --account-scroll-thumb: color-mix(in srgb, var(--account-muted, #8e99aa) 28%, transparent);
+    --account-scroll-thumb-hover: color-mix(in srgb, var(--account-gold, #c59b4c) 55%, transparent);
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--account-scroll-thumb) transparent;
+}
+body.account-body .account-sidebar:hover,
+body.account-body .account-scroll-area:hover { scrollbar-color: var(--account-scroll-thumb-hover) transparent; }
+/* Safari still draws scrollbars only through the WebKit pseudo-elements. */
+body.account-body :is(.account-sidebar, .account-scroll-area)::-webkit-scrollbar { width: 8px; height: 8px; }
+body.account-body :is(.account-sidebar, .account-scroll-area)::-webkit-scrollbar-track { background: transparent; }
+body.account-body :is(.account-sidebar, .account-scroll-area)::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: var(--account-scroll-thumb) padding-box; }
+body.account-body :is(.account-sidebar, .account-scroll-area):hover::-webkit-scrollbar-thumb { background-color: var(--account-scroll-thumb-hover); }
 body.account-body .account-content { width: min(100%, 1480px); padding: 24px 28px 60px; }
 body.account-body .account-main { isolation: isolate; }
 body.account-body .account-content { position: relative; z-index: 0; }

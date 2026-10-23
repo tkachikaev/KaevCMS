@@ -1,6 +1,28 @@
 (() => {
     const initializedConversations = new WeakSet();
 
+    // A chat opens at the newest message. Stylesheets and fonts that arrive later change its
+    // height, so it keeps to the bottom while it resizes until the reader scrolls it.
+    const followBottom = (conversation) => {
+        let readerScrolled = false;
+        ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((type) => {
+            conversation.addEventListener(type, () => { readerScrolled = true; }, { passive: true });
+        });
+
+        if (typeof ResizeObserver !== 'function') {
+            return;
+        }
+
+        const observer = new ResizeObserver(() => {
+            if (!readerScrolled && conversation.isConnected) {
+                conversation.scrollTop = conversation.scrollHeight;
+            }
+        });
+        observer.observe(conversation);
+        Array.from(conversation.children).forEach((child) => observer.observe(child));
+        window.setTimeout(() => observer.disconnect(), 5000);
+    };
+
     const scrollConversations = (force = false) => {
         document.querySelectorAll('[data-support-conversation]').forEach((conversation) => {
             if (!force && initializedConversations.has(conversation)) {
@@ -8,6 +30,9 @@
             }
 
             conversation.scrollTop = conversation.scrollHeight;
+            if (!initializedConversations.has(conversation)) {
+                followBottom(conversation);
+            }
             initializedConversations.add(conversation);
         });
     };

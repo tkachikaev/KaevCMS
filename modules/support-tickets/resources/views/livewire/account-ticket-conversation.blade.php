@@ -26,7 +26,7 @@
 
     <div class="support-thread-layout">
         <section class="support-thread-chat" aria-label="{{ __('module-support-tickets::messages.conversation') }}">
-            <div class="support-chat-window" data-support-conversation>
+            <div class="support-chat-window account-scroll-area" data-support-conversation>
                 @if($hasPreviousMessages)
                     <div class="support-load-previous">
                         <button type="button" wire:click="loadPrevious" wire:loading.attr="disabled" wire:target="loadPrevious">
