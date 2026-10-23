@@ -1394,29 +1394,64 @@
 }
 
 /* Localization */
-/* Same restrained segmented control as the dashboard periods: hairline frame, the active
-   choice underlined in the accent colour. */
-.admin-language-switcher {
+/* Language menu: a hairline button with the current code, like the dashboard period picker,
+   opening a list of languages by their own names. */
+.admin-language-menu { position: relative; }
+.admin-language-menu > summary {
     display: inline-flex;
     align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 9px 0 11px;
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius-inner);
-}
-.admin-language-switcher form { margin: 0; }
-.admin-language-switcher button {
-    min-width: 36px;
-    height: 32px;
-    padding: 0 8px;
-    border: 0;
-    background: transparent;
-    color: var(--admin-text-muted);
+    color: var(--admin-text);
     cursor: pointer;
     font-size: 11px;
     font-weight: var(--admin-weight-medium);
     letter-spacing: .06em;
+    list-style: none;
 }
-.admin-language-switcher button:hover { color: var(--admin-text); }
-.admin-language-switcher button.active { color: var(--admin-text); box-shadow: inset 0 -2px 0 var(--admin-primary); }
+.admin-language-menu > summary::-webkit-details-marker { display: none; }
+.admin-language-menu > summary:hover,
+.admin-language-menu[open] > summary { border-color: var(--admin-border-strong); }
+.admin-language-menu > summary:focus-visible { outline: 2px solid var(--admin-focus-ring); outline-offset: 2px; }
+.admin-language-menu-chevron { color: var(--admin-text-muted); transition: transform .16s ease; }
+.admin-language-menu[open] .admin-language-menu-chevron { transform: rotate(180deg); }
+.admin-language-menu-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 60;
+    display: grid;
+    min-width: 168px;
+    padding: 4px;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-control);
+    background: var(--admin-surface);
+    box-shadow: var(--admin-shadow-raised);
+}
+.admin-language-menu-list form { margin: 0; }
+.admin-language-menu-list button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--admin-radius-inner);
+    background: transparent;
+    color: var(--admin-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+}
+.admin-language-menu-list button small { color: var(--admin-text-muted); font-size: 10px; font-weight: var(--admin-weight-medium); letter-spacing: .08em; }
+.admin-language-menu-list button:hover { background: var(--admin-surface-muted); }
+.admin-language-menu-list button.active { box-shadow: inset 2px 0 0 var(--admin-primary); font-weight: var(--admin-weight-semibold); }
+[dir="rtl"] .admin-language-menu-list { right: auto; left: 0; }
 .translation-editor { display: grid; gap: 16px; }
 .translation-editor.compact { gap: 12px; }
 .translation-tabs {

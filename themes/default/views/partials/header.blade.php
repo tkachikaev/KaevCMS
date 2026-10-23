@@ -31,25 +31,11 @@
                 @endif
             @endauth
             {{-- On phones the header actions are hidden, so the menu carries the language choice. --}}
-            @if(count($enabledLanguages ?? []) > 1)
-                <div class="language-switcher mobile-language-switcher" aria-label="{{ __('Switch language') }}">
-                    @foreach($enabledLanguages as $code => $language)
-                        <a class="{{ app()->getLocale() === $code ? 'active' : '' }}" href="{{ route('language.switch', ['locale' => $code, 'return' => request()->getRequestUri()]) }}" lang="{{ $code }}" hreflang="{{ $code }}">{{ strtoupper($code) }}</a>
-                    @endforeach
-                </div>
-            @endif
+            <x-language-menu class="mobile-language-menu" />
         </nav>
 
         <div class="header-actions">
-            @if(count($enabledLanguages ?? []) > 1)
-                <div class="language-switcher" aria-label="{{ __('Switch language') }}">
-                    @foreach($enabledLanguages as $code => $language)
-                        <a class="{{ app()->getLocale() === $code ? 'active' : '' }}" href="{{ route('language.switch', ['locale' => $code, 'return' => request()->getRequestUri()]) }}" lang="{{ $code }}" hreflang="{{ $code }}">
-                            {{ strtoupper($code) }}
-                        </a>
-                    @endforeach
-                </div>
-            @endif
+            <x-language-menu />
 
             @auth
                 <a class="button button-gold" href="{{ public_route('account') }}">{{ __('Account') }}</a>

@@ -691,12 +691,14 @@ test('system information shows compact APP_KEY, LoginServer and GameServer cards
         });
     }
 
-    await page.getByRole('button', { name: 'EN', exact: true }).click();
+    await page.locator('.admin-language-menu > summary').click();
+    await page.locator('.admin-language-menu button[lang="en"]').click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'Key and game connections', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'APP_KEY encryption', exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'RU', exact: true }).click();
+    await page.locator('.admin-language-menu > summary').click();
+    await page.locator('.admin-language-menu button[lang="ru"]').click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
 });
 

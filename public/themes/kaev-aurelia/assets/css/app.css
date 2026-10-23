@@ -170,31 +170,64 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .main-nav a:hover::after,
 .main-nav a.active::after { width: 26px; }
 .mobile-account-link { display: none !important; }
-.mobile-language-switcher { display: none !important; }
+.mobile-language-menu { display: none !important; }
 .header-actions { display: flex; align-items: center; gap: 9px; }
 .header-logout-form { margin: 0; }
 .menu-toggle { display: none; }
-.language-switcher {
+/* Language menu: the current code opens a list of languages by their own names. */
+.language-menu { position: relative; }
+.language-menu > summary {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 3px;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 11px 0 13px;
     border: 1px solid var(--line);
     border-radius: 999px;
     background: rgba(255, 253, 247, .54);
-}
-.language-switcher a {
-    min-width: 30px;
-    padding: 6px 7px;
-    border-radius: 999px;
-    color: var(--muted);
-    font-size: 10px;
+    color: var(--ink);
+    font-size: 11px;
     font-weight: 800;
-    line-height: 1;
-    text-align: center;
+    letter-spacing: .06em;
+    list-style: none;
+    cursor: pointer;
 }
-.language-switcher a:hover,
-.language-switcher a.active { background: var(--ink); color: #fffdf8; }
+.language-menu > summary::-webkit-details-marker { display: none; }
+.language-menu > summary:hover,
+.language-menu[open] > summary { border-color: var(--gold); }
+.language-menu > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.language-menu-chevron { color: var(--muted); transition: transform .16s ease; }
+.language-menu[open] .language-menu-chevron { transform: rotate(180deg); }
+.language-menu-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    display: grid;
+    min-width: 176px;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fffdf8;
+    box-shadow: 0 22px 60px rgba(50, 61, 53, .16);
+}
+.language-menu-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 13px;
+}
+.language-menu-list a small { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.language-menu-list a:hover { background: rgba(216, 199, 161, .2); }
+.language-menu-list a.active { background: var(--ink); color: #fffdf8; }
+.language-menu-list a.active small { color: rgba(255, 253, 248, .7); }
+[dir="rtl"] .language-menu-list { right: auto; left: 0; }
+@keyframes language-menu-slide { from { opacity: 0; margin-top: -6px; } to { opacity: 1; margin-top: 0; } }
+@media (prefers-reduced-motion: reduce) { .language-menu-list { animation: none !important; } }
 
 /* Buttons */
 .button {
@@ -1280,32 +1313,36 @@ body.kaev-aurelia::before {
         top: 76px;
     }
 
-    /* Language choice at the foot of the phone menu, styled like the desktop switcher. */
-    .kaev-aurelia .mobile-language-switcher {
-        display: inline-flex !important;
-        align-self: center;
+    /* Language menu at the foot of the phone menu; its list slides over the page below the
+       button, so the menu itself keeps its size. */
+    .kaev-aurelia .mobile-language-menu {
+        display: grid !important;
+        justify-items: center;
         margin: 10px 0 4px;
     }
 
-    .kaev-aurelia .main-nav .mobile-language-switcher a {
-        min-width: 44px;
+    .kaev-aurelia .mobile-language-menu .language-menu-list {
+        right: auto;
+        left: 50%;
+        width: min(240px, calc(100vw - 48px));
+        transform: translateX(-50%);
+        animation: language-menu-slide .16s ease-out;
+    }
+
+    .kaev-aurelia .main-nav .language-menu-list a {
         min-height: 0;
-        padding: 9px 12px;
-        font-family: inherit;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: .04em;
-        color: var(--muted);
+        padding: 10px 14px;
+        font-size: 14px;
     }
 
-    .kaev-aurelia .main-nav .mobile-language-switcher a.active,
-    .kaev-aurelia .main-nav .mobile-language-switcher a:hover {
-        background: var(--ink);
-        color: #fffdf8;
-    }
-
-    .kaev-aurelia .main-nav .mobile-language-switcher a::after {
+    .kaev-aurelia .main-nav .language-menu-list a::after {
         display: none;
+    }
+
+    /* The menu link colour must not override the selected language. */
+    .kaev-aurelia .main-nav .language-menu-list a.active,
+    .kaev-aurelia .main-nav .language-menu-list a.active:hover {
+        color: #fffdf8;
     }
 
     .kaev-aurelia .hero-content {

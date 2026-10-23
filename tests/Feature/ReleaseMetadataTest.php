@@ -732,7 +732,7 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.7', 'kaev-aurelia' => '1.6.9'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.8', 'kaev-aurelia' => '1.6.10'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,

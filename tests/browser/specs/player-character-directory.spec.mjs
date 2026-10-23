@@ -301,9 +301,11 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
 
     await gotoWithLocalNetworkRetry(page, '/modules/daily-rewards?calendar=1&account=2');
     await expect(page).toHaveURL(/\/modules\/daily-rewards\?calendar=1&account=2$/);
-    await page.locator('.account-language-switcher').getByRole('link', { name: 'EN', exact: true }).click();
+    await page.locator('.account-language-menu > summary').click();
+    await page.locator('.account-language-menu a[hreflang="en"]').click();
     await expect(page).toHaveURL(/\/en\/account$/);
-    await page.locator('.account-language-switcher').getByRole('link', { name: 'RU', exact: true }).click();
+    await page.locator('.account-language-menu > summary').click();
+    await page.locator('.account-language-menu a[hreflang="ru"]').click();
     await expect(page).toHaveURL(/\/ru\/account$/);
 
     const promoLink = page.locator('.account-nav').getByRole('link', { name: 'Промокоды' });

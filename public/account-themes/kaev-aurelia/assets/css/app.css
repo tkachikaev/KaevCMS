@@ -709,27 +709,58 @@ body.account-body {
 }
 .account-topbar-context strong { color: var(--account-text); font-family: var(--account-serif); font-size: 18px; }
 .account-sidebar-toggle { border-color: rgba(83,99,87,.18); background: rgba(255,253,247,.9); }
-.account-language-switcher {
+/* Language menu: the current code opens a list of languages by their own names. */
+.account-language-menu { position: relative; }
+.account-language-menu > summary {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 3px;
+    gap: 6px;
+    min-height: 38px;
+    padding: 0 11px 0 13px;
     border: 1px solid rgba(83,99,87,.16);
     border-radius: 999px;
     background: rgba(255,253,247,.7);
-}
-.account-language-switcher a {
-    min-width: 30px;
-    padding: 6px 7px;
-    border-radius: 999px;
-    color: var(--account-muted);
-    font-size: 10px;
+    color: var(--account-text);
+    font-size: 11px;
     font-weight: 800;
-    line-height: 1;
-    text-align: center;
+    letter-spacing: .06em;
+    list-style: none;
+    cursor: pointer;
 }
-.account-language-switcher a:hover,
-.account-language-switcher a.active { background: var(--account-text); color: #fffdf8; }
+.account-language-menu > summary::-webkit-details-marker { display: none; }
+.account-language-menu > summary:hover,
+.account-language-menu[open] > summary { border-color: rgba(125,103,61,.32); }
+.account-language-menu > summary:focus-visible { outline: 2px solid var(--account-gold-dark); outline-offset: 2px; }
+.account-language-menu .language-menu-chevron { color: var(--account-muted); transition: transform .16s ease; }
+.account-language-menu[open] .language-menu-chevron { transform: rotate(180deg); }
+.account-language-menu .language-menu-list {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 40;
+    display: grid;
+    min-width: 176px;
+    padding: 6px;
+    border: 1px solid rgba(83,99,87,.18);
+    border-radius: 15px;
+    background: #fffdf8;
+    box-shadow: 0 24px 70px rgba(50,61,53,.17);
+}
+.account-language-menu .language-menu-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    color: var(--account-text);
+    font-size: 13px;
+}
+.account-language-menu .language-menu-list a small { color: var(--account-muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.account-language-menu .language-menu-list a:hover { background: rgba(216,199,161,.18); }
+.account-language-menu .language-menu-list a.active { background: var(--account-text); color: #fffdf8; }
+.account-language-menu .language-menu-list a.active small { color: rgba(255,253,248,.7); }
+[dir="rtl"] .account-language-menu .language-menu-list { right: auto; left: 0; }
 .account-profile-menu summary { border-color: rgba(83,99,87,.14); background: rgba(255,253,247,.66); }
 .account-profile-menu[open] summary { border-color: rgba(125,103,61,.28); background: rgba(216,199,161,.18); }
 .account-profile-dropdown { border-color: rgba(83,99,87,.18); background: #fffdf8; box-shadow: 0 24px 70px rgba(50,61,53,.17); }
@@ -948,7 +979,6 @@ html.account-is-navigating::before {
     .account-hero { padding-right: 38%; background-position: 62% center; }
 }
 @media (max-width: 760px) {
-    .account-language-switcher { display: none; }
     .account-hero {
         min-height: 360px;
         padding: 30px 26px 165px;
@@ -1159,8 +1189,6 @@ html.account-is-navigating::before {
 }
 
 .account-button,
-.account-language-switcher,
-.account-language-switcher a,
 .account-chip,
 .online-state,
 .account-group-chevron,

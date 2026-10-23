@@ -67,13 +67,7 @@
 
                 <div class="account-topbar-actions">
                     <x-account-wallet-menu :wallet-view="$walletView" />
-                    @if(count($enabledLanguages ?? []) > 1)
-                        <div class="account-language-switcher" aria-label="{{ __('Switch language') }}">
-                            @foreach($enabledLanguages as $code => $language)
-                                <a class="{{ app()->getLocale() === $code ? 'active' : '' }}" href="{{ route('language.switch', ['locale' => $code, 'return' => request()->getRequestUri()]) }}" lang="{{ $code }}" hreflang="{{ $code }}" data-no-navigate>{{ strtoupper($code) }}</a>
-                            @endforeach
-                        </div>
-                    @endif
+                    <x-language-menu class="account-language-menu" />
                     <details class="account-profile-menu account-profile-menu-topbar">
                         <summary aria-label="{{ __('Open account menu') }}">
                             <x-account-avatar :user="$user" class="account-profile-avatar" aria-hidden="true" />

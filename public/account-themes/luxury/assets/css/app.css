@@ -205,6 +205,37 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
     background: rgba(255, 255, 255, 0.025);
     cursor: pointer;
 }
+/* Language menu: the current code opens a list of languages by their own names. */
+.account-language-menu { position: relative; }
+.account-language-menu > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 11px 0 13px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--account-text);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    list-style: none;
+    cursor: pointer;
+}
+.account-language-menu > summary::-webkit-details-marker { display: none; }
+.account-language-menu > summary:hover,
+.account-language-menu[open] > summary { border-color: rgba(212, 173, 103, 0.28); background: rgba(212, 173, 103, 0.055); }
+.account-language-menu > summary:focus-visible { outline: 2px solid var(--account-gold); outline-offset: 2px; }
+.account-language-menu .language-menu-chevron { color: var(--account-muted); transition: transform .16s ease; }
+.account-language-menu[open] .language-menu-chevron { transform: rotate(180deg); }
+.account-language-menu .language-menu-list { position: absolute; right: 0; top: calc(100% + 10px); z-index: 40; display: grid; min-width: 176px; padding: 6px; border: 1px solid var(--account-line); border-radius: 15px; background: #111925; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48); }
+.account-language-menu .language-menu-list a { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 9px 12px; border-radius: 10px; color: #d6dce5; font-size: 13px; }
+.account-language-menu .language-menu-list a small { color: var(--account-muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.account-language-menu .language-menu-list a:hover { background: var(--account-panel-soft); color: #fff; }
+.account-language-menu .language-menu-list a.active { background: rgba(212, 173, 103, 0.14); color: var(--account-gold-bright); }
+.account-language-menu .language-menu-list a.active small { color: var(--account-gold); }
+[dir="rtl"] .account-language-menu .language-menu-list { right: auto; left: 0; }
 .account-profile-menu summary::-webkit-details-marker { display: none; }
 .account-profile-menu[open] summary { border-color: rgba(212, 173, 103, 0.28); background: rgba(212, 173, 103, 0.055); }
 .account-profile-avatar { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(145deg, var(--account-gold-bright), var(--account-gold-dark)); color: #17120a; font-weight: 900; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22); }

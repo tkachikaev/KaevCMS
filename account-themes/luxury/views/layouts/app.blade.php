@@ -61,6 +61,7 @@
 
                 <div class="account-topbar-actions">
                     <x-account-wallet-menu :wallet-view="$walletView" />
+                    <x-language-menu class="account-language-menu" />
                     <details class="account-profile-menu account-profile-menu-topbar">
                         <summary aria-label="{{ __('Open account menu') }}">
                             <x-account-avatar :user="$user" class="account-profile-avatar" aria-hidden="true" />
