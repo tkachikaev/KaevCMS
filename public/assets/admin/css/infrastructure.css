@@ -85,10 +85,10 @@
     flex: 0 0 34px;
     width: 34px;
     height: 34px;
-    border: 1px solid color-mix(in srgb, var(--admin-primary) 35%, transparent);
+    border: 1px solid var(--admin-selected-border);
     border-radius: var(--admin-radius-inner);
-    background: var(--admin-primary-soft);
-    color: var(--admin-primary);
+    background: var(--admin-selected-bg);
+    color: var(--admin-selected-text);
     font-size: 14px;
     font-weight: 600;
     line-height: 1;

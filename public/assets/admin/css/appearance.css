@@ -270,7 +270,6 @@ html[data-admin-color-scheme="dark"] .admin-notification-menu > summary {
     background: var(--admin-surface-subtle);
 }
 
-html[data-admin-color-scheme="dark"] .admin-account-avatar,
 html[data-admin-color-scheme="dark"] .admin-notification-icon,
 html[data-admin-color-scheme="dark"] .field-help-tooltip-icon,
 html[data-admin-color-scheme="dark"] .compact-default-badge,

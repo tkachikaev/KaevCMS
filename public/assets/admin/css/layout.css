@@ -38,7 +38,10 @@
    menu and shift it sideways when the scrollbar appears. */
 .admin-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; padding: 22px 10px 22px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(148,163,184,.28) transparent; background: var(--sidebar); color: var(--sidebar-text); contain: layout paint; }
 .admin-brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.admin-brand-mark { display: grid; flex: none; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(79,140,255,.45); border-radius: 4px; background: rgba(79,140,255,.1); color: #8ab4ff; font-size: 15px; font-weight: 600; }
+.admin-brand-mark { display: grid; flex: none; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; background: rgba(255,255,255,.06); color: #e8e9ec; font-size: 15px; font-weight: 600; }
+/* An uploaded site logo replaces the letter and keeps its own proportions. */
+:is(.admin-brand-mark, .admin-mobile-brand-mark).has-logo { overflow: hidden; border-color: transparent; background: transparent; }
+:is(.admin-brand-mark, .admin-mobile-brand-mark).has-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .admin-brand strong, .admin-brand small { display: block; }
 .admin-brand strong { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .admin-brand small { color: var(--sidebar-muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
@@ -171,7 +174,7 @@ a.admin-section-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(
     .admin-mobile-menu-icon { display: grid; gap: 4px; }
     .admin-mobile-menu-icon i { display: block; width: 18px; height: 2px; border-radius: 999px; background: currentColor; }
     .admin-mobile-brand { display: inline-flex; align-items: center; min-width: 0; gap: 9px; margin-left: 11px; }
-    .admin-mobile-brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(79,140,255,.45); border-radius: 4px; background: rgba(79,140,255,.1); color: #8ab4ff; font-size: 14px; font-weight: 600; }
+    .admin-mobile-brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--admin-selected-border); border-radius: 4px; background: var(--admin-selected-bg); color: var(--admin-selected-text); font-size: 14px; font-weight: 600; }
     .admin-mobile-brand strong,
     .admin-mobile-brand small { display: block; }
     .admin-mobile-brand strong { overflow: hidden; color: #fff; font-size: 14px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
