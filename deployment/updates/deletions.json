@@ -726,5 +726,8 @@
     "core/themes/default/views/auth/account.blade.php",
     "core/themes/kaev-aurelia/views/auth/account.blade.php",
     "public/themes/kaev-aurelia/assets/images/kaev-logo-gold.png"
+  ],
+  "0.53.0": [
+    "core/deployment/windows/apply-0.52.0.ps1"
   ]
 }
