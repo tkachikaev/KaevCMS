@@ -46,9 +46,10 @@
 
         // Chat composers grow with the text (up to a limit) and send on Ctrl + Enter.
         root.querySelectorAll('textarea[data-autogrow]').forEach((textarea) => {
+            const maximum = Number(textarea.dataset.autogrowMax || 220);
             const fit = () => {
                 textarea.style.height = 'auto';
-                textarea.style.height = `${Math.min(textarea.scrollHeight, 220)}px`;
+                textarea.style.height = `${Math.min(textarea.scrollHeight, maximum)}px`;
             };
 
             if (textarea.dataset.autogrowReady !== '1') {
