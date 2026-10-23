@@ -873,6 +873,25 @@ small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c
 .dash-series-1 .dash-metric-swatch, .dash-series-2 .dash-metric-swatch, .dash-series-3 .dash-metric-swatch { border-top-style: dashed; }
 .dash-metric-value { color: var(--admin-text); font-size: 24px; line-height: 30px; font-weight: var(--admin-weight-semibold); letter-spacing: -.02em; }
 .dash-metric[aria-pressed="false"] { opacity: .4; }
+.dash-widget-controls { display: flex; flex: none; align-items: center; gap: var(--admin-space-2); }
+/* Online per game server: solid lines in the chart colours; the total stays the accent line. */
+.dash-tone-1 { --dash-tone: var(--admin-chart-2); }
+.dash-tone-2 { --dash-tone: var(--admin-chart-3); }
+.dash-tone-3 { --dash-tone: var(--admin-chart-4); }
+.dash-tone-4 { --dash-tone: var(--admin-danger); }
+.dash-chart-line.dash-series-p { stroke-width: 1.4; }
+/* "Servers" menu: checkboxes choose the visible lines. */
+.dash-lines { position: relative; }
+.dash-lines > summary { display: inline-flex; align-items: center; padding: 5px 28px 5px var(--admin-space-3); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-inner); color: var(--admin-text); font-size: var(--admin-text-caption); line-height: var(--admin-leading-caption); font-weight: var(--admin-weight-medium); letter-spacing: .02em; list-style: none; cursor: pointer; }
+.dash-lines > summary::-webkit-details-marker { display: none; }
+.dash-lines > summary::after { position: absolute; top: 50%; right: 10px; width: 5px; height: 5px; border-right: 1.3px solid var(--admin-text-muted); border-bottom: 1.3px solid var(--admin-text-muted); content: ""; transform: translateY(-70%) rotate(45deg); }
+.dash-lines > summary:hover, .dash-lines[open] > summary { border-color: var(--admin-border-strong); }
+.dash-lines > summary:focus-visible { outline: 2px solid var(--admin-focus-ring); outline-offset: 2px; }
+.dash-lines-list { position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; display: grid; min-width: 200px; max-height: 280px; overflow-y: auto; padding: 4px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface); box-shadow: var(--admin-shadow-raised); }
+.dash-lines-item { display: flex; align-items: center; gap: var(--admin-space-2); padding: 7px 10px; border-radius: var(--admin-radius-inner); color: var(--admin-text); font-size: 13px; cursor: pointer; }
+.dash-lines-item:hover { background: var(--admin-surface-muted); }
+.dash-lines-item input { margin: 0; accent-color: var(--admin-primary); }
+
 /* Period picker: a hairline native select; the chevron is drawn in CSS (no images). */
 .dash-period { position: relative; display: inline-flex; flex: none; }
 .dash-period::after { position: absolute; top: 50%; right: 10px; width: 5px; height: 5px; border-right: 1.3px solid var(--admin-text-muted); border-bottom: 1.3px solid var(--admin-text-muted); content: ""; pointer-events: none; transform: translateY(-70%) rotate(45deg); }

@@ -143,8 +143,13 @@
                 return numberFormat.format(value);
             };
 
-            // The first line is the accent line, the others are muted dashed lines.
-            const seriesClass = (line) => `dash-series-${Math.min(3, widget.series.findIndex((candidate) => candidate.key === line.key))}`;
+            // The first line is the accent line. The others are muted dashed lines, or, in a
+            // palette widget (online per game server), solid lines in the chart colours.
+            const seriesClass = (line) => {
+                const index = widget.series.findIndex((candidate) => candidate.key === line.key);
+                if (widget.palette && index > 0) return `dash-series-p dash-tone-${((index - 1) % 4) + 1}`;
+                return `dash-series-${Math.min(3, index)}`;
+            };
 
             const saved = readStorage()[widget.key] || {};
             const state = {
@@ -172,6 +177,54 @@
                 return present.reduce((sum, value) => sum + value, 0);
             };
 
+            // With many lines (several game servers) a "Servers" menu with checkboxes chooses the
+            // visible lines; the legend then lists only those.
+            const lineInputs = [];
+            if (widget.picker) {
+                const lines = html('details', 'dash-lines');
+                lines.append(html('summary', '', widget.i18n.lines));
+                const list = html('div', 'dash-lines-list');
+                widget.series.forEach((line) => {
+                    const item = html('label', `dash-lines-item ${seriesClass(line)}`);
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.value = line.key;
+                    input.addEventListener('change', () => {
+                        if (input.checked) {
+                            state.hidden.delete(line.key);
+                        } else if (widget.series.length - state.hidden.size > 1) {
+                            state.hidden.add(line.key);
+                        } else {
+                            input.checked = true; // At least one line stays visible.
+                            return;
+                        }
+                        persist();
+                        render();
+                    });
+                    item.append(input, html('i', 'dash-metric-swatch'), document.createTextNode(line.label));
+                    list.append(item);
+                    lineInputs.push(input);
+                });
+                lines.append(list);
+                card.querySelector('[data-dash-controls]')?.prepend(lines);
+
+                const closeOutside = (event) => {
+                    if (lines.open && !(event.target instanceof Node && lines.contains(event.target))) lines.open = false;
+                };
+                const closeOnEscape = (event) => {
+                    if (event.key === 'Escape' && lines.open) {
+                        lines.open = false;
+                        lines.querySelector('summary')?.focus();
+                    }
+                };
+                document.addEventListener('pointerdown', closeOutside);
+                document.addEventListener('keydown', closeOnEscape);
+                cleanups.push(() => {
+                    document.removeEventListener('pointerdown', closeOutside);
+                    document.removeEventListener('keydown', closeOnEscape);
+                });
+            }
+
             const picker = card.querySelector('select[data-dash-period]');
             // Document-level listeners of the current drawing, removed before the next one.
             const renderCleanups = [];
@@ -179,12 +232,13 @@
             const render = () => {
                 renderCleanups.splice(0).forEach((cleanup) => cleanup());
                 if (picker) picker.value = state.period;
+                lineInputs.forEach((input) => { input.checked = !state.hidden.has(input.value); });
 
                 const { labels, series } = slice();
                 const visible = series.filter((line) => !state.hidden.has(line.key));
 
                 // A toggle per line: its line sample, name and total for the selected period.
-                legend.replaceChildren(...series.map((line) => {
+                legend.replaceChildren(...(widget.picker ? visible : series).map((line) => {
                     const toggle = html('button', `dash-metric ${seriesClass(line)}`);
                     toggle.type = 'button';
                     toggle.setAttribute('aria-pressed', state.hidden.has(line.key) ? 'false' : 'true');

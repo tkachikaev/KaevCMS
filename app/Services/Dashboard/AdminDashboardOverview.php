@@ -41,7 +41,7 @@ final class AdminDashboardOverview
      *     game_accounts: array{total:int,new_today:int,per_player:float|null}|null,
      *     registrations: array{days:list<array{date:CarbonImmutable,count:int,game_accounts:int}>,hours:list<array{masters:int,games:int}>,minutes:list<array{masters:int,games:int}>,total:int,last_7_days:int,game_accounts_total:int,max:int}|null,
      *     latest_master_accounts: list<array{id:int,name:string,email:string,verified:bool,game_accounts:int,created_at:CarbonImmutable}>|null,
-     *     online: array{days:list<array{date:CarbonImmutable,peak:int|null,average:int|null}>,hours:list<array{peak:int|null,average:int|null}>,minutes:list<int|null>,peak:int|null,peak_at:CarbonImmutable|null,average_peak:float|null}|null,
+     *     online: array{servers:list<array{id:int,name:string}>,total:array{days:list<int|null>,hours:list<int|null>,minutes:list<int|null>},per_server:array<int,array{days:list<int|null>,hours:list<int|null>,minutes:list<int|null>}>,peak:int|null}|null,
      *     donations: array{totals:list<array{currency:string,amount:float,previous:float}>,payments:int,average:float|null,currency:string|null,days:list<array{date:CarbonImmutable,amount:float}>,hours:list<float>,minutes:list<float>,max:float,latest:list<array{player:string,amount:float,currency:string,credited_at:CarbonImmutable,order_uuid:string}>,route:string,orders_route:string|null,review:int}|null,
      *     rewards_attention: int|null
      * }
@@ -56,7 +56,7 @@ final class AdminDashboardOverview
             'registrations' => $canViewUsers ? $this->registrations() : null,
             'latest_master_accounts' => $canViewUsers ? $this->latestMasterAccounts() : null,
             'online' => $admin->hasPermission(AdminPermission::ServersView)
-                ? [...$this->onlineHistory->dailyPeaks(self::SERIES_DAYS), 'hours' => $this->onlineHistory->hourly(24), 'minutes' => $this->onlineHistory->recent(self::RECENT_BUCKETS)]
+                ? $this->onlineHistory->chart(self::SERIES_DAYS, 24, self::RECENT_BUCKETS)
                 : null,
             'donations' => $this->donations($admin),
             'rewards_attention' => $admin->hasPermission(AdminPermission::RewardsView)

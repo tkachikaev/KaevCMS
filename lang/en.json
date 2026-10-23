@@ -2869,7 +2869,6 @@
     "Registrations per day: :masters master accounts and :games game accounts in 30 days.": "Registrations per day: :masters master accounts and :games game accounts in 30 days.",
     "Daily peak, last 30 days": "Daily peak, last 30 days",
     "Now": "Now",
-    "Peak": "Peak",
     "Online history starts with the next server check. The chart fills in as the monitor runs.": "Online history starts with the next server check. The chart fills in as the monitor runs.",
     ":date: peak :count": ":date: peak :count",
     ":date: no data": ":date: no data",
@@ -2917,6 +2916,5 @@
     "Open": "Open",
     "Disable module?": "Disable module?",
     "Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.": "Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.",
-    "Yes, disable": "Yes, disable",
-    "Average online": "Average online"
+    "Yes, disable": "Yes, disable"
 }

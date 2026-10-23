@@ -52,115 +52,84 @@ final class ServerOnlineHistory
     }
 
     /**
-     * Highest total online per day for the last $days days (null for days without samples).
+     * Online for the dashboard chart: the total of all game servers and each server on its
+     * own, as the highest value per day (last $days days), per hour (last $hours hours) and
+     * the value of each of the last $buckets five-minute steps. Points without samples are
+     * null. 'peak' is the highest total of the whole day range.
      *
-     * @return array{days:list<array{date:CarbonImmutable,peak:int|null,average:int|null}>,peak:int|null,peak_at:CarbonImmutable|null,average_peak:float|null}
+     * @return array{servers:list<array{id:int,name:string}>,total:array{days:list<int|null>,hours:list<int|null>,minutes:list<int|null>},per_server:array<int,array{days:list<int|null>,hours:list<int|null>,minutes:list<int|null>}>,peak:int|null}
      */
-    public function dailyPeaks(int $days = 30): array
+    public function chart(int $days = 30, int $hours = 24, int $buckets = 60): array
     {
         $today = CarbonImmutable::now()->startOfDay();
-        $start = $today->subDays($days - 1);
+        $dayStart = $today->subDays($days - 1);
+        $currentHour = CarbonImmutable::now()->startOfHour();
+        $hourStart = $currentHour->subHours($hours - 1);
+        $recent = self::recentBuckets($buckets);
 
-        // 30 days are 8640 buckets: they are grouped by the "Y-m-d" prefix of the stored
-        // time; a date object is built only for the peak.
-        $peaks = [];
-        $sums = [];
-        $counts = [];
-        $peak = null;
-        $peakAt = null;
+        $servers = GameServer::query()->orderBy('sort_order')->orderBy('id')->get()
+            ->map(static fn (GameServer $server): array => ['id' => (int) $server->id, 'name' => $server->nameFor()])
+            ->values()->all();
+        $known = array_fill_keys(array_column($servers, 'id'), true);
+
+        // One pass over the stored rows, keyed by the "Y-m-d H:i" text of each step: 30 days
+        // of several servers are tens of thousands of rows, too many for date objects.
+        $totals = [];
+        $perServer = [];
         DB::table('server_online_samples')
-            ->where('bucket_at', '>=', $start)
-            ->groupBy('bucket_at')
-            ->orderBy('bucket_at')
-            ->get(['bucket_at', DB::raw('SUM(players) as players')])
-            ->each(static function (object $row) use (&$peaks, &$sums, &$counts, &$peak, &$peakAt): void {
-                $key = substr((string) $row->bucket_at, 0, 10);
-                $players = (int) $row->players;
-                $peaks[$key] = max($peaks[$key] ?? 0, $players);
-                $sums[$key] = ($sums[$key] ?? 0) + $players;
-                $counts[$key] = ($counts[$key] ?? 0) + 1;
-                if ($peak === null || $players > $peak) {
-                    $peak = $players;
-                    $peakAt = (string) $row->bucket_at;
+            ->where('bucket_at', '>=', min($dayStart, $hourStart, $recent[0]))
+            ->get(['game_server_id', 'bucket_at', 'players'])
+            ->each(static function (object $row) use (&$totals, &$perServer, $known): void {
+                $serverId = (int) $row->game_server_id;
+                if (! isset($known[$serverId])) {
+                    return;
                 }
+                $key = self::bucketKey((string) $row->bucket_at);
+                $players = (int) $row->players;
+                $totals[$key] = ($totals[$key] ?? 0) + $players;
+                $perServer[$serverId][$key] = $players;
             });
 
-        $series = [];
-        for ($day = $start; $day->lte($today); $day = $day->addDay()) {
-            $key = $day->toDateString();
-            $series[] = [
-                'date' => $day,
-                'peak' => $peaks[$key] ?? null,
-                'average' => isset($sums[$key]) ? (int) round($sums[$key] / $counts[$key]) : null,
-            ];
+        $dayKeys = [];
+        for ($day = $dayStart; $day->lte($today); $day = $day->addDay()) {
+            $dayKeys[] = $day->toDateString();
         }
+        $hourKeys = [];
+        for ($hour = $hourStart; $hour->lte($currentHour); $hour = $hour->addHour()) {
+            $hourKeys[] = $hour->format('Y-m-d H');
+        }
+        $minuteKeys = array_map(static fn (CarbonImmutable $bucket): string => $bucket->format('Y-m-d H:i'), $recent);
+        $hourFloor = $hourStart->format('Y-m-d H:i');
+
+        /** @param array<string,int> $steps */
+        $series = static function (array $steps) use ($dayKeys, $hourKeys, $minuteKeys, $hourFloor): array {
+            $dayPeaks = [];
+            $hourPeaks = [];
+            foreach ($steps as $key => $players) {
+                $day = substr($key, 0, 10);
+                $dayPeaks[$day] = max($dayPeaks[$day] ?? 0, $players);
+                if ($key >= $hourFloor) {
+                    $hour = substr($key, 0, 13);
+                    $hourPeaks[$hour] = max($hourPeaks[$hour] ?? 0, $players);
+                }
+            }
+
+            return [
+                'days' => array_map(static fn (string $key): ?int => $dayPeaks[$key] ?? null, $dayKeys),
+                'hours' => array_map(static fn (string $key): ?int => $hourPeaks[$key] ?? null, $hourKeys),
+                'minutes' => array_map(static fn (string $key): ?int => $steps[$key] ?? null, $minuteKeys),
+            ];
+        };
+
+        $total = $series($totals);
+        $present = array_filter($total['days'], static fn (?int $value): bool => $value !== null);
 
         return [
-            'days' => $series,
-            'peak' => $peak,
-            'peak_at' => $peakAt === null ? null : CarbonImmutable::parse($peakAt),
-            'average_peak' => $peaks === [] ? null : (float) (array_sum($peaks) / count($peaks)),
+            'servers' => $servers,
+            'total' => $total,
+            'per_server' => array_map($series, array_replace(array_fill_keys(array_keys($known), []), $perServer)),
+            'peak' => $present === [] ? null : max($present),
         ];
-    }
-
-    /**
-     * Highest and average total online per hour for the last $hours hours, oldest first
-     * (null for hours without samples).
-     *
-     * @return list<array{peak:int|null,average:int|null}>
-     */
-    public function hourly(int $hours = 24): array
-    {
-        $currentHour = CarbonImmutable::now()->startOfHour();
-        $start = $currentHour->subHours($hours - 1);
-
-        $peaks = [];
-        $sums = [];
-        $counts = [];
-        DB::table('server_online_samples')
-            ->where('bucket_at', '>=', $start)
-            ->groupBy('bucket_at')
-            ->get(['bucket_at', DB::raw('SUM(players) as players')])
-            ->each(static function (object $row) use (&$peaks, &$sums, &$counts): void {
-                $key = substr((string) $row->bucket_at, 0, 13);
-                $players = (int) $row->players;
-                $peaks[$key] = max($peaks[$key] ?? 0, $players);
-                $sums[$key] = ($sums[$key] ?? 0) + $players;
-                $counts[$key] = ($counts[$key] ?? 0) + 1;
-            });
-
-        $series = [];
-        for ($hour = $start; $hour->lte($currentHour); $hour = $hour->addHour()) {
-            $key = $hour->format('Y-m-d H');
-            $series[] = [
-                'peak' => $peaks[$key] ?? null,
-                'average' => isset($sums[$key]) ? (int) round($sums[$key] / $counts[$key]) : null,
-            ];
-        }
-
-        return $series;
-    }
-
-    /**
-     * Total online for each of the last $count five-minute buckets, oldest first (null for
-     * buckets without samples).
-     *
-     * @return list<int|null>
-     */
-    public function recent(int $count = 60): array
-    {
-        $buckets = self::recentBuckets($count);
-
-        $totals = [];
-        DB::table('server_online_samples')
-            ->where('bucket_at', '>=', $buckets[0])
-            ->groupBy('bucket_at')
-            ->get(['bucket_at', DB::raw('SUM(players) as players')])
-            ->each(static function (object $row) use (&$totals): void {
-                $totals[self::bucketKey((string) $row->bucket_at)] = (int) $row->players;
-            });
-
-        return array_map(static fn (CarbonImmutable $bucket): ?int => $totals[$bucket->format('Y-m-d H:i')] ?? null, $buckets);
     }
 
     /**

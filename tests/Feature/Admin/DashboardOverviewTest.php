@@ -66,7 +66,7 @@ final class DashboardOverviewTest extends TestCase
         $this->assertSame(2, array_sum(array_column($registrations['minutes'], 'masters')));
     }
 
-    public function test_online_history_sums_servers_per_bucket(): void
+    public function test_online_chart_shows_the_total_and_each_game_server(): void
     {
         $history = app(ServerOnlineHistory::class);
         [$first, $second] = GameServer::factory()->count(2)->create()->all();
@@ -74,32 +74,62 @@ final class DashboardOverviewTest extends TestCase
         $history->record($second, 50, CarbonImmutable::parse('2026-10-22 10:03:00'));
         $history->record($first, 120, CarbonImmutable::parse('2026-10-22 10:06:00'));
         $history->record($first, 30, CarbonImmutable::parse('2026-10-21 23:56:00'));
-
-        $daily = $history->dailyPeaks(30);
-
-        $this->assertSame(150, $daily['peak']);
-        $this->assertSame('2026-10-22 10:00:00', $daily['peak_at']?->format('Y-m-d H:i:s'));
-        $this->assertSame(['peak' => 150, 'average' => 135], array_slice($daily['days'][29], 1));
-        $this->assertSame(['peak' => 30, 'average' => 30], array_slice($daily['days'][28], 1));
-        $this->assertNull($daily['days'][27]['peak']);
-        $this->assertSame(90.0, $daily['average_peak']);
-
-        $hourly = $history->hourly(24);
-
-        $this->assertCount(24, $hourly);
-        $this->assertSame(['peak' => 150, 'average' => 135], $hourly[18]);
-        $this->assertSame(['peak' => 30, 'average' => 30], $hourly[7]);
-        $this->assertSame(['peak' => null, 'average' => null], $hourly[23]);
-
         $history->record($first, 40, CarbonImmutable::parse('2026-10-22 15:31:00'));
         $history->record($second, 2, CarbonImmutable::parse('2026-10-22 15:32:00'));
         $history->record($first, 35, CarbonImmutable::parse('2026-10-22 15:22:00'));
-        $recent = $history->recent(60);
 
-        $this->assertCount(60, $recent);
-        $this->assertSame([35, null, 42], array_slice($recent, 57));
+        $chart = $history->chart(30, 24, 60);
+        $total = $chart['total'];
+        $one = $chart['per_server'][$first->id];
+        $two = $chart['per_server'][$second->id];
+
+        $this->assertSame(GameServer::query()->orderBy('sort_order')->orderBy('id')->pluck('id')->all(), array_column($chart['servers'], 'id'));
+        // Days: the highest online of the day; the total is the highest sum of one step
+        // (100 + 50 at 10:00), not the sum of each server's own peak (120 + 50).
+        $this->assertSame(150, $total['days'][29]);
+        $this->assertSame(30, $total['days'][28]);
+        $this->assertNull($total['days'][27]);
+        $this->assertSame([120, 50], [$one['days'][29], $two['days'][29]]);
+        $this->assertSame([30, null], [$one['days'][28], $two['days'][28]]);
+        $this->assertSame(150, $chart['peak']);
+
+        // Hours: the last 24 hours, the highest online of each hour.
+        $this->assertCount(24, $total['hours']);
+        $this->assertSame([150, 120, 50], [$total['hours'][18], $one['hours'][18], $two['hours'][18]]);
+        $this->assertSame(30, $total['hours'][7]);
+        $this->assertSame([42, 40, 2], [$total['hours'][23], $one['hours'][23], $two['hours'][23]]);
+
+        // Five-minute steps for the last 5 hours: the online of each step.
+        $this->assertCount(60, $total['minutes']);
+        $this->assertSame([35, null, 42], array_slice($total['minutes'], 57));
+        $this->assertSame([35, null, 40], array_slice($one['minutes'], 57));
+        $this->assertSame([null, null, 2], array_slice($two['minutes'], 57));
         // 10:00 is 5.5 hours ago, outside the last 5 hours.
-        $this->assertSame([], array_filter(array_slice($recent, 0, 57), static fn ($value) => $value !== null));
+        $this->assertSame([], array_filter(array_slice($total['minutes'], 0, 57), static fn ($value) => $value !== null));
+
+        // The widget: the total first, then one line per server, with a server picker.
+        $widget = DashboardTrends::widgets(null, $chart, null)[0];
+        $keys = array_column($widget['series'], 'key');
+        $this->assertSame('total', $keys[0]);
+        $this->assertContains('server-'.$first->id, $keys);
+        $this->assertContains('server-'.$second->id, $keys);
+        $this->assertSame('Общий онлайн', $widget['series'][0]['label']);
+        $this->assertTrue($widget['picker']);
+        $byKey = array_column($widget['series'], null, 'key');
+        $this->assertSame([150, 120, 50], [$byKey['total']['days'][29], $byKey['server-'.$first->id]['days'][29], $byKey['server-'.$second->id]['days'][29]]);
+    }
+
+    public function test_a_single_game_server_has_one_online_line_without_a_picker(): void
+    {
+        // Installation creates one game server.
+        $server = GameServer::query()->sole();
+        app(ServerOnlineHistory::class)->record($server, 70, CarbonImmutable::parse('2026-10-22 12:00:00'));
+
+        $widget = DashboardTrends::widgets(null, app(ServerOnlineHistory::class)->chart(), null)[0];
+
+        $this->assertSame(['total'], array_column($widget['series'], 'key'));
+        $this->assertFalse($widget['picker']);
+        $this->assertSame(70, $widget['series'][0]['days'][29]);
     }
 
     public function test_chart_widgets_offer_five_minute_steps_for_the_last_hours(): void

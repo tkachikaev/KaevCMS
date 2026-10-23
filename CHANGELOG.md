@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The online chart shows each game server.** Instead of "peak" and "average" lines it shows the total online and, with several game servers, one line per server; a "Servers" menu with checkboxes chooses the visible lines and is remembered. Days and hours show their highest online, the 5-hour and 1-hour periods the online of every five minutes. The total of a step is the sum of the servers at that step.
+
 - **The About the server page is editable.** `/about` showed fixed theme text ending with "its content will be editable in the CMS later". It now shows an editable RU/EN page from **Pages** (reserved `about` address, created once on install or upgrade) above the game server cards, which still come from the game server settings. Without a published page `/about` shows the cards alone; a deleted page is not recreated by upgrades and can be restored with **Create about page** in the page list. `/ru/pages/about` redirects to `/about`.
 - **Language menu instead of language buttons.** The website, the player account and the administration showed one button per language (RU / EN). A compact button with the current code now opens a list of the enabled languages by their own names, so more languages take no extra room; it closes on an outside click or Escape. On phones the public menu ends with it (both themes hid the header switcher there with no replacement), and the player account keeps it on phones too. The Luxury account theme, which had no language choice at all, gets it as well. Theme versions, so browsers load the new styles: Kaev Aurelia 1.0.13, L2 Dark Classic 0.8.5, account themes Luxury 1.6.8 and Kaev Aurelia 1.6.10.
 

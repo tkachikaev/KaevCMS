@@ -15,7 +15,7 @@ final class DashboardTrends
 {
     /**
      * @param  array{days:list<array{date:CarbonImmutable,count:int,game_accounts:int}>,hours:list<array{masters:int,games:int}>,minutes:list<array{masters:int,games:int}>}|null  $registrations
-     * @param  array{days:list<array{date:CarbonImmutable,peak:int|null,average:int|null}>,hours:list<array{peak:int|null,average:int|null}>,minutes:list<int|null>}|null  $online
+     * @param  array{servers:list<array{id:int,name:string}>,total:array{days:list<int|null>,hours:list<int|null>,minutes:list<int|null>},per_server:array<int,array{days:list<int|null>,hours:list<int|null>,minutes:list<int|null>}>}|null  $online
      * @param  array{currency:string|null,days:list<array{date:CarbonImmutable,amount:float}>,hours:list<float>,minutes:list<float>}|null  $donations
      * @return list<array<string,mixed>>
      */
@@ -25,11 +25,21 @@ final class DashboardTrends
         $widgets = [];
 
         if ($online !== null) {
-            // A five-minute step holds one sample, so its peak and average are the same value.
-            $widgets[] = self::widget('online', self::text('Players online'), 'number', null, $labels, [
-                self::series('peak', self::text('Peak'), 'chart-1', 'max', array_column($online['days'], 'peak'), array_column($online['hours'], 'peak'), $online['minutes'], true),
-                self::series('average', self::text('Average online'), 'chart-4', 'avg', array_column($online['days'], 'average'), array_column($online['hours'], 'average'), $online['minutes'], true),
-            ]);
+            // The total of all game servers, then each server on its own line; with several
+            // servers a picker chooses the lines. Days and hours show their highest online.
+            $total = $online['total'];
+            $lines = [self::series('total', self::text('Total online'), 'chart-1', 'max', $total['days'], $total['hours'], $total['minutes'], true)];
+            if (count($online['servers']) > 1) {
+                foreach ($online['servers'] as $server) {
+                    $values = $online['per_server'][$server['id']];
+                    $lines[] = self::series('server-'.$server['id'], $server['name'], 'chart-2', 'max', $values['days'], $values['hours'], $values['minutes'], true);
+                }
+            }
+            $widget = self::widget('online', self::text('Players online'), 'number', null, $labels, $lines);
+            $widget['palette'] = true;
+            $widget['picker'] = count($lines) > 1;
+            $widget['i18n']['lines'] = self::text('Servers');
+            $widgets[] = $widget;
         }
 
         if ($registrations !== null) {

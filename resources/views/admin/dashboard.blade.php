@@ -125,6 +125,7 @@
             <section class="dash-card dash-widget" data-testid="dashboard-chart-{{ $widget['key'] }}" data-dash-widget>
                 <header class="dash-widget-header">
                     <h2>{{ $widget['title'] }}</h2>
+                    <div class="dash-widget-controls" data-dash-controls>
                     <span class="dash-period">
                         <select data-dash-period aria-label="{{ __('Period') }}">
                             <option value="30" selected>{{ __('30 days') }}</option>
@@ -134,6 +135,7 @@
                             <option value="1h">{{ __('1 hour') }}</option>
                         </select>
                     </span>
+                    </div>
                 </header>
                 <div class="dash-widget-series" data-dash-legend role="group" aria-label="{{ __('Visible lines') }}"></div>
                 <div class="dash-widget-chart" data-dash-chart></div>

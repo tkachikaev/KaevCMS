@@ -2429,7 +2429,7 @@
     "Top-up history": "История пополнений",
     "Top-ups, coins received and spending in one place.": "Пополнения, начисления и расходы — в одном месте.",
     "Total": "Всего",
-    "Total online": "Всего онлайн",
+    "Total online": "Общий онлайн",
     "Total operations": "Всего операций",
     "Total records": "Всего записей",
     "Transaction history": "История операций",
@@ -2869,7 +2869,6 @@
     "Registrations per day: :masters master accounts and :games game accounts in 30 days.": "Регистрации по дням: за 30 дней мастер-аккаунтов — :masters, игровых аккаунтов — :games.",
     "Daily peak, last 30 days": "Пик за день, последние 30 дней",
     "Now": "Сейчас",
-    "Peak": "Пик",
     "Online history starts with the next server check. The chart fills in as the monitor runs.": "История онлайна начнёт копиться со следующей проверки серверов. График заполнится по мере работы монитора.",
     ":date: peak :count": ":date: пик :count",
     ":date: no data": ":date: нет данных",
@@ -2917,6 +2916,5 @@
     "Open": "Открыть",
     "Disable module?": "Отключить модуль?",
     "Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.": "Его разделы пропадут из меню админки и из кабинета игрока. Данные модуля в базе сохранятся, и его можно будет включить снова.",
-    "Yes, disable": "Да, отключить",
-    "Average online": "Среднее"
+    "Yes, disable": "Да, отключить"
 }

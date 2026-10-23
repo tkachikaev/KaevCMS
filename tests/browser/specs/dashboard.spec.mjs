@@ -123,6 +123,32 @@ test('dashboard charts switch periods and lines', async ({ page }) => {
     await expect(lines.nth(0)).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('online chart shows the total and each game server, chosen with checkboxes', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await signIn(page);
+
+    const online = page.getByTestId('dashboard-chart-online');
+    const legend = online.locator('.dash-metric');
+    const lines = online.locator('.dash-lines');
+    await expect(legend.first()).toContainText('Общий онлайн');
+    const servers = await online.locator('.dash-lines-item').count();
+    expect(servers).toBeGreaterThanOrEqual(3);
+    await expect(legend).toHaveCount(servers);
+
+    await lines.locator('summary').click();
+    const second = online.locator('.dash-lines-item input').nth(1);
+    await second.uncheck();
+    await expect(legend).toHaveCount(servers - 1);
+    // An outside click closes the menu; the choice is remembered.
+    await online.locator('h2').click();
+    await expect(online.locator('.dash-lines-list')).toBeHidden();
+    await page.reload();
+    await expect(page.getByTestId('dashboard-chart-online').locator('.dash-metric')).toHaveCount(servers - 1);
+    await page.getByTestId('dashboard-chart-online').locator('.dash-lines summary').click();
+    await page.getByTestId('dashboard-chart-online').locator('.dash-lines-item input').nth(1).check();
+    await expect(page.getByTestId('dashboard-chart-online').locator('.dash-metric')).toHaveCount(servers);
+});
+
 test('dashboard remains readable without horizontal overflow', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page);
