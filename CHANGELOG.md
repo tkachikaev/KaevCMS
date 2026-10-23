@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.53.1 - 2026-10-23
+
+`composer.lock` is unchanged; no new migrations.
+
+- **About and Download are ordinary pages.** Theme buttons open a page by its address key: "About the server" the page with the address `about`, "Download client" the page with the address `downloads`, through the new `page_key_url()` helper (`download_page_url()` remains). Create a page with that address and the button picks it up; without a published page the button stays and its address answers "not found". Both pages can be edited, unpublished or deleted without warnings; the page list no longer shows "check the download page" notices or template buttons, the page form no longer has special download or About blocks, and the About page no longer appends game server cards under its text. The old `/about` and `/downloads` addresses redirect to the pages with these keys. New installations still get both as example pages, the About text without the line about server details below.
+- **One address in every language.** When a translation's address is left empty, the page takes the address typed in another language (the default one first) instead of making a new one from that language's title, so `downloads` stays `downloads` in English too.
+- **New pages are published on save.** The "Publish" switch is on by default when creating a page; untick it to keep a draft.
+- The RuSAcis statistics test checks only visible text, so a random CSRF token can no longer fail it.
+
 ## 0.53.0 - 2026-10-23
 
 `composer.lock` is unchanged (Laravel 13.37, Livewire 4.4.7). One new migration runs automatically: the reserved About page. Account theme versions: Luxury 1.6.8, Kaev Aurelia 1.6.10; public themes Kaev Aurelia 1.0.14, L2 Dark Classic 0.8.5.

@@ -729,5 +729,13 @@
   ],
   "0.53.0": [
     "core/deployment/windows/apply-0.52.0.ps1"
+  ],
+  "0.53.1": [
+    "core/deployment/windows/apply-0.53.0.ps1",
+    "core/tests/Feature/ManagedAboutPageTest.php",
+    "core/themes/default/views/pages/about.blade.php",
+    "core/themes/default/views/pages/downloads.blade.php",
+    "core/themes/kaev-aurelia/views/pages/about.blade.php",
+    "core/themes/kaev-aurelia/views/pages/downloads.blade.php"
   ]
 }
