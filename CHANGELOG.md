@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- **One button for the admin theme.** The light, dark and system buttons in the admin header became one button: the sun in the light theme, the moon in the dark one. A click switches the theme; the icon turns and the colours fade over a quarter of a second (instantly with reduced motion). A saved "system" choice keeps following the device until the button is used.
+- **One button for the admin theme.** The light, dark and system buttons in the admin header became one button that steps light → dark → system, showing the sun, the moon or the monitor. The whole page cross-fades into the new theme in one step (before, every element faded on its own and text flickered), while the old icon slides up and the next one rises in its place; with reduced motion, or in browsers without view transitions, the theme simply switches.
+
+- **Player support tickets look like a chat.** A ticket shows the conversation grouped by day with the player's messages on the right, a messenger-style field that grows with the text, a round send button and Ctrl + Enter to send; sending no longer shows a banner, and the cursor stays in the field. The number, subject, category, assignee and dates sit in a details panel beside the chat. The new ticket form picks the category from tiles with icons, keeps the character counters inside the fields and lists short tips on what to include.
 
 - **The online chart shows each game server.** Instead of "peak" and "average" lines it shows the total online and, with several game servers, one line per server; a "Servers" menu with checkboxes chooses the visible lines and is remembered. Days and hours show their highest online, the 5-hour and 1-hour periods the online of every five minutes. The total of a step is the sum of the servers at that step.
 

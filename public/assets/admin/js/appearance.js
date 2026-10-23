@@ -4,9 +4,9 @@
     const root = document.documentElement;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    // 'system' follows the device; it is no longer offered in the header, but a saved choice
-    // keeps working until the administrator switches the theme with the button.
-    const allowed = new Set(['light', 'dark', 'system']);
+    // The header button steps through the themes in this order; 'system' follows the device.
+    const cycle = ['light', 'dark', 'system'];
+    const allowed = new Set(cycle);
     const storageKey = root.dataset.adminAppearanceKey || 'kaevcms.admin.appearance';
 
     const loadPreference = () => {
@@ -23,10 +23,13 @@
         ? (media.matches ? 'dark' : 'light')
         : preference;
 
+    const nextPreference = (current) => cycle[(cycle.indexOf(current) + 1) % cycle.length];
+
     // The button names what a click does: "switch to the dark theme" while the page is light.
     const synchronizeControls = () => {
         document.querySelectorAll('[data-admin-appearance-toggle]').forEach((button) => {
-            const label = root.dataset.adminColorScheme === 'dark' ? button.dataset.labelLight : button.dataset.labelDark;
+            const next = nextPreference(root.dataset.adminAppearance || 'light');
+            const label = button.dataset[`label${next.charAt(0).toUpperCase()}${next.slice(1)}`];
             if (label) {
                 button.setAttribute('aria-label', label);
                 button.setAttribute('title', label);
@@ -61,17 +64,26 @@
     let preference = loadPreference();
     applyPreference(preference);
 
-    // Colours fade for a moment instead of snapping to the other theme.
-    let changingTimer = null;
-    const switchTo = (nextPreference) => {
-        if (!reducedMotion.matches) {
-            root.classList.add('admin-theme-changing');
-            window.clearTimeout(changingTimer);
-            changingTimer = window.setTimeout(() => root.classList.remove('admin-theme-changing'), 300);
+    // The browser cross-fades a snapshot of the whole page into the new theme, so every colour
+    // changes in one smooth step; the header icon slides up and the next one rises from below
+    // (see appearance.css). Element transitions are paused meanwhile so nothing animates twice.
+    // Browsers without view transitions, or with reduced motion, simply switch.
+    const switchTo = (next) => {
+        const apply = () => {
+            preference = next;
+            savePreference(preference);
+            applyPreference(preference);
+        };
+
+        if (reducedMotion.matches || typeof document.startViewTransition !== 'function') {
+            apply();
+
+            return;
         }
-        preference = nextPreference;
-        savePreference(preference);
-        applyPreference(preference);
+
+        root.classList.add('admin-theme-changing');
+        const transition = document.startViewTransition(apply);
+        transition.finished.finally(() => root.classList.remove('admin-theme-changing'));
     };
 
     document.addEventListener('click', (event) => {
@@ -80,7 +92,7 @@
             return;
         }
 
-        switchTo(resolvedScheme(preference) === 'dark' ? 'light' : 'dark');
+        switchTo(nextPreference(preference));
     });
 
     media.addEventListener('change', () => {

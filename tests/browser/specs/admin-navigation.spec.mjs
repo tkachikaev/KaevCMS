@@ -104,31 +104,34 @@ test('administrator appearance switches with one button and survives navigation'
     await expect(root).toHaveAttribute('data-admin-appearance', 'light');
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
     await expect(toggle).toHaveAttribute('aria-label', 'Включить тёмную тему');
-    await expect(toggle.locator('.admin-appearance-sun')).toHaveCSS('opacity', '1');
+    await expect(toggle.locator('.admin-appearance-sun')).toBeVisible();
+    await expect(toggle.locator('.admin-appearance-moon')).toBeHidden();
 
     await toggle.click();
     await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
-    await expect(toggle).toHaveAttribute('aria-label', 'Включить светлую тему');
-    await expect(toggle.locator('.admin-appearance-moon')).toHaveCSS('opacity', '1');
+    await expect(toggle).toHaveAttribute('aria-label', 'Включить системную тему');
+    await expect(toggle.locator('.admin-appearance-moon')).toBeVisible();
+    await expect(root).not.toHaveClass(/admin-theme-changing/);
 
     await gotoWithLocalNetworkRetry(page, '/admin/news');
     await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
 
+    // The third step follows the device.
     await page.locator('[data-admin-appearance-toggle]').click();
-    await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
-
-    // A saved "follow the device" choice keeps working until the button is used.
-    await page.evaluate(() => window.KaevCMSAdminAppearance.apply('system'));
+    await expect(root).toHaveAttribute('data-admin-appearance', 'system');
+    await expect(toggle).toHaveAttribute('aria-label', 'Включить светлую тему');
+    await expect(toggle.locator('.admin-appearance-system')).toBeVisible();
     await page.emulateMedia({ colorScheme: 'dark' });
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
     await page.emulateMedia({ colorScheme: 'light' });
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
-    await page.locator('[data-admin-appearance-toggle]').click();
-    await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
+
     await page.locator('[data-admin-appearance-toggle]').click();
     await expect(root).toHaveAttribute('data-admin-appearance', 'light');
+    await page.locator('[data-admin-appearance-toggle]').click();
+    await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
 });
 
 test('audit category counters remain readable and spaced in dark mode', async ({ page }) => {
