@@ -51,20 +51,24 @@ body:has(.donations-dialog[open]) { overflow: hidden; }
     max-width: none;
     max-height: calc(100dvh - 48px);
     margin: auto;
-    padding: 0;
-    overflow: auto;
+    /* The content scrolls inside the frame, so the thin scrollbar keeps clear of the rounded
+       corners; the right padding is its lane. */
+    padding: 8px 4px 8px 0;
+    overflow: hidden;
     color: var(--account-text);
     background: var(--account-panel-raised);
     border: 1px solid var(--account-line);
     border-radius: 24px;
     box-shadow: var(--account-shadow);
 }
+.donations-dialog[open] { display: flex; flex-direction: column; }
 .donations-dialog::backdrop { background: rgb(0 0 0 / .64); backdrop-filter: blur(5px); }
 .donations-dialog [hidden] { display: none !important; }
-.donations-dialog-shell { padding: clamp(20px, 3vw, 32px); }
+.donations-dialog-shell { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: clamp(12px, 2vw, 24px) clamp(16px, 3vw, 28px) clamp(12px, 2vw, 24px) clamp(20px, 3vw, 32px); }
 .donations-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
 .donations-dialog-head h2 { margin: 6px 0 0; font-size: clamp(22px, 3vw, 28px); line-height: 1.2; }
-.donations-dialog-close { flex: 0 0 40px; height: 40px; padding: 0; display: grid; place-items: center; color: var(--account-muted); background: var(--account-panel-soft); border: 1px solid var(--account-line); border-radius: 50%; font-size: 26px; cursor: pointer; }
+.donations-dialog-close { flex: 0 0 40px; height: 40px; padding: 0; display: grid; place-items: center; color: var(--account-muted); background: var(--account-panel-soft); border: 1px solid var(--account-line); border-radius: 50%; cursor: pointer; }
+.donations-dialog-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .donations-dialog-close:hover { color: var(--account-text); border-color: var(--account-gold); }
 .donations-dialog-close:focus-visible { outline: 2px solid var(--account-gold); outline-offset: 3px; }
 body.account-body .donations-dialog .account-donations-card { border: 0; padding: 0; background: transparent; }
@@ -99,7 +103,7 @@ body.account-body .donations-dialog .account-donations-card { border: 0; padding
 .donations-topup-caption { text-align: center; font-size: 12px; line-height: 1.6; }
 @media (max-width: 700px) {
     .donations-topup-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-    .donations-dialog { width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; }
+    .donations-dialog { width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; }
     .donations-dialog-head { position: sticky; top: -20px; z-index: 1; padding: 12px 0; margin: -12px 0 20px; background: var(--account-panel-raised); }
     .donations-dialog-shell { padding: 20px 18px calc(24px + env(safe-area-inset-bottom)); }
     .donations-dialog .account-form-card, .donations-topup-total { padding: 18px; }
@@ -109,7 +113,7 @@ body.account-body .donations-dialog .account-donations-card { border: 0; padding
 
 /* Player coin transfer: compact form and a clear inventory hand-off. */
 .donations-exchange-dialog { width: min(480px, calc(100% - 32px)); }
-.donations-exchange-dialog .donations-dialog-shell { padding: 24px; }
+.donations-exchange-dialog .donations-dialog-shell { padding: 16px 20px 16px 24px; }
 .donations-exchange-dialog .donations-dialog-head { margin-bottom: 16px; }
 .donations-exchange-dialog .donations-dialog-head h2 { font-size: 23px; }
 .donations-exchange-page { max-width: 540px; margin-inline: auto; }
