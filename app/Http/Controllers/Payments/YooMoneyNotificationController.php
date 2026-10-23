@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
+use KaevCMS\Modules\Donations\Services\DonationYooMoneyNotificationTest;
 use LogicException;
 use Throwable;
 
@@ -29,6 +30,14 @@ final class YooMoneyNotificationController extends Controller
         }
         try {
             DonationsTrustedAutoload::register();
+            // Only while the owner waits on the "Test" dialog, and only for YooMoney's test
+            // notification; every other request takes the usual settlement path below.
+            $notificationTest = app(DonationYooMoneyNotificationTest::class);
+            if ($notificationTest->intercepts($request->getContent())) {
+                return $notificationTest->accept($request->getContent())
+                    ? response('OK', 200)
+                    : response('Invalid notification', 400);
+            }
             $status = app(DonationPaymentSettlements::class)->receive(new ProviderCallback(
                 $request->getContent(), [], '',
             ));

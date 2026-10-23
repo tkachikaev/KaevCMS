@@ -157,6 +157,57 @@ final class YooMoneyProvider implements PaymentProvider
         );
     }
 
+    /**
+     * Signature check for the "Test" notification an owner sends from YooMoney's HTTP
+     * notification settings. It never credits anything and is separate from
+     * verifyCallback(), which alone handles real payments. Both the HMAC-SHA256 "sign"
+     * used by verifyCallback() and YooMoney's documented sha1_hash are accepted.
+     */
+    public function testNotificationSignatureValid(string $rawBody, string $secret): bool
+    {
+        if ($rawBody === '' || strlen($rawBody) > 16384 || $secret === '') {
+            return false;
+        }
+        $params = [];
+        foreach (explode('&', $rawBody) as $part) {
+            $pair = explode('=', $part, 2);
+            $key = urldecode($pair[0]);
+            if (! preg_match('/\A[a-z][a-z0-9_]*\z/D', $key) || array_key_exists($key, $params)) {
+                return false;
+            }
+            $params[$key] = urldecode($pair[1] ?? '');
+        }
+        if (($params['test_notification'] ?? null) !== 'true') {
+            return false;
+        }
+
+        $signature = strtolower($params['sign'] ?? '');
+        if (preg_match('/\A[a-f0-9]{64}\z/D', $signature)) {
+            $signed = $params;
+            unset($signed['sign']);
+            ksort($signed, SORT_STRING);
+            $parts = [];
+            foreach ($signed as $key => $value) {
+                $parts[] = $key.'='.rawurlencode($value);
+            }
+
+            return hash_equals(hash_hmac('sha256', implode('&', $parts), $secret), $signature);
+        }
+
+        $sha1 = strtolower($params['sha1_hash'] ?? '');
+        if (preg_match('/\A[a-f0-9]{40}\z/D', $sha1)) {
+            $source = implode('&', [
+                $params['notification_type'] ?? '', $params['operation_id'] ?? '', $params['amount'] ?? '',
+                $params['currency'] ?? '', $params['datetime'] ?? '', $params['sender'] ?? '',
+                $params['codepro'] ?? '', $secret, $params['label'] ?? '',
+            ]);
+
+            return hash_equals(sha1($source), $sha1);
+        }
+
+        return false;
+    }
+
     /** Strict exact decimal parser: no float, no exponent, no round-off. */
     private function parseRubMinor(string $amount): int
     {

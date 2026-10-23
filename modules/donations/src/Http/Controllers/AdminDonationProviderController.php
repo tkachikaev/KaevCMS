@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Services\Admin\AdminPathSettings;
 use App\Support\Modules\ModuleAdminAuthorizer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
+use KaevCMS\Modules\Donations\Services\DonationYooMoneyNotificationTest;
 use Throwable;
 
 final class AdminDonationProviderController extends Controller
@@ -111,6 +113,40 @@ final class AdminDonationProviderController extends Controller
         return redirect()->route('admin.module-pages.donations.providers.show', [
             'adminPath' => $paths->path(), 'providerCode' => 'yoomoney',
         ])->with('status', __('module-donations::messages.activation_saved'));
+    }
+
+    /** "Test" button: wait up to five minutes for YooMoney's test notification. */
+    public function startNotificationTest(Request $request, ModuleAdminAuthorizer $access,
+        DonationYooMoneyNotificationTest $test): JsonResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.notification-test.start', 'POST', $admin);
+        $secret = $request->input('secret', '');
+        if (! is_string($secret) && $secret !== null) {
+            return response()->json(['error' => __('module-donations::messages.yoomoney_test_secret_required')], 422);
+        }
+
+        try {
+            $token = $test->start($admin, (string) $secret);
+        } catch (InvalidArgumentException) {
+            return response()->json(['error' => __('module-donations::messages.yoomoney_test_secret_required')], 422);
+        }
+
+        return response()->json([
+            'token' => $token,
+            'expires_in' => DonationYooMoneyNotificationTest::TTL_SECONDS,
+        ]);
+    }
+
+    public function notificationTestStatus(string $token, Request $request, ModuleAdminAuthorizer $access,
+        DonationYooMoneyNotificationTest $test): JsonResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.notification-test.status', 'GET', $admin);
+
+        return response()->json(['status' => $test->status($token)]);
     }
 
     public function update(string $providerCode, Request $request, AdminPathSettings $paths,

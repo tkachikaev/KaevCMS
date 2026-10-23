@@ -12,9 +12,54 @@
         @elseif(! $webhookIsLocal)
             <div class="form-group">
                 <label>{{ __('module-donations::messages.yoomoney_notification_address') }}</label>
-                <code class="donations-callback-url">{{ $webhookUrl }}</code>
+                <div class="donations-callback-row">
+                    <code class="donations-callback-url">{{ $webhookUrl }}</code>
+                    @unless(request()->attributes->get('admin_read_only'))
+                        <button class="button button-secondary donations-test-open" type="button" data-yoomoney-test-open
+                            data-start-url="{{ route('admin.module-pages.donations.providers.notification-test.start', ['adminPath' => $adminPath]) }}"
+                            data-status-url="{{ route('admin.module-pages.donations.providers.notification-test.status', ['adminPath' => $adminPath, 'token' => str_repeat('0', 40)]) }}">{{ __('module-donations::messages.yoomoney_test_button') }}</button>
+                    @endunless
+                </div>
                 <small>{{ __('module-donations::messages.yoomoney_notification_help') }}</small>
             </div>
+            @unless(request()->attributes->get('admin_read_only'))
+                {{-- Waits for the test notification sent from YooMoney's settings; on success the
+                     settings form below is saved as with its own button. --}}
+                <dialog class="donations-test-dialog" data-yoomoney-test-dialog data-state="waiting" aria-labelledby="yoomoney-test-title">
+                    <div class="donations-test-card">
+                        <div class="donations-test-mark" aria-hidden="true">
+                            <span class="donations-test-spinner"></span>
+                            <svg class="donations-test-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                            <svg class="donations-test-fail" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></svg>
+                        </div>
+                        <div class="donations-test-copy" data-test-copy="waiting">
+                            <h2 id="yoomoney-test-title">{{ __('module-donations::messages.yoomoney_test_waiting_title') }}</h2>
+                            <p>{{ __('module-donations::messages.yoomoney_test_waiting_text') }}</p>
+                            <small>{{ __('module-donations::messages.yoomoney_test_waiting_hint') }}</small>
+                        </div>
+                        <div class="donations-test-copy" data-test-copy="received" hidden>
+                            <h2>{{ __('module-donations::messages.yoomoney_test_received_title') }}</h2>
+                            <p>{{ __('module-donations::messages.yoomoney_test_received_text') }}</p>
+                        </div>
+                        <div class="donations-test-copy" data-test-copy="signature_mismatch" hidden>
+                            <h2>{{ __('module-donations::messages.yoomoney_test_mismatch_title') }}</h2>
+                            <p>{{ __('module-donations::messages.yoomoney_test_mismatch_text') }}</p>
+                        </div>
+                        <div class="donations-test-copy" data-test-copy="expired" hidden>
+                            <h2>{{ __('module-donations::messages.yoomoney_test_expired_title') }}</h2>
+                            <p>{{ __('module-donations::messages.yoomoney_test_expired_text') }}</p>
+                        </div>
+                        <div class="donations-test-copy" data-test-copy="error" hidden>
+                            <h2>{{ __('module-donations::messages.yoomoney_test_error_title') }}</h2>
+                            <p data-test-error>{{ __('module-donations::messages.yoomoney_test_secret_required') }}</p>
+                        </div>
+                        <div class="donations-test-actions">
+                            <button class="button button-secondary" type="button" data-yoomoney-test-close>{{ __('module-donations::messages.yoomoney_test_close') }}</button>
+                            <button class="button button-primary" type="button" data-yoomoney-test-retry hidden>{{ __('module-donations::messages.yoomoney_test_retry') }}</button>
+                        </div>
+                    </div>
+                </dialog>
+            @endunless
         @endif
         @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
         @if($readinessIssues !== [])

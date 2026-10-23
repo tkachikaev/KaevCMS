@@ -19,6 +19,10 @@ Route::get('/orders', [AdminDonationController::class, 'orders'])->name('orders.
 Route::post('/orders/{orderUuid}/reviews', [AdminDonationController::class, 'reportReview'])->whereUuid('orderUuid')->name('orders.reviews.store');
 Route::get('/orders/{orderUuid}', [AdminDonationController::class, 'showOrder'])->whereUuid('orderUuid')->name('orders.show');
 Route::get('/providers', [AdminDonationProviderController::class, 'index'])->name('providers.index');
+Route::post('/providers/yoomoney/notification-test', [AdminDonationProviderController::class, 'startNotificationTest'])
+    ->middleware('throttle:10,1,donations-notification-test')->name('providers.notification-test.start');
+Route::get('/providers/yoomoney/notification-test/{token}', [AdminDonationProviderController::class, 'notificationTestStatus'])
+    ->where('token', '[A-Za-z0-9]{40}')->name('providers.notification-test.status');
 Route::get('/providers/{providerCode}', [AdminDonationProviderController::class, 'show'])->where('providerCode', '[a-z][a-z0-9_-]{1,39}')->name('providers.show');
 Route::put('/providers/activation', [AdminDonationProviderController::class, 'updateActivation'])->name('providers.activation.update');
 Route::put('/providers/{providerCode}', [AdminDonationProviderController::class, 'update'])->where('providerCode', '[a-z][a-z0-9_-]{1,39}')->name('providers.update');

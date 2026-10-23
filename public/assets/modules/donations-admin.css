@@ -96,3 +96,26 @@
     .donations-save-bar { padding:14px; }
     .donations-save-bar .button { width:100%; }
 }
+
+/* YooMoney notification test: the address with its "Test" button, and the waiting dialog
+   (spinner, then a green tick or a red cross). */
+.donations-callback-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.donations-callback-row .donations-test-open { min-height: 34px; padding: 6px 14px; }
+.donations-test-dialog { width: min(440px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: var(--admin-radius-card); background: transparent; color: var(--admin-text); }
+.donations-test-dialog::backdrop { background: rgba(10, 11, 12, .55); backdrop-filter: blur(2px); }
+.donations-test-card { display: grid; justify-items: center; gap: 16px; padding: 28px 26px 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); background: var(--admin-surface); text-align: center; }
+.donations-test-mark { position: relative; display: grid; place-items: center; width: 56px; height: 56px; }
+.donations-test-spinner { width: 44px; height: 44px; border: 3px solid var(--admin-border); border-top-color: var(--admin-primary); border-radius: 999px; animation: donations-test-spin .8s linear infinite; }
+.donations-test-mark svg { display: none; width: 56px; height: 56px; padding: 12px; border-radius: 999px; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.donations-test-ok { background: var(--admin-success-soft); stroke: var(--admin-success); }
+.donations-test-fail { background: var(--admin-danger-soft); stroke: var(--admin-danger); }
+.donations-test-dialog:not([data-state="waiting"]) .donations-test-spinner { display: none; }
+.donations-test-dialog[data-state="received"] .donations-test-ok { display: block; }
+.donations-test-dialog:is([data-state="signature_mismatch"], [data-state="expired"], [data-state="error"]) .donations-test-fail { display: block; }
+.donations-test-copy h2 { margin: 0; font-size: 18px; }
+.donations-test-copy p { margin: 8px 0 0; color: var(--admin-text-muted); line-height: 1.5; }
+.donations-test-copy small { display: block; margin-top: 8px; color: var(--admin-text-muted); font-size: 12px; }
+.donations-test-actions { display: flex; justify-content: center; gap: 10px; width: 100%; }
+.donations-test-dialog [hidden] { display: none !important; }
+@keyframes donations-test-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .donations-test-spinner { animation-duration: 2.4s; } }
