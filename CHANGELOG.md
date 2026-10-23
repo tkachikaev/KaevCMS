@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **One button for the admin theme.** The light, dark and system buttons in the admin header became one button: the sun in the light theme, the moon in the dark one. A click switches the theme; the icon turns and the colours fade over a quarter of a second (instantly with reduced motion). A saved "system" choice keeps following the device until the button is used.
+
 - **The online chart shows each game server.** Instead of "peak" and "average" lines it shows the total online and, with several game servers, one line per server; a "Servers" menu with checkboxes chooses the visible lines and is remembered. Days and hours show their highest online, the 5-hour and 1-hour periods the online of every five minutes. The total of a step is the sum of the servers at that step.
 
 - **The About the server page is editable.** `/about` showed fixed theme text ending with "its content will be editable in the CMS later". It now shows an editable RU/EN page from **Pages** (reserved `about` address, created once on install or upgrade) above the game server cards, which still come from the game server settings. Without a published page `/about` shows the cards alone; a deleted page is not recreated by upgrades and can be restored with **Create about page** in the page list. `/ru/pages/about` redirects to `/about`.

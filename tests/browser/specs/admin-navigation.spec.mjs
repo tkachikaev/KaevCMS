@@ -97,38 +97,42 @@ test('administration loads the split stylesheet stack once and in order', async 
     expect(await stylesheetNames()).toEqual(expected);
 });
 
-test('administrator appearance switches between light dark and system and survives navigation', async ({ page }) => {
+test('administrator appearance switches with one button and survives navigation', async ({ page }) => {
     const root = page.locator('html');
-    const light = page.locator('[data-admin-appearance-option="light"]');
-    const dark = page.locator('[data-admin-appearance-option="dark"]');
-    const system = page.locator('[data-admin-appearance-option="system"]');
+    const toggle = page.locator('[data-admin-appearance-toggle]');
 
     await expect(root).toHaveAttribute('data-admin-appearance', 'light');
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
-    await expect(root).not.toHaveAttribute('aria-pressed');
-    await expect(light).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle).toHaveAttribute('aria-label', 'Включить тёмную тему');
+    await expect(toggle.locator('.admin-appearance-sun')).toHaveCSS('opacity', '1');
 
-    await dark.click();
+    await toggle.click();
     await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
-    await expect(dark).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle).toHaveAttribute('aria-label', 'Включить светлую тему');
+    await expect(toggle.locator('.admin-appearance-moon')).toHaveCSS('opacity', '1');
 
     await gotoWithLocalNetworkRetry(page, '/admin/news');
     await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
 
-    await system.click();
-    await expect(root).toHaveAttribute('data-admin-appearance', 'system');
-    await expect(system).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('[data-admin-appearance-toggle]').click();
+    await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
 
+    // A saved "follow the device" choice keeps working until the button is used.
+    await page.evaluate(() => window.KaevCMSAdminAppearance.apply('system'));
     await page.emulateMedia({ colorScheme: 'dark' });
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'dark');
     await page.emulateMedia({ colorScheme: 'light' });
     await expect(root).toHaveAttribute('data-admin-color-scheme', 'light');
+    await page.locator('[data-admin-appearance-toggle]').click();
+    await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
+    await page.locator('[data-admin-appearance-toggle]').click();
+    await expect(root).toHaveAttribute('data-admin-appearance', 'light');
 });
 
 test('audit category counters remain readable and spaced in dark mode', async ({ page }) => {
-    await page.locator('[data-admin-appearance-option="dark"]').click();
+    await page.locator('[data-admin-appearance-toggle]').click();
     await gotoWithLocalNetworkRetry(page, '/admin/logs');
 
     const inactiveBadge = page.locator('.audit-tabs .admin-tab:not(.active) span').first();

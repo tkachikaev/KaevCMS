@@ -27,7 +27,7 @@ for (const appearance of ['light', 'dark']) {
         await page.setViewportSize(appearance === 'dark' ? { width: 390, height: 844 } : { width: 1280, height: 900 });
         await signIn(page);
         await gotoWithLocalNetworkRetry(page, '/admin/news/create');
-        await page.locator(`[data-admin-appearance-option="${appearance}"]`).click();
+        await page.evaluate((scheme) => window.KaevCMSAdminAppearance.apply(scheme), appearance);
 
         const editor = page.locator('[data-rich-editor]').first();
         const canvas = editor.locator('.ProseMirror');

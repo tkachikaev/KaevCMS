@@ -3,6 +3,9 @@
 
     const root = document.documentElement;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // 'system' follows the device; it is no longer offered in the header, but a saved choice
+    // keeps working until the administrator switches the theme with the button.
     const allowed = new Set(['light', 'dark', 'system']);
     const storageKey = root.dataset.adminAppearanceKey || 'kaevcms.admin.appearance';
 
@@ -20,11 +23,14 @@
         ? (media.matches ? 'dark' : 'light')
         : preference;
 
-    const synchronizeControls = (preference) => {
-        document.querySelectorAll('[data-admin-appearance-option]').forEach((button) => {
-            const active = button.dataset.adminAppearanceOption === preference;
-            button.classList.toggle('active', active);
-            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    // The button names what a click does: "switch to the dark theme" while the page is light.
+    const synchronizeControls = () => {
+        document.querySelectorAll('[data-admin-appearance-toggle]').forEach((button) => {
+            const label = root.dataset.adminColorScheme === 'dark' ? button.dataset.labelLight : button.dataset.labelDark;
+            if (label) {
+                button.setAttribute('aria-label', label);
+                button.setAttribute('title', label);
+            }
         });
     };
 
@@ -41,7 +47,7 @@
             themeColor.setAttribute('content', scheme === 'dark' ? '#0b111a' : '#f3f6fa');
         }
 
-        synchronizeControls(normalized);
+        synchronizeControls();
     };
 
     const savePreference = (preference) => {
@@ -55,20 +61,26 @@
     let preference = loadPreference();
     applyPreference(preference);
 
+    // Colours fade for a moment instead of snapping to the other theme.
+    let changingTimer = null;
+    const switchTo = (nextPreference) => {
+        if (!reducedMotion.matches) {
+            root.classList.add('admin-theme-changing');
+            window.clearTimeout(changingTimer);
+            changingTimer = window.setTimeout(() => root.classList.remove('admin-theme-changing'), 300);
+        }
+        preference = nextPreference;
+        savePreference(preference);
+        applyPreference(preference);
+    };
+
     document.addEventListener('click', (event) => {
-        const target = event.target instanceof Element ? event.target.closest('[data-admin-appearance-option]') : null;
+        const target = event.target instanceof Element ? event.target.closest('[data-admin-appearance-toggle]') : null;
         if (!(target instanceof HTMLButtonElement)) {
             return;
         }
 
-        const nextPreference = target.dataset.adminAppearanceOption;
-        if (!allowed.has(nextPreference)) {
-            return;
-        }
-
-        preference = nextPreference;
-        savePreference(preference);
-        applyPreference(preference);
+        switchTo(resolvedScheme(preference) === 'dark' ? 'light' : 'dark');
     });
 
     media.addEventListener('change', () => {
@@ -77,6 +89,7 @@
         }
     });
 
+    document.addEventListener('DOMContentLoaded', synchronizeControls);
     document.addEventListener('livewire:navigated', () => applyPreference(preference));
 
     window.KaevCMSAdminAppearance = Object.freeze({
@@ -86,9 +99,7 @@
                 return false;
             }
 
-            preference = nextPreference;
-            savePreference(preference);
-            applyPreference(preference);
+            switchTo(nextPreference);
 
             return true;
         },

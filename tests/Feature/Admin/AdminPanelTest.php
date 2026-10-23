@@ -475,9 +475,9 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('assets/admin/js/appearance.js', $layout);
         $this->assertStringContainsString("'appearance',", $layout);
         $this->assertStringContainsString('data-admin-appearance-key=', $layout);
-        $this->assertStringContainsString('data-admin-appearance-option="light"', $panel);
-        $this->assertStringContainsString('data-admin-appearance-option="dark"', $panel);
-        $this->assertStringContainsString('data-admin-appearance-option="system"', $panel);
+        $this->assertStringContainsString('data-admin-appearance-toggle', $panel);
+        $this->assertStringContainsString('admin-appearance-sun', $panel);
+        $this->assertStringContainsString('admin-appearance-moon', $panel);
         $this->assertStringContainsString('prefers-color-scheme: dark', $appearanceScript);
         $this->assertStringContainsString('window.localStorage.setItem(storageKey, preference)', $appearanceScript);
         $this->assertStringContainsString('data-admin-color-scheme="dark"', $appearanceStyles);
