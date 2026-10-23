@@ -1221,6 +1221,17 @@
 
 .support-thread-details dt { color: var(--support-muted); }
 
+/* A long subject reads better under its label than squeezed to the right. */
+.support-thread-details dl > .support-thread-detail-wide {
+    display: grid;
+    gap: 4px;
+}
+
+.support-thread-details .support-thread-detail-wide dd {
+    text-align: left;
+    line-height: 1.45;
+}
+
 .support-thread-details dd {
     min-width: 0;
     margin: 0;

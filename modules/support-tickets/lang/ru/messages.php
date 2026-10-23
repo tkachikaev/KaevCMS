@@ -163,6 +163,7 @@ return [
     'message_pagination' => 'Страницы переписки',
     'show_previous_messages' => 'Показать предыдущие сообщения',
     'show_newer_messages' => 'Показать новые сообщения',
+    'number' => 'Номер',
     'today' => 'Сегодня',
     'yesterday' => 'Вчера',
     'you' => 'Вы',

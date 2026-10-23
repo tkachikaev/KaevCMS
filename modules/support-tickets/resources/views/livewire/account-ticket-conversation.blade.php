@@ -13,9 +13,7 @@
             {{ __('module-support-tickets::messages.back_to_tickets') }}
         </a>
         <div class="support-thread-summary">
-            <span class="support-thread-number">{{ $ticket->number() }}</span>
             <span class="support-ticket-status {{ $ticket->status->cssClass() }}"><i aria-hidden="true"></i>{{ $ticket->status->label() }}</span>
-            <span class="support-thread-category">{{ $ticket->category->label() }}</span>
         </div>
         @unless($ticket->isClosed())
             <button class="support-thread-close" type="button" wire:click="closeTicket" wire:confirm="{{ __('module-support-tickets::messages.close_ticket_confirm') }}">
@@ -94,6 +92,8 @@
         <aside class="support-thread-details">
             <h2>{{ __('module-support-tickets::messages.ticket_details') }}</h2>
             <dl>
+                <div><dt>{{ __('module-support-tickets::messages.number') }}</dt><dd><span class="support-thread-number">{{ $ticket->number() }}</span></dd></div>
+                <div class="support-thread-detail-wide"><dt>{{ __('module-support-tickets::messages.subject') }}</dt><dd>{{ $ticket->subject }}</dd></div>
                 <div><dt>{{ __('module-support-tickets::messages.category') }}</dt><dd>{{ $ticket->category->label() }}</dd></div>
                 <div><dt>{{ __('module-support-tickets::messages.assigned_to') }}</dt><dd>{{ $ticket->assignedAdmin?->name ?? __('module-support-tickets::messages.not_assigned') }}</dd></div>
                 <div><dt>{{ __('module-support-tickets::messages.created_at') }}</dt><dd>{{ $ticket->created_at->format('d.m.Y H:i') }}</dd></div>

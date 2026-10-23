@@ -163,6 +163,7 @@ return [
     'message_pagination' => 'Conversation pages',
     'show_previous_messages' => 'Show previous messages',
     'show_newer_messages' => 'Show newer messages',
+    'number' => 'Number',
     'today' => 'Today',
     'yesterday' => 'Yesterday',
     'you' => 'You',
