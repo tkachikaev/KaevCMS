@@ -12,6 +12,7 @@
                 const selectButton = container.querySelector('[data-settings-file-select]');
                 const preview = container.querySelector('[data-settings-preview]');
                 const remove = container.querySelector('[data-settings-remove]');
+                const removeToggle = container.querySelector('[data-settings-remove-toggle]');
                 const wideToggle = container.querySelector('[data-settings-logo-wide]');
 
                 if (!(input instanceof HTMLInputElement) || !(preview instanceof HTMLElement)) {
@@ -75,19 +76,29 @@
                     image.src = objectUrl;
                     image.alt = container.dataset.previewAlt || 'Selected image preview';
                     preview.classList.add('has-image');
-                    preview.classList.remove('marked-for-removal');
-
-                    if (remove instanceof HTMLInputElement) {
-                        remove.checked = false;
-                    }
+                    markForRemoval(false);
                 };
+
+                // "Delete" only marks the current image; it is removed when the form is saved,
+                // and the same button takes the mark back.
+                function markForRemoval(marked) {
+                    preview.classList.toggle('marked-for-removal', marked);
+                    if (remove instanceof HTMLInputElement) {
+                        remove.value = marked ? '1' : '0';
+                    }
+                    if (removeToggle instanceof HTMLButtonElement) {
+                        removeToggle.textContent = marked ? removeToggle.dataset.labelKeep : removeToggle.dataset.labelRemove;
+                        removeToggle.setAttribute('aria-pressed', marked ? 'true' : 'false');
+                    }
+                }
 
                 selectButton?.addEventListener('click', () => input.click());
                 input.addEventListener('change', showSelectedFile);
 
-                remove?.addEventListener('change', () => {
-                    preview.classList.toggle('marked-for-removal', remove.checked);
+                removeToggle?.addEventListener('click', () => {
+                    markForRemoval(!(remove instanceof HTMLInputElement && remove.value === '1'));
                 });
+                markForRemoval(remove instanceof HTMLInputElement && remove.value === '1');
 
                 cleanupCallbacks.push(clearObjectUrl);
             };

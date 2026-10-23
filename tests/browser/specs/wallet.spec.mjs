@@ -111,7 +111,12 @@ test('custom currency names and PNG/WebP icons persist, render in both themes an
             }
         }
         await gotoWithLocalNetworkRetry(page, path);
-        await form.locator('[name="remove_icon"]').check();
+        // "Delete" marks the icon; the second click would take the mark back.
+        const removeIcon = form.locator('[data-settings-remove-toggle]');
+        await expect(removeIcon).toHaveText('Удалить');
+        await removeIcon.click();
+        await expect(removeIcon).toHaveText('Не удалять');
+        await expect(form.locator('[name="remove_icon"]')).toHaveValue('1');
         await save();
         expect((await page.request.get(iconUrl)).status()).toBe(404);
         for (const theme of ['luxury', 'kaev-aurelia']) {
@@ -128,8 +133,11 @@ test('custom currency names and PNG/WebP icons persist, render in both themes an
                 if (locale) await form.getByRole('tab', { name: locale.toUpperCase(), exact: true }).click();
                 await form.locator(`#${field.id}`).fill(field.value);
             }
-            const removal = form.locator('[name="remove_icon"]');
-            if (await removal.count()) await removal.check();
+            const removal = form.locator('[data-settings-remove-toggle]');
+            if (await removal.count()) {
+                await removal.click();
+                await expect(form.locator('[name="remove_icon"]')).toHaveValue('1');
+            }
             await save();
         }
         await activate('luxury');

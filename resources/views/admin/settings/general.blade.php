@@ -107,13 +107,6 @@
                     <input id="logo" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-settings-file>
                     <button class="button button-secondary" type="button" data-settings-file-select>{{ __('Choose logo') }}</button>
 
-                    @if ($settings['logo_url'])
-                        <label class="settings-remove-row">
-                            <input name="remove_logo" type="checkbox" value="1" @checked(old('remove_logo')) data-settings-remove>
-                            <span>{{ __('Remove current logo') }}</span>
-                        </label>
-                    @endif
-
                     <small>{{ __('JPG, PNG or WebP, up to 5 MB. SVG is intentionally disabled.') }}</small>
 
                     <input type="hidden" name="logo_wide" value="0">
@@ -121,6 +114,10 @@
                         <input name="logo_wide" type="checkbox" value="1" @checked(old('logo_wide', $settings['logo_wide']))>
                         <span>{{ __('Wide logo') }}</span>
                     </label>
+
+                    @if ($settings['logo_url'])
+                        @include('admin.settings._image-remove', ['name' => 'remove_logo'])
+                    @endif
                 </div>
             </section>
 
@@ -138,14 +135,11 @@
                     <input id="favicon" name="favicon" type="file" accept=".png,.webp,.ico,image/png,image/webp,image/x-icon,image/vnd.microsoft.icon" data-settings-file>
                     <button class="button button-secondary" type="button" data-settings-file-select>{{ __('Choose favicon') }}</button>
 
-                    @if ($settings['favicon_url'])
-                        <label class="settings-remove-row">
-                            <input name="remove_favicon" type="checkbox" value="1" @checked(old('remove_favicon')) data-settings-remove>
-                            <span>{{ __('Remove current favicon') }}</span>
-                        </label>
-                    @endif
-
                     <small>{{ __('PNG, WebP or ICO, up to 1 MB. Recommended size: 512×512.') }}</small>
+
+                    @if ($settings['favicon_url'])
+                        @include('admin.settings._image-remove', ['name' => 'remove_favicon'])
+                    @endif
                 </div>
             </section>
         </aside>

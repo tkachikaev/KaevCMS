@@ -1745,9 +1745,15 @@
 
 /* "Wide logo": a neutral checkbox, softly highlighted for a moment when the chosen image is
    much wider than tall (settings.js). */
-/* The negative margin keeps the box in line with "Remove current logo" while the padding
-   leaves room for the highlight. */
-.settings-logo-wide { margin: 0 -8px; padding: 6px 8px; border-radius: var(--admin-radius-control); transition: background-color .3s ease, box-shadow .3s ease; }
+/* "Delete" closes an image card: a quiet button with the danger colour in its text only. */
+.button.settings-remove-button { width: 100%; margin-top: 6px; color: var(--admin-danger); }
+.button.settings-remove-button:hover:not(:disabled) { border-color: var(--admin-danger-border); background: var(--admin-danger-soft); color: var(--admin-danger); }
+/* Marked for removal: the button now offers to keep the image, so it turns neutral. */
+.button.settings-remove-button[aria-pressed="true"],
+.button.settings-remove-button[aria-pressed="true"]:hover:not(:disabled) { border-color: var(--admin-border-strong); background: var(--admin-surface-muted); color: var(--admin-text); }
+html[data-admin-color-scheme="dark"] .button.settings-remove-button:not([aria-pressed="true"]) { color: var(--admin-danger); }
+/* The row is as wide as the buttons above and below; the padding leaves room for the highlight. */
+.settings-logo-wide { margin: 0; padding: 6px 10px; border-radius: var(--admin-radius-control); transition: background-color .3s ease, box-shadow .3s ease; }
 .settings-logo-wide input { accent-color: var(--admin-primary); }
 .settings-logo-wide.is-suggested {
     background: color-mix(in srgb, var(--admin-primary) 10%, transparent);

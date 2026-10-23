@@ -48,13 +48,10 @@
                     </div>
                     <input id="wallet_icon" name="icon" type="file" accept=".png,.webp,image/png,image/webp" data-settings-file>
                     <button class="button button-secondary" type="button" data-settings-file-select>{{ __('Choose wallet icon') }}</button>
-                    @if ($settings['icon'])
-                        <label class="settings-remove-row">
-                            <input name="remove_icon" type="checkbox" value="1" @checked(old('remove_icon')) data-settings-remove>
-                            <span>{{ __('Remove wallet icon') }}</span>
-                        </label>
-                    @endif
                     <small>{{ __('PNG or WebP only, up to 1 MB and 1024×1024 pixels. SVG is disabled.') }}</small>
+                    @if ($settings['icon'])
+                        @include('admin.settings._image-remove', ['name' => 'remove_icon'])
+                    @endif
                 </div>
             </section>
         </aside>
