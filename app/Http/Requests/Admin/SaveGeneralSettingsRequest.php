@@ -35,6 +35,7 @@ class SaveGeneralSettingsRequest extends AdminFormRequest
                 $this->imageRule('favicon'),
             ],
             'remove_logo' => ['nullable', 'boolean'],
+            'logo_wide' => ['sometimes', 'boolean'],
             'remove_favicon' => ['nullable', 'boolean'],
         ];
 
@@ -95,6 +96,9 @@ class SaveGeneralSettingsRequest extends AdminFormRequest
             'footer_text' => trim((string) $this->input('footer_text')),
             'translations' => $translations,
             'remove_logo' => $this->boolean('remove_logo'),
+            ...($this->has('logo_wide')
+                ? ['logo_wide' => $this->boolean('logo_wide')]
+                : []),
             'remove_favicon' => $this->boolean('remove_favicon'),
         ]);
     }

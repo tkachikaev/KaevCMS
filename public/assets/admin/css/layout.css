@@ -45,6 +45,10 @@
 .admin-brand strong, .admin-brand small { display: block; }
 .admin-brand strong { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .admin-brand small { color: var(--sidebar-muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+/* A logo marked wide in Settings → Site takes the whole row; the caption moves under it. */
+.admin-brand.has-wide-logo { flex-direction: column; align-items: flex-start; gap: 10px; }
+.admin-brand-wide-logo { display: block; max-width: 100%; }
+.admin-brand-wide-logo img { display: block; width: auto; max-width: 100%; height: auto; max-height: 44px; object-fit: contain; }
 .admin-menu { display: grid; gap: 4px; margin-top: 20px; }
 .admin-menu-group { margin: 1px 0; }
 .admin-menu-group-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 0 10px 0 12px; border-left: 2px solid transparent; color: var(--sidebar-text); cursor: pointer; font-size: 13px; font-weight: 500; user-select: none; }
@@ -179,6 +183,7 @@ a.admin-section-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 24px rgba(
     .admin-mobile-brand small { display: block; }
     .admin-mobile-brand strong { overflow: hidden; color: #fff; font-size: 14px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
     .admin-mobile-brand small { color: #9ca3af; font-size: 10px; }
+    .admin-mobile-brand.has-wide-logo .admin-brand-wide-logo img { max-width: 170px; max-height: 32px; }
     .admin-sidebar {
         position: fixed;
         inset: 0 auto 0 0;

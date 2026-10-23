@@ -62,6 +62,7 @@ class GeneralSettingsController extends Controller
                 'name' => (string) ($validated['site_name'] ?? $current['name']),
                 'description' => (string) ($validated['site_description'] ?? $current['description']),
                 'logo' => $logo,
+                'logo_wide' => (bool) ($validated['logo_wide'] ?? $current['logo_wide']),
                 'favicon' => $favicon,
                 'timezone' => (string) $validated['timezone'],
                 'admin_email' => (string) ($validated['admin_email'] ?? ''),
@@ -121,6 +122,7 @@ class GeneralSettingsController extends Controller
             'admin_email' => $values['admin_email'] ?? '',
             'footer_text' => $values['footer_text'] ?? '',
             'logo_configured' => ! empty($values['logo']),
+            'logo_wide' => (bool) ($values['logo_wide'] ?? false),
             'favicon_configured' => ! empty($values['favicon']),
             'show_public_online' => (bool) ($values['show_public_online'] ?? true),
         ];

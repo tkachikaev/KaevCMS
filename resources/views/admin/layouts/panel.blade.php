@@ -18,12 +18,19 @@
                 aria-label="{{ __('Close menu') }}"
             ><span aria-hidden="true">×</span></button>
 
-            <a wire:navigate.hover class="admin-brand" data-admin-menu-link href="{{ route('admin.dashboard') }}">
-                @include('admin.partials.brand-mark', ['class' => 'admin-brand-mark'])
-                <span>
-                    <strong>{{ config('app.name') }}</strong>
+            @php($wideBrandLogo = site_logo_url() !== null && site_logo_is_wide())
+            <a wire:navigate.hover @class(['admin-brand', 'has-wide-logo' => $wideBrandLogo]) data-admin-menu-link href="{{ route('admin.dashboard') }}">
+                @if($wideBrandLogo)
+                    {{-- A wide logo carries the name itself, so it takes the whole row. --}}
+                    <span class="admin-brand-wide-logo"><img src="{{ site_logo_url() }}" alt="{{ config('app.name') }}"></span>
                     <small>{{ __('Control panel') }}</small>
-                </span>
+                @else
+                    @include('admin.partials.brand-mark', ['class' => 'admin-brand-mark'])
+                    <span>
+                        <strong>{{ config('app.name') }}</strong>
+                        <small>{{ __('Control panel') }}</small>
+                    </span>
+                @endif
             </a>
 
             @include('admin.partials.navigation')
@@ -56,12 +63,16 @@
             >
                 <span class="admin-mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span>
             </button>
-            <a wire:navigate class="admin-mobile-brand" href="{{ route('admin.dashboard') }}">
-                @include('admin.partials.brand-mark', ['class' => 'admin-mobile-brand-mark'])
-                <span>
-                    <strong>{{ config('app.name') }}</strong>
-                    <small>{{ __('Control panel') }}</small>
-                </span>
+            <a wire:navigate @class(['admin-mobile-brand', 'has-wide-logo' => $wideBrandLogo]) href="{{ route('admin.dashboard') }}">
+                @if($wideBrandLogo)
+                    <span class="admin-brand-wide-logo"><img src="{{ site_logo_url() }}" alt="{{ config('app.name') }}"></span>
+                @else
+                    @include('admin.partials.brand-mark', ['class' => 'admin-mobile-brand-mark'])
+                    <span>
+                        <strong>{{ config('app.name') }}</strong>
+                        <small>{{ __('Control panel') }}</small>
+                    </span>
+                @endif
             </a>
         </div>
         <header class="admin-header">

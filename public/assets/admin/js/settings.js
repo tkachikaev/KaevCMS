@@ -12,9 +12,28 @@
                 const selectButton = container.querySelector('[data-settings-file-select]');
                 const preview = container.querySelector('[data-settings-preview]');
                 const remove = container.querySelector('[data-settings-remove]');
+                const wideToggle = container.querySelector('[data-settings-logo-wide]');
 
                 if (!(input instanceof HTMLInputElement) || !(preview instanceof HTMLElement)) {
                     return;
+                }
+
+                // A chosen logo much wider than tall softly highlights the "Wide logo" box; the
+                // administrator still decides whether to tick it.
+                const suggestWideLogo = (image) => {
+                    if (!(wideToggle instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    const checkbox = wideToggle.querySelector('input[type="checkbox"]');
+                    const isWide = image.naturalHeight > 0 && image.naturalWidth / image.naturalHeight >= 1.6;
+                    wideToggle.classList.toggle('is-suggested', isWide && checkbox instanceof HTMLInputElement && !checkbox.checked);
+                };
+
+                if (wideToggle instanceof HTMLElement) {
+                    wideToggle.querySelector('input[type="checkbox"]')?.addEventListener('change', () => {
+                        wideToggle.classList.remove('is-suggested');
+                    });
                 }
 
                 let objectUrl = null;
@@ -42,6 +61,7 @@
                         preview.replaceChildren(image);
                     }
 
+                    image.addEventListener('load', () => suggestWideLogo(image), { once: true });
                     image.src = objectUrl;
                     image.alt = container.dataset.previewAlt || 'Selected image preview';
                     preview.classList.add('has-image');

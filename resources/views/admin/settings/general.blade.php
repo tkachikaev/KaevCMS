@@ -115,6 +115,13 @@
                     @endif
 
                     <small>{{ __('JPG, PNG or WebP, up to 5 MB. SVG is intentionally disabled.') }}</small>
+
+                    <input type="hidden" name="logo_wide" value="0">
+                    <label class="settings-remove-row settings-logo-wide" data-settings-logo-wide>
+                        <input name="logo_wide" type="checkbox" value="1" @checked(old('logo_wide', $settings['logo_wide']))>
+                        <span>{{ __('Wide logo') }}</span>
+                    </label>
+                    <small>{{ __('For a logo wider than it is tall. It then fills the top of the control panel and player account menus on its own, without the site name beside it.') }}</small>
                 </div>
             </section>
 

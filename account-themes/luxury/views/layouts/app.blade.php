@@ -23,15 +23,17 @@
     @persist('account-sidebar')
         <aside class="account-sidebar" data-account-sidebar wire:navigate:scroll>
             <div class="account-sidebar-glow" aria-hidden="true"></div>
-            <a wire:navigate.hover class="account-brand" href="{{ public_route('account') }}" aria-label="{{ site_name() }} — {{ __('Player account') }}">
+            <a wire:navigate.hover @class(['account-brand', 'has-wide-logo' => site_logo_url() && site_logo_is_wide()]) href="{{ public_route('account') }}" aria-label="{{ site_name() }} — {{ __('Player account') }}">
                 @if (site_logo_url())
                     <span class="account-brand-logo"><img src="{{ site_logo_url() }}" alt="{{ site_name() }}"></span>
                 @else
                     <span class="account-brand-mark">L2</span>
                 @endif
-                <span class="account-brand-copy">
-                    <strong title="{{ site_name() }}">{{ site_name() }}</strong>
-                </span>
+                @unless (site_logo_url() && site_logo_is_wide())
+                    <span class="account-brand-copy">
+                        <strong title="{{ site_name() }}">{{ site_name() }}</strong>
+                    </span>
+                @endunless
             </a>
 
             @include('account-theme::partials.navigation')

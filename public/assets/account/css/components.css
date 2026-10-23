@@ -37,6 +37,10 @@ body.account-body .account-panel .account-section-heading > div { min-width: 0; 
     body.account-body .account-shell { grid-template-columns: 260px minmax(0, 1fr); }
     body.account-body .account-shell > .account-sidebar { width: auto; padding-inline: 14px; }
 }
+/* A logo marked wide in the site settings fills the brand row on its own (no name beside it). */
+body.account-body .account-brand.has-wide-logo { justify-content: flex-start; }
+body.account-body .account-brand.has-wide-logo .account-brand-logo { flex: 0 1 auto; width: auto; max-width: 100%; height: auto; min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+body.account-body .account-brand.has-wide-logo .account-brand-logo img { display: block; width: auto; max-width: 100%; height: auto; max-height: 44px; object-fit: contain; }
 /* Quiet scrollbars for the sidebar and inner scroll areas (the support chat uses the class
    too): a thin thumb on a transparent track that takes the theme accent on hover. Reaching
    the end of such an area does not scroll the page behind it. */

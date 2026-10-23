@@ -1667,6 +1667,8 @@
     "Remember this device": "Запомнить вход на этом устройстве",
     "Remove current favicon": "Удалить текущий favicon",
     "Remove current image": "Удалить текущее изображение",
+    "Wide logo": "Широкий логотип",
+    "For a logo wider than it is tall. It then fills the top of the control panel and player account menus on its own, without the site name beside it.": "Для логотипа, который шире своей высоты. Тогда он один занимает верх меню в панели управления и личном кабинете, без названия сайта рядом.",
     "Remove current logo": "Удалить текущий логотип",
     "Remove link": "Удалить ссылку",
     "Remove the public install directory immediately.": "Немедленно удалите публичный каталог install.",

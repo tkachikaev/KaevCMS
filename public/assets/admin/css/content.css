@@ -1742,3 +1742,19 @@
 .navigation-link-preview { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #3157a4; }
 .navigation-link-preview-icon { width: 29px; height: 29px; display: block; flex: none; }
 .navigation-link-preview:hover .navigation-link-preview-icon { transform: translateY(-1px); }
+
+/* "Wide logo": a neutral checkbox, softly highlighted for a moment when the chosen image is
+   much wider than tall (settings.js). */
+.settings-logo-wide { margin-top: 4px; padding: 6px 8px; border-radius: var(--admin-radius-control); transition: background-color .3s ease, box-shadow .3s ease; }
+.settings-logo-wide input { accent-color: var(--admin-primary); }
+.settings-logo-wide.is-suggested {
+    background: color-mix(in srgb, var(--admin-primary) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--admin-primary) 35%, transparent);
+    animation: settings-logo-wide-hint 1.6s ease-in-out 3;
+}
+@keyframes settings-logo-wide-hint {
+    50% { background: color-mix(in srgb, var(--admin-primary) 18%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .settings-logo-wide.is-suggested { animation: none; }
+}

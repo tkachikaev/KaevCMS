@@ -69,6 +69,13 @@ if (! function_exists('site_logo_url')) {
     }
 }
 
+if (! function_exists('site_logo_is_wide')) {
+    function site_logo_is_wide(): bool
+    {
+        return app(SiteSettings::class)->logoIsWide();
+    }
+}
+
 if (! function_exists('site_favicon_url')) {
     function site_favicon_url(): ?string
     {

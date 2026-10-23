@@ -161,6 +161,41 @@ class AdminSettingsManagementTest extends TestCase
             ->assertSee('/uploads/'.$favicon, false);
     }
 
+    public function test_wide_logo_flag_is_saved_and_replaces_the_name_beside_the_logo(): void
+    {
+        $admin = $this->createAdmin();
+        $fields = [
+            '_method' => 'PUT',
+            'site_name' => 'Wide Brand',
+            'site_description' => '',
+            'timezone' => 'UTC',
+            'admin_email' => '',
+            'footer_text' => '',
+            'remove_logo' => '0',
+            'remove_favicon' => '0',
+        ];
+
+        $this->actingAs($admin, 'admin')
+            ->post('/admin/settings', $fields + ['logo' => $this->pngUpload('wide.png'), 'logo_wide' => '1'])
+            ->assertRedirect(route('admin.settings.general'));
+
+        $this->assertSame('1', (string) $this->setting('site.logo_wide'));
+        $this->actingAs($admin, 'admin')->get('/admin/settings')
+            ->assertOk()
+            ->assertSee('admin-brand has-wide-logo', false)
+            ->assertSee('admin-brand-wide-logo', false);
+
+        // The unchecked box arrives as the hidden "0" and turns the flag off.
+        $this->actingAs($admin, 'admin')
+            ->post('/admin/settings', $fields + ['logo_wide' => '0'])
+            ->assertRedirect(route('admin.settings.general'));
+
+        $this->assertSame('0', (string) $this->setting('site.logo_wide'));
+        $this->actingAs($admin, 'admin')->get('/admin/settings')
+            ->assertOk()
+            ->assertDontSee('has-wide-logo', false);
+    }
+
     public function test_replacing_and_removing_settings_images_deletes_old_files(): void
     {
         $admin = $this->createAdmin();

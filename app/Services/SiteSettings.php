@@ -15,6 +15,9 @@ final class SiteSettings
 
     public const KEY_FAVICON = 'site.favicon';
 
+    /** The administrator marks a logo as wide; it then fills the sidebar without the site name beside it. */
+    public const KEY_LOGO_WIDE = 'site.logo_wide';
+
     public const KEY_TIMEZONE = 'site.timezone';
 
     public const KEY_ADMIN_EMAIL = 'site.admin_email';
@@ -29,7 +32,7 @@ final class SiteSettings
         private readonly LanguageManager $languages,
     ) {}
 
-    /** @return array{name: string, description: string, logo: string|null, logo_url: string|null, favicon: string|null, favicon_url: string|null, timezone: string, admin_email: string, footer_text: string, show_public_online: bool, locale:string} */
+    /** @return array{name: string, description: string, logo: string|null, logo_url: string|null, logo_wide: bool, favicon: string|null, favicon_url: string|null, timezone: string, admin_email: string, footer_text: string, show_public_online: bool, locale:string} */
     public function values(?string $locale = null): array
     {
         $defaults = $this->defaults();
@@ -48,6 +51,7 @@ final class SiteSettings
             self::KEY_NAME => $defaults['name'],
             self::KEY_DESCRIPTION => $defaults['description'],
             self::KEY_LOGO => null,
+            self::KEY_LOGO_WIDE => '0',
             self::KEY_FAVICON => null,
             self::KEY_TIMEZONE => $defaults['timezone'],
             self::KEY_ADMIN_EMAIL => $defaults['admin_email'],
@@ -78,6 +82,7 @@ final class SiteSettings
             ),
             'logo' => $logo,
             'logo_url' => $this->images->publicUrl($logo),
+            'logo_wide' => $logo !== null && $this->booleanValue($values[self::KEY_LOGO_WIDE] ?? null, false),
             'favicon' => $favicon,
             'favicon_url' => $this->images->publicUrl($favicon),
             'timezone' => $timezone,
@@ -145,7 +150,7 @@ final class SiteSettings
     }
 
     /**
-     * @param  array{name: string, description: string, logo: string|null, favicon: string|null, timezone: string, admin_email: string, footer_text: string, show_public_online: bool}  $values
+     * @param  array{name: string, description: string, logo: string|null, logo_wide?: bool, favicon: string|null, timezone: string, admin_email: string, footer_text: string, show_public_online: bool}  $values
      * @param  array<string, array{name?:string,description?:string,footer_text?:string}>  $translations
      */
     public function update(array $values, array $translations = []): void
@@ -188,6 +193,10 @@ final class SiteSettings
             $settings[$this->localizedKey(self::KEY_FOOTER_TEXT, $locale)] = (string) ($translation['footer_text'] ?? '');
         }
 
+        if (array_key_exists('logo_wide', $values)) {
+            $settings[self::KEY_LOGO_WIDE] = $values['logo_wide'] ? '1' : '0';
+        }
+
         $this->settings->setMany($settings);
         $this->applyTimezone($values['timezone']);
     }
@@ -205,6 +214,11 @@ final class SiteSettings
     public function logoUrl(): ?string
     {
         return $this->values()['logo_url'];
+    }
+
+    public function logoIsWide(): bool
+    {
+        return $this->values()['logo_wide'];
     }
 
     public function faviconUrl(): ?string
