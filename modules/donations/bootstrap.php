@@ -32,6 +32,8 @@ return static function (Application $app, ModuleContext $module): void {
     // The registry has one account entry per module. Prefer coin selection while
     // enabled; history stays reachable from that page and becomes the entry when closed.
     // If the table is unavailable/corrupt, visibility fails closed.
+    // Top-up and exchange are opened from the wallet (its page and the header menu), so they
+    // stay out of the account sidebar; only the history-only fallback is listed there.
     if ($app->make(DonationSettings::class)->isVisibleToPlayers()) {
         $navigation->registerAccountLink(
             moduleId: $module->id,
@@ -39,6 +41,7 @@ return static function (Application $app, ModuleContext $module): void {
             labelKey: 'module-donations::messages.navigation_label',
             descriptionKey: 'module-donations::messages.navigation_description',
             sortOrder: 70,
+            inSidebar: false,
         );
     } elseif ($app->make(DonationGameExchange::class)->available() !== []) {
         $navigation->registerAccountLink(
@@ -47,6 +50,7 @@ return static function (Application $app, ModuleContext $module): void {
             labelKey: 'module-donations::messages.exchange_title',
             descriptionKey: 'module-donations::messages.exchange_account_help',
             sortOrder: 70,
+            inSidebar: false,
         );
     } else {
         // History must remain available even when the owner stops accepting new drafts.

@@ -47,6 +47,31 @@ class DonationsModuleTest extends TestCase
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.donations.settings.update'));
     }
 
+    public function test_top_up_is_reached_from_the_wallet_not_from_the_account_sidebar(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        app(DonationSettings::class)->updateVisibility(true, $owner);
+        $navigation = app(ModuleNavigationRegistry::class);
+        $navigation->registerAccountLink(
+            moduleId: 'donations',
+            routeName: 'modules.donations.index',
+            labelKey: 'module-donations::messages.navigation_label',
+            descriptionKey: 'module-donations::messages.navigation_description',
+            sortOrder: 70,
+            inSidebar: false,
+        );
+
+        $this->assertContains('modules.donations.index', array_column($navigation->accountLinks(), 'route'));
+        $this->assertNotContains('modules.donations.index', array_column($navigation->sidebarAccountLinks(), 'route'));
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->get('/account/wallet')
+            ->assertOk()
+            ->assertSee('account-wallet-topup', false)
+            ->assertSee('data-wallet-topup', false)
+            ->assertDontSee(__('module-donations::messages.navigation_description'));
+    }
+
     public function test_player_does_not_see_page_until_opted_in_and_never_gets_checkout(): void
     {
         $user = User::factory()->create();

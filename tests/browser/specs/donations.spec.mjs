@@ -166,8 +166,9 @@ test('players can preview accurate coin prices but cannot create fake payment dr
             await player.keyboard.press('Escape');
             await expect(player.locator('[data-donations-dialog]')).not.toBeVisible();
             await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
-            await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations$/);
-            await expect(player.locator('a[data-account-module-id="donations"]')).toContainText('Пополнить монеты');
+            // Top-up lives in the wallet (its page and the header menu), not in the account sidebar.
+            await expect(player.locator('a[data-account-module-id="donations"]')).toHaveCount(0);
+            await expect(player.locator('[data-wallet-topup]')).toHaveAttribute('href', /\/modules\/donations$/);
             const choose = player.getByRole('link', { name: 'Пополнить баланс', exact: true });
             await expect(choose).toBeInViewport();
             await choose.click();

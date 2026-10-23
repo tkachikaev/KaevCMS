@@ -26,12 +26,17 @@ final class ModuleNavigationRegistry
     /** @var array<string, Closure(Admin): int> */
     private array $adminBadgeResolvers = [];
 
+    /**
+     * $inSidebar = false keeps the entry for other account surfaces (the wallet's top-up
+     * button and menu) without a duplicate item in the account sidebar.
+     */
     public function registerAccountLink(
         string $moduleId,
         string $routeName,
         string $labelKey,
         string $descriptionKey,
         int $sortOrder = 100,
+        bool $inSidebar = true,
     ): void {
         $this->accountLinks[$moduleId] = $this->validatedLink(
             moduleId: $moduleId,
@@ -40,7 +45,7 @@ final class ModuleNavigationRegistry
             descriptionKey: $descriptionKey,
             sortOrder: $sortOrder,
             routePrefix: 'modules.'.$moduleId.'.',
-        );
+        ) + ['in_sidebar' => $inSidebar];
     }
 
     /** @param Closure(): bool $visibleWhen */
@@ -100,6 +105,15 @@ final class ModuleNavigationRegistry
     public function accountLinks(): array
     {
         return $this->availableLinks($this->accountLinks);
+    }
+
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    public function sidebarAccountLinks(): array
+    {
+        return array_values(array_filter(
+            $this->accountLinks(),
+            static fn (array $link): bool => (bool) ($link['in_sidebar'] ?? true),
+        ));
     }
 
     /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
