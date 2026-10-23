@@ -81,11 +81,11 @@
 }
 
 .button-primary {
-    box-shadow: 0 4px 12px rgba(37, 99, 235, .16);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
 }
 
 .button-primary:hover:not(:disabled) {
-    box-shadow: 0 6px 16px rgba(37, 99, 235, .22);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .16);
     transform: translateY(-1px);
 }
 
@@ -141,10 +141,10 @@
 }
 
 .admin-tab.active {
-    border-color: var(--admin-primary);
-    background: var(--admin-primary);
-    box-shadow: 0 5px 14px rgba(37, 99, 235, .2);
-    color: #fff;
+    border-color: var(--admin-selected-border);
+    background: var(--admin-selected-bg);
+    box-shadow: none;
+    color: var(--admin-selected-text);
 }
 
 .admin-tab:focus-visible,
@@ -172,9 +172,10 @@
 }
 
 .translation-tab.active {
-    border-color: var(--admin-primary);
-    background: var(--admin-primary);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, .16);
+    border-color: var(--admin-selected-border);
+    background: var(--admin-selected-bg);
+    box-shadow: none;
+    color: var(--admin-selected-text);
 }
 
 /* Drawer keeps its document-tab shape but uses the same hierarchy and tokens. */
@@ -506,10 +507,10 @@ a.admin-data-card:hover {
 }
 
 .admin-subtabs a.active {
-    border-color: var(--admin-primary) !important;
-    background: var(--admin-primary) !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, .16);
-    color: #fff !important;
+    border-color: var(--admin-selected-border) !important;
+    background: var(--admin-selected-bg) !important;
+    box-shadow: none;
+    color: var(--admin-selected-text) !important;
 }
 
 .admin-table-wrap {
@@ -699,8 +700,9 @@ a.admin-data-card:hover {
 
 .login-form .primary-button {
     border-radius: var(--admin-radius-control);
-    background: var(--admin-primary);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, .18);
+    background: var(--admin-button-primary);
+    color: var(--admin-button-primary-text);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
 }
 
 .login-form .primary-button:hover {

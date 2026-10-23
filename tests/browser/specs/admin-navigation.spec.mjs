@@ -152,8 +152,8 @@ test('audit category counters remain readable and spaced in dark mode', async ({
         };
     });
 
-    expect(styles.backgroundColor).toBe('rgb(51, 65, 85)');
-    expect(styles.color).toBe('rgb(226, 232, 240)');
+    expect(styles.backgroundColor).toBe('rgb(46, 48, 53)');
+    expect(styles.color).toBe('rgb(228, 229, 232)');
     expect(styles.gap).toBe('7px');
 });
 

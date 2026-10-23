@@ -406,7 +406,7 @@
     font-weight: 700;
 }
 .pagination-page:hover { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
-.pagination-page.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.pagination-page.active { border-color: var(--admin-selected-border); background: var(--admin-selected-bg); color: var(--admin-selected-text); }
 .confirm-dialog {
     width: min(92vw, 520px);
     padding: 0;
@@ -776,7 +776,7 @@
     font-size: 10px;
     text-align: center;
 }
-.audit-tabs .admin-tab.active span { background: rgba(255,255,255,.2); color: #fff; }
+.audit-tabs .admin-tab.active span { background: var(--admin-surface); color: var(--admin-selected-text); }
 .audit-table-wrap {
     overflow-x: auto;
     border: 1px solid var(--border);
@@ -1493,9 +1493,9 @@
     line-height: 1;
     white-space: nowrap;
 }
-.translation-tab.active .translation-tab-default { background: rgba(255, 255, 255, .2); color: #fff; }
+.translation-tab.active .translation-tab-default { background: var(--admin-surface); color: var(--admin-text-muted); }
 .translation-tab:hover { border-color: var(--accent); color: var(--text); }
-.translation-tab.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.translation-tab.active { border-color: var(--admin-selected-border); background: var(--admin-selected-bg); color: var(--admin-selected-text); }
 .translation-tab.complete:not(.active)::after {
     width: 6px;
     height: 6px;

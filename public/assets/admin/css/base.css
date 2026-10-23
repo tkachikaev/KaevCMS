@@ -27,6 +27,15 @@
     --admin-primary: #2563eb;
     --admin-primary-hover: #1d4ed8;
     --admin-primary-soft: #eaf2ff;
+    /* The main action button is monochrome (near-black here, near-white in the dark theme);
+       the blue primary stays for links, focus, selection and charts. */
+    --admin-button-primary: #17181b;
+    --admin-button-primary-hover: #2e3035;
+    --admin-button-primary-text: #ffffff;
+    /* A selected tab or page is a raised neutral chip, not a blue fill. */
+    --admin-selected-bg: #e4e7ec;
+    --admin-selected-border: #cbd2dc;
+    --admin-selected-text: #0f172a;
     --admin-row-hover: #f8fbff;
     --admin-table-head: #f4f7fb;
     --admin-success: #15803d;
@@ -133,8 +142,8 @@ button:disabled { cursor: not-allowed; opacity: .55; }
     border-radius: 7px;
     font-weight: 600;
 }
-.button-primary { border-color: var(--accent); background: var(--accent); color: #fff; }
-.button-primary:hover { background: var(--accent-hover); }
+.button-primary { border-color: var(--admin-button-primary); background: var(--admin-button-primary); color: var(--admin-button-primary-text); }
+.button-primary:hover { border-color: var(--admin-button-primary-hover); background: var(--admin-button-primary-hover); }
 .button-secondary { border-color: var(--border); background: var(--surface); color: #374151; }
 .button-secondary:hover:not(:disabled) { background: #f9fafb; }
 

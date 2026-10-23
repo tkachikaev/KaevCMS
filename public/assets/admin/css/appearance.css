@@ -108,6 +108,12 @@ html[data-admin-color-scheme="dark"] {
     --admin-primary: #4f8cff;
     --admin-primary-hover: #73a4ff;
     --admin-primary-soft: #152747;
+    --admin-button-primary: #e8e9ec;
+    --admin-button-primary-hover: #ffffff;
+    --admin-button-primary-text: #111214;
+    --admin-selected-bg: #2a2c31;
+    --admin-selected-border: #44464d;
+    --admin-selected-text: #ffffff;
     --admin-row-hover: #1b1c20;
     --admin-table-head: #191a1d;
     --admin-success: #6ee7a0;
@@ -416,8 +422,8 @@ html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab:not(.active) span {
 }
 
 html[data-admin-color-scheme="dark"] .audit-tabs .admin-tab.active span {
-    border: 1px solid rgba(255, 255, 255, .18);
-    background: rgba(255, 255, 255, .22);
+    border: 1px solid var(--admin-selected-border);
+    background: var(--admin-surface);
     color: #fff;
 }
 

@@ -90,7 +90,9 @@ All spacing is a multiple of 4 px (`--admin-space-1` … `--admin-space-12`: 4, 
 
 - Use only semantic variables: `--admin-success*`, `--admin-warning*`, `--admin-danger*`, `--admin-info*`, `--admin-primary*`. Each has a dark-theme counterpart.
 - A status is never conveyed by colour alone: a word ("Running", "Unavailable") or a labelled icon is always present.
-- Green means fine, amber needs attention, red is broken or losing data, blue is information and actions. Animation (a pulsing dot) only for "happening right now".
+- Green means fine, amber needs attention, red is broken or losing data, blue is information, links, focus and charts. Animation (a pulsing dot) only for "happening right now".
+- The main button is monochrome: near-black in the light theme and near-white in the dark one (`--admin-button-primary`, `--admin-button-primary-hover`, `--admin-button-primary-text`). Buttons are never filled with blue.
+- A selected tab or page is a raised neutral chip (`--admin-selected-bg`, `--admin-selected-border`, `--admin-selected-text`), not a blue fill.
 
 ## Cards and badges
 
