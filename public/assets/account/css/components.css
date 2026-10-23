@@ -597,6 +597,9 @@ html.account-operation-modal-open{overflow:hidden}
 .account-wallet-dropdown { width:230px; max-width:calc(100vw - 24px); }
 /* The balance pill is shorter than the 54px profile button beside it; open from the shared row edge so both menus start on one line. */
 @media(min-width:761px) { .account-wallet-menu > .account-wallet-dropdown { top:calc(50% + 27px + 10px); } }
+/* The language list drops from the same line as the wallet and profile menus: 10px below the
+   54px profile button that the top bar is centred on. */
+@media(min-width:761px) { body.account-body .account-language-menu > .language-menu-list { top:calc(50% + 27px + 10px); } }
 .account-wallet-dropdown .account-profile-dropdown-head { gap:5px; }
 .account-wallet-menu .account-profile-chevron { width:auto; }
 @media(max-width:650px) { .account-wallet-menu > summary.account-topbar-wallet { padding:5px 8px; gap:5px; } }
