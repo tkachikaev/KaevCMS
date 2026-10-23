@@ -813,3 +813,405 @@
         grid-template-columns: minmax(100px, .8fr) minmax(0, 1.2fr);
     }
 }
+
+/* Player ticket as a chat (2.0): compact header, day separators, bubbles with avatars,
+   a messenger-style composer and the ticket details beside it. Colours come from the
+   account theme variables, so the Luxury and Aurelia themes both fit. */
+.support-thread {
+    --support-gold: var(--account-gold, #c59b4c);
+    --support-gold-bright: var(--account-gold-bright, #e2c483);
+    --support-gold-dark: var(--account-gold-dark, #8c652b);
+    --support-line: var(--account-line, rgba(127, 127, 127, .2));
+    --support-line-soft: var(--account-line-soft, rgba(127, 127, 127, .12));
+    --support-panel: var(--account-panel, rgba(127, 127, 127, .04));
+    --support-raised: var(--account-panel-raised, rgba(127, 127, 127, .06));
+    --support-soft: var(--account-panel-soft, rgba(127, 127, 127, .1));
+    --support-text: var(--account-text, inherit);
+    --support-muted: var(--account-muted, #8e99aa);
+    /* Gold text readable on both themes: mixed towards the theme's text colour. */
+    --support-gold-text: color-mix(in srgb, var(--support-gold) 70%, var(--support-text));
+    display: grid;
+    gap: 16px;
+}
+
+.support-thread .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.support-thread-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+}
+
+.support-thread-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--support-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.support-thread-back:hover { color: var(--support-text); }
+
+.support-thread-back svg,
+.support-thread-close svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.support-thread-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    min-width: 0;
+}
+
+.support-thread-number {
+    padding: 4px 9px;
+    border: 1px solid color-mix(in srgb, var(--support-gold) 40%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--support-gold) 10%, transparent);
+    color: var(--support-gold-text);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.support-thread-category {
+    color: var(--support-muted);
+    font-size: 13px;
+}
+
+.support-ticket-status i {
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.support-thread .support-ticket-status { min-height: 26px; padding: 3px 10px; font-size: 12px; }
+
+.support-thread-close {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 8px 14px;
+    border: 1px solid var(--support-line);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--support-text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.support-thread-close:hover { border-color: color-mix(in srgb, var(--support-gold) 45%, transparent); }
+
+.support-thread-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 290px;
+    gap: 16px;
+    align-items: start;
+}
+
+.support-thread-chat {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--support-line);
+    border-radius: var(--account-radius, 18px);
+    background: var(--support-panel);
+}
+
+.support-thread .support-chat-window {
+    min-height: 220px;
+    max-height: min(64vh, 720px);
+    padding: 18px 20px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.support-thread .support-conversation { gap: 14px; }
+
+.support-thread .support-load-previous button {
+    padding: 6px 12px;
+    border: 1px solid var(--support-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--support-muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.support-day {
+    display: flex;
+    justify-content: center;
+    margin: 4px 0;
+}
+
+.support-day span {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--support-soft);
+    color: var(--support-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.support-thread .support-message {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: min(78%, 720px);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+}
+
+.support-thread .support-message.player {
+    flex-direction: row-reverse;
+    justify-self: end;
+}
+
+.support-thread .support-message.staff { justify-self: start; }
+
+.support-message-avatar {
+    display: grid;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--support-soft);
+    color: var(--support-text);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.support-message.staff .support-message-avatar {
+    background: linear-gradient(145deg, var(--support-gold-bright), var(--support-gold-dark));
+    color: #17120a;
+}
+
+.support-message-bubble {
+    min-width: 0;
+    padding: 10px 14px 8px;
+    border: 1px solid var(--support-line);
+    border-radius: 16px;
+    border-bottom-left-radius: 6px;
+    background: var(--support-raised);
+}
+
+.support-message.player .support-message-bubble {
+    border-color: color-mix(in srgb, var(--support-gold) 40%, transparent);
+    border-radius: 16px;
+    border-bottom-right-radius: 6px;
+    background: color-mix(in srgb, var(--support-gold) 20%, var(--support-raised));
+}
+
+.support-thread .support-message header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 8px;
+    margin-bottom: 4px;
+}
+
+.support-thread .support-message header strong { font-size: 13px; }
+
+.support-thread .support-message header .support-message-role {
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--support-gold) 14%, transparent);
+    color: var(--support-gold-text);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    opacity: 1;
+}
+
+.support-thread .support-message-body {
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.support-thread .support-message footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 4px;
+    color: var(--support-muted);
+    font-size: 11px;
+}
+
+.support-thread .support-message footer .support-message-edited {
+    display: inline;
+    margin: 0;
+    font-size: 11px;
+}
+
+.support-thread .support-chat-composer {
+    margin: 0;
+    padding: 14px 16px 12px;
+    border-top: 1px solid var(--support-line);
+}
+
+.support-composer-field {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 6px 6px 6px 14px;
+    border: 1px solid var(--support-line);
+    border-radius: 16px;
+    background: var(--support-raised);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.support-composer-field:focus-within {
+    border-color: color-mix(in srgb, var(--support-gold) 60%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--support-gold) 18%, transparent);
+}
+
+.support-thread .support-composer-field textarea {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    min-height: 24px;
+    max-height: 220px;
+    margin: 0;
+    padding: 8px 0;
+    border: 0 !important;
+    border-radius: 0;
+    outline: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--support-text);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+}
+
+.support-thread .support-composer-field textarea::placeholder { color: var(--support-muted); opacity: 1; }
+
+.support-composer-send {
+    display: grid;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--support-gold-bright), var(--support-gold-dark));
+    color: #17120a;
+    cursor: pointer;
+    transition: transform .12s ease, filter .12s ease;
+}
+
+.support-composer-send:hover { filter: brightness(1.06); }
+.support-composer-send:active { transform: scale(.95); }
+.support-composer-send:disabled { opacity: .55; cursor: default; }
+.support-composer-send:focus-visible { outline: 2px solid var(--support-gold); outline-offset: 2px; }
+
+.support-composer-send svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.support-composer-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+    padding: 0 4px;
+    color: var(--support-muted);
+    font-size: 11px;
+}
+
+.support-thread .support-composer-meta .support-character-counter {
+    margin: 0;
+    opacity: 1;
+}
+
+.support-thread .support-chat-closed { margin: 14px 16px 16px; }
+
+.support-thread-details {
+    padding: 16px 18px 6px;
+    border: 1px solid var(--support-line);
+    border-radius: var(--account-radius, 18px);
+    background: var(--support-panel);
+}
+
+.support-thread .support-thread-details h2 {
+    margin: 0 0 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.3;
+}
+
+.support-thread-details dl { margin: 0; }
+
+.support-thread-details dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 10px 0;
+    border-top: 1px solid var(--support-line-soft);
+    font-size: 13px;
+}
+
+.support-thread-details dt { color: var(--support-muted); }
+
+.support-thread-details dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+    text-align: right;
+}
+
+@media (max-width: 1100px) {
+    .support-thread-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+    .support-thread .support-chat-window { padding: 14px 12px; max-height: 62vh; }
+    .support-thread .support-message,
+    .support-thread .support-message.player,
+    .support-thread .support-message.staff { max-width: 94%; }
+    .support-thread .support-message.player { justify-self: end; }
+    .support-thread .support-message.staff { justify-self: start; }
+    .support-thread-close { margin-left: 0; }
+    .support-thread .support-chat-composer { padding: 12px; }
+    .support-composer-meta span { display: none; }
+    .support-composer-meta { justify-content: flex-end; }
+}

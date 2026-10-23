@@ -138,11 +138,17 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(page.locator('.support-message-body', { hasText: correctedStaffReply })).toBeVisible();
     await expect(page.locator('.support-message-body', { hasText: originalStaffReply })).toHaveCount(0);
     const playerReplyForm = page.locator('[data-testid="player-reply-form"]');
-    await expect(playerReplyForm.locator('textarea[name="body"]')).toHaveCSS('border-radius', '12px');
+    // Messenger-style composer: the frame belongs to the field, the text area grows with the text.
+    await expect(playerReplyForm.locator('.support-composer-field')).toHaveCSS('border-radius', '16px');
+    await expect(playerReplyForm.locator('textarea[name="body"]')).toHaveCSS('resize', 'none');
+    await expect(page.locator('.support-message.staff .support-message-role')).toHaveText(/Поддержка/i);
     await playerReplyForm.locator('textarea[name="body"]').fill('Проблема появилась сегодня после входа в игру.');
+    await expect(playerReplyForm.locator('[data-character-counter]')).toContainText('46 / ');
     const playerMarker = await setNoReloadMarker(page);
-    await playerReplyForm.getByRole('button', { name: 'Отправить ответ', exact: true }).click();
+    await expect(playerReplyForm.getByRole('button', { name: 'Отправить ответ', exact: true })).toBeVisible();
+    await playerReplyForm.locator('textarea[name="body"]').press('Control+Enter');
     await expect(page.getByText('В работе', { exact: true })).toBeVisible();
+    await expect(page.locator('.support-message.player .support-message-body', { hasText: 'Проблема появилась сегодня' })).toBeVisible();
     await expectNoReload(page, playerMarker);
 
     await context.clearCookies();

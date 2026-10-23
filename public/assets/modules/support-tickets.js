@@ -14,7 +14,9 @@
 
     const initialize = (root = document) => {
         root.querySelectorAll('[data-character-input]').forEach((input) => {
-            const counter = input.parentElement?.querySelector('[data-character-counter]');
+            // The counter sits beside the field, or under the chat composer in the same form.
+            const counter = input.parentElement?.querySelector('[data-character-counter]')
+                ?? input.closest('form')?.querySelector('[data-character-counter]');
             if (!counter) {
                 return;
             }
@@ -31,6 +33,26 @@
                 input.dataset.characterCounterReady = '1';
             }
             update();
+        });
+
+        // Chat composers grow with the text (up to a limit) and send on Ctrl + Enter.
+        root.querySelectorAll('textarea[data-autogrow]').forEach((textarea) => {
+            const fit = () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = `${Math.min(textarea.scrollHeight, 220)}px`;
+            };
+
+            if (textarea.dataset.autogrowReady !== '1') {
+                textarea.addEventListener('input', fit);
+                textarea.addEventListener('keydown', (event) => {
+                    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && textarea.value.trim() !== '') {
+                        event.preventDefault();
+                        textarea.form?.requestSubmit();
+                    }
+                });
+                textarea.dataset.autogrowReady = '1';
+            }
+            fit();
         });
 
         root.querySelectorAll('[data-support-editor-permissions]').forEach((form) => {
