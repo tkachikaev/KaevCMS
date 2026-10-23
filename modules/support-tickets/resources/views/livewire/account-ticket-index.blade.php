@@ -20,7 +20,6 @@
             @endphp
             <form class="support-new support-ticket-create-panel" wire:submit="createTicket" data-testid="support-ticket-create-form" novalidate>
                 <header class="support-new-head">
-                    <span class="support-new-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM12 7v6M9 10h6"/></svg></span>
                     <div>
                         <h2>{{ __('module-support-tickets::messages.new_ticket') }}</h2>
                         <p>{{ __('module-support-tickets::messages.new_ticket_lead') }}</p>

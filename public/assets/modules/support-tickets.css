@@ -1273,17 +1273,6 @@
     gap: 14px;
 }
 
-.support-new-icon {
-    display: grid;
-    flex: 0 0 44px;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border-radius: 14px;
-    background: linear-gradient(145deg, var(--support-gold-bright), var(--support-gold-dark));
-    color: #17120a;
-}
-
 .support-new svg {
     width: 20px;
     height: 20px;
