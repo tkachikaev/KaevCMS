@@ -12,6 +12,15 @@
         });
     };
 
+    // After a message is sent the chat scrolls to it and the cursor stays in the emptied field.
+    const afterSend = () => {
+        scrollConversations(true);
+        document.querySelectorAll('[data-support-composer] textarea[data-autogrow]').forEach((textarea) => {
+            textarea.style.height = 'auto';
+            textarea.focus({ preventScroll: true });
+        });
+    };
+
     const initialize = (root = document) => {
         root.querySelectorAll('[data-character-input]').forEach((input) => {
             // The counter sits beside the field, or under the chat composer in the same form.
@@ -107,7 +116,7 @@
             window.requestAnimationFrame(() => initialize());
         });
         window.Livewire.on('support-conversation-updated', () => {
-            window.requestAnimationFrame(() => scrollConversations(true));
+            window.requestAnimationFrame(afterSend);
         });
     };
 
@@ -120,7 +129,7 @@
         setupLivewireHooks();
     });
     window.addEventListener('support-conversation-updated', () => {
-        window.requestAnimationFrame(() => scrollConversations(true));
+        window.requestAnimationFrame(afterSend);
     });
 
     let mutationInitializationScheduled = false;

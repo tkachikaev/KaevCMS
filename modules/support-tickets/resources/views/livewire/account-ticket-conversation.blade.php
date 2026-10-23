@@ -77,8 +77,9 @@
                     <label class="support-composer-field">
                         <span class="sr-only">{{ __('module-support-tickets::messages.message') }}</span>
                         <textarea name="body" wire:model="body" rows="1" maxlength="{{ $messageMaxLength }}" placeholder="{{ __('module-support-tickets::messages.reply_placeholder') }}" data-character-input data-autogrow required></textarea>
-                        <button class="support-composer-send" type="submit" wire:loading.attr="disabled" wire:target="reply" aria-label="{{ __('module-support-tickets::messages.send_reply') }}" title="{{ __('module-support-tickets::messages.send_reply') }}">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5L4 12z"/></svg>
+                        <button class="support-composer-send" type="submit" wire:loading.attr="disabled" wire:loading.class="is-sending" wire:target="reply" aria-label="{{ __('module-support-tickets::messages.send_reply') }}" title="{{ __('module-support-tickets::messages.send_reply') }}">
+                            <svg class="support-send-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>
+                            <span class="support-send-spinner" aria-hidden="true"></span>
                         </button>
                     </label>
                     <div class="support-composer-meta">

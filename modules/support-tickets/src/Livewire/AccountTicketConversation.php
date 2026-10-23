@@ -69,7 +69,8 @@ final class AccountTicketConversation extends Component
         RateLimiter::hit($rateLimitKey, 60);
         $tickets->replyAsPlayer($ticket, $user, (string) $validated['body']);
         $this->reset('body');
-        $this->notice = __('module-support-tickets::messages.reply_sent');
+        // No banner: the new message appears at the end of the chat, which scrolls to it.
+        $this->notice = null;
         $this->dispatch('support-conversation-updated');
     }
 
@@ -87,7 +88,8 @@ final class AccountTicketConversation extends Component
 
         RateLimiter::hit($rateLimitKey, 60);
         $tickets->closeByPlayer($this->ticket(), $user);
-        $this->notice = __('module-support-tickets::messages.ticket_closed');
+        // The closed status and the closed-ticket notice in place of the composer say it.
+        $this->notice = null;
     }
 
     public function render(): View

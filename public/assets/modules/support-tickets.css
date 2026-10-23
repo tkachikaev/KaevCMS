@@ -1120,31 +1120,61 @@
 
 .support-thread .support-composer-field textarea::placeholder { color: var(--support-muted); opacity: 1; }
 
+/* Round send button with an arrow, as in current messengers; muted while the field is
+   empty, a spinner while the message is on its way. */
 .support-composer-send {
+    position: relative;
     display: grid;
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
     place-items: center;
     border: 0;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--support-gold-bright), var(--support-gold-dark));
-    color: #17120a;
+    border-radius: 999px;
+    background: var(--support-gold);
+    color: #fff;
     cursor: pointer;
-    transition: transform .12s ease, filter .12s ease;
+    transition: background-color .15s ease, opacity .15s ease, transform .12s ease;
 }
 
-.support-composer-send:hover { filter: brightness(1.06); }
-.support-composer-send:active { transform: scale(.95); }
-.support-composer-send:disabled { opacity: .55; cursor: default; }
+.support-composer-send:hover { background: color-mix(in srgb, var(--support-gold) 85%, #000); }
+.support-composer-send:active { transform: scale(.94); }
 .support-composer-send:focus-visible { outline: 2px solid var(--support-gold); outline-offset: 2px; }
 
-.support-composer-send svg {
-    width: 18px;
-    height: 18px;
-    fill: currentColor;
+.support-composer-field:has(textarea:placeholder-shown) .support-composer-send {
+    background: var(--support-soft);
+    color: var(--support-muted);
+    cursor: default;
 }
 
+.support-send-arrow {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.support-send-spinner {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 999px;
+    opacity: 0;
+}
+
+.support-composer-send.is-sending .support-send-arrow { opacity: 0; }
+.support-composer-send.is-sending .support-send-spinner { opacity: 1; animation: support-spin .7s linear infinite; }
+
+@keyframes support-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .support-composer-send.is-sending .support-send-spinner { animation: none; }
+}
 .support-composer-meta {
     display: flex;
     justify-content: space-between;
