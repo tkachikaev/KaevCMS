@@ -54,6 +54,15 @@ body.account-body .account-scroll-area {
 }
 body.account-body .account-sidebar:hover,
 body.account-body .account-scroll-area:hover { scrollbar-color: var(--account-scroll-thumb-hover) transparent; }
+/* The page itself scrolls with the same thin bar; the pointer is nearly always over the page,
+   so it keeps one muted colour instead of switching on hover. */
+html:has(> body.account-body) {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--account-muted, #8e99aa) 40%, transparent) transparent;
+}
+html:has(> body.account-body)::-webkit-scrollbar { width: 8px; height: 8px; }
+html:has(> body.account-body)::-webkit-scrollbar-track { background: transparent; }
+html:has(> body.account-body)::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--account-muted, #8e99aa) 40%, transparent) padding-box; }
 /* Safari still draws scrollbars only through the WebKit pseudo-elements. */
 body.account-body :is(.account-sidebar, .account-scroll-area)::-webkit-scrollbar { width: 8px; height: 8px; }
 body.account-body :is(.account-sidebar, .account-scroll-area)::-webkit-scrollbar-track { background: transparent; }
