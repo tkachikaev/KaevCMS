@@ -60,7 +60,7 @@ final class AdminDonationGameExchangeController extends Controller
             'servers.*.enabled' => ['required', 'boolean'],
             'servers.*.item_id' => ['nullable', 'required_if:servers.*.enabled,1', 'integer', 'min:1', 'max:2147483647'],
             'servers.*.items_per_coin' => ['nullable', 'required_if:servers.*.enabled,1', 'integer', 'min:1', 'max:1000000'],
-        ]);
+        ], $this->validationMessages('servers.*.'), $this->validationAttributes($request));
 
         try {
             $servers = array_column($values['servers'], null, 'server_id');
@@ -89,9 +89,9 @@ final class AdminDonationGameExchangeController extends Controller
         $access->authorize('admin.module-pages.donations.exchange.update', 'PUT', $admin);
         $values = $request->validate([
             'enabled' => ['nullable', 'boolean'],
-            'item_id' => ['nullable', 'integer', 'min:1', 'max:2147483647'],
-            'items_per_coin' => ['nullable', 'integer', 'min:1', 'max:1000000'],
-        ]);
+            'item_id' => ['nullable', 'required_if:enabled,1', 'integer', 'min:1', 'max:2147483647'],
+            'items_per_coin' => ['nullable', 'required_if:enabled,1', 'integer', 'min:1', 'max:1000000'],
+        ], $this->validationMessages(), $this->validationAttributes($request, $serverId));
         try {
             $exchange->configure($admin, $serverId,
                 isset($values['item_id']) ? (int) $values['item_id'] : null,
@@ -103,5 +103,61 @@ final class AdminDonationGameExchangeController extends Controller
 
         return redirect()->route('admin.module-pages.donations.exchange.index', ['adminPath' => $paths->path()])
             ->with('status', __('module-donations::messages.exchange_settings_saved'));
+    }
+
+    /** @return array<string, string> */
+    private function validationMessages(string $prefix = ''): array
+    {
+        $messages = [
+            'required_if' => __('module-donations::messages.exchange_validation_required'),
+            'integer' => __('module-donations::messages.exchange_validation_integer'),
+            'array' => __('module-donations::messages.exchange_validation_format'),
+            'exists' => __('module-donations::messages.exchange_validation_server_unavailable'),
+            'distinct' => __('module-donations::messages.exchange_validation_server_duplicate'),
+        ];
+        foreach (['item_id', 'items_per_coin'] as $field) {
+            foreach (['min', 'max'] as $rule) {
+                $messages[$prefix.$field.'.'.$rule] = __('module-donations::messages.exchange_validation_'.$rule);
+            }
+        }
+
+        return $messages;
+    }
+
+    /** @return array<string, string> */
+    private function validationAttributes(Request $request, ?int $serverId = null): array
+    {
+        $labels = [
+            'server_id' => __('module-donations::messages.exchange_server'),
+            'enabled' => __('module-donations::messages.exchange_enabled_short'),
+            'item_id' => __('module-donations::messages.exchange_item_id'),
+            'items_per_coin' => __('module-donations::messages.exchange_quantity'),
+        ];
+        $attributes = [
+            'servers' => __('module-donations::messages.exchange_validation_servers'),
+            'servers.*' => __('module-donations::messages.exchange_validation_server_settings'),
+        ];
+        foreach ($labels as $field => $label) {
+            $attributes[$serverId === null ? 'servers.*.'.$field : $field] = $label;
+        }
+        $rows = $serverId === null ? $request->input('servers') : [['server_id' => $serverId]];
+        if (! is_array($rows) || count($rows) > 1000) {
+            return $attributes;
+        }
+        // Names come from the CMS, not from submitted labels or the row's position.
+        $names = GameServer::query()->pluck('name', 'id');
+        foreach ($rows as $index => $row) {
+            $id = is_array($row) ? ($row['server_id'] ?? null) : null;
+            if ((! is_int($id) && ! is_string($id)) || ! is_string($name = $names->get($id))) {
+                continue;
+            }
+            foreach ($labels as $field => $label) {
+                $attributes[$serverId === null ? 'servers.'.$index.'.'.$field : $field] = __('module-donations::messages.exchange_validation_field', [
+                    'server' => $name, 'field' => $label,
+                ]);
+            }
+        }
+
+        return $attributes;
     }
 }

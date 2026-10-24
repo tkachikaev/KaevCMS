@@ -2373,6 +2373,7 @@
     "These fields are not saved or used by the CMS yet.": "Эти поля пока не сохраняются и не используются CMS.",
     "These rules apply to accounts created by players from the separate player account interface.": "Эти правила применяются к аккаунтам, которые игроки создают из отдельного личного кабинета.",
     "This GameServer contains web inventory rewards or delivery history. Deletion is blocked to prevent reward data loss.": "На этом GameServer есть награды веб-инвентаря или история выдачи. Удаление заблокировано, чтобы не потерять данные наград.",
+    "This game server has rewards, history or other linked module data. Deletion is blocked to preserve these records.": "Нельзя удалить сервер: с ним связаны награды, история операций или данные модулей. Удаление заблокировано, чтобы сохранить эти данные.",
     "This adjustment key was already used for another operation.": "Ключ операции уже использовался для другой корректировки.",
     "This administrator has not enabled two-factor authentication.": "Этот администратор не включил двухфакторную аутентификацию.",
     "This avatar and information identify your KaevCMS account only.": "Этот аватар и данные относятся только к аккаунту KaevCMS.",

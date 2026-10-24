@@ -10,6 +10,7 @@ use App\Models\UserGameAccount;
 use App\Services\Localization\LanguageManager;
 use App\Support\Database\TableExistence;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -173,39 +174,54 @@ final class GameServerSettings
      */
     public function delete(GameServer $server, ?string $confirmedImpactFingerprint = null): array
     {
-        return DB::transaction(function () use ($server, $confirmedImpactFingerprint): array {
-            $expectedLoginServerId = $server->login_server_id;
-            if ($expectedLoginServerId !== null) {
-                $server->loginServer()->lockForUpdate()->first();
-            }
+        try {
+            return DB::transaction(function () use ($server, $confirmedImpactFingerprint): array {
+                $expectedLoginServerId = $server->login_server_id;
+                if ($expectedLoginServerId !== null) {
+                    $server->loginServer()->lockForUpdate()->first();
+                }
 
-            $lockedServer = GameServer::query()
-                ->with('loginServer')
-                ->lockForUpdate()
-                ->findOrFail($server->id);
-            $impact = $this->deletionImpact->analyze($lockedServer);
+                $lockedServer = GameServer::query()
+                    ->with('loginServer')
+                    ->lockForUpdate()
+                    ->findOrFail($server->id);
+                $impact = $this->deletionImpact->analyze($lockedServer);
 
-            if ($lockedServer->login_server_id !== $expectedLoginServerId) {
-                throw new GameServerDeletionConfirmationRequired($impact);
-            }
-            if ($impact['requires_confirmation']
-                && (! is_string($confirmedImpactFingerprint)
-                    || ! hash_equals($impact['fingerprint'], $confirmedImpactFingerprint))) {
-                throw new GameServerDeletionConfirmationRequired($impact);
-            }
+                if ($lockedServer->login_server_id !== $expectedLoginServerId) {
+                    throw new GameServerDeletionConfirmationRequired($impact);
+                }
+                if ($impact['requires_confirmation']
+                    && (! is_string($confirmedImpactFingerprint)
+                        || ! hash_equals($impact['fingerprint'], $confirmedImpactFingerprint))) {
+                    throw new GameServerDeletionConfirmationRequired($impact);
+                }
 
-            if ($lockedServer->rewardInventoryGrants()->exists()
-                || $lockedServer->rewardInventoryItems()->exists()
-                || $lockedServer->rewardDeliveries()->exists()
-                || $this->moduleDependencies->blocksDeletion($lockedServer)) {
+                if ($lockedServer->rewardInventoryGrants()->exists()
+                    || $lockedServer->rewardInventoryItems()->exists()
+                    || $lockedServer->rewardDeliveries()->exists()
+                    || $this->moduleDependencies->blocksDeletion($lockedServer)) {
+                    throw new GameServerHasRewardData;
+                }
+
+                $this->reassignLinkedAccountsBeforeDisconnect($lockedServer);
+                $lockedServer->delete();
+
+                return $impact;
+            });
+        } catch (QueryException $exception) {
+            $state = (string) ($exception->errorInfo[0] ?? '');
+            $code = (int) ($exception->errorInfo[1] ?? 0);
+            // Disabled or unavailable modules may still retain protected rows. The
+            // transaction has rolled back before the UI receives its normal warning.
+            if ($state === '23503'
+                || ($state === '23000' && ($code === 1451
+                    || (in_array($code, [19, 787], true)
+                        && str_contains(strtolower($exception->getMessage()), 'foreign key constraint failed'))))) {
                 throw new GameServerHasRewardData;
             }
 
-            $this->reassignLinkedAccountsBeforeDisconnect($lockedServer);
-            $lockedServer->delete();
-
-            return $impact;
-        });
+            throw $exception;
+        }
     }
 
     public function reassignLinkedAccountsBeforeDisconnect(GameServer $server, ?int $nextLoginServerId = null): int

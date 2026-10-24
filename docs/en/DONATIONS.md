@@ -41,3 +41,5 @@ In Donations, open **Transfer coins to game**. For each game server specify its 
 The player selects a game server and a coin quantity. One atomic primary-database transaction debits the wallet and grants the selected item to **Web Inventory**, with audit and retry protection. Players can then send items to a character using the existing Web Inventory → `kaev_reward_queue` workflow. The CMS does not directly modify game-item tables or guarantee downstream game delivery.
 
 The exchange works independently from YooMoney and requires no `.env` edits. Disabling it does not erase grant or wallet history. Failed exchanges roll back coin debits.
+
+Deleting a game server that only has an exchange rate also removes that rate. Exchange history, rewards and deliveries prevent server deletion and remain protected even when Donations is disabled. Other database-protected references produce a readable warning in the deletion dialog. The new migration changes only the rate's server relationship; existing users, wallets, operations and payment-provider credentials are preserved.

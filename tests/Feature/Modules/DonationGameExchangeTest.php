@@ -20,6 +20,7 @@ use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Services\DonationGameExchange;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\Concerns\RefreshDonationDatabase;
 use Tests\TestCase;
@@ -305,6 +306,83 @@ final class DonationGameExchangeTest extends TestCase
             ]);
             $this->assertDatabaseMissing('module_donation_game_exchange_rates', ['game_server_id' => $second->id]);
         }
+    }
+
+    public static function exchangeValidationLocales(): array
+    {
+        return [
+            'Russian' => ['ru', [
+                'required' => 'Заполните поле «%s», чтобы включить обмен.',
+                'integer' => 'В поле «%s» укажите целое число.',
+                'min' => 'В поле «%s» укажите число не меньше 1.',
+                'item_max' => 'В поле «%s» укажите число не больше 2147483647.',
+                'rate_max' => 'В поле «%s» укажите число не больше 1000000.',
+                'item_label' => 'ID игрового предмета',
+                'rate_label' => 'Количество предметов',
+            ]],
+            'English' => ['en', [
+                'required' => 'Complete "%s" to enable exchange.',
+                'integer' => 'Enter a whole number for "%s".',
+                'min' => 'Enter a number of at least 1 for "%s".',
+                'item_max' => 'Enter a number no greater than 2147483647 for "%s".',
+                'rate_max' => 'Enter a number no greater than 1000000 for "%s".',
+                'item_label' => 'Game item ID',
+                'rate_label' => 'Item quantity',
+            ]],
+        ];
+    }
+
+    #[DataProvider('exchangeValidationLocales')]
+    public function test_missing_exchange_fields_are_localized_for_each_server_and_keep_settings(string $locale, array $copy): void
+    {
+        [$admin, , $first] = $this->setupExchange();
+        $admin->update(['locale' => $locale]);
+        $second = GameServer::factory()->create(['name' => 'Second realm']);
+        $url = '/admin/extensions/donations/exchange';
+        // Reverse the row order to ensure names are resolved by server ID, not DB order.
+        $expected = [];
+        foreach ([$second, $first] as $index => $server) {
+            $expected['servers.'.$index.'.item_id'] = sprintf($copy['required'], $server->name.' — '.$copy['item_label']);
+            $expected['servers.'.$index.'.items_per_coin'] = sprintf($copy['required'], $server->name.' — '.$copy['rate_label']);
+        }
+        $this->actingAs($admin, 'admin')->from($url)->put($url, ['servers' => [
+            ['server_id' => $second->id, 'enabled' => 1, 'item_id' => '', 'items_per_coin' => ''],
+            ['server_id' => $first->id, 'enabled' => 1, 'item_id' => '', 'items_per_coin' => ''],
+        ]])->assertRedirect($url)->assertSessionHasErrors($expected);
+        $this->assertSame(1, session()->getOldInput('servers.0.enabled'));
+        $page = $this->get($url)->assertOk()->assertDontSee('servers.0.item_id')->assertDontSee('field is required');
+        foreach ($expected as $message) {
+            $page->assertSee($message);
+            $this->assertSame(2, substr_count($page->getContent(), e($message)));
+        }
+        $this->assertDatabaseHas('module_donation_game_exchange_rates', [
+            'game_server_id' => $first->id, 'item_id' => 90000, 'items_per_coin' => 10,
+        ]);
+        $this->assertDatabaseMissing('module_donation_game_exchange_rates', ['game_server_id' => $second->id]);
+    }
+
+    #[DataProvider('exchangeValidationLocales')]
+    public function test_exchange_numeric_errors_are_localized_on_bulk_and_single_server_endpoints(string $locale, array $copy): void
+    {
+        [$admin, , $server] = $this->setupExchange();
+        $admin->update(['locale' => $locale]);
+        $this->actingAs($admin, 'admin');
+        foreach ([[0, 0, 'min', 'min'], ['1.5', '1.5', 'integer', 'integer'],
+            ['invalid', 'invalid', 'integer', 'integer'], [2147483648, 1000001, 'item_max', 'rate_max'],
+            ['', '', 'required', 'required']] as [$item, $rate, $itemRule, $rateRule]) {
+            $values = ['server_id' => $server->id, 'enabled' => 1, 'item_id' => $item, 'items_per_coin' => $rate];
+            $errors = [
+                'item_id' => sprintf($copy[$itemRule], $server->name.' — '.$copy['item_label']),
+                'items_per_coin' => sprintf($copy[$rateRule], $server->name.' — '.$copy['rate_label']),
+            ];
+            $this->put('/admin/extensions/donations/exchange', ['servers' => [$values]])
+                ->assertSessionHasErrors(['servers.0.item_id' => $errors['item_id'], 'servers.0.items_per_coin' => $errors['items_per_coin']]);
+            unset($values['server_id']);
+            $this->put('/admin/extensions/donations/exchange/'.$server->id, $values)->assertSessionHasErrors($errors);
+        }
+        $this->assertDatabaseHas('module_donation_game_exchange_rates', [
+            'game_server_id' => $server->id, 'item_id' => 90000, 'items_per_coin' => 10,
+        ]);
     }
 
     public function test_preview_uses_server_icon_over_common_icon_and_is_read_only(): void

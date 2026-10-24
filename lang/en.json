@@ -2373,6 +2373,7 @@
     "These fields are not saved or used by the CMS yet.": "These fields are not saved or used by the CMS yet.",
     "These rules apply to accounts created by players from the separate player account interface.": "These rules apply to accounts created by players from the separate player account interface.",
     "This GameServer contains web inventory rewards or delivery history. Deletion is blocked to prevent reward data loss.": "This GameServer contains web inventory rewards or delivery history. Deletion is blocked to prevent reward data loss.",
+    "This game server has rewards, history or other linked module data. Deletion is blocked to preserve these records.": "This game server has rewards, history or other linked module data. Deletion is blocked to preserve these records.",
     "This adjustment key was already used for another operation.": "This adjustment key was already used for another operation.",
     "This administrator has not enabled two-factor authentication.": "This administrator has not enabled two-factor authentication.",
     "This avatar and information identify your KaevCMS account only.": "This avatar and information identify your KaevCMS account only.",

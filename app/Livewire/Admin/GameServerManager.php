@@ -447,7 +447,7 @@ class GameServerManager extends Component
 
             return;
         } catch (GameServerHasRewardData) {
-            $this->deleteImpactWarning = __('This GameServer contains web inventory rewards or delivery history. Deletion is blocked to prevent reward data loss.');
+            $this->deleteImpactWarning = __('This game server has rewards, history or other linked module data. Deletion is blocked to preserve these records.');
 
             return;
         }

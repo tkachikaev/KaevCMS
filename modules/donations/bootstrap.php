@@ -2,8 +2,10 @@
 
 use App\Auth\AdminRole;
 use App\Contracts\WalletTopUpHistory;
+use App\Models\GameServer;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
+use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
 use KaevCMS\Modules\Donations\Services\DonationGameExchange;
@@ -11,6 +13,13 @@ use KaevCMS\Modules\Donations\Services\DonationPlayerHistory;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 
 return static function (Application $app, ModuleContext $module): void {
+    $app->make(ModuleGameServerDependencyRegistry::class)->register(
+        $module->id,
+        static fn (GameServer $server): bool => $server->getConnection()
+            ->table('module_donation_game_exchanges')
+            ->where('game_server_id', $server->id)
+            ->exists(),
+    );
     $app->bind(WalletTopUpHistory::class, DonationPlayerHistory::class);
     $navigation = $app->make(ModuleNavigationRegistry::class);
     $navigation->registerWalletLink(
