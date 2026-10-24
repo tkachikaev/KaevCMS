@@ -1732,7 +1732,7 @@
     "Rewards and transfers": "Rewards and transfers",
     "Rewards are reserved before delivery. Known failures return them to the player inventory; unknown outcomes stay reserved for review.": "Rewards are reserved before delivery. Known failures return them to the player inventory; unknown outcomes stay reserved for review.",
     "Rewards from promo codes, donations and future modules are stored here until you transfer them to a character.": "Rewards from promo codes, donations and future modules are stored here until you transfer them to a character.",
-    "Rewards will appear here after they are granted by promo codes, donations or other modules.": "Rewards will appear here after they are granted by promo codes, donations or other modules.",
+    "Rewards will appear here after they are granted by promo codes, donations or other modules.": "Your rewards will appear here. You can send them to a character from this page.",
     "Rogue": "Rogue",
     "Role": "Role",
     "Roles limit which control panel sections and actions are available to each account.": "Roles limit which control panel sections and actions are available to each account.",
@@ -2896,5 +2896,17 @@
     "Open": "Open",
     "Disable module?": "Disable module?",
     "Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.": "Its sections disappear from the administration menu and the player account. The module data in the database is kept, and the module can be enabled again.",
-    "Yes, disable": "Yes, disable"
+    "Yes, disable": "Yes, disable",
+    "Hello, :name!": "Hello, :name!",
+    "Waiting for you": "Waiting for you",
+    "Nothing is waiting for you right now.": "Nothing is waiting for you right now.",
+    "Items in the web inventory: :count": "Items in the web inventory: :count",
+    "Transfer them to a character to receive them in the game.": "Transfer them to a character to receive them in the game.",
+    "Transfer to a character": "Transfer to a character",
+    "My game accounts": "My game accounts",
+    "Game accounts will appear here after you create one.": "Game accounts will appear here after you create one.",
+    "Banner effects": "Banner effects",
+    "Enable banner effects": "Enable banner effects",
+    "Disable banner effects": "Disable banner effects",
+    "Banner effects are disabled by your motion settings": "Banner effects are disabled by your motion settings"
 }

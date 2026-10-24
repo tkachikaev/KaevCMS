@@ -257,7 +257,9 @@ test('players can preview accurate coin prices but cannot create fake payment dr
     await form.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
     await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
     await gotoWithLocalNetworkRetry(player, '/modules/donations/orders');
-    await expect(player.locator('a[data-account-module-id="donations"]')).toHaveAttribute('href', /\/modules\/donations\/orders$/);
+    // Hidden donations leave no sidebar item: history lives in the wallet, which this route opens.
+    await expect(player.locator('a[data-account-module-id="donations"]')).toHaveCount(0);
+    await expect(player).toHaveURL(/\/account\/wallet$/);
     await expect(player.getByTestId('donations-choose-coins')).toHaveCount(0);
     // Previewing prices must not create payment orders.
     await expect(player.locator('[data-wallet-history] [data-history-key]')).toHaveCount(0);
@@ -552,11 +554,11 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
             await pendingRow.getByRole('button', { name: 'Отменить', exact: true }).click();
             await expect(player).toHaveURL(/\/account\/wallet$/);
             await expect(pendingRow).toHaveCount(0);
-            await player.getByRole('link', { name: 'Показать неактивные', exact: true }).click();
+            await player.getByRole('link', { name: 'Показать отменённые и просроченные пополнения', exact: true }).click();
             const closedRow = player.locator('[data-history-key^="topup-"]').filter({ hasText: '237' });
             await expect(closedRow.last()).toContainText('Пополнение отменено');
             await expect(closedRow.getByRole('button', { name: 'Отменить', exact: true })).toHaveCount(0);
-            await player.getByRole('link', { name: 'Скрыть неактивные', exact: true }).click();
+            await player.getByRole('link', { name: 'Скрыть отменённые и просроченные пополнения', exact: true }).click();
             await expect(player.locator('.account-topbar-wallet-amount')).toHaveText('0');
         }
     }

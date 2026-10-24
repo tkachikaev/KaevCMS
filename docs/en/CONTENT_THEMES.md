@@ -10,6 +10,12 @@ Built-in Russian and English catalogs must have matching keys and placeholders. 
 
 The bundled Kaev Aurelia Account theme uses a persistent Livewire shell, rounded dashboard surfaces, separate pages for characters and game accounts, a web inventory, and a modal account-avatar picker.
 
+The bundled Kaev Classic theme is built for readability: a warm light palette and a moonlit dark palette with lavender accents, large high-contrast text (16 px body), single-line navigation with icons, 6 px corners and one thin border per block. A top-bar button switches between light and dark; the choice is kept in the player's browser (`localStorage`) and applied before the page paints, including after Livewire navigation. At the bottom of the menu the shared `<x-account-server-status />` component shows each game server's status, and its online count only when the site setting for public online is enabled. The theme styles only through `--account-*` variables, so both modes also reach module pages.
+
+The Kaev Classic overview banner follows the chosen scheme: the light theme uses the daytime elf with gold particles, while the dark theme uses the moonlit elf with lavender particles. A small sparkle button in the top-right corner switches the effect on or off; the preference stays in the player's browser. Reduced motion disables the effect, while leaving the viewport, hiding the tab or navigating away stops rendering. Particles stay inside the artwork and do not intercept clicks.
+
+Kaev Classic uses a compact sun/moon switch. The new scheme is revealed in a circular wave from the pointer position, or from the switch centre when activated with the keyboard. Reduced motion or missing View Transitions support makes switching immediate. Navigating between sections finishes the effect and keeps the chosen scheme.
+
 ## Player account
 
 The overview is compact. A first-game-account panel is shown only while the player has no game accounts; afterwards the page opens directly with account metrics and quick actions.

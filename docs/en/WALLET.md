@@ -39,7 +39,7 @@ Each administrator has separate limits: six adjustments and six status changes p
 
 ## Player wallet
 
-Signed-in players with a verified email open **My wallet** at `/account/wallet`. Both bundled account themes show the balance and coin icon in the top bar and account menu. A blocked wallet shows a notice that spending is restricted. Players cannot credit, debit, or transfer coins on this page.
+Signed-in players with a verified email open **My wallet** at `/account/wallet`. The bundled account themes show the balance and coin icon in the top bar and account menu. A blocked wallet shows a notice that spending is restricted. Players cannot credit, debit, or transfer coins on this page.
 
 The page has one paginated history: credits, debits, and unpaid Donations top-ups. A purchase is shown once; the journal is the authority for received coins. Pending top-ups come first, with payment and cancellation actions and an expiry timer. Cancelled and expired attempts are hidden by default and shown with **Show inactive top-ups**. Players see only the direction, amount, date, and balance after each operation; internal keys, references, and administrator details stay hidden. The old `/modules/donations/orders` address redirects to this history.
 

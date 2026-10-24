@@ -62,13 +62,16 @@ return static function (Application $app, ModuleContext $module): void {
             inSidebar: false,
         );
     } else {
-        // History must remain available even when the owner stops accepting new drafts.
+        // History must remain available even when the owner stops accepting new drafts. It lives
+        // in the wallet now (this route only redirects there), so a sidebar item would merely
+        // duplicate "My wallet"; the wallet menu's History link keeps it one click away.
         $navigation->registerAccountLink(
             moduleId: $module->id,
             routeName: 'modules.donations.orders.index',
             labelKey: 'module-donations::messages.orders_title',
             descriptionKey: 'module-donations::messages.orders_description',
             sortOrder: 71,
+            inSidebar: false,
         );
     }
 

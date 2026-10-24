@@ -186,7 +186,7 @@ class AccountNavigationTest extends TestCase
 
     public function test_profile_avatar_is_not_reused_as_a_game_account_icon(): void
     {
-        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+        foreach (['kaev-aurelia', 'kaev-classic', 'luxury'] as $theme) {
             $index = file_get_contents(base_path("account-themes/{$theme}/views/game-accounts/index.blade.php"));
             $show = file_get_contents(base_path("account-themes/{$theme}/views/game-accounts/show.blade.php"));
             $dashboard = file_get_contents(base_path("account-themes/{$theme}/views/dashboard.blade.php"));
@@ -219,7 +219,7 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString('data-character-rescue-online-message', $modal);
         $this->assertStringContainsString('data-character-rescue-submit', $modal);
 
-        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+        foreach (['kaev-aurelia', 'kaev-classic', 'luxury'] as $theme) {
             $row = file_get_contents(base_path("account-themes/{$theme}/views/components/character-row.blade.php"));
             $directory = file_get_contents(base_path("account-themes/{$theme}/views/livewire/character-directory.blade.php"));
 
@@ -243,7 +243,7 @@ class AccountNavigationTest extends TestCase
         $this->assertStringContainsString("backdrop.addEventListener('click', closeMobileSidebar)", $runtime);
         $this->assertStringContainsString('data-account-sidebar-backdrop', $backdrop);
 
-        foreach (['kaev-aurelia', 'luxury'] as $theme) {
+        foreach (['kaev-aurelia', 'kaev-classic', 'luxury'] as $theme) {
             $layout = file_get_contents(base_path("account-themes/{$theme}/views/layouts/app.blade.php"));
             $css = file_get_contents(public_path("account-themes/{$theme}/assets/css/app.css"));
 

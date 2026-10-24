@@ -477,7 +477,7 @@ test('theme catalogues expose semantic single-column catalogues', async ({ page 
     const accountCatalog = page.getByTestId('account-theme-catalog');
     await expect(accountCatalog).toHaveAttribute('data-layout', 'single-column');
     const accountThemes = accountCatalog.getByTestId('account-theme-card');
-    await expect(accountThemes).toHaveCount(2);
+    await expect(accountThemes).toHaveCount(3);
     await expect(accountThemes.first().locator('.admin-catalog-heading')).toBeVisible();
     await expect(accountThemes.first().locator('.theme-catalog-preview')).toBeVisible();
     await expect(accountThemes.first().locator('.admin-catalog-side')).toBeVisible();
