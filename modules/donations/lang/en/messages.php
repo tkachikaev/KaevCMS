@@ -54,6 +54,7 @@ return [
     'yoomoney_test_received_text' => 'The address and the secret match. Saving the settings…',
     'yoomoney_test_mismatch_title' => 'The secret does not match',
     'yoomoney_test_mismatch_text' => 'The notification arrived, but its signature does not match. Make sure the secret here and in the YooMoney settings is the same.',
+    'yoomoney_test_mismatch_waiting_hint' => 'This window keeps waiting: if a correctly signed notification follows, the test passes.',
     'yoomoney_test_expired_title' => 'No notification arrived',
     'yoomoney_test_expired_text' => 'YooMoney sent nothing within 5 minutes. Check the address and that notifications are switched on, then try again.',
     'yoomoney_test_error_title' => 'Could not start the test',

@@ -14,6 +14,7 @@ use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
+use KaevCMS\Modules\Donations\Services\DonationYooMoneyNotificationTest;
 use Tests\Concerns\RefreshDonationDatabase;
 use Tests\TestCase;
 
@@ -79,6 +80,13 @@ final class DonationYooMoneyNotificationTestButtonTest extends TestCase
             ->assertOk()->json('status');
     }
 
+    private function dialogWaiting(string $token): bool
+    {
+        return (bool) $this->actingAs($this->owner, 'admin')
+            ->getJson('/admin/extensions/donations/providers/yoomoney/notification-test/'.$token)
+            ->assertOk()->json('waiting');
+    }
+
     public function test_signed_test_notification_is_confirmed_while_the_owner_waits(): void
     {
         $token = (string) $this->start()->assertOk()->json('token');
@@ -114,6 +122,42 @@ final class DonationYooMoneyNotificationTestButtonTest extends TestCase
         $token = (string) $this->start()->assertOk()->json('token');
         $this->notify($this->yooMoneyTestBody('another-secret'))->assertStatus(400);
         $this->assertSame('signature_mismatch', $this->dialogStatus($token));
+        $this->assertTrue($this->dialogWaiting($token));
+
+        // Without a correctly signed notification the window ends with the mismatch.
+        $this->travel(DonationYooMoneyNotificationTest::TTL_SECONDS + 1)->seconds();
+        $this->assertSame('signature_mismatch', $this->dialogStatus($token));
+        $this->assertFalse($this->dialogWaiting($token));
+        $this->notify($this->yooMoneyTestBody())->assertStatus(400);
+    }
+
+    public function test_forged_notification_cannot_end_the_test_before_yoomoney_answers(): void
+    {
+        $token = (string) $this->start()->assertOk()->json('token');
+
+        foreach (range(1, 3) as $attempt) {
+            $this->notify($this->yooMoneyTestBody('attacker-guess-'.$attempt))->assertStatus(400);
+        }
+        $this->assertSame('signature_mismatch', $this->dialogStatus($token));
+        $this->assertTrue($this->dialogWaiting($token));
+
+        $this->notify($this->yooMoneyTestBody())->assertOk();
+
+        $this->assertSame('received', $this->dialogStatus($token));
+        $this->assertFalse($this->dialogWaiting($token));
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_untouched_window_expires_without_a_mismatch(): void
+    {
+        $token = (string) $this->start()->assertOk()->json('token');
+        $this->assertTrue($this->dialogWaiting($token));
+
+        $this->travel(DonationYooMoneyNotificationTest::TTL_SECONDS + 1)->seconds();
+
+        $this->assertSame('expired', $this->dialogStatus($token));
+        $this->assertFalse($this->dialogWaiting($token));
     }
 
     public function test_without_a_waiting_owner_the_address_behaves_as_before(): void

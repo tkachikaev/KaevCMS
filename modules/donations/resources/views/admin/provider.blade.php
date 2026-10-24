@@ -44,6 +44,7 @@
                         <div class="donations-test-copy" data-test-copy="signature_mismatch" hidden>
                             <h2>{{ __('module-donations::messages.yoomoney_test_mismatch_title') }}</h2>
                             <p>{{ __('module-donations::messages.yoomoney_test_mismatch_text') }}</p>
+                            <small data-test-still-waiting hidden>{{ __('module-donations::messages.yoomoney_test_mismatch_waiting_hint') }}</small>
                         </div>
                         <div class="donations-test-copy" data-test-copy="expired" hidden>
                             <h2>{{ __('module-donations::messages.yoomoney_test_expired_title') }}</h2>

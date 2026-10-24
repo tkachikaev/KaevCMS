@@ -54,6 +54,7 @@ return [
     'yoomoney_test_received_text' => 'Адрес и секрет совпадают. Сохраняем настройки…',
     'yoomoney_test_mismatch_title' => 'Секрет не совпадает',
     'yoomoney_test_mismatch_text' => 'Уведомление пришло, но его подпись не сходится. Проверьте, что секрет здесь и в настройках ЮMoney одинаковый.',
+    'yoomoney_test_mismatch_waiting_hint' => 'Окно продолжает ждать: если следом придёт уведомление с верной подписью, проверка пройдёт.',
     'yoomoney_test_expired_title' => 'Уведомление не пришло',
     'yoomoney_test_expired_text' => 'За 5 минут ЮMoney ничего не отправил. Проверьте адрес и что уведомления включены, затем повторите.',
     'yoomoney_test_error_title' => 'Не удалось начать проверку',

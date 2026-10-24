@@ -146,7 +146,7 @@ final class AdminDonationProviderController extends Controller
         abort_unless($admin instanceof Admin, 403);
         $access->authorize('admin.module-pages.donations.providers.notification-test.status', 'GET', $admin);
 
-        return response()->json(['status' => $test->status($token)]);
+        return response()->json($test->status($token));
     }
 
     public function update(string $providerCode, Request $request, AdminPathSettings $paths,

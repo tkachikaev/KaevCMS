@@ -18,6 +18,9 @@ use Throwable;
  * before: real payments never reach this class. The waiting state lives in the CMS settings
  * table, which every request shares whatever the cache store; the secret in it is encrypted
  * and dropped once the outcome is known.
+ *
+ * Anyone can post to the notification address, so a wrong signature only marks the window
+ * and keeps it waiting: a forged body cannot end the test before YooMoney's real one arrives.
  */
 final class DonationYooMoneyNotificationTest
 {
@@ -44,21 +47,36 @@ final class DonationYooMoneyNotificationTest
             'admin_id' => (int) $admin->getKey(),
             'secret' => Crypt::encryptString($secret),
             'status' => 'waiting',
+            'mismatch' => false,
             'expires_at' => now()->addSeconds(self::TTL_SECONDS)->getTimestamp(),
         ]);
 
         return $token;
     }
 
-    /** waiting, received, signature_mismatch or expired. */
-    public function status(string $token): string
+    /**
+     * status: waiting, received, signature_mismatch or expired. waiting: the window is still
+     * open, so a signature mismatch may yet be followed by YooMoney's correctly signed test.
+     *
+     * @return array{status:string,waiting:bool}
+     */
+    public function status(string $token): array
     {
-        $state = $this->state();
+        $state = $this->state(includeExpired: true);
         if ($state === null || ! hash_equals($state['token'], hash('sha256', $token))) {
-            return 'expired';
+            return ['status' => 'expired', 'waiting' => false];
         }
 
-        return $state['status'];
+        $mismatch = $state['status'] === 'signature_mismatch' || ($state['mismatch'] ?? false) === true;
+        $waiting = $state['status'] === 'waiting' && $state['expires_at'] >= now()->getTimestamp();
+        $status = match (true) {
+            $state['status'] === 'received' => 'received',
+            $mismatch => 'signature_mismatch',
+            $waiting => 'waiting',
+            default => 'expired',
+        };
+
+        return ['status' => $status, 'waiting' => $waiting];
     }
 
     /**
@@ -92,25 +110,30 @@ final class DonationYooMoneyNotificationTest
         }
 
         $valid = (new YooMoneyProvider)->testNotificationSignatureValid($rawBody, Crypt::decryptString($state['secret']));
-        $state['status'] = $valid ? 'received' : 'signature_mismatch';
-        $state['secret'] = '';
+        if ($valid) {
+            $state['status'] = 'received';
+            $state['secret'] = '';
+        } else {
+            $state['mismatch'] = true;
+        }
         $this->write($state);
 
         return $valid;
     }
 
-    /** @return array{token:string,admin_id:int,secret:string,status:string,expires_at:int}|null */
-    private function state(): ?array
+    /** @return array{token:string,admin_id:int,secret:string,status:string,mismatch?:bool,expires_at:int}|null */
+    private function state(bool $includeExpired = false): ?array
     {
         $this->cms->forget();
         $state = json_decode((string) $this->cms->get(self::SETTING_KEY, ''), true);
         if (! is_array($state) || ! is_string($state['token'] ?? null) || ! is_string($state['secret'] ?? null)
             || ! in_array($state['status'] ?? null, ['waiting', 'received', 'signature_mismatch'], true)
-            || ! is_int($state['expires_at'] ?? null) || $state['expires_at'] < now()->getTimestamp()) {
+            || ! is_int($state['expires_at'] ?? null)
+            || (! $includeExpired && $state['expires_at'] < now()->getTimestamp())) {
             return null;
         }
 
-        /** @var array{token:string,admin_id:int,secret:string,status:string,expires_at:int} $state */
+        /** @var array{token:string,admin_id:int,secret:string,status:string,mismatch?:bool,expires_at:int} $state */
         return $state;
     }
 

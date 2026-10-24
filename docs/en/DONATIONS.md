@@ -24,6 +24,8 @@ The YooMoney page has one switch: on means **All players**, off means **Off**. T
 
 Turning payments off stops new checkouts only. Signed confirmations for payments that were already started continue to be processed, and orders, history and saved confirmations are kept.
 
+The **Test** button next to the notification address (shown when the site is opened at a public HTTPS address) checks the HTTP notification address and secret without a payment. The window then waits up to 5 minutes for a test notification: press "Test" in the HTTP notification settings on the YooMoney site. When the signature matches, the window reports success and saves the settings. When a notification with a wrong signature arrives, the window shows "The secret does not match" at once but keeps waiting: the notification address is open to anyone, and a forged request must not spoil the test. A correctly signed YooMoney notification that follows still counts. Real payments are handled as usual meanwhile, and test notifications never credit coins.
+
 ## Localhost cannot receive real callbacks
 
 `127.0.0.1` is not publicly reachable by YooMoney. Genuine transfers with automatic crediting require a public HTTPS website and working MySQL/MariaDB. Local automated tests can validate the form, prices and signatures but cannot substitute for receipt of a real remote notification. The CMS displays this limitation when the operator attempts to enable payments; do not bypass signature verification.

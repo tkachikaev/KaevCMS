@@ -105,12 +105,14 @@
         let timer = null;
         let run = 0;
 
-        const show = (state, message) => {
+        const stillWaiting = dialog.querySelector('[data-test-still-waiting]');
+        const show = (state, message, waiting = false) => {
             dialog.dataset.state = state;
             dialog.querySelectorAll('[data-test-copy]').forEach((copy) => {
                 copy.hidden = copy.dataset.testCopy !== state;
             });
             if (message) dialog.querySelector('[data-test-error]').textContent = message;
+            if (stillWaiting) stillWaiting.hidden = !waiting;
             retry.hidden = !['signature_mismatch', 'expired', 'error'].includes(state);
         };
         const stop = () => {
@@ -126,7 +128,9 @@
                     });
                     const body = await response.json();
                     if (current !== run) return;
-                    if (body.status === 'waiting') {
+                    // A mismatching body may be forged; YooMoney's signed test can still follow.
+                    if (body.waiting === true) {
+                        if (body.status !== 'waiting') show(body.status, undefined, true);
                         poll(token, current);
                         return;
                     }
