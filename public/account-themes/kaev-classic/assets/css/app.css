@@ -186,7 +186,7 @@ h1, h2, h3 { font-family: var(--account-heading-font); }
 :root[data-account-scheme="dark"] .account-scheme-sun { opacity: 0; }
 :root[data-account-scheme="dark"] .account-scheme-moon { opacity: 1; }
 
-/* The documentation's moonlit wave: only the new snapshot expands from the switch. */
+/* Crossfade: the new snapshot fades in over the old one. */
 .kc-theme-reveal::view-transition-old(root),
 .kc-theme-reveal::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 .kc-theme-reveal::view-transition-old(root) { z-index: 1; }
@@ -522,15 +522,25 @@ dd { margin: 0; }
 .kc-entering .account-nav a:nth-child(n + 6) { animation-delay: .15s; }
 .kc-entering .account-sidebar-footer { animation-delay: .2s; }
 .kc-entering .account-topbar-actions { animation: kc-rise .45s cubic-bezier(.2, .7, .2, 1) .05s both; }
-/* Top-bar menus (coin, language, profile) open with a short drop instead of appearing at once. */
-@keyframes kc-pop { from { opacity: 0; transform: translate3d(0, -6px, 0) scale(.98); } to { opacity: 1; transform: none; } }
-.account-profile-menu[open] > .account-profile-dropdown, .account-language-menu[open] > .language-menu-list { transform-origin: top right; animation: kc-pop .2s cubic-bezier(.2, .7, .2, 1) both; }
+/* Top-bar menus (coin, language, profile) open with a soft drop instead of appearing at once;
+   their rows follow one after another, so the wider profile menu reads as smooth as the short
+   language list. */
+@keyframes kc-pop { from { opacity: 0; transform: translate3d(0, -10px, 0) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes kc-menu-item { from { opacity: 0; transform: translate3d(0, -5px, 0); } to { opacity: 1; transform: none; } }
+.account-profile-menu[open] > .account-profile-dropdown, .account-language-menu[open] > .language-menu-list { transform-origin: top right; animation: kc-pop .34s cubic-bezier(.16, .84, .3, 1) both; }
+.account-profile-menu[open] > .account-profile-dropdown > *, .account-language-menu[open] > .language-menu-list > * { animation: kc-menu-item .3s cubic-bezier(.16, .84, .3, 1) both; }
+.account-profile-menu[open] > .account-profile-dropdown > :nth-child(1), .account-language-menu[open] > .language-menu-list > :nth-child(1) { animation-delay: .05s; }
+.account-profile-menu[open] > .account-profile-dropdown > :nth-child(2), .account-language-menu[open] > .language-menu-list > :nth-child(2) { animation-delay: .09s; }
+.account-profile-menu[open] > .account-profile-dropdown > :nth-child(3), .account-language-menu[open] > .language-menu-list > :nth-child(3) { animation-delay: .13s; }
+.account-profile-menu[open] > .account-profile-dropdown > :nth-child(4), .account-language-menu[open] > .language-menu-list > :nth-child(4) { animation-delay: .17s; }
+.account-profile-menu[open] > .account-profile-dropdown > :nth-child(n + 5), .account-language-menu[open] > .language-menu-list > :nth-child(n + 5) { animation-delay: .21s; }
 .account-profile-chevron, .account-language-menu .language-menu-chevron { display: inline-block; transition: transform .2s ease; }
 .account-profile-menu[open] .account-profile-chevron, .account-language-menu[open] .language-menu-chevron { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {
     .kc-nav-indicator { transition: none; }
     .account-nav a, .account-nav a svg, .account-nav a svg :is(path, rect, circle) { transition: none; }
-    .account-profile-menu[open] > .account-profile-dropdown, .account-language-menu[open] > .language-menu-list { animation: none; }
+    .account-profile-menu[open] > .account-profile-dropdown, .account-language-menu[open] > .language-menu-list,
+    .account-profile-menu[open] > .account-profile-dropdown > *, .account-language-menu[open] > .language-menu-list > * { animation: none; }
     .account-profile-chevron, .account-language-menu .language-menu-chevron { transition: none; }
 }
 

@@ -4,7 +4,7 @@
             @if (site_logo_url())
                 <img class="brand-logo brand-logo-custom" src="{{ site_logo_url() }}" alt="{{ site_name() }}">
             @else
-                <img class="brand-logo brand-logo-kaev" src="{{ theme_asset('images/kaev-logo.png') }}" alt="Kaev">
+                <img class="brand-logo brand-logo-kaev" src="{{ theme_asset('images/kaev-logo.webp') }}" alt="Kaev">
             @endif
         </a>
 
@@ -36,10 +36,29 @@
             @endauth
             {{-- On phones the header actions are hidden, so the menu carries the language choice. --}}
             <x-language-menu class="mobile-language-menu" />
+            <button type="button" class="mobile-scheme-toggle" role="switch" aria-checked="false" data-site-scheme-toggle
+                data-label-light="{{ __('Switch to the light theme') }}" data-label-dark="{{ __('Switch to the dark theme') }}"
+                data-dark-art="{{ theme_asset('images/hero-dark.webp') }}" data-light-art="{{ theme_asset('images/hero.webp') }}" data-light-art-mobile="{{ theme_asset('images/hero-mobile.webp') }}"
+                aria-label="{{ __('Switch to the dark theme') }}">
+                <span class="scheme-track" aria-hidden="true"><span class="scheme-thumb">
+                    <svg class="scheme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>
+                    <svg class="scheme-moon" viewBox="0 0 24 24"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+                </span></span>
+                <span data-scheme-label>{{ __('Switch to the dark theme') }}</span>
+            </button>
         </nav>
 
         <div class="header-actions">
             <x-language-menu />
+            <button type="button" class="scheme-toggle" role="switch" aria-checked="false" data-site-scheme-toggle
+                data-label-light="{{ __('Switch to the light theme') }}" data-label-dark="{{ __('Switch to the dark theme') }}"
+                data-dark-art="{{ theme_asset('images/hero-dark.webp') }}" data-light-art="{{ theme_asset('images/hero.webp') }}" data-light-art-mobile="{{ theme_asset('images/hero-mobile.webp') }}"
+                aria-label="{{ __('Switch to the dark theme') }}" title="{{ __('Switch to the dark theme') }}">
+                <span class="scheme-track" aria-hidden="true"><span class="scheme-thumb">
+                    <svg class="scheme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>
+                    <svg class="scheme-moon" viewBox="0 0 24 24"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+                </span></span>
+            </button>
 
             @auth
                 <a class="button button-gold header-main-action" href="{{ public_route('account') }}">{{ __('Account') }}</a>

@@ -34,13 +34,13 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertTrue($publicTheme['valid'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertTrue($publicTheme['compatible'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertSame('Kaev Aurelia', $publicTheme['name']);
-        $this->assertSame('1.0.14', $publicTheme['version']);
+        $this->assertSame('1.1.0', $publicTheme['version']);
         $this->assertNotNull($publicTheme['preview_url']);
 
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertSame('Kaev Aurelia Account', $accountTheme['name']);
-        $this->assertSame('1.6.10', $accountTheme['version']);
+        $this->assertSame('1.6.11', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
         foreach ($this->publicThemeFiles() as $file) {
@@ -103,6 +103,39 @@ class BundledAureliaThemesTest extends TestCase
             'key' => 'theme.active',
             'value' => 'kaev-aurelia',
         ]);
+    }
+
+    public function test_aurelia_night_scheme_is_wired_before_the_first_paint_and_ships_its_artwork(): void
+    {
+        app(ThemeManager::class)->activate('kaev-aurelia');
+
+        foreach (['/ru', '/ru/news', '/ru/login'] as $path) {
+            $html = $this->get($path)->assertOk()->getContent();
+
+            // The scheme script runs before the stylesheets so the saved choice never flashes.
+            $script = strpos($html, 'themes/kaev-aurelia/assets/js/scheme.js');
+            $this->assertNotFalse($script);
+            $this->assertLessThan(strpos($html, 'themes/kaev-aurelia/assets/css/app.css'), $script);
+            $this->assertLessThan(strpos($html, 'themes/kaev-aurelia/assets/css/dark.css'), $script);
+            $this->assertStringContainsString('data-site-scheme-toggle', $html);
+            $this->assertStringContainsString('class="scheme-toggle"', $html);
+            $this->assertStringContainsString('class="mobile-scheme-toggle"', $html);
+            $this->assertStringContainsString('role="switch"', $html);
+            $this->assertStringContainsString(__('Switch to the dark theme'), $html);
+        }
+
+        foreach (['assets/css/dark.css', 'assets/js/scheme.js', 'assets/images/hero-dark.webp'] as $asset) {
+            $this->assertFileExists(public_path('themes/kaev-aurelia/'.$asset));
+        }
+
+        $darkCss = $this->readFile(public_path('themes/kaev-aurelia/assets/css/dark.css'));
+        $this->assertStringContainsString('html[data-site-scheme="dark"]', $darkCss);
+        $this->assertStringContainsString("url('../images/hero-dark.webp')", $darkCss);
+
+        $schemeScript = $this->readFile(public_path('themes/kaev-aurelia/assets/js/scheme.js'));
+        $this->assertStringContainsString("'kaevcms.site.scheme'", $schemeScript);
+        $this->assertStringContainsString('startViewTransition', $schemeScript);
+        $this->assertStringContainsString('prefers-reduced-motion', $schemeScript);
     }
 
     public function test_aurelia_scenery_has_the_correct_initial_state_without_javascript(): void

@@ -137,7 +137,7 @@
                         @if ($item->coverUrl())
                             <img src="{{ $item->coverUrl() }}" alt="">
                         @else
-                            <span class="news-thumb-fallback" aria-hidden="true"><img src="{{ theme_asset('images/kaev-mark.png') }}" alt=""></span>
+                            <span class="news-thumb-fallback" aria-hidden="true"><img src="{{ theme_asset('images/kaev-logo.webp') }}" alt=""></span>
                         @endif
                     </a>
                     <div class="news-card-copy">

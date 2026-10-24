@@ -9,7 +9,7 @@
     @if (site_favicon_url())
         <link rel="icon" href="{{ site_favicon_url() }}">
     @else
-        <link rel="icon" type="image/png" href="{{ account_theme_asset('assets/images/kaev-mark.png') }}">
+        <link rel="icon" type="image/webp" href="{{ account_theme_asset('assets/images/kaev-logo.webp') }}">
     @endif
     <title>@yield('title', __('Personal account')) — {{ site_name() }}</title>
     <link rel="stylesheet" href="{{ account_theme_asset('assets/css/app.css') }}" data-navigate-track>
@@ -33,7 +33,7 @@
                 @if (site_logo_url())
                     <span class="account-brand-logo account-brand-logo-custom"><img src="{{ site_logo_url() }}" alt="{{ site_name() }}"></span>
                 @else
-                    <span class="account-brand-logo"><img src="{{ account_theme_asset('assets/images/kaev-logo.png') }}" alt="Kaev"></span>
+                    <span class="account-brand-logo"><img src="{{ account_theme_asset('assets/images/kaev-logo.webp') }}" alt="Kaev"></span>
                 @endif
                 @unless (site_logo_url() && site_logo_is_wide())
                     <span class="account-brand-copy">

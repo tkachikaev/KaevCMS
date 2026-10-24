@@ -86,7 +86,7 @@
         }
     };
 
-    const switchAppearance = async (event, button) => {
+    const switchAppearance = async (button) => {
         if (appearanceChange !== null) return;
         const next = root.dataset.accountScheme === 'dark' ? 'light' : 'dark';
         if (reducedMotion.matches || typeof document.startViewTransition !== 'function'
@@ -95,11 +95,6 @@
             return;
         }
 
-        const bounds = button.getBoundingClientRect();
-        // Keyboard activation has no pointer position: reveal from the button's centre.
-        const x = event.detail > 0 ? event.clientX : bounds.left + bounds.width / 2;
-        const y = event.detail > 0 ? event.clientY : bounds.top + bounds.height / 2;
-        const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
         const change = { next, button, transition: null, animation: null };
         appearanceChange = change;
         button.setAttribute('aria-busy', 'true');
@@ -116,11 +111,11 @@
             await change.transition.ready;
             if (appearanceChange !== change) return;
             change.animation = root.animate({
-                clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`],
-                filter: ['brightness(1.22) saturate(1.15)', 'brightness(1) saturate(1)'],
+                opacity: [0, 1],
             }, {
-                duration: 950,
-                easing: 'cubic-bezier(.22,.68,.16,1)',
+                // A quick crossfade: one portrait melts into the other, the page follows.
+                duration: 520,
+                easing: 'cubic-bezier(.4,0,.2,1)',
                 pseudoElement: '::view-transition-new(root)',
             });
             await change.animation.finished;
@@ -148,7 +143,13 @@
     // Motion hooks: `kc-js` lets images wait hidden until loaded (without JS they show at once);
     // `kc-entering` limits the sidebar entrance to the first paint, not to every Livewire visit.
     root.classList.add('kc-entering');
-    window.addEventListener('load', () => window.setTimeout(() => root.classList.remove('kc-entering'), 900), { once: true });
+    window.addEventListener('load', () => window.setTimeout(() => {
+        root.classList.remove('kc-entering');
+        // A coin inside a closed menu is not rendered, so its fade never advances: settle it.
+        document.querySelectorAll('img.account-wallet-coin-image').forEach((image) => {
+            image.getAnimations().forEach((animation) => animation.finish());
+        });
+    }, 900), { once: true });
 
     // The banner art and the shared wallet coin both ease in once their image has arrived.
     const revealSelector = 'img[data-kc-reveal], img.account-wallet-coin-image';
@@ -270,7 +271,7 @@
             return;
         }
 
-        void switchAppearance(event, target);
+        void switchAppearance(target);
     });
 
     // Livewire navigation copies the new page's <html> attributes over this one; restore the

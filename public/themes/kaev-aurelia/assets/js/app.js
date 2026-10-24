@@ -272,7 +272,10 @@
         const controller = new AbortController();
         const { signal } = controller;
         const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const palette = ['255,215,0', '245,158,11', '255,244,204', '212,175,55'];
+        const palettes = {
+            light: ['255,215,0', '245,158,11', '255,244,204', '212,175,55'],
+            dark: ['205,189,247', '170,142,240', '236,228,255', '150,120,230'],
+        };
         let width = 0;
         let height = 0;
         let particles = [];
@@ -294,7 +297,7 @@
             pulse: Math.random() * Math.PI * 2,
             pulseSpeed: .01 + Math.random() * .03,
             opacity: .25 + Math.random() * .65,
-            color: palette[Math.floor(Math.random() * palette.length)],
+            color: Math.floor(Math.random() * palettes.light.length),
             glint: Math.random() > .82,
             spin: Math.random() * Math.PI,
             spinSpeed: (Math.random() - .5) * .02,
@@ -302,6 +305,7 @@
 
         const draw = (step) => {
             context.clearRect(0, 0, width, height);
+            const colors = document.documentElement.dataset.siteScheme === 'dark' ? palettes.dark : palettes.light;
             particles.forEach((particle) => {
                 if (step > 0) {
                     particle.y -= particle.speed * step;
@@ -326,8 +330,9 @@
                 const opacity = (.2 + .8 * (Math.sin(particle.pulse) + 1) / 2) * particle.opacity;
                 context.save();
                 context.translate(particle.x, particle.y);
-                context.fillStyle = `rgba(${particle.color},${opacity})`;
-                context.shadowColor = `rgba(${particle.color},${opacity * .9})`;
+                const color = colors[particle.color];
+                context.fillStyle = `rgba(${color},${opacity})`;
+                context.shadowColor = `rgba(${color},${opacity * .9})`;
                 context.shadowBlur = particle.size * 5;
                 context.beginPath();
                 if (particle.glint) {

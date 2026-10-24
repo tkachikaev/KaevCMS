@@ -1,0 +1,260 @@
+/* ==========================================================================
+   Kaev Aurelia — night scheme. Applies only while <html data-site-scheme="dark">;
+   scheme.js sets the attribute before the first paint.
+   ========================================================================== */
+html[data-site-scheme="dark"] {
+    --bg: #0d0c11;
+    --bg-soft: #15131c;
+    --paper: rgba(25, 22, 34, .92);
+    --paper-solid: #191622;
+    --ink: #ece8f5;
+    --ink-soft: #c1bbd0;
+    --muted: #9690a8;
+    --line: rgba(190, 172, 235, .15);
+    --line-strong: rgba(190, 172, 235, .34);
+    --gold: #b9a3f1;
+    --gold-dark: #cdbdf7;
+    --gold-light: #3b3259;
+    --sage: #8e86a8;
+    --sage-dark: #b4acc9;
+    --green: #6fc08a;
+    --danger: #e88a82;
+    --warning: #dcb766;
+    --shadow-sm: 0 14px 40px rgba(0, 0, 0, .38);
+    --shadow: 0 30px 90px rgba(0, 0, 0, .5);
+    background: #0d0c11;
+    color-scheme: dark;
+}
+
+html[data-site-scheme="dark"] body.kaev-aurelia {
+    background:
+        radial-gradient(circle at 6% 10%, rgba(120, 96, 190, .2), transparent 30rem),
+        radial-gradient(circle at 94% 72%, rgba(94, 70, 160, .16), transparent 32rem),
+        var(--bg);
+}
+html[data-site-scheme="dark"] body.kaev-aurelia::before {
+    background-image:
+        linear-gradient(rgba(190, 172, 235, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(190, 172, 235, .05) 1px, transparent 1px);
+}
+html[data-site-scheme="dark"] .page-aura { border-color: rgba(185, 163, 241, .14); }
+
+/* Header */
+html[data-site-scheme="dark"] .kaev-aurelia .site-header {
+    border-bottom-color: rgba(190, 172, 235, .14);
+    background: rgba(15, 13, 21, .94);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+}
+html[data-site-scheme="dark"] .kaev-aurelia .main-nav a { color: #d8d2e6; }
+html[data-site-scheme="dark"] .kaev-aurelia .main-nav a:hover,
+html[data-site-scheme="dark"] .kaev-aurelia .main-nav a.active { color: #fff; }
+html[data-site-scheme="dark"] .kaev-aurelia .header-text-action { color: var(--ink-soft); }
+html[data-site-scheme="dark"] .kaev-aurelia .header-text-action:hover { color: #fff; }
+html[data-site-scheme="dark"] .brand-mark { background: rgba(25, 22, 34, .7); border-color: var(--line-strong); }
+
+/* Language menu and phone menu */
+html[data-site-scheme="dark"] .language-menu > summary { background: rgba(25, 22, 34, .72); color: var(--ink); }
+html[data-site-scheme="dark"] .language-menu-list {
+    background: #181520;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .6);
+}
+html[data-site-scheme="dark"] .language-menu-list a:hover { background: rgba(185, 163, 241, .12); }
+html[data-site-scheme="dark"] .language-menu-list a.active,
+html[data-site-scheme="dark"] .kaev-aurelia .main-nav .language-menu-list a.active,
+html[data-site-scheme="dark"] .kaev-aurelia .main-nav .language-menu-list a.active:hover {
+    background: linear-gradient(135deg, #cdbdf7, #a58de6);
+    color: #17121f;
+}
+html[data-site-scheme="dark"] .language-menu-list a.active small { color: rgba(23, 18, 31, .72); }
+html[data-site-scheme="dark"] .menu-toggle { background: rgba(25, 22, 34, .8); }
+
+/* Buttons */
+html[data-site-scheme="dark"] .kaev-aurelia .button:focus-visible { outline-color: #cdbdf7; }
+html[data-site-scheme="dark"] .kaev-aurelia .button-gold {
+    border-color: #a58de6;
+    background: linear-gradient(135deg, #d6c8fa 0%, #b9a3f1 48%, #8f74dc 100%);
+    color: #17121f;
+    text-shadow: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 0 rgba(60, 38, 120, .25), 0 6px 22px rgba(130, 100, 220, .3);
+}
+html[data-site-scheme="dark"] .kaev-aurelia .button-gold:hover {
+    border-color: #c4b3f6;
+    background: linear-gradient(135deg, #e2d7fc 0%, #c6b3f5 48%, #9d84e4 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -1px 0 rgba(60, 38, 120, .2), 0 8px 28px rgba(140, 110, 230, .42);
+}
+html[data-site-scheme="dark"] .kaev-aurelia .button-ghost {
+    border-color: rgba(185, 163, 241, .5);
+    background: rgba(25, 22, 34, .6);
+    color: #d9ccfa;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+html[data-site-scheme="dark"] .kaev-aurelia .button-ghost:hover {
+    border-color: #b9a3f1;
+    background: rgba(45, 38, 66, .85);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 5px 20px rgba(120, 92, 210, .24);
+}
+
+/* Night portrait. The scene is a persisted element, so only its background changes. */
+html[data-site-scheme="dark"] body.kaev-aurelia .aurelia-scene .hero-art { background-image: url('../images/hero-dark.webp'); }
+html[data-site-scheme="dark"] .aurelia-scene-shade {
+    background:
+        linear-gradient(90deg, rgba(13,12,17,.97) 0%, rgba(13,12,17,.9) 28%, rgba(13,12,17,.55) 46%, rgba(13,12,17,.08) 70%, transparent 100%),
+        linear-gradient(0deg, rgba(13,12,17,.94), transparent 24%);
+}
+html[data-site-scheme="dark"] .aurelia-scene-veil { background: rgba(13, 12, 17, .56); }
+html[data-site-scheme="dark"] .kaev-aurelia .hero-light {
+    background:
+        radial-gradient(circle at 25% 42%, rgba(150, 120, 235, .16), transparent 28rem),
+        linear-gradient(180deg, rgba(255, 255, 255, .03), transparent 28%);
+}
+html[data-site-scheme="dark"] .kaev-aurelia .hero-copy { color: #c9c3d8; }
+html[data-site-scheme="dark"] .kaev-aurelia .hero-meta span { border-right-color: rgba(190, 172, 235, .3); }
+html[data-site-scheme="dark"] .kaev-aurelia .hero-divider span { background: linear-gradient(90deg, transparent, rgba(185, 163, 241, .62), transparent); }
+html[data-site-scheme="dark"] .kaev-aurelia .ornament-icon::before { filter: drop-shadow(0 4px 12px rgba(150, 120, 240, .35)); }
+
+/* Cards and panels */
+html[data-site-scheme="dark"] .kaev-aurelia .panel {
+    border-color: rgba(190, 172, 235, .16);
+    background: rgba(25, 22, 34, .9);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .42);
+}
+html[data-site-scheme="dark"] .kaev-aurelia .server-stat,
+html[data-site-scheme="dark"] .kaev-aurelia .server-arrow { border-left-color: rgba(190, 172, 235, .14); }
+html[data-site-scheme="dark"] .kaev-aurelia .server-summary small,
+html[data-site-scheme="dark"] .kaev-aurelia .server-stat small { color: #9a93ae; }
+html[data-site-scheme="dark"] .kaev-aurelia .status-dot { background: #7a758a; }
+html[data-site-scheme="dark"] .kaev-aurelia .status-dot.online { background: var(--green); box-shadow: 0 0 0 5px rgba(111, 192, 138, .14); }
+html[data-site-scheme="dark"] .kaev-aurelia .status-dot.offline { background: var(--danger); }
+html[data-site-scheme="dark"] .kaev-aurelia .status-dot.maintenance { background: var(--warning); }
+html[data-site-scheme="dark"] .kaev-aurelia .section-heading-ornamented > span { background: linear-gradient(90deg, transparent, rgba(185, 163, 241, .5)); }
+html[data-site-scheme="dark"] .kaev-aurelia .section-heading-ornamented > span:last-child { background: linear-gradient(90deg, rgba(185, 163, 241, .5), transparent); }
+html[data-site-scheme="dark"] .news-thumb,
+html[data-site-scheme="dark"] .public-news-cover { background: linear-gradient(135deg, #221d33, #2e2646); }
+html[data-site-scheme="dark"] .kaev-aurelia .news-thumb-fallback { background: linear-gradient(145deg, #1f1a2e, #2a2340); }
+html[data-site-scheme="dark"] .news-thumb-fallback::after { background: rgba(185, 163, 241, .12); }
+html[data-site-scheme="dark"] .news-thumb-fallback,
+html[data-site-scheme="dark"] .public-news-cover::after { border-color: rgba(185, 163, 241, .32); }
+html[data-site-scheme="dark"] .kaev-aurelia .news-thumb-fallback img,
+html[data-site-scheme="dark"] .kaev-aurelia .empty-state > img { filter: brightness(1.7) saturate(.6); }
+html[data-site-scheme="dark"] .kaev-aurelia .news-card-copy time { color: var(--gold); }
+html[data-site-scheme="dark"] .about-server-card { background: rgba(31, 27, 43, .75); }
+html[data-site-scheme="dark"] tbody tr:hover { background: rgba(185, 163, 241, .07); }
+
+/* Inner pages and sign-in */
+html[data-site-scheme="dark"] .kaev-aurelia .auth-page {
+    background:
+        linear-gradient(90deg, rgba(13,12,17,.94), rgba(13,12,17,.76)),
+        url('../images/hero-dark.webp') center top / cover no-repeat;
+}
+html[data-site-scheme="dark"] .auth-card input:not([type="checkbox"]) {
+    background: rgba(13, 12, 17, .7);
+    color: var(--ink);
+}
+html[data-site-scheme="dark"] .auth-card input:not([type="checkbox"]):focus {
+    background: rgba(13, 12, 17, .9);
+    box-shadow: 0 0 0 4px rgba(185, 163, 241, .18);
+}
+html[data-site-scheme="dark"] .auth-card input::placeholder { color: #7f7894; }
+html[data-site-scheme="dark"] .auth-card input:-webkit-autofill {
+    -webkit-text-fill-color: var(--ink);
+    box-shadow: 0 0 0 100px #14111c inset;
+}
+
+/* Statistics */
+html[data-site-scheme="dark"] .statistics-server-switcher a,
+html[data-site-scheme="dark"] .statistics-tabs a { background: rgba(31, 27, 43, .8); }
+html[data-site-scheme="dark"] .statistics-server-switcher a:hover,
+html[data-site-scheme="dark"] .statistics-server-switcher a.active,
+html[data-site-scheme="dark"] .statistics-tabs a:hover,
+html[data-site-scheme="dark"] .statistics-tabs a.active {
+    border-color: #b9a3f1;
+    background: linear-gradient(135deg, #cdbdf7, #a58de6);
+    color: #17121f;
+}
+html[data-site-scheme="dark"] .statistics-partial-progress { background: rgba(25, 22, 34, .94); border-color: rgba(185, 163, 241, .3); }
+html[data-site-scheme="dark"] .statistics-partial-progress span { border-color: rgba(185, 163, 241, .3); border-top-color: var(--gold-dark); }
+html[data-site-scheme="dark"] .news-preview-banner { background: #2a2340; color: #ece8f5; }
+
+/* Footer */
+html[data-site-scheme="dark"] .kaev-aurelia .site-footer {
+    border-color: rgba(190, 172, 235, .14);
+    background: #0a090e;
+    color: #bdb7cc;
+}
+html[data-site-scheme="dark"] .kaev-aurelia .footer-emblem { background: rgba(185, 163, 241, .1); border-color: rgba(185, 163, 241, .5); color: #cdbdf7; box-shadow: none; }
+html[data-site-scheme="dark"] .kaev-aurelia .footer-statement h2,
+html[data-site-scheme="dark"] .kaev-aurelia .footer-grid h3 { color: #f1edf9; }
+html[data-site-scheme="dark"] .kaev-aurelia .footer-quote,
+html[data-site-scheme="dark"] .kaev-aurelia .footer-bottom { color: #9e97b1; }
+html[data-site-scheme="dark"] .kaev-aurelia .footer-bottom { border-color: rgba(190, 172, 235, .14); }
+html[data-site-scheme="dark"] .kaev-aurelia .footer-section-links a { color: #c1bbd0; }
+html[data-site-scheme="dark"] .kaev-aurelia .footer-section-links a:hover { color: #fff; }
+html[data-site-scheme="dark"] .kaev-aurelia .footer-emblem:focus-visible,
+html[data-site-scheme="dark"] .kaev-aurelia .footer-section-links a:focus-visible { outline-color: #cdbdf7; }
+
+/* Editor content: lift the dark text tones, turn light highlights into soft glows. */
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="gold"] { color: #d9b878; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="amber"] { color: #f0b254; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="yellow"] { color: #e7c24f; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="red"] { color: #f2837a; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="rose"] { color: #f58aa4; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="coral"] { color: #f38d78; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="orange"] { color: #f59a63; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="brown"] { color: #d39a6a; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="lime"] { color: #a9d457; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="green"] { color: #5fd28a; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="emerald"] { color: #4cd3a2; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="teal"] { color: #4dd2c4; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="cyan"] { color: #55cde3; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="sky"] { color: #5ab9ee; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="blue"] { color: #7aa5f7; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="indigo"] { color: #9a9bf5; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="violet"] { color: #b497f7; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="purple"] { color: #c58cf3; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="fuchsia"] { color: #e089ee; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="pink"] { color: #f58cbf; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="slate"] { color: #a4b0c3; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="gray"] { color: #a6abb6; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="zinc"] { color: #a7a7b0; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-color="muted"] { color: #9690a8; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="yellow"] { background: rgba(255, 224, 102, .26); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="amber"] { background: rgba(251, 191, 36, .28); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="orange"] { background: rgba(251, 146, 60, .28); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="rose"] { background: rgba(251, 113, 133, .26); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="red"] { background: rgba(248, 113, 113, .26); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="lime"] { background: rgba(163, 230, 53, .22); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="green"] { background: rgba(74, 222, 128, .22); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="teal"] { background: rgba(45, 212, 191, .22); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="cyan"] { background: rgba(34, 211, 238, .22); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="blue"] { background: rgba(96, 165, 250, .26); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="purple"] { background: rgba(192, 132, 252, .26); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) [data-highlight="gray"] { background: rgba(160, 160, 175, .24); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) th { background: rgba(185, 163, 241, .1); }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) code { background: rgba(185, 163, 241, .14); color: #f0b8a0; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) pre { background: #07060a; border: 1px solid var(--line); color: #ece8f5; }
+html[data-site-scheme="dark"] :where(.news-prose,.cms-page-prose) pre code { background: transparent; color: inherit; }
+
+html[data-site-scheme="dark"] #nprogress .bar { box-shadow: 0 0 12px rgba(185, 163, 241, .55) !important; }
+
+/* Phone menu panel. */
+@media (max-width: 900px) {
+    html[data-site-scheme="dark"] .main-nav { background: rgba(21, 18, 29, .98); }
+}
+
+/* Phone: the same portrait, framed on her face above the copy. */
+@media (max-width: 900px) {
+    html[data-site-scheme="dark"] body.kaev-aurelia .aurelia-scene .hero-art { background-image: url('../images/hero-dark.webp'); background-position: 78% top; }
+    html[data-site-scheme="dark"] .kaev-aurelia .auth-page {
+        background-image:
+            linear-gradient(90deg, rgba(13,12,17,.95), rgba(13,12,17,.8)),
+            url('../images/hero-dark.webp');
+        background-position: 78% top;
+        background-size: cover;
+    }
+}
+@media (max-width: 680px) {
+    html[data-site-scheme="dark"] .aurelia-scene-shade {
+        background: linear-gradient(180deg, rgba(13,12,17,.05) 0%, rgba(13,12,17,.12) 24%, rgba(13,12,17,.82) 38%, rgba(13,12,17,.98) 49%, #0d0c11 65%);
+    }
+}

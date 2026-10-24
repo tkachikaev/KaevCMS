@@ -27,7 +27,7 @@
                 @if (site_logo_url())
                     <span class="account-brand-logo"><img src="{{ site_logo_url() }}" alt="{{ site_name() }}"></span>
                 @else
-                    <span class="account-brand-mark">L2</span>
+                    <span class="account-brand-logo"><img src="{{ asset('assets/images/kaev-logo.webp') }}" alt="{{ site_name() }}"></span>
                 @endif
                 @unless (site_logo_url() && site_logo_is_wide())
                     <span class="account-brand-copy">

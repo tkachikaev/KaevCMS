@@ -176,22 +176,18 @@ test('Kaev Classic keeps the chosen scheme across navigation and reloads on desk
             .map(animation => ({ frames: animation.effect.getKeyframes(), progress: animation.effect.getComputedTiming().progress })));
         await expect.poll(async () => (await revealAnimation()).length).toBe(1);
         const snapshot = (await revealAnimation())[0];
-        expect(snapshot.frames[0].clipPath).toMatch(/^circle\(0px at /);
-        expect(snapshot.frames.at(-1).clipPath).not.toBe(snapshot.frames[0].clipPath);
+        expect(Number(snapshot.frames[0].opacity)).toBe(0);
+        expect(Number(snapshot.frames.at(-1).opacity)).toBe(1);
         await toggle.evaluate(button => button.click());
         await expect(root).toHaveAttribute('data-account-scheme', 'dark');
         await expect(root).not.toHaveClass(/kc-theme-reveal/);
         await expect(toggle).not.toHaveAttribute('aria-busy', 'true');
 
-        // Space activation uses the switch centre rather than the top-left screen corner.
-        const switchBounds = await toggle.boundingBox();
+        // Keyboard activation switches with the same crossfade.
         await toggle.focus();
         await page.keyboard.press('Space');
         await expect(root).toHaveAttribute('data-account-scheme', 'light');
         await expect.poll(async () => (await revealAnimation()).length).toBe(1);
-        const origin = (await revealAnimation())[0].frames[0].clipPath.match(/at ([\d.]+)px ([\d.]+)px/);
-        expect(Number(origin[1])).toBeCloseTo(switchBounds.x + switchBounds.width / 2, 1);
-        expect(Number(origin[2])).toBeCloseTo(switchBounds.y + switchBounds.height / 2, 1);
         await expect(root).not.toHaveClass(/kc-theme-reveal/);
         await page.keyboard.press('Space');
         await expect(root).toHaveAttribute('data-account-scheme', 'dark');

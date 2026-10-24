@@ -22,13 +22,15 @@
     @if (site_favicon_url())
         <link rel="icon" href="{{ site_favicon_url() }}">
     @else
-        <link rel="icon" type="image/png" href="{{ theme_asset('images/kaev-mark.png') }}">
+        <link rel="icon" type="image/webp" href="{{ theme_asset('images/kaev-logo.webp') }}">
     @endif
     @if (! empty($isPreview))
         <meta name="robots" content="noindex, nofollow, noarchive">
     @endif
     <title>@yield('title', site_name())</title>
+    <script src="{{ theme_asset('js/scheme.js') }}" data-navigate-once></script>
     <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}&ui=mobile-portrait" data-navigate-track>
+    <link rel="stylesheet" href="{{ theme_asset('css/dark.css') }}" data-navigate-track>
     <script src="{{ theme_asset('js/app.js') }}&ui=mobile-portrait" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
