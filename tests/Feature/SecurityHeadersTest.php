@@ -79,13 +79,25 @@ class SecurityHeadersTest extends TestCase
     {
         $admin = Admin::factory()->create();
 
-        $this->actingAs($admin, 'admin')
+        $response = $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertHeader('X-Frame-Options', 'DENY')
-            ->assertHeader('Referrer-Policy', 'same-origin')
-            ->assertHeader('Content-Security-Policy', "default-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
+            ->assertHeader('Referrer-Policy', 'same-origin');
+
+        $policy = (string) $response->headers->get('Content-Security-Policy');
+        $this->assertMatchesRegularExpression(
+            "/\\Adefault-src 'self'; style-src 'self' 'nonce-([A-Za-z0-9]{40})'; img-src 'self' data: blob:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'\\z/",
+            $policy,
+        );
+        preg_match("/'nonce-([A-Za-z0-9]+)'/", $policy, $nonce);
+        // Livewire's own style block carries this response's nonce; nothing else may be inline.
+        $this->assertStringContainsString('<style nonce="'.$nonce[1].'" data-livewire-style>', (string) $response->getContent());
+        $this->assertStringNotContainsString('unsafe-inline', $policy);
+
+        $next = (string) $this->actingAs($admin, 'admin')->get(route('admin.dashboard'))->headers->get('Content-Security-Policy');
+        $this->assertStringNotContainsString($nonce[1], $next);
     }
 
     public function test_templates_do_not_use_inline_handlers_blocked_by_the_policy(): void

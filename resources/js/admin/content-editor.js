@@ -302,6 +302,8 @@ const initializeRichEditor = (root, signal) => {
     const editor = new Editor({
         element: canvas,
         content: source.value,
+        // The admin CSP admits inline <style> only with the response nonce Livewire carries.
+        injectNonce: document.querySelector('style[data-livewire-style]')?.nonce || undefined,
         extensions: [
             StarterKit.configure({
                 heading: { levels: [2, 3, 4] },

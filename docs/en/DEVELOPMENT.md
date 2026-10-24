@@ -76,6 +76,8 @@ public/assets/admin/css/catalogs.css
 
 Keep the order stable: later files intentionally refine earlier primitives. Do not recreate a monolithic `app.css` or add page fixes as untracked tail overrides. Place new rules in the narrowest matching file and add a browser regression when layout behavior changes.
 
+The administration Content Security Policy admits an inline `<style>` only with the current response's one-time nonce (`Vite::cspNonce()`, issued by `AdminSecurityHeaders`). Livewire (`@livewireStyles`, the navigation progress bar) and the content editor (`injectNonce`) use it. `style="…"` attributes in markup are blocked: style with classes in CSS files, and from JavaScript through `element.style`. One blocked-style report during Livewire navigation inside administration is expected: Livewire parses the new page before substituting the current nonce, and rendering is unaffected.
+
 Both bundled player-account themes use the shared versioned runtime:
 
 ```text

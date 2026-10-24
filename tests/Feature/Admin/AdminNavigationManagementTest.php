@@ -74,13 +74,16 @@ class AdminNavigationManagementTest extends TestCase
         $this->actingAs(Admin::factory()->create(), 'admin')
             ->post('/admin/navigation', $this->payload())->assertRedirect();
 
-        $this->get('/admin/navigation')
+        $policy = (string) $this->get('/admin/navigation')
             ->assertOk()
             ->assertSee('class="content-row-preview page-row-preview navigation-link-preview"', false)
             ->assertSee('class="navigation-link-preview-icon"', false)
             ->assertSee('viewBox="0 0 24 24"', false)
             ->assertDontSee('href="https://www.google.com/s2/favicons', false)
-            ->assertHeader('Content-Security-Policy', "default-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
+            ->headers->get('Content-Security-Policy');
+        // Link previews are inline SVG: the admin policy still loads no third-party images.
+        $this->assertStringContainsString("; img-src 'self' data: blob:;", $policy);
+        $this->assertStringStartsWith("default-src 'self'; style-src 'self' 'nonce-", $policy);
 
         foreach (['default', 'kaev-aurelia'] as $theme) {
             $footer = file_get_contents(base_path('themes/'.$theme.'/views/partials/footer.blade.php')) ?: '';
