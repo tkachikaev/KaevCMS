@@ -31,10 +31,6 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
  */
 function kaevReleaseBuild(array $options): array
 {
-    if (! class_exists(ZipArchive::class)) {
-        throw new RuntimeException('The PHP zip extension is required.');
-    }
-
     $rootOption = trim((string) ($options['root'] ?? dirname(__DIR__, 2)));
     $previousOption = trim((string) ($options['previous'] ?? ''));
     $outputOption = trim((string) ($options['output-dir'] ?? ''));
@@ -50,6 +46,12 @@ function kaevReleaseBuild(array $options): array
 
     // Release packages deliver composer.lock to every site, so it must be owner-approved.
     kaevDependencyAssertApproved($root);
+
+    // The dependency approval gate must run before environment/toolchain checks.
+    // A missing ZIP extension must never mask an unapproved framework change.
+    if (! class_exists(ZipArchive::class)) {
+        throw new RuntimeException('The PHP zip extension is required.');
+    }
 
     $release = kaevReleaseReadJson($root.'/release.json');
     $version = kaevReleaseRequireVersion($release['version'] ?? null, 'version');

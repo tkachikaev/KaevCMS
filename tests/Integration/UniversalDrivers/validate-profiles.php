@@ -50,4 +50,30 @@ foreach (['', '{', '[]', str_repeat('x', 262145)] as $badJson) {
     }
     throw new RuntimeException('Unsafe JSON was accepted.');
 }
-printf("OK: %d bundled profiles and 12 negative cases; no application bootstrap/DB used.\n", count($profiles));
+// These fields are used by the real connection tester to approve a profile.
+// A valid JSON must not claim compatibility while omitting the mandatory
+// character/account owner keys or a mandatory filter column from preflight.
+$contractNegative = [
+    ['login:l2j_mobius', static function (array &$p): void { $p['config']['requirements'][0]['required'] = false; }],
+    ['login:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['password']; }],
+    ['login:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['login']; }],
+    ['login:rusacis', static function (array &$p): void { $p['config']['accounts']['ownership']['column'] = 'password'; }],
+    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['required'] = false; }],
+    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['obj_Id', 'char_name']; }],
+    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['account_name', 'char_name']; }],
+    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['account_name', 'obj_Id']; }],
+    ['game:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['columns'] = array_values(array_diff($p['config']['requirements'][0]['columns'], ['deletetime']));
+    }],
+];
+foreach ($contractNegative as [$identity, $mutate]) {
+    $bad = $profiles[$identity];
+    $mutate($bad);
+    try {
+        $validator->validate($bad);
+    } catch (ProfileValidationException) {
+        continue;
+    }
+    throw new RuntimeException('A profile with an unverified primary key/filter was accepted: '.$identity);
+}
+printf("OK: %d bundled profiles, 12 unsafe-input and %d primary-contract negative cases; offline.\n", count($profiles), count($contractNegative));

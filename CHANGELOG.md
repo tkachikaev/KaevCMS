@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.53.11 - 2026-10-25
+
+Universal driver audit and targeted safety hardening, based on 0.53.10 full ZIP. **Experimental; not a stable migration release.**
+
+- Reject JSON profiles that mark the primary accounts/characters table optional, omit mandatory account identity, character owner/ID/name or character-filter columns from the REQUIRED MySQL schema preflight. Validate the LoginServer ownership column against the declared identity mapping.
+- Add nine offline negative regression scenarios to protect against false-positive connection compatibility. Validate filter structure before inspecting its required columns.
+- Respect locally hidden bundled profile IDs in the LoginServer/GameServer selection registry, not only in the Drivers catalog. Preserve unchanged PHP fallback for existing connections; add a feature test for hide/restore visibility.
+- Run owner-approved dependency guard before requiring PHP ZIP when invoking the release builder. The dependency approval regression now passes even on a PHP installation without the ZIP extension; actual release packaging still requires ZIP.
+- Document remaining unverified points: real MySQL parity and unique login index, server-side account-ID ownership, EAV ranking, module-driven driver capabilities, old-driver parity, browser/Windows/install/update and complete PHPUnit/PHPStan. Retain the PHP Mobius/RUSaCis drivers and do not switch existing production connections.
+- No new or modified migrations, game database writes, Composer dependency changes, framework updates or payment changes.
+
 ## 0.53.10 - 2026-10-25
 
 Universal drivers, iteration 8: **opt-in integration and guarded JSON profile activation**. Base: 0.53.9 full ZIP.

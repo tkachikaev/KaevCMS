@@ -766,5 +766,8 @@
   ],
   "0.53.10": [
     "core/deployment/windows/apply-0.53.9.ps1"
+  ],
+  "0.53.11": [
+    "core/deployment/windows/apply-0.53.10.ps1"
   ]
 }

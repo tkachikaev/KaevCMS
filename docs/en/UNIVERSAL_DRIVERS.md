@@ -1,4 +1,12 @@
-# Universal drivers — development history / current version 0.53.10
+# Universal drivers — development history / current version 0.53.11
+
+## 0.53.11 audit — schema preflight hardening
+
+**Status: experimental; production migration is not certified.** JSON profiles can no longer mark their accounts/characters primary table optional or omit identity and character-filter columns from mandatory schema checks. LoginServer ownership must refer to the selected login/ID field. Nine additional negative offline contract tests are included. Hiding a bundled profile now also removes it from new connection selectors.
+
+Outstanding verification: MySQL 8.4 parity, PHPUnit/PHPStan, clean installation and upgrades, browser/Windows quality; EAV-based ranking, account-ID ownership mapping, modular driver extensions, and complete bundled-driver hide semantics are not complete. Existing PHP game drivers remain intact.
+
+---
 
 ## Iteration 8 — CMS connection integration (0.53.10)
 

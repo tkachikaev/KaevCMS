@@ -59,7 +59,12 @@ final class ProfileValidator
         if ($profile['type'] === 'login') {
             $this->keys($config, ['database', 'requirements', 'capabilities', 'accounts', 'password'], ['database', 'requirements', 'capabilities', 'accounts'], 'login config');
             $this->accounts($this->object($config['accounts'], 'accounts'), $config['capabilities'], $config['requirements']);
-            $this->requirePrimaryTable($config['accounts']['table'], $config['requirements']);
+            $loginFields = $config['accounts']['fields'];
+            $primaryColumns = [$loginFields['login']];
+            if (in_array('account_creation', $config['capabilities'], true) || in_array('password_change', $config['capabilities'], true)) {
+                $primaryColumns[] = $loginFields['password'];
+            }
+            $this->requirePrimaryTable($config['accounts']['table'], $config['requirements'], $primaryColumns);
             if (in_array('account_creation', $config['capabilities'], true) || in_array('password_change', $config['capabilities'], true)) {
                 if (! isset($config['password'])) {
                     throw new ProfileValidationException('Account creation/change requires a supported password scheme.');
@@ -72,8 +77,18 @@ final class ProfileValidator
             $this->keys($config, ['database', 'requirements', 'capabilities', 'characters', 'relations', 'filters', 'rankings', 'features'], ['database', 'requirements', 'capabilities', 'characters', 'relations', 'filters', 'rankings', 'features'], 'game config');
             $relations = $this->relations($this->object($config['relations'], 'relations'));
             $this->characters($this->object($config['characters'], 'characters'), $relations);
-            $this->requirePrimaryTable($config['characters']['table'], $config['requirements']);
+            // Validate filter structure before using it to verify the schema contract.
             $this->filters($config['filters']);
+            $characters = $config['characters'];
+            $baseColumns = [
+                $characters['owner']['column'],
+                $characters['fields']['id']['column'],
+                $characters['fields']['name']['column'],
+            ];
+            foreach ($config['filters'] as $filter) {
+                $baseColumns[] = $filter['column'];
+            }
+            $this->requirePrimaryTable($characters['table'], $config['requirements'], $baseColumns);
             $this->rankings($this->object($config['rankings'], 'rankings'), $this->object($config['characters']['fields'], 'characters.fields'));
             $this->features($this->object($config['features'], 'features'), $relations);
             $fields = $config['characters']['fields'];
@@ -102,12 +117,31 @@ final class ProfileValidator
         }
     }
 
-    /** @param list<array<string,mixed>> $requirements */
-    private function requirePrimaryTable(string $table, array $requirements): void
+    /**
+     * A schema preflight is only trustworthy when the primary table and every
+     * identity/filter column it needs are declared REQUIRED. Otherwise the
+     * connection tester can approve a profile that fails on its first query.
+     *
+     * @param list<array<string,mixed>> $requirements
+     * @param list<string> $requiredColumns
+     */
+    private function requirePrimaryTable(string $table, array $requirements, array $requiredColumns): void
     {
-        if (! in_array($table, array_column($requirements, 'table'), true)) {
-            throw new ProfileValidationException('The primary table must appear in schema requirements.');
+        foreach ($requirements as $requirement) {
+            if ($requirement['table'] !== $table) {
+                continue;
+            }
+            if ($requirement['required'] !== true) {
+                throw new ProfileValidationException('The primary table must be a required schema table.');
+            }
+            foreach (array_unique($requiredColumns) as $column) {
+                if (! in_array($column, $requirement['columns'], true)) {
+                    throw new ProfileValidationException('Required primary table column is not declared: '.$table.'.'.$column);
+                }
+            }
+            return;
         }
+        throw new ProfileValidationException('The primary table must appear in schema requirements.');
     }
 
     /** @param array<string, mixed> $database */
@@ -170,6 +204,10 @@ final class ProfileValidator
         $this->identifier($ownership['column'], 'ownership.column');
         if ($ownership['identity'] === 'id' && ! is_string($fields['id'] ?? null)) {
             throw new ProfileValidationException('Account ID ownership requires accounts.fields.id.');
+        }
+        $identityField = $ownership['identity'] === 'login' ? $fields['login'] : $fields['id'];
+        if ($ownership['column'] !== $identityField) {
+            throw new ProfileValidationException('Account ownership column must match its declared login/ID field.');
         }
         if (in_array('account_creation', $capabilities, true) && ! isset($accounts['create'])) {
             throw new ProfileValidationException('Account creation requires field mapping.');

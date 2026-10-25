@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\LoginServer;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\ProfileEditorDraft;
+use App\Services\Servers\ServerDriverRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -75,8 +76,12 @@ final class DriverManagerTest extends TestCase
             ->call('askDelete', 'login', 'rusacis')->call('deleteProfile');
         $this->assertNull($catalog->find('login', 'rusacis'));
         $this->assertDatabaseHas('universal_driver_profiles', ['profile_id' => 'rusacis', 'is_deleted' => 1]);
+        // Hiding a bundled profile must hide its legacy identifier in the
+        // new connection form too, not merely in the Drivers catalog.
+        $this->assertNotContains('rusacis', app(ServerDriverRegistry::class)->loginDriverKeys());
         Livewire::test(UniversalDriverManager::class)->call('restoreProfile', 'login', 'rusacis');
         $this->assertSame($original, $catalog->find('login', 'rusacis')['profile']);
+        $this->assertContains('rusacis', app(ServerDriverRegistry::class)->loginDriverKeys());
     }
 
     public function test_used_driver_cannot_be_removed_through_administration(): void

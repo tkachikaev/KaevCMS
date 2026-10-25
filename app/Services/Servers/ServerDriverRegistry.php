@@ -6,6 +6,7 @@ use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\RusacisGameSchemaInspector;
 use App\Support\Database\TableExistence;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
+use Illuminate\Support\Facades\DB;
 
 final class ServerDriverRegistry
 {
@@ -93,7 +94,10 @@ final class ServerDriverRegistry
             ],
         ];
 
-        return $legacy + $this->customDescriptors('login', array_keys($legacy));
+        // A bundled JSON profile hidden in the catalog must also disappear
+        // from the connection selector; keeping the legacy PHP descriptor
+        // visible would silently undo the administrator's delete action.
+        return $this->selectableLegacy('login', $legacy) + $this->customDescriptors('login', array_keys($legacy));
     }
 
     /**
@@ -152,7 +156,33 @@ final class ServerDriverRegistry
             ],
         ];
 
-        return $legacy + $this->customDescriptors('game', array_keys($legacy));
+        return $this->selectableLegacy('game', $legacy) + $this->customDescriptors('game', array_keys($legacy));
+    }
+
+    /**
+     * Preserve the original PHP implementation for existing connections, but
+     * respect tombstones in selectors. Deleting a profile is already refused
+     * while any server uses its identifier, so hiding cannot orphan a server.
+     *
+     * @param array<string,array<string,mixed>> $legacy
+     * @return array<string,array<string,mixed>>
+     */
+    private function selectableLegacy(string $type, array $legacy): array
+    {
+        if (! app(TableExistence::class)->has('universal_driver_profiles')) {
+            return $legacy;
+        }
+
+        $hidden = DB::table('universal_driver_profiles')
+            ->where('type', $type)
+            ->where('is_deleted', true)
+            ->pluck('profile_id')
+            ->all();
+        foreach ($hidden as $profileId) {
+            unset($legacy[$profileId]);
+        }
+
+        return $legacy;
     }
 
     /**
