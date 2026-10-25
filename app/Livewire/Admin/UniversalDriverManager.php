@@ -60,6 +60,14 @@ final class UniversalDriverManager extends Component
     /** @var array<string,mixed> */
     public array $draft = [];
 
+    /**
+     * What the "Table" cell of each optional field row shows and edits: the main table, or the table the
+     * field is read from. Typing another table turns the field into a relation-backed one automatically.
+     *
+     * @var array<string,string>
+     */
+    public array $fieldTables = [];
+
     /** @var array<string,bool> */
     public array $enabled = [];
 
@@ -127,6 +135,7 @@ final class UniversalDriverManager extends Component
         }
         $this->originalGameConfig = $type === 'game' ? $this->draft['config'] : [];
         $this->charactersTableForRelations = (string) ($this->draft['config']['characters']['table'] ?? '');
+        $this->syncFieldTables();
         $this->initializeGameDisplay();
         $this->templateId = $baseId ?? '';
         $this->loadRegistrationRows();
@@ -158,6 +167,7 @@ final class UniversalDriverManager extends Component
         $this->draft = $entry['profile'];
         $this->originalGameConfig = $type === 'game' ? $this->draft['config'] : [];
         $this->charactersTableForRelations = (string) ($this->draft['config']['characters']['table'] ?? '');
+        $this->syncFieldTables();
         $this->loadRegistrationRows();
         $this->originalAccountsTable = (string) ($this->draft['config']['accounts']['table'] ?? '');
         $this->originalType = $type;
@@ -238,6 +248,7 @@ final class UniversalDriverManager extends Component
         abort_unless($this->editing && $this->draft['type'] === 'game' && in_array($target, ['mapping', 'features'], true), 409);
         $this->validateGameDetails($target === 'features');
         $this->pruneAutoRelations();
+        $this->syncFieldTables();
         if ($target === 'features') {
             $this->draft['config'] = app(GameProfileEditor::class)->alignReferences($this->draft['config'], $this->originalGameConfig);
         }
@@ -272,6 +283,61 @@ final class UniversalDriverManager extends Component
             }
         }
         $this->charactersTableForRelations = $value;
+        $this->syncFieldTables();
+    }
+
+    /** A table typed into a field row: the main table keeps a plain column, another one gets a relation. */
+    public function updatedFieldTables(mixed $value, string $field): void
+    {
+        $this->managePermission();
+        abort_unless($this->editing && ($this->draft['type'] ?? '') === 'game', 409);
+        if (! in_array($field, ProfileFormat::FIELD_NAMES, true) || in_array($field, ['id', 'name'], true)) {
+            return;
+        }
+        $table = trim((string) $value);
+        $main = (string) $this->draft['config']['characters']['table'];
+        $definition = $this->draft['config']['characters']['fields'][$field] ?? ['kind' => 'column', 'column' => ''];
+        $kind = $definition['kind'] ?? 'column';
+
+        if ($kind === 'eav') {
+            $relation = (string) ($definition['relation'] ?? '');
+            if (isset($this->draft['config']['relations'][$relation])) {
+                $this->draft['config']['relations'][$relation]['table'] = $table;
+            }
+        } elseif (in_array($kind, ['column', 'related'], true)) {
+            if ($table === '' || strcasecmp($table, $main) === 0) {
+                if ($kind === 'related') {
+                    $this->draft['config']['characters']['fields'][$field] = ['kind' => 'column', 'column' => (string) ($definition['column'] ?? '')];
+                }
+            } else {
+                $relation = (string) ($definition['relation'] ?? '');
+                if (! isset($this->draft['config']['relations'][$relation])) {
+                    $relation = $this->ensureFieldRelation($field, 'related');
+                }
+                if ($relation !== '') {
+                    $this->draft['config']['relations'][$relation]['table'] = $table;
+                    $this->draft['config']['characters']['fields'][$field] = ['kind' => 'related', 'relation' => $relation, 'column' => (string) ($definition['column'] ?? '')];
+                }
+            }
+        }
+        $this->pruneAutoRelations();
+        $this->syncFieldTables();
+    }
+
+    private function syncFieldTables(): void
+    {
+        $this->fieldTables = [];
+        if (($this->draft['type'] ?? '') !== 'game') {
+            return;
+        }
+        $main = (string) ($this->draft['config']['characters']['table'] ?? '');
+        foreach (ProfileFormat::FIELD_NAMES as $field) {
+            $definition = $this->draft['config']['characters']['fields'][$field] ?? ['kind' => 'column'];
+            $relation = $this->draft['config']['relations'][$definition['relation'] ?? ''] ?? null;
+            $this->fieldTables[$field] = in_array($definition['kind'] ?? 'column', ['related', 'eav'], true) && $relation !== null
+                ? (string) $relation['table']
+                : $main;
+        }
     }
 
     private function validateLoginDetails(bool $includeMappings = false): void
@@ -606,6 +672,7 @@ final class UniversalDriverManager extends Component
             default => ['kind' => 'column', 'column' => ''],
         };
         $this->pruneAutoRelations();
+        $this->syncFieldTables();
     }
 
     /** Relations created automatically for a typed table ("f_<field>") disappear once nothing uses them. */
@@ -630,6 +697,8 @@ final class UniversalDriverManager extends Component
     {
         $name = 'f_'.$field;
         if (isset($this->draft['config']['relations'][$name])) {
+            $this->draft['config']['relations'][$name]['cardinality'] = $kind === 'eav' ? 'many' : 'one';
+
             return $name;
         }
         if (count($this->draft['config']['relations']) >= 16) {
@@ -676,6 +745,7 @@ final class UniversalDriverManager extends Component
         }
         unset($this->draft['config']['characters']['fields'][$field]);
         $this->pruneAutoRelations();
+        $this->syncFieldTables();
     }
 
     public function addFilter(): void

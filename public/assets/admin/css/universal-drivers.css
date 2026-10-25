@@ -194,3 +194,12 @@
     .ud-map-table tr.ud-map-extra > td { padding: 0 0 var(--admin-space-2); }
     .ud-map-end { width: auto; }
 }
+
+.ud-row-tools { display: inline-flex; align-items: center; gap: var(--admin-space-1); }
+.ud-row-tools .ud-menu > summary { width: 30px; height: 30px; font-size: 16px; }
+.ud-link-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: var(--admin-space-3); padding: var(--admin-space-2) var(--admin-space-3); border-left: 3px solid var(--admin-primary); background: var(--admin-surface-subtle); border-radius: 0 var(--admin-radius-inner) var(--admin-radius-inner) 0; margin-bottom: var(--admin-space-2); }
+.ud-link-row > label { display: grid; gap: var(--admin-space-1); flex: 1 1 180px; min-width: 0; }
+.ud-link-title { flex: 1 1 100%; color: var(--admin-text-muted); font-size: var(--admin-text-small); }
+.ud-link-row > span[aria-hidden] { padding-bottom: 9px; color: var(--admin-text-muted); }
+.ud-map-extra > td { padding-top: 0; }
+.ud-map-table .ud-map-end { width: 84px; }

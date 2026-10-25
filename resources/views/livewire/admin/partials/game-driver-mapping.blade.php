@@ -1,7 +1,7 @@
 <p class="ud-info">{{ __('drivers.game_mapping_help') }}</p>
 <div class="ud-main-table">
     <label for="ud-game-main-table">{{ __('drivers.main_table') }}
-        <input id="ud-game-main-table" type="text" wire:model.blur="draft.config.characters.table" maxlength="64">
+        <input id="ud-game-main-table" type="text" wire:model.live.blur="draft.config.characters.table" maxlength="64">
         <small>{{ __('drivers.main_table_help') }}</small>
     </label>
     @error('draft.config.characters.table')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
@@ -44,79 +44,78 @@
                     @php($relation = $config['relations'][$def['relation'] ?? ''] ?? null)
                     @php($required = in_array($field, ['id','name'], true))
                     @php($label = $field === 'id' ? __('drivers.field_id_game') : __('drivers.field_'.$field))
+                    @php($kind = $def['kind'])
                     <tr @class(['ud-map-row', 'ud-map-required' => $required]) wire:key="game-field-{{ $field }}">
                         <th scope="row"><strong>{{ $label }}</strong><small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small></th>
                         <td>
-                            @if(in_array($def['kind'], ['related','eav'], true))
-                                @if($relation)
-                                    <input type="text" aria-label="{{ $label }}: {{ __('drivers.table') }}" wire:model.blur="draft.config.relations.{{ $def['relation'] }}.table" maxlength="64" placeholder="{{ __('drivers.other_table_placeholder') }}">
-                                @else
-                                    <span class="ud-info">{{ __('drivers.game_relation_missing') }}</span>
-                                @endif
-                            @elseif($def['kind'] === 'operator')
-                                <span class="ud-info">{{ __('drivers.kind_operator') }}</span>
-                            @else
+                            @if($required || in_array($kind, ['choice','operator'], true))
                                 <code class="ud-main-table-name">{{ $mainTable }}</code>
+                            @else
+                                <input type="text" aria-label="{{ $label }}: {{ __('drivers.table') }}" wire:model.live.blur="fieldTables.{{ $field }}" maxlength="64" placeholder="{{ $mainTable }}">
                             @endif
                         </td>
                         <td>
-                            @if(in_array($def['kind'], ['column','related'], true))
+                            @if(in_array($kind, ['column','related'], true))
                                 <input type="text" aria-label="{{ $label }}: {{ __('drivers.column') }}" wire:model="draft.config.characters.fields.{{ $field }}.column" maxlength="64" placeholder="{{ __('drivers.optional') }}">
-                            @elseif($def['kind'] === 'eav')
+                            @elseif($kind === 'eav')
                                 <input type="text" aria-label="{{ $label }}: {{ __('drivers.value_column') }}" wire:model="draft.config.characters.fields.{{ $field }}.value_column" maxlength="64" placeholder="{{ __('drivers.value_column') }}">
-                            @elseif($def['kind'] === 'choice')
+                            @elseif($kind === 'choice')
                                 <span class="ud-info">{{ __('drivers.kind_choice') }}</span>
+                            @else
+                                <span class="ud-info">{{ __('drivers.kind_operator') }}</span>
                             @endif
                             @error('draft.config.characters.fields.'.$field.'.column')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
                         </td>
                         <td class="ud-map-end">
                             @unless($required)
-                                <button type="button" class="ud-remove" wire:click="removeField('{{ $field }}')" aria-label="{{ __('drivers.clear_mapping') }}" title="{{ __('drivers.clear_mapping') }}">✕</button>
+                                <div class="ud-row-tools">
+                                    <details class="ud-menu" data-ud-menu>
+                                        <summary aria-label="{{ __('drivers.row_options') }}" aria-haspopup="menu" title="{{ __('drivers.row_options') }}">⋯</summary>
+                                        <div class="ud-menu-items" role="menu">
+                                            @foreach(['column','choice','eav','operator'] as $option)
+                                                @continue($option === 'operator' && $field !== 'hero' && $kind !== 'operator')
+                                                <button type="button" role="menuitem" wire:click="changeFieldKind('{{ $field }}', '{{ $option }}')">{{ __('drivers.store_'.$option) }}@if(($option === 'column' && in_array($kind, ['column','related'], true)) || $option === $kind) ✓@endif</button>
+                                            @endforeach
+                                        </div>
+                                    </details>
+                                    <button type="button" class="ud-remove" wire:click="removeField('{{ $field }}')" aria-label="{{ __('drivers.clear_mapping') }}" title="{{ __('drivers.clear_mapping') }}">✕</button>
+                                </div>
                             @endunless
                         </td>
                     </tr>
-                    @unless($required)
+                    @if(in_array($kind, ['related','eav'], true) || $kind === 'choice' || $kind === 'operator')
                         <tr class="ud-map-extra" wire:key="game-field-source-{{ $field }}">
                             <td colspan="4">
-                                <details class="ud-field-source" wire:ignore.self @if($def['kind'] !== 'column') open @endif>
-                                    <summary>{{ __('drivers.field_source_settings') }}</summary>
-                                    <div class="ud-grid">
-                                        <label>{{ __('drivers.source') }}
-                                            <select wire:change="changeFieldKind('{{ $field }}', $event.target.value)">
-                                                @foreach(['column','related','eav','choice','operator'] as $kind)
-                                                    @continue($kind === 'operator' && $field !== 'hero' && $def['kind'] !== 'operator')
-                                                    <option value="{{ $kind }}" @selected($def['kind'] === $kind)>{{ __('drivers.kind_'.$kind) }}</option>
-                                                @endforeach
-                                            </select>
-                                        </label>
-                                        @if(in_array($def['kind'], ['related','eav'], true))
-                                            <label>{{ __('drivers.relation') }}<select wire:model.live="draft.config.characters.fields.{{ $field }}.relation">
-                                                <option value="">{{ __('drivers.choose_relation') }}</option>
-                                                @foreach($config['relations'] as $name => $r)<option value="{{ $name }}">{{ $r['table'] ?: __('drivers.relation_unset') }}</option>@endforeach
-                                            </select></label>
-                                            @if($relation)
-                                                <label>{{ __('drivers.link_from', ['table' => $mainTable]) }}<input type="text" wire:model="draft.config.relations.{{ $def['relation'] }}.local_column" maxlength="64"></label>
-                                                <label>{{ __('drivers.link_to') }}<input type="text" wire:model="draft.config.relations.{{ $def['relation'] }}.foreign_column" maxlength="64"></label>
-                                            @endif
-                                        @endif
-                                        @if($def['kind'] === 'eav')
-                                            <p class="ud-info">{{ __('drivers.game_eav_world_limit') }}</p>
-                                            <label>{{ __('drivers.key_column') }}<input type="text" wire:model="draft.config.characters.fields.{{ $field }}.key_column"></label>
-                                            <label>{{ __('drivers.key_value') }}<input type="text" wire:model="draft.config.characters.fields.{{ $field }}.key_value"></label>
-                                        @elseif($def['kind'] === 'choice')
-                                            <label>{{ __('drivers.preference') }}<select wire:model="draft.config.characters.fields.{{ $field }}.preference"><option value="first_present">{{ __('drivers.first_present') }}</option><option value="mobius_chronicle">{{ __('drivers.mobius_chronicle') }}</option></select></label>
-                                            @foreach($def['columns'] as $i => $column)
-                                                <label>{{ __('drivers.column') }} {{ $i + 1 }}<input type="text" wire:model="draft.config.characters.fields.{{ $field }}.columns.{{ $i }}"></label>
-                                            @endforeach
-                                            <button type="button" class="button button-secondary" wire:click="addChoiceColumn('{{ $field }}')" @disabled(count($def['columns']) >= 4)>+ {{ __('drivers.column') }}</button>
-                                        @elseif($def['kind'] === 'operator')
-                                            <p class="ud-info">{{ __('drivers.rusacis_hero_help') }}</p>
-                                        @endif
+                                @if(in_array($kind, ['related','eav'], true) && $relation)
+                                    <div class="ud-link-row">
+                                        <span class="ud-link-title">{{ __('drivers.link_heading') }}</span>
+                                        <label>{{ __('drivers.link_from', ['table' => $mainTable]) }}<input type="text" wire:model="draft.config.relations.{{ $def['relation'] }}.local_column" maxlength="64"></label>
+                                        <span aria-hidden="true">=</span>
+                                        <label>{{ __('drivers.link_to_table', ['table' => $relation['table'] ?: __('drivers.relation_unset')]) }}<input type="text" wire:model="draft.config.relations.{{ $def['relation'] }}.foreign_column" maxlength="64"></label>
                                     </div>
-                                </details>
+                                @endif
+                                @if($kind === 'eav')
+                                    <div class="ud-link-row">
+                                        <span class="ud-link-title">{{ __('drivers.eav_heading') }}</span>
+                                        <label>{{ __('drivers.key_column') }}<input type="text" wire:model="draft.config.characters.fields.{{ $field }}.key_column"></label>
+                                        <label>{{ __('drivers.key_value') }}<input type="text" wire:model="draft.config.characters.fields.{{ $field }}.key_value"></label>
+                                    </div>
+                                    <p class="ud-info">{{ __('drivers.game_eav_world_limit') }}</p>
+                                @elseif($kind === 'choice')
+                                    <div class="ud-link-row">
+                                        <span class="ud-link-title">{{ __('drivers.choice_heading') }}</span>
+                                        @foreach($def['columns'] as $i => $column)
+                                            <label>{{ __('drivers.column') }} {{ $i + 1 }}<input type="text" wire:model="draft.config.characters.fields.{{ $field }}.columns.{{ $i }}"></label>
+                                        @endforeach
+                                        <button type="button" class="button button-secondary" wire:click="addChoiceColumn('{{ $field }}')" @disabled(count($def['columns']) >= 4)>+ {{ __('drivers.column') }}</button>
+                                        <label>{{ __('drivers.preference') }}<select wire:model="draft.config.characters.fields.{{ $field }}.preference"><option value="first_present">{{ __('drivers.first_present') }}</option><option value="mobius_chronicle">{{ __('drivers.mobius_chronicle') }}</option></select></label>
+                                    </div>
+                                @elseif($kind === 'operator')
+                                    <p class="ud-info">{{ __('drivers.rusacis_hero_help') }}</p>
+                                @endif
                             </td>
                         </tr>
-                    @endunless
+                    @endif
                 @endforeach
             </tbody>
         </table>

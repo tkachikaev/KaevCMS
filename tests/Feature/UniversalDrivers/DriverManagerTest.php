@@ -163,6 +163,40 @@ final class DriverManagerTest extends TestCase
         $this->assertSame('player_stats', $profile['config']['relations']['f_class_id']['table']);
     }
 
+    public function test_typing_a_table_in_a_field_row_switches_between_the_main_table_and_another_one(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        $component = Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'game')
+            ->assertSet('fieldTables.race', 'characters')
+            ->set('draft.config.characters.fields.race.column', 'race')
+            ->set('fieldTables.race', 'race_data')
+            ->assertSet('draft.config.characters.fields.race.kind', 'related')
+            ->assertSet('draft.config.characters.fields.race.relation', 'f_race')
+            ->assertSet('draft.config.relations.f_race.table', 'race_data')
+            ->assertSet('draft.config.characters.fields.race.column', 'race');
+
+        // Typing the main table back makes it a plain column again and drops the unused relation.
+        $component->set('fieldTables.race', 'characters')
+            ->assertSet('draft.config.characters.fields.race.kind', 'column');
+        $this->assertArrayNotHasKey('f_race', $component->get('draft.config.relations'));
+
+        // Renaming the main table moves every plain-column row with it.
+        $component->set('draft.config.characters.table', 'players')
+            ->assertSet('fieldTables.race', 'players')
+            ->assertSet('fieldTables.level', 'players');
+    }
+
+    public function test_required_fields_are_not_given_a_table_of_their_own(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'game')
+            ->set('fieldTables.id', 'other_table')
+            ->assertSet('draft.config.characters.fields.id.kind', 'column')
+            ->assertSet('draft.config.relations', []);
+    }
+
     public function test_new_driver_can_be_saved_without_knowing_its_technical_identifier(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');

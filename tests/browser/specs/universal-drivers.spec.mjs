@@ -117,22 +117,27 @@ for (const variant of [
         await page.locator('.ud-game-editor button[type=submit]').click();
         await expect(page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]')).toHaveValue('obj_Id');
         await page.locator('[data-game-group=game_basic] > summary').click();
-        const mainTable = page.locator('input[wire\\:model\\.blur="draft.config.characters.table"]').first();
+        const mainTable = page.locator('input[wire\\:model\\.live\\.blur="draft.config.characters.table"]').first();
         await mainTable.fill('players');
         await mainTable.press('Tab');
         await page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]').fill('player_id');
         await page.locator('input[wire\\:model="draft.config.characters.fields.level.column"]').fill('player_level');
         await page.locator('[data-game-group=game_additional] > summary').click();
-        const title = page.locator('tr[wire\\:key="game-field-title"], tr[wire\\:key="game-field-source-title"]');
-        await title.locator('summary').click();
-        await title.locator('select').first().selectOption('related');
-        await title.locator('select').nth(1).selectOption('clan');
-        await expect(title.locator('input').first()).toHaveValue('clan_data');
-        await title.locator('input[wire\\:model="draft.config.characters.fields.title.column"]').fill('clan_name');
+        const rowTable = (field) => page.locator(`input[wire\\:model\\.live\\.blur="fieldTables.${field}"]`);
+        const rowMenu = (field, option) => page.locator(`tr[wire\\:key="game-field-${field}"] .ud-menu summary`).click().then(
+            () => page.locator(`tr[wire\\:key="game-field-${field}"] button[wire\\:click="changeFieldKind('${field}', '${option}')"]`).click(),
+        );
+        // Type the other table straight into the row: the link columns appear under it.
+        await rowTable('title').fill('clan_data');
+        await rowTable('title').press('Tab');
+        const titleLink = page.locator('tr[wire\\:key="game-field-source-title"]');
+        await expect(titleLink).toBeVisible();
+        await titleLink.locator('input').nth(0).fill('clanid');
+        await titleLink.locator('input').nth(1).fill('clan_id');
+        await page.locator('input[wire\\:model="draft.config.characters.fields.title.column"]').fill('clan_name');
         await page.locator('[data-game-group=game_statistics] > summary').click();
-        const reputation = page.locator('tr[wire\\:key="game-field-reputation"], tr[wire\\:key="game-field-source-reputation"]');
-        await reputation.locator('summary').click();
-        await reputation.locator('select').first().selectOption('choice');
+        await rowMenu('reputation', 'choice');
+        const reputation = page.locator('tr[wire\\:key="game-field-source-reputation"]');
         await reputation.locator('input[wire\\:model="draft.config.characters.fields.reputation.columns.0"]').fill('karma');
         await reputation.locator('input[wire\\:model="draft.config.characters.fields.reputation.columns.1"]').fill('reputation');
         await page.screenshot({ path: testInfo.outputPath('game-mappings.png'), fullPage: true });
@@ -150,26 +155,20 @@ for (const variant of [
         await gameCard.locator('button[wire\\:click^="editProfile"]').click();
         await page.locator('button[wire\\:click="nextGameStep(\'mapping\')"]').click();
         await expect(page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]')).toHaveValue('player_id');
-        await expect(page.locator('tr[wire\\:key="game-field-title"], tr[wire\\:key="game-field-source-title"]').locator('input').first()).toHaveValue('clan_data');
-        // A key/value source must remain usable after changing its kind and selecting a new relation.
+        await expect(page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]')).toHaveValue('clan_data');
+        // A key/value source must remain usable after changing its kind: its table is typed in the row too.
         await page.locator('[data-game-group=game_additional] > summary').click();
-        const keyValueTitle = page.locator('tr[wire\\:key="game-field-title"], tr[wire\\:key="game-field-source-title"]');
-        await keyValueTitle.locator('select').first().selectOption('eav');
-        await page.locator('button[wire\\:click="nextGameStep(\'features\')"]').first().click();
-        await page.locator('button[wire\\:click="addGameRelation"]').click();
-        const stats = page.locator('[wire\\:key="game-relation-relation_1"]');
-        await stats.locator('input').nth(0).fill('character_stats');
-        await stats.locator('input').nth(1).fill('player_id');
-        await stats.locator('input').nth(2).fill('char_id');
-        await stats.locator('summary').click();
-        await stats.locator('select[wire\\:model="draft.config.relations.relation_1.cardinality"]').selectOption('many');
-        await page.locator('button[wire\\:click="setSection(\'mapping\')"]').first().click();
-        await page.locator('[data-game-group=game_additional] > summary').click();
-        await keyValueTitle.locator('select').nth(1).selectOption('relation_1');
+        await page.locator('tr[wire\\:key="game-field-title"] .ud-menu summary').click();
+        await page.locator('tr[wire\\:key="game-field-title"] button[wire\\:click="changeFieldKind(\'title\', \'eav\')"]').click();
+        const keyValueTitle = page.locator('tr[wire\\:key="game-field-source-title"]');
+        await page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]').fill('character_stats');
+        await page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]').press('Tab');
+        await keyValueTitle.locator('input').nth(0).fill('player_id');
+        await keyValueTitle.locator('input').nth(1).fill('char_id');
         await keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.key_column"]').fill('param');
-        await keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.value_column"]').fill('value');
+        await page.locator('input[wire\\:model="draft.config.characters.fields.title.value_column"]').fill('value');
         await keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.key_value"]').fill('title');
-        await expect(keyValueTitle.locator('input').first()).toHaveValue('character_stats');
+        await expect(page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]')).toHaveValue('character_stats');
         await page.locator('.ud-game-editor button[type=submit]').click();
         await expect(gameCard).toBeVisible();
         await gameCard.locator('.ud-menu summary').click();
