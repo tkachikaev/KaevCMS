@@ -1,6 +1,6 @@
-# Universal drivers — iterations 1–2 (JSON + read-only LoginServer)
+# Universal drivers — iterations 1–3 (JSON + read-only LoginServer/GameServer)
 
-**Status: experimental and NOT enabled in the CMS.** The existing production PHP LoginServer/GameServer drivers, registration, password updates, character queries, castles and reward delivery are unchanged. There is no admin editor or import action yet. A read-only LoginServer query adapter exists for isolated validation only; it is not wired into production resolvers. A valid profile file is not proof of compatibility with a game build.
+**Status: experimental and NOT enabled in the CMS.** The existing production PHP LoginServer/GameServer drivers, registration, password updates, character queries, castles and reward delivery are unchanged. There is no admin editor or import action yet. Separate read-only LoginServer and GameServer character adapters exist for isolated validation only; it is not wired into production resolvers. A valid profile file is not proof of compatibility with a game build.
 
 ## Bundled references
 
@@ -18,9 +18,9 @@ Each profile has `id` (stable ID), `name` (display name), `type` (`login` or `ga
 
 Login profiles describe `accounts.fields`, `accounts.ownership`, insertion sources under `accounts.create.columns`, and a trusted password scheme (`sha1_base64`, or `bcrypt_2a` with cost 4–16). Read-only account profiles may omit the password mapping. LoginServer email is independent of the CMS user email.
 
-Game profiles use `characters.owner`, `characters.fields` sources (`column`, `related`, `choice`, `eav`, `operator`), limited `relations`, `filters`, `rankings`, and `features`. Column/table values are validated as identifiers, never SQL expressions; future query adapters must bind data values. The optional `heroes` and `castle` schemas must not break the basic character list.
+Game profiles use `characters.owner`, `characters.fields` sources (`column`, `related`, `choice`, `eav`, `operator`), limited `relations`, `filters`, `rankings`, and `features`. Column/table values are validated as identifiers, never SQL expressions; read adapters bind data values. The optional `heroes` and `castle` schemas must not break the basic character list.
 
-**Legacy behavior mapped but not yet implemented by the new engine:** RUSaCis `herountil` OR active `heroes`, nullable or zero `deletetime`; Mobius `karma` versus `reputation` by chronicle/schema; reusable Castle ID → localized name catalog; server-account ownership verification. These are verified during read-only parity iterations, not inferred from a valid JSON alone.
+**Mapped behavior:** The experimental character reader now handles RUSaCis `herountil` OR active `heroes`, nullable or zero `deletetime`, and Mobius `karma`/`reputation` by chronicle/schema. Castle names, public statistics and account ownership authorization are not yet migrated. A valid JSON alone does not demonstrate parity.
 
 `format_version` is the structure version of JSON, not the CMS release or game version. The initial migrator explicitly accepts only version 1; unknown versions fail closed. Future format versions require explicit migration logic.
 
@@ -40,14 +40,28 @@ KAEV_MYSQL_TEST_USER=root KAEV_MYSQL_TEST_PASSWORD='TEST_ONLY' \
 php tests/Integration/UniversalDrivers/mysql-fixtures.php
 ```
 
-Read-only **LoginServer** parity is checked by this job, but it has not been executed locally unless a MySQL test environment is available. GameServer parity belongs to iterations 3–4. Valid JSON is a structural contract, not proof of a working game login.
+Read-only LoginServer and character GameServer parity tests are included in this job. Actual MySQL execution is required before claiming parity; full statistics and castle parity belongs to iteration 4. Valid JSON is a structural contract, not proof of a working game login.
 
 ## Next steps
 
-Iteration 2 adds read-only LoginServer queries on MySQL, still alongside the PHP drivers. Admin UI, built-in overrides/tombstones, imported custom profiles, and per-connection validated snapshots come later. `database.dialect` keeps the format structurally extensible for a future SQL Server/PTS adapter, but `sqlserver` is deliberately rejected in v1 and no SQL Server dependency is installed. No database migrations are required for this iteration.
+Iterations 2–3 add isolated read-only LoginServer and GameServer character queries on MySQL, still alongside the PHP drivers. Admin UI, built-in overrides/tombstones, imported custom profiles, and per-connection validated snapshots come later. `database.dialect` keeps the format structurally extensible for a future SQL Server/PTS adapter, but `sqlserver` is deliberately rejected in v1 and no SQL Server dependency is installed. No database migrations are required for this iteration.
 
 ## Iteration 2 — LoginServer read-only path
 
 `app/Services/GameAccounts/UniversalLoginAccountReader.php` supplies `summary`, `inspect` and `diagnose` using validated LoginServer JSON profiles and an existing Laravel MySQL connection. All login values are query-bound. Optional account metadata can be absent; a missing access column yields `unknown`, not an invented `active` state. Mobius inspection fails closed if the configured email column is absent. No JSON-controlled SQL expressions, registration, password changes or production switching are introduced.
 
 The disposable MySQL CI fixture job now installs locked dependencies and directly compares legacy and JSON-powered read-only results for RUSaCis, Mobius and Mobius Legacy, including missing accounts, wrong credentials, SQL injection as a login value, and missing optional fields. Only unique, test-owned databases are dropped on completion. No production server connection is needed or permitted.
+
+
+## Iteration 3 — experimental read-only GameServer (0.53.5)
+
+`app/Services/GameWorld/UniversalGameCharacterReader.php` accepts an existing Laravel MySQL `Connection`, a validated JSON profile and a trusted game-account identity. It never selects a server by itself, performs writes, or hooks into the production `GameWorldDriverResolver`. The caller remains responsible for verifying the CMS user's rights to the game account and character.
+
+- `diagnose(Connection, profile)` reports missing required and optional tables and columns.
+- `charactersForAccount(Connection, profile, identity, limit, chronicle)` filters by the configured owner, applies parameter-bound filters, reads direct/choice/related/EAV mappings, then orders by level and name (1–100 results).
+- Built-in Mobius `karma/reputation` chronicle selection and RUSaCis hero flag (`herountil` or an active hero record) are supported for character rows.
+- Related/EAV mappings use bounded batched SELECTs rather than raw imported SQL. Duplicate one-to-one records and duplicate EAV values fail closed. Scans exceeding 1,000 character rows per account fail explicitly rather than returning a misleading partial result.
+
+**Not implemented yet:** public rankings, full hero/castle sections, production resolver switching, writes, the editor or driver importing. The new adapter does not itself authorize a CMS user.
+
+`tests/Integration/UniversalDrivers/mysql-game-character-parity.php` is invoked by `mysql-fixtures.php` and compares this read path with the existing PHP game drivers on disposable local MySQL fixtures. It tests account isolation, bound hostile identity strings, hero/reputation mappings, EAV, and ambiguous data. CI requires Composer dependencies from the approved lock and MySQL 8.4. Until executed, the presence of these tests is not a successful compatibility verification.

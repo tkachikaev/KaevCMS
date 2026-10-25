@@ -177,7 +177,7 @@ jobs:
         run: php deployment/release/tests/release-builder-regression.php
 
   universal-drivers-mysql:
-    name: Universal LoginServer MySQL parity (no production switching)
+    name: Universal LoginServer/GameServer MySQL parity (no production switching)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:

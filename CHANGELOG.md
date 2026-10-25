@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.53.5 - 2026-10-25
+
+Universal drivers, iteration 3: **experimental read-only GameServer character retrieval; no production switching**. Built on full 0.53.4 source; Composer dependencies and published migrations unchanged.
+
+- Added `UniversalGameCharacterReader`, accepting only validated JSON and an already-open MySQL connection. It reads characters bound to the selected game account, mapped from direct, choice, single-related and EAV fields, with explicit missing-schema diagnostics and bounded queries. JSON does not execute SQL/PHP and cannot select a different server connection.
+- Supports RUSaCis deleted-character filtering and active hero flag, Mobius chronicle-based `karma/reputation`, and missing optional data. Ambiguous related rows and duplicate EAV values fail closed.
+- Added disposable MySQL 8.4 legacy-vs-universal character parity coverage, EAV and injection/ownership cases to the existing workflow. These require Composer dependencies and live test MySQL; PHP syntax and offline profile validation alone cannot prove parity.
+- Kept PHP GameWorldDriver resolvers, user-facing character pages, rankings, heroes/castles and writes untouched. No UI, module or DB migration changes.
+
+
 ## 0.53.4 - 2026-10-25
 
 Universal drivers, iteration 2: **experimental read-only LoginServer path; no production switching**. Based on full 0.53.3 source. Composer dependencies and published migrations unchanged.
