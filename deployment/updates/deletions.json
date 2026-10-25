@@ -744,5 +744,8 @@
     "public/account-themes/kaev-aurelia/assets/images/kaev-mark.png",
     "public/themes/kaev-aurelia/assets/images/kaev-logo.png",
     "public/themes/kaev-aurelia/assets/images/kaev-mark.png"
+  ],
+  "0.53.3": [
+    "core/deployment/windows/apply-0.53.2.ps1"
   ]
 }

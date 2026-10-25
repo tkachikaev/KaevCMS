@@ -1,0 +1,61 @@
+{
+  "id": "rusacis",
+  "name": "RUSaCis LoginServer",
+  "type": "login",
+  "format_version": 1,
+  "config": {
+    "database": {
+      "dialect": "mysql",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "requirements": [
+      {
+        "table": "accounts",
+        "columns": [
+          "login",
+          "password"
+        ],
+        "required": true,
+        "optional_columns": [
+          "last_active",
+          "access_level",
+          "last_server"
+        ]
+      }
+    ],
+    "capabilities": [
+      "account_lookup",
+      "account_creation",
+      "password_change",
+      "account_status"
+    ],
+    "accounts": {
+      "table": "accounts",
+      "fields": {
+        "login": "login",
+        "password": "password",
+        "id": null,
+        "email": null,
+        "created_at": null,
+        "last_active": "last_active",
+        "access_level": "access_level",
+        "last_server": "last_server"
+      },
+      "ownership": {
+        "identity": "login",
+        "column": "login"
+      },
+      "create": {
+        "columns": {
+          "login": "login",
+          "password": "credential"
+        }
+      }
+    },
+    "password": {
+      "scheme": "bcrypt_2a",
+      "cost": 10
+    }
+  }
+}

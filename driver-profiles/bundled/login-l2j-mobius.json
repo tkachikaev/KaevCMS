@@ -1,0 +1,82 @@
+{
+  "id": "l2j_mobius",
+  "name": "L2J Mobius LoginServer",
+  "type": "login",
+  "format_version": 1,
+  "config": {
+    "database": {
+      "dialect": "mysql",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "requirements": [
+      {
+        "table": "accounts",
+        "columns": [
+          "login",
+          "password",
+          "email"
+        ],
+        "required": true,
+        "optional_columns": [
+          "created_time",
+          "lastactive",
+          "accessLevel",
+          "lastIP",
+          "lastServer"
+        ]
+      },
+      {
+        "table": "account_data",
+        "columns": [
+          "account_name",
+          "var",
+          "value"
+        ],
+        "required": false
+      },
+      {
+        "table": "accounts_ipauth",
+        "columns": [
+          "login",
+          "ip",
+          "type"
+        ],
+        "required": false
+      }
+    ],
+    "capabilities": [
+      "account_lookup",
+      "account_creation",
+      "password_change",
+      "account_status"
+    ],
+    "accounts": {
+      "table": "accounts",
+      "fields": {
+        "login": "login",
+        "password": "password",
+        "id": null,
+        "email": "email",
+        "created_at": "created_time",
+        "last_active": "lastactive",
+        "access_level": "accessLevel",
+        "last_server": "lastServer"
+      },
+      "ownership": {
+        "identity": "login",
+        "column": "login"
+      },
+      "create": {
+        "columns": {
+          "login": "login",
+          "password": "credential",
+          "email": "email"
+        }
+      }
+    },
+    "password": {
+      "scheme": "sha1_base64"
+    }
+  }
+}

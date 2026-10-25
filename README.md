@@ -1,4 +1,4 @@
-# KaevCMS 0.53.2
+# KaevCMS 0.53.4
 
 [English](#english) · [Русский](#русский)
 
@@ -6,7 +6,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Changes in each release are listed in [CHANGELOG.md](CHANGELOG.md). Cumulative update baseline: 0.42.4.
+Changes in each release are listed in [CHANGELOG.md](CHANGELOG.md). Experimental universal JSON driver contract (not active): [EN](docs/en/UNIVERSAL_DRIVERS.md) / [RU](docs/ru/UNIVERSAL_DRIVERS.md). Cumulative update baseline: 0.42.4.
 
 ### Requirements
 

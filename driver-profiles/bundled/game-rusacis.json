@@ -1,0 +1,238 @@
+{
+  "id": "rusacis",
+  "name": "RUSaCis GameServer",
+  "type": "game",
+  "format_version": 1,
+  "config": {
+    "database": {
+      "dialect": "mysql",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "requirements": [
+      {
+        "table": "characters",
+        "columns": [
+          "account_name",
+          "obj_Id",
+          "char_name",
+          "level",
+          "exp",
+          "classid",
+          "race",
+          "sex",
+          "title",
+          "online",
+          "onlinetime",
+          "accesslevel",
+          "deletetime",
+          "pvpkills",
+          "pkkills",
+          "karma",
+          "nobless",
+          "herountil",
+          "clanid",
+          "lastAccess"
+        ],
+        "required": true
+      },
+      {
+        "table": "clan_data",
+        "columns": [
+          "clan_id",
+          "clan_name",
+          "clan_level",
+          "reputation_score",
+          "hasCastle",
+          "leader_id"
+        ],
+        "required": true
+      },
+      {
+        "table": "heroes",
+        "columns": [
+          "char_id",
+          "class_id",
+          "count",
+          "played",
+          "active"
+        ],
+        "required": false
+      },
+      {
+        "table": "castle",
+        "columns": [
+          "id"
+        ],
+        "required": false
+      }
+    ],
+    "capabilities": [
+      "characters",
+      "level",
+      "pvp",
+      "pk",
+      "play_time",
+      "heroes",
+      "castles"
+    ],
+    "characters": {
+      "table": "characters",
+      "owner": {
+        "identity": "login",
+        "column": "account_name"
+      },
+      "fields": {
+        "id": {
+          "kind": "column",
+          "column": "obj_Id"
+        },
+        "name": {
+          "kind": "column",
+          "column": "char_name"
+        },
+        "level": {
+          "kind": "column",
+          "column": "level"
+        },
+        "experience": {
+          "kind": "column",
+          "column": "exp"
+        },
+        "class_id": {
+          "kind": "column",
+          "column": "classid"
+        },
+        "race": {
+          "kind": "column",
+          "column": "race"
+        },
+        "gender": {
+          "kind": "column",
+          "column": "sex"
+        },
+        "title": {
+          "kind": "column",
+          "column": "title"
+        },
+        "online": {
+          "kind": "column",
+          "column": "online"
+        },
+        "last_seen_at_ms": {
+          "kind": "column",
+          "column": "lastAccess"
+        },
+        "play_time_seconds": {
+          "kind": "column",
+          "column": "onlinetime"
+        },
+        "pvp_kills": {
+          "kind": "column",
+          "column": "pvpkills"
+        },
+        "pk_kills": {
+          "kind": "column",
+          "column": "pkkills"
+        },
+        "reputation": {
+          "kind": "column",
+          "column": "karma"
+        },
+        "noble": {
+          "kind": "column",
+          "column": "nobless"
+        },
+        "clan_id": {
+          "kind": "column",
+          "column": "clanid"
+        },
+        "clan_name": {
+          "kind": "related",
+          "relation": "clan",
+          "column": "clan_name"
+        },
+        "hero": {
+          "kind": "operator",
+          "operator": "rusacis_hero_active"
+        }
+      }
+    },
+    "relations": {
+      "clan": {
+        "table": "clan_data",
+        "local_column": "clanid",
+        "foreign_column": "clan_id",
+        "join": "left",
+        "cardinality": "one"
+      },
+      "heroes": {
+        "table": "heroes",
+        "local_column": "obj_Id",
+        "foreign_column": "char_id",
+        "join": "inner",
+        "cardinality": "one"
+      },
+      "castle": {
+        "table": "castle",
+        "local_column": "hasCastle",
+        "foreign_column": "id",
+        "join": "inner",
+        "cardinality": "one"
+      },
+      "leader": {
+        "table": "characters",
+        "local_column": "leader_id",
+        "foreign_column": "obj_Id",
+        "join": "left",
+        "cardinality": "one"
+      }
+    },
+    "filters": [
+      {
+        "column": "accesslevel",
+        "op": "eq",
+        "value": 0
+      },
+      {
+        "column": "deletetime",
+        "op": "zero_or_null"
+      }
+    ],
+    "rankings": {
+      "level": {
+        "column": "level",
+        "secondary": "exp",
+        "positive_only": false
+      },
+      "pvp": {
+        "column": "pvpkills",
+        "secondary": "level",
+        "positive_only": true
+      },
+      "pk": {
+        "column": "pkkills",
+        "secondary": "level",
+        "positive_only": true
+      },
+      "play_time": {
+        "column": "onlinetime",
+        "secondary": "level",
+        "positive_only": true
+      }
+    },
+    "features": {
+      "heroes": {
+        "relation": "heroes",
+        "played_column": "played",
+        "active_column": "active",
+        "played_value": 1,
+        "active_value": 1
+      },
+      "castles": {
+        "relation": "castle",
+        "name_source": "catalog"
+      }
+    }
+  }
+}

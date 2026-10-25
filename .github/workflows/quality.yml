@@ -175,3 +175,43 @@ jobs:
 
       - name: Run release builder regression
         run: php deployment/release/tests/release-builder-regression.php
+
+  universal-drivers-mysql:
+    name: Universal LoginServer MySQL parity (no production switching)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test_only_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest_only_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, fileinfo, mbstring, pdo_mysql, xml, zip
+          coverage: none
+          tools: composer:v2
+      - name: Install locked dependencies for real legacy/universal parity
+        run: |
+          php deployment/dependencies/dependency-guard.php
+          composer install --no-interaction --prefer-dist --no-progress
+      - name: Validate bundled driver contracts offline
+        run: php tests/Integration/UniversalDrivers/validate-profiles.php
+      - name: Check MySQL 8.4 schema and fixture semantics
+        env:
+          KAEV_UNIVERSAL_MYSQL_TEST: '1'
+          KAEV_MYSQL_TEST_HOST: 127.0.0.1
+          KAEV_MYSQL_TEST_USER: root
+          KAEV_MYSQL_TEST_PASSWORD: test_only_password
+        run: php tests/Integration/UniversalDrivers/mysql-fixtures.php

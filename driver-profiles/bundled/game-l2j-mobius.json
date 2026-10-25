@@ -1,0 +1,261 @@
+{
+  "id": "l2j_mobius",
+  "name": "L2J Mobius GameServer",
+  "type": "game",
+  "format_version": 1,
+  "config": {
+    "database": {
+      "dialect": "mysql",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "requirements": [
+      {
+        "table": "characters",
+        "columns": [
+          "account_name",
+          "charId",
+          "char_name",
+          "level",
+          "exp",
+          "classid",
+          "race",
+          "sex",
+          "title",
+          "online",
+          "onlinetime",
+          "accesslevel",
+          "deletetime",
+          "pvpkills",
+          "pkkills",
+          "nobless",
+          "clanid",
+          "lastAccess"
+        ],
+        "required": true,
+        "any_columns": [
+          "karma",
+          "reputation"
+        ],
+        "optional_columns": [
+          "x",
+          "y",
+          "z"
+        ]
+      },
+      {
+        "table": "clan_data",
+        "columns": [
+          "clan_id",
+          "clan_name",
+          "clan_level",
+          "reputation_score",
+          "hasCastle",
+          "leader_id"
+        ],
+        "required": true
+      },
+      {
+        "table": "heroes",
+        "columns": [
+          "charId",
+          "class_id",
+          "count",
+          "played",
+          "claimed"
+        ],
+        "required": false
+      },
+      {
+        "table": "castle",
+        "columns": [
+          "id",
+          "name"
+        ],
+        "required": false
+      }
+    ],
+    "capabilities": [
+      "characters",
+      "level",
+      "pvp",
+      "pk",
+      "play_time",
+      "heroes",
+      "castles",
+      "character_rescue"
+    ],
+    "characters": {
+      "table": "characters",
+      "owner": {
+        "identity": "login",
+        "column": "account_name"
+      },
+      "fields": {
+        "id": {
+          "kind": "column",
+          "column": "charId"
+        },
+        "name": {
+          "kind": "column",
+          "column": "char_name"
+        },
+        "level": {
+          "kind": "column",
+          "column": "level"
+        },
+        "experience": {
+          "kind": "column",
+          "column": "exp"
+        },
+        "class_id": {
+          "kind": "column",
+          "column": "classid"
+        },
+        "race": {
+          "kind": "column",
+          "column": "race"
+        },
+        "gender": {
+          "kind": "column",
+          "column": "sex"
+        },
+        "title": {
+          "kind": "column",
+          "column": "title"
+        },
+        "online": {
+          "kind": "column",
+          "column": "online"
+        },
+        "last_seen_at_ms": {
+          "kind": "column",
+          "column": "lastAccess"
+        },
+        "play_time_seconds": {
+          "kind": "column",
+          "column": "onlinetime"
+        },
+        "pvp_kills": {
+          "kind": "column",
+          "column": "pvpkills"
+        },
+        "pk_kills": {
+          "kind": "column",
+          "column": "pkkills"
+        },
+        "reputation": {
+          "kind": "choice",
+          "columns": [
+            "karma",
+            "reputation"
+          ],
+          "preference": "mobius_chronicle"
+        },
+        "noble": {
+          "kind": "column",
+          "column": "nobless"
+        },
+        "clan_id": {
+          "kind": "column",
+          "column": "clanid"
+        },
+        "clan_name": {
+          "kind": "related",
+          "relation": "clan",
+          "column": "clan_name"
+        },
+        "created_at": {
+          "kind": "column",
+          "column": "createDate"
+        },
+        "x": {
+          "kind": "column",
+          "column": "x"
+        },
+        "y": {
+          "kind": "column",
+          "column": "y"
+        },
+        "z": {
+          "kind": "column",
+          "column": "z"
+        }
+      }
+    },
+    "relations": {
+      "clan": {
+        "table": "clan_data",
+        "local_column": "clanid",
+        "foreign_column": "clan_id",
+        "join": "left",
+        "cardinality": "one"
+      },
+      "heroes": {
+        "table": "heroes",
+        "local_column": "charId",
+        "foreign_column": "charId",
+        "join": "inner",
+        "cardinality": "one"
+      },
+      "castle": {
+        "table": "castle",
+        "local_column": "hasCastle",
+        "foreign_column": "id",
+        "join": "inner",
+        "cardinality": "one"
+      },
+      "leader": {
+        "table": "characters",
+        "local_column": "leader_id",
+        "foreign_column": "charId",
+        "join": "left",
+        "cardinality": "one"
+      }
+    },
+    "filters": [
+      {
+        "column": "accesslevel",
+        "op": "eq",
+        "value": 0
+      },
+      {
+        "column": "deletetime",
+        "op": "eq",
+        "value": 0
+      }
+    ],
+    "rankings": {
+      "level": {
+        "column": "level",
+        "secondary": "exp",
+        "positive_only": false
+      },
+      "pvp": {
+        "column": "pvpkills",
+        "secondary": "level",
+        "positive_only": true
+      },
+      "pk": {
+        "column": "pkkills",
+        "secondary": "level",
+        "positive_only": true
+      },
+      "play_time": {
+        "column": "onlinetime",
+        "secondary": "level",
+        "positive_only": true
+      }
+    },
+    "features": {
+      "heroes": {
+        "relation": "heroes"
+      },
+      "castles": {
+        "relation": "castle",
+        "name_source": "column",
+        "name_column": "name"
+      }
+    }
+  }
+}

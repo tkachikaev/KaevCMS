@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.53.4 - 2026-10-25
+
+Universal drivers, iteration 2: **experimental read-only LoginServer path; no production switching**. Based on full 0.53.3 source. Composer dependencies and published migrations unchanged.
+
+- Added `UniversalLoginAccountReader` for validated JSON-driven MySQL account lookup, status/activity summary, prepared account comparison, and mandatory/optional schema diagnostics. Profile input is validated and login values are bound by Laravel Query Builder; configured email identity fails closed if unavailable.
+- Split optional LoginServer metadata (`created_time`, `lastactive`, `accessLevel`, etc.) from required account fields in bundled JSON contracts while preserving the old registry schemas and all five format-v1 bundled profiles.
+- Added regression/negative tests and direct MySQL fixture parity against existing RUSaCis/Mobius/Mobius Legacy PHP drivers, including unknown accounts, blocked status, mismatched credentials, injected login strings and missing metadata. Test databases are unique per run and cleaned up.
+- Extended MySQL 8.4 CI job to install locked dependencies and perform live legacy-vs-JSON read comparisons. Added RU/EN implementation and test documentation.
+- **Not enabled:** no legacy resolver/gateway switch, registration, password writes, GameServer queries, modules, server connection settings or DB migrations changed. MySQL CI parity must be run before declaring functional equivalence.
+
+
+## 0.53.3 - 2026-10-25
+
+Universal drivers, iteration 1 (experimental data contract; **no production driver switching**). No dependencies, game accounts, wallet flows or database migrations changed.
+
+- Added strict JSON profile format v1, offline validator and initial explicit format migrator (unknown versions rejected). Bundled profiles describe Mobius LoginServer, Mobius Legacy LoginServer, RUSaCis LoginServer, Mobius GameServer and RUSaCis GameServer. They are currently read-only **reference files**, not runtime drivers.
+- Added hostile-import and registry/schema-parity unit tests, dependency-free contract smoke tests, disposable MySQL 8.4 fixture job with characters, accounts, hero and castle relations, and RU/EN format documentation.
+- Documented legacy-only special cases: RUSaCis heroes (`herountil`/`heroes`), Mobius karma/reputation selection, castle names and cross-server ownership. Actual query-equivalence work starts in the following iterations.
+
+
 ## 0.53.2 - 2026-10-25
 
 `composer.lock` changes only by Livewire 4.4.7 → 4.4.8 (Laravel 13.37 is unchanged). One new migration (Donations) runs from the module page. Account theme versions: Luxury 1.6.9, Kaev Aurelia 1.6.11, Kaev Classic 1.0.2; public theme Kaev Aurelia 1.1.0; Donations module 1.16.2.
