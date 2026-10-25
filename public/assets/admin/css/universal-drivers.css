@@ -37,6 +37,7 @@
 .ud-inline-input button { border: 0; background: transparent; color: var(--admin-text); cursor: pointer; font-size: var(--admin-text-title); padding: var(--admin-space-2); }
 .ud-actions input, .ud-actions select { width: auto !important; max-width: 260px; flex: 1; }
 .ud-savebar { border-top: 1px solid var(--admin-border); padding-top: var(--admin-space-4); }
+.ud-savebar .ud-save-button { margin-inline-start: auto; }
 .ud-section-head h3 { margin: 0; }
 .ud-section-head p { margin: var(--admin-space-1) 0; }
 .ud-template-picker { display: grid; gap: var(--admin-space-3); border-bottom: 1px solid var(--admin-border); padding-bottom: var(--admin-space-4); }

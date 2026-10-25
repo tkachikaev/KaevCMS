@@ -115,7 +115,7 @@
             <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.next') }} →</button>
         @else
             <button type="button" class="button button-secondary" wire:click="setSection('general')">← {{ __('drivers.back') }}</button>
-            <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
+            <button type="submit" class="button button-primary ud-save-button" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
         @endif
     </div>
 </form>

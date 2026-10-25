@@ -23,10 +23,10 @@
         @elseif($section === 'mapping')
             <button type="button" class="button button-secondary" wire:click="setSection('general')">← {{ __('drivers.back') }}</button>
             <button type="button" class="button button-primary" wire:click="nextGameStep('features')">{{ __('drivers.next') }} →</button>
-            <button type="submit" class="button button-secondary" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
+            <button type="submit" class="button button-secondary ud-save-button" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
         @else
             <button type="button" class="button button-secondary" wire:click="setSection('mapping')">← {{ __('drivers.back') }}</button>
-            <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
+            <button type="submit" class="button button-primary ud-save-button" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
         @endif
     </div>
 </form>
