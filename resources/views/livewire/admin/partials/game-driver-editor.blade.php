@@ -9,7 +9,7 @@
         <button type="button" @class(['ud-section-tab', 'active' => $section === 'features']) wire:click="nextGameStep('features')">{{ __('drivers.game_step_features') }}</button>
     </nav>
     @if($errors->any())
-        <div class="notice notice-error" role="alert"><ul>@foreach($errors->all() as $message)<li>{{ $message }}</li>@endforeach</ul></div>
+        <div class="notice notice-warning ud-error-summary" role="alert">{{ __('drivers.check_fields') }}</div>
     @endif
     @if($section === 'general')
         @include('livewire.admin.partials.game-driver-settings')

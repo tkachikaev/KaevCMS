@@ -88,7 +88,7 @@ for (const variant of [
         // Error messages come from the CMS locale, not native browser validation.
         await page.locator('#ud-login-column-password').fill('');
         await page.locator('.ud-login-editor button[type=submit]').click();
-        await expect(page.locator('.ud-field-error')).toContainText(variant.locale === 'ru' ? 'Заполните поле' : 'Enter');
+        await expect(page.locator('.ud-field-error')).toContainText(variant.locale === 'ru' ? 'Это поле нужно заполнить' : 'This field is required');
         await page.locator('#ud-login-column-password').fill('secret_hash');
         await page.locator('.ud-login-editor button[type=submit]').click();
         const created = page.locator('.ud-profile').filter({ hasText: name });
