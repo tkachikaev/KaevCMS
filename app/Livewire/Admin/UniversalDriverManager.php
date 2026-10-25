@@ -105,6 +105,8 @@ final class UniversalDriverManager extends Component
         $this->managePermission();
         abort_unless(in_array($type, ['login', 'game'], true), 404);
         $this->resetValidation();
+        $this->importOpen = false;
+        $this->confirmDelete = false;
         $this->tab = $type;
         $this->draft = app(ProfileEditorDraft::class)->blank($type);
         if ($baseId !== null) {
@@ -441,6 +443,18 @@ final class UniversalDriverManager extends Component
         } catch (ProfileValidationException $exception) {
             $this->error = __('drivers.invalid_profile').': '.$exception->getMessage();
         }
+    }
+
+    public function closeImport(): void
+    {
+        $this->importOpen = false;
+        $this->importFile = null;
+        $this->resetValidation('importFile');
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->confirmDelete = false;
     }
 
     public function askDelete(string $type, string $id): void

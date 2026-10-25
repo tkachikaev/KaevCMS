@@ -3,6 +3,7 @@
 namespace App\Services\GameAccounts;
 
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\ProfileFormat;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
@@ -28,6 +29,7 @@ final class UniversalLoginAccountWriter
         $hash = match ($passwordConfig['scheme']) {
             'sha1_base64' => base64_encode(sha1($password, true)),
             'bcrypt_2a' => $this->bcrypt($password, $passwordConfig['cost']),
+            'sha1_hex', 'md5_hex', 'sha256_hex', 'whirlpool_hex' => hash(ProfileFormat::HEX_PASSWORD_SCHEMES[$passwordConfig['scheme']][0], $password),
             default => throw new ProfileValidationException('Unsupported game password scheme.'),
         };
 
@@ -48,6 +50,9 @@ final class UniversalLoginAccountWriter
 
             return is_string($decoded) && strlen($decoded) === 20 && base64_encode($decoded) === $credential;
         }
+        if (isset(ProfileFormat::HEX_PASSWORD_SCHEMES[$password['scheme']])) {
+            return preg_match('/\A[0-9a-f]{'.ProfileFormat::HEX_PASSWORD_SCHEMES[$password['scheme']][1].'}\z/D', $credential) === 1;
+        }
         if ($password['scheme'] === 'bcrypt_2a') {
             return preg_match('/\A\$2a\$(\d\d)\$[.\/A-Za-z0-9]{53}\z/D', $credential, $matches) === 1
                 && (int) $matches[1] === $password['cost'];
@@ -61,7 +66,7 @@ final class UniversalLoginAccountWriter
      * GameAccountGateway translates it and performs recovery using inspect().
      * Never perform a pre-insert 'exists then insert' without a unique index.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      */
     public function create(Connection $database, array $profile, PreparedGameAccount $account): void
     {
@@ -99,7 +104,7 @@ final class UniversalLoginAccountWriter
      * applied; false means absent. A conflicting stored hash fails closed.
      * On an unknown network outcome retry only with the SAME prepared hash.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      */
     public function changePreparedPassword(
         Connection $database,
@@ -154,7 +159,7 @@ final class UniversalLoginAccountWriter
     }
 
     /** @param array<string,mixed> $profile
-     *  @return array<string,mixed>
+     * @return array<string,mixed>
      */
     private function configuration(array $profile, string $capability, bool $checkCapability = true): array
     {
@@ -174,7 +179,7 @@ final class UniversalLoginAccountWriter
     }
 
     /** @param array<string,mixed> $profile
-     *  @return array<string,mixed>
+     * @return array<string,mixed>
      */
     private function databaseConfig(Connection $database, array $profile, string $capability): array
     {

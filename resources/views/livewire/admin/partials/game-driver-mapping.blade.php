@@ -1,14 +1,4 @@
 <p class="ud-info">{{ __('drivers.game_mapping_help') }}</p>
-<div class="ud-mapping-row">
-    <div class="ud-mapping-purpose"><strong>{{ __('drivers.character_owner') }}</strong><small>{{ __('drivers.required_field') }}</small></div>
-    <span class="ud-arrow" aria-hidden="true">→</span>
-    <label>{{ __('drivers.table') }}<input type="text" wire:model.blur="draft.config.characters.table" maxlength="64"></label>
-    <span class="ud-arrow" aria-hidden="true">→</span>
-    <label>{{ __('drivers.column') }}<input type="text" wire:model="draft.config.characters.owner.column" maxlength="64"></label>
-</div>
-@foreach(['characters.table', 'characters.owner.column'] as $path)
-    @error('draft.config.'.$path)<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
-@endforeach
 @php
     $groups = [
         'game_basic' => ['id','name','level','class_id','race','gender','online'],
@@ -17,8 +7,23 @@
     ];
 @endphp
 @foreach($groups as $group => $fields)
-    <details class="ud-game-group" data-game-group="{{ $group }}" wire:ignore.self @if($group === 'game_basic') open @endif>
+    <details class="ud-game-group" data-game-group="{{ $group }}" wire:ignore.self>
         <summary><h3>{{ __('drivers.'.$group) }}</h3></summary>
+        @if($group === 'game_basic')
+            <div class="ud-game-field" wire:key="game-field-owner">
+                <div class="ud-mapping-row">
+                    <div class="ud-mapping-purpose"><strong>{{ __('drivers.character_owner') }}</strong><small>{{ __('drivers.required_field') }}</small></div>
+                    <span class="ud-arrow" aria-hidden="true">→</span>
+                    <label>{{ __('drivers.table') }}<input type="text" wire:model.blur="draft.config.characters.table" maxlength="64"></label>
+                    <span class="ud-arrow" aria-hidden="true">→</span>
+                    <label>{{ __('drivers.column') }}<input type="text" wire:model="draft.config.characters.owner.column" maxlength="64"></label>
+                    <span class="ud-row-end"></span>
+                </div>
+                @foreach(['characters.table', 'characters.owner.column'] as $path)
+                    @error('draft.config.'.$path)<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
+                @endforeach
+            </div>
+        @endif
         @foreach($fields as $field)
             @php($def = $config['characters']['fields'][$field] ?? ['kind' => 'column', 'column' => ''])
             @php($relation = $config['relations'][$def['relation'] ?? ''] ?? null)
@@ -45,14 +50,21 @@
                     @else
                         <span class="ud-info">{{ __('drivers.kind_'.$def['kind']) }}</span>
                     @endif
+                    @if(in_array($field,['id','name'],true))
+                        <span class="ud-row-end"></span>
+                    @else
+                        <button type="button" class="ud-row-end ud-remove" wire:click="removeField('{{ $field }}')" aria-label="{{ __('drivers.clear_mapping') }}" title="{{ __('drivers.clear_mapping') }}">✕</button>
+                    @endif
                 </div>
                 @error('draft.config.characters.fields.'.$field.'.column')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
+                @unless(in_array($field,['id','name'],true))
                 <details class="ud-field-source" wire:ignore.self @if($def['kind'] !== 'column') open @endif>
                     <summary>{{ __('drivers.field_source_settings') }}</summary>
                     <div class="ud-grid">
                         <label>{{ __('drivers.source') }}
                             <select wire:change="changeFieldKind('{{ $field }}', $event.target.value)">
                                 @foreach(['column','related','eav','choice','operator'] as $kind)
+                                    @continue($kind === 'operator' && $field !== 'hero' && $def['kind'] !== 'operator')
                                     <option value="{{ $kind }}" @selected($def['kind'] === $kind) @disabled(in_array($field,['id','name'],true) && $kind !== 'column')>{{ __('drivers.kind_'.$kind) }}</option>
                                 @endforeach
                             </select>
@@ -77,9 +89,9 @@
                         @elseif($def['kind'] === 'operator')
                             <p class="ud-info">{{ __('drivers.rusacis_hero_help') }}</p>
                         @endif
-                        @unless(in_array($field,['id','name'],true))<button type="button" class="button button-secondary" wire:click="removeField('{{ $field }}')">{{ __('drivers.clear_mapping') }}</button>@endunless
                     </div>
                 </details>
+                @endunless
             </div>
         @endforeach
     </details>

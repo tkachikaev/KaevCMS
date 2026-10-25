@@ -84,7 +84,7 @@
     @else
     @foreach(['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $name => $field)
         @if(($config['characters']['fields'][$field]['kind'] ?? '') === 'column' && !empty($config['characters']['fields'][$field]['column']))
-            <div class="ud-grid" wire:key="game-ranking-{{ $name }}">
+            <div class="ud-grid ud-ranking" wire:key="game-ranking-{{ $name }}">
                 <label>{{ __('drivers.cap_'.$name) }}<code>{{ $config['characters']['table'] }} → {{ $config['characters']['fields'][$field]['column'] }}</code></label>
                 <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.optional') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']))<option value="{{ $def['column'] }}">{{ __('drivers.field_'.$key) }} ({{ $def['column'] }})</option>@endif @endforeach</select></label>
                 <label class="ud-check"><input type="checkbox" wire:model="draft.config.rankings.{{ $name }}.positive_only">{{ __('drivers.positive_only') }}</label>
