@@ -1,4 +1,4 @@
-# Universal drivers — development history / current version 0.53.11
+# Universal drivers — development history / current version 0.54.0
 
 ## Using the editor
 
@@ -33,7 +33,7 @@ The game editor has three steps: settings, field mappings, and relations/statist
 }]
 ```
 
-   `type` is `game` or `login` (which driver it belongs to). Field kinds: `table`, `column` (a database name, checked as an identifier), `text`, `number`, `choice` (needs an `options` list). Limits: up to 8 declarations, up to 12 fields each; `ModuleValidator` checks the shape when the module is inspected.
+   `type` is `game` or `login` (which driver it belongs to). Field kinds: `table`, `column` (a database name, checked as an identifier), `text`, `number`, `choice` (needs an `options` list). Limits: up to 8 declarations, up to 12 fields each; `ModuleValidator` checks the shape when the module is inspected. The field exists since CMS 0.54.0, so such a module must set `"cms_min": "0.54.0"`.
 2. The driver editor (**Servers → Drivers**) shows a "For modules" section at the end of the last step with the fields of every installed module, even one that is not enabled yet. The answers are stored in the profile at `config.extensions.<module id>.<key>.<field>`. Empty answers are not stored; answers for modules that are not installed here are kept and travel with the driver on export and import.
 3. **Enabling a module is checked.** With `required: true`, `ModuleManager::enable()` refuses to enable the module until every connected server of that type has the required fields filled in its driver. The administrator gets a plain message: which server, which driver, what is missing and where to go.
 4. **At run time** the module reads the answers like this:
