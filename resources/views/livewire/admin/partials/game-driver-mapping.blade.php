@@ -9,7 +9,7 @@
 @endphp
 @foreach($groups as $group => $fields)
     <details class="ud-game-group" data-game-group="{{ $group }}" wire:ignore.self>
-        <summary><h3>{{ __('drivers.'.$group) }}</h3></summary>
+        <summary><h3>{{ __("drivers.{$group}") }}</h3></summary>
         @if($group === 'game_basic')
             <p class="ud-info ud-main-note">{{ __('drivers.main_table_help') }}</p>
         @endif
@@ -42,7 +42,7 @@
                     @php($def = $config['characters']['fields'][$field] ?? ['kind' => 'column', 'column' => ''])
                     @php($relation = $config['relations'][$def['relation'] ?? ''] ?? null)
                     @php($required = in_array($field, ['id','name'], true))
-                    @php($label = $field === 'id' ? __('drivers.field_id_game') : __('drivers.field_'.$field))
+                    @php($label = $field === 'id' ? __('drivers.field_id_game') : __("drivers.field_{$field}"))
                     @php($kind = $def['kind'])
                     <tr @class(['ud-map-row', 'ud-map-required' => $required]) wire:key="game-field-{{ $field }}">
                         <th scope="row"><strong>{{ $label }}</strong><small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small></th>
@@ -75,7 +75,7 @@
                                         <div class="ud-menu-items" role="menu">
                                             @foreach(['column','choice','eav','operator'] as $option)
                                                 @continue($option === 'operator' && $field !== 'hero' && $kind !== 'operator')
-                                                <button type="button" role="menuitem" wire:click="changeFieldKind('{{ $field }}', '{{ $option }}')">{{ __('drivers.store_'.$option) }}@if(($option === 'column' && in_array($kind, ['column','related'], true)) || $option === $kind) ✓@endif</button>
+                                                <button type="button" role="menuitem" wire:click="changeFieldKind('{{ $field }}', '{{ $option }}')">{{ __("drivers.store_{$option}") }}@if(($option === 'column' && in_array($kind, ['column','related'], true)) || $option === $kind) ✓@endif</button>
                                             @endforeach
                                         </div>
                                     </details>

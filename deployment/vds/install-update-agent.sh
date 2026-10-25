@@ -232,7 +232,7 @@ repair_project_permissions() {
     chmod 2750 "${PROJECT_ROOT}"
 
     local path
-    for path in .github app config database deployment docs integrations lang modules resources routes tests themes account-themes vendor; do
+    for path in .github app config database deployment docs driver-profiles integrations lang modules resources routes tests themes account-themes vendor; do
         repair_program_path "${PROJECT_ROOT}/${path}"
     done
 

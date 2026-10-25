@@ -334,9 +334,10 @@ test('active sidebar item keeps its selected color while hovered', async ({ page
     const gameServersLink = serversGroup.getByRole('link', { name: 'Игровые серверы', exact: true });
     const serverLinks = serversGroup.locator('.admin-menu-group-items .admin-menu-item');
 
-    await expect(serverLinks).toHaveCount(2);
+    await expect(serverLinks).toHaveCount(3);
     await expect(serverLinks.nth(0)).toContainText('Игровые серверы');
     await expect(serverLinks.nth(1)).toContainText('Логин-серверы');
+    await expect(serverLinks.nth(2)).toContainText('Драйверы');
     await expect(gameServersLink).toHaveClass(/active/);
 
     const selectedBackground = await gameServersLink.evaluate((element) => getComputedStyle(element).backgroundColor);

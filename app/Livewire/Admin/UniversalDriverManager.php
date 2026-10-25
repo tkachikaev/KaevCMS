@@ -272,7 +272,7 @@ final class UniversalDriverManager extends Component
         if ($mappings) {
             foreach (['characters.table' => 'characters_table', 'characters.owner.column' => 'character_owner', 'characters.fields.id.column' => 'field_id_game', 'characters.fields.name.column' => 'field_name'] as $path => $label) {
                 $rules['draft.config.'.$path] = ['required', 'string', $identifier];
-                $names['draft.config.'.$path] = __('drivers.'.$label);
+                $names['draft.config.'.$path] = __("drivers.{$label}");
             }
         }
         $this->validate($rules, ['required' => __('drivers.validation_required'), 'regex' => __('drivers.validation_identifier'), 'string' => __('drivers.validation_string'), 'max' => __('drivers.validation_max')], $names);
@@ -384,7 +384,7 @@ final class UniversalDriverManager extends Component
                     || ($field === 'id' && ($this->draft['config']['accounts']['ownership']['identity'] ?? '') === 'id');
                 $path = 'draft.config.accounts.fields.'.$field;
                 $rules[$path] = [$required ? 'required' : 'nullable', 'string', 'regex:/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D'];
-                $attributes[$path] = __('drivers.field_'.$field);
+                $attributes[$path] = __("drivers.field_{$field}");
             }
         }
         $this->validate($rules, [

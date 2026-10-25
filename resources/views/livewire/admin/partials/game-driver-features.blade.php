@@ -5,10 +5,10 @@
         @if(isset($config['relations'][$hero['relation']]))
             @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.field_id_game'), 'tablePath' => 'draft.config.relations.'.$hero['relation'].'.table', 'columnPath' => 'draft.config.relations.'.$hero['relation'].'.foreign_column'])
             @foreach(['count_column' => 'hero_count_label', 'played_column' => 'hero_played_label', 'claimed_column' => 'hero_claimed_label'] as $key => $label)
-                @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.'.$label), 'tablePath' => 'draft.config.relations.'.$hero['relation'].'.table', 'columnPath' => 'draft.config.features.heroes.'.$key])
+                @include('livewire.admin.partials.game-data-row', ['purpose' => __("drivers.{$label}"), 'tablePath' => 'draft.config.relations.'.$hero['relation'].'.table', 'columnPath' => 'draft.config.features.heroes.'.$key])
             @endforeach
             <details class="ud-field-source" wire:ignore.self><summary>{{ __('drivers.hero_filters') }}</summary><p class="ud-info">{{ __('drivers.hero_filters_help') }}</p><div class="ud-grid">
-                @foreach(['played_column','played_value','active_column','active_value'] as $key)<label>{{ __('drivers.'.$key) }}<input type="text" wire:model="draft.config.features.heroes.{{ $key }}"></label>@endforeach
+                @foreach(['played_column','played_value','active_column','active_value'] as $key)<label>{{ __("drivers.{$key}") }}<input type="text" wire:model="draft.config.features.heroes.{{ $key }}"></label>@endforeach
             </div></details>
         @else
             <p class="ud-field-error">{{ __('drivers.game_relation_missing') }}</p>
@@ -34,7 +34,7 @@
                 @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.name_column'), 'tablePath' => 'draft.config.relations.'.$castle['relation'].'.table', 'columnPath' => 'draft.config.features.castles.name_column'])
             @endif
             @foreach(['id','name','level','reputation'] as $field)
-                @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.clan_'.$field), 'tablePath' => 'draft.config.relations.'.$castle['clan_relation'].'.table', 'columnPath' => 'draft.config.features.castles.clan_columns.'.$field])
+                @include('livewire.admin.partials.game-data-row', ['purpose' => __("drivers.clan_{$field}"), 'tablePath' => 'draft.config.relations.'.$castle['clan_relation'].'.table', 'columnPath' => 'draft.config.features.castles.clan_columns.'.$field])
             @endforeach
             @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.leader_name_column'), 'tablePath' => 'draft.config.relations.'.$castle['leader_relation'].'.table', 'columnPath' => 'draft.config.features.castles.leader_name_column'])
         @else
@@ -54,8 +54,8 @@
     @foreach(['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $name => $field)
         @if(($config['characters']['fields'][$field]['kind'] ?? '') === 'column' && !empty($config['characters']['fields'][$field]['column']))
             <div class="ud-grid ud-ranking" wire:key="game-ranking-{{ $name }}">
-                <label>{{ __('drivers.cap_'.$name) }}<code>{{ $config['characters']['table'] }} → {{ $config['characters']['fields'][$field]['column'] }}</code></label>
-                <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.optional') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']))<option value="{{ $def['column'] }}">{{ __('drivers.field_'.$key) }} ({{ $def['column'] }})</option>@endif @endforeach</select></label>
+                <label>{{ __("drivers.cap_{$name}") }}<code>{{ $config['characters']['table'] }} → {{ $config['characters']['fields'][$field]['column'] }}</code></label>
+                <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.optional') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']))<option value="{{ $def['column'] }}">{{ __("drivers.field_{$key}") }} ({{ $def['column'] }})</option>@endif @endforeach</select></label>
                 <label class="ud-check"><input type="checkbox" wire:model="draft.config.rankings.{{ $name }}.positive_only">{{ __('drivers.positive_only') }}</label>
             </div>
         @endif

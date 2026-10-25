@@ -68,7 +68,7 @@
                 @php($required = in_array($field, ['login','password'], true) || ($field === 'id' && $config['accounts']['ownership']['identity'] === 'id'))
                 <div class="ud-mapping-row" wire:key="login-mapping-{{ $field }}">
                     <div class="ud-mapping-purpose">
-                        <strong>{{ $field === 'id' ? __('drivers.field_id_login') : __('drivers.field_'.$field) }}</strong>
+                        <strong>{{ $field === 'id' ? __('drivers.field_id_login') : __("drivers.field_{$field}") }}</strong>
                         <small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small>
                     </div>
                     <span class="ud-arrow" aria-hidden="true">→</span>
