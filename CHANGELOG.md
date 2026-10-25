@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.53.8 - 2026-10-25
+
+Universal drivers, iteration 6: **experimental CMS-side JSON profile catalog and verified connection snapshots**, no change to live PHP resolvers. Base: 0.53.7 full ZIP.
+
+- Added `DriverProfileCatalog` with bundled+custom profiles, persistent local overrides, tombstones for removed bundled profiles, restore to bundled defaults, non-destructive JSON import/export and safeguards against deleting a profile used by LoginServer/GameServer or stored snapshots.
+- Added `ConnectionProfileSnapshots` for immutable verified-per-connection JSON + SHA256. Snapshot replacement requires a caller-supplied real schema verification callback; failed checks preserve the last confirmed snapshot. The future administration/server workflows do not yet call this experimental service.
+- Added **two additive CMS migrations tables** (`universal_driver_profiles`, `universal_driver_connection_snapshots`). Game databases, existing account/character tables and connection credentials remain unchanged.
+- Added feature coverage for offline CRUD, persistence of bundled modifications and tombstones, import identity/name collisions, forbidden deletion, snapshot rollback and corruption. No admin endpoints or UI yet; no release-owned JSON, PHP dependency, or production resolver changes.
+
+## 0.53.7 - 2026-10-25
+
+Universal drivers, iteration 5: **experimental LoginServer account creation and prepared password change**; existing production LoginServer drivers and authorization flows remain unchanged. Base: 0.53.6 full ZIP.
+
+- Added `UniversalLoginAccountWriter` using validated JSON and caller-supplied existing MySQL connection. `preparePassword` supports tested SHA-1/Base64 and BCrypt `$2a$` formats, using a single immutable prepared credential for registration recovery.
+- Added bounded, declared, fixed insert values; imported JSON may not remap credentials into arbitrary columns or grant elevated account access. Creation requires supported capabilities, valid fields and a unique login index. Database duplicate exceptions are preserved for the existing `pending/active/failed` recovery logic.
+- Added compare-and-set prepared password updates with idempotent retries of the same hash and fail-closed conflicts; this method is not wired to the player account until the later resolver/authorization iteration.
+- Added offline writer-safety checks and disposable MySQL fixtures comparing prepared credentials and inserted records against Mobius/RUSaCis legacy drivers; includes duplicate insert, retry, concurrent-stale proof, missing-index and capability tests.
+- No framework/Composer updates, published migrations, public routes, production switching or SQL Server/PTS adapter. MySQL integration, browser and full PHPUnit quality gate still require execution in a prepared test environment.
+
 ## 0.53.6 - 2026-10-25
 
 Universal drivers, iteration 4: **experimental read-only GameServer rankings, hero lists and castle ownership; production drivers remain unchanged**. Based on the 0.53.5 full ZIP; no Composer changes, published migrations or runtime database changes.

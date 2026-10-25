@@ -58,7 +58,7 @@ final class ProfileValidator
         $this->capabilities($config['capabilities'], $profile['type']);
         if ($profile['type'] === 'login') {
             $this->keys($config, ['database', 'requirements', 'capabilities', 'accounts', 'password'], ['database', 'requirements', 'capabilities', 'accounts'], 'login config');
-            $this->accounts($this->object($config['accounts'], 'accounts'), $config['capabilities']);
+            $this->accounts($this->object($config['accounts'], 'accounts'), $config['capabilities'], $config['requirements']);
             $this->requirePrimaryTable($config['accounts']['table'], $config['requirements']);
             if (in_array('account_creation', $config['capabilities'], true) || in_array('password_change', $config['capabilities'], true)) {
                 if (! isset($config['password'])) {
@@ -153,7 +153,7 @@ final class ProfileValidator
     /** @param array<string, mixed> $accounts
      *  @param list<string> $capabilities
      */
-    private function accounts(array $accounts, array $capabilities): void
+    private function accounts(array $accounts, array $capabilities, array $requirements): void
     {
         $this->keys($accounts, ['table', 'fields', 'ownership', 'create'], ['table', 'fields', 'ownership'], 'accounts');
         $this->identifier($accounts['table'], 'accounts.table');
@@ -181,7 +181,7 @@ final class ProfileValidator
             return;
         }
         $create = $this->object($accounts['create'], 'accounts.create');
-        $this->keys($create, ['columns'], ['columns'], 'accounts.create');
+        $this->keys($create, ['columns', 'fixed_values'], ['columns'], 'accounts.create');
         $columns = $this->object($create['columns'], 'accounts.create.columns');
         if (count($columns) > 32) {
             throw new ProfileValidationException('Too many account insertion fields.');
@@ -189,6 +189,14 @@ final class ProfileValidator
         foreach ($columns as $column => $source) {
             $this->identifier($column, 'create column');
             $this->oneOf($source, ['login', 'credential', 'email'], 'create source');
+            $expected = match ($source) {
+                'login' => $fields['login'],
+                'credential' => $fields['password'] ?? null,
+                'email' => $fields['email'] ?? null,
+            };
+            if ($expected !== $column) {
+                throw new ProfileValidationException('Dynamic account fields must match their declared column mapping.');
+            }
         }
         if (in_array('account_creation', $capabilities, true) && ($columns[$fields['login']] ?? null) !== 'login') {
             throw new ProfileValidationException('Account creation must provide its login field.');
@@ -198,6 +206,35 @@ final class ProfileValidator
         }
         if (in_array('account_creation', $capabilities, true) && in_array('email', $columns, true) && ($fields['email'] ?? null) === null) {
             throw new ProfileValidationException('Cannot insert email without an email column.');
+        }
+        if (isset($create['fixed_values'])) {
+            $fixed = $this->object($create['fixed_values'], 'accounts.create.fixed_values');
+            if (count($fixed) > 16) {
+                throw new ProfileValidationException('Too many fixed account insertion values.');
+            }
+            // A constant cannot override a trusted dynamic login/password
+            // input. It must also refer to a declared schema column.
+            $declaredColumns = [];
+            foreach ($requirements as $requirement) {
+                if ($requirement['table'] === $accounts['table']) {
+                    $declaredColumns = array_merge($requirement['columns'], $requirement['optional_columns'] ?? []);
+                    break;
+                }
+            }
+            foreach ($fixed as $column => $value) {
+                $this->identifier($column, 'fixed value column');
+                if (! in_array($column, $declaredColumns, true)) {
+                    throw new ProfileValidationException('A fixed account value must map to a declared schema column.');
+                }
+                $this->scalar($value, 'fixed value');
+                if (array_key_exists($column, $columns) || in_array($column, [$fields['login'], $fields['password'] ?? null, $fields['email'] ?? null], true)) {
+                    throw new ProfileValidationException('Fixed values cannot overwrite mapped account identity fields.');
+                }
+                // Privileged account flags must not be set by importable profiles.
+                if (preg_match('/(?:access.?level|privilege|is.?admin|is.?gm|authority)/i', $column) === 1 && ! in_array($value, [0, '0', false], true)) {
+                    throw new ProfileValidationException('Fixed values cannot grant game account privileges.');
+                }
+            }
         }
     }
 

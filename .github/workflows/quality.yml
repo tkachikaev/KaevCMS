@@ -208,6 +208,8 @@ jobs:
           composer install --no-interaction --prefer-dist --no-progress
       - name: Validate bundled driver contracts offline
         run: php tests/Integration/UniversalDrivers/validate-profiles.php
+      - name: Validate offline password schemes and write mappings
+        run: php tests/Integration/UniversalDrivers/validate-write-profiles.php
       - name: Check MySQL 8.4 schema and fixture semantics
         env:
           KAEV_UNIVERSAL_MYSQL_TEST: '1'
