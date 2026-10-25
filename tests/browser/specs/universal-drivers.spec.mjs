@@ -62,11 +62,8 @@ for (const variant of [
         await page.locator('#ud-login-template').selectOption('rusacis');
         await page.locator('button[wire\\:click="useLoginTemplate"]').click();
         await expect(page.locator('#ud-login-password-scheme')).toHaveValue('bcrypt_2a');
-        // Switching an encoding updates incompatible collations rather than keeping an invalid pair.
-        await page.locator('#ud-login-charset').selectOption('cp1251');
-        await expect(page.locator('#ud-login-collation')).toHaveValue('cp1251_general_ci');
-        await page.locator('#ud-login-charset').selectOption('utf8mb4');
-        await expect(page.locator('#ud-login-collation')).toHaveValue('utf8mb4_unicode_ci');
+        // The connection takes its encoding from the server settings, so the editor offers none.
+        await expect(page.locator('#ud-login-charset, #ud-login-collation')).toHaveCount(0);
         const name = `Editor browser ${variant.locale} ${Date.now()}`;
         await page.screenshot({ path: testInfo.outputPath('login-settings.png'), fullPage: true });
         await page.locator('#ud-login-name').fill(name);

@@ -11,8 +11,17 @@ final class BundledProfileCatalog
         private readonly ProfileValidator $validator = new ProfileValidator,
     ) {}
 
+    /** @var array<string,array<string,mixed>>|null */
+    private static ?array $cache = null;
+
     /** @return array<string,array<string,mixed>> Keys are type:id, not display names. */
     public function all(): array
+    {
+        return self::$cache ??= $this->load();
+    }
+
+    /** @return array<string,array<string,mixed>> */
+    private function load(): array
     {
         $directory = dirname(__DIR__, 3).'/driver-profiles/bundled';
         $result = [];

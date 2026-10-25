@@ -40,34 +40,6 @@
             </label>
         </div>
 
-        @php
-            $encodingOptions = [
-                'utf8mb4' => ['utf8mb4_unicode_ci', 'utf8mb4_general_ci', 'utf8mb4_bin'],
-                'utf8' => ['utf8_unicode_ci', 'utf8_general_ci', 'utf8_bin'],
-                'utf8mb3' => ['utf8mb3_unicode_ci', 'utf8mb3_general_ci', 'utf8mb3_bin'],
-                'cp1251' => ['cp1251_general_ci', 'cp1251_bin'],
-                'latin1' => ['latin1_general_ci', 'latin1_swedish_ci', 'latin1_bin'],
-            ];
-            $charset = $config['database']['charset'];
-            $collations = $encodingOptions[$charset] ?? [];
-        @endphp
-        <div class="ud-grid">
-            <label for="ud-login-charset">{{ __('drivers.charset') }}
-                <select id="ud-login-charset" wire:model.live="draft.config.database.charset">
-                    @foreach(array_keys($encodingOptions) as $encoding)<option value="{{ $encoding }}">{{ $encoding }}</option>@endforeach
-                    @unless(isset($encodingOptions[$charset]))<option value="{{ $charset }}">{{ $charset }}</option>@endunless
-                </select>
-                @error('draft.config.database.charset')<span class="ud-field-error" role="alert">{{ $message }}</span>@enderror
-            </label>
-            <label for="ud-login-collation">{{ __('drivers.collation') }}
-                <select id="ud-login-collation" wire:model="draft.config.database.collation" wire:key="login-collation-{{ $charset }}">
-                    @foreach($collations as $collation)<option value="{{ $collation }}">{{ $collation }}</option>@endforeach
-                    @unless(in_array($config['database']['collation'], $collations, true))<option value="{{ $config['database']['collation'] }}">{{ $config['database']['collation'] }}</option>@endunless
-                </select>
-                @error('draft.config.database.collation')<span class="ud-field-error" role="alert">{{ $message }}</span>@enderror
-            </label>
-        </div>
-
         <div class="ud-grid">
             <label for="ud-login-password-scheme">{{ __('drivers.password_scheme') }}
                 <select id="ud-login-password-scheme" wire:model.live="draft.config.password.scheme">

@@ -273,14 +273,6 @@ final class UniversalDriverManager extends Component
         $this->charactersTableForRelations = $value;
     }
 
-    public function updatedDraftConfigDatabaseCharset(string $value): void
-    {
-        $this->managePermission();
-        if (! str_starts_with((string) ($this->draft['config']['database']['collation'] ?? ''), $value.'_')) {
-            $this->draft['config']['database']['collation'] = $value === 'utf8mb4' ? 'utf8mb4_unicode_ci' : $value.'_general_ci';
-        }
-    }
-
     private function validateLoginDetails(bool $includeMappings = false): void
     {
         $rules = [

@@ -18,8 +18,11 @@ use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
+use App\Support\UniversalDrivers\LoginProfileEditor;
+use App\Support\UniversalDrivers\ProfileEditorDraft;
 use App\Support\UniversalDrivers\ProfileFormat;
 use App\Support\UniversalDrivers\ProfileValidationException;
+use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\MySqlConnection;
 use Illuminate\Database\QueryException;
 
@@ -142,6 +145,41 @@ foreach ($databaseNames as $type => $name) {
         $writer->create($db, $sha1Profile, new PreparedGameAccount('narrowOk', $writer->preparePassword($sha1Profile, 'Testing123'), 'n@example.invalid'));
         $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(255) NULL');
         echo "OK: password column width guard (VARCHAR(45) refuses Whirlpool, accepts SHA-1/Base64)\n";
+    }
+    if ($type === 'l2j_mobius') {
+        // A driver assembled the way the editor assembles it: own table and column names, MD5.
+        $pdo->exec('CREATE TABLE `site_players` (`user_name` VARCHAR(45) NOT NULL, `pass_hash` VARCHAR(32) NOT NULL, `mail` VARCHAR(100) NULL, UNIQUE KEY `uk_user` (`user_name`))');
+        $draft = (new ProfileEditorDraft)->blank('login');
+        $draft['id'] = 'custom-md5-site';
+        $draft['name'] = 'Custom MD5 site';
+        $draft['config']['accounts'] = [
+            'table' => 'site_players',
+            'fields' => ['login' => 'user_name', 'password' => 'pass_hash', 'email' => 'mail'],
+            'ownership' => ['identity' => 'login', 'column' => 'user_name'],
+            'create' => ['columns' => ['user_name' => 'login', 'pass_hash' => 'credential', 'mail' => 'email']],
+        ];
+        $draft['config']['password'] = ['scheme' => 'md5_hex'];
+        $custom = (new LoginProfileEditor)->prepare($draft, 'accounts');
+        (new ProfileValidator)->validate($custom);
+        $customHash = $writer->preparePassword($custom, 'Testing123');
+        $customAccount = new PreparedGameAccount('customUser', $customHash, 'custom@example.invalid');
+        if ($reader->inspect($db, $custom, $customAccount) !== ExternalGameAccountState::Missing) {
+            throw new RuntimeException('A custom-schema login should not exist yet.');
+        }
+        $writer->create($db, $custom, $customAccount);
+        if ($reader->inspect($db, $custom, $customAccount) !== ExternalGameAccountState::Matching) {
+            throw new RuntimeException('Custom-schema account does not match its recovery proof.');
+        }
+        $row = $pdo->query("SELECT pass_hash, mail FROM site_players WHERE user_name = 'customUser'")->fetch(PDO::FETCH_ASSOC);
+        if ($row !== ['pass_hash' => md5('Testing123'), 'mail' => 'custom@example.invalid']) {
+            throw new RuntimeException('Custom-schema row was stored differently from the profile.');
+        }
+        $customNext = $writer->preparePassword($custom, 'Changed123');
+        if (! $writer->changePreparedPassword($db, $custom, 'customUser', $customHash, $customNext)) {
+            throw new RuntimeException('Custom-schema password change failed.');
+        }
+        $pdo->exec('DROP TABLE `site_players`');
+        echo "OK: custom-schema MD5 driver built like the editor builds it (own table and columns)\n";
     }
     // A valid JSON mapping alone must not enable unsafe writes into a table
     // without an enforced unique login key.
