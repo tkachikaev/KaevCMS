@@ -77,6 +77,11 @@
                             <span wire:loading.remove wire:target="testStored({{ $server->id }})">{{ __('Test connection') }}</span>
                             <span wire:loading wire:target="testStored({{ $server->id }})">{{ __('Checking…') }}</span>
                         </button>
+                        @if(in_array('login:'.$server->driver, $jsonDriverIds, true))
+                            <button class="button button-secondary" type="button" wire:click="applyJsonProfile({{ $server->id }})" wire:loading.attr="disabled" wire:target="applyJsonProfile({{ $server->id }})">
+                                {{ __('Apply JSON and verify') }}
+                            </button>
+                        @endif
                         <button class="button button-primary" type="button" data-read-only-allowed wire:click="edit({{ $server->id }})">{{ __('Configure') }}</button>
                         <details class="server-card-menu">
                             <summary aria-label="{{ __('More actions') }}">⋯</summary>

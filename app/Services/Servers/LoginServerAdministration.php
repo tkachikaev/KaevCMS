@@ -50,6 +50,32 @@ final class LoginServerAdministration
      */
     public function save(?LoginServer $server, array $values): array
     {
+        $key = (string) ($values['driver'] ?? '');
+        $custom = ! in_array($key, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        if (! $custom) {
+            return $this->saveUnchecked($server, $values);
+        }
+        // Refuse to switch a working connection to an unverified custom profile.
+        $candidate = $values;
+        if ($server !== null && trim((string) ($candidate['database_password'] ?? '')) === '') {
+            $candidate['database_password'] = $server->databasePassword() ?? '';
+        }
+        $report = $this->tester->testLoginValues($candidate);
+        if (! $this->databaseState->isConfigured($report)) {
+            throw ValidationException::withMessages(['driver' => __('The driver must pass a real database compatibility check before it can be applied.')]);
+        }
+        return DB::transaction(function () use ($server, $values): array {
+            $saved = $this->saveUnchecked($server, $values);
+            app(UniversalDriverActivation::class)->apply($saved['server']);
+            return $saved;
+        });
+    }
+
+    /** @param array<string,mixed> $values
+     *  @return array{server:LoginServer,created:bool}
+     */
+    private function saveUnchecked(?LoginServer $server, array $values): array
+    {
         $payload = $this->persistenceValues($values);
 
         if (! $server instanceof LoginServer) {
@@ -83,7 +109,18 @@ final class LoginServerAdministration
                     'driver' => __('Create a separate LoginServer connection to change the driver while game accounts are linked.'),
                 ]);
             }
+            $beforeTarget = [
+                $locked->driver, $locked->database_host, $locked->database_port, $locked->database_name,
+                $locked->database_username, $locked->databasePassword(), $locked->database_charset,
+            ];
             $locked->update($payload);
+            $afterTarget = [
+                $locked->driver, $locked->database_host, $locked->database_port, $locked->database_name,
+                $locked->database_username, $locked->databasePassword(), $locked->database_charset,
+            ];
+            if ($beforeTarget !== $afterTarget) {
+                app(UniversalDriverActivation::class)->invalidate($locked);
+            }
 
             return $locked;
         });
@@ -125,6 +162,7 @@ final class LoginServerAdministration
                     'name' => $lockedServer->name,
                     'values' => $this->auditValues->loginServer($lockedServer),
                 ];
+                app(UniversalDriverActivation::class)->invalidate($lockedServer);
                 $lockedServer->delete();
 
                 return $result;

@@ -55,7 +55,7 @@ final class DriverProfileCatalog
      *
      * @param array<string,mixed> $profile
      */
-    public function save(array $profile): void
+    public function save(array $profile, ?string $expectedSha256 = null): void
     {
         $this->validator->validate($profile);
         $type = $profile['type'];
@@ -63,11 +63,19 @@ final class DriverProfileCatalog
         $this->identity($type, $id);
         $json = $this->canonicalJson($profile);
 
-        DB::transaction(function () use ($type, $id, $json): void {
+        DB::transaction(function () use ($type, $id, $json, $expectedSha256): void {
             $row = DB::table('universal_driver_profiles')
                 ->where('type', $type)->where('profile_id', $id)->lockForUpdate()->first();
             if ($row !== null && (bool) $row->is_deleted) {
                 throw new ProfileValidationException('Restore the deleted built-in profile before editing it.');
+            }
+            if ($expectedSha256 !== null) {
+                $rawCurrent = $row === null
+                    ? ($this->bundled->all()[$type.':'.$id] ?? null)
+                    : $this->decodeStored($row->profile_json, $type, $id);
+                if ($rawCurrent === null || ! hash_equals($expectedSha256, hash('sha256', $this->canonicalJson($rawCurrent)))) {
+                    throw new ProfileValidationException('This profile was changed. Reload it before saving.');
+                }
             }
             if ($row === null) {
                 DB::table('universal_driver_profiles')->insert([
@@ -79,6 +87,33 @@ final class DriverProfileCatalog
                     ->update(['profile_json' => $json, 'updated_at' => now()]);
             }
         });
+    }
+
+    /**
+     * Create an exact new identity; unlike save(), never overwrite another
+     * administrator's profile when two requests race for the same ID.
+     *
+     * @param array<string,mixed> $profile
+     */
+    public function create(array $profile): void
+    {
+        $json = $this->canonicalJson($profile);
+        $type = $profile['type'];
+        $id = $profile['id'];
+        if (isset($this->bundled->all()[$type.':'.$id])) {
+            throw new ProfileValidationException('Driver profile ID already exists.');
+        }
+        try {
+            DB::table('universal_driver_profiles')->insert([
+                'type' => $type, 'profile_id' => $id, 'profile_json' => $json,
+                'is_deleted' => false, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        } catch (QueryException $exception) {
+            if (! $this->duplicateKey($exception)) {
+                throw $exception;
+            }
+            throw new ProfileValidationException('Driver profile ID already exists.', previous: $exception);
+        }
     }
 
     /**

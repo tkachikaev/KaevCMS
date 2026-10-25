@@ -43,8 +43,14 @@ final class UniversalGameWorldReader
         $schema = $this->schema($database, $config);
         $this->requireCore($schema);
         $supported = [];
+        $base = $config['characters']['table'];
+        $characterColumns = $schema['columns'][$base] ?? [];
         foreach (self::RANKING_SECTIONS as $section) {
-            if (in_array($section, $config['capabilities'], true)) {
+            $rank = $config['rankings'][$section] ?? null;
+            if (in_array($section, $config['capabilities'], true) && is_array($rank) &&
+                $this->hasAll($characterColumns, array_values(array_filter([
+                    $rank['column'] ?? null, $rank['secondary'] ?? null,
+                ], 'is_string')))) {
                 $supported[] = $section;
             }
         }

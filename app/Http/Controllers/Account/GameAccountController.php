@@ -17,7 +17,6 @@ use App\Services\GameAccountSettings;
 use App\Services\GameAssets\CharacterAppearanceResolver;
 use App\Services\GameWorld\MobiusCharacterLabels;
 use App\Services\Servers\ExternalServerCooldown;
-use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\GameAccountCreationFailure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
@@ -250,18 +249,11 @@ class GameAccountController extends Controller
         return GameServer::query()
             ->with(['loginServer', 'translations'])
             ->whereNotNull('login_server_id')
-            ->whereIn('driver', [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
             ->filter(fn (GameServer $server): bool => $server->connectionConfigured()
                 && $server->loginServer instanceof LoginServer
-                && $this->gateway->supportsLoginServer($server->loginServer)
-                && ($server->driver === ServerDriverRegistry::RUSACIS_DRIVER
-                    ? $server->loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER
-                    : in_array($server->loginServer->driver, [
-                        ServerDriverRegistry::MOBIUS_DRIVER,
-                        ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
-                    ], true)));
+                && $this->gateway->supportsGameServer($server));
     }
 }

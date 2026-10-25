@@ -7,6 +7,9 @@ use App\Models\Admin;
 use App\Models\LoginServer;
 use App\Services\Servers\LoginServerAdministration;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Services\Servers\UniversalDriverActivation;
+use App\Support\UniversalDrivers\DriverProfileCatalog;
+use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -127,6 +130,29 @@ class LoginServerManager extends Component
         $this->cardTestResults[$server->id] = $this->cardTestResult($report);
     }
 
+    /** Apply a JSON candidate explicitly; failed probes never replace the active snapshot. */
+    public function applyJsonProfile(int $serverId): void
+    {
+        $this->ensureCanManage();
+        $server = LoginServer::query()->findOrFail($serverId);
+        try {
+            $report = app(UniversalDriverActivation::class)->apply($server);
+            $this->cardTestResults[$serverId] = $this->cardTestResult($report);
+            app(AuditLogger::class)->success(
+                category: 'admin', action: 'universal_driver_applied', target: $server,
+                details: ['type' => 'login', 'driver' => $server->driver],
+            );
+        } catch (ProfileValidationException $exception) {
+            $this->cardTestResults[$serverId] = [
+                'state' => 'failed', 'message' => __('JSON driver compatibility check failed. The previous configuration was kept.'),
+            ];
+            app(AuditLogger::class)->failed(
+                category: 'admin', action: 'universal_driver_apply_failed', target: $server,
+                details: ['type' => 'login', 'driver' => $server->driver],
+            );
+        }
+    }
+
     public function testConnection(): void
     {
         $this->ensureCanManage();
@@ -233,6 +259,7 @@ class LoginServerManager extends Component
                 ->orderBy('id')
                 ->get(),
             'drivers' => app(ServerDriverRegistry::class)->loginDrivers(),
+            'jsonDriverIds' => array_keys(app(DriverProfileCatalog::class)->all()),
         ]);
     }
 

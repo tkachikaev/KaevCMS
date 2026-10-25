@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.53.10 - 2026-10-25
+
+Universal drivers, iteration 8: **opt-in integration and guarded JSON profile activation**. Base: 0.53.9 full ZIP.
+
+- Registered user-defined JSON LoginServer/GameServer profiles in connection selectors. Existing Mobius/RUSaCis identifiers still use their proven PHP paths until explicitly activated with **Apply JSON and verify**; no automatic cutover of existing installations.
+- Added database compatibility preflight for newly selected user-defined profiles before modifying server connections, verified immutable per-connection snapshots and stored-config validation. Failed candidate activation preserves the previously verified profile; profile catalog edits do not automatically affect live connections.
+- Bound profile approvals to the connection's real database coordinates and decrypted credentials (including inherited LoginServer DB credentials) using keyed HMAC. Stale or tampered snapshots fail closed. Added an **additive** migration to store connection fingerprints, without changing the previous catalog migration.
+- Connected verified snapshots to the existing LoginServer account read/write interface and GameServer world/character readers. Public account screens now use verified ownership/capability checks instead of hard-coded paired driver identifiers. Custom account-ID ownership without a verified login-to-ID mapping is deliberately unavailable.
+- The legacy Mobius-only character rescue writer is disabled for JSON-active GameServers: an arbitrary profile must never trigger hard-coded coordinate SQL. Shared Wallet/Donations/reward queue semantics and their data are not modified.
+- Added server-management controls and RU/EN translations, snapshot-integrity tests, activation/rollback regression scenarios, and deployment documentation.
+- **Not production certified:** parity across real Mobius/RUSaCis MySQL installations, PHPUnit/PHPStan, visual/browser regressions and official release-builder checks still need to run through Codex/CI. Full JS/visual and module-specific universal capabilities need validation before stable adoption. No PHP/Composer dependency updates or live payments.
+
+## 0.53.9 - 2026-10-25
+
+Universal drivers, iteration 7: **administrative editor and JSON catalog UI**, based on the 0.53.8 full ZIP; all production Mobius/RUSaCis PHP drivers remain active.
+
+- Added **Servers → Drivers** (LoginServer/GameServer tabs) for offline profile creation, typed field/table/relation editing, optional EAV/choice/operator mappings, ranking/castle/hero settings, import/export of JSON, cloning, removal/hiding, and restoring bundled profiles. Unlike a raw JSON text editor, mappings and allowed operations are edited through form controls. Import is limited to 256 KiB and passes the existing format-v1 allowlist validator.
+- Admin permissions: `servers.view` to browse/export; `servers.manage` (non-read-only administrator) for any changes. Livewire methods re-check authorization on every action; actions are audited without logging profile payloads or database credentials.
+- Bundled profiles can be edited through local overrides, restored to release defaults, or hidden persistently across CMS upgrades. Profiles referenced by existing connections or verified snapshots cannot be deleted. The editor checks for concurrent conflicting updates, and exact-ID creation cannot overwrite an existing profile.
+- Added RU/EN translations, responsive administrator CSS and controller/route/navigation integration. Added feature/regression tests for roles, create/edit/export/delete/restore/import, invalid mappings and deletion protection. PHP dependencies and existing migrations unchanged.
+- The experimental adapters are **not switched on for production**. New profiles can be configured and shared offline, but they will not yet appear in the normal LoginServer/GameServer connection selectors. Snapshot verification / safe switch is iteration 8. MySQL parity, full PHPUnit/PHPStan and browser tests need an actual test environment before deployment.
+
 ## 0.53.8 - 2026-10-25
 
 Universal drivers, iteration 6: **experimental CMS-side JSON profile catalog and verified connection snapshots**, no change to live PHP resolvers. Base: 0.53.7 full ZIP.

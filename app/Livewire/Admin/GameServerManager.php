@@ -16,6 +16,9 @@ use App\Services\Servers\GameServerAdministration;
 use App\Services\Servers\GameServerFormSchema;
 use App\Services\Servers\GameServerFormState;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Services\Servers\UniversalDriverActivation;
+use App\Support\UniversalDrivers\DriverProfileCatalog;
+use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Services\SiteSettings;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -273,6 +276,29 @@ class GameServerManager extends Component
         $this->cardTestResults[$server->id] = $this->cardTestResult($report);
     }
 
+    /** Apply a JSON candidate explicitly; failed probes never replace the active snapshot. */
+    public function applyJsonProfile(int $serverId): void
+    {
+        $this->ensureCanManage();
+        $server = GameServer::query()->findOrFail($serverId);
+        try {
+            $report = app(UniversalDriverActivation::class)->apply($server);
+            $this->cardTestResults[$serverId] = $this->cardTestResult($report);
+            app(AuditLogger::class)->success(
+                category: 'admin', action: 'universal_driver_applied', target: $server,
+                details: ['type' => 'game', 'driver' => $server->driver],
+            );
+        } catch (ProfileValidationException $exception) {
+            $this->cardTestResults[$serverId] = [
+                'state' => 'failed', 'message' => __('JSON driver compatibility check failed. The previous configuration was kept.'),
+            ];
+            app(AuditLogger::class)->failed(
+                category: 'admin', action: 'universal_driver_apply_failed', target: $server,
+                details: ['type' => 'game', 'driver' => $server->driver],
+            );
+        }
+    }
+
     public function testConnection(): void
     {
         $this->ensureCanManage();
@@ -470,6 +496,7 @@ class GameServerManager extends Component
             'servers' => app(GameServerSettings::class)->all(),
             'loginServers' => LoginServer::query()->orderBy('name')->orderBy('id')->get(),
             'gameDrivers' => app(ServerDriverRegistry::class)->gameDrivers(),
+            'jsonDriverIds' => array_keys(app(DriverProfileCatalog::class)->all()),
             'statisticsCapabilities' => $this->statisticsCapabilities(),
             'languages' => app(LanguageManager::class)->enabled(),
             'defaultLocale' => app(LanguageManager::class)->default(),

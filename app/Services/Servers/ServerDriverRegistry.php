@@ -4,6 +4,8 @@ namespace App\Services\Servers;
 
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\RusacisGameSchemaInspector;
+use App\Support\Database\TableExistence;
+use App\Support\UniversalDrivers\DriverProfileCatalog;
 
 final class ServerDriverRegistry
 {
@@ -27,7 +29,7 @@ final class ServerDriverRegistry
      */
     public function loginDrivers(): array
     {
-        return [
+        $legacy = [
             self::MOBIUS_DRIVER => [
                 'label' => __('L2J Mobius — Interlude and newer'),
                 'description' => __('L2J Mobius LoginServer for Interlude and newer builds.'),
@@ -90,6 +92,8 @@ final class ServerDriverRegistry
                 ],
             ],
         ];
+
+        return $legacy + $this->customDescriptors('login', array_keys($legacy));
     }
 
     /**
@@ -108,7 +112,7 @@ final class ServerDriverRegistry
      */
     public function gameDrivers(): array
     {
-        return [
+        $legacy = [
             self::MOBIUS_DRIVER => [
                 'label' => 'L2J Mobius',
                 'description' => __('One L2J Mobius GameServer driver with automatic legacy and modern schema detection.'),
@@ -147,6 +151,47 @@ final class ServerDriverRegistry
                 'requirements' => RusacisGameSchemaInspector::requirements(),
             ],
         ];
+
+        return $legacy + $this->customDescriptors('game', array_keys($legacy));
+    }
+
+    /**
+     * Discover user-installed profiles from the existing catalog. Release-owned
+     * legacy IDs deliberately retain their previous PHP descriptors until an
+     * administrator explicitly applies a JSON snapshot to a connection.
+     *
+     * @param list<string> $reserved
+     * @return array<string,array<string,mixed>>
+     */
+    private function customDescriptors(string $type, array $reserved): array
+    {
+        if (! app(TableExistence::class)->has('universal_driver_profiles')) {
+            return [];
+        }
+        $drivers = [];
+        foreach (app(DriverProfileCatalog::class)->all() as $entry) {
+            $profile = $entry['profile'];
+            if ($profile['type'] !== $type || in_array($profile['id'], $reserved, true)) {
+                continue;
+            }
+            $config = $profile['config'];
+            // No custom PHP / SQL can be registered here: only validated JSON.
+            $drivers[$profile['id']] = [
+                'label' => $profile['name'],
+                'description' => __('User-defined JSON driver'),
+                'ready' => true,
+                'service_port' => $type === 'login' ? 2106 : 7777,
+                'schema_profile' => 'universal:'.$profile['id'],
+                'capabilities' => $config['capabilities'],
+                'optional_capabilities' => [],
+                'requirements' => $config['requirements'],
+                'statistics' => $type === 'game' ? array_values(array_intersect(
+                    ['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'], $config['capabilities'],
+                )) : [],
+            ];
+        }
+
+        return $drivers;
     }
 
     /** @return list<string> */

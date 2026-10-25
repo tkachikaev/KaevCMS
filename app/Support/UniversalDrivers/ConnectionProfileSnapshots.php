@@ -5,6 +5,7 @@ namespace App\Support\UniversalDrivers;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use Closure;
+use App\Support\Database\TableExistence;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -55,6 +56,7 @@ final class ConnectionProfileSnapshots
                     'profile_id' => $profileId,
                     'format_version' => $profile['format_version'],
                     'profile_sha256' => hash('sha256', $raw),
+                    'connection_fingerprint' => $this->fingerprint($locked),
                     'profile_json' => $raw,
                     'verified_at' => now(),
                     'updated_at' => now(),
@@ -63,10 +65,45 @@ final class ConnectionProfileSnapshots
         });
     }
 
+    /**
+     * Bind the checked profile to the actual DB target/credentials. The secret
+     * itself is never persisted: only keyed HMAC. A changed connection cannot
+     * silently reuse a stale approval, including an inherited LoginServer DB.
+     */
+    private function fingerprint(LoginServer|GameServer $server): string
+    {
+        $key = (string) config('app.key');
+        if ($key === '') {
+            throw new RuntimeException('Missing application key for driver verification.');
+        }
+        $target = $server;
+        if ($server instanceof GameServer && $server->use_login_server_connection) {
+            $target = LoginServer::query()->find($server->login_server_id);
+            if (! $target instanceof LoginServer) {
+                throw new RuntimeException('Missing inherited database connection.');
+            }
+        }
+        $values = [
+            'type' => $server instanceof LoginServer ? 'login' : 'game',
+            'connection_id' => $server->getKey(),
+            'driver' => $server->driver,
+            'game_login_server_id' => $server instanceof GameServer ? $server->login_server_id : null,
+            'game_inherits_db' => $server instanceof GameServer ? $server->use_login_server_connection : null,
+            'chronicle' => $server instanceof GameServer ? $server->chronicle : null,
+            'db_host' => $target->database_host,
+            'db_port' => $target->database_port,
+            'db_name' => $target->database_name,
+            'db_username' => $target->database_username,
+            'db_password' => $target->databasePassword(),
+            'db_charset' => $target->database_charset,
+        ];
+        return hash_hmac('sha256', json_encode($values, JSON_THROW_ON_ERROR), $key);
+    }
+
     /** @return array<string,mixed>|null Last checked copy, not today's catalog version. */
     public function get(LoginServer|GameServer $server): ?array
     {
-        if (! $server->exists) {
+        if (! $server->exists || ! app(TableExistence::class)->has('universal_driver_connection_snapshots')) {
             return null;
         }
         $type = $server instanceof LoginServer ? 'login' : 'game';
@@ -75,8 +112,16 @@ final class ConnectionProfileSnapshots
         if ($row === null) {
             return null;
         }
-        if (! is_string($row->profile_json) ||
-            ! hash_equals($row->profile_sha256, hash('sha256', $row->profile_json))) {
+        // Legacy experiments could create a snapshot before the connection
+        // fingerprint migration. Such a snapshot was never production-active.
+        if ($row->connection_fingerprint === null && in_array((string) $server->driver,
+            $type === 'login' ? ['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] : ['l2j_mobius', 'rusacis'], true)) {
+            return null;
+        }
+        if (! is_string($row->profile_json) || ! is_string($row->profile_sha256) ||
+            ! hash_equals($row->profile_sha256, hash('sha256', $row->profile_json)) ||
+            ! is_string($row->connection_fingerprint) ||
+            ! hash_equals($row->connection_fingerprint, $this->fingerprint($server))) {
             throw new RuntimeException('Driver connection snapshot integrity check failed.');
         }
         $profile = $this->validator->fromJson($row->profile_json);

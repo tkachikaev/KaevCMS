@@ -4,6 +4,7 @@ namespace App\Services\Servers;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use Illuminate\Validation\ValidationException;
 use App\Services\AuditLogger;
 use App\Services\GameServerDeletionImpact;
 use App\Services\GameServerSettings;
@@ -87,6 +88,33 @@ final class GameServerAdministration
         string $connectionMode = self::CONNECTION_PRESERVE,
         ?array $connectionValues = null,
     ): array {
+        if ($connectionMode === self::CONNECTION_CONNECT && is_array($connectionValues) &&
+            ! in_array((string) ($connectionValues['driver'] ?? ''), [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+            $login = LoginServer::query()->findOrFail((int) ($connectionValues['login_server_id'] ?? 0));
+            $candidate = $connectionValues;
+            if ($server !== null && ! (bool) ($candidate['use_login_server_connection'] ?? true) &&
+                trim((string) ($candidate['database_password'] ?? '')) === '') {
+                $candidate['database_password'] = $server->databasePassword() ?? '';
+            }
+            $report = $this->tester->testGameValues($candidate, $login);
+            if (! $this->databaseState->isConfigured($report)) {
+                throw ValidationException::withMessages(['driver' => __('The driver must pass a real database compatibility check before it can be applied.')]);
+            }
+            return DB::transaction(function () use ($server, $profileValues, $connectionMode, $connectionValues): array {
+                $saved = $this->saveUnchecked($server, $profileValues, $connectionMode, $connectionValues);
+                app(UniversalDriverActivation::class)->apply($saved['server']);
+                return $saved;
+            });
+        }
+        return $this->saveUnchecked($server, $profileValues, $connectionMode, $connectionValues);
+    }
+
+    /** @param array<string,mixed> $profileValues
+     *  @param array<string,mixed>|null $connectionValues
+     *  @return array{server:GameServer,created:bool}
+     */
+    private function saveUnchecked(?GameServer $server, array $profileValues, string $connectionMode, ?array $connectionValues): array
+    {
         if (! in_array($connectionMode, [self::CONNECTION_CONNECT, self::CONNECTION_DISCONNECT, self::CONNECTION_PRESERVE], true)) {
             throw new InvalidArgumentException('Unsupported GameServer connection update mode.');
         }
@@ -154,6 +182,29 @@ final class GameServerAdministration
 
     /** @param array<string, mixed> $connectionValues */
     public function updateConnection(GameServer $server, array $connectionValues): GameServer
+    {
+        $custom = ! in_array((string) ($connectionValues['driver'] ?? ''), [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        if ($custom) {
+            $login = LoginServer::query()->findOrFail((int) ($connectionValues['login_server_id'] ?? 0));
+            $candidate = $connectionValues;
+            if (! (bool) ($candidate['use_login_server_connection'] ?? true) && trim((string) ($candidate['database_password'] ?? '')) === '') {
+                $candidate['database_password'] = $server->databasePassword() ?? '';
+            }
+            $report = $this->tester->testGameValues($candidate, $login);
+            if (! $this->databaseState->isConfigured($report)) {
+                throw ValidationException::withMessages(['driver' => __('The driver must pass a real database compatibility check before it can be applied.')]);
+            }
+            return DB::transaction(function () use ($server, $connectionValues): GameServer {
+                $updated = $this->updateConnectionUnchecked($server, $connectionValues);
+                app(UniversalDriverActivation::class)->apply($updated);
+                return $updated;
+            });
+        }
+        return $this->updateConnectionUnchecked($server, $connectionValues);
+    }
+
+    /** @param array<string,mixed> $connectionValues */
+    private function updateConnectionUnchecked(GameServer $server, array $connectionValues): GameServer
     {
         $before = $this->auditValues->gameServer($server);
         $beforeConnection = $this->auditValues->connectionFingerprints($server);
@@ -293,11 +344,13 @@ final class GameServerAdministration
         }
 
         $server->update($payload);
+        app(UniversalDriverActivation::class)->invalidate($server);
         $this->settings->restoreOrphanedAccountLinks($server);
     }
 
     private function disconnect(GameServer $server): void
     {
+        app(UniversalDriverActivation::class)->invalidate($server);
         $this->settings->reassignLinkedAccountsBeforeDisconnect($server);
         $server->update([
             'login_server_id' => null,

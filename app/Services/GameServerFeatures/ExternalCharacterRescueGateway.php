@@ -6,6 +6,7 @@ use App\Contracts\CharacterRescueGateway;
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\GameServerFeatures\CharacterRescueCapabilities;
 use App\Support\GameServerFeatures\CharacterRescueWriteResult;
 use Carbon\CarbonImmutable;
@@ -31,7 +32,9 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
 
     public function supports(GameServer $server): bool
     {
-        return $server->driver === ServerDriverRegistry::MOBIUS_DRIVER && $server->connectionConfigured();
+        return $server->driver === ServerDriverRegistry::MOBIUS_DRIVER
+            && $server->connectionConfigured()
+            && app(ConnectionProfileSnapshots::class)->get($server) === null;
     }
 
     public function capabilities(GameServer $server): CharacterRescueCapabilities

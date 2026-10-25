@@ -52,6 +52,17 @@ final class ProfileCatalogTest extends TestCase
         $this->assertNotNull($catalog->find('login', 'rusacis'));
     }
 
+    public function test_exact_create_never_overwrites_an_existing_identity(): void
+    {
+        $catalog = app(DriverProfileCatalog::class);
+        $p = (new BundledProfileCatalog)->all()['login:rusacis'];
+        $p['id'] = 'new-custom-login';
+        $catalog->create($p);
+        $p['name'] = 'Second writer';
+        $this->expectException(ProfileValidationException::class);
+        $catalog->create($p);
+    }
+
     public function test_import_export_roundtrip_and_conflicts_do_not_overwrite_existing_entries(): void
     {
         $catalog = app(DriverProfileCatalog::class);

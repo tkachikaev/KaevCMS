@@ -204,6 +204,7 @@ final class GameServerSettings
                 }
 
                 $this->reassignLinkedAccountsBeforeDisconnect($lockedServer);
+                app(\App\Services\Servers\UniversalDriverActivation::class)->invalidate($lockedServer);
                 $lockedServer->delete();
 
                 return $impact;

@@ -7,6 +7,7 @@ use App\Contracts\LoginServerDriver;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameWorld\GameWorldDriverResolver;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\MobiusGameSchemaProfile;
 use App\Services\Servers\MySqlSessionQueryTimeout;
@@ -38,21 +39,45 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function supportsLoginServer(LoginServer $loginServer): bool
     {
-        return $this->loginDrivers->supports($loginServer->driver);
+        return $this->loginDrivers->supports($loginServer);
     }
 
     public function supportsGameServer(GameServer $gameServer): bool
     {
-        return $gameServer->loginServer instanceof LoginServer
-            && $this->supportsLoginServer($gameServer->loginServer)
-            && $this->loginDrivers->resolve($gameServer->loginServer->driver)->supportsGameDriver((string) $gameServer->driver);
+        $login = $gameServer->loginServer;
+        if (! $login instanceof LoginServer || ! $this->supportsLoginServer($login)) {
+            return false;
+        }
+        try {
+            $gameProfile = app(ConnectionProfileSnapshots::class)->get($gameServer);
+            $loginProfile = app(ConnectionProfileSnapshots::class)->get($login);
+        } catch (RuntimeException) {
+            // Connection configuration or snapshot integrity changed: do not
+            // advertise unsafe game-account operations to the player.
+            return false;
+        }
+        if ($gameProfile !== null) {
+            // Current CMS account API is login-based. ID ownership requires a
+            // separately verified account-ID mapping and must fail closed.
+            $gameIdentity = $gameProfile['config']['characters']['owner']['identity'] ?? null;
+            $loginIdentity = $loginProfile['config']['accounts']['ownership']['identity'] ?? 'login';
+            return $gameIdentity === 'login' && $loginIdentity === 'login'
+                && in_array('characters', $gameProfile['config']['capabilities'], true);
+        }
+        if ($loginProfile !== null) {
+            // Legacy world readers are login-based, but never assume that all
+            // profiles share the same account-identity contract.
+            return ($loginProfile['config']['accounts']['ownership']['identity'] ?? null) === 'login'
+                && in_array($gameServer->driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        }
+        return $this->loginDrivers->resolve($login)->supportsGameDriver((string) $gameServer->driver);
     }
 
     public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount
     {
         return new PreparedGameAccount(
             login: trim($login),
-            credential: $this->loginDrivers->resolve($loginServer->driver)->encodePassword($password),
+            credential: $this->loginDrivers->resolve($loginServer)->encodePassword($password),
             email: Str::lower(trim($email)),
         );
     }
@@ -84,21 +109,21 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function changePassword(LoginServer $loginServer, string $login, string $password): bool
     {
-        $driver = $this->loginDrivers->resolve($loginServer->driver);
+        $driver = $this->loginDrivers->resolve($loginServer);
 
         return $this->withLoginConnection($loginServer, fn (Connection $database): bool => $driver->changePassword($database, $login, $password));
     }
 
     public function accountSummary(LoginServer $loginServer, string $login): ?array
     {
-        $driver = $this->loginDrivers->resolve($loginServer->driver);
+        $driver = $this->loginDrivers->resolve($loginServer);
 
         return $this->withLoginConnection($loginServer, fn (Connection $database): ?array => $driver->summary($database, $login));
     }
 
     private function preparedAccountDriver(LoginServer $loginServer, PreparedGameAccount $account): LoginServerDriver
     {
-        $driver = $this->loginDrivers->resolve($loginServer->driver);
+        $driver = $this->loginDrivers->resolve($loginServer);
         if (! $driver->acceptsCredential($account->credential)) {
             throw new RuntimeException('The prepared credential does not match the selected LoginServer driver.');
         }
@@ -108,7 +133,8 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function characters(GameServer $gameServer, string $login): array
     {
-        if ($gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER) {
+        if ($gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER ||
+            app(ConnectionProfileSnapshots::class)->get($gameServer) !== null) {
             if (! $this->supportsGameServer($gameServer)) {
                 throw new RuntimeException('The selected GameServer driver does not support characters.');
             }
@@ -136,6 +162,9 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             ], $rows);
         }
 
+        if (! $this->supportsGameServer($gameServer) || $gameServer->driver !== ServerDriverRegistry::MOBIUS_DRIVER) {
+            throw new RuntimeException('Unverified GameServer driver cannot read characters.');
+        }
         $limit = $this->characterLimit();
         $createdAtColumn = $this->characterCreatedAtColumn($gameServer);
 

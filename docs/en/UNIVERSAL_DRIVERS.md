@@ -1,3 +1,21 @@
+# Universal drivers — development history / current version 0.53.10
+
+## Iteration 8 — CMS connection integration (0.53.10)
+
+**Current status: experimental.** Catalog profiles are selectable for LoginServer/GameServer connections. New custom drivers require an actual MySQL schema probe before replacing connection settings. Existing RUSaCis/Mobius PHP drivers remain operational until the administrator explicitly chooses **Apply JSON and verify**. Failed validation preserves the previously applied profile.
+
+A successful validation stores a connection-local JSON snapshot and SHA256 and binds it to the actual database credentials and target using keyed HMAC. Catalog edits never silently replace a running configuration; changed DB credentials require a fresh check. MySQL/MariaDB only, no arbitrary SQL/PHP, and only the supported SHA-1/Base64 or BCrypt `$2a$` password schemes.
+
+**Deliberate limitations:** personal actions using a GameServer account-ID ownership mapping are disabled until the LoginServer-ID mapping is verified. The legacy Mobius-specific rescue writer is disabled for JSON-active profiles. Wallet, Donations and the game reward queue are unchanged. Actual game-client password acceptance requires separate checks.
+
+**Migration:** `2026_10_25_020000_bind_universal_snapshots_to_connections.php` adds an HMAC fingerprint column to the CMS snapshot table only. It does not modify game databases or existing published migrations.
+
+**Before production:** run PHPUnit, PHPStan, migrations, real MySQL parity, Windows quality and browser checks through Codex/CI. Do not migrate all production servers until the final acceptance stage.
+
+---
+
+## Earlier implementation notes (historical)
+
 # Universal drivers — iterations 1–3 (JSON + read-only LoginServer/GameServer)
 
 **Status: experimental and NOT enabled in the CMS.** The existing production PHP LoginServer/GameServer drivers, registration, password updates, character queries, castles and reward delivery are unchanged. There is no admin editor or import action yet. Separate read-only LoginServer and GameServer character adapters exist for isolated validation only; it is not wired into production resolvers. A valid profile file is not proof of compatibility with a game build.
@@ -97,3 +115,12 @@ No database migrations, PHP/Composer dependency updates, PTS adapter, live drive
 `ConnectionProfileSnapshots` keeps the last **successfully externally verified** JSON configuration per connection in `universal_driver_connection_snapshots` (format version, SHA256, driver identity and timestamp). Its API requires a real connection/schema verifier callback; a failed check does not overwrite the previous snapshot. Stored snapshot integrity and connection identity are rechecked on load. Saving the catalog does not affect a running connection.
 
 **No production switch or public CRUD route is enabled in iteration 6.** Hooking up server configuration checks and the authorized/audited administration UI is scheduled for iterations 7–8. Existing PHP drivers remain active and existing connections have no JSON snapshot yet. The additive `2026_10_25_010000_create_universal_driver_catalog_tables.php` migration creates only two CMS-local tables; no game database or existing server fields are changed. Feature tests are in `tests/Feature/UniversalDrivers/ProfileCatalogTest.php` and require locked Composer dependencies plus an isolated CMS test database.
+
+
+## Iteration 7 — driver administration UI (0.53.9)
+
+**Servers → Drivers** provides separate LoginServer/GameServer lists and a structured offline editor: name/ID, tables and columns, relations, account and character mappings (including EAV/column choices), filters, rankings, heroes, castles and supported capabilities. JSON import/export is limited to 256 KiB. No game database is contacted while creating, editing or importing.
+
+Bundled profiles can be edited using local CMS-owned overrides, hidden, restored to release defaults or exported. Profiles referenced by active connections or verified snapshots cannot be deleted. Stale concurrent edits fail instead of overwriting a newer profile. Editing requires `servers.manage`; browsing/export requires `servers.view`. Audit records contain action/identity only.
+
+**Not enabled:** new JSON profiles are not yet selectable in the regular LoginServer/GameServer connection forms. Server-side schema verification and the production handover are iteration 8. Import validity does not prove game runtime compatibility; full tests need PHPUnit/browser/MySQL in an isolated environment.

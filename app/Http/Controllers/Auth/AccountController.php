@@ -10,7 +10,6 @@ use App\Models\RewardInventoryItem;
 use App\Models\User;
 use App\Services\GameAccounts\GameAccountQuota;
 use App\Services\GameAccountSettings;
-use App\Services\Servers\ServerDriverRegistry;
 use App\Services\Servers\ServerStatusOverview;
 use App\Services\Wallet\WalletAccountReadService;
 use App\Support\Modules\ModuleNavigationRegistry;
@@ -39,17 +38,10 @@ class AccountController extends Controller
         $availableServers = GameServer::query()
             ->with('loginServer')
             ->whereNotNull('login_server_id')
-            ->whereIn('driver', [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER])
             ->get()
             ->filter(static fn (GameServer $server): bool => $server->connectionConfigured()
                 && $server->loginServer instanceof LoginServer
-                && $gateway->supportsLoginServer($server->loginServer)
-                && ($server->driver === ServerDriverRegistry::RUSACIS_DRIVER
-                    ? $server->loginServer->driver === ServerDriverRegistry::RUSACIS_DRIVER
-                    : in_array($server->loginServer->driver, [
-                        ServerDriverRegistry::MOBIUS_DRIVER,
-                        ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER,
-                    ], true)))
+                && $gateway->supportsGameServer($server))
             ->count();
 
         $topUpLink = collect($navigation->accountLinks())->firstWhere('route', 'modules.donations.index');

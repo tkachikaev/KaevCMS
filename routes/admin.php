@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GameAccountSettingsController as AdminGameAccountSettingsController;
 use App\Http\Controllers\Admin\GameServerConnectionController as AdminGameServerConnectionController;
 use App\Http\Controllers\Admin\GameServerController as AdminGameServerController;
+use App\Http\Controllers\Admin\UniversalDriverController as AdminUniversalDriverController;
 use App\Http\Controllers\Admin\GeneralSettingsController as AdminGeneralSettingsController;
 use App\Http\Controllers\Admin\LanguageSettingsController as AdminLanguageSettingsController;
 use App\Http\Controllers\Admin\LoginServerController as AdminLoginServerController;
@@ -190,6 +191,7 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.wallet-appearance');
         Route::put('/settings/wallet-appearance', [AdminWalletAppearanceController::class, 'update'])
             ->middleware('throttle:admin-wallet-appearance')->name('settings.wallet-appearance.update');
+        Route::get('/settings/drivers', AdminUniversalDriverController::class)->name('settings.drivers');
         Route::get('/settings/game-server', [AdminGameServerController::class, 'index'])->name('settings.game-server');
         Route::post('/settings/game-server/{gameServer}/connection', [AdminGameServerConnectionController::class, 'update'])
             ->middleware('throttle:10,1')

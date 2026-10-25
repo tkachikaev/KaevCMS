@@ -111,6 +111,11 @@ final class AdminRouteAccessRegistry
                 AdminPermission::RewardsManage,
             ),
             $this->prefix(
+                'admin.settings.drivers',
+                AdminPermission::ServersView,
+                AdminPermission::ServersManage,
+            ),
+            $this->prefix(
                 'admin.settings.game-server',
                 AdminPermission::ServersView,
                 AdminPermission::ServersManage,

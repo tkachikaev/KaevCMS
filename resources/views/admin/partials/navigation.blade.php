@@ -64,7 +64,7 @@
     @endif
 
     @if($admin->hasPermission(\App\Auth\AdminPermission::ServersView))
-        <details class="admin-menu-group" data-admin-menu-group="servers" @if (request()->routeIs('admin.settings.game-server*', 'admin.settings.login-server*')) open @endif>
+        <details class="admin-menu-group" data-admin-menu-group="servers" @if (request()->routeIs('admin.settings.game-server*', 'admin.settings.login-server*', 'admin.settings.drivers*')) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{!! $menuIcons['servers'] !!}{{ __('Servers') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
@@ -72,6 +72,7 @@
             <div class="admin-menu-group-items">
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.settings.game-server') }}"><span>{!! $menuIcons['game-servers'] !!}{{ __('Game servers') }}</span></a>
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.settings.login-server') }}"><span>{!! $menuIcons['login-servers'] !!}{{ __('Login servers') }}</span></a>
+                <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.settings.drivers') }}"><span>{!! $menuIcons['servers'] !!}{{ __('drivers.title') }}</span></a>
             </div>
         </details>
     @endif

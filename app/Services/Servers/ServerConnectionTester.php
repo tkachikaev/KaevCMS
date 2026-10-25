@@ -7,6 +7,8 @@ use App\Exceptions\ExternalDatabaseDriverUnavailable;
 use App\Exceptions\ExternalDatabaseSchemaMismatch;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
+use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\MobiusGameSchemaProfile;
 use App\Services\GameWorld\RusacisGameSchemaProfile;
@@ -60,6 +62,14 @@ final class ServerConnectionTester
             throw new InvalidArgumentException('Unsupported LoginServer driver.');
         }
 
+        if (! in_array($driverKey, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+            $profile = app(DriverProfileCatalog::class)->find('login', $driverKey)['profile'] ?? null;
+            if (! is_array($profile)) {
+                throw new InvalidArgumentException('Unknown LoginServer JSON profile.');
+            }
+            return $this->testLoginProfileValues($values, $profile);
+        }
+
         return $this->withLoginDriver(
             $this->testExternalDatabase(
                 $this->credentials($values),
@@ -71,9 +81,67 @@ final class ServerConnectionTester
         );
     }
 
+    /**
+     * Verify the exact JSON candidate, not whatever is currently in the catalog.
+     * The result does not grant permission to apply or execute a driver.
+     * @param array<string,mixed> $values
+     * @param array<string,mixed> $profile
+     * @return array<string,mixed>
+     */
+    public function testLoginProfileValues(array $values, array $profile): array
+    {
+        if ($profile['type'] !== 'login' || $profile['config']['database']['dialect'] !== 'mysql') {
+            throw new InvalidArgumentException('The selected LoginServer profile is not supported.');
+        }
+        $report = $this->testExternalDatabase($this->credentials($values), $profile['config']['requirements'], true);
+        $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
+        $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
+        $report['capabilities'] = ($report['compatible'] ?? false) ? $profile['config']['capabilities'] : [];
+        return $report;
+    }
+
+    /**
+     * @param array<string,mixed> $values
+     * @param array<string,mixed> $profile
+     * @return array<string,mixed>
+     */
+    public function testGameProfileValues(array $values, LoginServer $loginServer, array $profile): array
+    {
+        if ($profile['type'] !== 'game' || $profile['config']['database']['dialect'] !== 'mysql') {
+            throw new InvalidArgumentException('The selected GameServer profile is not supported.');
+        }
+        $connectionValues = (bool) ($values['use_login_server_connection'] ?? false)
+            ? [
+                'database_host' => $loginServer->database_host,
+                'database_port' => $loginServer->database_port,
+                'database_name' => $loginServer->database_name,
+                'database_username' => $loginServer->database_username,
+                'database_password' => $loginServer->databasePassword() ?? '',
+                'database_charset' => $loginServer->database_charset,
+            ] : $values;
+        $report = $this->testExternalDatabase($this->credentials($connectionValues), $profile['config']['requirements'], true);
+        $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
+        $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
+        $report['capabilities'] = ($report['compatible'] ?? false) ? array_values(array_intersect(
+            $profile['config']['capabilities'], ['characters', 'level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'],
+        )) : [];
+        return $report;
+    }
+
     /** @return array<string, mixed> */
     public function testLoginServer(LoginServer $server): array
     {
+        $active = app(ConnectionProfileSnapshots::class)->get($server);
+        if ($active !== null) {
+            return $this->testLoginProfileValues([
+                'database_host' => $server->database_host,
+                'database_port' => $server->database_port,
+                'database_name' => $server->database_name,
+                'database_username' => $server->database_username,
+                'database_password' => $server->databasePassword() ?? '',
+                'database_charset' => $server->database_charset,
+            ], $active);
+        }
         return $this->testLoginValues([
             'driver' => $server->driver,
             'database_host' => $server->database_host,
@@ -108,6 +176,14 @@ final class ServerConnectionTester
             ]
             : $values;
 
+        if (! in_array($driverKey, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+            $profile = app(DriverProfileCatalog::class)->find('game', $driverKey)['profile'] ?? null;
+            if (! is_array($profile)) {
+                throw new InvalidArgumentException('Unknown GameServer JSON profile.');
+            }
+            return $this->testGameProfileValues($values, $loginServer, $profile);
+        }
+
         return $this->withGameDriver(
             $this->testExternalDatabase(
                 $this->credentials($connectionValues),
@@ -128,6 +204,18 @@ final class ServerConnectionTester
             throw new InvalidArgumentException('GameServer has no LoginServer selected.');
         }
 
+        $active = app(ConnectionProfileSnapshots::class)->get($server);
+        if ($active !== null) {
+            return $this->testGameProfileValues([
+                'use_login_server_connection' => $server->use_login_server_connection,
+                'database_host' => $server->database_host,
+                'database_port' => $server->database_port,
+                'database_name' => $server->database_name,
+                'database_username' => $server->database_username,
+                'database_password' => $server->databasePassword() ?? '',
+                'database_charset' => $server->database_charset,
+            ], $loginServer, $active);
+        }
         return $this->testGameValues([
             'driver' => $server->driver,
             'chronicle' => $server->chronicle,
