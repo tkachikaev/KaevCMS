@@ -15,6 +15,7 @@ use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\ExternalGameAccountWriteResult;
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
+use App\Support\UniversalDrivers\ProfileDatabaseEncoding;
 use Carbon\CarbonImmutable;
 use Closure;
 use DateTimeInterface;
@@ -143,7 +144,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
             $rows = $this->worldDrivers->resolve($gameServer)->charactersForAccount($gameServer, $login, $this->characterLimit());
 
-            return array_map(static fn (array $row): array => [
+            return array_map(fn (array $row): array => [
                 'id' => (int) ($row['id'] ?? 0),
                 'name' => (string) ($row['name'] ?? ''),
                 'level' => (int) ($row['level'] ?? 0),
@@ -160,7 +161,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
                 'reputation' => (int) ($row['reputation'] ?? 0),
                 'noble' => (int) ($row['noble'] ?? 0) === 1,
                 'hero' => (int) ($row['hero'] ?? 0) === 1,
-                'created_at' => null,
+                'created_at' => $this->parseCharacterCreatedAt($row['created_at'] ?? null),
             ], $rows);
         }
 
@@ -254,14 +255,14 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             throw new RuntimeException('The selected LoginServer driver does not support game accounts.');
         }
 
-        return $this->withConnection([
+        return $this->withConnection(ProfileDatabaseEncoding::apply([
             'host' => $loginServer->database_host,
             'port' => $loginServer->database_port,
             'database' => $loginServer->database_name,
             'username' => $loginServer->database_username,
             'password' => $loginServer->databasePassword() ?? '',
             'charset' => $loginServer->database_charset,
-        ], $callback);
+        ], app(ConnectionProfileSnapshots::class)->get($loginServer)), $callback);
     }
 
     /**
@@ -306,7 +307,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
     /**
      * @template T
      *
-     * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string}  $values
+     * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string, collation?: string}  $values
      * @param  Closure(Connection): T  $callback
      * @return T
      */
@@ -321,7 +322,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             'username' => $values['username'],
             'password' => $values['password'],
             'charset' => $values['charset'],
-            'collation' => $this->collationFor($values['charset']),
+            'collation' => $values['collation'] ?? $this->collationFor($values['charset']),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,

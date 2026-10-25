@@ -212,3 +212,4 @@
 .universal-drivers .ud-field-error { margin: var(--admin-space-1) 0 0; }
 
 .ud-extensions .ud-section-head { align-items: flex-start; }
+.ud-editor-fields { border: 0; margin: 0; padding: 0; min-width: 0; }

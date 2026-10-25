@@ -16,7 +16,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
     public function __construct(private readonly MySqlSessionQueryTimeout $queryTimeout) {}
 
     /**
-     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $connection
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $connection
      * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>  $requirements
      * @return array{
      *     connected:bool,
@@ -39,7 +39,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
             'username' => $connection['username'],
             'password' => $connection['password'],
             'charset' => $connection['charset'],
-            'collation' => $this->collationFor($connection['charset']),
+            'collation' => $connection['collation'] ?? $this->collationFor($connection['charset']),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,

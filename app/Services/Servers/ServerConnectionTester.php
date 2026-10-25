@@ -12,6 +12,7 @@ use App\Services\GameWorld\MobiusGameSchemaProfile;
 use App\Services\GameWorld\RusacisGameSchemaProfile;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
+use App\Support\UniversalDrivers\ProfileDatabaseEncoding;
 use InvalidArgumentException;
 
 final class ServerConnectionTester
@@ -95,7 +96,7 @@ final class ServerConnectionTester
         if ($profile['type'] !== 'login' || $profile['config']['database']['dialect'] !== 'mysql') {
             throw new InvalidArgumentException('The selected LoginServer profile is not supported.');
         }
-        $report = $this->testExternalDatabase($this->credentials($values), $profile['config']['requirements'], true);
+        $report = $this->testExternalDatabase(ProfileDatabaseEncoding::apply($this->credentials($values), $profile), $profile['config']['requirements'], true);
         $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
         $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
         $report['capabilities'] = ($report['compatible'] ?? false) ? $profile['config']['capabilities'] : [];
@@ -122,7 +123,7 @@ final class ServerConnectionTester
                 'database_password' => $loginServer->databasePassword() ?? '',
                 'database_charset' => $loginServer->database_charset,
             ] : $values;
-        $report = $this->testExternalDatabase($this->credentials($connectionValues), $profile['config']['requirements'], true);
+        $report = $this->testExternalDatabase(ProfileDatabaseEncoding::apply($this->credentials($connectionValues), $profile), $profile['config']['requirements'], true);
         $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
         $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
         $report['capabilities'] = ($report['compatible'] ?? false) ? array_values(array_intersect(
@@ -237,7 +238,7 @@ final class ServerConnectionTester
     }
 
     /**
-     * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string}  $connection
+     * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string, collation?: string}  $connection
      * @param  list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>  $requirements
      * @return array<string, mixed>
      */
@@ -262,7 +263,7 @@ final class ServerConnectionTester
 
     /**
      * @param  array<string, mixed>  $values
-     * @return array{host: string, port: int, database: string, username: string, password: string, charset: string}
+     * @return array{host: string, port: int, database: string, username: string, password: string, charset: string, collation?: string}
      */
     private function credentials(array $values): array
     {

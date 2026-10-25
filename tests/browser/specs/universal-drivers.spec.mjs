@@ -118,8 +118,17 @@ for (const variant of [
         await expect(page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]')).toHaveValue('obj_Id');
         await page.locator('[data-game-group=game_basic] > summary').click();
         const mainTable = page.locator('input[wire\\:model\\.live\\.blur="draft.config.characters.table"]').first();
+        // A pending main-table update must not overwrite another field typed during its round trip.
+        await page.route('**/livewire-*/update', async (route) => {
+            const body = route.request().postDataJSON();
+            if (body?.components?.some(component => component.updates?.['draft.config.characters.table'] === 'players')) {
+                await new Promise(resolve => setTimeout(resolve, 350));
+            }
+            await route.continue();
+        });
         await mainTable.fill('players');
         await mainTable.press('Tab');
+        await expect(page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]')).toBeDisabled();
         await page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]').fill('player_id');
         await page.locator('input[wire\\:model="draft.config.characters.fields.level.column"]').fill('player_level');
         await page.locator('[data-game-group=game_additional] > summary').click();

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MySQL/MariaDB fixture and read-only LoginServer parity tests.
+ * MySQL/MariaDB disposable fixture, read/write parity and application activation tests.
  * Runs only with explicit test flag on localhost and creates unique disposable test databases.
  * Required environment: KAEV_UNIVERSAL_MYSQL_TEST=1, KAEV_MYSQL_TEST_USER,
  * KAEV_MYSQL_TEST_PASSWORD (empty allowed), KAEV_MYSQL_TEST_HOST=127.0.0.1.
@@ -74,6 +74,7 @@ try {
     require __DIR__.'/mysql-game-world-parity.php';
     require __DIR__.'/mysql-login-write-parity.php';
     require __DIR__.'/mysql-login-parity.php';
+    require __DIR__.'/mysql-application-parity.php';
 } finally {
     // Only remove databases created by this exact invocation.
     foreach ($created as $db) {

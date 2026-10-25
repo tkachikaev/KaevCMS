@@ -6,6 +6,8 @@ use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\Servers\MySqlSessionQueryTimeout;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
+use App\Support\UniversalDrivers\ProfileDatabaseEncoding;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -31,7 +33,9 @@ final class MySqlGameServerDatabase implements GameServerDatabaseGateway
         try {
             $connection = DB::connectUsing(
                 $connectionName,
-                $this->configuration($this->connectionValues($server)),
+                $this->configuration(ProfileDatabaseEncoding::apply(
+                    $this->connectionValues($server), app(ConnectionProfileSnapshots::class)->get($server),
+                )),
                 true,
             );
 
@@ -51,7 +55,7 @@ final class MySqlGameServerDatabase implements GameServerDatabaseGateway
         }
     }
 
-    /** @return array{host:string,port:int,database:string,username:string,password:string,charset:string} */
+    /** @return array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string} */
     private function connectionValues(GameServer $server): array
     {
         $loginServer = $server->loginServer;
@@ -81,7 +85,7 @@ final class MySqlGameServerDatabase implements GameServerDatabaseGateway
     }
 
     /**
-     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $values
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $values
      * @return array<string,mixed>
      */
     private function configuration(array $values): array
@@ -94,7 +98,7 @@ final class MySqlGameServerDatabase implements GameServerDatabaseGateway
             'username' => $values['username'],
             'password' => $values['password'],
             'charset' => $values['charset'] !== '' ? $values['charset'] : 'utf8mb4',
-            'collation' => $this->collationFor($values['charset']),
+            'collation' => $values['collation'] ?? $this->collationFor($values['charset']),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,

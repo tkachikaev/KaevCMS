@@ -61,8 +61,16 @@
             spinSpeed: (Math.random() - .5) * .02,
         });
 
+        const clear = () => {
+            // CSS sizes can be fractional, while the backing bitmap is rounded.
+            // Clear every physical pixel, including a partially covered edge.
+            context.save();
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.restore();
+        };
         const draw = (step) => {
-            context.clearRect(0, 0, width, height);
+            clear();
             const dark = document.documentElement.dataset.accountScheme === 'dark';
             const palette = dark ? palettes.dark : palettes.light;
             particles.forEach((particle) => {
@@ -122,7 +130,7 @@
             button.title = motion.matches ? button.dataset.labelReduced
                 : active ? button.dataset.labelDisable : button.dataset.labelEnable;
             canvas.hidden = !active;
-            if (!active) context.clearRect(0, 0, width, height);
+            if (!active) clear();
             if (canAnimate()) {
                 draw(0);
                 frame = window.requestAnimationFrame(tick);

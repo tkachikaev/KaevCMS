@@ -5,7 +5,7 @@ namespace App\Contracts;
 interface ExternalDatabaseConnectionTester
 {
     /**
-     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string}  $connection
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $connection
      * @param  list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>  $requirements
      * @return array{
      *     connected:bool,

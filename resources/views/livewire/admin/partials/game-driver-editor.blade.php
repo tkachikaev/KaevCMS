@@ -8,6 +8,7 @@
         <button type="button" @class(['ud-section-tab', 'active' => $section === 'mapping']) wire:click="nextGameStep('mapping')">{{ __('drivers.login_step_mapping') }}</button>
         <button type="button" @class(['ud-section-tab', 'active' => $section === 'features']) wire:click="nextGameStep('features')">{{ __('drivers.game_step_features') }}</button>
     </nav>
+    <fieldset class="ud-editor-fields" wire:loading.attr="disabled">
     @if($section === 'general')
         @include('livewire.admin.partials.game-driver-settings')
     @elseif($section === 'mapping')
@@ -15,6 +16,7 @@
     @else
         @include('livewire.admin.partials.game-driver-features')
     @endif
+    </fieldset>
     <div class="ud-savebar">
         @if($section === 'general')
             <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.next') }} →</button>
