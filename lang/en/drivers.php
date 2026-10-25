@@ -225,7 +225,6 @@ return [
     'next' => 'Next',
     'back' => 'Back',
     'validation_required' => 'This field is required.',
-    'check_fields' => 'Check the fields marked in red.',
     'validation_identifier' => 'Check :attribute: use Latin letters, digits and supported separators, without spaces.',
     'validation_string' => 'The :attribute field must contain text.',
     'validation_max' => 'The :attribute field is too long (maximum :max characters).',

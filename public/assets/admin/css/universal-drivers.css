@@ -206,7 +206,6 @@
 
 .ud-main-note { margin: 0 0 var(--admin-space-2); }
 
-.ud-error-summary { margin: 0; padding: var(--admin-space-2) var(--admin-space-3); }
 .universal-drivers.universal-drivers label:has(.ud-field-error) > input,
 .universal-drivers.universal-drivers label:has(.ud-field-error) > select,
 .universal-drivers.universal-drivers td:has(.ud-field-error) > input { border-color: var(--admin-danger); }

@@ -8,9 +8,6 @@
         <button type="button" @class(['ud-section-tab', 'active' => $section === 'mapping']) wire:click="nextGameStep('mapping')">{{ __('drivers.login_step_mapping') }}</button>
         <button type="button" @class(['ud-section-tab', 'active' => $section === 'features']) wire:click="nextGameStep('features')">{{ __('drivers.game_step_features') }}</button>
     </nav>
-    @if($errors->any())
-        <div class="notice notice-warning ud-error-summary" role="alert">{{ __('drivers.check_fields') }}</div>
-    @endif
     @if($section === 'general')
         @include('livewire.admin.partials.game-driver-settings')
     @elseif($section === 'mapping')
