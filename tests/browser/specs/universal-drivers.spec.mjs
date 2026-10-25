@@ -123,14 +123,14 @@ for (const variant of [
         await page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]').fill('player_id');
         await page.locator('input[wire\\:model="draft.config.characters.fields.level.column"]').fill('player_level');
         await page.locator('[data-game-group=game_additional] > summary').click();
-        const title = page.locator('[wire\\:key="game-field-title"]');
+        const title = page.locator('tr[wire\\:key="game-field-title"], tr[wire\\:key="game-field-source-title"]');
         await title.locator('summary').click();
         await title.locator('select').first().selectOption('related');
         await title.locator('select').nth(1).selectOption('clan');
         await expect(title.locator('input').first()).toHaveValue('clan_data');
         await title.locator('input[wire\\:model="draft.config.characters.fields.title.column"]').fill('clan_name');
         await page.locator('[data-game-group=game_statistics] > summary').click();
-        const reputation = page.locator('[wire\\:key="game-field-reputation"]');
+        const reputation = page.locator('tr[wire\\:key="game-field-reputation"], tr[wire\\:key="game-field-source-reputation"]');
         await reputation.locator('summary').click();
         await reputation.locator('select').first().selectOption('choice');
         await reputation.locator('input[wire\\:model="draft.config.characters.fields.reputation.columns.0"]').fill('karma');
@@ -150,10 +150,10 @@ for (const variant of [
         await gameCard.locator('button[wire\\:click^="editProfile"]').click();
         await page.locator('button[wire\\:click="nextGameStep(\'mapping\')"]').click();
         await expect(page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]')).toHaveValue('player_id');
-        await expect(page.locator('[wire\\:key="game-field-title"] input').first()).toHaveValue('clan_data');
+        await expect(page.locator('tr[wire\\:key="game-field-title"], tr[wire\\:key="game-field-source-title"]').locator('input').first()).toHaveValue('clan_data');
         // A key/value source must remain usable after changing its kind and selecting a new relation.
         await page.locator('[data-game-group=game_additional] > summary').click();
-        const keyValueTitle = page.locator('[wire\\:key="game-field-title"]');
+        const keyValueTitle = page.locator('tr[wire\\:key="game-field-title"], tr[wire\\:key="game-field-source-title"]');
         await keyValueTitle.locator('select').first().selectOption('eav');
         await page.locator('button[wire\\:click="nextGameStep(\'features\')"]').first().click();
         await page.locator('button[wire\\:click="addGameRelation"]').click();

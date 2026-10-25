@@ -131,6 +131,38 @@ final class DriverManagerTest extends TestCase
         $this->assertSame($original, $catalog->find('game', 'rusacis')['profile']);
     }
 
+    public function test_a_table_typed_into_a_field_gets_its_own_relation_and_unused_ones_are_dropped(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        $component = Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'game', 'rusacis')
+            ->set('draft.id', 'typed-table')
+            ->set('draft.name', 'Typed table')
+            ->call('changeFieldKind', 'class_id', 'related')
+            ->assertSet('draft.config.characters.fields.class_id.relation', 'f_class_id')
+            ->assertSet('draft.config.relations.f_class_id.table', '')
+            ->set('draft.config.relations.f_class_id.table', 'player_stats')
+            ->set('draft.config.relations.f_class_id.local_column', 'obj_Id')
+            ->set('draft.config.relations.f_class_id.foreign_column', 'char_id')
+            ->set('draft.config.characters.fields.class_id.column', 'cid');
+
+        // Going back to a plain column removes the relation nobody uses any more.
+        $component->call('changeFieldKind', 'class_id', 'column');
+        $this->assertArrayNotHasKey('f_class_id', $component->get('draft.config.relations'));
+
+        // A typed table that stays in use is saved with the profile.
+        $component->call('changeFieldKind', 'class_id', 'related')
+            ->set('draft.config.relations.f_class_id.table', 'player_stats')
+            ->set('draft.config.relations.f_class_id.local_column', 'obj_Id')
+            ->set('draft.config.relations.f_class_id.foreign_column', 'char_id')
+            ->set('draft.config.characters.fields.class_id.column', 'cid')
+            ->call('saveProfile')->assertHasNoErrors()->assertSet('editing', false);
+
+        $profile = app(DriverProfileCatalog::class)->find('game', 'typed-table')['profile'];
+        $this->assertSame('f_class_id', $profile['config']['characters']['fields']['class_id']['relation']);
+        $this->assertSame('player_stats', $profile['config']['relations']['f_class_id']['table']);
+    }
+
     public function test_new_driver_can_be_saved_without_knowing_its_technical_identifier(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');

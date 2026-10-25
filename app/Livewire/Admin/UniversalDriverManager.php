@@ -237,6 +237,7 @@ final class UniversalDriverManager extends Component
         $this->managePermission();
         abort_unless($this->editing && $this->draft['type'] === 'game' && in_array($target, ['mapping', 'features'], true), 409);
         $this->validateGameDetails($target === 'features');
+        $this->pruneAutoRelations();
         if ($target === 'features') {
             $this->draft['config'] = app(GameProfileEditor::class)->alignReferences($this->draft['config'], $this->originalGameConfig);
         }
@@ -337,6 +338,7 @@ final class UniversalDriverManager extends Component
             }
             $this->draft['config']['accounts']['create']['fixed_values'] = $fixed;
         } else {
+            $this->pruneAutoRelations();
             $this->validateGameDetails(mappings: true);
         }
         $catalog = app(DriverProfileCatalog::class);
@@ -594,13 +596,51 @@ final class UniversalDriverManager extends Component
             (in_array($field, ['id', 'name'], true) && $kind !== 'column')) {
             return;
         }
+        // Another table is typed straight into the row: it gets a relation of its own right away.
+        $relation = in_array($kind, ['related', 'eav'], true) ? $this->ensureFieldRelation($field, $kind) : '';
         $this->draft['config']['characters']['fields'][$field] = match ($kind) {
-            'related' => ['kind' => 'related', 'relation' => '', 'column' => ''],
-            'eav' => ['kind' => 'eav', 'relation' => '', 'key_column' => '', 'value_column' => '', 'key_value' => ''],
+            'related' => ['kind' => 'related', 'relation' => $relation, 'column' => ''],
+            'eav' => ['kind' => 'eav', 'relation' => $relation, 'key_column' => '', 'value_column' => '', 'key_value' => ''],
             'choice' => ['kind' => 'choice', 'columns' => ['', ''], 'preference' => 'first_present'],
             'operator' => ['kind' => 'operator', 'operator' => 'rusacis_hero_active'],
             default => ['kind' => 'column', 'column' => ''],
         };
+        $this->pruneAutoRelations();
+    }
+
+    /** Relations created automatically for a typed table ("f_<field>") disappear once nothing uses them. */
+    private function pruneAutoRelations(): void
+    {
+        $used = [];
+        $collect = static function (mixed $value) use (&$used): void {
+            if (is_string($value) && $value !== '') {
+                $used[$value] = true;
+            }
+        };
+        array_walk_recursive($this->draft['config']['characters']['fields'], $collect);
+        array_walk_recursive($this->draft['config']['features'], $collect);
+        foreach (array_keys($this->draft['config']['relations']) as $name) {
+            if (str_starts_with((string) $name, 'f_') && ! isset($used[$name])) {
+                unset($this->draft['config']['relations'][$name]);
+            }
+        }
+    }
+
+    private function ensureFieldRelation(string $field, string $kind): string
+    {
+        $name = 'f_'.$field;
+        if (isset($this->draft['config']['relations'][$name])) {
+            return $name;
+        }
+        if (count($this->draft['config']['relations']) >= 16) {
+            return '';
+        }
+        $this->draft['config']['relations'][$name] = [
+            'table' => '', 'local_column' => '', 'foreign_column' => '', 'join' => 'left',
+            'cardinality' => $kind === 'eav' ? 'many' : 'one',
+        ];
+
+        return $name;
     }
 
     public function addChoiceColumn(string $field): void
@@ -635,6 +675,7 @@ final class UniversalDriverManager extends Component
             return;
         }
         unset($this->draft['config']['characters']['fields'][$field]);
+        $this->pruneAutoRelations();
     }
 
     public function addFilter(): void

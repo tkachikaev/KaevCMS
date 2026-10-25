@@ -159,3 +159,38 @@
 .ud-table tr.ud-profile { padding: 0; border: 0; border-radius: 0; background: transparent; }
 @media (min-width: 781px) { .ud-table tr.ud-profile { display: table-row; } }
 @media (max-width: 780px) { .ud-table tr.ud-profile { border-bottom: 1px solid var(--admin-border); } .ud-table tbody tr.ud-profile:last-child { border-bottom: 0; } }
+
+/* Mapping step: one real table per group; the main table is typed once above. */
+.ud-main-table { display: grid; gap: var(--admin-space-2); padding: var(--admin-space-3); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-inner); background: var(--admin-surface-subtle); max-width: 520px; }
+.ud-main-table-name { padding: 2px 8px; border-radius: 6px; background: var(--admin-surface-subtle); border: 1px solid var(--admin-border); font-size: var(--admin-text-small); }
+.ud-map-wrap { overflow-x: auto; }
+.ud-map-table { width: 100%; border-collapse: collapse; font-size: var(--admin-text-small); }
+.ud-map-table th, .ud-map-table td { padding: var(--admin-space-2) var(--admin-space-3); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--admin-border); }
+.ud-map-table thead th { color: var(--admin-text-muted); font-size: var(--admin-text-caption); font-weight: var(--admin-weight-medium); text-transform: uppercase; letter-spacing: .04em; }
+.ud-map-table tbody th { width: 34%; font-weight: var(--admin-weight-medium); }
+.ud-map-table tbody th strong { display: block; color: var(--admin-text); font-size: var(--admin-text-body); font-weight: var(--admin-weight-medium); }
+.ud-map-table tbody th small { display: block; color: var(--admin-text-muted); font-weight: 400; }
+.ud-map-table td:nth-child(2), .ud-map-table td:nth-child(3) { width: 30%; }
+.ud-map-table input { width: 100%; }
+.ud-map-end { width: 44px; text-align: center !important; }
+.ud-map-required > * { background: var(--admin-surface-subtle); }
+.ud-map-required th small { color: var(--admin-primary); }
+.ud-map-extra > td { padding-top: 0; padding-left: var(--admin-space-3); }
+.ud-map-extra .ud-field-source { margin: 0; }
+.ud-map-extra .ud-field-source summary { padding: var(--admin-space-1) 0; }
+@media (max-width: 780px) {
+    .ud-map-table tbody th { width: auto; }
+    .ud-map-table td:nth-child(2), .ud-map-table td:nth-child(3) { width: auto; min-width: 140px; }
+}
+
+/* Phone: a field is a small card (name on top, table and column side by side). */
+@media (max-width: 780px) {
+    .ud-map-table, .ud-map-table tbody, .ud-map-table tr, .ud-map-table td, .ud-map-table th { display: block; }
+    .ud-map-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+    .ud-map-table tr.ud-map-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px; gap: var(--admin-space-2); align-items: center; padding: var(--admin-space-3) 0 var(--admin-space-2); border-bottom: 0; }
+    .ud-map-table tr.ud-map-row > th { grid-column: 1 / -1; width: auto; padding: 0; border: 0; }
+    .ud-map-table tr.ud-map-row > td { padding: 0; border: 0; width: auto; min-width: 0; }
+    .ud-map-table tr.ud-map-extra { border-bottom: 1px solid var(--admin-border); }
+    .ud-map-table tr.ud-map-extra > td { padding: 0 0 var(--admin-space-2); }
+    .ud-map-end { width: auto; }
+}
