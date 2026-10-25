@@ -175,7 +175,7 @@ return [
     'eav_heading' => 'Which row of the table:',
     'choice_heading' => 'Columns to choose from:',
     'main_table' => 'Main character table',
-    'main_table_help' => 'Every field below is read from it unless the field has another source.',
+    'main_table_help' => 'The three required fields (owner, ID, name) share one table: changing it in any of these rows changes it in the others and in every field below that has no table of its own.',
     'col_field' => 'Field',
     'other_table_placeholder' => 'Name of the other table',
     'characters_table' => 'Characters table',

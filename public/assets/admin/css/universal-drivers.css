@@ -203,3 +203,5 @@
 .ud-link-row > span[aria-hidden] { padding-bottom: 9px; color: var(--admin-text-muted); }
 .ud-map-extra > td { padding-top: 0; }
 .ud-map-table .ud-map-end { width: 84px; }
+
+.ud-main-note { margin: 0 0 var(--admin-space-2); }

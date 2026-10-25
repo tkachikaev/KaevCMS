@@ -1,11 +1,4 @@
 <p class="ud-info">{{ __('drivers.game_mapping_help') }}</p>
-<div class="ud-main-table">
-    <label for="ud-game-main-table">{{ __('drivers.main_table') }}
-        <input id="ud-game-main-table" type="text" wire:model.live.blur="draft.config.characters.table" maxlength="64">
-        <small>{{ __('drivers.main_table_help') }}</small>
-    </label>
-    @error('draft.config.characters.table')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
-</div>
 @php
     $groups = [
         'game_basic' => ['id','name','level','class_id','race','gender','online'],
@@ -17,6 +10,9 @@
 @foreach($groups as $group => $fields)
     <details class="ud-game-group" data-game-group="{{ $group }}" wire:ignore.self>
         <summary><h3>{{ __('drivers.'.$group) }}</h3></summary>
+        @if($group === 'game_basic')
+            <p class="ud-info ud-main-note">{{ __('drivers.main_table_help') }}</p>
+        @endif
         <div class="ud-map-wrap">
         <table class="ud-map-table">
             <thead>
@@ -31,7 +27,10 @@
                 @if($group === 'game_basic')
                     <tr class="ud-map-row ud-map-required" wire:key="game-field-owner">
                         <th scope="row"><strong>{{ __('drivers.character_owner') }}</strong><small>{{ __('drivers.required_field') }}</small></th>
-                        <td><code class="ud-main-table-name">{{ $mainTable }}</code></td>
+                        <td>
+                            <input type="text" aria-label="{{ __('drivers.character_owner') }}: {{ __('drivers.table') }}" wire:model.live.blur="draft.config.characters.table" maxlength="64">
+                            @error('draft.config.characters.table')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
+                        </td>
                         <td>
                             <input type="text" aria-label="{{ __('drivers.character_owner') }}: {{ __('drivers.column') }}" wire:model="draft.config.characters.owner.column" maxlength="64">
                             @error('draft.config.characters.owner.column')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
@@ -48,7 +47,9 @@
                     <tr @class(['ud-map-row', 'ud-map-required' => $required]) wire:key="game-field-{{ $field }}">
                         <th scope="row"><strong>{{ $label }}</strong><small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small></th>
                         <td>
-                            @if($required || in_array($kind, ['choice','operator'], true))
+                            @if($required)
+                                <input type="text" aria-label="{{ $label }}: {{ __('drivers.table') }}" wire:model.live.blur="draft.config.characters.table" maxlength="64">
+                            @elseif(in_array($kind, ['choice','operator'], true))
                                 <code class="ud-main-table-name">{{ $mainTable }}</code>
                             @else
                                 <input type="text" aria-label="{{ $label }}: {{ __('drivers.table') }}" wire:model.live.blur="fieldTables.{{ $field }}" maxlength="64" placeholder="{{ $mainTable }}">
