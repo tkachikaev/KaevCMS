@@ -71,6 +71,7 @@ foreach ($databaseNames as $fixture => $db) {
 }
 
 require __DIR__.'/mysql-game-character-parity.php';
+require __DIR__.'/mysql-game-world-parity.php';
 require __DIR__.'/mysql-login-parity.php';
 } finally {
     // Only remove databases created by this exact invocation.

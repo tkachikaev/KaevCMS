@@ -65,3 +65,16 @@ The disposable MySQL CI fixture job now installs locked dependencies and directl
 **Not implemented yet:** public rankings, full hero/castle sections, production resolver switching, writes, the editor or driver importing. The new adapter does not itself authorize a CMS user.
 
 `tests/Integration/UniversalDrivers/mysql-game-character-parity.php` is invoked by `mysql-fixtures.php` and compares this read path with the existing PHP game drivers on disposable local MySQL fixtures. It tests account isolation, bound hostile identity strings, hero/reputation mappings, EAV, and ambiguous data. CI requires Composer dependencies from the approved lock and MySQL 8.4. Until executed, the presence of these tests is not a successful compatibility verification.
+
+
+## Iteration 4 — experimental GameServer rankings, heroes and castles (0.53.6)
+
+`app/Services/GameWorld/UniversalGameWorldReader.php` supplies standalone **read-only** `ranking`, `heroes`, `castleOwners`, `capabilities`, and `diagnose` on an existing Laravel MySQL connection. It never chooses a DSN, writes to the game database, or modifies the production `GameWorldDriverResolver`.
+
+- Level/PvP/PK/play-time rankings sort/filter through whitelisted JSON column mappings with Query Builder bindings; clan names follow the configured one-to-one join. Duplicate character identities fail closed.
+- The hero list follows profile-defined character/hero relations, using RUSaCis active/played filtering and Mobius hero record fields. The RUSaCis character hero flag still combines `herountil` with eligible hero records.
+- Castle ownership follows the configured clan/castle/leader relations. Mobius uses the DB name; RUSaCis uses a reusable translated nine-castle catalog with safe unknown-ID fallback.
+- Optional `features.heroes.count_column`/`claimed_column` and `features.castles.clan_relation`/`leader_relation`/`clan_columns`/`leader_name_column` extend the existing format-v1 schema without breaking previously exported v1 profiles. Arbitrary SQL or PHP in JSON remains prohibited.
+- If optional `heroes` or `castle` tables are unavailable, only those respective capabilities are disabled; core rankings continue when mandatory tables are valid.
+
+**Explicit limitation:** ordering rankings by EAV or remote-table fields is not yet implemented; the reader rejects these configurations rather than producing incorrectly ordered lists. MySQL parity with existing RUSaCis/Mobius drivers is covered by `tests/Integration/UniversalDrivers/mysql-game-world-parity.php`, called from the disposable `mysql-fixtures.php` job, but parity is **not verified** until that job executes successfully. No production switching, SQL Server/PTS adapter, write operation, admin UI, CMS migration or dependency change was made.

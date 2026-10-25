@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.53.6 - 2026-10-25
+
+Universal drivers, iteration 4: **experimental read-only GameServer rankings, hero lists and castle ownership; production drivers remain unchanged**. Based on the 0.53.5 full ZIP; no Composer changes, published migrations or runtime database changes.
+
+- Added `UniversalGameWorldReader`, which accepts validated JSON and an existing MySQL connection. Level/PvP/PK/play-time rankings, hero records and clan/castle ownership now use configured tables/columns and bounded query-builder bindings; the existing `GameWorldDriverResolver` still uses legacy drivers.
+- Added a reusable nine-castle name catalog with RU/EN translations and a safe unknown-ID fallback, used only when the JSON declares `name_source=catalog`. Mobius keeps names from the SQL column.
+- Extended additive format-v1 hero and castle metadata with explicit column/relation mappings for generic Java game schemas. No SQL/PHP expression is accepted from the profile. Existing format-v1 files remain valid.
+- Added disposable MySQL 8.4 parity tests comparing the JSON reader with Mobius/RUSaCis legacy rankings, heroes, castles and capabilities. Missing optional hero/castle tables, custom JSON table names, ambiguous clan joins and unsafe SQL identifier inputs are also tested. These tests require a real MySQL run and Composer vendor; local syntax-only validation does not prove parity.
+- Current limitation: rank sorting uses direct character columns, and non-EAV related display fields are supported. Cross-table/EAV sort expressions are deliberately refused until safe, scalable database-level ordering can be tested. No production feature switch, SQL Server/PTS adapter, write operation, UI or database migration is included.
+
 ## 0.53.5 - 2026-10-25
 
 Universal drivers, iteration 3: **experimental read-only GameServer character retrieval; no production switching**. Built on full 0.53.4 source; Composer dependencies and published migrations unchanged.

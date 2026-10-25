@@ -28,6 +28,9 @@ $negative = [
     static function (array &$p): void { $p['config']['features']['heroes']['query'] = 'select * from accounts'; },
     static function (array &$p): void { $p['config']['database']['dialect'] = 'sqlserver'; },
     static function (array &$p): void { $p['format_version'] = 100; },
+    static function (array &$p): void { $p['config']['features']['heroes']['claimed_column'] = 'played; DROP TABLE heroes'; },
+    static function (array &$p): void { $p['config']['features']['castles']['leader_relation'] = 'unregistered_relation'; },
+    static function (array &$p): void { $p['config']['features']['castles']['clan_columns']['name'] = 'clan_name FROM users'; },
 ];
 foreach ($negative as $mutate) {
     $bad = $profiles['game:rusacis'];
@@ -47,4 +50,4 @@ foreach (['', '{', '[]', str_repeat('x', 262145)] as $badJson) {
     }
     throw new RuntimeException('Unsafe JSON was accepted.');
 }
-printf("OK: %d bundled profiles and 9 negative cases; no application bootstrap/DB used.\n", count($profiles));
+printf("OK: %d bundled profiles and 12 negative cases; no application bootstrap/DB used.\n", count($profiles));

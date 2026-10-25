@@ -227,11 +227,22 @@
         "played_column": "played",
         "active_column": "active",
         "played_value": 1,
-        "active_value": 1
+        "active_value": 1,
+        "count_column": "count",
+        "claimed_column": "active"
       },
       "castles": {
         "relation": "castle",
-        "name_source": "catalog"
+        "name_source": "catalog",
+        "clan_relation": "clan",
+        "leader_relation": "leader",
+        "clan_columns": {
+          "id": "clan_id",
+          "name": "clan_name",
+          "level": "clan_level",
+          "reputation": "reputation_score"
+        },
+        "leader_name_column": "char_name"
       }
     }
   }

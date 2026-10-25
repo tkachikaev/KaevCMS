@@ -331,12 +331,12 @@ final class ProfileValidator
         $this->keys($features, ['heroes', 'castles'], [], 'features');
         foreach ($features as $key => $value) {
             $feature = $this->object($value, "features.$key");
-            $allowed = $key === 'heroes' ? ['relation', 'played_column', 'active_column', 'active_value', 'played_value'] : ['relation', 'name_source', 'name_column'];
+            $allowed = $key === 'heroes' ? ['relation', 'played_column', 'active_column', 'active_value', 'played_value', 'count_column', 'claimed_column'] : ['relation', 'name_source', 'name_column', 'clan_relation', 'leader_relation', 'clan_columns', 'leader_name_column'];
             $required = $key === 'heroes' ? ['relation'] : ['relation', 'name_source'];
             $this->keys($feature, $allowed, $required, "features.$key");
             $this->oneOf($feature['relation'], $relations, "features.$key.relation");
             if ($key === 'heroes') {
-                foreach (['played_column', 'active_column'] as $column) {
+                foreach (['played_column', 'active_column', 'count_column', 'claimed_column'] as $column) {
                     if (isset($feature[$column])) {
                         $this->identifier($feature[$column], "features.heroes.$column");
                     }
@@ -347,6 +347,21 @@ final class ProfileValidator
                     }
                 }
             } else {
+                foreach (['clan_relation', 'leader_relation'] as $keyName) {
+                    if (isset($feature[$keyName])) {
+                        $this->oneOf($feature[$keyName], $relations, 'features.castles.'.$keyName);
+                    }
+                }
+                if (isset($feature['clan_columns'])) {
+                    $mapping = $this->object($feature['clan_columns'], 'features.castles.clan_columns');
+                    $this->keys($mapping, ['id', 'name', 'level', 'reputation'], ['id', 'name', 'level', 'reputation'], 'features.castles.clan_columns');
+                    foreach ($mapping as $columnName) {
+                        $this->identifier($columnName, 'features.castles.clan_columns field');
+                    }
+                }
+                if (isset($feature['leader_name_column'])) {
+                    $this->identifier($feature['leader_name_column'], 'features.castles.leader_name_column');
+                }
                 $this->oneOf($feature['name_source'], ['column', 'catalog'], 'features.castles.name_source');
                 if ($feature['name_source'] === 'column') {
                     if (! isset($feature['name_column'])) {
