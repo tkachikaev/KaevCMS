@@ -25,12 +25,14 @@ use Illuminate\Database\MySqlConnection;
 // Legacy RUSaCis castle names pass through __(); install a no-op translator
 // for this isolated test rather than booting a CMS installation or .env.
 $container = new Container;
-$container->instance('translator', new class {
+$container->instance('translator', new class
+{
     public function get(string $key, array $replace = [], ?string $locale = null, bool $fallback = true): string
     {
         foreach ($replace as $name => $value) {
             $key = str_replace(':'.$name, (string) $value, $key);
         }
+
         return $key;
     }
 });
@@ -41,9 +43,14 @@ $reader = new UniversalGameWorldReader;
 foreach ($databaseNames as $type => $db) {
     $pdo->exec("USE `$db`");
     $connection = new MySqlConnection($pdo, $db, '', ['driver' => 'mysql', 'database' => $db, 'prefix' => '']);
-    $gateway = new class($connection) implements GameServerDatabaseGateway {
+    $gateway = new class($connection) implements GameServerDatabaseGateway
+    {
         public function __construct(private readonly Connection $connection) {}
-        public function run(GameServer $server, callable $callback): mixed { return $callback($this->connection); }
+
+        public function run(GameServer $server, callable $callback): mixed
+        {
+            return $callback($this->connection);
+        }
     };
     $legacy = $type === 'rusacis'
         ? new RusacisGameWorldDriver($gateway, new RusacisGameSchemaInspector)
@@ -157,7 +164,7 @@ foreach ($databaseNames as $type => $db) {
 }
 
 /** @param list<array<string,mixed>> $old
- *  @param list<array<string,mixed>> $new
+ * @param  list<array<string,mixed>>  $new
  */
 function assertWorldParity(array $old, array $new, string $context): void
 {

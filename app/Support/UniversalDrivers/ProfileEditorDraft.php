@@ -146,6 +146,7 @@ final class ProfileEditorDraft
             }
             unset($feature);
         }
+
         return $profile;
     }
 }

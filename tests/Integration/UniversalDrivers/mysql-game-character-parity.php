@@ -32,7 +32,8 @@ foreach ($databaseNames as $type => $db) {
     $connection = new MySqlConnection($pdo, $db, '', [
         'driver' => 'mysql', 'database' => $db, 'prefix' => '',
     ]);
-    $gateway = new class($connection) implements GameServerDatabaseGateway {
+    $gateway = new class($connection) implements GameServerDatabaseGateway
+    {
         public function __construct(private readonly Connection $connection) {}
 
         public function run(GameServer $server, callable $callback): mixed

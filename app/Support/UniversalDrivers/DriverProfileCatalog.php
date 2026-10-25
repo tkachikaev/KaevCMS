@@ -4,6 +4,7 @@ namespace App\Support\UniversalDrivers;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -28,9 +29,21 @@ final class DriverProfileCatalog
             $key = $row->type.':'.$row->profile_id;
             if ((bool) $row->is_deleted) {
                 unset($profiles[$key]);
+
                 continue;
             }
-            $profile = $this->decodeStored($row->profile_json, $row->type, $row->profile_id);
+            try {
+                $profile = $this->decodeStored($row->profile_json, $row->type, $row->profile_id);
+            } catch (ProfileValidationException|RuntimeException $exception) {
+                // One damaged or no-longer-valid stored profile must not take the whole catalogue (and every
+                // page that lists drivers) down. A damaged override of a bundled driver falls back to the bundled
+                // original; a damaged custom driver is left out, so servers using it fail closed.
+                Log::warning('A stored driver profile was skipped because it is invalid.', [
+                    'type' => $row->type, 'profile_id' => $row->profile_id, 'reason' => $exception->getMessage(),
+                ]);
+
+                continue;
+            }
             $profiles[$key] = [
                 'profile' => $profile,
                 'origin' => isset($profiles[$key]) ? 'builtin' : 'custom',
@@ -46,6 +59,7 @@ final class DriverProfileCatalog
     public function find(string $type, string $id): ?array
     {
         $this->identity($type, $id);
+
         return $this->all()[$type.':'.$id] ?? null;
     }
 
@@ -53,7 +67,7 @@ final class DriverProfileCatalog
      * Create or edit a profile without any game database. Editing bundled entries
      * transparently creates a local override under the same stable identity.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      */
     public function save(array $profile, ?string $expectedSha256 = null): void
     {
@@ -93,7 +107,7 @@ final class DriverProfileCatalog
      * Create an exact new identity; unlike save(), never overwrite another
      * administrator's profile when two requests race for the same ID.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      */
     public function create(array $profile): void
     {
@@ -119,6 +133,7 @@ final class DriverProfileCatalog
     /**
      * Imports any valid JSON as a new independent profile. An existing identity is
      * never overwritten, including a locally deleted bundled identity.
+     *
      * @return array<string,mixed> Imported profile with its final identity/name.
      */
     public function import(string $json): array
@@ -157,6 +172,7 @@ final class DriverProfileCatalog
                     'profile_json' => $this->canonicalJson($candidate), 'is_deleted' => false,
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
+
                 return $candidate;
             } catch (QueryException $e) {
                 // A collision is expected when importing the same JSON concurrently.
@@ -175,6 +191,7 @@ final class DriverProfileCatalog
         if ($entry === null) {
             throw new ProfileValidationException('Driver profile not found.');
         }
+
         return $this->canonicalJson($entry['profile'])."\n";
     }
 
@@ -223,6 +240,7 @@ final class DriverProfileCatalog
         if (strlen($json) > ProfileFormat::MAX_BYTES) {
             throw new ProfileValidationException('Driver profile is too large.');
         }
+
         return $json;
     }
 
@@ -244,6 +262,7 @@ final class DriverProfileCatalog
         if ($profile['type'] !== $type || $profile['id'] !== $id) {
             throw new RuntimeException('Stored driver profile identity does not match its database key.');
         }
+
         return $profile;
     }
 

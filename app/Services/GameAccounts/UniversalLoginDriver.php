@@ -52,6 +52,7 @@ final class UniversalLoginDriver implements LoginServerDriver
         if ($stored === null) {
             return false;
         }
+
         // Never retry a lost-response bcrypt change with a freshly generated
         // credential; caller must have a stable operation key for such recovery.
         return $this->writer->changePreparedPassword($database, $this->profile, $login,

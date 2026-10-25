@@ -6,9 +6,9 @@ use App\Contracts\CharacterRescueGateway;
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Services\Servers\ServerDriverRegistry;
-use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\GameServerFeatures\CharacterRescueCapabilities;
 use App\Support\GameServerFeatures\CharacterRescueWriteResult;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Connection;
 

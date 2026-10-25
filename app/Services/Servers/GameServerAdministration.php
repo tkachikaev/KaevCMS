@@ -4,11 +4,11 @@ namespace App\Services\Servers;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
-use Illuminate\Validation\ValidationException;
 use App\Services\AuditLogger;
 use App\Services\GameServerDeletionImpact;
 use App\Services\GameServerSettings;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Throwable;
 
@@ -100,18 +100,21 @@ final class GameServerAdministration
             if (! $this->databaseState->isConfigured($report)) {
                 throw ValidationException::withMessages(['driver' => __('The driver must pass a real database compatibility check before it can be applied.')]);
             }
+
             return DB::transaction(function () use ($server, $profileValues, $connectionMode, $connectionValues): array {
                 $saved = $this->saveUnchecked($server, $profileValues, $connectionMode, $connectionValues);
                 app(UniversalDriverActivation::class)->apply($saved['server']);
+
                 return $saved;
             });
         }
+
         return $this->saveUnchecked($server, $profileValues, $connectionMode, $connectionValues);
     }
 
     /** @param array<string,mixed> $profileValues
-     *  @param array<string,mixed>|null $connectionValues
-     *  @return array{server:GameServer,created:bool}
+     * @param  array<string,mixed>|null  $connectionValues
+     * @return array{server:GameServer,created:bool}
      */
     private function saveUnchecked(?GameServer $server, array $profileValues, string $connectionMode, ?array $connectionValues): array
     {
@@ -194,12 +197,15 @@ final class GameServerAdministration
             if (! $this->databaseState->isConfigured($report)) {
                 throw ValidationException::withMessages(['driver' => __('The driver must pass a real database compatibility check before it can be applied.')]);
             }
+
             return DB::transaction(function () use ($server, $connectionValues): GameServer {
                 $updated = $this->updateConnectionUnchecked($server, $connectionValues);
                 app(UniversalDriverActivation::class)->apply($updated);
+
                 return $updated;
             });
         }
+
         return $this->updateConnectionUnchecked($server, $connectionValues);
     }
 

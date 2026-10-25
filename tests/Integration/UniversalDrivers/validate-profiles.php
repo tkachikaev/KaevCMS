@@ -23,14 +23,30 @@ foreach ($profiles as $profile) {
     }
 }
 $negative = [
-    static function (array &$p): void { $p['config']['characters']['table'] = 'characters` OR 1=1'; },
-    static function (array &$p): void { $p['config']['characters']['fields']['hero']['operator'] = 'raw_sql'; },
-    static function (array &$p): void { $p['config']['features']['heroes']['query'] = 'select * from accounts'; },
-    static function (array &$p): void { $p['config']['database']['dialect'] = 'sqlserver'; },
-    static function (array &$p): void { $p['format_version'] = 100; },
-    static function (array &$p): void { $p['config']['features']['heroes']['claimed_column'] = 'played; DROP TABLE heroes'; },
-    static function (array &$p): void { $p['config']['features']['castles']['leader_relation'] = 'unregistered_relation'; },
-    static function (array &$p): void { $p['config']['features']['castles']['clan_columns']['name'] = 'clan_name FROM users'; },
+    static function (array &$p): void {
+        $p['config']['characters']['table'] = 'characters` OR 1=1';
+    },
+    static function (array &$p): void {
+        $p['config']['characters']['fields']['hero']['operator'] = 'raw_sql';
+    },
+    static function (array &$p): void {
+        $p['config']['features']['heroes']['query'] = 'select * from accounts';
+    },
+    static function (array &$p): void {
+        $p['config']['database']['dialect'] = 'sqlserver';
+    },
+    static function (array &$p): void {
+        $p['format_version'] = 100;
+    },
+    static function (array &$p): void {
+        $p['config']['features']['heroes']['claimed_column'] = 'played; DROP TABLE heroes';
+    },
+    static function (array &$p): void {
+        $p['config']['features']['castles']['leader_relation'] = 'unregistered_relation';
+    },
+    static function (array &$p): void {
+        $p['config']['features']['castles']['clan_columns']['name'] = 'clan_name FROM users';
+    },
 ];
 foreach ($negative as $mutate) {
     $bad = $profiles['game:rusacis'];
@@ -54,14 +70,30 @@ foreach (['', '{', '[]', str_repeat('x', 262145)] as $badJson) {
 // A valid JSON must not claim compatibility while omitting the mandatory
 // character/account owner keys or a mandatory filter column from preflight.
 $contractNegative = [
-    ['login:l2j_mobius', static function (array &$p): void { $p['config']['requirements'][0]['required'] = false; }],
-    ['login:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['password']; }],
-    ['login:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['login']; }],
-    ['login:rusacis', static function (array &$p): void { $p['config']['accounts']['ownership']['column'] = 'password'; }],
-    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['required'] = false; }],
-    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['obj_Id', 'char_name']; }],
-    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['account_name', 'char_name']; }],
-    ['game:rusacis', static function (array &$p): void { $p['config']['requirements'][0]['columns'] = ['account_name', 'obj_Id']; }],
+    ['login:l2j_mobius', static function (array &$p): void {
+        $p['config']['requirements'][0]['required'] = false;
+    }],
+    ['login:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['columns'] = ['password'];
+    }],
+    ['login:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['columns'] = ['login'];
+    }],
+    ['login:rusacis', static function (array &$p): void {
+        $p['config']['accounts']['ownership']['column'] = 'password';
+    }],
+    ['game:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['required'] = false;
+    }],
+    ['game:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['columns'] = ['obj_Id', 'char_name'];
+    }],
+    ['game:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['columns'] = ['account_name', 'char_name'];
+    }],
+    ['game:rusacis', static function (array &$p): void {
+        $p['config']['requirements'][0]['columns'] = ['account_name', 'obj_Id'];
+    }],
     ['game:rusacis', static function (array &$p): void {
         $p['config']['requirements'][0]['columns'] = array_values(array_diff($p['config']['requirements'][0]['columns'], ['deletetime']));
     }],

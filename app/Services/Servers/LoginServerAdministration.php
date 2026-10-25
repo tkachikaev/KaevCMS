@@ -64,15 +64,17 @@ final class LoginServerAdministration
         if (! $this->databaseState->isConfigured($report)) {
             throw ValidationException::withMessages(['driver' => __('The driver must pass a real database compatibility check before it can be applied.')]);
         }
+
         return DB::transaction(function () use ($server, $values): array {
             $saved = $this->saveUnchecked($server, $values);
             app(UniversalDriverActivation::class)->apply($saved['server']);
+
             return $saved;
         });
     }
 
     /** @param array<string,mixed> $values
-     *  @return array{server:LoginServer,created:bool}
+     * @return array{server:LoginServer,created:bool}
      */
     private function saveUnchecked(?LoginServer $server, array $values): array
     {

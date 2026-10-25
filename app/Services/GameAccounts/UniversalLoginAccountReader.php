@@ -21,7 +21,7 @@ final class UniversalLoginAccountReader
      * Explain which schema requirements are present, without running a data query.
      * A missing optional column disables only that piece of account metadata.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      * @return array{missing_required:list<string>,missing_optional:list<string>}
      */
     public function diagnose(Connection $database, array $profile): array
@@ -73,7 +73,7 @@ final class UniversalLoginAccountReader
     }
 
     /**
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      * @return array{login:string,created_at:string|null,last_active:int,status:string}|null
      */
     public function summary(Connection $database, array $profile, string $login): ?array
@@ -106,7 +106,7 @@ final class UniversalLoginAccountReader
      * Compare a persisted account with the immutable prepared credential. No
      * new password hashes are generated here, and nothing is written to the DB.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      */
     public function inspect(Connection $database, array $profile, PreparedGameAccount $account): ExternalGameAccountState
     {
@@ -139,7 +139,7 @@ final class UniversalLoginAccountReader
     }
 
     /** @param array<string,mixed> $profile
-     *  @return array<string,mixed>
+     * @return array<string,mixed>
      */
     private function configuration(Connection $database, array $profile, ?string $capability = null): array
     {
@@ -155,7 +155,7 @@ final class UniversalLoginAccountReader
     }
 
     /** @param list<string> $required
-     *  @return list<string>
+     * @return list<string>
      */
     private function availableColumns(Connection $database, string $table, array $required): array
     {
@@ -174,9 +174,9 @@ final class UniversalLoginAccountReader
     }
 
     /** @param array<string,string|null> $fields
-     *  @param list<string> $available
-     *  @param list<string> $names
-     *  @return list<string>
+     * @param  list<string>  $available
+     * @param  list<string>  $names
+     * @return list<string>
      */
     private function selected(array $fields, array $available, array $names): array
     {
@@ -192,7 +192,7 @@ final class UniversalLoginAccountReader
     }
 
     /** @param array<string,string|null> $fields
-     *  @param list<string> $available
+     * @param  list<string>  $available
      */
     private function value(object $record, array $fields, array $available, string $name): mixed
     {

@@ -8,6 +8,7 @@ use App\Models\GameServer;
 use App\Models\GameServerTranslation;
 use App\Models\UserGameAccount;
 use App\Services\Localization\LanguageManager;
+use App\Services\Servers\UniversalDriverActivation;
 use App\Support\Database\TableExistence;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use Illuminate\Database\QueryException;
@@ -204,7 +205,7 @@ final class GameServerSettings
                 }
 
                 $this->reassignLinkedAccountsBeforeDisconnect($lockedServer);
-                app(\App\Services\Servers\UniversalDriverActivation::class)->invalidate($lockedServer);
+                app(UniversalDriverActivation::class)->invalidate($lockedServer);
                 $lockedServer->delete();
 
                 return $impact;

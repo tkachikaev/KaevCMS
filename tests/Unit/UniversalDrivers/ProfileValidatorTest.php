@@ -71,11 +71,21 @@ final class ProfileValidatorTest extends TestCase
         $game = $profiles['game:rusacis'];
         $login = $profiles['login:rusacis'];
         foreach ([
-            static function (array &$p): void { $p['config']['characters']['table'] = 'characters; DROP TABLE accounts'; },
-            static function (array &$p): void { $p['config']['characters']['fields']['hero']['operator'] = 'eval'; },
-            static function (array &$p): void { $p['config']['relations']['clan']['sql'] = 'DROP DATABASE'; },
-            static function (array &$p): void { $p['config']['filters'][0]['op'] = 'raw'; },
-            static function (array &$p): void { $p['config']['database']['collation'] = 'utf8mb4_malicious'; },
+            static function (array &$p): void {
+                $p['config']['characters']['table'] = 'characters; DROP TABLE accounts';
+            },
+            static function (array &$p): void {
+                $p['config']['characters']['fields']['hero']['operator'] = 'eval';
+            },
+            static function (array &$p): void {
+                $p['config']['relations']['clan']['sql'] = 'DROP DATABASE';
+            },
+            static function (array &$p): void {
+                $p['config']['filters'][0]['op'] = 'raw';
+            },
+            static function (array &$p): void {
+                $p['config']['database']['collation'] = 'utf8mb4_malicious';
+            },
         ] as $modify) {
             $copy = $game;
             $modify($copy);

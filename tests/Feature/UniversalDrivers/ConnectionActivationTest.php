@@ -36,7 +36,8 @@ final class ConnectionActivationTest extends TestCase
 
     public function test_failed_application_keeps_last_verified_snapshot_and_legacy_driver_is_not_switched_implicitly(): void
     {
-        $probe = new class implements ExternalDatabaseConnectionTester {
+        $probe = new class implements ExternalDatabaseConnectionTester
+        {
             public bool $allowed = true;
 
             public function test(array $connection, array $requirements, bool $driverReady): array
@@ -79,7 +80,8 @@ final class ConnectionActivationTest extends TestCase
 
     public function test_stale_snapshot_fails_closed_when_connection_credentials_change_outside_admin(): void
     {
-        $probe = new class implements ExternalDatabaseConnectionTester {
+        $probe = new class implements ExternalDatabaseConnectionTester
+        {
             public function test(array $connection, array $requirements, bool $driverReady): array
             {
                 return ['connected' => true, 'compatible' => true, 'driver_ready' => true,

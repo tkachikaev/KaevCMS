@@ -7,7 +7,6 @@ use App\Contracts\LoginServerDriver;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameWorld\GameWorldDriverResolver;
-use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\GameWorld\MobiusGameSchemaProfile;
 use App\Services\Servers\MySqlSessionQueryTimeout;
@@ -15,6 +14,7 @@ use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\ExternalGameAccountWriteResult;
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use Carbon\CarbonImmutable;
 use Closure;
 use DateTimeInterface;
@@ -61,6 +61,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             // separately verified account-ID mapping and must fail closed.
             $gameIdentity = $gameProfile['config']['characters']['owner']['identity'] ?? null;
             $loginIdentity = $loginProfile['config']['accounts']['ownership']['identity'] ?? 'login';
+
             return $gameIdentity === 'login' && $loginIdentity === 'login'
                 && in_array('characters', $gameProfile['config']['capabilities'], true);
         }
@@ -70,6 +71,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             return ($loginProfile['config']['accounts']['ownership']['identity'] ?? null) === 'login'
                 && in_array($gameServer->driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
         }
+
         return $this->loginDrivers->resolve($login)->supportsGameDriver((string) $gameServer->driver);
     }
 

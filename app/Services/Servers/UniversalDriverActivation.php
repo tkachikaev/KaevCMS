@@ -50,10 +50,12 @@ final class UniversalDriverActivation
                     'database_charset' => $locked->database_charset,
                 ], $login, $profile);
             }
+
             return ($report['connected'] ?? false) === true && ($report['compatible'] ?? false) === true
                 && ($report['driver_ready'] ?? false) === true;
         });
         $this->state->apply($server, $report);
+
         return $report;
     }
 

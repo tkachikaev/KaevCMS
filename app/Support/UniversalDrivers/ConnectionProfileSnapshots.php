@@ -4,8 +4,8 @@ namespace App\Support\UniversalDrivers;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
-use Closure;
 use App\Support\Database\TableExistence;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -25,7 +25,7 @@ final class ConnectionProfileSnapshots
      * The snapshot is updated only after that verifier succeeds. A check returning
      * false or throwing preserves the last verified snapshot unchanged.
      *
-     * @param Closure(LoginServer|GameServer,array<string,mixed>):bool $verify
+     * @param  Closure(LoginServer|GameServer,array<string,mixed>):bool  $verify
      */
     public function verifyAndRecord(LoginServer|GameServer $server, string $profileId, Closure $verify): void
     {
@@ -97,6 +97,7 @@ final class ConnectionProfileSnapshots
             'db_password' => $target->databasePassword(),
             'db_charset' => $target->database_charset,
         ];
+
         return hash_hmac('sha256', json_encode($values, JSON_THROW_ON_ERROR), $key);
     }
 
@@ -132,6 +133,7 @@ final class ConnectionProfileSnapshots
             $currentDriver !== $profile['id']) {
             throw new RuntimeException('Driver connection snapshot no longer matches its connection.');
         }
+
         return $profile;
     }
 }

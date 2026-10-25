@@ -164,7 +164,7 @@ final class ServerDriverRegistry
      * respect tombstones in selectors. Deleting a profile is already refused
      * while any server uses its identifier, so hiding cannot orphan a server.
      *
-     * @param array<string,array<string,mixed>> $legacy
+     * @param  array<string,array<string,mixed>>  $legacy
      * @return array<string,array<string,mixed>>
      */
     private function selectableLegacy(string $type, array $legacy): array
@@ -190,7 +190,7 @@ final class ServerDriverRegistry
      * legacy IDs deliberately retain their previous PHP descriptors until an
      * administrator explicitly applies a JSON snapshot to a connection.
      *
-     * @param list<string> $reserved
+     * @param  list<string>  $reserved
      * @return array<string,array<string,mixed>>
      */
     private function customDescriptors(string $type, array $reserved): array

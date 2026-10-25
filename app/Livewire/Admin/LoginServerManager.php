@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Auth\AdminPermission;
 use App\Models\Admin;
 use App\Models\LoginServer;
+use App\Services\AuditLogger;
 use App\Services\Servers\LoginServerAdministration;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Services\Servers\UniversalDriverActivation;

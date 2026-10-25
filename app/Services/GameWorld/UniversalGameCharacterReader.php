@@ -20,7 +20,7 @@ final class UniversalGameCharacterReader
     public function __construct(private readonly ProfileValidator $validator = new ProfileValidator) {}
 
     /**
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      * @return array{missing_required:list<string>,missing_optional:list<string>}
      */
     public function diagnose(Connection $database, array $profile): array
@@ -39,7 +39,7 @@ final class UniversalGameCharacterReader
      * Caller remains responsible for account/character authorization; this
      * reader cannot validate ownership of a CMS user on its own.
      *
-     * @param array<string,mixed> $profile
+     * @param  array<string,mixed>  $profile
      * @return list<array<string,mixed>>
      */
     public function charactersForAccount(
@@ -105,6 +105,7 @@ final class UniversalGameCharacterReader
                 'gt' => $query->where($filter['column'], '>', $filter['value']),
                 'zero_or_null' => $query->where(static fn (Builder $q): Builder => $q
                     ->whereNull($filter['column'])->orWhere($filter['column'], 0)),
+                default => throw new ProfileValidationException('Unsupported character filter operation.'),
             };
         }
         // The limit is applied after related/EAV values have been populated,
@@ -137,6 +138,7 @@ final class UniversalGameCharacterReader
                     'choice' => ($choice = $this->chosenColumn($field, $columns, $chronicle)) !== null ? ($row[$choice] ?? null) : null,
                     'related', 'eav' => $this->relatedValue($related, $config, $row, $field, $name),
                     'operator' => $this->heroValue($row, $idColumn, $heroIds),
+                    default => throw new ProfileValidationException('Unsupported character field source.'),
                 };
             }
             $result[] = $mapped;
@@ -145,6 +147,7 @@ final class UniversalGameCharacterReader
         // descending and by name ascending. Sort after mapping for EAV level.
         usort($result, static function (array $a, array $b): int {
             $byLevel = (int) ($b['level'] ?? 0) <=> (int) ($a['level'] ?? 0);
+
             return $byLevel !== 0 ? $byLevel : strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
         });
 
@@ -152,7 +155,7 @@ final class UniversalGameCharacterReader
     }
 
     /**
-     * @param array<string,mixed> $config
+     * @param  array<string,mixed>  $config
      * @return array{columns:array<string,list<string>>,missing_required:list<string>,missing_optional:list<string>}
      */
     private function schema(Connection $database, array $config): array
@@ -170,6 +173,7 @@ final class UniversalGameCharacterReader
                 } else {
                     $missingOptional[] = 'table:'.$table;
                 }
+
                 continue;
             }
             $columns[$table] = $inspector->getColumnListing($table);
@@ -201,9 +205,9 @@ final class UniversalGameCharacterReader
     }
 
     /**
-     * @param list<array<string,mixed>> $rows
-     * @param array<string,mixed> $config
-     * @param array<string,list<string>> $columns
+     * @param  list<array<string,mixed>>  $rows
+     * @param  array<string,mixed>  $config
+     * @param  array<string,list<string>>  $columns
      * @return array<string,array<string,array<string,mixed>>>
      */
     private function relatedValues(Connection $database, array $config, array $columns, array $rows): array
@@ -226,7 +230,7 @@ final class UniversalGameCharacterReader
             if (! array_key_exists($table, $columns)) {
                 throw new ProfileValidationException('Mapped relation must declare its table in schema requirements: '.$table);
             }
-            $available = $columns[$table] ?? [];
+            $available = $columns[$table];
             if ($available === []) {
                 // Missing optional relation: no associated fields for that row.
                 // A required relation is already rejected by schema().
@@ -288,13 +292,14 @@ final class UniversalGameCharacterReader
                 }
             }
         }
+
         return $results;
     }
 
     /** @param array<string,array<string,array<string,mixed>>> $related
-     *  @param array<string,mixed> $config
-     *  @param array<string,mixed> $row
-     *  @param array<string,mixed> $field
+     * @param  array<string,mixed>  $config
+     * @param  array<string,mixed>  $row
+     * @param  array<string,mixed>  $field
      */
     private function relatedValue(array $related, array $config, array $row, array $field, string $name): mixed
     {
@@ -305,13 +310,14 @@ final class UniversalGameCharacterReader
         }
         $lookup = $field['relation'].($field['kind'] === 'eav' ? ':eav:'.$name : '');
         $data = $related[$lookup][(string) $key] ?? null;
+
         return $data[$field['kind'] === 'eav' ? 'value' : $field['column']] ?? null;
     }
 
     /**
-     * @param array<string,mixed> $config
-     * @param array<string,list<string>> $columns
-     * @param list<array<string,mixed>> $rows
+     * @param  array<string,mixed>  $config
+     * @param  array<string,list<string>>  $columns
+     * @param  list<array<string,mixed>>  $rows
      * @return array<string,bool>
      */
     private function activeHeroIds(Connection $database, array $config, array $columns, array $rows, string $idColumn): array
@@ -340,11 +346,12 @@ final class UniversalGameCharacterReader
             ->get([$relation['foreign_column']]) as $item) {
             $ids[(string) $item->{$relation['foreign_column']}] = true;
         }
+
         return $ids;
     }
 
     /** @param array<string,mixed> $row
-     *  @param array<string,bool> $heroIds
+     * @param  array<string,bool>  $heroIds
      */
     private function heroValue(array $row, string $idColumn, array $heroIds): int
     {
@@ -353,7 +360,7 @@ final class UniversalGameCharacterReader
     }
 
     /** @param array<string,mixed> $field
-     *  @param list<string> $columns
+     * @param  list<string>  $columns
      */
     private function chosenColumn(array $field, array $columns, ?string $chronicle): ?string
     {
@@ -368,8 +375,10 @@ final class UniversalGameCharacterReader
                     return in_array('karma', $available, true) ? 'karma' : $available[0];
                 }
             }
+
             return in_array('reputation', $available, true) ? 'reputation' : $available[0];
         }
+
         return $available[0];
     }
 
@@ -381,11 +390,12 @@ final class UniversalGameCharacterReader
                 return true;
             }
         }
+
         return false;
     }
 
     /** @param list<string> $columns
-     *  @param list<string> $needed
+     * @param  list<string>  $needed
      */
     private function hasAnyColumn(array $columns, array $needed): bool
     {
@@ -394,11 +404,12 @@ final class UniversalGameCharacterReader
                 return true;
             }
         }
+
         return false;
     }
 
     /** @param list<string> $columns
-     *  @param list<string> $needed
+     * @param  list<string>  $needed
      */
     private function hasAllColumns(array $columns, array $needed): bool
     {
@@ -407,6 +418,7 @@ final class UniversalGameCharacterReader
                 return false;
             }
         }
+
         return true;
     }
 
@@ -417,7 +429,7 @@ final class UniversalGameCharacterReader
     }
 
     /** @param array<string,mixed> $profile
-     *  @return array<string,mixed>
+     * @return array<string,mixed>
      */
     private function configuration(Connection $database, array $profile, ?string $capability = null): array
     {
@@ -428,6 +440,7 @@ final class UniversalGameCharacterReader
         if ($capability !== null && ! in_array($capability, $profile['config']['capabilities'], true)) {
             throw new ProfileValidationException('The game profile does not support the requested operation.');
         }
+
         return $profile['config'];
     }
 }

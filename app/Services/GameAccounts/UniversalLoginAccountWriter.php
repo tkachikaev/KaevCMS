@@ -83,6 +83,10 @@ final class UniversalLoginAccountWriter
         $mapping = $config['accounts']['create']['columns'];
         $fixed = $config['accounts']['create']['fixed_values'] ?? [];
         $this->requireWritableSchema($database, $table, $loginColumn, array_merge(array_keys($mapping), array_keys($fixed)));
+        $credentialColumn = array_search('credential', $mapping, true);
+        if (is_string($credentialColumn)) {
+            $this->requireColumnFits($database, $table, $credentialColumn, strlen($account->credential));
+        }
 
         $values = [];
         foreach ($mapping as $column => $source) {
@@ -90,6 +94,7 @@ final class UniversalLoginAccountWriter
                 'login' => $account->login,
                 'credential' => $account->credential,
                 'email' => $account->email,
+                default => throw new ProfileValidationException('Unsupported account insertion source.'),
             };
         }
         foreach ($fixed as $column => $constant) {
@@ -126,6 +131,7 @@ final class UniversalLoginAccountWriter
         $loginColumn = $fields['login'];
         $passwordColumn = $fields['password'];
         $this->requireWritableSchema($database, $table, $loginColumn, [$loginColumn, $passwordColumn]);
+        $this->requireColumnFits($database, $table, $passwordColumn, strlen($replacementCredential));
 
         // First inspect: never change a password if the expected proof has
         // already been replaced by a third party.
@@ -209,7 +215,7 @@ final class UniversalLoginAccountWriter
         // accounts, while an INSERT would not be protected against races.
         $uniqueLogin = false;
         foreach ($schema->getIndexes($table) as $index) {
-            if (($index['unique'] ?? false) && ($index['columns'] ?? []) === [$loginColumn]) {
+            if ($index['unique'] && $index['columns'] === [$loginColumn]) {
                 $uniqueLogin = true;
                 break;
             }
@@ -219,10 +225,36 @@ final class UniversalLoginAccountWriter
         }
     }
 
+    /**
+     * A hash longer than its column is silently cut by a non-strict server (the account can then
+     * never log in) or rejected by a strict one. Refuse early with a clear reason: classic L2J
+     * tables often keep passwords in VARCHAR(45), which fits SHA-1 but not Whirlpool.
+     */
+    private function requireColumnFits(Connection $database, string $table, string $column, int $length): void
+    {
+        foreach ($database->getSchemaBuilder()->getColumns($table) as $definition) {
+            if (strcasecmp($definition['name'], $column) !== 0) {
+                continue;
+            }
+            if (preg_match('/\A(?:var)?(?:char|binary)\((\d+)\)/i', $definition['type'], $matches) === 1
+                && (int) $matches[1] < $length) {
+                throw new ProfileValidationException(sprintf(
+                    'The password column %s.%s holds %d characters, but this password format needs %d.',
+                    $table,
+                    $column,
+                    (int) $matches[1],
+                    $length,
+                ));
+            }
+
+            return;
+        }
+    }
+
     private function bcrypt(string $password, int $cost): string
     {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $cost]);
-        if (! is_string($hash) || ! str_starts_with($hash, '$2y$') || strlen($hash) !== 60) {
+        if (! str_starts_with($hash, '$2y$') || strlen($hash) !== 60) {
             throw new RuntimeException('Unable to prepare game BCrypt credential.');
         }
 

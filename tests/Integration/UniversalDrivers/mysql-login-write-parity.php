@@ -18,6 +18,7 @@ use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
+use App\Support\UniversalDrivers\ProfileFormat;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Database\MySqlConnection;
 use Illuminate\Database\QueryException;
@@ -97,6 +98,50 @@ foreach ($databaseNames as $type => $name) {
             // Expected.
         }
         echo "OK: $id write parity, unique index, immutable BCrypt/SHA1, retry, conflict and ownership proof\n";
+    }
+    if ($type === 'l2j_mobius') {
+        // Unsalted hex schemes go through the same create / recovery / change flow on a real server.
+        foreach (['whirlpool_hex' => 'hexWhirlpool', 'sha1_hex' => 'hexSha1', 'sha256_hex' => 'hexSha256', 'md5_hex' => 'hexMd5'] as $scheme => $hexLogin) {
+            $hexProfile = $profiles['login:l2j_mobius'];
+            $hexProfile['config']['password'] = ['scheme' => $scheme];
+            $algorithm = ProfileFormat::HEX_PASSWORD_SCHEMES[$scheme][0];
+            $hexHash = $writer->preparePassword($hexProfile, 'Testing123');
+            if ($hexHash !== hash($algorithm, 'Testing123')) {
+                throw new RuntimeException("$scheme digest differs from the reference implementation.");
+            }
+            $hexPrepared = new PreparedGameAccount($hexLogin, $hexHash, 'hex@example.invalid');
+            $writer->create($db, $hexProfile, $hexPrepared);
+            if ($reader->inspect($db, $hexProfile, $hexPrepared) !== ExternalGameAccountState::Matching) {
+                throw new RuntimeException("$scheme account does not match its recovery proof.");
+            }
+            $stored = $pdo->query("SELECT password FROM accounts WHERE login = '$hexLogin'")->fetchColumn();
+            if ($stored !== $hexHash) {
+                throw new RuntimeException("$scheme hash was stored altered or truncated.");
+            }
+            $hexNext = $writer->preparePassword($hexProfile, 'Changed123');
+            if (! $writer->changePreparedPassword($db, $hexProfile, $hexLogin, $hexHash, $hexNext)
+                || ! $writer->changePreparedPassword($db, $hexProfile, $hexLogin, $hexHash, $hexNext)) {
+                throw new RuntimeException("$scheme password change was not idempotent.");
+            }
+            echo "OK: $scheme create, read-back, inspect and idempotent change on a real server\n";
+        }
+        // A password column that cannot hold the digest is refused before any write.
+        $pdo->exec("DELETE FROM accounts WHERE login LIKE 'hex%'");
+        $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(45) NULL');
+        $narrow = $profiles['login:l2j_mobius'];
+        $narrow['config']['password'] = ['scheme' => 'whirlpool_hex'];
+        try {
+            $writer->create($db, $narrow, new PreparedGameAccount('narrowColumn', $writer->preparePassword($narrow, 'Testing123'), 'n@example.invalid'));
+            throw new RuntimeException('A 128-character hash was written into VARCHAR(45).');
+        } catch (ProfileValidationException $e) {
+            if (! str_contains($e->getMessage(), 'holds 45 characters')) {
+                throw $e;
+            }
+        }
+        $sha1Profile = $profiles['login:l2j_mobius'];
+        $writer->create($db, $sha1Profile, new PreparedGameAccount('narrowOk', $writer->preparePassword($sha1Profile, 'Testing123'), 'n@example.invalid'));
+        $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(255) NULL');
+        echo "OK: password column width guard (VARCHAR(45) refuses Whirlpool, accepts SHA-1/Base64)\n";
     }
     // A valid JSON mapping alone must not enable unsafe writes into a table
     // without an enforced unique login key.

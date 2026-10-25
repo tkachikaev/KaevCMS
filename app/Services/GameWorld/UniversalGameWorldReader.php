@@ -24,7 +24,7 @@ final class UniversalGameWorldReader
     ) {}
 
     /** @param array<string,mixed> $profile
-     *  @return array{missing_required:list<string>,missing_optional:list<string>}
+     * @return array{missing_required:list<string>,missing_optional:list<string>}
      */
     public function diagnose(Connection $database, array $profile): array
     {
@@ -35,7 +35,7 @@ final class UniversalGameWorldReader
     }
 
     /** @param array<string,mixed> $profile
-     *  @return list<string>
+     * @return list<string>
      */
     public function capabilities(Connection $database, array $profile): array
     {
@@ -67,11 +67,12 @@ final class UniversalGameWorldReader
             ]))) {
             $supported[] = 'character_rescue';
         }
+
         return $supported;
     }
 
     /** @param array<string,mixed> $profile
-     *  @return list<array<string,mixed>>
+     * @return list<array<string,mixed>>
      */
     public function ranking(Connection $database, array $profile, string $section, int $limit, ?string $chronicle = null): array
     {
@@ -103,7 +104,7 @@ final class UniversalGameWorldReader
     }
 
     /** @param array<string,mixed> $profile
-     *  @return list<array<string,mixed>>
+     * @return list<array<string,mixed>>
      */
     public function heroes(Connection $database, array $profile, ?string $chronicle = null): array
     {
@@ -134,7 +135,7 @@ final class UniversalGameWorldReader
     }
 
     /** @param array<string,mixed> $profile
-     *  @return list<array<string,mixed>>
+     * @return list<array<string,mixed>>
      */
     public function castleOwners(Connection $database, array $profile): array
     {
@@ -176,11 +177,12 @@ final class UniversalGameWorldReader
             }
             unset($row);
         }
+
         return $rows;
     }
 
     /** @param array<string,mixed> $profile
-     *  @return array<string,mixed>
+     * @return array<string,mixed>
      */
     private function configuration(Connection $database, array $profile, ?string $capability = null): array
     {
@@ -191,11 +193,12 @@ final class UniversalGameWorldReader
         if ($capability !== null && ! in_array($capability, $profile['config']['capabilities'], true)) {
             throw new ProfileValidationException('The game profile does not support the requested operation.');
         }
+
         return $profile['config'];
     }
 
     /** @param array<string,mixed> $config
-     *  @return array{columns:array<string,list<string>>,missing_required:list<string>,missing_optional:list<string>}
+     * @return array{columns:array<string,list<string>>,missing_required:list<string>,missing_optional:list<string>}
      */
     private function schema(Connection $database, array $config): array
     {
@@ -212,6 +215,7 @@ final class UniversalGameWorldReader
                 } else {
                     $optional[] = 'table:'.$table;
                 }
+
                 continue;
             }
             $columns[$table] = $inspector->getColumnListing($table);
@@ -224,6 +228,7 @@ final class UniversalGameWorldReader
                             $optional[] = $table.'.{'.implode(',', $rule[$key]).'}';
                         }
                     }
+
                     continue;
                 }
                 foreach ($rule[$key] ?? [] as $column) {
@@ -237,6 +242,7 @@ final class UniversalGameWorldReader
                 }
             }
         }
+
         return ['columns' => $columns, 'missing_required' => $required, 'missing_optional' => $optional];
     }
 
@@ -249,7 +255,7 @@ final class UniversalGameWorldReader
     }
 
     /** @param array<string,mixed> $config
-     *  @param array<string,list<string>> $columns
+     * @param  array<string,list<string>>  $columns
      */
     private function featureIsAvailable(array $config, array $columns, string $featureName): bool
     {
@@ -290,11 +296,12 @@ final class UniversalGameWorldReader
                 return false;
             }
         }
+
         return $this->hasAll($available, $needed);
     }
 
     /** @param array<string,mixed> $config
-     *  @param array<string,list<string>> $columns
+     * @param  array<string,list<string>>  $columns
      */
     private function characterQuery(Connection $database, array $config, array $columns, ?string $chronicle): Builder
     {
@@ -311,6 +318,7 @@ final class UniversalGameWorldReader
                 'eq' => $query->where('c.'.$filter['column'], '=', $filter['value']),
                 'gt' => $query->where('c.'.$filter['column'], '>', $filter['value']),
                 'zero_or_null' => $query->where(static fn (Builder $q): Builder => $q->whereNull('c.'.$filter['column'])->orWhere('c.'.$filter['column'], 0)),
+                default => throw new ProfileValidationException('Unsupported character filter operation.'),
             };
         }
         $relationNames = [];
@@ -360,11 +368,12 @@ final class UniversalGameWorldReader
                 throw new ProfileValidationException('EAV world ranking requires a separately verified aggregate mapping; use character lookup until implemented.');
             }
         }
+
         return $query;
     }
 
     /** @param iterable<object> $records
-     *  @return list<array<string,mixed>>
+     * @return list<array<string,mixed>>
      */
     private function rows(iterable $records, string $identity = 'id'): array
     {
@@ -379,13 +388,14 @@ final class UniversalGameWorldReader
             $seen[$key] = true;
             $result[] = $row;
         }
+
         return $result;
     }
 
     /** @param array<string,mixed> $config
-     *  @param array<string,list<string>> $columns
-     *  @param list<array<string,mixed>> $rows
-     *  @return list<array<string,mixed>>
+     * @param  array<string,list<string>>  $columns
+     * @param  list<array<string,mixed>>  $rows
+     * @return list<array<string,mixed>>
      */
     private function hydrateHero(Connection $database, array $config, array $columns, array $rows): array
     {
@@ -412,11 +422,12 @@ final class UniversalGameWorldReader
             unset($row['__hero_character_id'], $row['__hero_until']);
         }
         unset($row);
+
         return $rows;
     }
 
     /** @param list<string> $available
-     *  @param list<string> $wanted
+     * @param  list<string>  $wanted
      */
     private function hasAll(array $available, array $wanted): bool
     {
@@ -424,7 +435,7 @@ final class UniversalGameWorldReader
     }
 
     /** @param list<string> $available
-     *  @param list<string> $wanted
+     * @param  list<string>  $wanted
      */
     private function hasAny(array $available, array $wanted): bool
     {
@@ -432,7 +443,7 @@ final class UniversalGameWorldReader
     }
 
     /** @param array<string,mixed> $field
-     *  @param list<string> $columns
+     * @param  list<string>  $columns
      */
     private function chosenColumn(array $field, array $columns, ?string $chronicle): ?string
     {
@@ -447,8 +458,10 @@ final class UniversalGameWorldReader
                     return in_array('karma', $present, true) ? 'karma' : $present[0];
                 }
             }
+
             return in_array('reputation', $present, true) ? 'reputation' : $present[0];
         }
+
         return $present[0];
     }
 }

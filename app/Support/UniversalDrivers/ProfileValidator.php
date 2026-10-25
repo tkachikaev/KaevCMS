@@ -122,8 +122,8 @@ final class ProfileValidator
      * identity/filter column it needs are declared REQUIRED. Otherwise the
      * connection tester can approve a profile that fails on its first query.
      *
-     * @param list<array<string,mixed>> $requirements
-     * @param list<string> $requiredColumns
+     * @param  list<array<string,mixed>>  $requirements
+     * @param  list<string>  $requiredColumns
      */
     private function requirePrimaryTable(string $table, array $requirements, array $requiredColumns): void
     {
@@ -139,6 +139,7 @@ final class ProfileValidator
                     throw new ProfileValidationException('Required primary table column is not declared: '.$table.'.'.$column);
                 }
             }
+
             return;
         }
         throw new ProfileValidationException('The primary table must appear in schema requirements.');
@@ -155,6 +156,12 @@ final class ProfileValidator
         // lexical relationship; existence is checked only against the actual DB later.
         if (! str_starts_with($database['collation'], $database['charset'].'_')) {
             throw new ProfileValidationException('Charset and collation are incompatible.');
+        }
+        // A collation is a known MySQL/MariaDB suffix, not free text: a made-up name only
+        // breaks the connection later with an unclear error.
+        $suffix = substr($database['collation'], strlen($database['charset']) + 1);
+        if (preg_match('/\A(?:bin|0900_bin|(?:general|unicode|unicode_520|swedish|danish|german2|polish|czech|russian|turkish|spanish|0900_ai|0900_as)_(?:ci|cs)|general_mysql500_ci)\z/D', $suffix) !== 1) {
+            throw new ProfileValidationException('Unsupported database collation.');
         }
     }
 
@@ -184,8 +191,10 @@ final class ProfileValidator
         }
     }
 
-    /** @param array<string, mixed> $accounts
-     *  @param list<string> $capabilities
+    /**
+     * @param  array<string, mixed>  $accounts
+     * @param  list<string>  $capabilities
+     * @param  array<int|string, mixed>  $requirements
      */
     private function accounts(array $accounts, array $capabilities, array $requirements): void
     {
@@ -231,6 +240,7 @@ final class ProfileValidator
                 'login' => $fields['login'],
                 'credential' => $fields['password'] ?? null,
                 'email' => $fields['email'] ?? null,
+                default => throw new ProfileValidationException('Unsupported account insertion source.'),
             };
             if ($expected !== $column) {
                 throw new ProfileValidationException('Dynamic account fields must match their declared column mapping.');
@@ -290,7 +300,10 @@ final class ProfileValidator
         }
     }
 
-    /** @return list<string> */
+    /**
+     * @param  array<int|string, mixed>  $relations
+     * @return list<string>
+     */
     private function relations(array $relations): array
     {
         if (count($relations) > 16) {
@@ -306,11 +319,12 @@ final class ProfileValidator
             $this->oneOf($r['join'], ['left', 'inner'], 'relation.join');
             $this->oneOf($r['cardinality'], ['one', 'many'], 'relation.cardinality');
         }
+
         return array_keys($relations);
     }
 
     /** @param array<string, mixed> $characters
-     *  @param list<string> $relations
+     * @param  list<string>  $relations
      */
     private function characters(array $characters, array $relations): void
     {
@@ -380,7 +394,7 @@ final class ProfileValidator
     }
 
     /** @param array<string, mixed> $rankings
-     *  @param array<string, mixed> $fields
+     * @param  array<string, mixed>  $fields
      */
     private function rankings(array $rankings, array $fields): void
     {
@@ -399,7 +413,7 @@ final class ProfileValidator
     }
 
     /** @param array<string, mixed> $features
-     *  @param list<string> $relations
+     * @param  list<string>  $relations
      */
     private function features(array $features, array $relations): void
     {
@@ -461,8 +475,8 @@ final class ProfileValidator
     }
 
     /** @param array<string, mixed> $value
-     *  @param list<string> $allowed
-     *  @param list<string> $required
+     * @param  list<string>  $allowed
+     * @param  list<string>  $required
      */
     private function keys(array $value, array $allowed, array $required, string $at): void
     {
@@ -484,6 +498,7 @@ final class ProfileValidator
         if (! is_array($value) || array_is_list($value) && $value !== []) {
             throw new ProfileValidationException("$at must be an object.");
         }
+
         return $value;
     }
 

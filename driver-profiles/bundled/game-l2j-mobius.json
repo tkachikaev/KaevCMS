@@ -32,7 +32,6 @@
           "clanid",
           "lastAccess"
         ],
-        "required": true,
         "any_columns": [
           "karma",
           "reputation"
@@ -41,7 +40,8 @@
           "x",
           "y",
           "z"
-        ]
+        ],
+        "required": true
       },
       {
         "table": "clan_data",

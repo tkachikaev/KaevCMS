@@ -133,6 +133,7 @@ final class ProfileCatalogTest extends TestCase
         $calls = 0;
         $snapshots->verifyAndRecord($server, 'rusacis', function ($connection, $profile) use (&$calls): bool {
             $calls++;
+
             return $connection->getKey() > 0 && $profile['type'] === 'login';
         });
         $this->assertSame(1, $calls);
@@ -163,7 +164,6 @@ final class ProfileCatalogTest extends TestCase
         $snapshots->get($server);
     }
 
-
     public function test_game_connection_snapshot_is_independent_from_login_connection_namespace(): void
     {
         $snapshots = app(ConnectionProfileSnapshots::class);
@@ -192,5 +192,26 @@ final class ProfileCatalogTest extends TestCase
         $server = LoginServer::factory()->create(['driver' => 'rusacis']);
         $this->expectException(ProfileValidationException::class);
         $snapshots->verifyAndRecord($server, 'l2j_mobius', static fn (): bool => true);
+    }
+
+    public function test_a_damaged_stored_profile_is_skipped_without_breaking_the_catalogue(): void
+    {
+        $catalog = app(DriverProfileCatalog::class);
+        $good = $catalog->find('login', 'rusacis')['profile'];
+        $good['id'] = 'my-good-login';
+        $good['name'] = 'My good login';
+        $catalog->create($good);
+        DB::table('universal_driver_profiles')->insert([
+            ['type' => 'login', 'profile_id' => 'broken-custom', 'profile_json' => '{not json', 'is_deleted' => false, 'created_at' => now(), 'updated_at' => now()],
+            ['type' => 'game', 'profile_id' => 'rusacis', 'profile_json' => '{"id":"rusacis"}', 'is_deleted' => false, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $all = $catalog->all();
+
+        $this->assertArrayHasKey('login:my-good-login', $all);
+        $this->assertArrayNotHasKey('login:broken-custom', $all);
+        // A damaged override of a bundled driver falls back to the bundled original.
+        $this->assertSame('builtin', $all['game:rusacis']['origin']);
+        $this->assertFalse($all['game:rusacis']['modified']);
     }
 }

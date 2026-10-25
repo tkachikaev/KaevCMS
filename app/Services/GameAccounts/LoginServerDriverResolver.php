@@ -4,8 +4,8 @@ namespace App\Services\GameAccounts;
 
 use App\Contracts\LoginServerDriver;
 use App\Models\LoginServer;
-use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use RuntimeException;
 
 final class LoginServerDriverResolver
@@ -26,6 +26,7 @@ final class LoginServerDriverResolver
             }
             $driver = (string) $driver->driver;
         }
+
         return in_array($driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
     }
 
@@ -39,6 +40,7 @@ final class LoginServerDriverResolver
             }
             $driver = (string) $driver->driver;
         }
+
         return match ($driver) {
             ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER => app(MobiusLoginDriver::class),
             ServerDriverRegistry::RUSACIS_DRIVER => app(RusacisLoginDriver::class),

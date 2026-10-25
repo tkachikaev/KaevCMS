@@ -2,11 +2,11 @@
 
 namespace App\Services\GameWorld;
 
+use App\Contracts\GameServerDatabaseGateway;
 use App\Contracts\GameWorldDriver;
 use App\Models\GameServer;
-use App\Contracts\GameServerDatabaseGateway;
-use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use RuntimeException;
 
 final class GameWorldDriverResolver
@@ -19,6 +19,7 @@ final class GameWorldDriverResolver
                 app(GameServerDatabaseGateway::class), app(UniversalGameWorldReader::class),
                 app(UniversalGameCharacterReader::class));
         }
+
         return match ((string) $server->driver) {
             ServerDriverRegistry::MOBIUS_DRIVER => app(MobiusGameWorldDriver::class),
             ServerDriverRegistry::RUSACIS_DRIVER => app(RusacisGameWorldDriver::class),

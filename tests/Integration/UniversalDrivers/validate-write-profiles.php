@@ -10,9 +10,9 @@ require __DIR__.'/../../../app/Services/GameAccounts/UniversalLoginAccountWriter
 require __DIR__.'/../../../app/Services/GameAccounts/MobiusPasswordEncoder.php';
 require __DIR__.'/../../../app/Services/GameAccounts/RusacisPasswordEncoder.php';
 
-use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Services\GameAccounts\MobiusPasswordEncoder;
 use App\Services\GameAccounts\RusacisPasswordEncoder;
+use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
@@ -48,13 +48,28 @@ foreach (['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] as $id) {
 
 $base = $profiles['login:rusacis'];
 $invalidMutations = [
-    static function (array &$p): void { $p['config']['accounts']['create']['columns']['access_level'] = 'credential'; },
-    static function (array &$p): void { $p['config']['accounts']['create']['fixed_values']['access_level'] = 100; },
-    static function (array &$p): void { $p['config']['accounts']['create']['fixed_values']['login'] = 'admin'; },
-    static function (array &$p): void { $p['config']['accounts']['create']['fixed_values']['unexpected_col'] = 0; },
-    static function (array &$p): void { $p['config']['accounts']['create']['fixed_values']['last_active'] = ['php' => 'evil']; },
-    static function (array &$p): void { $p['config']['accounts']['create']['fixed_values']['last_server'] = 'foo; DROP TABLE accounts'; $p['config']['accounts']['create']['fixed_values']['login'] = 'foo'; },
-    static function (array &$p): void { $p['config']['accounts']['create']['columns']['password'] = 'email'; },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['columns']['access_level'] = 'credential';
+    },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['fixed_values']['access_level'] = 100;
+    },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['fixed_values']['login'] = 'admin';
+    },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['fixed_values']['unexpected_col'] = 0;
+    },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['fixed_values']['last_active'] = ['php' => 'evil'];
+    },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['fixed_values']['last_server'] = 'foo; DROP TABLE accounts';
+        $p['config']['accounts']['create']['fixed_values']['login'] = 'foo';
+    },
+    static function (array &$p): void {
+        $p['config']['accounts']['create']['columns']['password'] = 'email';
+    },
 ];
 foreach ($invalidMutations as $mutate) {
     $candidate = $base;
@@ -62,7 +77,8 @@ foreach ($invalidMutations as $mutate) {
     try {
         $validator->validate($candidate);
     } catch (ProfileValidationException) {
-        ++$checks;
+        $checks++;
+
         continue;
     }
     throw new RuntimeException('Unsafe account creation profile was accepted.');
@@ -71,5 +87,5 @@ foreach ($invalidMutations as $mutate) {
 $valid = $base;
 $valid['config']['accounts']['create']['fixed_values'] = ['access_level' => 0, 'last_active' => 0];
 $validator->validate($valid);
-++$checks;
+$checks++;
 printf("OK: %d writer/password/constant safety checks; no DB or Composer.\n", $checks);
