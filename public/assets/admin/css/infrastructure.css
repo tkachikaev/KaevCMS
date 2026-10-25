@@ -773,6 +773,18 @@ small.field-error, p.field-error { display: block; margin-top: 5px; color: #b91c
 .mail-delivery-description strong { display: block; margin-bottom: 5px; font-size: 12px; }
 .mail-delivery-description p { margin: 3px 0; font-size: 11px; line-height: 1.5; }
 .mail-delivery-probes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.mail-cron-card { margin-top: 16px; }
+.mail-cron-facts { display: grid; gap: 8px; margin: 0 0 14px; }
+.mail-cron-facts > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; }
+.mail-cron-facts dt { color: var(--muted, #64748b); font-weight: 600; }
+.mail-cron-facts dd { margin: 0; overflow-wrap: anywhere; }
+.mail-cron-facts small { display: block; color: var(--muted, #64748b); }
+.mail-cron-label { display: block; margin: 12px 0 5px; font-weight: 600; }
+.mail-cron-command { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; background: #f8fafc; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: inherit; }
+.mail-cron-hint { margin: 10px 0 14px; color: var(--muted, #64748b); overflow-wrap: anywhere; }
+.mail-delivery-explanation { margin: 4px 0 8px; }
+.mail-delivery-explanation p { margin: 0 0 4px; }
+@media (max-width: 640px) { .mail-cron-facts > div { grid-template-columns: 1fr; gap: 2px; } }
 .mail-delivery-probe { display: grid; align-content: start; gap: 9px; padding: 13px; border: 1px solid var(--border); border-radius: 9px; background: #f8fafc; }
 .mail-delivery-probe-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .mail-delivery-probe-heading > strong { color: #111827; font-size: 12px; }

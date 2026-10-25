@@ -737,5 +737,12 @@
     "core/themes/default/views/pages/downloads.blade.php",
     "core/themes/kaev-aurelia/views/pages/about.blade.php",
     "core/themes/kaev-aurelia/views/pages/downloads.blade.php"
+  ],
+  "0.53.2": [
+    "core/deployment/windows/apply-0.53.1.ps1",
+    "public/account-themes/kaev-aurelia/assets/images/kaev-logo.png",
+    "public/account-themes/kaev-aurelia/assets/images/kaev-mark.png",
+    "public/themes/kaev-aurelia/assets/images/kaev-logo.png",
+    "public/themes/kaev-aurelia/assets/images/kaev-mark.png"
   ]
 }

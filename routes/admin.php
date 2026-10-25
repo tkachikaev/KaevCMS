@@ -226,6 +226,10 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.mail.delivery-probe');
         Route::get('/settings/mail/delivery-probe/status', [AdminMailDeliveryController::class, 'probeStatus'])
             ->name('settings.mail.delivery-probe.status');
+        Route::post('/settings/mail/cron-check', [AdminMailDeliveryController::class, 'cronCheck'])
+            ->name('settings.mail.cron-check');
+        Route::get('/settings/mail/cron-check/status', [AdminMailDeliveryController::class, 'cronCheckStatus'])
+            ->name('settings.mail.cron-check.status');
         Route::get('/settings/mail/custom', [AdminMailSettingsController::class, 'customMail'])
             ->name('settings.mail.custom');
         Route::post('/settings/mail/custom', [AdminMailSettingsController::class, 'sendCustomMail'])

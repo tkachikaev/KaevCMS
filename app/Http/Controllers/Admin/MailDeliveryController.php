@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ProbeMailDeliveryModeRequest;
 use App\Http\Requests\Admin\SaveMailDeliveryModeRequest;
 use App\Jobs\Mail\MailDeliveryModeProbe;
 use App\Services\AuditLogger;
+use App\Services\Mail\MailHostingDiagnostics;
 use App\Services\MailSettings;
 use App\Services\MailTemplateSettings;
 use Illuminate\Http\JsonResponse;
@@ -16,13 +17,24 @@ use Throwable;
 
 class MailDeliveryController extends Controller
 {
-    public function index(MailSettings $mailSettings, MailTemplateSettings $mailTemplates): View
+    public function index(MailSettings $mailSettings, MailTemplateSettings $mailTemplates, MailHostingDiagnostics $hosting): View
     {
+        $settings = $mailSettings->values();
         $configuredUrl = rtrim((string) config('app.url', ''), '/');
         $currentUrl = rtrim(request()->root(), '/');
 
         return view('admin.settings.mail-delivery', [
-            'settings' => $mailSettings->values(),
+            'settings' => $settings,
+            'hosting' => $hosting->report(),
+            'cronCheck' => $hosting->cronCheck(),
+            'explanations' => [
+                'background' => $settings['background_probe_status'] === 'failed'
+                    ? $hosting->explainFailure(MailSettings::MODE_BACKGROUND, $settings['background_probe_error'])
+                    : null,
+                'database' => $settings['database_probe_status'] === 'failed'
+                    ? $hosting->explainFailure(MailSettings::MODE_DATABASE, $settings['database_probe_error'])
+                    : null,
+            ],
             'mailTemplates' => $mailTemplates->navigation(app()->getLocale()),
             'configuredUrl' => $configuredUrl,
             'currentUrl' => $currentUrl,
@@ -100,6 +112,27 @@ class MailDeliveryController extends Controller
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
 
+    public function cronCheck(MailHostingDiagnostics $hosting, AuditLogger $auditLogger): RedirectResponse
+    {
+        if ($hosting->cronCheck()['status'] !== 'pending') {
+            $hosting->beginCronCheck();
+            $auditLogger->success(
+                category: 'mail',
+                action: 'mail.cron_check_started',
+                target: __('Mail delivery mode'),
+            );
+        }
+
+        return back()->with('status', __('The cron check has started. It finishes within about two minutes.'));
+    }
+
+    public function cronCheckStatus(MailHostingDiagnostics $hosting): JsonResponse
+    {
+        return response()
+            ->json($hosting->cronCheck())
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    }
+
     private function startProbe(
         string $mode,
         bool $activateOnSuccess,
@@ -132,8 +165,10 @@ class MailDeliveryController extends Controller
                 details: ['mode' => $mode, 'exception_class' => $exception::class],
             );
 
+            $explanation = app(MailHostingDiagnostics::class)->explainFailure($mode, $exception::class);
+
             return back()->withErrors([
-                'delivery_mode' => __('The selected asynchronous mode is not supported by this server. Synchronous delivery remains active.'),
+                'delivery_mode' => $explanation['reason'].' '.$explanation['solution'],
             ]);
         }
 

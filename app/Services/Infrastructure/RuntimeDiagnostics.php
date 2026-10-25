@@ -47,6 +47,11 @@ final class RuntimeDiagnostics
         ]);
     }
 
+    public function schedulerLastSeenAt(): ?Carbon
+    {
+        return $this->heartbeat(self::SCHEDULER_HEARTBEAT);
+    }
+
     public function recordQueueStarted(
         string $connection,
         ?string $queue,

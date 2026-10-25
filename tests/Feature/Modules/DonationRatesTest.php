@@ -39,7 +39,7 @@ class DonationRatesTest extends TestCase
             'id' => 1, 'show_in_account' => false, 'min_coins' => 1, 'max_coins' => 1000000,
         ]);
         $this->assertDatabaseCount('module_donation_currency_rates', 0);
-        $this->assertSame('1.16.1', app(ModuleManager::class)->inspect('donations')['version']);
+        $this->assertSame('1.16.2', app(ModuleManager::class)->inspect('donations')['version']);
     }
 
     public function test_iso_currency_catalog_has_correct_fraction_digits_and_many_choices(): void

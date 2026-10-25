@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.53.2 - 2026-10-25
+
+`composer.lock` changes only by Livewire 4.4.7 → 4.4.8 (Laravel 13.37 is unchanged). One new migration (Donations) runs from the module page. Account theme versions: Luxury 1.6.9, Kaev Aurelia 1.6.11, Kaev Classic 1.0.2; public theme Kaev Aurelia 1.1.0; Donations module 1.16.2.
+
+- **Mail modes on ordinary hosting explain themselves.** A failed check of the asynchronous or database-queue mode now says why (background processes forbidden, no PHP 8.3+ found, cron never ran or stopped) and what to do, instead of "not supported". **Settings → Mail → Delivery mode** also builds the cron line from the real `artisan` location (split installs included) and the PHP 8.3+ binary found on the server, with hints for Plesk, cPanel, DirectAdmin and ISPmanager, and a "Check cron" button that waits for a real Scheduler run to prove cron works.
+- **Livewire 4.4.8.** Dependency update.
+- **Kaev Classic, a new player account theme.** Warm light and moonlit dark schemes with lavender accents, large readable text, one-line menu with icons, server status at the foot of the menu, an overview banner whose artwork and particles follow the scheme, and a sun/moon switch that crossfades between the two portraits. Menus (profile, wallet, language) open smoothly.
+- **Kaev Aurelia has a night scheme.** A sun/moon switch in the header (and at the end of the phone menu) turns the site dark with the night elf portrait and lavender particles. The choice is remembered and applied before the first paint, so it never flashes. After a reload the portrait and the copy ease in instead of snapping in; the language menu opens smoothly. Theme version 1.1.0.
+- **The K logo is the default.** Kaev Aurelia, Aurelia Account, Classic and Luxury show the bundled K until a logo is uploaded in **Settings → Site**; a square logo keeps the site name beside it, a wide one takes the whole row.
+- **"Личный кабинет" instead of "Личный кабинет игрока"** in the account sidebar and its accessibility labels.
+- **Deleting a game server no longer fails with HTTP 500** when the Donations module holds exchange rates for it; they are removed together with the server (new migration).
+- A coin in a closed account menu no longer stays faint after the first paint.
+
 ## 0.53.1 - 2026-10-23
 
 `composer.lock` is unchanged; no new migrations.

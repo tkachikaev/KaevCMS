@@ -1,4 +1,4 @@
-# KaevCMS 0.53.1
+# KaevCMS 0.53.2
 
 [English](#english) · [Русский](#русский)
 

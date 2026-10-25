@@ -2,6 +2,11 @@
     'use strict';
 
     const initialize = () => {
+        // The cron line is meant to be copied whole: one click selects it.
+        document.querySelectorAll('.mail-cron-command').forEach((field) => {
+            field.addEventListener('focus', () => field.select());
+        });
+
         const panels = [...document.querySelectorAll('[data-mail-delivery-probe]')]
             .filter((panel) => panel.dataset.probeStatus === 'pending');
 
