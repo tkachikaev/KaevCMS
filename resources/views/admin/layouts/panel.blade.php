@@ -106,7 +106,7 @@
                         </span>
                         <span class="admin-account-chevron" aria-hidden="true">⌄</span>
                     </summary>
-                    <div class="admin-account-dropdown">
+                    <div class="admin-account-dropdown admin-topbar-panel">
                         <a wire:navigate href="{{ route('admin.account.profile') }}">{{ __('My profile') }}</a>
                         <a wire:navigate href="{{ route('admin.account.security') }}">
                             {{ __('Account security') }}

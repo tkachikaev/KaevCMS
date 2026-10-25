@@ -489,3 +489,57 @@ html[data-admin-color-scheme="dark"] .settings-image-preview.has-image {
 
 html[data-admin-color-scheme="dark"] .field-info::after { background: var(--admin-surface-strong); }
 html[data-admin-color-scheme="dark"] .field-help-tooltip-content::after { border-top-color: var(--admin-surface); }
+/* Header menus share the language chooser's surface, spacing and selection marker. */
+.admin-language-menu-list.admin-topbar-panel,
+.admin-account-dropdown.admin-topbar-panel,
+.admin-notification-dropdown.admin-topbar-panel {
+    position: fixed;
+    inset: auto;
+    top: var(--admin-dropdown-top);
+    right: var(--admin-dropdown-right, 12px);
+    z-index: 90;
+    min-width: 0;
+    max-width: calc(100% - 24px);
+    max-height: calc(100dvh - var(--admin-dropdown-top) - 12px);
+    overflow: auto;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-control);
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-shadow: var(--admin-shadow-raised);
+}
+.admin-language-menu-list.admin-topbar-panel { width: 168px; }
+.admin-account-dropdown.admin-topbar-panel { width: 280px; padding: 4px; }
+.admin-notification-dropdown.admin-topbar-panel { width: 390px; }
+html .admin-topbar-panel.admin-account-dropdown > a,
+html .admin-topbar-panel.admin-account-dropdown form button {
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--admin-radius-inner);
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: var(--admin-weight-medium);
+}
+html .admin-topbar-panel.admin-account-dropdown > a:hover,
+html .admin-topbar-panel.admin-account-dropdown form button:hover,
+html .admin-topbar-panel.admin-notification-dropdown .admin-notification-item:hover {
+    background: var(--admin-surface-muted);
+    color: var(--admin-text);
+}
+html .admin-topbar-panel.admin-account-dropdown form button { color: var(--admin-danger); }
+.admin-topbar-panel .account-menu-state { flex: 0 0 auto; max-width: none; font-size: 10px; }
+.admin-topbar-panel.admin-account-dropdown > a[aria-current="page"],
+html .admin-topbar-panel.admin-notification-dropdown .admin-notification-item.unread {
+    background: transparent;
+    box-shadow: inset 2px 0 0 var(--admin-primary);
+}
+html .admin-topbar-panel.admin-notification-dropdown .admin-notification-item.unread:hover { background: var(--admin-surface-muted); }
+html .admin-topbar-panel .admin-notification-filters button.active {
+    box-shadow: inset 2px 0 0 var(--admin-primary);
+    background: var(--admin-surface);
+    color: var(--admin-text);
+}
+html .admin-topbar-panel .admin-notification-filters button:hover { background: var(--admin-surface-muted); }
+.admin-topbar-panel > a:focus-visible,
+.admin-topbar-panel form button:focus-visible { outline: 2px solid var(--admin-focus-ring); outline-offset: -2px; }

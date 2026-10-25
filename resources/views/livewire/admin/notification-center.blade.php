@@ -18,7 +18,7 @@
             @endif
         </summary>
 
-        <div class="admin-notification-dropdown" role="region" aria-label="{{ __('Notification center') }}">
+        <div class="admin-notification-dropdown admin-topbar-panel" role="region" aria-label="{{ __('Notification center') }}">
             <div class="admin-notification-heading">
                 <div>
                     <strong>{{ __('Notifications') }}</strong>

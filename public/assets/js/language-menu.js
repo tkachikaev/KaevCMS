@@ -7,7 +7,8 @@
     if (window.KaevCMSLanguageMenu) return;
     window.KaevCMSLanguageMenu = true;
 
-    const openMenus = () => document.querySelectorAll('details[data-language-menu][open]');
+    // Administration coordinates language, account and notification menus together.
+    const openMenus = () => document.querySelectorAll('details[data-language-menu][open]:not([data-admin-dropdown-ready])');
 
     document.addEventListener('pointerdown', (event) => {
         const target = event.target instanceof Node ? event.target : null;
@@ -18,7 +19,7 @@
 
     document.addEventListener('toggle', (event) => {
         const menu = event.target;
-        if (!(menu instanceof HTMLDetailsElement) || !menu.matches('[data-language-menu]') || !menu.open) return;
+        if (!(menu instanceof HTMLDetailsElement) || !menu.matches('[data-language-menu]') || menu.hasAttribute('data-admin-dropdown-ready') || !menu.open) return;
         openMenus().forEach((other) => {
             if (other !== menu) other.open = false;
         });
@@ -26,7 +27,7 @@
 
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
-        const menu = document.querySelector('details[data-language-menu][open]');
+        const menu = openMenus()[0];
         if (!(menu instanceof HTMLDetailsElement)) return;
         menu.open = false;
         menu.querySelector('summary')?.focus();

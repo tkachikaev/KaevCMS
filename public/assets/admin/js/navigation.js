@@ -4,6 +4,8 @@
     const synchronizingAttribute = 'data-admin-menu-synchronizing';
     const mobileQuery = window.matchMedia('(max-width: 760px)');
     let lastMenuTrigger = null;
+    let initializedContent = null;
+    let pageEntryAnimation = null;
 
     const loadSavedState = () => {
         try {
@@ -215,11 +217,24 @@
     const beginNavigation = () => {
         closeMobileMenu({ restoreFocus: false });
         document.documentElement.classList.add('admin-is-navigating');
+        document.querySelector('.admin-content')?.setAttribute('aria-busy', 'true');
     };
 
     const finishNavigation = () => {
         closeMobileMenu({ restoreFocus: false });
         synchronizeSidebar();
+        const content = document.querySelector('.admin-content');
+        content?.removeAttribute('aria-busy');
+        if (content && content !== initializedContent) {
+            pageEntryAnimation?.cancel();
+            if (!reducedMotion.matches && typeof content.animate === 'function') {
+                pageEntryAnimation = content.animate([
+                    { opacity: initializedContent ? 0 : .92, transform: 'translateY(5px)' },
+                    { opacity: 1, transform: 'translateY(0)' },
+                ], { duration: 200, easing: 'cubic-bezier(.2, .7, .3, 1)' });
+            }
+            initializedContent = content;
+        }
 
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove('admin-is-navigating');
@@ -270,6 +285,8 @@
         synchronizeSidebar();
     });
 
+    reducedMotion.addEventListener('change', () => pageEntryAnimation?.cancel());
+    document.addEventListener('livewire:navigating', () => pageEntryAnimation?.cancel());
     document.addEventListener('livewire:navigate', beginNavigation);
     document.addEventListener('livewire:navigated', finishNavigation);
 

@@ -117,6 +117,5 @@
             <button type="button" class="button button-secondary" wire:click="setSection('general')">← {{ __('drivers.back') }}</button>
             <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.save') }}</button>
         @endif
-        <button type="button" class="button button-secondary" wire:click="closeEditor">{{ __('Cancel') }}</button>
     </div>
 </form>

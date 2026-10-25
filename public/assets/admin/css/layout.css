@@ -91,7 +91,6 @@ a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { backgrou
 .admin-user strong, .admin-user span { display: block; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-user span { color: var(--muted); font-size: 11px; }
 .admin-content { min-height: calc(100vh - 144px); padding-top: 24px; }
-html.admin-is-navigating .admin-main { opacity: .86; }
 #nprogress .bar { height: 2px !important; box-shadow: none !important; }
 #nprogress .peg { box-shadow: 0 0 8px var(--accent), 0 0 3px var(--accent) !important; }
 

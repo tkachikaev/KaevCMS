@@ -97,6 +97,155 @@ test('administration loads the split stylesheet stack once and in order', async 
     expect(await stylesheetNames()).toEqual(expected);
 });
 
+for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }]) {
+    test(`header menus align and animate exclusively on ${variant.width}px (${variant.scheme})`, async ({ page }, testInfo) => {
+        await page.setViewportSize({ width: variant.width, height: 900 });
+        await page.evaluate(scheme => window.KaevCMSAdminAppearance.apply(scheme), variant.scheme);
+        await page.evaluate(() => {
+            window.adminHeaderDurations = [];
+            const animate = Element.prototype.animate;
+            Element.prototype.animate = function (frames, timing) {
+                if (this.matches('.admin-topbar-panel')) window.adminHeaderDurations.push(timing.duration);
+                return animate.call(this, frames, timing);
+            };
+        });
+        const errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        const menus = page.locator('.admin-user details[data-admin-dropdown-ready]');
+        await expect(menus).toHaveCount(3);
+        const tops = [];
+        for (const selector of ['.admin-language-menu', '.admin-account-menu', '.admin-notification-menu']) {
+            const menu = page.locator('.admin-user ' + selector);
+            await menu.locator(':scope > summary').click();
+            await expect(menu).toHaveAttribute('open', '');
+            await expect(menus.locator('visible=true')).toHaveCount(3);
+            await expect(page.locator('.admin-user details[open]')).toHaveCount(1);
+            const panel = menu.locator(':scope > .admin-topbar-panel');
+            await expect(panel).toBeVisible();
+            // Wait for the entry frame so geometry is measured at its final position.
+            await panel.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))));
+            const box = await panel.boundingBox();
+            tops.push(box.y);
+            expect(box.x, JSON.stringify(await panel.evaluate(element => ({
+                width: innerWidth, root: document.documentElement.clientWidth, body: document.body.clientWidth,
+                rect: element.getBoundingClientRect().toJSON(), right: getComputedStyle(element).right,
+                max: getComputedStyle(element).maxWidth, parent: getComputedStyle(element.parentElement).transform,
+            })))).toBeGreaterThanOrEqual(11);
+            expect(box.x + box.width).toBeLessThanOrEqual(variant.width - 11);
+            await page.screenshot({ path: testInfo.outputPath(selector.slice(1) + '.png') });
+        }
+        expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
+        const notifications = page.locator('.admin-notification-menu');
+        const beforeFilter = await notifications.locator('.admin-topbar-panel').boundingBox();
+        for (const index of [1, 0, 1]) {
+            const filter = notifications.locator('.admin-notification-filters button').nth(index);
+            await filter.click();
+            await expect(filter).toHaveAttribute('aria-pressed', 'true');
+            const afterFilter = await notifications.locator('.admin-topbar-panel').boundingBox();
+            expect(Math.abs(afterFilter.x - beforeFilter.x)).toBeLessThanOrEqual(1);
+            expect(Math.abs(afterFilter.y - beforeFilter.y)).toBeLessThanOrEqual(1);
+            await expect(page.locator('.admin-user details[open]')).toHaveCount(1);
+        }
+        await page.keyboard.press('Escape');
+        await expect(page.locator('.admin-user details[open]')).toHaveCount(0);
+        await expect(page.locator('[data-admin-dropdown-departing]')).toHaveCount(0);
+        await expect(page.locator('.admin-notification-menu > summary')).toBeFocused();
+        expect(await page.evaluate(() => window.adminHeaderDurations.length)).toBeGreaterThanOrEqual(6);
+        expect(await page.evaluate(() => window.adminHeaderDurations.every(duration => duration === 200))).toBe(true);
+        const profile = page.locator('.admin-account-menu');
+        await profile.locator('summary').click();
+        const profileItem = profile.locator('.admin-account-dropdown > a').first();
+        await profileItem.hover();
+        const profileHover = await profileItem.evaluate(element => getComputedStyle(element).backgroundColor);
+        await page.locator('.admin-language-menu > summary').click();
+        const languageItem = page.locator('.admin-language-menu-list button').first();
+        await languageItem.hover();
+        expect(await languageItem.evaluate(element => getComputedStyle(element).backgroundColor)).toBe(profileHover);
+        const shortClosing = await page.locator('.admin-language-menu').evaluate(menu => {
+            const panel = menu.querySelector('.admin-topbar-panel');
+            const label = panel.querySelector('button span');
+            const expected = { font: getComputedStyle(label).font, color: getComputedStyle(label).color };
+            menu.querySelector('summary').click();
+            const copy = document.querySelector('[data-admin-dropdown-departing].admin-language-menu-list');
+            const fadingLabel = copy.querySelector('button span');
+            return { expected, actual: { font: getComputedStyle(fadingLabel).font, color: getComputedStyle(fadingLabel).color },
+                scrollbar: copy.scrollHeight > copy.clientHeight, inert: copy.inert };
+        });
+        expect(shortClosing.actual).toEqual(shortClosing.expected);
+        expect(shortClosing.scrollbar).toBe(false);
+        expect(shortClosing.inert).toBe(true);
+        // Many enabled languages use a bounded scroll area; closing keeps its visible position.
+        await page.locator('.admin-language-menu > summary').click();
+        const longClosing = await page.locator('.admin-language-menu').evaluate(menu => {
+            const panel = menu.querySelector('.admin-topbar-panel');
+            const form = panel.querySelector('form');
+            for (let index = 0; index < 30; index++) {
+                const extra = form.cloneNode(true);
+                extra.querySelector('button span').textContent = 'Language ' + index;
+                panel.append(extra);
+            }
+            panel.scrollTop = 120;
+            const before = panel.scrollTop;
+            const bounds = panel.getBoundingClientRect();
+            menu.querySelector('summary').click();
+            const copy = document.querySelector('[data-admin-dropdown-departing].admin-language-menu-list');
+            return { before, after: copy.scrollTop, height: bounds.height, available: innerHeight - bounds.top - 12,
+                source: { scroll: panel.scrollHeight, client: panel.clientHeight, overflow: getComputedStyle(panel).overflow },
+                copied: { scroll: copy.scrollHeight, client: copy.clientHeight, overflow: getComputedStyle(copy).overflow, max: getComputedStyle(copy).maxHeight } };
+        });
+        expect(longClosing.before).toBeGreaterThan(0);
+        expect(longClosing.after, JSON.stringify(longClosing)).toBe(longClosing.before);
+        expect(longClosing.height).toBeLessThanOrEqual(longClosing.available + 1);
+        await page.locator('h1').click();
+        await expect(page.locator('.admin-user details[open]')).toHaveCount(0);
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await profile.locator('summary').click();
+        expect(await profile.locator('.admin-topbar-panel').evaluate(element => element.getAnimations().length)).toBe(0);
+        await page.keyboard.press('Escape');
+        expect(await page.locator('[data-admin-dropdown-departing]').count()).toBe(0);
+        expect(errors).toEqual([]);
+        // The shared language partial also serves the login screen: its native anchor stays local.
+        await page.context().clearCookies();
+        await gotoWithLocalNetworkRetry(page, '/admin/login');
+        await page.locator('.admin-language-menu > summary').click();
+        expect(await page.locator('.admin-language-menu-list').evaluate(element => getComputedStyle(element).position)).toBe('absolute');
+        await page.keyboard.press('Escape');
+        await expect(page.locator('.admin-language-menu')).not.toHaveAttribute('open');
+    });
+}
+
+test('page entries animate once for navigation and never for notification updates', async ({ page }) => {
+    await page.evaluate(() => {
+        window.adminEntryFrames = [];
+        const animate = Element.prototype.animate;
+        Element.prototype.animate = function (frames, timing) {
+            if (this.matches('.admin-content')) window.adminEntryFrames.push({ frames, duration: timing.duration });
+            return animate.call(this, frames, timing);
+        };
+    });
+    const link = page.locator('.admin-menu a[href$="/admin/news"]').first();
+    await openMenuGroup(page, 'content');
+    await link.click();
+    await expect(page).toHaveURL(/\/admin\/news$/);
+    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(1);
+    expect(await page.evaluate(() => window.adminEntryFrames[0].duration)).toBe(200);
+    await page.evaluate(() => document.dispatchEvent(new Event('livewire:navigated')));
+    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(1);
+    await page.locator('.admin-notification-menu > summary').click();
+    await page.locator('.admin-notification-filters button').last().click();
+    await expect(page.locator('.admin-notification-filters button').last()).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(1);
+    await page.keyboard.press('Escape');
+    await page.goBack();
+    await expect(page).toHaveURL(/\/admin$/);
+    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(2);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openMenuGroup(page, 'content');
+    await page.locator('.admin-menu a[href$="/admin/news"]').first().click();
+    await expect(page).toHaveURL(/\/admin\/news$/);
+    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(2);
+});
+
 test('administrator appearance switches with one button and survives navigation', async ({ page }) => {
     const root = page.locator('html');
     const toggle = page.locator('[data-admin-appearance-toggle]');
