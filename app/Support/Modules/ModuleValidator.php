@@ -29,6 +29,7 @@ final class ModuleValidator
         'views',
         'lang',
         'migrations',
+        'driver_extensions',
     ];
 
     private readonly Filesystem $files;
@@ -199,6 +200,7 @@ final class ModuleValidator
         $this->inspectOptionalDirectory($manifest, 'lang', $path, $result);
         $this->inspectMigrations($manifest, $path, $result);
         $this->inspectRoutes($manifest, $path, $result);
+        $this->inspectDriverExtensions($manifest, $result);
         $this->inspectModuleImage($path, $result);
 
         $result['valid'] = $result['errors'] === [];
@@ -405,6 +407,73 @@ final class ModuleValidator
         $result['migrations_path'] = $path;
         $result['migration_files'] = $migrationFiles;
         $result['capabilities'][] = 'migrations';
+    }
+
+    /**
+     * What a module needs from a driver profile (see DriverExtensionCatalog).
+     *
+     * @param  array<string, mixed>  $manifest
+     * @param  array<string, mixed>  $result
+     */
+    private function inspectDriverExtensions(array $manifest, array &$result): void
+    {
+        $declarations = $manifest['driver_extensions'] ?? null;
+        if ($declarations === null) {
+            return;
+        }
+        $fail = function (string $detail) use (&$result): void {
+            $result['errors'][] = __('drivers.manifest_extensions_invalid', ['detail' => $detail]);
+        };
+        if (! is_array($declarations) || ! array_is_list($declarations) || count($declarations) > 8) {
+            $fail('list of up to 8 items');
+
+            return;
+        }
+        $seen = [];
+        foreach ($declarations as $index => $declaration) {
+            if (! is_array($declaration) || array_is_list($declaration) || array_diff(array_keys($declaration), ['key', 'type', 'required', 'title', 'description', 'fields']) !== []) {
+                $fail('item '.$index.' has unknown or missing parts');
+
+                return;
+            }
+            $key = $declaration['key'] ?? null;
+            if (! is_string($key) || preg_match('/\A[a-z][a-z0-9_]{0,39}\z/D', $key) !== 1 || isset($seen[$declaration['type'] ?? ''][$key])) {
+                $fail('item '.$index.' needs a unique key');
+
+                return;
+            }
+            if (! in_array($declaration['type'] ?? null, ['login', 'game'], true)) {
+                $fail('item '.$index.' type must be login or game');
+
+                return;
+            }
+            $seen[$declaration['type']][$key] = true;
+            $fields = $declaration['fields'] ?? null;
+            if (! is_array($fields) || ! array_is_list($fields) || $fields === [] || count($fields) > 12) {
+                $fail('item '.$index.' needs 1 to 12 fields');
+
+                return;
+            }
+            $names = [];
+            foreach ($fields as $field) {
+                $name = is_array($field) ? ($field['name'] ?? null) : null;
+                if (! is_array($field) || array_diff(array_keys($field), ['name', 'kind', 'required', 'label', 'options']) !== []
+                    || ! is_string($name) || preg_match('/\A[a-z][a-z0-9_]{0,39}\z/D', $name) !== 1 || isset($names[$name])
+                    || ! in_array($field['kind'] ?? null, ['table', 'column', 'text', 'number', 'choice'], true)) {
+                    $fail('item '.$index.' has an invalid field');
+
+                    return;
+                }
+                $names[$name] = true;
+                if (($field['kind'] === 'choice') !== array_key_exists('options', $field)
+                    || (isset($field['options']) && (! is_array($field['options']) || ! array_is_list($field['options']) || $field['options'] === [] || count($field['options']) > 12
+                        || array_filter($field['options'], static fn ($option): bool => ! is_string($option) || preg_match('/\A[A-Za-z0-9_.-]{1,40}\z/D', $option) !== 1) !== []))) {
+                    $fail('field '.$name.' options are invalid');
+
+                    return;
+                }
+            }
+        }
     }
 
     /**

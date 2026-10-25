@@ -6,6 +6,7 @@ use App\Auth\AdminPermission;
 use App\Models\Admin;
 use App\Services\AuditLogger;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
+use App\Support\UniversalDrivers\DriverExtensionCatalog;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\GameProfileEditor;
 use App\Support\UniversalDrivers\LoginProfileEditor;
@@ -13,6 +14,7 @@ use App\Support\UniversalDrivers\ProfileEditorDraft;
 use App\Support\UniversalDrivers\ProfileFormat;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -136,6 +138,7 @@ final class UniversalDriverManager extends Component
         $this->originalGameConfig = $type === 'game' ? $this->draft['config'] : [];
         $this->charactersTableForRelations = (string) ($this->draft['config']['characters']['table'] ?? '');
         $this->syncFieldTables();
+        $this->ensureExtensionDraft();
         $this->initializeGameDisplay();
         $this->templateId = $baseId ?? '';
         $this->loadRegistrationRows();
@@ -168,6 +171,7 @@ final class UniversalDriverManager extends Component
         $this->originalGameConfig = $type === 'game' ? $this->draft['config'] : [];
         $this->charactersTableForRelations = (string) ($this->draft['config']['characters']['table'] ?? '');
         $this->syncFieldTables();
+        $this->ensureExtensionDraft();
         $this->loadRegistrationRows();
         $this->originalAccountsTable = (string) ($this->draft['config']['accounts']['table'] ?? '');
         $this->originalType = $type;
@@ -324,6 +328,19 @@ final class UniversalDriverManager extends Component
         $this->syncFieldTables();
     }
 
+    private function ensureExtensionDraft(): void
+    {
+        $type = (string) ($this->draft['type'] ?? '');
+        if (! in_array($type, ['login', 'game'], true)) {
+            return;
+        }
+        foreach (app(DriverExtensionCatalog::class)->declarations($type) as $declaration) {
+            foreach ($declaration['fields'] as $field) {
+                $this->draft['config']['extensions'][$declaration['module']][$declaration['key']][$field['name']] ??= '';
+            }
+        }
+    }
+
     private function syncFieldTables(): void
     {
         $this->fieldTables = [];
@@ -407,8 +424,19 @@ final class UniversalDriverManager extends Component
             $this->pruneAutoRelations();
             $this->validateGameDetails(mappings: true);
         }
+        $extensions = app(DriverExtensionCatalog::class);
+        $extensionErrors = $extensions->validate((string) $this->draft['type'], (array) ($this->draft['config']['extensions'] ?? []));
+        if ($extensionErrors !== []) {
+            throw ValidationException::withMessages($extensionErrors);
+        }
         $catalog = app(DriverProfileCatalog::class);
         $profile = $this->draft;
+        $cleanExtensions = $extensions->clean((array) ($profile['config']['extensions'] ?? []));
+        if ($cleanExtensions === []) {
+            unset($profile['config']['extensions']);
+        } else {
+            $profile['config']['extensions'] = $cleanExtensions;
+        }
         $type = $this->originalType ?? $this->tab;
         $profile['type'] = $type;
         $profile['format_version'] = ProfileFormat::CURRENT_VERSION;
@@ -862,6 +890,7 @@ final class UniversalDriverManager extends Component
             'hiddenProfiles' => $hidden,
             'canManage' => $this->mayManage(),
             'fieldNames' => ProfileFormat::FIELD_NAMES,
+            'moduleExtensions' => $this->editing ? app(DriverExtensionCatalog::class)->declarations((string) ($this->draft['type'] ?? '')) : [],
             'capabilities' => $this->availableCapabilities($this->editing ? ($this->originalType ?? $this->tab) : $this->tab),
         ]);
     }

@@ -4,6 +4,7 @@ namespace App\Support\Modules;
 
 use App\Models\ModuleState;
 use App\Support\Database\TableExistence;
+use App\Support\UniversalDrivers\DriverExtensionRequirements;
 use Carbon\CarbonInterface;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
@@ -124,6 +125,12 @@ final class ModuleManager
 
         if (($module['modified_migrations'] ?? []) !== []) {
             throw new RuntimeException(__('An already applied module migration was modified or removed. Restore the original file or add a newer migration.'));
+        }
+
+        $driverProblems = app(DriverExtensionRequirements::class)
+            ->problems((string) $module['id'], (string) ($module['name'] ?? $module['id']), (array) ($module['manifest'] ?? []));
+        if ($driverProblems !== []) {
+            throw new RuntimeException(implode(' ', $driverProblems));
         }
 
         $migrationResult = $this->migrations->migrate($module);

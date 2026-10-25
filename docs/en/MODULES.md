@@ -50,3 +50,7 @@ final class ExampleComponent extends Component
 `module.json` may include an optional `locales` object, for example `"locales": {"ru": {"name": "Промокоды", "description": "Награды по промокодам"}, "en": {"name": "Promo Codes"}}`. Only `name` (up to 120 characters) and `description` (up to 1000) are accepted per locale. Labels are plain text and escaped by Blade. Display uses the current locale, then the CMS fallback locale, then the original manifest text. Translation does not execute module PHP or require activation; internal identifiers and stored audit records stay unchanged.
 
 Audit event display labels for bundled modules live in `lang/ru/audit.php` and `lang/en/audit.php`. Add a label for each new audit action; retain its stable action code in storage. Unknown external-module actions keep the readable code fallback.
+
+## What a module asks of the game or login database driver
+
+The `driver_extensions` field in `module.json` lets a module declare where in the administrator's database the data it needs lives (for example a premium-account table). The administrator fills it in on the driver, and enabling the module is blocked until the required values are set. Details, an example and the security rules: [UNIVERSAL_DRIVERS.md](UNIVERSAL_DRIVERS.md#extension-point-for-modules-driver_extensions).

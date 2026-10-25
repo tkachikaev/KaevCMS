@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Universal drivers (experimental).** **Servers → Drivers** has a constructor for game-server and login-server drivers: a catalogue table, import and export, a copy of any driver, and editors where each field's table and column are typed directly (another table is just typed into the row). More password formats are available (SHA-1 and SHA-256 and MD5 as hex, Whirlpool, plus the existing SHA-1/Base64 and BCrypt), and a hash that does not fit its column is refused before writing. A damaged stored driver no longer breaks the page.
+- **Modules can ask a driver where their data lives.** A module declares `driver_extensions` in `module.json`; the driver editor shows a "For modules" section for it, and the module will not switch on until the drivers in use have its required answers. See `docs/en/UNIVERSAL_DRIVERS.md`.
+
 ## 0.53.11 - 2026-10-25
 
 Universal driver audit and targeted safety hardening, based on 0.53.10 full ZIP. **Experimental; not a stable migration release.**

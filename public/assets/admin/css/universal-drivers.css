@@ -210,3 +210,5 @@
 .universal-drivers.universal-drivers label:has(.ud-field-error) > select,
 .universal-drivers.universal-drivers td:has(.ud-field-error) > input { border-color: var(--admin-danger); }
 .universal-drivers .ud-field-error { margin: var(--admin-space-1) 0 0; }
+
+.ud-extensions .ud-section-head { align-items: flex-start; }

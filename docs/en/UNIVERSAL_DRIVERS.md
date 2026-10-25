@@ -12,6 +12,43 @@ Extra registration values are only needed by servers requiring other columns on 
 
 The game editor has three steps: settings, field mappings, and relations/statistics. It has no feature checkboxes or manual schema requirement list. Tables and columns are editable in mapping rows; checks are generated from the data used. Existing optional fields and hero/castle tables remain optional. Related keys and secondary ordering follow primary field renames while explicit key edits are preserved. Rankings follow direct level, PvP, PK and play-time fields. Key/value (EAV) data is supported for character lookup, but world rankings and hero lists are not; the interface and profile capabilities reflect this limitation. JSON character rescue is not enabled. Saving any driver to the catalog neither proves compatibility with a real database nor applies it to a connection. Verify and apply it separately in server connection settings.
 
+## Extension point for modules (driver_extensions)
+
+**Do not forget this when building modules.** If a module needs data from the game or login database (a premium-account table, a column with an end date, a table for its own payouts), do not add those fields to the general character fields. The module **declares** what it needs and the administrator **tells the driver** where that lives in their build.
+
+1. In `module.json` the module adds the `driver_extensions` field:
+
+```json
+"driver_extensions": [{
+  "key": "premium",
+  "type": "game",
+  "required": true,
+  "title": {"ru": "Премиум-аккаунт", "en": "Premium account"},
+  "description": {"en": "Where the premium end date is stored."},
+  "fields": [
+    {"name": "table", "kind": "table", "required": true, "label": {"en": "Premium table"}},
+    {"name": "until_column", "kind": "column", "required": true, "label": {"en": "End column"}},
+    {"name": "unit", "kind": "choice", "options": ["days", "seconds"], "label": {"en": "Unit"}}
+  ]
+}]
+```
+
+   `type` is `game` or `login` (which driver it belongs to). Field kinds: `table`, `column` (a database name, checked as an identifier), `text`, `number`, `choice` (needs an `options` list). Limits: up to 8 declarations, up to 12 fields each; `ModuleValidator` checks the shape when the module is inspected.
+2. The driver editor (**Servers → Drivers**) shows a "For modules" section at the end of the last step with the fields of every installed module, even one that is not enabled yet. The answers are stored in the profile at `config.extensions.<module id>.<key>.<field>`. Empty answers are not stored; answers for modules that are not installed here are kept and travel with the driver on export and import.
+3. **Enabling a module is checked.** With `required: true`, `ModuleManager::enable()` refuses to enable the module until every connected server of that type has the required fields filled in its driver. The administrator gets a plain message: which server, which driver, what is missing and where to go.
+4. **At run time** the module reads the answers like this:
+
+```php
+$values = app(\App\Support\UniversalDrivers\DriverExtensionAccess::class)->values($gameServer, 'premium', 'premium');
+// ['table' => 'account_premium', 'until_column' => 'premium_end', ...]
+```
+
+   The verified snapshot of that connection's driver is used; servers still on a built-in PHP driver use the catalogue driver of the same name (`l2j_mobius`, `rusacis`). A changed driver reaches the connection after "Apply driver".
+
+**Security.** The values are data, not SQL. Use table and column names from `config.extensions` only through the Laravel query builder (`$connection->table($values['table'])`) and check that the table and columns exist before writing. Never build raw SQL from them. Writes into the game database follow the same rules as the rest of the CMS: the reward queue or a verified writer, not a query straight from a form.
+
+**Code:** `app/Support/UniversalDrivers/DriverExtensionCatalog.php` (declarations, validation, cleaning), `DriverExtensionRequirements.php` (enable check), `DriverExtensionAccess.php` (run-time reads); profile shape — `ProfileValidator::extensions()`; manifest shape — `ModuleValidator::inspectDriverExtensions()`; tests — `tests/Feature/UniversalDrivers/DriverExtensionTest.php`.
+
 ## 0.53.11 audit — schema preflight hardening
 
 **Status: experimental; production migration is not certified.** JSON profiles can no longer mark their accounts/characters primary table optional or omit identity and character-filter columns from mandatory schema checks. LoginServer ownership must refer to the selected login/ID field. Nine additional negative offline contract tests are included. Hiding a bundled profile now also removes it from new connection selectors.

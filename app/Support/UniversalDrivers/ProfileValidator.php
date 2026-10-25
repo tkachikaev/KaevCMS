@@ -52,12 +52,15 @@ final class ProfileValidator
             throw new ProfileValidationException('Unsupported driver profile format.');
         }
         $config = $this->object($profile['config'], 'config');
-        $this->keys($config, ['database', 'requirements', 'capabilities', 'accounts', 'password', 'characters', 'relations', 'filters', 'rankings', 'features'], ['database', 'requirements', 'capabilities'], 'config');
+        $this->keys($config, ['database', 'requirements', 'capabilities', 'accounts', 'password', 'characters', 'relations', 'filters', 'rankings', 'features', 'extensions'], ['database', 'requirements', 'capabilities'], 'config');
+        if (isset($config['extensions'])) {
+            $this->extensions($config['extensions']);
+        }
         $this->database($this->object($config['database'], 'database'));
         $this->requirements($config['requirements']);
         $this->capabilities($config['capabilities'], $profile['type']);
         if ($profile['type'] === 'login') {
-            $this->keys($config, ['database', 'requirements', 'capabilities', 'accounts', 'password'], ['database', 'requirements', 'capabilities', 'accounts'], 'login config');
+            $this->keys($config, ['database', 'requirements', 'capabilities', 'accounts', 'password', 'extensions'], ['database', 'requirements', 'capabilities', 'accounts'], 'login config');
             $this->accounts($this->object($config['accounts'], 'accounts'), $config['capabilities'], $config['requirements']);
             $loginFields = $config['accounts']['fields'];
             $primaryColumns = [$loginFields['login']];
@@ -74,7 +77,7 @@ final class ProfileValidator
                 $this->password($this->object($config['password'], 'password'));
             }
         } else {
-            $this->keys($config, ['database', 'requirements', 'capabilities', 'characters', 'relations', 'filters', 'rankings', 'features'], ['database', 'requirements', 'capabilities', 'characters', 'relations', 'filters', 'rankings', 'features'], 'game config');
+            $this->keys($config, ['database', 'requirements', 'capabilities', 'characters', 'relations', 'filters', 'rankings', 'features', 'extensions'], ['database', 'requirements', 'capabilities', 'characters', 'relations', 'filters', 'rankings', 'features'], 'game config');
             $relations = $this->relations($this->object($config['relations'], 'relations'));
             $this->characters($this->object($config['characters'], 'characters'), $relations);
             // Validate filter structure before using it to verify the schema contract.
@@ -111,6 +114,45 @@ final class ProfileValidator
                 foreach (['x', 'y', 'z'] as $axis) {
                     if (! isset($fields[$axis])) {
                         throw new ProfileValidationException('Character rescue requires x/y/z field mappings.');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Answers that modules asked the driver for (config.extensions.<module>.<key>.<field>). Only the
+     * shape is checked here, so a profile can be imported before its module is installed; the editor
+     * checks the values against the module's own declaration.
+     */
+    private function extensions(mixed $extensions): void
+    {
+        $extensions = $this->object($extensions, 'extensions');
+        if (count($extensions) > 16) {
+            throw new ProfileValidationException('Too many module extensions.');
+        }
+        foreach ($extensions as $module => $groups) {
+            if (preg_match('/\A[a-z0-9][a-z0-9-]{0,99}\z/D', (string) $module) !== 1) {
+                throw new ProfileValidationException('Invalid module identifier in extensions.');
+            }
+            $groups = $this->object($groups, 'extensions.'.$module);
+            if (count($groups) > 16) {
+                throw new ProfileValidationException('Too many extensions for one module.');
+            }
+            foreach ($groups as $key => $values) {
+                if (preg_match('/\A[a-z][a-z0-9_]{0,39}\z/D', (string) $key) !== 1) {
+                    throw new ProfileValidationException('Invalid extension key.');
+                }
+                $values = $this->object($values, 'extensions.'.$module.'.'.$key);
+                if (count($values) > 24) {
+                    throw new ProfileValidationException('Too many extension values.');
+                }
+                foreach ($values as $name => $value) {
+                    if (preg_match('/\A[a-z][a-z0-9_]{0,39}\z/D', (string) $name) !== 1) {
+                        throw new ProfileValidationException('Invalid extension value name.');
+                    }
+                    if (is_string($value) ? strlen($value) > 128 || preg_match('/[\x00-\x1F\x7F]/', $value) === 1 : ! is_int($value) && ! is_bool($value)) {
+                        throw new ProfileValidationException('Unsupported extension value at '.$module.'.'.$key.'.'.$name.'.');
                     }
                 }
             }

@@ -106,6 +106,10 @@
         </details>
     @endif
 
+    @if($section !== 'general')
+        @include('livewire.admin.partials.driver-extensions')
+    @endif
+
     <div class="ud-savebar">
         @if($section === 'general')
             <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.next') }} →</button>
