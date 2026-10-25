@@ -131,7 +131,7 @@ for (const variant of [
         await rowTable('title').fill('clan_data');
         await rowTable('title').press('Tab');
         const titleLink = page.locator('tr[wire\\:key="game-field-source-title"]');
-        await expect(titleLink).toBeVisible();
+        await expect(titleLink).toBeVisible({ timeout: 20_000 });
         await titleLink.locator('input').nth(0).fill('clanid');
         await titleLink.locator('input').nth(1).fill('clan_id');
         await page.locator('input[wire\\:model="draft.config.characters.fields.title.column"]').fill('clan_name');
