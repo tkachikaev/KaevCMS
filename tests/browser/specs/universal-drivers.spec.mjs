@@ -143,7 +143,6 @@ for (const variant of [
         await page.screenshot({ path: testInfo.outputPath('game-mappings.png'), fullPage: true });
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
         await page.locator('button[wire\\:click="nextGameStep(\'features\')"]').first().click();
-        await expect(page.locator('input[wire\\:model="draft.config.relations.heroes.local_column"]')).toHaveValue('player_id');
         await expect(page.locator('input[wire\\:model\\.blur="draft.config.relations.leader.table"]').first()).toHaveValue('players');
         await page.locator('.ud-game-group').filter({ has: page.locator('input[wire\\:model="draft.config.features.heroes.count_column"]') }).locator('summary').first().click();
         await page.locator('input[wire\\:model="draft.config.features.heroes.count_column"]').fill('hero_total');

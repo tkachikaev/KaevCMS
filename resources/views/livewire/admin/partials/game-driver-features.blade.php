@@ -1,31 +1,7 @@
-<section class="ud-game-group">
-    <div class="ud-section-head"><div><h3>{{ __('drivers.relations') }}</h3><p>{{ __('drivers.game_relations_help') }}</p></div><button type="button" class="button button-secondary" wire:click="addGameRelation">+ {{ __('drivers.add_row') }}</button></div>
-    @forelse($config['relations'] as $name => $relation)
-        @php
-            $castle = $config['features']['castles'] ?? [];
-            $sourceTable = in_array($name, [$castle['relation'] ?? '', $castle['leader_relation'] ?? ''], true)
-                ? ($config['relations'][$castle['clan_relation'] ?? 'clan']['table'] ?? '') : $config['characters']['table'];
-        @endphp
-        <div class="ud-group" wire:key="game-relation-{{ $name }}">
-            <div class="ud-section-head"><strong>@if(in_array($name,['clan','heroes','castle','leader'],true)){{ __('drivers.relation_'.$name) }}@elseif(str_starts_with($name, 'f_') && in_array(substr($name, 2), $fieldNames, true)){{ __('drivers.relation_for_field', ['field' => __('drivers.field_'.substr($name, 2))]) }}@else{{ $name }}@endif</strong><button type="button" class="button button-secondary" wire:click="removeRelation('{{ $name }}')">{{ __('drivers.remove') }}</button></div>
-            <div class="ud-registration-row">
-                <label>{{ __('drivers.table') }}<input type="text" wire:model.blur="draft.config.relations.{{ $name }}.table" maxlength="64"></label>
-                <label>{{ __('drivers.link_from', ['table' => $sourceTable]) }}<input type="text" wire:model="draft.config.relations.{{ $name }}.local_column" maxlength="64"></label>
-                <label>{{ __('drivers.link_to') }}<input type="text" wire:model="draft.config.relations.{{ $name }}.foreign_column" maxlength="64"></label>
-            </div>
-        </div>
-    @empty
-        <p class="ud-info">{{ __('drivers.no_relations') }}</p>
-    @endforelse
-</section>
-
 <details class="ud-game-group" wire:ignore.self>
     <summary><h3>{{ __('drivers.cap_heroes') }}</h3></summary>
     @if(isset($config['features']['heroes']))
         @php($hero = $config['features']['heroes'])
-        <div class="ud-grid">
-            <label>{{ __('drivers.relation') }}<select wire:model.live="draft.config.features.heroes.relation">@foreach($config['relations'] as $name => $r)<option value="{{ $name }}">{{ $r['table'] ?: $name }}</option>@endforeach</select></label>
-        </div>
         @if(isset($config['relations'][$hero['relation']]))
             @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.field_id_game'), 'tablePath' => 'draft.config.relations.'.$hero['relation'].'.table', 'columnPath' => 'draft.config.relations.'.$hero['relation'].'.foreign_column'])
             @foreach(['count_column' => 'hero_count_label', 'played_column' => 'hero_played_label', 'claimed_column' => 'hero_claimed_label'] as $key => $label)
@@ -48,10 +24,9 @@
     @if(isset($config['features']['castles']))
         @php($castle = $config['features']['castles'])
         <div class="ud-grid">
-            @foreach(['relation' => 'castle_table_link', 'clan_relation' => 'clan_relation', 'leader_relation' => 'leader_relation'] as $key => $label)
-                <label>{{ __('drivers.'.$label) }}<select wire:model.live="draft.config.features.castles.{{ $key }}">@foreach($config['relations'] as $name => $r)<option value="{{ $name }}">{{ $r['table'] ?: $name }}</option>@endforeach</select></label>
-            @endforeach
-            <label>{{ __('drivers.name_source') }}<select wire:model.live="draft.config.features.castles.name_source"><option value="catalog">{{ __('drivers.name_catalog') }}</option><option value="column">{{ __('drivers.name_column') }}</option></select></label>
+            <label>{{ __('drivers.name_source') }}<select wire:model.live="draft.config.features.castles.name_source"><option value="catalog">{{ __('drivers.name_catalog') }}</option><option value="column">{{ __('drivers.name_column') }}</option></select>
+                <small>{{ __('drivers.castle_name_help') }}</small>
+            </label>
         </div>
         @if(isset($config['relations'][$castle['relation']], $config['relations'][$castle['clan_relation']], $config['relations'][$castle['leader_relation']]))
             @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.castle_id'), 'tablePath' => 'draft.config.relations.'.$castle['relation'].'.table', 'columnPath' => 'draft.config.relations.'.$castle['relation'].'.foreign_column'])
