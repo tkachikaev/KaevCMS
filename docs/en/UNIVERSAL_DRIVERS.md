@@ -1,5 +1,17 @@
 # Universal drivers — development history / current version 0.53.11
 
+## Using the editor
+
+“Login server” describes accounts and game passwords; “Game server” describes characters and statistics. “Edit” opens an existing profile. For a new driver, select a current configuration to use as the starting point of an unsaved draft.
+
+The login editor has two steps. First enter a display name (any language), short file name (Latin characters, digits and separators), database character set, collation and game password format. A new short name may be blank to generate it from the display name; it is fixed after creation. Then map fields: **data needed by the website → game database table → column containing the data**. For example: “Account login → accounts → login”. Editing the table in any row updates all rows because account data comes from one table.
+
+Login and password are required. Leave other fields blank if your server does not have them. Account lookup, creation, password changes and status reading are configured automatically, without feature switches. Saving generates primary table requirements from mapped fields and extra registration values. The old primary table name is replaced, while requirements for other tables in the source profile are preserved. All configured columns are required during verification; leave nonexistent optional fields unmapped. The ownership column follows the source profile’s login/ID identity mapping without a second manual entry. SHA-1/Base64 and BCrypt `$2a$` are implemented; Whirlpool is not supported yet.
+
+Extra registration values are only needed by servers requiring other columns on account creation, such as normal access `accessLevel = 0`. Existing restrictions still prevent overriding login/password or granting elevated privileges.
+
+The game editor has three steps: settings, field mappings, and relations/statistics. It has no feature checkboxes or manual schema requirement list. Tables and columns are editable in mapping rows; checks are generated from the data used. Existing optional fields and hero/castle tables remain optional. Related keys and secondary ordering follow primary field renames while explicit key edits are preserved. Rankings follow direct level, PvP, PK and play-time fields. Key/value (EAV) data is supported for character lookup, but world rankings and hero lists are not; the interface and profile capabilities reflect this limitation. JSON character rescue is not enabled. Saving any driver to the catalog neither proves compatibility with a real database nor applies it to a connection. Verify and apply it separately in server connection settings.
+
 ## 0.53.11 audit — schema preflight hardening
 
 **Status: experimental; production migration is not certified.** JSON profiles can no longer mark their accounts/characters primary table optional or omit identity and character-filter columns from mandatory schema checks. LoginServer ownership must refer to the selected login/ID field. Nine additional negative offline contract tests are included. Hiding a bundled profile now also removes it from new connection selectors.

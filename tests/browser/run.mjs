@@ -50,6 +50,10 @@ writeFileSync(browserAvatarPath, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCA
 const environment = {
     ...process.env,
     APP_ENV: 'testing',
+    // A cached production config otherwise overrides the test environment and DB_DATABASE.
+    APP_CONFIG_CACHE: resolve(runtimeDirectory, `config-${process.pid}.php`),
+    APP_ROUTES_CACHE: resolve(runtimeDirectory, `routes-${process.pid}.php`),
+    APP_EVENTS_CACHE: resolve(runtimeDirectory, `events-${process.pid}.php`),
     APP_DEBUG: 'false',
     APP_KEY: `base64:${randomBytes(32).toString('base64')}`,
     APP_URL: baseUrl,
@@ -175,6 +179,17 @@ try {
         temporaryEnvironmentCreated = true;
     }
 
+    run('php', ['-r', `
+        require 'vendor/autoload.php';
+        $app = require 'bootstrap/app.php';
+        $app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();
+        if (! $app->environment('testing')
+            || config('database.default') !== 'sqlite'
+            || config('database.connections.sqlite.database') !== getenv('DB_DATABASE')) {
+            fwrite(STDERR, "Browser tests refused: database isolation could not be verified.\\n");
+            exit(1);
+        }
+    `]);
     run('php', ['artisan', 'migrate:fresh', '--force']);
     run('php', ['artisan', 'db:seed', '--class=Database\\Seeders\\BrowserTestSeeder', '--force']);
 
