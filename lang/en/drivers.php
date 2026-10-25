@@ -174,6 +174,7 @@ return [
     'link_to_table' => 'Column in :table',
     'eav_heading' => 'Which row of the table:',
     'choice_heading' => 'Columns to choose from:',
+    'relation_for_field' => 'Table for the field ":field"',
     'main_table' => 'Main character table',
     'main_table_help' => 'The three required fields (owner, ID, name) share one table: changing it in any of these rows changes it in the others and in every field below that has no table of its own.',
     'col_field' => 'Field',

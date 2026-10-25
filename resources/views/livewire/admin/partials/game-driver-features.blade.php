@@ -7,18 +7,12 @@
                 ? ($config['relations'][$castle['clan_relation'] ?? 'clan']['table'] ?? '') : $config['characters']['table'];
         @endphp
         <div class="ud-group" wire:key="game-relation-{{ $name }}">
-            <div class="ud-section-head"><strong>{{ in_array($name,['clan','heroes','castle','leader'],true) ? __('drivers.relation_'.$name) : $name }}</strong><button type="button" class="button button-secondary" wire:click="removeRelation('{{ $name }}')">{{ __('drivers.remove') }}</button></div>
+            <div class="ud-section-head"><strong>@if(in_array($name,['clan','heroes','castle','leader'],true)){{ __('drivers.relation_'.$name) }}@elseif(str_starts_with($name, 'f_') && in_array(substr($name, 2), $fieldNames, true)){{ __('drivers.relation_for_field', ['field' => __('drivers.field_'.substr($name, 2))]) }}@else{{ $name }}@endif</strong><button type="button" class="button button-secondary" wire:click="removeRelation('{{ $name }}')">{{ __('drivers.remove') }}</button></div>
             <div class="ud-registration-row">
                 <label>{{ __('drivers.table') }}<input type="text" wire:model.blur="draft.config.relations.{{ $name }}.table" maxlength="64"></label>
                 <label>{{ __('drivers.link_from', ['table' => $sourceTable]) }}<input type="text" wire:model="draft.config.relations.{{ $name }}.local_column" maxlength="64"></label>
                 <label>{{ __('drivers.link_to') }}<input type="text" wire:model="draft.config.relations.{{ $name }}.foreign_column" maxlength="64"></label>
             </div>
-            <details class="ud-field-source" wire:ignore.self><summary>{{ __('drivers.relation_options') }}</summary>
-                <div class="ud-grid">
-                    <label>{{ __('drivers.cardinality') }}<select wire:model="draft.config.relations.{{ $name }}.cardinality"><option value="one">{{ __('drivers.one_row') }}</option><option value="many">{{ __('drivers.many_rows') }}</option></select></label>
-                    <label>{{ __('drivers.missing_relation') }}<select wire:model="draft.config.relations.{{ $name }}.join"><option value="left">{{ __('drivers.keep_character') }}</option><option value="inner">{{ __('drivers.skip_character') }}</option></select></label>
-                </div>
-            </details>
         </div>
     @empty
         <p class="ud-info">{{ __('drivers.no_relations') }}</p>
