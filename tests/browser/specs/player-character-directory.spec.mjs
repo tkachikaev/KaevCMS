@@ -285,7 +285,7 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
     await expect(page).toHaveURL(/\/admin$/);
 
     await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
-    const aureliaCard = page.locator('.theme-card').filter({ hasText: 'Kaev Aurelia Account' });
+    const aureliaCard = page.locator('.theme-card').filter({ has: page.getByRole('heading', { name: 'Aurelia', exact: true }) });
     const activate = aureliaCard.getByRole('button', { name: 'Активировать' });
     if (await activate.count()) {
         await activate.click();

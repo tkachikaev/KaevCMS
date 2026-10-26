@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\Themes\ThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,6 +12,8 @@ class HomePageTest extends TestCase
 
     public function test_default_theme_uses_one_footer_section_and_no_static_files_header_item(): void
     {
+        // This markup contract belongs to Dark (directory "default"), not the install default.
+        app(ThemeManager::class)->activate('default');
         $this->seed();
 
         $content = $this->get('/')->assertOk()->getContent();
@@ -36,14 +39,17 @@ class HomePageTest extends TestCase
     {
         $this->seed();
 
-        $this->get('/')
-            ->assertOk()
-            ->assertSee('/themes/default/assets/css/app.css?v=0.8.5', false)
-            ->assertSee('/themes/default/assets/js/app.js?v=0.8.5', false);
+        foreach (['default' => '0.8.5', 'kaev-aurelia' => '1.1.0'] as $theme => $version) {
+            app(ThemeManager::class)->activate($theme);
+            $this->get('/')->assertOk()
+                ->assertSee('/themes/'.$theme.'/assets/css/app.css?v='.$version, false)
+                ->assertSee('/themes/'.$theme.'/assets/js/app.js?v='.$version, false);
+        }
     }
 
     public function test_home_page_is_available(): void
     {
+        app(ThemeManager::class)->activate('default');
         $this->seed();
 
         $this->get('/')

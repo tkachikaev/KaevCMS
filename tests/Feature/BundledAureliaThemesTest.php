@@ -8,12 +8,66 @@ use App\Services\CmsSettings;
 use App\Services\RegistrationSettings;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
+use Dotenv\Dotenv;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class BundledAureliaThemesTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_bundled_theme_names_use_short_labels_with_unchanged_identifiers(): void
+    {
+        foreach ([['default', 'Dark'], ['kaev-aurelia', 'Aurelia']] as [$slug, $name]) {
+            $theme = app(ThemeManager::class)->inspect($slug);
+            $this->assertSame($name, $theme['name']);
+            $this->assertSame($slug, $theme['slug']);
+            $this->assertTrue($theme['valid']);
+            $this->assertTrue($theme['compatible']);
+        }
+        foreach ([['kaev-classic', 'Classic'], ['kaev-aurelia', 'Aurelia'], ['luxury', 'Obsidian']] as [$slug, $name]) {
+            $theme = app(AccountThemeManager::class)->inspect($slug);
+            $this->assertSame($name, $theme['name']);
+            $this->assertSame($slug, $theme['slug']);
+            $this->assertTrue($theme['valid']);
+            $this->assertTrue($theme['compatible']);
+        }
+    }
+
+    public function test_fresh_installation_template_renders_aurelia_site_and_classic_account(): void
+    {
+        $defaults = Dotenv::parse($this->readFile(base_path('.env.example')));
+        $this->assertSame('kaev-aurelia', $defaults['CMS_THEME']);
+        $this->assertSame('kaev-classic', $defaults['CMS_ACCOUNT_THEME']);
+        $this->bootInstallationThemes($defaults);
+
+        $this->assertSame('kaev-aurelia', app(ThemeManager::class)->name());
+        $this->assertSame('kaev-classic', app(AccountThemeManager::class)->name());
+        $this->get('/')->assertOk()->assertSee('themes/kaev-aurelia/assets/css/app.css', false);
+        $this->actingAs(User::factory()->create())->get('/account')
+            ->assertOk()->assertSee('account-themes/kaev-classic/assets/css/app.css', false);
+    }
+
+    public function test_new_installation_defaults_do_not_override_saved_theme_choices(): void
+    {
+        app(CmsSettings::class)->setMany(['theme.active' => 'default', 'account_theme.active' => 'luxury']);
+        $this->bootInstallationThemes(Dotenv::parse($this->readFile(base_path('.env.example'))));
+
+        $this->assertSame('default', app(ThemeManager::class)->name());
+        $this->assertSame('luxury', app(AccountThemeManager::class)->name());
+        $this->assertDatabaseHas('cms_settings', ['key' => 'theme.active', 'value' => 'default']);
+        $this->assertDatabaseHas('cms_settings', ['key' => 'account_theme.active', 'value' => 'luxury']);
+    }
+
+    /** @param array<string,string> $defaults */
+    private function bootInstallationThemes(array $defaults): void
+    {
+        config(['cms.theme' => $defaults['CMS_THEME'], 'cms.account_theme' => $defaults['CMS_ACCOUNT_THEME']]);
+        $this->app->forgetInstance(ThemeManager::class);
+        $this->app->forgetInstance(AccountThemeManager::class);
+        app(ThemeManager::class)->boot();
+        app(AccountThemeManager::class)->boot();
+    }
 
     public function test_fallback_account_theme_uses_the_shared_core_navigation_runtime(): void
     {
@@ -33,13 +87,13 @@ class BundledAureliaThemesTest extends TestCase
 
         $this->assertTrue($publicTheme['valid'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertTrue($publicTheme['compatible'], implode(PHP_EOL, $publicTheme['errors']));
-        $this->assertSame('Kaev Aurelia', $publicTheme['name']);
+        $this->assertSame('Aurelia', $publicTheme['name']);
         $this->assertSame('1.1.0', $publicTheme['version']);
         $this->assertNotNull($publicTheme['preview_url']);
 
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
-        $this->assertSame('Kaev Aurelia Account', $accountTheme['name']);
+        $this->assertSame('Aurelia', $accountTheme['name']);
         $this->assertSame('1.6.11', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
@@ -179,7 +233,8 @@ class BundledAureliaThemesTest extends TestCase
             ->assertSee('assets/account/js/navigation.js', false)
             ->assertSee('data-account-sidebar', false)
             ->assertSee('data-account-topbar', false)
-            ->assertDontSee('Kaev Aurelia Account');
+            ->assertSee('Aurelia Player')
+            ->assertDontSee(__('Account theme'));
 
         $this->actingAs($user)
             ->get('/account/game-accounts')

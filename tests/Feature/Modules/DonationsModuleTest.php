@@ -11,6 +11,7 @@ use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\Themes\AccountThemeManager;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -75,17 +76,24 @@ class DonationsModuleTest extends TestCase
     public function test_player_does_not_see_page_until_opted_in_and_never_gets_checkout(): void
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->get('/modules/donations')->assertNotFound();
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
-        app(DonationSettings::class)->updateVisibility(true, $owner);
-        $this->actingAs($user)->get('/modules/donations')
-            ->assertOk()
-            ->assertSee(__('module-donations::messages.account_description'))
-            ->assertSee('data-testid="donations-no-currencies"', false)
-            ->assertDontSee('name="payment_amount"', false)
-            ->assertDontSee('https://yoomoney.ru/quickpay/confirm');
-        $this->assertDatabaseCount('wallet_entries', 0);
-        $this->actingAs($user)->post('/modules/donations')->assertStatus(405);
+        foreach (['luxury', 'kaev-aurelia', 'kaev-classic'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            app(DonationSettings::class)->updateVisibility(false, $owner);
+            $this->actingAs($user)->get('/modules/donations')->assertNotFound();
+            app(DonationSettings::class)->updateVisibility(true, $owner);
+            $response = $this->actingAs($user)->get('/modules/donations')->assertOk()
+                ->assertSee(__('module-donations::messages.account_title'))
+                ->assertSee('data-testid="donations-no-currencies"', false)
+                ->assertDontSee('name="payment_amount"', false)
+                ->assertDontSee('https://yoomoney.ru/quickpay/confirm');
+            if ($theme !== 'kaev-classic') {
+                // Classic deliberately omits page subtitles; other themes render them.
+                $response->assertSee(__('module-donations::messages.account_description'));
+            }
+            $this->assertDatabaseCount('wallet_entries', 0);
+            $this->actingAs($user)->post('/modules/donations')->assertStatus(405);
+        }
     }
 
     public function test_admin_permissions_and_visibility_update(): void

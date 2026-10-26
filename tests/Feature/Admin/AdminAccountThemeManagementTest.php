@@ -27,8 +27,8 @@ class AdminAccountThemeManagementTest extends TestCase
             ->get('/admin/account-themes')
             ->assertOk()
             ->assertSee('Шаблоны личного кабинета')
-            ->assertSee('L2 Obsidian Luxury')
-            ->assertSee('Kaev Aurelia Account')
+            ->assertSee('Obsidian')
+            ->assertSee('Aurelia')
             ->assertSee('Дизайн личного кабинета не зависит от публичной темы сайта и административной панели.')
             ->assertSee('data-account-theme-list', false)
             ->assertSee('class="admin-card-row admin-catalog-row theme-card theme-row', false)
@@ -87,7 +87,7 @@ class AdminAccountThemeManagementTest extends TestCase
             ->assertSee('account-themes/luxury/assets/css/app.css', false)
             ->assertSee('assets/account/js/navigation.js', false)
             ->assertDontSee('account-themes/luxury/assets/js/navigation.js', false)
-            ->assertDontSee('L2 Obsidian Luxury')
+            ->assertDontSee(__('Account theme'))
             ->assertDontSee('assets/account/css/app.css', false);
     }
 

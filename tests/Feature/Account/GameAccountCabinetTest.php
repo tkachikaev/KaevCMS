@@ -15,6 +15,7 @@ use App\Services\GameAccounts\GameAccountQuota;
 use App\Services\GameAccountSettings;
 use App\Services\GameServerDeletionImpact;
 use App\Services\GameServerSettings;
+use App\Support\Themes\AccountThemeManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -142,6 +143,8 @@ class GameAccountCabinetTest extends TestCase
 
     public function test_player_overview_stays_compact_when_no_game_accounts_exist(): void
     {
+        // Obsidian's compact overview differs from Classic's game-account cards.
+        app(AccountThemeManager::class)->activate('luxury');
         $user = $this->user();
         $this->servers();
 
@@ -155,6 +158,7 @@ class GameAccountCabinetTest extends TestCase
 
     public function test_player_overview_does_not_mix_game_account_or_character_details_into_the_profile_summary(): void
     {
+        app(AccountThemeManager::class)->activate('luxury');
         $user = $this->user();
         [$loginServer, $gameServer] = $this->servers();
         UserGameAccount::query()->create([

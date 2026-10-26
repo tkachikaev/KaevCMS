@@ -65,19 +65,50 @@ test('Kaev Classic keeps the chosen scheme across navigation and reloads on desk
         // One highlight glides to the chosen item and survives the Livewire visit.
         const indicator = page.locator('.kc-nav-indicator');
         await expect(indicator).toHaveClass(/is-placed/);
-        const glide = await page.evaluate(async () => {
-            const positions = [];
-            const sample = window.setInterval(() => positions.push(Math.round(new DOMMatrix(getComputedStyle(document.querySelector('.kc-nav-indicator')).transform).m42)), 16);
-            document.querySelector('.account-nav a[href$="/account/web-inventory"]').click();
-            await new Promise(resolve => window.setTimeout(resolve, 900));
-            window.clearInterval(sample);
-
-            return positions.filter((position, index) => index === 0 || position !== positions[index - 1]);
+        // A successful visit may take longer than the old 900 ms sampling window.
+        await page.route('**/account/web-inventory', async route => {
+            await new Promise(resolve => setTimeout(resolve, 1100));
+            await route.continue();
         });
+        await page.evaluate(() => {
+            // Capture the real browser animation when navigation actually finishes.
+            // Sampling a fixed interval after the click misses it on a slow CI runner.
+            const animate = Element.prototype.animate;
+            window.classicNavAnimation = null;
+            window.restoreClassicNavAnimation = () => { Element.prototype.animate = animate; };
+            Element.prototype.animate = function (...args) {
+                const animation = animate.apply(this, args);
+                if (this.matches('.kc-nav-indicator')) {
+                    animation.pause();
+                    window.classicNavAnimation = animation;
+                }
+                return animation;
+            };
+        });
+        await page.locator('.account-nav a[href$="/account/web-inventory"]').click();
         await expect(page).toHaveURL(/\/account\/web-inventory$/);
+        await expect.poll(() => page.evaluate(() => window.classicNavAnimation !== null)).toBe(true);
+        const { glide, duration } = await page.evaluate(async () => {
+            const animation = window.classicNavAnimation;
+            await animation.ready;
+            const duration = Number(animation.effect.getComputedTiming().duration);
+            const element = animation.effect.target;
+            // Advance the actual animation timeline, keeping native interpolation/easing.
+            // The test still requires several distinct intermediate positions and the endpoint.
+            const positions = [0, .25, .5, .75, 1].map(progress => {
+                animation.currentTime = duration * progress;
+                return Math.round(new DOMMatrix(getComputedStyle(element).transform).m42);
+            });
+            window.restoreClassicNavAnimation();
+            animation.finish();
+            return { glide: positions.filter((position, index) => index === 0 || position !== positions[index - 1]), duration };
+        });
+        await page.unroute('**/account/web-inventory');
         const inventoryTop = await page.locator('.account-nav a[href$="/account/web-inventory"]').evaluate(link => link.offsetTop);
+        expect(duration).toBeGreaterThan(0);
         expect(glide.length).toBeGreaterThan(3);
         expect(glide.at(-1)).toBe(inventoryTop);
+        await expect(page.locator('.account-nav')).not.toHaveClass(/kc-nav-moving/);
         await expect(page.locator('.account-nav a.is-target')).toHaveCount(1);
         // After a real Livewire swap the persisted menu must still have just one background:
         // the moving indicator. Server/Livewire active classes must not paint a second one.

@@ -8,6 +8,7 @@ use App\Models\LoginServer;
 use App\Services\GameWorld\GameStatistics;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\SiteSettings;
+use App\Support\Themes\ThemeManager;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -82,6 +83,8 @@ class PublicGameStatisticsTest extends TestCase
 
     public function test_home_uses_configured_game_statistics_instead_of_mock_characters(): void
     {
+        // Dark includes the homepage ranking; Aurelia links to the statistics page.
+        app(ThemeManager::class)->activate('default');
         $this->statisticsServer();
 
         $this->get('/')
@@ -92,6 +95,7 @@ class PublicGameStatisticsTest extends TestCase
 
     public function test_home_shows_honest_empty_ranking_without_configured_statistics(): void
     {
+        app(ThemeManager::class)->activate('default');
         GameServer::query()->update(['statistics_enabled' => false]);
 
         $this->get('/')
@@ -104,19 +108,21 @@ class PublicGameStatisticsTest extends TestCase
     {
         $server = $this->statisticsServer();
 
-        $this->get('/statistics/'.$server->id.'?section=pvp')
-            ->assertOk()
-            ->assertSee('Эльфачка')
-            ->assertSee('Тёмный мистик')
-            ->assertSee('Тёмный эльф')
-            ->assertSee('Женский')
-            ->assertSee('Васельки')
-            ->assertSee('5')
-            ->assertDontSee('test1');
+        foreach (['default', 'kaev-aurelia'] as $theme) {
+            app(ThemeManager::class)->activate($theme);
+            $response = $this->get('/statistics/'.$server->id.'?section=pvp')->assertOk()
+                ->assertSee('Эльфачка')->assertSee('Тёмный мистик')
+                ->assertSee('Васельки')->assertSee('5')->assertDontSee('test1');
+            if ($theme === 'default') {
+                // Dark's extended table also shows race and gender.
+                $response->assertSee('Тёмный эльф')->assertSee('Женский');
+            }
+        }
     }
 
     public function test_statistics_are_available_through_localized_routes(): void
     {
+        app(ThemeManager::class)->activate('default');
         $server = $this->statisticsServer();
 
         $this->get('/en/statistics')

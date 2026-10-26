@@ -624,6 +624,7 @@ test('theme catalogues expose semantic single-column catalogues', async ({ page 
     await expect(publicCatalog).toHaveAttribute('data-layout', 'single-column');
     const publicThemes = publicCatalog.getByTestId('public-theme-card');
     await expect(publicThemes).toHaveCount(2);
+    expect((await publicThemes.locator('.admin-catalog-heading h2').allTextContents()).map(name => name.trim()).sort()).toEqual(['Aurelia', 'Dark']);
     await expect(publicThemes.first().locator('.admin-catalog-heading')).toBeVisible();
     await expect(publicThemes.first().locator('.theme-catalog-preview')).toBeVisible();
     await expect(publicThemes.first().locator('.admin-catalog-side')).toBeVisible();
@@ -633,6 +634,7 @@ test('theme catalogues expose semantic single-column catalogues', async ({ page 
     await expect(accountCatalog).toHaveAttribute('data-layout', 'single-column');
     const accountThemes = accountCatalog.getByTestId('account-theme-card');
     await expect(accountThemes).toHaveCount(3);
+    expect((await accountThemes.locator('.admin-catalog-heading h2').allTextContents()).map(name => name.trim()).sort()).toEqual(['Aurelia', 'Classic', 'Obsidian']);
     await expect(accountThemes.first().locator('.admin-catalog-heading')).toBeVisible();
     await expect(accountThemes.first().locator('.theme-catalog-preview')).toBeVisible();
     await expect(accountThemes.first().locator('.admin-catalog-side')).toBeVisible();
@@ -642,8 +644,8 @@ test('bundled public themes keep their footers inside the mobile viewport', asyn
     await page.setViewportSize({ width: 390, height: 844 });
 
     for (const [name, slug] of [
-        ['L2 Dark Classic', 'default'],
-        ['Kaev Aurelia', 'kaev-aurelia'],
+        ['Dark', 'default'],
+        ['Aurelia', 'kaev-aurelia'],
     ]) {
         await gotoWithLocalNetworkRetry(page, '/admin/themes');
         const card = page.getByTestId('public-theme-card').filter({ hasText: name });

@@ -30,6 +30,17 @@ try {
     ]);
     file_put_contents($active, $content);
     $parsed = parseSimpleEnv($active);
+    $freshThemeEnv = $temp.'/fresh-themes.env';
+    $realExample = dirname(__DIR__, 4).'/.env.example';
+    file_put_contents($freshThemeEnv, buildEnvironmentContent($realExample, $freshThemeEnv, []));
+    $freshThemes = parseSimpleEnv($freshThemeEnv);
+    assertInstaller(($freshThemes['CMS_THEME'] ?? null) === 'kaev-aurelia', 'Fresh installations must select Aurelia for the public site.');
+    assertInstaller(($freshThemes['CMS_ACCOUNT_THEME'] ?? null) === 'kaev-classic', 'Fresh installations must select Classic for the player account.');
+    $existingThemeEnv = $temp.'/existing-themes.env';
+    file_put_contents($existingThemeEnv, "APP_KEY=base64:KEEP_EXISTING_KEY\nCMS_THEME=default\nCMS_ACCOUNT_THEME=luxury\n");
+    file_put_contents($existingThemeEnv, buildEnvironmentContent($realExample, $existingThemeEnv, []));
+    $existingThemes = parseSimpleEnv($existingThemeEnv);
+    assertInstaller($existingThemes['CMS_THEME'] === 'default' && $existingThemes['CMS_ACCOUNT_THEME'] === 'luxury', 'Existing environment theme selections must be preserved.');
 
     assertInstaller(($parsed['APP_KEY'] ?? null) === 'base64:KEEP_EXISTING_KEY', 'A resumed installation must preserve APP_KEY.');
     assertInstaller(($parsed['APP_NAME'] ?? null) === $specialName, 'Quoted site names must survive .env encoding.');

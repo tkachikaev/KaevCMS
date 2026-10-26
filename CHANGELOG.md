@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.54.4 - 2026-10-26
+
+Updates from 0.54.3. No dependency updates, database migrations or payment changes. Universal drivers remain experimental.
+
+- Fresh installations using the bundled environment template select Aurelia for the public website and Classic for player accounts. Existing environment files and saved theme choices retain their selections.
+- Shortened bundled theme display names: Classic, Aurelia and Obsidian for player accounts; Aurelia and Dark for the public site. Directory names, persisted identifiers and activation URLs are unchanged.
+- The Classic navigation animation regression waits for the real animation after the page swap and checks native interpolation on its actual timeline. It retains intermediate-position and destination checks, with a deliberately delayed response to reproduce the former fixed-window CI failure.
+- Theme-specific rendering checks select their intended theme explicitly. Statistics and payment-availability coverage also exercise the newly selected themes; calendar assertions distinguish module content from the global server-status sidebar.
+
 ## 0.54.3 - 2026-10-26
 
 **Experimental universal drivers; not production certified.** Updates from 0.54.2. No dependency updates, database migrations or Wallet/Donations changes.

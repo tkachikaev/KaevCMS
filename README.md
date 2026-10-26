@@ -1,4 +1,4 @@
-# KaevCMS 0.54.3
+# KaevCMS 0.54.4
 
 **QA candidate — not a production release. / Кандидат для проверки, не production-релиз.**
 
@@ -70,7 +70,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 
 ### Main capabilities
 
-- Separate public and account themes, including Kaev Aurelia (light and night schemes on the website), Kaev Aurelia Account and Kaev Classic with light and dark modes.
+- Public themes Aurelia (light and dark modes) and Dark; account themes Classic (light and dark modes), Aurelia and Obsidian.
 - Persistent Livewire navigation for administration and player account pages.
 - Multilingual news, pages, settings, mail templates, and localized routes.
 - Owner, administrator, editor, and trusted Auditor roles; two-factor authentication and recovery codes.
@@ -165,7 +165,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 
 ### Основные возможности
 
-- Раздельные публичные шаблоны и шаблоны личного кабинета, включая Kaev Aurelia (светлая и тёмная гамма на сайте), Kaev Aurelia Account и Kaev Classic со светлой и тёмной гаммой.
+- Шаблоны сайта Aurelia (светлая и тёмная гамма) и Dark; шаблоны кабинета Classic (светлая и тёмная гамма), Aurelia и Obsidian.
 - Постоянная Livewire-навигация в административной панели и кабинете игрока.
 - Многоязычные новости, страницы, настройки, почтовые шаблоны и маршруты.
 - Роли владельца, администратора, редактора и доверенного аудитора; двухфакторная защита и recovery codes.

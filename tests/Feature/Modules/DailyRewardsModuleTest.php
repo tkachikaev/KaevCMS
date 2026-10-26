@@ -295,11 +295,19 @@ class DailyRewardsModuleTest extends TestCase
             }
         });
 
-        $this->actingAs($user)
+        $response = $this->actingAs($user)
             ->get('/modules/daily-rewards')
             ->assertOk()
-            ->assertSee('Current Rewards World')
-            ->assertDontSee('Historical Rewards World');
+            ->assertSee('Current Rewards World');
+        // Classic's sidebar legitimately lists every game server. Restrict the
+        // calendar assertion to the module content rather than the entire shell.
+        $document = new \DOMDocument;
+        $document->loadHTML($response->getContent(), LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+        $sections = (new \DOMXPath($document))->query('//*[contains(concat(" ", normalize-space(@class), " "), " daily-reward-account-section ")]');
+        $this->assertNotFalse($sections);
+        $this->assertCount(1, $sections);
+        $this->assertStringContainsString('Current Rewards World', $sections->item(0)->textContent);
+        $this->assertStringNotContainsString('Historical Rewards World', $sections->item(0)->textContent);
 
         $this->assertNotNull($periodQueryBindings, 'The account calendar query must filter year and month in SQL.');
         $this->assertContains(2026, $periodQueryBindings);

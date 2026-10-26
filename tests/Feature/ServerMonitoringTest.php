@@ -15,6 +15,7 @@ use App\Services\Servers\ServerMonitorCoordinator;
 use App\Services\Servers\ServerMonitorSettings;
 use App\Services\Servers\ServerStatusOverview;
 use App\Services\SiteSettings;
+use App\Support\Themes\ThemeManager;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -138,6 +139,8 @@ class ServerMonitoringTest extends TestCase
 
     public function test_dashboard_and_public_home_show_compact_real_server_statuses(): void
     {
+        // These literal status labels describe Dark's public status card.
+        app(ThemeManager::class)->activate('default');
         $this->seed();
         GameServer::query()->delete();
         LoginServer::query()->delete();
@@ -187,6 +190,7 @@ class ServerMonitoringTest extends TestCase
 
     public function test_admin_shows_each_process_state_while_public_status_requires_login_and_game_servers(): void
     {
+        app(ThemeManager::class)->activate('default');
         $this->seed();
         GameServer::query()->delete();
         LoginServer::query()->delete();
