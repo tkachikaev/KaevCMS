@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
+
 ## 0.54.4 - 2026-10-26
 
 Updates from 0.54.3. No dependency updates, database migrations or payment changes. Universal drivers remain experimental.

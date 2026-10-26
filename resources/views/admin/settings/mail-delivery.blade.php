@@ -209,7 +209,7 @@
                 {{ __('The check waits for the next real cron run. It does not send an email.') }}
             @endif
             @if($cronCheck['last_run_at'])
-                <small>{{ __('Last Scheduler run: :time', ['time' => IlluminateSupportCarbon::parse($cronCheck['last_run_at'])->diffForHumans()]) }}</small>
+                <small>{{ __('Last Scheduler run: :time', ['time' => \Illuminate\Support\Carbon::parse($cronCheck['last_run_at'])->diffForHumans()]) }}</small>
             @endif
         </p>
         <form method="POST" action="{{ route('admin.settings.mail.cron-check') }}">
