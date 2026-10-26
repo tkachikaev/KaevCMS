@@ -54,7 +54,7 @@ for (const variant of [
         await expect(page.locator('.ud-menu[open]')).toHaveCount(0);
         await firstCard.locator('button[wire\\:click^="editProfile"]').click();
         await expect(page.locator('.ud-login-editor')).toBeVisible();
-        await expect(page.locator('.ud-login-editor input[type=checkbox]')).toHaveCount(0);
+        await expect(page.locator('.ud-login-editor input[type=checkbox]')).toHaveCount(4);
         await expect(page.locator('.ud-login-editor button[wire\\:click="setSection(\'schema\')"]')).toHaveCount(0);
         await page.locator('.ud-login-editor button[wire\\:click="closeEditor"]').first().click();
 
@@ -62,8 +62,9 @@ for (const variant of [
         await page.locator('#ud-login-template').selectOption('rusacis');
         await page.locator('button[wire\\:click="useLoginTemplate"]').click();
         await expect(page.locator('#ud-login-password-scheme')).toHaveValue('bcrypt_2a');
-        // The connection takes its encoding from the server settings, so the editor offers none.
-        await expect(page.locator('#ud-login-charset, #ud-login-collation')).toHaveCount(0);
+        // Explicitly applied snapshots own their database encoding.
+        await expect(page.locator('#ud-login-charset')).toHaveValue('utf8mb4');
+        await expect(page.locator('#ud-login-collation')).toHaveValue('utf8mb4_unicode_ci');
         const name = `Editor browser ${variant.locale} ${Date.now()}`;
         await page.screenshot({ path: testInfo.outputPath('login-settings.png'), fullPage: true });
         await page.locator('#ud-login-name').fill(name);
@@ -104,6 +105,33 @@ for (const variant of [
         await created.locator('button[wire\\:click^="askDelete"]').click();
         await page.locator('button[wire\\:click="deleteProfile"]').click();
         await expect(created).toHaveCount(0);
+
+        // Disable writes, omit the password column, save, and verify the exported contract.
+        await page.locator('button[wire\\:click="createProfile(\'login\')"]').click();
+        const readOnlyName = `Read only ${variant.locale} ${Date.now()}`;
+        await page.locator('#ud-login-name').fill(readOnlyName);
+        for (const capability of ['account_creation', 'password_change', 'account_status']) {
+            await page.locator(`input[wire\\:model="enabled.${capability}"]`).uncheck();
+        }
+        await page.locator('.ud-login-editor button[type=submit]').click();
+        await page.locator('#ud-login-column-password').fill('');
+        await expect(page.locator('#ud-login-column-password')).not.toHaveAttribute('required');
+        await page.locator('.ud-login-editor button[type=submit]').click();
+        const readOnlyCard = page.locator('.ud-profile').filter({ hasText: readOnlyName });
+        await expect(readOnlyCard).toBeVisible();
+        await readOnlyCard.locator('button[wire\\:click^="editProfile"]').click();
+        await expect(page.locator('input[wire\\:model="enabled.account_creation"]')).not.toBeChecked();
+        await expect(page.locator('input[wire\\:model="enabled.password_change"]')).not.toBeChecked();
+        await page.locator('.ud-login-editor button[wire\\:click="closeEditor"]').click();
+        await readOnlyCard.locator('.ud-menu summary').click();
+        const [readOnlyDownload] = await Promise.all([
+            page.waitForEvent('download'), readOnlyCard.locator('button[wire\\:click^="exportProfile"]').click(),
+        ]);
+        const readOnlyChunks = [];
+        for await (const chunk of await readOnlyDownload.createReadStream()) readOnlyChunks.push(chunk);
+        const readOnlyProfile = JSON.parse(Buffer.concat(readOnlyChunks).toString('utf8'));
+        expect(readOnlyProfile.config.capabilities).toEqual(['account_lookup']);
+        expect(readOnlyProfile.config.accounts.fields.password).toBeNull();
 
         await page.getByRole('button', { name: variant.game, exact: true }).click();
         await page.locator('button[wire\\:click="createProfile(\'game\')"]').click();

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.54.2 - 2026-10-26
+
+**QA candidate, not production certified.**
+
+Updates from 0.54.0. No migrations, Composer updates, Laravel/Livewire changes, payment/wallet modifications or automatic cutover.
+
+- Universal JSON connection preflight now checks read-only invariants beyond table/column presence: unique login index for account writes, password column length, declared ranking and hero/castle base mappings. Rejections retain the previous verified snapshot and show schema issues in admin diagnostics; checks do not prove actual game-client acceptance.
+- Custom GameServer online counting now follows the configured `characters.fields.online` direct column, including a verified snapshot on an old driver identifier. Unsupported online sources return unavailable without querying an unrelated legacy table.
+- Saved custom JSON drafts cannot execute online-count queries until explicitly verified and applied to the server.
+- Module `driver_extensions` now use only a verified applied snapshot for custom drivers, check declared module tables/columns at enablement and re-check when mappings are read at runtime. Legacy drivers retain their bundled template fallback; one table per extension group.
+- LoginServer constructor preserves independently selected capabilities instead of forcing all writes on. Profile editor exposes charset/collation and active capabilities; optional account fields no longer automatically block read-only profiles.
+- RU/EN guides rewritten for the actual constructor and operational limitations; previous iteration notes archived. Added offline negative preflight checks and strengthened module regression tests.
+- Registration preflight also checks mapped insertion fields and fixed values. Read-only copies retain their selected capabilities and do not require password mappings. Modified legacy-profile overrides require explicit verification before modules can use them. Schema diagnostics are localized and safely escaped.
+- Release acceptance includes disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright and installation/update regression tests. Game-client acceptance remains a separate requirement. Account-ID ownership and EAV ranking remain deferred deliberately.
+
+
 ## 0.54.0 - 2026-10-25
 
 `composer.lock` is unchanged; no new migrations. The universal drivers stay experimental. Modules that use the new `driver_extensions` field must require `cms_min` 0.54.0.

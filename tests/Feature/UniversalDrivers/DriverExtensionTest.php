@@ -3,20 +3,24 @@
 namespace Tests\Feature\UniversalDrivers;
 
 use App\Auth\AdminRole;
+use App\Contracts\ExternalDatabaseConnectionTester;
 use App\Livewire\Admin\UniversalDriverManager;
 use App\Models\Admin;
 use App\Models\GameServer;
+use App\Services\Servers\UniversalDriverActivation;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleValidator;
 use App\Support\UniversalDrivers\DriverExtensionAccess;
 use App\Support\UniversalDrivers\DriverExtensionCatalog;
 use App\Support\UniversalDrivers\DriverExtensionRequirements;
+use App\Support\UniversalDrivers\DriverExtensionSchemaVerifier;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Tests\Fakes\FakeExternalDatabaseConnectionTester;
 use Tests\TestCase;
 
 final class DriverExtensionTest extends TestCase
@@ -166,6 +170,11 @@ final class DriverExtensionTest extends TestCase
     {
         app()->setLocale('en');
         GameServer::factory()->create(['name' => 'Main world', 'driver' => 'rusacis']);
+        // A simulated real DB probe. Without it, a catalog entry alone must
+        // never authorize a module that needs game database columns.
+        $fake = new FakeExternalDatabaseConnectionTester;
+        $this->app->instance(ExternalDatabaseConnectionTester::class, $fake);
+        $this->app->instance(DriverExtensionCatalog::class, $this->catalogWithPremium());
         $requirements = app(DriverExtensionRequirements::class);
 
         $problems = array_values(array_filter(
@@ -177,20 +186,29 @@ final class DriverExtensionTest extends TestCase
         $this->assertStringContainsString('End column', $problems[0]);
         $this->assertStringContainsString('Servers → Drivers', $problems[0]);
 
-        // The administrator fills the driver in; the module may now be switched on.
+        // A saved override is a draft until explicitly applied to this server.
         $catalog = app(DriverProfileCatalog::class);
         $profile = $catalog->find('game', 'rusacis')['profile'];
         $profile['config']['extensions'] = ['premium' => ['premium' => ['table' => 'account_premium', 'until_column' => 'premium_end']]];
         $catalog->save($profile);
+        $server = GameServer::query()->where('name', 'Main world')->firstOrFail();
+        $this->assertSame([], app(DriverExtensionAccess::class)->values($server, 'premium', 'premium'));
+        $this->assertNotEmpty($requirements->problems('premium', 'Premium', $this->premiumManifest()));
+        app(UniversalDriverActivation::class)->apply($server);
         $this->assertSame([], array_values(array_filter(
             $requirements->problems('premium', 'Premium', $this->premiumManifest()),
             static fn (string $problem): bool => str_contains($problem, 'Main world'),
         )));
 
         // And the module reads its answers for one server at run time.
-        $server = GameServer::query()->where('name', 'Main world')->firstOrFail();
         $this->assertSame('account_premium', app(DriverExtensionAccess::class)->values($server, 'premium', 'premium')['table']);
         $this->assertSame([], app(DriverExtensionAccess::class)->values($server, 'premium', 'unknown'));
+        $this->assertSame([['table' => 'account_premium', 'columns' => ['premium_end'], 'required' => true]], $fake->requirements);
+        // Once the real schema probe fails, even a formerly enabled module
+        // receives no mappings, and enabling it again is rejected.
+        $fake->report['compatible'] = false;
+        $this->assertSame([], app(DriverExtensionAccess::class)->values($server, 'premium', 'premium'));
+        $this->assertNotEmpty($requirements->problems('premium', 'Premium', $this->premiumManifest()));
 
         // An optional extension never blocks.
         $this->assertSame([], $requirements->problems('premium', 'Premium', $this->premiumManifest(required: false)));
@@ -236,5 +254,28 @@ final class DriverExtensionTest extends TestCase
             ->call('saveProfile')->assertHasNoErrors();
 
         $this->assertArrayNotHasKey('extensions', app(DriverProfileCatalog::class)->find('game', 'plain-driver')['profile']['config']);
+    }
+
+    public function test_incomplete_optional_groups_and_unsafe_or_ambiguous_identifiers_are_refused_before_queries(): void
+    {
+        $fake = new FakeExternalDatabaseConnectionTester;
+        $verifier = new DriverExtensionSchemaVerifier($fake);
+        $declaration = DriverExtensionCatalog::fromManifest('premium', 'Premium', $this->premiumManifest(required: false))[0];
+        $server = GameServer::factory()->create(['driver' => 'rusacis']);
+        $profile = app(DriverProfileCatalog::class)->find('game', 'rusacis')['profile'];
+        foreach ([
+            ['table' => 'premium_table'],
+            ['table' => 'accounts; DROP TABLE accounts', 'until_column' => 'end_time'],
+            ['table' => 'premium_table', 'until_column' => 'end_time` OR 1=1'],
+        ] as $values) {
+            $profile['config']['extensions'] = ['premium' => ['premium' => $values]];
+            $this->assertFalse($verifier->compatible($server, $profile, $declaration));
+        }
+        $declaration['fields'][] = ['name' => 'second_table', 'kind' => 'table', 'required' => true];
+        $profile['config']['extensions'] = ['premium' => ['premium' => [
+            'table' => 'premium_table', 'second_table' => 'another_table', 'until_column' => 'end_time',
+        ]]];
+        $this->assertFalse($verifier->compatible($server, $profile, $declaration));
+        $this->assertSame([], $fake->requirements);
     }
 }

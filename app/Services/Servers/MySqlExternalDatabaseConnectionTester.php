@@ -30,6 +30,30 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
      */
     public function test(array $connection, array $requirements, bool $driverReady): array
     {
+        return $this->probe($connection, $requirements, $driverReady);
+    }
+
+    /**
+     * Verify additional read-only invariants before allowing a JSON profile to be applied.
+     * The regular connection test for legacy PHP drivers is unchanged.
+     *
+     * @param  array<string,mixed>  $profile
+     * @param  array<string,mixed>  $connection
+     * @return array<string,mixed>
+     */
+    public function testProfile(array $connection, array $profile): array
+    {
+        return $this->probe($connection, $profile['config']['requirements'], true, $profile);
+    }
+
+    /**
+     * @param  array<string,mixed>  $connection
+     * @param  list<array<string,mixed>>  $requirements
+     * @param  array<string,mixed>|null  $profile
+     * @return array<string,mixed>
+     */
+    private function probe(array $connection, array $requirements, bool $driverReady, ?array $profile = null): array
+    {
         $connectionName = 'kaevcms_external_'.Str::lower(Str::random(12));
         $configuration = [
             'driver' => 'mysql',
@@ -104,7 +128,16 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 ];
             }
 
+            $profileIssues = [];
+            if ($compatible && $profile !== null) {
+                $profileIssues = (new UniversalProfileSchemaProbe)->problems($database, $profile);
+                if ($profileIssues !== []) {
+                    $compatible = false;
+                }
+            }
+
             return [
+                'profile_issues' => $profileIssues,
                 'connected' => true,
                 'compatible' => $driverReady ? $compatible : null,
                 'server_version' => $serverVersion,
@@ -120,6 +153,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
             ]);
 
             return [
+                'profile_issues' => [],
                 'connected' => false,
                 'compatible' => false,
                 'server_version' => null,

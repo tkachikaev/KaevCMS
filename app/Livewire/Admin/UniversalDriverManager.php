@@ -150,7 +150,7 @@ final class UniversalDriverManager extends Component
             $this->enabled[$capability] = true;
         }
         $this->originalAccountsTable = (string) ($this->draft['config']['accounts']['table'] ?? '');
-        if ($type === 'login') {
+        if ($type === 'login' && $baseId === null) {
             $this->enabled = array_fill_keys(ProfileFormat::LOGIN_CAPABILITIES, true);
         }
         $this->section = 'general';
@@ -380,7 +380,8 @@ final class UniversalDriverManager extends Component
             $rules['draft.config.accounts.table'] = ['required', 'string', 'regex:/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D'];
             $attributes['draft.config.accounts.table'] = __('drivers.accounts_table');
             foreach (['login', 'password', 'id', 'email', 'created_at', 'last_active', 'access_level', 'last_server'] as $field) {
-                $required = in_array($field, ['login', 'password'], true)
+                $required = $field === 'login'
+                    || ($field === 'password' && (($this->enabled['account_creation'] ?? false) || ($this->enabled['password_change'] ?? false)))
                     || ($field === 'id' && ($this->draft['config']['accounts']['ownership']['identity'] ?? '') === 'id');
                 $path = 'draft.config.accounts.fields.'.$field;
                 $rules[$path] = [$required ? 'required' : 'nullable', 'string', 'regex:/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D'];
@@ -481,6 +482,7 @@ final class UniversalDriverManager extends Component
         } catch (ProfileValidationException $exception) {
             $this->error = $type === 'login'
                 ? match ($exception->getMessage()) {
+                    'drivers.login_choose_capability' => __('drivers.login_choose_capability'),
                     'Driver profile ID already exists.' => __('drivers.short_name_taken'),
                     'This driver was changed by another administrator. Reopen it before saving.' => __('drivers.reload_profile'),
                     default => __('drivers.login_save_failed'),

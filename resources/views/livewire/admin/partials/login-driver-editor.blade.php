@@ -40,6 +40,20 @@
             </label>
         </div>
 
+        <fieldset class="ud-login-capabilities">
+            <legend>{{ __('drivers.capabilities') }}</legend>
+            <p>{{ __('drivers.capabilities_help') }}</p>
+            <div class="ud-grid">
+                @foreach(\App\Support\UniversalDrivers\ProfileFormat::LOGIN_CAPABILITIES as $capability)
+                    <label class="ud-check">
+                        <input type="checkbox" wire:model="enabled.{{ $capability }}">
+                        <span>{{ __("drivers.cap_{$capability}") }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </fieldset>
+        @include('livewire.admin.partials.driver-database-encoding', ['prefix' => 'login'])
+
         <div class="ud-grid">
             <label for="ud-login-password-scheme">{{ __('drivers.password_scheme') }}
                 <select id="ud-login-password-scheme" wire:model.live="draft.config.password.scheme">
@@ -65,7 +79,7 @@
         <p class="ud-info">{{ __('drivers.login_mapping_help') }}</p>
         <div class="ud-login-mappings">
             @foreach(['login','password','email','access_level','created_at','last_active','last_server','id'] as $field)
-                @php($required = in_array($field, ['login','password'], true) || ($field === 'id' && $config['accounts']['ownership']['identity'] === 'id'))
+                @php($required = $field === 'login' || ($field === 'password' && (($enabled['account_creation'] ?? false) || ($enabled['password_change'] ?? false))) || ($field === 'id' && $config['accounts']['ownership']['identity'] === 'id'))
                 <div class="ud-mapping-row" wire:key="login-mapping-{{ $field }}">
                     <div class="ud-mapping-purpose">
                         <strong>{{ $field === 'id' ? __('drivers.field_id_login') : __("drivers.field_{$field}") }}</strong>

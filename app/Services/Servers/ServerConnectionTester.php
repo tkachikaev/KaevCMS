@@ -96,7 +96,7 @@ final class ServerConnectionTester
         if ($profile['type'] !== 'login' || $profile['config']['database']['dialect'] !== 'mysql') {
             throw new InvalidArgumentException('The selected LoginServer profile is not supported.');
         }
-        $report = $this->testExternalDatabase(ProfileDatabaseEncoding::apply($this->credentials($values), $profile), $profile['config']['requirements'], true);
+        $report = $this->testUniversalProfile(ProfileDatabaseEncoding::apply($this->credentials($values), $profile), $profile);
         $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
         $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
         $report['capabilities'] = ($report['compatible'] ?? false) ? $profile['config']['capabilities'] : [];
@@ -123,7 +123,7 @@ final class ServerConnectionTester
                 'database_password' => $loginServer->databasePassword() ?? '',
                 'database_charset' => $loginServer->database_charset,
             ] : $values;
-        $report = $this->testExternalDatabase(ProfileDatabaseEncoding::apply($this->credentials($connectionValues), $profile), $profile['config']['requirements'], true);
+        $report = $this->testUniversalProfile(ProfileDatabaseEncoding::apply($this->credentials($connectionValues), $profile), $profile);
         $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
         $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
         $report['capabilities'] = ($report['compatible'] ?? false) ? array_values(array_intersect(
@@ -235,6 +235,21 @@ final class ServerConnectionTester
             'database_password' => $server->databasePassword() ?? '',
             'database_charset' => $server->database_charset,
         ], $loginServer);
+    }
+
+    /** @param array<string,mixed> $connection
+     * @param  array<string,mixed>  $profile
+     * @return array<string,mixed>
+     */
+    private function testUniversalProfile(array $connection, array $profile): array
+    {
+        // A test double may only implement the legacy interface; real MySQL checks
+        // use the expanded read-only probe on the same physical DB connection.
+        if ($this->tester instanceof MySqlExternalDatabaseConnectionTester) {
+            return $this->tester->testProfile($connection, $profile);
+        }
+
+        return $this->testExternalDatabase($connection, $profile['config']['requirements'], true);
     }
 
     /**

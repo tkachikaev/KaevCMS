@@ -74,7 +74,7 @@ final class DriverManagerTest extends TestCase
         $this->assertArrayNotHasKey('fixed_values', $catalog->find('login', 'registration-rows')['profile']['config']['accounts']['create']);
     }
 
-    public function test_login_editor_derives_full_functionality_and_checks_from_renamed_fields(): void
+    public function test_login_editor_preserves_selected_functionality_and_checks_renamed_fields(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
         Livewire::test(UniversalDriverManager::class)
@@ -84,7 +84,6 @@ final class DriverManagerTest extends TestCase
             ->set('draft.config.accounts.table', 'player_accounts')
             ->set('draft.config.accounts.fields.login', 'username')
             ->set('draft.config.accounts.fields.password', 'secret_hash')
-            ->set('enabled', [])
             ->call('saveProfile')
             ->assertHasNoErrors()
             ->assertSet('editing', false);
@@ -111,6 +110,39 @@ final class DriverManagerTest extends TestCase
             ->assertHasErrors(['draft.config.accounts.fields.password' => 'required'])
             ->assertSet('editing', true);
         $this->assertDatabaseCount('universal_driver_profiles', 0);
+    }
+
+    public function test_login_editor_can_save_and_copy_a_read_only_profile_without_enabling_writes(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'login', 'rusacis')
+            ->set('draft.id', 'read-only-login')
+            ->set('draft.name', 'Read only')
+            ->set('enabled', ['account_lookup' => true])
+            ->set('draft.config.accounts.fields.password', null)
+            ->call('saveProfile')->assertHasNoErrors()->assertSet('editing', false);
+        $profile = app(DriverProfileCatalog::class)->find('login', 'read-only-login')['profile'];
+        $this->assertSame(['account_lookup'], $profile['config']['capabilities']);
+        $this->assertNotContains('password', $profile['config']['requirements'][0]['columns']);
+        Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'login', 'read-only-login')
+            ->assertSet('enabled.account_creation', false)
+            ->assertSet('enabled.password_change', false)
+            ->set('draft.id', 'read-only-copy')
+            ->call('saveProfile')->assertHasNoErrors();
+        $this->assertSame(['account_lookup'], app(DriverProfileCatalog::class)->find('login', 'read-only-copy')['profile']['config']['capabilities']);
+    }
+
+    public function test_login_editor_rejects_an_empty_capability_selection_without_saving(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'login', 'rusacis')
+            ->set('draft.id', 'empty-functions')
+            ->set('enabled', [])
+            ->call('saveProfile')->assertSet('editing', true);
+        $this->assertNull(app(DriverProfileCatalog::class)->find('login', 'empty-functions'));
     }
 
     public function test_starting_from_a_template_does_not_save_or_change_the_original(): void

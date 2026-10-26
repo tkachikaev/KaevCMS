@@ -125,7 +125,12 @@ for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: '
             // Wait for the entry frame so geometry is measured at its final position.
             await panel.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))));
             const box = await panel.boundingBox();
-            tops.push(box.y);
+            // Clicking a partially visible trigger can scroll the page. Compare
+            // each panel with the toolbar that actually anchors it, not a stale viewport Y.
+            const toolbar = await page.locator('.admin-user').boundingBox();
+            const offset = box.y - toolbar.y - toolbar.height;
+            tops.push(offset);
+            expect(Math.abs(offset - 8)).toBeLessThanOrEqual(1);
             expect(box.x, JSON.stringify(await panel.evaluate(element => ({
                 width: innerWidth, root: document.documentElement.clientWidth, body: document.body.clientWidth,
                 rect: element.getBoundingClientRect().toJSON(), right: getComputedStyle(element).right,

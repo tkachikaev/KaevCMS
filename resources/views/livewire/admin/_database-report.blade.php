@@ -3,6 +3,7 @@
         $connected = (bool) ($report['connected'] ?? false);
         $incompatible = $connected && ($report['compatible'] ?? null) === false;
         $checks = is_array($report['checks'] ?? null) ? $report['checks'] : [];
+        $profileIssues = is_array($report['profile_issues'] ?? null) ? $report['profile_issues'] : [];
     @endphp
     <div @class(['database-test-report', 'success' => $connected && ! $incompatible, 'warning' => $incompatible, 'failed' => ! $connected]) role="status">
         <div class="database-test-heading">
@@ -20,8 +21,16 @@
             <p>
                 {{ ($report['compatible'] ?? false)
                     ? __('The database schema is compatible with the selected driver.')
-                    : __('The database is reachable, but required driver tables or columns are missing.') }}
+                    : ($profileIssues !== [] ? __('drivers.schema_probe_failed') : __('The database is reachable, but required driver tables or columns are missing.')) }}
             </p>
+
+            @if($profileIssues !== [])
+                <ul class="database-test-checks">
+                    @foreach($profileIssues as $issue)
+                        <li>{{ __($issue['key'], $issue['replace']) }}</li>
+                    @endforeach
+                </ul>
+            @endif
 
             @if($checks !== [])
                 <button class="database-test-details-toggle" type="button" wire:click="$toggle('showChecks')">

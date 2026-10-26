@@ -3,9 +3,12 @@
 namespace Tests\Feature\UniversalDrivers;
 
 use App\Contracts\ExternalDatabaseConnectionTester;
+use App\Contracts\GameServerDatabaseGateway;
+use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\LoginServerDriverResolver;
 use App\Services\GameAccounts\UniversalLoginDriver;
+use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Services\Servers\UniversalDriverActivation;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
@@ -13,6 +16,7 @@ use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -107,5 +111,21 @@ final class ConnectionActivationTest extends TestCase
         $this->assertFalse(app(LoginServerDriverResolver::class)->supports($server));
         $this->expectException(RuntimeException::class);
         app(LoginServerDriverResolver::class)->resolve($server);
+    }
+
+    public function test_unapplied_custom_game_profile_cannot_query_the_online_counter(): void
+    {
+        $catalog = app(DriverProfileCatalog::class);
+        $profile = $catalog->find('game', 'rusacis')['profile'];
+        $profile['id'] = 'unapplied-online';
+        $profile['name'] = 'Unapplied online';
+        $catalog->create($profile);
+        $server = GameServer::factory()->create(['driver' => $profile['id']]);
+        $database = Mockery::mock(GameServerDatabaseGateway::class);
+        $database->shouldNotReceive('run');
+        $this->app->instance(GameServerDatabaseGateway::class, $database);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Apply and verify');
+        app(MySqlGameServerOnlineCounter::class)->count($server);
     }
 }

@@ -218,6 +218,12 @@ final class ServerDriverRegistry
                 'statistics' => $type === 'game' ? array_values(array_intersect(
                     ['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'], $config['capabilities'],
                 )) : [],
+                ...($type === 'game' && ($config['characters']['fields']['online']['kind'] ?? null) === 'column'
+                    ? ['online_count' => [
+                        'table' => $config['characters']['table'],
+                        'column' => $config['characters']['fields']['online']['column'],
+                        'value' => 1,
+                    ]] : []),
             ];
         }
 

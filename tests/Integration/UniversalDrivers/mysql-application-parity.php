@@ -4,10 +4,14 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\ExternalGameAccountGateway;
 use App\Services\GameWorld\GameWorldDriverResolver;
+use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\UniversalDriverActivation;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\ExternalGameAccountWriteResult;
+use App\Support\Modules\ModuleManager;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
+use App\Support\UniversalDrivers\DriverExtensionAccess;
+use App\Support\UniversalDrivers\DriverExtensionCatalog;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\GameProfileEditor;
 use App\Support\UniversalDrivers\LoginProfileEditor;
@@ -60,6 +64,20 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
     $snapshots = app(ConnectionProfileSnapshots::class);
     $activation = app(UniversalDriverActivation::class);
     $gateway = app(ExternalGameAccountGateway::class);
+    $reject = static function (LoginServer|GameServer $server) use ($activation, $check): void {
+        $query = static fn () => DB::table('universal_driver_connection_snapshots')
+            ->where('connection_type', $server instanceof LoginServer ? 'login' : 'game')
+            ->where('connection_id', $server->id)->value('profile_sha256');
+        $before = $query();
+        try {
+            $activation->apply($server);
+        } catch (ProfileValidationException) {
+            $check($query() === $before, 'Rejected activation changed the verified snapshot.');
+
+            return;
+        }
+        throw new RuntimeException('An incompatible schema passed activation.');
+    };
     foreach ($databases as $family => $database) {
         $database .= '_app';
         $fixture->exec('CREATE DATABASE `'.$database.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
@@ -76,6 +94,7 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $id = $family === 'rusacis' ? 'obj_Id' : 'charId';
         $fixture->exec('ALTER TABLE mapped_characters RENAME COLUMN `'.$id.'` TO player_id');
         $fixture->exec('ALTER TABLE mapped_characters ADD COLUMN born_on VARCHAR(32) NULL');
+        $fixture->exec('ALTER TABLE mapped_characters RENAME COLUMN online TO is_connected');
         $fixture->exec("UPDATE mapped_characters SET born_on='2026-10-20 15:23:01'");
         $login = $catalog->find('login', $family)['profile'];
         $login['id'] = 'fixture-login-'.$family;
@@ -92,6 +111,7 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $game['config']['characters']['table'] = 'mapped_characters';
         $game['config']['characters']['fields']['id']['column'] = 'player_id';
         $game['config']['characters']['fields']['created_at'] = ['kind' => 'column', 'column' => 'born_on'];
+        $game['config']['characters']['fields']['online'] = ['kind' => 'column', 'column' => 'is_connected'];
         $game = (new GameProfileEditor)->prepare($game, $original);
         $catalog->create($game);
         $connection = ['database_host' => '127.0.0.1', 'database_port' => (int) (getenv('KAEV_MYSQL_TEST_PORT') ?: 3306),
@@ -100,8 +120,23 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $loginServer = LoginServer::factory()->create(['driver' => $login['id'], ...$connection]);
         $gameServer = GameServer::factory()->create(['driver' => $game['id'], 'login_server_id' => $loginServer->id,
             'use_login_server_connection' => false, 'chronicle' => 'Interlude', ...$connection]);
+        $fixture->exec('ALTER TABLE mapped_accounts DROP INDEX fixture_login');
+        $reject($loginServer);
+        $fixture->exec('ALTER TABLE mapped_accounts ADD UNIQUE KEY fixture_login (login)');
+        if ($family === 'rusacis') {
+            $fixture->exec('ALTER TABLE mapped_accounts MODIFY password VARCHAR(45) NULL');
+            $reject($loginServer);
+            $fixture->exec('ALTER TABLE mapped_accounts MODIFY password VARCHAR(60) NULL');
+        }
         $activation->apply($loginServer);
+        try {
+            app(MySqlGameServerOnlineCounter::class)->count($gameServer);
+            throw new RuntimeException('Unapplied JSON profile counted online players.');
+        } catch (RuntimeException $exception) {
+            $check(str_contains($exception->getMessage(), 'Apply and verify'), 'Unapplied online profile did not fail before reading the game database.');
+        }
         $activation->apply($gameServer);
+        $check(app(MySqlGameServerOnlineCounter::class)->count($gameServer) === (int) $fixture->query('SELECT COUNT(*) FROM mapped_characters WHERE is_connected = 1')->fetchColumn(), 'Online count ignored the selected column.');
         $check($snapshots->get($loginServer)['id'] === $login['id'], 'Login activation lost its selected candidate.');
         $check($gateway->accountSummary($loginServer, 'alice')['login'] === 'alice', 'Runtime account lookup failed.');
         $rows = $gateway->characters($gameServer, 'alice');
@@ -117,6 +152,105 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $check($gateway->inspectPreparedAccount($loginServer, $prepared) === ExternalGameAccountState::Matching, 'Runtime registration recovery proof mismatch.');
         $check($gateway->createPreparedAccount($loginServer, $prepared) === ExternalGameAccountWriteResult::AlreadyExists, 'Duplicate runtime registration not detected.');
         $check($gateway->changePassword($loginServer, $prepared->login, 'Changed-Fixture-456'), 'Runtime password update failed.');
+        $invalidLogin = $login;
+        $invalidLogin['config']['accounts']['create']['fixed_values'] = ['missing_registration_flag' => 0];
+        $invalidLogin['config']['requirements'][0]['optional_columns'][] = 'missing_registration_flag';
+        $catalog->save($invalidLogin);
+        $reject($loginServer);
+        $catalog->save($login);
+        $fixture->exec('ALTER TABLE mapped_accounts ADD numeric_hash INT NULL');
+        $invalidLogin = $login;
+        $invalidLogin['config']['accounts']['fields']['password'] = 'numeric_hash';
+        unset($invalidLogin['config']['accounts']['create']['columns']['password']);
+        $invalidLogin['config']['accounts']['create']['columns']['numeric_hash'] = 'credential';
+        $invalidLogin['config']['requirements'][0]['columns'][] = 'numeric_hash';
+        $catalog->save($invalidLogin);
+        $reject($loginServer);
+        $catalog->save($login);
+        $fixture->exec('ALTER TABLE mapped_accounts DROP INDEX fixture_login');
+        $reject($loginServer);
+        $fixture->exec('ALTER TABLE mapped_accounts ADD UNIQUE KEY fixture_login (login)');
+        $check($gateway->accountSummary($loginServer, 'alice')['login'] === 'alice', 'Rejected activation broke the existing read snapshot.');
+
+        foreach (['level', 'heroes', 'castles', 'heroes-details', 'castles-leader'] as $feature) {
+            $invalidGame = $game;
+            if ($feature === 'level') {
+                $invalidGame['config']['rankings']['level']['column'] = 'missing_rank';
+            } elseif ($feature === 'heroes-details') {
+                $invalidGame['config']['features']['heroes']['played_column'] = 'missing_hero_detail';
+            } elseif ($feature === 'castles-leader') {
+                $invalidGame['config']['features']['castles']['leader_name_column'] = 'missing_leader_name';
+            } else {
+                $relation = $game['config']['features'][$feature]['relation'];
+                $invalidGame['config']['relations'][$relation]['foreign_column'] = 'missing_join_key';
+            }
+            $catalog->save($invalidGame);
+            $reject($gameServer);
+        }
+        $catalog->save($game);
+
+        $manifest = ['driver_extensions' => [[
+            'key' => 'premium', 'type' => 'game', 'required' => true, 'title' => ['en' => 'Premium'],
+            'fields' => [
+                ['name' => 'table', 'kind' => 'table', 'required' => true, 'label' => ['en' => 'Table']],
+                ['name' => 'until_column', 'kind' => 'column', 'required' => true, 'label' => ['en' => 'Expiry column']],
+            ],
+        ]]];
+        $declarations = DriverExtensionCatalog::fromManifest('fixturemod', 'Fixture module', $manifest);
+        app()->instance(DriverExtensionCatalog::class, new class(app(ModuleManager::class), $declarations) extends DriverExtensionCatalog
+        {
+            public function __construct(ModuleManager $modules, private array $items)
+            {
+                parent::__construct($modules);
+            }
+
+            public function declarations(?string $type = null): array
+            {
+                return $type === 'login' ? [] : $this->items;
+            }
+        });
+        $fixture->exec('CREATE TABLE fixture_premium (expires_at BIGINT NOT NULL)');
+        $extensionGame = $game;
+        $extensionGame['id'] = 'fixture-ext-'.$family;
+        $extensionGame['config']['extensions'] = ['fixturemod' => ['premium' => ['table' => 'fixture_premium', 'until_column' => 'expires_at']]];
+        $catalog->create($extensionGame);
+        $extensionServer = GameServer::factory()->create(['driver' => $extensionGame['id'], 'login_server_id' => $loginServer->id,
+            'use_login_server_connection' => true]);
+        $access = app(DriverExtensionAccess::class);
+        $check($access->values($extensionServer, 'fixturemod', 'premium') === [], 'An unapplied custom profile supplied extension values.');
+        $activation->apply($extensionServer);
+        $check(($access->values($extensionServer, 'fixturemod', 'premium')['until_column'] ?? null) === 'expires_at', 'Verified extension could not read the real inherited schema.');
+        $fixture->exec('ALTER TABLE fixture_premium RENAME COLUMN expires_at TO renamed_expiry');
+        $check($access->values($extensionServer, 'fixturemod', 'premium') === [], 'A renamed extension column remained authorized.');
+
+        // A legacy identifier must use its explicitly applied custom snapshot.
+        $legacyGame = $game;
+        $legacyGame['id'] = $family;
+        $catalog->save($legacyGame);
+        $legacyServer = GameServer::factory()->create(['driver' => $family, 'login_server_id' => $loginServer->id,
+            'use_login_server_connection' => true]);
+        $activation->apply($legacyServer);
+        $check(app(MySqlGameServerOnlineCounter::class)->count($legacyServer) === (int) $fixture->query('SELECT COUNT(*) FROM mapped_characters WHERE is_connected = 1')->fetchColumn(), 'Legacy identifier overrode the snapshot online mapping.');
+        unset($legacyGame['config']['characters']['fields']['online']);
+        $catalog->save($legacyGame);
+        $activation->apply($legacyServer);
+        try {
+            app(MySqlGameServerOnlineCounter::class)->count($legacyServer);
+            throw new RuntimeException('A snapshot without an online column fell back to legacy SQL.');
+        } catch (RuntimeException $exception) {
+            $check(str_contains($exception->getMessage(), 'does not provide online counting'), 'Unexpected failure when online mapping is absent.');
+        }
+        $fixture->exec('CREATE TABLE fixture_online_stats (char_id INT NOT NULL, stat_key VARCHAR(32), stat_value VARCHAR(32))');
+        $legacyGame['config']['relations']['online_stats'] = ['table' => 'fixture_online_stats', 'local_column' => 'player_id', 'foreign_column' => 'char_id', 'join' => 'left', 'cardinality' => 'many'];
+        $legacyGame['config']['characters']['fields']['online'] = ['kind' => 'eav', 'relation' => 'online_stats', 'key_column' => 'stat_key', 'value_column' => 'stat_value', 'key_value' => 'online'];
+        $catalog->save($legacyGame);
+        $activation->apply($legacyServer);
+        try {
+            app(MySqlGameServerOnlineCounter::class)->count($legacyServer);
+            throw new RuntimeException('EAV online mapping fell back to legacy SQL.');
+        } catch (RuntimeException $exception) {
+            $check(str_contains($exception->getMessage(), 'does not provide online counting'), 'Unexpected failure for unsupported EAV online.');
+        }
         $gameServer->update(['use_login_server_connection' => true]);
         try {
             $snapshots->get($gameServer);

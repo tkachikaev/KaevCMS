@@ -31,4 +31,5 @@
         </div>
 
 
+    @include('livewire.admin.partials.driver-database-encoding', ['prefix' => 'game'])
 </fieldset>

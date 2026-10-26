@@ -4,6 +4,7 @@ namespace App\Support\UniversalDrivers;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Services\Servers\ServerDriverRegistry;
 use Throwable;
 
 /**
@@ -11,7 +12,7 @@ use Throwable;
  * one connected server: the answers the administrator gave in the driver's "Modules" section.
  *
  * The verified connection snapshot wins; connections still on a built-in PHP driver (or not applied
- * yet) fall back to the driver profile of the same name in the catalogue.
+ * yet) may fall back only to their bundled, release-owned profile.
  */
 final class DriverExtensionAccess
 {
@@ -30,7 +31,19 @@ final class DriverExtensionAccess
                 return $snapshot;
             }
 
-            return $this->catalog->find($type, (string) $server->driver)['profile'] ?? null;
+            // Only a bundled legacy PHP driver may use its shipped JSON as a
+            // declaration template. Custom profiles must be applied and verified
+            // against THIS server first, not merely saved in the catalogue.
+            $legacy = $type === 'login'
+                ? [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER]
+                : [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER];
+            if (! in_array((string) $server->driver, $legacy, true)) {
+                return null;
+            }
+
+            $entry = $this->catalog->find($type, (string) $server->driver);
+
+            return $entry !== null && ! $entry['modified'] ? $entry['profile'] : null;
         } catch (Throwable) {
             return null;
         }
@@ -41,8 +54,23 @@ final class DriverExtensionAccess
      */
     public function values(LoginServer|GameServer $server, string $moduleId, string $key): array
     {
-        $values = $this->profileFor($server)['config']['extensions'][$moduleId][$key] ?? [];
+        // Re-check at the moment of use. A schema can change after a module
+        // was enabled, so persisted answers are not permanent authorization.
+        $profile = $this->profileFor($server);
+        if ($profile === null) {
+            return [];
+        }
+        $values = $profile['config']['extensions'][$moduleId][$key] ?? [];
+        if (! is_array($values) || $values === []) {
+            return [];
+        }
+        foreach (app(DriverExtensionCatalog::class)->declarations($server instanceof LoginServer ? 'login' : 'game') as $declaration) {
+            if ($declaration['module'] === $moduleId && $declaration['key'] === $key) {
+                return app(DriverExtensionSchemaVerifier::class)->compatible($server, $profile, $declaration)
+                    ? $values : [];
+            }
+        }
 
-        return is_array($values) ? $values : [];
+        return []; // Unknown/uninstalled module declarations never get credentials or mappings.
     }
 }

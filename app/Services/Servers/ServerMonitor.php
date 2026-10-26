@@ -6,6 +6,7 @@ use App\Contracts\GameServerOnlineCounter;
 use App\Contracts\ServicePortProbe;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Throwable;
@@ -79,7 +80,28 @@ final class ServerMonitor
 
         $this->updateServiceState($gameServer, $serviceOnline);
 
-        if (! $databaseConfigured || ! $serviceOnline || ! is_array($driver['online_count'] ?? null)) {
+        $onlineDefinition = $driver['online_count'] ?? null;
+        try {
+            $activeProfile = app(ConnectionProfileSnapshots::class)->get($gameServer);
+            if ($activeProfile !== null) {
+                $online = $activeProfile['config']['characters']['fields']['online'] ?? [];
+                $onlineDefinition = ($activeProfile['type'] ?? null) === 'game' && ($online['kind'] ?? null) === 'column'
+                    ? ['table' => $activeProfile['config']['characters']['table'], 'column' => $online['column'], 'value' => 1]
+                    : null;
+            } elseif (! in_array((string) $gameServer->driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+                $onlineDefinition = null;
+            }
+        } catch (Throwable $exception) {
+            // A stale or corrupt verified snapshot must never fall back to the
+            // legacy counter: it might query a different game schema.
+            $onlineDefinition = null;
+            Log::warning('GameServer online profile unavailable.', [
+                'game_server_id' => $gameServer->id,
+                'exception_class' => $exception::class,
+            ]);
+        }
+
+        if (! $databaseConfigured || ! $serviceOnline || ! is_array($onlineDefinition)) {
             $gameServer->forceFill([
                 'online_players' => null,
                 'online_checked_at' => now(),

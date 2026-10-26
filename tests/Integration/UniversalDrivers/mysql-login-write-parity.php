@@ -152,6 +152,7 @@ foreach ($databaseNames as $type => $name) {
         $draft = (new ProfileEditorDraft)->blank('login');
         $draft['id'] = 'custom-md5-site';
         $draft['name'] = 'Custom MD5 site';
+        $draft['config']['capabilities'] = ['account_lookup', 'account_creation', 'password_change'];
         $draft['config']['accounts'] = [
             'table' => 'site_players',
             'fields' => ['login' => 'user_name', 'password' => 'pass_hash', 'email' => 'mail'],

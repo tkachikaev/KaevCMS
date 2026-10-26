@@ -8,7 +8,9 @@ use App\Models\LoginServer;
 /** Decides whether the drivers in use give a module everything it declared as required. */
 final class DriverExtensionRequirements
 {
-    public function __construct(private readonly DriverExtensionAccess $access) {}
+    public function __construct(private readonly DriverExtensionAccess $access,
+        private readonly DriverExtensionSchemaVerifier $schema,
+    ) {}
 
     /**
      * One readable sentence per server whose driver misses something the module needs. An empty
@@ -41,6 +43,13 @@ final class DriverExtensionRequirements
                         'kind' => $kind,
                         'server' => (string) $server->name,
                         'fields' => implode(', ', array_map(static fn (array $item): string => $item['label'], $missing)),
+                    ]);
+
+                    continue;
+                }
+                if (! $this->schema->compatible($server, $profile, $declaration)) {
+                    $problems[] = __('drivers.ext_gate_schema', [
+                        'module' => $moduleName, 'kind' => $kind, 'server' => (string) $server->name,
                     ]);
                 }
             }

@@ -390,7 +390,9 @@ class AdminPanelTest extends TestCase
         $this->assertStringContainsString('closeMobileMenu', $navigation);
         $this->assertStringContainsString("event.key === 'Escape'", $navigation);
         $this->assertStringContainsString('scrollbar-gutter: stable', $styles);
-        $this->assertStringContainsString('html.admin-is-navigating .admin-main', $styles);
+        $this->assertStringNotContainsString('html.admin-is-navigating .admin-main', $styles);
+        $this->assertStringContainsString('pageEntryAnimation = content.animate(', $navigation);
+        $this->assertStringContainsString('duration: 200', $navigation);
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
         $this->assertStringContainsString('a.admin-menu-item.active:hover', $styles);
         $this->assertStringContainsString('a.admin-menu-item[data-current]:hover', $styles);

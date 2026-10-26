@@ -15,9 +15,11 @@ use App\Services\Servers\ServerMonitorCoordinator;
 use App\Services\Servers\ServerMonitorSettings;
 use App\Services\Servers\ServerStatusOverview;
 use App\Services\SiteSettings;
+use App\Support\UniversalDrivers\DriverProfileCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Mockery;
 use Tests\Concerns\InteractsWithServerFixtures;
 use Tests\Fakes\FakeExternalDatabaseConnectionTester;
 use Tests\Fakes\FakeGameServerOnlineCounter;
@@ -56,6 +58,25 @@ class ServerMonitoringTest extends TestCase
         $this->assertNull($gameServer->online_players);
         $this->assertNotNull($gameServer->database_checked_at);
         $this->assertNotNull($gameServer->monitor_checked_at);
+    }
+
+    public function test_monitor_does_not_count_online_from_an_unapplied_custom_profile(): void
+    {
+        [, $server] = $this->servers();
+        $catalog = app(DriverProfileCatalog::class);
+        $profile = $catalog->find('game', 'rusacis')['profile'];
+        $profile['id'] = 'unapplied-monitor';
+        $profile['name'] = 'Unapplied monitor';
+        $catalog->create($profile);
+        $server->update(['driver' => $profile['id'], 'online_players' => 7]);
+        $ports = new FakeServicePortProbe;
+        $ports->default = true;
+        $this->app->instance(ServicePortProbe::class, $ports);
+        $counter = Mockery::mock(GameServerOnlineCounter::class);
+        $counter->shouldNotReceive('count');
+        $this->app->instance(GameServerOnlineCounter::class, $counter);
+        app(ServerMonitor::class)->run();
+        $this->assertNull($server->fresh()->online_players);
     }
 
     public function test_monitor_records_live_services_and_online_players(): void
