@@ -2,10 +2,10 @@
 
 namespace App\Services\GameWorld;
 
+use App\Support\UniversalDrivers\GameCharacterFilters;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Builder;
 
 /**
  * Experimental read-only character adapter. It does not participate in the
@@ -96,18 +96,7 @@ final class UniversalGameCharacterReader
             }
         }
         $query = $database->table($table)->where($owner['column'], $accountIdentity);
-        foreach ($config['filters'] as $filter) {
-            if (! $this->hasColumn($columns, $filter['column'])) {
-                throw new ProfileValidationException('A configured character filter column is missing: '.$table.'.'.$filter['column']);
-            }
-            match ($filter['op']) {
-                'eq' => $query->where($filter['column'], '=', $filter['value']),
-                'gt' => $query->where($filter['column'], '>', $filter['value']),
-                'zero_or_null' => $query->where(static fn (Builder $q): Builder => $q
-                    ->whereNull($filter['column'])->orWhere($filter['column'], 0)),
-                default => throw new ProfileValidationException('Unsupported character filter operation.'),
-            };
-        }
+        GameCharacterFilters::apply($query, $config, $schema['columns'], $table);
         // The limit is applied after related/EAV values have been populated,
         // because level may come from another table. Reject oversized account
         // datasets rather than returning a misleading partial list.

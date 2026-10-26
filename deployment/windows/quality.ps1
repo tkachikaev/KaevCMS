@@ -42,6 +42,11 @@ try {
     php deployment/dependencies/tests/dependency-guard-regression.php
     if ($LASTEXITCODE -ne 0) { throw "Dependency approval guard regression checks failed with exit code $LASTEXITCODE." }
 
+    foreach ($validator in @('validate-profiles.php', 'validate-write-profiles.php', 'validate-editor-drafts.php', 'validate-schema-preflight.php')) {
+        php (Join-Path $ProjectRoot "tests\Integration\UniversalDrivers\$validator")
+        if ($LASTEXITCODE -ne 0) { throw "Universal driver validation failed: $validator." }
+    }
+
     & "$PSScriptRoot\tests\update-workflow.ps1"
     & "$PSScriptRoot\tests\composer-audit-policy.ps1"
 

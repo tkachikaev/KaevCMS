@@ -74,6 +74,7 @@ try {
     require __DIR__.'/mysql-game-world-parity.php';
     require __DIR__.'/mysql-login-write-parity.php';
     require __DIR__.'/mysql-login-parity.php';
+    require __DIR__.'/mysql-filter-parity.php';
     require __DIR__.'/mysql-application-parity.php';
 } finally {
     // Only remove databases created by this exact invocation.

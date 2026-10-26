@@ -3,6 +3,7 @@
 namespace App\Services\GameWorld;
 
 use App\Support\UniversalDrivers\CastleNameCatalog;
+use App\Support\UniversalDrivers\GameCharacterFilters;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
@@ -310,17 +311,7 @@ final class UniversalGameWorldReader
         $fields = $characters['fields'];
         $mainColumns = $columns[$table] ?? [];
         $query = $database->table($table.' as c');
-        foreach ($config['filters'] as $filter) {
-            if (! $this->hasAll($mainColumns, [$filter['column']])) {
-                throw new ProfileValidationException('A configured character filter column is missing: '.$filter['column']);
-            }
-            match ($filter['op']) {
-                'eq' => $query->where('c.'.$filter['column'], '=', $filter['value']),
-                'gt' => $query->where('c.'.$filter['column'], '>', $filter['value']),
-                'zero_or_null' => $query->where(static fn (Builder $q): Builder => $q->whereNull('c.'.$filter['column'])->orWhere('c.'.$filter['column'], 0)),
-                default => throw new ProfileValidationException('Unsupported character filter operation.'),
-            };
-        }
+        GameCharacterFilters::apply($query, $config, $columns, 'c');
         $relationNames = [];
         foreach ($fields as $name => $field) {
             if ($field['kind'] === 'related') {

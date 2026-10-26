@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.54.3 - 2026-10-26
+
+**Experimental universal drivers; not production certified.** Updates from 0.54.2. No dependency updates, database migrations or Wallet/Donations changes.
+
+- Character filters now name their source table explicitly and support another table through a pair of character link columns. Existing profiles without a source table keep their original primary-table behavior.
+- Related conditions use correlated `EXISTS` instead of joins: duplicate matching records do not duplicate characters, conditions sharing a source/link must match the same record, and missing related records exclude the character. Filter values remain parameter-bound; identifiers and all required schema dependencies are validated before activation.
+- Rankings display their primary table/column and explain tie-break sorting in RU/EN. Primary-table ranking sources remain a documented limitation. The constructor shows an explicit table → column → condition → value flow, related link fields, and the scope of filters across public lists and account characters.
+- Fixed a mobile layout issue that compressed hero mapping inputs. Added regression coverage for editor persistence, unsafe/missing filter sources, ownership, duplicate rows, EAV-style conditions and real SQL parity.
+- Standalone driver validators load the new filter helper without Composer and run as part of the Windows quality gate. Kaev Classic 1.0.3 also synchronizes its particle switch and clears the canvas on the next frame when reduced motion changes before the media callback is delivered; a browser regression simulates that delivery delay.
+
 ## 0.54.2 - 2026-10-26
 
 **QA candidate, not production certified.**

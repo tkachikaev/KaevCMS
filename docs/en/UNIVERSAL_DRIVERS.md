@@ -1,4 +1,4 @@
-# KaevCMS universal drivers — current guide (0.54.2 QA candidate)
+# KaevCMS universal drivers — current guide (0.54.3 QA candidate)
 
 ## Overview and boundaries
 
@@ -16,6 +16,14 @@ Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. G
 
 Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the legacy counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID and the old Mobius-only rescue writer remain out of scope. Reward queues, Wallet and Donations are unchanged.
 
+### Ranking and filter sources
+
+Rankings display the primary table and column from character mappings. Experience is the recommended tie-breaker for level; level for PvP/PK/play time. No secondary metric does not disable a ranking. Name is the final tie-breaker. Rankings still require direct columns in the primary character table.
+
+Filters follow “Table → Column → Condition → Value”. Another table requires both link columns, for example `characters.obj_Id ↔ character_access.char_id`. Correlated `EXISTS` avoids duplicate characters and excludes characters without a matching record. Conditions sharing a table and both link columns must match the same record, including EAV key/value conditions.
+
+All filters combine with AND and affect both public lists and account characters. Thus `accesslevel = 0` also hides GMs in their account. `zero_or_null` takes no value. Profiles may add `filters[].table` and `filters[].link = {local_column, foreign_column}`; omitted `table` retains the legacy primary-table source. Older CMS versions may reject the new keys; import these profiles into a version supporting related filters. Activation requires both tables and all filter/link columns. Queries never modify game data.
+
 ## Database encoding
 
 The profile's **Charset** and **Collation** fields are editable on the first step for both server types. **An applied JSON snapshot takes precedence over the connection's original charset setting.** Reapply the profile to update an active server; legacy PHP drivers retain existing connection settings.
@@ -32,6 +40,6 @@ Modules must still enforce permissions, ownership, business constraints and use 
 
 ## QA status
 
-Offline checks: `validate-profiles.php`, `validate-write-profiles.php`, `validate-editor-drafts.php`, `validate-schema-preflight.php` under `tests/Integration/UniversalDrivers`. Remaining acceptance gates are disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright, clean install/update (Windows/VDS/shared), and real game-client checks. **0.54.2 is a QA candidate, not production certified.**
+Offline checks: `validate-profiles.php`, `validate-write-profiles.php`, `validate-editor-drafts.php`, `validate-schema-preflight.php` under `tests/Integration/UniversalDrivers`. Remaining acceptance gates are disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright, clean install/update (Windows/VDS/shared), and real game-client checks. **0.54.3 is a QA candidate, not production certified.**
 
 Prior iteration notes: [0.54.0 archive](history/UNIVERSAL_DRIVERS_0.54.0.md).

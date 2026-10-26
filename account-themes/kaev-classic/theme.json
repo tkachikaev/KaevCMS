@@ -1,7 +1,7 @@
 {
     "name": "Kaev Classic",
     "slug": "kaev-classic",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "KaevCMS",
     "cms_min": "0.53.1",
     "description": "Readable warm account theme with light and dark modes, single-line navigation, server status and large touch-friendly controls.",

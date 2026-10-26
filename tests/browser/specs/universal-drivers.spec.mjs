@@ -180,9 +180,23 @@ for (const variant of [
         await page.screenshot({ path: testInfo.outputPath('game-mappings.png'), fullPage: true });
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
         await page.locator('button[wire\\:click="nextGameStep(\'features\')"]').first().click();
+        await expect(page.locator('[data-ranking-table]')).toHaveCount(4);
+        await expect(page.locator('[data-ranking-table]').first()).toHaveValue('players');
+        await expect(page.locator('select[wire\\:model="draft.config.rankings.level.secondary"]')).toHaveValue('exp');
+        const filter = page.locator('.ud-filter').first();
+        await expect(filter.locator('[data-filter-table]')).toHaveValue('players');
+        await filter.locator('[data-filter-table]').fill('player_access');
+        await filter.locator('[data-filter-table]').press('Tab');
+        await expect(filter.locator('.ud-filter-link')).toBeVisible();
+        await expect(filter.locator('input[wire\\:model="draft.config.filters.0.link.local_column"]')).toHaveValue('player_id');
+        await filter.locator('input[wire\\:model="draft.config.filters.0.link.foreign_column"]').fill('char_id');
         await expect(page.locator('input[wire\\:model\\.blur="draft.config.relations.leader.table"]').first()).toHaveValue('players');
         await page.locator('.ud-game-group').filter({ has: page.locator('input[wire\\:model="draft.config.features.heroes.count_column"]') }).locator('summary').first().click();
         await page.locator('input[wire\\:model="draft.config.features.heroes.count_column"]').fill('hero_total');
+        if (variant.width <= 780) {
+            const heroTable = page.locator('input[wire\\:model\\.blur="draft.config.relations.heroes.table"]').first();
+            expect((await heroTable.boundingBox()).width).toBeGreaterThan(100);
+        }
         await page.screenshot({ path: testInfo.outputPath('game-features.png'), fullPage: true });
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
         await page.locator('.ud-game-editor button[type=submit]').click();
@@ -212,6 +226,8 @@ for (const variant of [
         const chunks = [];
         for await (const chunk of await download.createReadStream()) chunks.push(chunk);
         const exported = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        expect(exported.config.filters[0].table).toBe('player_access');
+        expect(exported.config.filters[0].link).toEqual({ local_column: 'player_id', foreign_column: 'char_id' });
         expect(exported.config.characters.fields.title.kind).toBe('eav');
         expect(exported.config.capabilities).toEqual(['characters', 'castles']);
         expect(Object.keys(exported.config.rankings)).toHaveLength(0);

@@ -21,6 +21,36 @@ final class DriverManagerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_filter_sources_can_be_changed_linked_saved_and_reopened(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        $component = Livewire::test(UniversalDriverManager::class)
+            ->call('createProfile', 'game', 'rusacis')
+            ->set('draft.name', 'Linked filters')
+            ->set('draft.config.characters.table', 'players')
+            ->set('draft.config.characters.fields.id.column', 'player_id')
+            ->call('nextGameStep', 'features')
+            ->assertSet('draft.config.filters.0.table', 'players')
+            ->assertSee('Только по основному показателю')
+            ->set('draft.config.filters.0.table', 'player_access')
+            ->assertSet('draft.config.filters.0.link.local_column', 'player_id')
+            ->assertSet('draft.config.filters.0.link.foreign_column', '')
+            ->assertSee('Ответный столбец в player_access')
+            ->call('saveProfile')
+            ->assertSet('editing', true)
+            ->assertSet('error', __('drivers.filter_link_required'));
+        $this->assertNull(app(DriverProfileCatalog::class)->find('game', 'linked-filters'));
+        $component->set('draft.config.filters.0.link.foreign_column', 'char_id')
+            ->call('saveProfile')->assertHasNoErrors()->assertSet('editing', false);
+        $saved = app(DriverProfileCatalog::class)->find('game', 'linked-filters')['profile'];
+        $this->assertSame(['local_column' => 'player_id', 'foreign_column' => 'char_id'], $saved['config']['filters'][0]['link']);
+        $this->assertSame('player_access', $saved['config']['filters'][0]['table']);
+        $component->call('editProfile', 'game', 'linked-filters')
+            ->assertSet('draft.config.filters.0.link.foreign_column', 'char_id')
+            ->set('draft.config.filters.0.table', 'players')
+            ->assertSet('draft.config.filters.0', ['table' => 'players', 'column' => 'accesslevel', 'op' => 'eq', 'value' => 0]);
+    }
+
     public function test_game_editor_saves_renamed_tables_and_infers_capabilities_without_checkboxes(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
@@ -150,12 +180,17 @@ final class DriverManagerTest extends TestCase
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
         $catalog = app(DriverProfileCatalog::class);
         $original = $catalog->find('game', 'rusacis')['profile'];
+        $displayConfig = $original['config'];
+        foreach ($displayConfig['filters'] as &$filter) {
+            $filter['table'] = $displayConfig['characters']['table'];
+        }
+        unset($filter);
 
         Livewire::test(UniversalDriverManager::class)
             ->call('createProfile', 'game', 'rusacis')
             ->assertSet('originalId', null)
             ->assertSet('draft.id', '')
-            ->assertSet('draft.config', $original['config'])
+            ->assertSet('draft.config', $displayConfig)
             ->assertSet('enabled.characters', true)
             ->assertSet('editing', true);
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Servers;
 
+use App\Support\UniversalDrivers\GameCharacterFilters;
 use App\Support\UniversalDrivers\ProfileFormat;
 use Illuminate\Database\Connection;
 
@@ -77,6 +78,19 @@ final class UniversalProfileSchemaProbe
             return [['key' => 'drivers.schema_missing_table', 'replace' => ['table' => $table]]];
         }
         $columns = $schema->getColumnListing($table);
+        foreach (GameCharacterFilters::requirements($config) as $filterTable => $filterColumns) {
+            if (! $schema->hasTable($filterTable)) {
+                $problems[] = ['key' => 'drivers.schema_missing_table', 'replace' => ['table' => $filterTable]];
+
+                continue;
+            }
+            $available = $schema->getColumnListing($filterTable);
+            foreach (array_unique($filterColumns) as $column) {
+                if (! in_array($column, $available, true)) {
+                    $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $filterTable.'.'.$column]];
+                }
+            }
+        }
         foreach (['level', 'pvp', 'pk', 'play_time'] as $capability) {
             if (! in_array($capability, $config['capabilities'], true)) {
                 continue;

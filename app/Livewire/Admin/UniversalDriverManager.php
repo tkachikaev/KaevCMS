@@ -232,6 +232,10 @@ final class UniversalDriverManager extends Component
         if (($this->draft['type'] ?? '') !== 'game') {
             return;
         }
+        foreach ($this->draft['config']['filters'] as &$filter) {
+            $filter['table'] ??= $this->draft['config']['characters']['table'];
+        }
+        unset($filter);
         foreach (['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $rank => $field) {
             if (($this->draft['config']['characters']['fields'][$field]['kind'] ?? '') === 'column') {
                 $this->draft['config']['rankings'][$rank] ??= ['column' => $this->draft['config']['characters']['fields'][$field]['column'], 'secondary' => null, 'positive_only' => $rank !== 'level'];
@@ -281,6 +285,11 @@ final class UniversalDriverManager extends Component
     public function updatedDraftConfigCharactersTable(string $value): void
     {
         $this->managePermission();
+        foreach ($this->draft['config']['filters'] ?? [] as $index => $filter) {
+            if (($filter['table'] ?? $this->charactersTableForRelations) === $this->charactersTableForRelations) {
+                $this->draft['config']['filters'][$index]['table'] = $value;
+            }
+        }
         foreach ($this->draft['config']['relations'] ?? [] as $key => $relation) {
             if ($relation['table'] === $this->charactersTableForRelations) {
                 $this->draft['config']['relations'][$key]['table'] = $value;
@@ -782,7 +791,27 @@ final class UniversalDriverManager extends Component
     {
         $this->managePermission();
         if (count($this->draft['config']['filters'] ?? []) < 16) {
-            $this->draft['config']['filters'][] = ['column' => '', 'op' => 'eq', 'value' => '0'];
+            $this->draft['config']['filters'][] = ['table' => $this->draft['config']['characters']['table'], 'column' => '', 'op' => 'eq', 'value' => '0'];
+        }
+    }
+
+    public function updatedDraft(mixed $value, ?string $key): void
+    {
+        if ($key === null || ! str_starts_with($key, 'config.filters.')) {
+            return;
+        }
+        $this->managePermission();
+        abort_unless($this->editing && ($this->draft['type'] ?? '') === 'game', 409);
+        $parts = explode('.', substr($key, strlen('config.filters.')));
+        if (count($parts) !== 2 || $parts[1] !== 'table' || ! ctype_digit($parts[0])
+            || ! isset($this->draft['config']['filters'][(int) $parts[0]])) {
+            return;
+        }
+        $filter = &$this->draft['config']['filters'][(int) $parts[0]];
+        if ($value === $this->draft['config']['characters']['table']) {
+            unset($filter['link']);
+        } else {
+            $filter['link'] ??= ['local_column' => $this->draft['config']['characters']['fields']['id']['column'], 'foreign_column' => ''];
         }
     }
 

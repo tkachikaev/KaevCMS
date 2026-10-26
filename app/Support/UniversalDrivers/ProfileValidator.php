@@ -81,15 +81,15 @@ final class ProfileValidator
             $relations = $this->relations($this->object($config['relations'], 'relations'));
             $this->characters($this->object($config['characters'], 'characters'), $relations);
             // Validate filter structure before using it to verify the schema contract.
-            $this->filters($config['filters']);
+            $this->validateGameFilters($config);
             $characters = $config['characters'];
             $baseColumns = [
                 $characters['owner']['column'],
                 $characters['fields']['id']['column'],
                 $characters['fields']['name']['column'],
             ];
-            foreach ($config['filters'] as $filter) {
-                $baseColumns[] = $filter['column'];
+            foreach (GameCharacterFilters::requirements($config) as $filterTable => $filterColumns) {
+                $this->requirePrimaryTable($filterTable, $config['requirements'], $filterColumns);
             }
             $this->requirePrimaryTable($characters['table'], $config['requirements'], $baseColumns);
             $this->rankings($this->object($config['rankings'], 'rankings'), $this->object($config['characters']['fields'], 'characters.fields'));
@@ -415,12 +415,35 @@ final class ProfileValidator
         }
     }
 
-    private function filters(mixed $filters): void
+    /** @param array<string,mixed> $config */
+    public function validateGameFilters(array $config): void
     {
+        $filters = $config['filters'];
+        $baseTable = $config['characters']['table'];
         $this->list($filters, 'filters', 16);
         foreach ($filters as $entry) {
             $filter = $this->object($entry, 'filter');
-            $this->keys($filter, ['column', 'op', 'value'], ['column', 'op'], 'filter');
+            $this->keys($filter, ['table', 'column', 'op', 'value', 'link'], ['column', 'op'], 'filter');
+            $table = $filter['table'] ?? $baseTable;
+            if (array_key_exists('table', $filter)) {
+                $this->identifier($filter['table'], 'filter.table');
+            }
+            $this->identifier($table, 'filter.table');
+            if ($table !== $baseTable) {
+                if (! isset($filter['link'])) {
+                    throw new ProfileValidationException('drivers.filter_link_required');
+                }
+                $link = $this->object($filter['link'], 'filter.link');
+                $this->keys($link, ['local_column', 'foreign_column'], ['local_column', 'foreign_column'], 'filter.link');
+                foreach (['local_column', 'foreign_column'] as $key) {
+                    if ($link[$key] === '') {
+                        throw new ProfileValidationException('drivers.filter_link_required');
+                    }
+                    $this->identifier($link[$key], 'filter.link.'.$key);
+                }
+            } elseif (array_key_exists('link', $filter)) {
+                throw new ProfileValidationException('drivers.filter_link_primary');
+            }
             $this->identifier($filter['column'], 'filter.column');
             $this->oneOf($filter['op'], ['eq', 'gt', 'zero_or_null'], 'filter.op');
             if ($filter['op'] === 'zero_or_null' && array_key_exists('value', $filter)) {

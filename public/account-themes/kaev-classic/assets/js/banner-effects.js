@@ -115,7 +115,12 @@
             && inView && width > 0 && height > 0;
         const tick = (time) => {
             frame = null;
-            if (!canAnimate()) return;
+            if (!canAnimate()) {
+                // The media value can change before its change callback is delivered.
+                // Keep the button and canvas in sync even in that interval.
+                if (motion.matches) synchronize();
+                return;
+            }
             const step = previousTime === null ? 1 : Math.min((time - previousTime) / (1000 / 60), 2);
             previousTime = time;
             draw(step);

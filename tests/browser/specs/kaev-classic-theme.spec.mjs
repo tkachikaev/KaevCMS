@@ -259,6 +259,17 @@ test('Classic banner particles stay within the art, remember the switch and stop
     // counters in the product. This detects leaked render loops after SPA navigation.
     await context.addInitScript(() => {
         window.classicCanvasDraws = new Map();
+        // Media callbacks can be delayed independently of the media value. The active
+        // animation must still stop and synchronize its button on the next frame.
+        const addMediaListener = MediaQueryList.prototype.addEventListener;
+        MediaQueryList.prototype.addEventListener = function (type, listener, options) {
+            if (type === 'change' && this.media === '(prefers-reduced-motion: reduce)' && typeof listener === 'function') {
+                return addMediaListener.call(this, type, event => {
+                    if (!window.delayClassicMotionCallbacks) listener.call(this, event);
+                }, options);
+            }
+            return addMediaListener.call(this, type, listener, options);
+        };
         const clear = CanvasRenderingContext2D.prototype.clearRect;
         CanvasRenderingContext2D.prototype.clearRect = function (...args) {
             if (this.canvas.matches('[data-kc-banner-particles]')) {
@@ -341,10 +352,12 @@ test('Classic banner particles stay within the art, remember the switch and stop
         await page.locator('.account-nav a[href$="/account"]').first().click();
         await expect.poll(hasPixels).toBe(true);
 
+        await page.evaluate(() => { window.delayClassicMotionCallbacks = true; });
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await expect(toggle).toBeDisabled();
         await expect(toggle).toHaveAttribute('aria-pressed', 'false');
         await expect.poll(hasPixels).toBe(false);
+        await page.evaluate(() => { window.delayClassicMotionCallbacks = false; });
         await page.emulateMedia({ reducedMotion: 'no-preference' });
         await expect(toggle).toBeEnabled();
         await expect.poll(hasPixels).toBe(true);

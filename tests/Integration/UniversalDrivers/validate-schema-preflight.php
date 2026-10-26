@@ -19,6 +19,7 @@ namespace {
     use Illuminate\Database\Connection;
 
     require_once __DIR__.'/../../../app/Support/UniversalDrivers/ProfileFormat.php';
+    require_once __DIR__.'/../../../app/Support/UniversalDrivers/GameCharacterFilters.php';
     require_once __DIR__.'/../../../app/Services/Servers/UniversalProfileSchemaProbe.php';
 
     final class FakeUniversalSchema

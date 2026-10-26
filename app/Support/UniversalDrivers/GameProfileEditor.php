@@ -23,6 +23,7 @@ final class GameProfileEditor
         $profile = (new ProfileEditorDraft)->clean($profile);
         $profile['config'] = $this->alignReferences($profile['config'], $original);
         $config = &$profile['config'];
+        (new ProfileValidator)->validateGameFilters($config);
         $table = $config['characters']['table'];
         $oldTable = $original['characters']['table'] ?? $table;
         $rules = [];
@@ -57,7 +58,16 @@ final class GameProfileEditor
             }
         }
         foreach ($config['filters'] as $filter) {
-            $this->column($rules, $table, $filter['column']);
+            $filterTable = $filter['table'] ?? $table;
+            if ($filterTable !== $table && (! is_array($filter['link'] ?? null)
+                || empty($filter['link']['local_column']) || empty($filter['link']['foreign_column']))) {
+                throw new ProfileValidationException('drivers.filter_link_required');
+            }
+        }
+        foreach (GameCharacterFilters::requirements($config) as $filterTable => $filterColumns) {
+            foreach ($filterColumns as $column) {
+                $this->column($rules, $filterTable, $column);
+            }
         }
         $capabilities = ['characters'];
         $rankings = [];
@@ -144,6 +154,16 @@ final class GameProfileEditor
         }
         $table = $config['characters']['table'];
         $oldTable = $original['characters']['table'] ?? $table;
+        foreach ($config['filters'] as &$filter) {
+            if (($filter['table'] ?? $oldTable) === $oldTable) {
+                if (isset($filter['table'])) {
+                    $filter['table'] = $table;
+                }
+            } elseif (isset($filter['link']['local_column'], $columns[$filter['link']['local_column']])) {
+                $filter['link']['local_column'] = $columns[$filter['link']['local_column']];
+            }
+        }
+        unset($filter);
         $clanSources = array_filter([$config['features']['castles']['relation'] ?? null, $config['features']['castles']['leader_relation'] ?? null]);
         foreach ($config['relations'] as $name => &$relation) {
             $old = $original['relations'][$name] ?? [];

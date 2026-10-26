@@ -53,24 +53,49 @@
     @else
     @foreach(['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $name => $field)
         @if(($config['characters']['fields'][$field]['kind'] ?? '') === 'column' && !empty($config['characters']['fields'][$field]['column']))
-            <div class="ud-grid ud-ranking" wire:key="game-ranking-{{ $name }}">
-                <label>{{ __("drivers.cap_{$name}") }}<code>{{ $config['characters']['table'] }} → {{ $config['characters']['fields'][$field]['column'] }}</code></label>
-                <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.optional') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']))<option value="{{ $def['column'] }}">{{ __("drivers.field_{$key}") }} ({{ $def['column'] }})</option>@endif @endforeach</select></label>
+            <fieldset class="ud-ranking" wire:key="game-ranking-{{ $name }}">
+                <legend>{{ __("drivers.cap_{$name}") }}</legend>
+                <div class="ud-ranking-source">
+                    <label>{{ __('drivers.table') }}<input type="text" value="{{ $config['characters']['table'] }}" readonly data-ranking-table></label>
+                    <span class="ud-arrow" aria-hidden="true">→</span>
+                    <label>{{ __('drivers.primary_sort') }}<input type="text" value="{{ $config['characters']['fields'][$field]['column'] }}" readonly></label>
+                    <span class="ud-arrow" aria-hidden="true">→</span>
+                    <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.no_secondary_sort') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']) && $def['column'] !== $config['characters']['fields'][$field]['column'])<option value="{{ $def['column'] }}">{{ __("drivers.field_{$key}") }} ({{ $config['characters']['table'] }} → {{ $def['column'] }})</option>@endif @endforeach</select></label>
+                </div>
+                <p class="ud-info">{{ __("drivers.ranking_{$name}_help") }}</p>
                 <label class="ud-check"><input type="checkbox" wire:model="draft.config.rankings.{{ $name }}.positive_only">{{ __('drivers.positive_only') }}</label>
-            </div>
+            </fieldset>
         @endif
     @endforeach
     @endif
 </section>
 
 <section class="ud-game-group">
-    <div class="ud-section-head"><div><h3>{{ __('drivers.filters') }}</h3><p>{{ __('drivers.filters_help') }}</p></div><button type="button" class="button button-secondary" wire:click="addFilter">+ {{ __('drivers.add_row') }}</button></div>
+    <div class="ud-section-head"><div><h3>{{ __('drivers.filters') }}</h3><p>{{ __('drivers.filters_help', ['table' => $config['characters']['table']]) }}</p></div><button type="button" class="button button-secondary" wire:click="addFilter">+ {{ __('drivers.add_row') }}</button></div>
+    <p class="ud-info">{{ __('drivers.filter_examples') }}</p>
+    <p class="ud-info">{{ __('drivers.filter_scope_help') }}</p>
     @foreach($config['filters'] as $index => $filter)
-        <div class="ud-registration-row" wire:key="game-filter-{{ $index }}">
-            <label>{{ __('drivers.column') }}<input type="text" wire:model="draft.config.filters.{{ $index }}.column"></label>
+        <div class="ud-filter" wire:key="game-filter-{{ $index }}">
+        <div class="ud-filter-row">
+            <label>{{ __('drivers.table') }}<input type="text" wire:model.live.blur="draft.config.filters.{{ $index }}.table" maxlength="64" data-filter-table></label>
+            <span class="ud-arrow" aria-hidden="true">→</span>
+            <label>{{ __('drivers.column') }}<input type="text" wire:model="draft.config.filters.{{ $index }}.column" maxlength="64"></label>
+            <span class="ud-arrow" aria-hidden="true">→</span>
             <label>{{ __('drivers.condition') }}<select wire:model.live="draft.config.filters.{{ $index }}.op"><option value="eq">{{ __('drivers.equals') }}</option><option value="gt">{{ __('drivers.greater_than') }}</option><option value="zero_or_null">{{ __('drivers.zero_or_empty') }}</option></select></label>
-            @if($filter['op'] !== 'zero_or_null')<label>{{ __('drivers.value') }}<input type="text" wire:model="draft.config.filters.{{ $index }}.value"></label>@else<span></span>@endif
+            <span class="ud-arrow" aria-hidden="true">→</span>
+            @if($filter['op'] !== 'zero_or_null')<label>{{ __('drivers.value') }}<input type="text" wire:model="draft.config.filters.{{ $index }}.value"></label>@else<label>{{ __('drivers.value') }}<input type="text" value="{{ __('drivers.filter_value_not_needed') }}" readonly></label>@endif
             <button type="button" class="button button-secondary" wire:click="removeFilter({{ $index }})">{{ __('drivers.remove') }}</button>
+        </div>
+        @if(($filter['table'] ?? $config['characters']['table']) !== $config['characters']['table'])
+            <div class="ud-filter-link">
+                <p class="ud-info">{{ __('drivers.filter_link_help') }}</p>
+                <div class="ud-filter-link-fields">
+                    <label>{{ __('drivers.filter_local_key', ['table' => $config['characters']['table']]) }}<input type="text" wire:model="draft.config.filters.{{ $index }}.link.local_column" maxlength="64"></label>
+                    <span class="ud-arrow" aria-hidden="true">↔</span>
+                    <label>{{ __('drivers.filter_foreign_key', ['table' => $filter['table']]) }}<input type="text" wire:model="draft.config.filters.{{ $index }}.link.foreign_column" maxlength="64"></label>
+                </div>
+            </div>
+        @endif
         </div>
     @endforeach
 </section>

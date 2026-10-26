@@ -1,7 +1,7 @@
 <?php
 
 /** Dependency-free editor smoke test. Does not contact a game database. */
-foreach (['ProfileFormat', 'ProfileValidationException', 'ProfileFormatMigrator', 'ProfileValidator', 'ProfileEditorDraft'] as $class) {
+foreach (['ProfileFormat', 'ProfileValidationException', 'ProfileFormatMigrator', 'GameCharacterFilters', 'ProfileValidator', 'ProfileEditorDraft'] as $class) {
     require __DIR__.'/../../../app/Support/UniversalDrivers/'.$class.'.php';
 }
 
