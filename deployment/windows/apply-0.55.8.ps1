@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Donations: PayPal Orders v2 REST client (inert); no live provider or Wallet credits. No .env edits.'
+Write-Host 'Donations: PayPal administrator Sandbox and credentials UI; no live player payments or Wallet credits. No .env edits.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

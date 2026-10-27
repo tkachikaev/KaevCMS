@@ -27,10 +27,10 @@ final class PayPalOrdersApi
 
     private const API = ['sandbox' => 'https://api-m.sandbox.paypal.com', 'live' => 'https://api-m.paypal.com'];
 
-    public function accessToken(PayPalApiCredentials $credentials): string
+    public function accessToken(PayPalApiCredentials $credentials, bool $forceRefresh = false): string
     {
         $cacheKey = $credentials->tokenCacheKey();
-        $cached = Cache::get($cacheKey);
+        $cached = $forceRefresh ? null : Cache::get($cacheKey);
         if (is_string($cached)) {
             try {
                 $token = Crypt::decryptString($cached);

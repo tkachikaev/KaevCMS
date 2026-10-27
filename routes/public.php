@@ -94,3 +94,8 @@ Route::post('/payments/yoomoney/notify', YooMoneyNotificationController::class)
 // real money settlement remains gated inside the bundled driver.
 Route::post('/payments/freekassa/notify', FreeKassaNotificationController::class)
     ->middleware('throttle:60,1,freekassa-notify')->name('payments.freekassa.notify');
+
+// Stable future PayPal webhook URL. Before iteration 4, intentionally reject ALL
+// notifications instead of acknowledging unverified payment evidence with 2xx.
+Route::post('/payments/paypal/notify', \App\Http\Controllers\Payments\PayPalNotificationPendingController::class)
+    ->middleware('throttle:60,1,paypal-notify')->name('payments.paypal.notify');

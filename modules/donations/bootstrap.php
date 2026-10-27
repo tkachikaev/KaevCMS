@@ -82,6 +82,18 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
+    foreach (['providers.paypal.show'] as $route) {
+        $access->registerExact(moduleId: $module->id, routeName: 'admin.module-pages.donations.'.$route,
+            viewRoles: [AdminRole::Auditor], manageRoles: [AdminRole::Owner, AdminRole::Administrator]);
+    }
+    foreach (['providers.paypal.test.return', 'providers.paypal.test.cancel'] as $route) {
+        $access->registerExact(moduleId: $module->id, routeName: 'admin.module-pages.donations.'.$route,
+            viewRoles: [], manageRoles: [AdminRole::Owner, AdminRole::Administrator]);
+    }
+    foreach (['providers.paypal.save', 'providers.paypal.check', 'providers.paypal.test.start', 'providers.paypal.test.capture'] as $route) {
+        $access->registerExact(moduleId: $module->id, routeName: 'admin.module-pages.donations.'.$route,
+            viewRoles: [], manageRoles: [AdminRole::Owner, AdminRole::Administrator]);
+    }
     foreach (['orders.index', 'orders.show', 'providers.index', 'providers.show', 'exchange.index', 'exchange.items.preview'] as $route) {
         $access->registerExact(
             moduleId: $module->id,

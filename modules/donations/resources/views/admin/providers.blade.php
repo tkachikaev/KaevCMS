@@ -30,5 +30,11 @@
             <a class="button button-secondary" wire:navigate href="{{ route('admin.module-pages.donations.index', ['adminPath' => $adminPath]) }}">{{ __('module-donations::messages.rates_title') }}</a>
         </div>
     @endforelse
+    <x-admin.card class="donations-provider-card" data-provider="paypal">
+        <div class="donations-provider-heading"><span class="donations-provider-logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/></svg></span><div><h2>PayPal</h2></div></div>
+        <p class="donations-provider-description">{{ __('module-donations::messages.paypal_admin_only') }}</p>
+        <div class="donations-provider-badges"><span class="status-badge">{{ __('module-donations::messages.paypal_not_live') }}</span></div>
+        <a class="button button-secondary" wire:navigate href="{{ route('admin.module-pages.donations.providers.paypal.show', ['adminPath' => $adminPath]) }}">{{ __('module-donations::messages.provider_configure') }}</a>
+    </x-admin.card>
 </div>
 @endsection

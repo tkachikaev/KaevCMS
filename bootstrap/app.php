@@ -29,7 +29,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
 
-        $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify', 'payments/freekassa/notify']);
+        $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify', 'payments/freekassa/notify', 'payments/paypal/notify']);
         // Multipart callbacks may only expose PHP's parsed form map. Preserve
         // signed values and empty strings rather than normalizing that map.
         $middleware->trimStrings(except: [fn (Request $request): bool => $request->is('payments/freekassa/notify')]);

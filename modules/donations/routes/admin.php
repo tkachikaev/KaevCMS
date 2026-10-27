@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationController;
 use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationGameExchangeController;
 use KaevCMS\Modules\Donations\Http\Controllers\AdminDonationProviderController;
+use KaevCMS\Modules\Donations\Http\Controllers\AdminPayPalController;
 
 Route::get('/', [AdminDonationController::class, 'index'])->name('index');
 Route::get('/exchange', [AdminDonationGameExchangeController::class, 'index'])->name('exchange.index');
@@ -21,6 +22,16 @@ Route::post('/orders/{orderUuid}/freekassa-recovery', [AdminDonationController::
 Route::post('/orders/{orderUuid}/reviews', [AdminDonationController::class, 'reportReview'])->whereUuid('orderUuid')->name('orders.reviews.store');
 Route::get('/orders/{orderUuid}', [AdminDonationController::class, 'showOrder'])->whereUuid('orderUuid')->name('orders.show');
 Route::get('/providers', [AdminDonationProviderController::class, 'index'])->name('providers.index');
+
+// PayPal is an admin-only Sandbox integration in iteration 3; not in player registry.
+Route::get('/providers/paypal', [AdminPayPalController::class, 'show'])->name('providers.paypal.show');
+Route::put('/providers/paypal', [AdminPayPalController::class, 'save'])->name('providers.paypal.save');
+Route::post('/providers/paypal/check', [AdminPayPalController::class, 'check'])->middleware('throttle:5,1,paypal-check')->name('providers.paypal.check');
+Route::post('/providers/paypal/test-purchase', [AdminPayPalController::class, 'start'])->middleware('throttle:5,1,paypal-sandbox')->name('providers.paypal.test.start');
+Route::get('/providers/paypal/test/{attemptId}/return', [AdminPayPalController::class, 'returned'])->whereNumber('attemptId')->name('providers.paypal.test.return');
+Route::get('/providers/paypal/test/{attemptId}/cancel', [AdminPayPalController::class, 'cancelled'])->whereNumber('attemptId')->name('providers.paypal.test.cancel');
+Route::post('/providers/paypal/test/{attemptId}/capture', [AdminPayPalController::class, 'capture'])->whereNumber('attemptId')->middleware('throttle:5,1,paypal-capture')->name('providers.paypal.test.capture');
+
 Route::post('/providers/yoomoney/notification-test', [AdminDonationProviderController::class, 'startNotificationTest'])
     ->middleware('throttle:10,1,donations-notification-test')->name('providers.notification-test.start');
 Route::get('/providers/yoomoney/notification-test/{token}', [AdminDonationProviderController::class, 'notificationTestStatus'])

@@ -174,6 +174,16 @@ final class PayPalAttempts
             if ($attempt->status !== 'capturing' || ($attempt->paypal_capture_id !== null && $attempt->paypal_capture_id !== $captureId)) {
                 throw new LogicException('PayPal capture response conflicts with its attempt.');
             }
+            // Sandbox has no corresponding wallet order. Do not give future
+            // settlement workers even a superficially eligible live status.
+            if ($attempt->purpose === 'admin_test') {
+                $next = match ($next) {
+                    'capture_completed_unsettled' => 'sandbox_verified',
+                    'capture_pending' => 'sandbox_pending',
+                    'capture_denied' => 'sandbox_denied',
+                    default => throw new LogicException('Invalid sandbox capture transition.'),
+                };
+            }
             DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
                 'status' => $next, 'paypal_capture_id' => $captureId,
                 'last_checked_at' => now(), 'diagnostic_code' => null, 'updated_at' => now(),

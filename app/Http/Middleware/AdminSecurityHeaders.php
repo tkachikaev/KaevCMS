@@ -23,6 +23,10 @@ class AdminSecurityHeaders
             // Only this reviewed checkout origin is allowed on these two pages.
             $formAction .= ' https://pay.fk.money';
         }
+        if (($request->routeIs('admin.module-pages.donations.providers.paypal.show')
+                || $request->routeIs('admin.module-pages.donations.providers.paypal.test.start'))) {
+            $formAction .= ' https://www.sandbox.paypal.com';
+        }
 
         $response->headers->set('Cache-Control', 'no-store, private');
         $response->headers->set('Pragma', 'no-cache');

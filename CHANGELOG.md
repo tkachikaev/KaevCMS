@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.55.8 - 2026-10-27
+
+**Donations 1.17.8 / PayPal Orders v2 iteration 3: QA candidate; PayPal Live/player checkout is NOT enabled.** Full source based on 0.55.7. Wallet, Composer lock, framework, YooMoney/FreeKassa live drivers and already published migrations unchanged.
+
+- Added PayPal settings card and a dedicated bilingual RU/EN administrator page with Sandbox/Live Client ID, encrypted Client Secret and Webhook ID, non-disclosing saved-secret hints, supported currency selection (including JPY zero decimals; incompatible HUF/TWD excluded) and read-only callback URL. PayPal configuration uses the existing encrypted provider-settings table.
+- PayPal stays outside the player provider registry, with its `enabled` flag forced OFF in this iteration, regardless of saved Live credentials. No player-visible PayPal checkout, DonationOrder, Wallet credit or settlement is introduced.
+- Added a sanitized diagnostic that verifies Sandbox or Live OAuth2 credentials using a fresh remote token request; this does not claim webhook registration, merchant availability or live-payment readiness.
+- Added an administrator-only Sandbox purchase via the existing PayPal attempts table (one additive admin actor column): short SQL reservation, hosted redirect, server-confirmed APPROVED, explicit POST Capture, stable request IDs and review-only handling of uncertain outcomes. Sandbox success uses `sandbox_verified`, never a Live settlement-eligible status.
+- Reserved a Core-owned PayPal webhook route, but it rejects **every** notification with HTTP 503 until signature verification is implemented in iteration 4 (64 KiB is rejected with 413); no events are accepted as proof.
+- Added access-control and mocked HTTP Feature tests, no-vendor contract tests, admin CSP restriction to the Sandbox approval host and existing provider regression checks. PHPUnit/MySQL/PHPStan/Pint/Playwright and real Sandbox credentials are unavailable here; full acceptance remains Codex QA.
+
+
 ## 0.55.7 - 2026-10-27
 
 **Donations 1.17.7 / PayPal Orders v2 iteration 2: QA candidate; PayPal is NOT enabled for players or administrators.** Full source built on 0.55.6. The live YooMoney/FreeKassa drivers, Wallet code, existing published migrations, Composer lock and framework versions remain unchanged.
