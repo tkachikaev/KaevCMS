@@ -414,6 +414,8 @@ return [
     'freekassa_test_zero_coins' => 'Результат теста сохраняется отдельно от заказов игроков. Монеты никому не начисляются, в том числе после переключения режима.',
     'freekassa_test_currency' => 'Валюта тестовой оплаты',
     'freekassa_test_amount' => 'Сумма (1–100, до 2 знаков после точки)',
+    'freekassa_test_continue' => 'Перейти к тестовой оплате',
+    'freekassa_test_continue_help' => 'Тестовый запрос подготовлен. Продолжите на странице FreeKassa; тестовый режим должен быть включён в кабинете FreeKassa.',
     'freekassa_test_start' => 'Открыть тестовую оплату',
     'freekassa_test_history' => 'Последние тестовые запросы',
     'freekassa_test_verified' => 'Подписанный callback получен',

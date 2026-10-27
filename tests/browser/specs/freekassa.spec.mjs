@@ -4,7 +4,7 @@ import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 test.use({ launchOptions: {
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}),
-    args: ['--host-resolver-rules=MAP pay.fk.money 127.0.0.1', '--no-proxy-server'],
+    args: ['--host-resolver-rules=MAP pay.fk.money 127.0.0.1, MAP checkout.example.test 127.0.0.1', '--no-proxy-server'],
 } });
 
 test('FreeKassa settings persist, admin checkout redirects correctly and CSP permits the isolated provider form', async ({ page, context }) => {
@@ -55,33 +55,19 @@ test('FreeKassa settings persist, admin checkout redirects correctly and CSP per
         expect(target.searchParams.get('m')).toBe('7012');
         expect(target.searchParams.get('oa')).toBe('1.00');
         expect(target.searchParams.get('currency')).toBe('RUB');
-        await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Local dummy provider</h1>' });
+        await route.fulfill({ status: 301, headers: { location: 'https://checkout.example.test/payment' }, body: '' });
     });
-    // Playwright does not reroute every redirect hop. Stop at the real controller's
-    // 303, verify its destination, then exercise its CSP using a direct GET form.
-    // DNS is additionally pinned to loopback so a missed interception cannot pay.
-    await context.route('**/providers/freekassa/test-purchase', async route => {
-        const response = await route.fetch({ maxRedirects: 0 });
-        expect(response.status()).toBe(303);
-        const headers = { ...response.headers() };
-        const destination = new URL(headers.location);
-        expect(destination.origin).toBe('https://pay.fk.money');
-        expect(destination.searchParams.get('s')).toMatch(/^[a-f0-9]{32}$/);
-        expect(headers['content-security-policy']).toContain("form-action 'self' https://pay.fk.money;");
-        delete headers.location;
-        delete headers['content-length'];
-        headers['content-type'] = 'text/html; charset=utf-8';
-        const fields = [...destination.searchParams].map(([name, value]) => {
-            expect(name).toMatch(/^[a-z_]+$/);
-            expect(value).toMatch(/^[a-zA-Z0-9.\-]+$/);
-            return `<input type="hidden" name="${name}" value="${value}">`;
-        }).join('');
-        await route.fulfill({ status: 200, headers, body: `<form method="GET" action="https://pay.fk.money/">${fields}<button>Continue locally</button></form>` });
-    });
+    await context.route('https://checkout.example.test/**', route => route.fulfill({
+        status: 200, contentType: 'text/html', body: '<h1>Local dummy provider</h1>',
+    }));
+    // Exercise the real POST/303/GET hand-off without replacing the controller response.
     const popupPromise = context.waitForEvent('page');
     await page.getByTestId('freekassa-test-purchase-form').getByRole('button').click();
     const popup = await popupPromise;
-    await popup.getByRole('button', { name: 'Continue locally' }).click();
+    await expect(popup).toHaveURL(/\/providers\/freekassa$/);
+    const continuation = popup.getByTestId('freekassa-test-continue');
+    await expect(continuation).toHaveAttribute('href', /^https:\/\/pay\.fk\.money\/\?/);
+    await continuation.click();
     await expect(popup.getByRole('heading')).toHaveText('Local dummy provider');
     expect(intercepted).toBe(1);
     await popup.close();

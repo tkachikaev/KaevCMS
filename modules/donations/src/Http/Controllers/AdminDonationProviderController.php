@@ -139,8 +139,11 @@ final class AdminDonationProviderController extends Controller
             return back()->withErrors(['freekassa_test' => __('module-donations::messages.freekassa_test_invalid')]);
         }
 
-        // 303 avoids repeating the POST on browser refresh.
-        return redirect()->away($checkout['url'], 303);
+        // Finish the POST on our own origin. The provider can redirect to another
+        // checkout host; an ordinary link must start that navigation, not this form.
+        return redirect()->route('admin.module-pages.donations.providers.show', [
+            'adminPath' => app(AdminPathSettings::class)->path(), 'providerCode' => 'freekassa',
+        ], 303)->with('freekassa_test_checkout_url', $checkout['url']);
     }
 
     public function updateActivation(Request $request, AdminPathSettings $paths,

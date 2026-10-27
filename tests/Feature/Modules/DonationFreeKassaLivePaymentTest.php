@@ -76,8 +76,19 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
     {
         [, $player, $order] = $this->prepared();
         $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertOk();
-        $response->assertSee('https://pay.fk.money/', false)->assertSee('name="oa"', false)
-            ->assertSee('name="currency"', false)->assertDontSee('merchant-orders-api-key');
+        $response->assertDontSee('merchant-orders-api-key');
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $links = (new \DOMXPath($dom))->query('//a[@data-testid="donations-checkout-submit"]');
+        $this->assertCount(1, $links);
+        $url = $links->item(0)->getAttribute('href');
+        $this->assertStringStartsWith('https://pay.fk.money/?', $url);
+        parse_str(parse_url($url, PHP_URL_QUERY), $fields);
+        $this->assertSame('7012', $fields['m']);
+        $this->assertSame('120.00', $fields['oa']);
+        $this->assertSame('RUB', $fields['currency']);
+        $this->assertSame($order->order_uuid, $fields['o']);
+        $this->assertSame(md5('7012:120.00:checkout-provider-secret:RUB:'.$order->order_uuid), $fields['s']);
         $this->assertMatchesRegularExpression("/(?:^|;)\\s*form-action\\s+(?:[^;]*\\s)?https:\/\/pay\\.fk\\.money(?=\\s|;|$)/",
             $response->headers->get('Content-Security-Policy'));
         $this->assertDatabaseCount('wallet_entries', 0);

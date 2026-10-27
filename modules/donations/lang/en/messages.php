@@ -414,6 +414,8 @@ return [
     'freekassa_test_zero_coins' => 'These tests are stored separately from player orders. No player receives coins, even after mode changes.',
     'freekassa_test_currency' => 'Test payment currency',
     'freekassa_test_amount' => 'Amount (1–100, up to 2 decimals)',
+    'freekassa_test_continue' => 'Continue to test checkout',
+    'freekassa_test_continue_help' => 'The test request is ready. Continue on FreeKassa; test mode must be enabled in your FreeKassa merchant account.',
     'freekassa_test_start' => 'Open test checkout',
     'freekassa_test_history' => 'Recent test requests',
     'freekassa_test_verified' => 'Signed callback received',

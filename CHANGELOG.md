@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Fix CSP-blocked FreeKassa checkout navigation: finish the administrator test POST on the CMS origin and continue through a link; use a signed GET link for player checkout. Keep the existing CSP restrictions and POST checkout providers unchanged.
+- Cover the real test-purchase hand-off and an additional provider redirect in browser regression tests.
+
 ## 0.55.12 - 2026-10-27
 
 **Donations 1.17.12 / PayPal Orders v2 QA fixes.** Real PayPal Sandbox and a separately approved Live control payment remain release acceptance gates.

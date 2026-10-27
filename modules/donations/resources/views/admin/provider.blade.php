@@ -108,6 +108,12 @@
     @else
         <h2>{{ $driver->name() }}</h2>
         @if($driver->code() === 'freekassa')
+            @if(session('freekassa_test_checkout_url'))
+                <section class="donations-readiness" role="status">
+                    <p>{{ __('module-donations::messages.freekassa_test_continue_help') }}</p>
+                    <a class="button button-primary" data-testid="freekassa-test-continue" rel="noreferrer noopener" href="{{ session('freekassa_test_checkout_url') }}">{{ __('module-donations::messages.freekassa_test_continue') }}</a>
+                </section>
+            @endif
             <p class="admin-field-help" role="status">{{ __('module-donations::messages.freekassa_iteration2_warning') }}</p>
             <div class="form-group">
                 <label for="freekassa-callback-url">{{ __('module-donations::messages.freekassa_notification_address') }}</label>

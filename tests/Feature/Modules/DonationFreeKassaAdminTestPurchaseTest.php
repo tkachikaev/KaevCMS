@@ -43,7 +43,15 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
             'currency_code' => 'RUB', 'amount' => '1.00',
         ]);
         $response->assertStatus(303);
-        $this->assertStringStartsWith('https://pay.fk.money/?', (string) $response->headers->get('Location'));
+        $response->assertRedirect('/admin/extensions/donations/providers/freekassa');
+        $checkoutUrl = session('freekassa_test_checkout_url');
+        $this->assertIsString($checkoutUrl);
+        $this->assertStringStartsWith('https://pay.fk.money/?', $checkoutUrl);
+        $page = $this->get('/admin/extensions/donations/providers/freekassa')->assertOk();
+        $page->assertSee('data-testid="freekassa-test-continue"', false);
+        $this->get('/admin/extensions/donations/providers/freekassa')->assertOk()
+            ->assertDontSee('data-testid="freekassa-test-continue"', false);
+        $this->assertDatabaseCount('module_donation_freekassa_admin_tests', 1);
         $row = DB::table('module_donation_freekassa_admin_tests')->first();
         $this->assertNotNull($row);
         $this->assertSame('pending', $row->status);
