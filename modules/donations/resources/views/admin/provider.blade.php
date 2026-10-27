@@ -111,7 +111,7 @@
             <p class="admin-field-help" role="status">{{ __('module-donations::messages.freekassa_iteration2_warning') }}</p>
             <div class="form-group">
                 <label for="freekassa-callback-url">{{ __('module-donations::messages.freekassa_notification_address') }}</label>
-                <input id="freekassa-callback-url" class="donations-callback-url" type="text" readonly value="{{ $webhookUrl }}" onclick="this.select()" aria-label="{{ __('module-donations::messages.freekassa_notification_address') }}">
+                <input id="freekassa-callback-url" class="donations-callback-url" type="text" readonly value="{{ $webhookUrl }}" data-donations-select-copy aria-label="{{ __('module-donations::messages.freekassa_notification_address') }}">
                 <small>{{ __('module-donations::messages.freekassa_callback_hint') }}</small>
             </div>
             @if($webhookIsLocal)

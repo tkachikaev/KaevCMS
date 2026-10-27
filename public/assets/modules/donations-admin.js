@@ -190,13 +190,23 @@
             dialog.removeEventListener('close', stop);
         };
     };
+    const initializeCopyFields = () => {
+        const fields = Array.from(document.querySelectorAll('[data-donations-select-copy]'));
+        const select = (event) => {
+            if (event.currentTarget instanceof HTMLInputElement) event.currentTarget.select();
+        };
+        fields.forEach(field => field.addEventListener('click', select));
+        return () => fields.forEach(field => field.removeEventListener('click', select));
+    };
     if (window.KaevCMSAdmin?.registerPage) {
         window.KaevCMSAdmin.registerPage('donations', initialize);
         window.KaevCMSAdmin.registerPage('donations-activation', initializeActivation);
         window.KaevCMSAdmin.registerPage('donations-yoomoney-test', initializeNotificationTest);
+        window.KaevCMSAdmin.registerPage('donations-copy-fields', initializeCopyFields);
     } else {
         initialize();
         initializeActivation();
         initializeNotificationTest();
+        initializeCopyFields();
     }
 })();

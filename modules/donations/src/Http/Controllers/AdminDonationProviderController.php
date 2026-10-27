@@ -13,13 +13,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
-use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
-use KaevCMS\Modules\Donations\Services\FreeKassaAdminTestPayments;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationYooMoneyNotificationTest;
+use KaevCMS\Modules\Donations\Services\FreeKassaAdminTestPayments;
+use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
 use Throwable;
 
 final class AdminDonationProviderController extends Controller
@@ -66,7 +67,8 @@ final class AdminDonationProviderController extends Controller
                 // Never reveal errors containing credentials in the admin UI.
             }
         }
-        $webhookUrl = route($driver->callbackRouteName());
+        $webhookUrl = $driver instanceof RoutablePaymentProvider
+            ? route($driver->callbackRouteName()) : '';
         $webhookHost = strtolower((string) parse_url($webhookUrl, PHP_URL_HOST));
         $webhookIsLocal = ! str_starts_with($webhookUrl, 'https://')
             || in_array($webhookHost, ['localhost', '127.0.0.1', '::1'], true)
@@ -135,6 +137,7 @@ final class AdminDonationProviderController extends Controller
         } catch (InvalidArgumentException|\LogicException) {
             return back()->withErrors(['freekassa_test' => __('module-donations::messages.freekassa_test_invalid')]);
         }
+
         // 303 avoids repeating the POST on browser refresh.
         return redirect()->away($checkout['url'], 303);
     }
@@ -270,9 +273,9 @@ final class AdminDonationProviderController extends Controller
             $proxies = null;
             if ($providerCode === 'freekassa') {
                 $senders = $request->exists('callback_sender_ips')
-                    ? FreeKassaCallbackSecurity::parseSubmitted($request->input('callback_sender_ips')) : null;
+                    ? FreeKassaCallbackSecurity::parseSubmitted($request->input('callback_sender_ips') ?? '') : null;
                 $proxies = $request->exists('callback_proxy_ips')
-                    ? FreeKassaCallbackSecurity::parseSubmitted($request->input('callback_proxy_ips'), true) : null;
+                    ? FreeKassaCallbackSecurity::parseSubmitted($request->input('callback_proxy_ips') ?? '', true) : null;
             }
             $settings->save($admin, $providerCode, (string) $enabled === '1', $mode,
                 $codes, $credentials, $senders, $proxies);

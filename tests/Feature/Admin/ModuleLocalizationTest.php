@@ -22,7 +22,7 @@ final class ModuleLocalizationTest extends TestCase
         $this->actingAs($admin, 'admin')->get('/admin/modules')->assertOk()
             ->assertSee('Пожертвования')->assertSee('Ежедневные награды')
             ->assertSee('Промокоды')->assertSee('Техническая поддержка')
-            ->assertSee('Пополнение монет через ЮMoney и настраиваемый обмен монет CMS на игровые предметы в веб-инвентаре.');
+            ->assertSee('ЮMoney и FreeKassa: серверная проверка платежей, восстановление по API из админки, безопасная смена секретов и однократное зачисление в Wallet.');
         $this->assertDatabaseCount('cms_modules', 0);
         $admin->update(['locale' => 'en']);
         $this->actingAs($admin, 'admin')->get('/admin/modules')->assertOk()

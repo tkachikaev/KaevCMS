@@ -5,12 +5,12 @@ namespace KaevCMS\Modules\Donations\Services;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Data\PaymentCheckout;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use KaevCMS\Modules\Donations\Models\DonationProviderSetting;
-use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use LogicException;
 
 /**
@@ -24,7 +24,6 @@ class DonationPaymentCheckout
         private readonly DonationProviderRegistry $registry,
         private readonly DonationProviderSettings $providers,
         private readonly DonationSettings $settings,
-        private readonly DonationMoney $money,
     ) {}
 
     /** Trusted integration guards plus audited payment mode in the database. */

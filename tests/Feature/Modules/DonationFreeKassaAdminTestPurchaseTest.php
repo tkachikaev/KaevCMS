@@ -8,8 +8,8 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
+use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use Tests\TestCase;
 
 final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
@@ -31,6 +31,7 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
             ['merchant_id' => '12345', 'secret_1' => 'test-checkout-secret', 'secret_2' => 'test-callback-secret'],
             ['198.51.100.19'], [],
         );
+
         return $owner;
     }
 
@@ -97,6 +98,38 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
         ], http_build_query(['MERCHANT_ID' => '12345', 'AMOUNT' => '1.00', 'intid' => '6789',
             'MERCHANT_ORDER_ID' => $uuid, 'CUR_ID' => '4', 'SIGN' => str_repeat('0', 32)]))->assertStatus(400);
         $this->assertSame('pending', DB::table('module_donation_freekassa_admin_tests')->value('status'));
+    }
+
+    public function test_admin_test_checkout_policy_allows_only_the_trusted_provider_destination(): void
+    {
+        $owner = $this->configuredOwner();
+        $response = $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers/freekassa');
+        $response->assertOk();
+        $this->assertStringContainsString("form-action 'self' https://pay.fk.money;",
+            $response->headers->get('Content-Security-Policy'));
+
+        $other = $this->get('/admin/extensions/donations/providers/yoomoney');
+        $other->assertOk();
+        $this->assertStringContainsString("form-action 'self';", $other->headers->get('Content-Security-Policy'));
+        $this->assertStringNotContainsString('https://pay.fk.money', $other->headers->get('Content-Security-Policy'));
+    }
+
+    public function test_php_parsed_multipart_callback_preserves_empty_fields_and_never_credits_wallet(): void
+    {
+        $owner = $this->configuredOwner();
+        $this->actingAs($owner, 'admin')->post('/admin/extensions/donations/providers/freekassa/test-purchase',
+            ['currency_code' => 'RUB', 'amount' => '1.00'])->assertStatus(303);
+        $reference = DB::table('module_donation_freekassa_admin_tests')->value('reference');
+        $fields = ['MERCHANT_ID' => '12345', 'AMOUNT' => '1.00', 'intid' => '9876543',
+            'MERCHANT_ORDER_ID' => $reference, 'CUR_ID' => '4', 'P_EMAIL' => '',
+            'SIGN' => md5('12345:1.00:test-callback-secret:'.$reference)];
+        $server = ['REMOTE_ADDR' => '198.51.100.19', 'HTTPS' => 'on',
+            'CONTENT_TYPE' => 'multipart/form-data; boundary=KaevMultipart', 'CONTENT_LENGTH' => '1024'];
+        $this->call('POST', '/payments/freekassa/notify', $fields, [], [], $server, '')
+            ->assertOk()->assertContent('YES');
+        $this->assertSame('verified', DB::table('module_donation_freekassa_admin_tests')->value('status'));
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 0);
     }
 
     public function test_auditor_and_guests_cannot_start_test_or_receive_secrets(): void

@@ -175,6 +175,7 @@ final class DonationPaymentSettlements
             testNotification: false,
             environment: 'live',
         );
+
         // This is explicitly API-confirmed evidence, NOT a forged SCI callback.
         // Its encrypted v2 receipt can still be replayed by retryPending().
         return $this->record($preparation, $verified, 'freekassa-api-recovery:'.$orderUuid.':'.$canonicalId);

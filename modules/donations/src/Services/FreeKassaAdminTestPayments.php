@@ -112,6 +112,7 @@ final class FreeKassaAdminTestPayments
                     || ! hash_equals((string) $row->notification_sha256, $fingerprint)) {
                     throw new LogicException('Conflicting FreeKassa administrative test operation.');
                 }
+
                 return 'verified';
             }
             if ($row->status !== 'pending') {
@@ -126,6 +127,7 @@ final class FreeKassaAdminTestPayments
             ]) === null) {
                 throw new RuntimeException('Unable to audit verified test notification.');
             }
+
             // Never call DonationPaymentSettlements, WalletGateway or any player service.
             return 'verified';
         }, 3);

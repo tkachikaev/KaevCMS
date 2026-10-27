@@ -113,3 +113,10 @@ FreeKassa SCI `intid` and API `fk_order_id` are separately named and their equal
 Up to four previous callback Secret 2 keys can remain encrypted for at most 24 hours after rotation and are accepted only for live payment preparations preceding that rotation. New orders always use current credentials. After the grace window, use merchant API reconciliation for confirmed old payments when the API remains available.
 
 Before going live, validate real vendor API responses, the merchant's notification settings and retries (`YES`), trusted callback IP/proxy chain, amount/currency, duplicate processing, and Laravel/MySQL/browser tests. No default-IP restore button is provided. Official provider documentation: https://docs.freekassa.net/.
+# FreeKassa 0.55.5 compatibility fixes
+
+Donations 1.17.5 requires CMS 0.55.5 or newer: multipart notification handling and checkout CSP permissions depend on core changes. Deploy the matching CMS release rather than replacing only the module directory on an older core.
+
+POST notifications support URL-encoded and multipart forms. When PHP already parsed multipart, one canonical field map is used without merging query parameters. Repeated fields on this path use PHP's selected value consistently for both signature and payment verification. Request sizes are bounded; arrays and observable files are rejected. This multipart path requires a valid Content-Length. No additional PHP or environment settings are required.
+
+Merchant API dispatch uses the existing database cache-lock table to preserve increasing nonce order across workers. Timeouts/API errors do not confirm payment; delivery retries and administrative reconciliation remain safe. These checks do not replace verification with an actual merchant account and its sandbox mode.

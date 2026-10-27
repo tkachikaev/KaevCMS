@@ -30,6 +30,10 @@ $application = Application::configure(basePath: dirname(__DIR__))
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
 
         $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify', 'payments/freekassa/notify']);
+        // Multipart callbacks may only expose PHP's parsed form map. Preserve
+        // signed values and empty strings rather than normalizing that map.
+        $middleware->trimStrings(except: [fn (Request $request): bool => $request->is('payments/freekassa/notify')]);
+        $middleware->convertEmptyStringsToNull(except: [fn (Request $request): bool => $request->is('payments/freekassa/notify')]);
         // The maintenance bypass cookie is read before cookie decryption and carries its own
         // HMAC, exactly as Laravel issues it; the updater sets it for the finalisation step.
         $middleware->encryptCookies(except: ['laravel_maintenance']);

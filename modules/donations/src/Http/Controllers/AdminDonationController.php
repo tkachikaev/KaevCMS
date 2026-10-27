@@ -191,8 +191,7 @@ final class AdminDonationController extends Controller
             $status = $settlements->recoverFreeKassaByApi($orderUuid);
         } catch (\Throwable) {
             // Never disclose remote API responses, credentials or payment metadata.
-            return back()->withErrors(['freekassa_recovery' =>
-                __('module-donations::messages.freekassa_recovery_failed')]);
+            return back()->withErrors(['freekassa_recovery' => __('module-donations::messages.freekassa_recovery_failed')]);
         }
 
         return redirect()->route('admin.module-pages.donations.orders.show', [

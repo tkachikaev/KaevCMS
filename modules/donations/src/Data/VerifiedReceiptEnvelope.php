@@ -58,8 +58,8 @@ final class VerifiedReceiptEnvelope
 
     /**
      * @return array{verified:VerifiedPayment,rawBody:string,providerCode:string}|null
-     *                                                             Returns null for unmodified legacy receipts (raw URL-encoded body).
-     *                                                             Caller MUST decrypt using Laravel Crypt before invoking this method.
+     *                                                                                 Returns null for unmodified legacy receipts (raw URL-encoded body).
+     *                                                                                 Caller MUST decrypt using Laravel Crypt before invoking this method.
      */
     public static function restore(string $plaintext): ?array
     {

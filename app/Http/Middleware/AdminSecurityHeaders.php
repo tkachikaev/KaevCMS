@@ -15,6 +15,14 @@ class AdminSecurityHeaders
         // with this per-response nonce; other inline styles stay blocked.
         $nonce = Vite::useCspNonce();
         $response = $next($request);
+        $formAction = "'self'";
+        if (($request->routeIs('admin.module-pages.donations.providers.show')
+                && $request->route('providerCode') === 'freekassa')
+            || $request->routeIs('admin.module-pages.donations.providers.freekassa.test-purchase')) {
+            // Chromium checks the destination of the test form's 303 redirect.
+            // Only this reviewed checkout origin is allowed on these two pages.
+            $formAction .= ' https://pay.fk.money';
+        }
 
         $response->headers->set('Cache-Control', 'no-store, private');
         $response->headers->set('Pragma', 'no-cache');
@@ -23,7 +31,7 @@ class AdminSecurityHeaders
         $response->headers->set('Referrer-Policy', 'same-origin');
         $response->headers->set(
             'Content-Security-Policy',
-            "default-src 'self'; style-src 'self' 'nonce-{$nonce}'; img-src 'self' data: blob:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"
+            "default-src 'self'; style-src 'self' 'nonce-{$nonce}'; img-src 'self' data: blob:; font-src 'self'; form-action {$formAction}; frame-ancestors 'none'; base-uri 'self'"
         );
 
         return $response;

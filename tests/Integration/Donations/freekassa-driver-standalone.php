@@ -4,9 +4,9 @@
 
 declare(strict_types=1);
 
+use KaevCMS\Modules\Donations\Data\PaymentCheckout;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
-use KaevCMS\Modules\Donations\Exceptions\InvalidPaymentSignature;
 use KaevCMS\Modules\Donations\Providers\FreeKassaProvider;
 use KaevCMS\Modules\Donations\Providers\FreeKassaSignedNotification;
 
@@ -49,7 +49,7 @@ $provider->assertCheckout($checkout, $intent, $credentials, $uuid);
 rejects(fn () => $provider->assertConfiguration($credentials, 'live'), 'API key is required for live');
 $provider->assertConfiguration([...$credentials, 'api_key' => 'verified-server-api-key'], 'live');
 ensure($provider->beginPayment($intent, [...$credentials, 'api_key' => 'verified-server-api-key'], 'live')->method === 'GET', 'live SCI checkout');
-rejects(fn () => $provider->assertCheckout(new \KaevCMS\Modules\Donations\Data\PaymentCheckout(null, 'https://evil.invalid', 'GET', $checkout->fields), $intent, $credentials, $uuid), 'malicious redirect');
+rejects(fn () => $provider->assertCheckout(new PaymentCheckout(null, 'https://evil.invalid', 'GET', $checkout->fields), $intent, $credentials, $uuid), 'malicious redirect');
 foreach (['100', '100.0', '100.00'] as $amount) {
     $signature = md5('7012:'.$amount.':notification-secret-value:'.$uuid);
     $body = http_build_query(['MERCHANT_ID' => '7012', 'AMOUNT' => $amount, 'intid' => '77788',

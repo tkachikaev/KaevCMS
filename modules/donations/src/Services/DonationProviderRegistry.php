@@ -4,8 +4,8 @@ namespace KaevCMS\Modules\Donations\Services;
 
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Contracts\PaymentProvider;
-use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 use KaevCMS\Modules\Donations\Providers\FreeKassaProvider;
+use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 use LogicException;
 
 /**

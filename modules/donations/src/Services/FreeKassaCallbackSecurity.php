@@ -31,7 +31,6 @@ final class FreeKassaCallbackSecurity
     }
 
     /**
-     * @param mixed $submitted
      * @return list<string>
      */
     public static function parseSubmitted(mixed $submitted, bool $proxies = false): array
@@ -53,7 +52,6 @@ final class FreeKassaCallbackSecurity
         return array_values(array_unique($items));
     }
 
-    /** @param mixed $items */
     public static function validateStored(mixed $items, bool $proxies = false): bool
     {
         if (! is_array($items) || ! array_is_list($items) || count($items) > 64) {
@@ -89,7 +87,7 @@ final class FreeKassaCallbackSecurity
                     return false;
                 }
                 $chain = array_map('trim', explode(',', $forwarded));
-                if (count($chain) < 1 || count($chain) > 16) {
+                if (count($chain) > 16) {
                     return false;
                 }
                 foreach ($chain as $hop) {
@@ -128,6 +126,7 @@ final class FreeKassaCallbackSecurity
                 if ($raw === @inet_pton($range)) {
                     return true;
                 }
+
                 continue;
             }
             [$network, $prefix] = explode('/', $range, 2);
@@ -141,7 +140,7 @@ final class FreeKassaCallbackSecurity
             if (substr($raw, 0, $whole) !== substr($base, 0, $whole)) {
                 continue;
             }
-            if ($remaining === 0 || ((ord($raw[$whole]) ^ ord($base[$whole])) & (0xff << (8 - $remaining))) === 0) {
+            if ($remaining === 0 || ((ord($raw[$whole]) ^ ord($base[$whole])) & (0xFF << (8 - $remaining))) === 0) {
                 return true;
             }
         }

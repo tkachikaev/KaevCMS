@@ -25,7 +25,7 @@ interface RoutablePaymentProvider extends PaymentProvider
     /**
      * Reject untrusted checkout destinations, method, receiver and altered amounts.
      *
-     * @param array<string,string> $credentials
+     * @param  array<string,string>  $credentials
      */
     public function assertCheckout(PaymentCheckout $checkout, PaymentIntent $intent, array $credentials, string $reference): void;
 }

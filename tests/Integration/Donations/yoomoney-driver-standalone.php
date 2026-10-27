@@ -2,6 +2,7 @@
 
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
+use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Data\VerifiedReceiptEnvelope;
 use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 
@@ -86,7 +87,7 @@ foreach ([
 }
 // v2 evidence includes authenticated provider identity and currency, but it cannot
 // be replayed as a legacy YooMoney envelope.
-$other = new \KaevCMS\Modules\Donations\Data\VerifiedPayment(
+$other = new VerifiedPayment(
     $verified->orderUuid, 'PAYMENT-A_42', 'received_unsettled', 'USD', 10000, 9900,
 );
 $sealedV2 = VerifiedReceiptEnvelope::seal($other, 'test-signed-payload', 'fixture_gamma');

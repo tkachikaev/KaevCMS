@@ -126,6 +126,8 @@ final class DonationProviderSettings
     /**
      * @param  array<array-key, mixed>  $currencyCodes
      * @param  array<array-key, mixed>  $suppliedCredentials
+     * @param  list<string>|null  $callbackSenderIps
+     * @param  list<string>|null  $callbackProxyIps
      */
     public function save(
         Admin $admin,
@@ -299,7 +301,6 @@ final class DonationProviderSettings
         });
     }
 
-
     /**
      * FreeKassa requires strictly increasing API nonces. Serialize the counter
      * through the existing provider settings row, including across PHP workers.
@@ -341,7 +342,7 @@ final class DonationProviderSettings
     }
 
     /** @param array<string,string> $stored
-     *  @return list<string>
+     * @return list<string>
      */
     private function freeKassaPolicyList(array $stored, string $key, bool $proxies): array
     {
@@ -445,11 +446,19 @@ final class DonationProviderSettings
         return $this->readRetiredKeys($stored, self::FREEKASSA_RETIRED_KEYS);
     }
 
+    /**
+     * @param  array<string,string>  $stored
+     * @return list<array{secret:string,rotated_at:string,max_preparation_id:int,expires_at:string}>
+     */
     private function readRetiredYooMoneyKeys(array $stored): array
     {
         return $this->readRetiredKeys($stored, self::YOOMONEY_RETIRED_KEYS);
     }
 
+    /**
+     * @param  array<string,string>  $stored
+     * @return list<array{secret:string,rotated_at:string,max_preparation_id:int,expires_at:string}>
+     */
     private function readRetiredKeys(array $stored, string $field): array
     {
         if (! isset($stored[$field])) {

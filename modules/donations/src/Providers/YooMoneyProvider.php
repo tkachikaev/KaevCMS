@@ -8,8 +8,8 @@ use KaevCMS\Modules\Donations\Data\PaymentCheckout;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Data\VerifiedPayment;
-use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Exceptions\InvalidPaymentSignature;
+use KaevCMS\Modules\Donations\Services\DonationMoney;
 
 /**
  * YooMoney wallet P2P collection, NOT YooKassa. Checkout requires trusted static

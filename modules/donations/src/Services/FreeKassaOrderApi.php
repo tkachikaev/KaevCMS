@@ -2,8 +2,11 @@
 
 namespace KaevCMS\Modules\Donations\Services;
 
+use Illuminate\Contracts\Cache\LockProvider;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Providers\FreeKassaSignedNotification;
 use RuntimeException;
 
 /**
@@ -32,22 +35,35 @@ final class FreeKassaOrderApi
             || $apiKey === '' || $amountMinor < 1) {
             throw new InvalidArgumentException('Invalid FreeKassa API proof parameters.');
         }
-        $payload = [
-            'shopId' => (int) $merchantId,
-            'nonce' => $this->settings->nextFreeKassaApiNonce($merchantId),
-            'paymentId' => $orderUuid,
-        ];
-        ksort($payload, SORT_STRING);
-        $payload['signature'] = hash_hmac('sha256', implode('|', $payload), $apiKey);
-        // HTTPS/certificate verification stays enabled; secrets never enter logs.
-        $response = Http::acceptJson()->asJson()->timeout(8)->connectTimeout(4)
-            ->withOptions(['allow_redirects' => false])->post(self::API_URL, $payload);
-        if (! $response->successful() || strlen($response->body()) > 131072) {
-            throw new RuntimeException('Unable to verify FreeKassa order by API.');
+
+        // A unique counter alone does not guarantee request arrival order.
+        // Hold one shared DB-backed lock through dispatch and response so a
+        // second worker cannot send nonce n+1 before nonce n reaches FreeKassa.
+        $lockStore = Cache::store('database')->getStore();
+        if (! $lockStore instanceof LockProvider) {
+            throw new RuntimeException('FreeKassa verification requires a shared lock store.');
         }
-        // intid is NOT covered by SCI signature. Canonical financial operation
-        // identity comes from authenticated merchant API, never callback intid.
-        return self::paidOrderIdFromResponse($response->body(), $orderUuid, $amountMinor, $currency);
+
+        return $lockStore->lock('donations:freekassa:api:'.hash('sha256', $merchantId), 15)
+            ->block(10, function () use ($merchantId, $apiKey, $orderUuid, $amountMinor, $currency): string {
+                $payload = [
+                    'shopId' => (int) $merchantId,
+                    'nonce' => $this->settings->nextFreeKassaApiNonce($merchantId),
+                    'paymentId' => $orderUuid,
+                ];
+                ksort($payload, SORT_STRING);
+                $payload['signature'] = hash_hmac('sha256', implode('|', $payload), $apiKey);
+                // HTTPS/certificate verification stays enabled; secrets never enter logs.
+                $response = Http::acceptJson()->asJson()->timeout(8)->connectTimeout(4)
+                    ->withOptions(['allow_redirects' => false])->post(self::API_URL, $payload);
+                if (! $response->successful() || strlen($response->body()) > 131072) {
+                    throw new RuntimeException('Unable to verify FreeKassa order by API.');
+                }
+
+                // intid is NOT covered by SCI signature. Canonical financial operation
+                // identity comes from authenticated merchant API, never callback intid.
+                return self::paidOrderIdFromResponse($response->body(), $orderUuid, $amountMinor, $currency);
+            });
     }
 
     /**
@@ -107,7 +123,7 @@ final class FreeKassaOrderApi
                 throw new RuntimeException('FreeKassa order status, currency or amount mismatch.');
             }
             try {
-                $apiMinor = \KaevCMS\Modules\Donations\Providers\FreeKassaSignedNotification::parseAmountMinor($order['amount']);
+                $apiMinor = FreeKassaSignedNotification::parseAmountMinor($order['amount']);
             } catch (InvalidArgumentException) {
                 throw new RuntimeException('Invalid FreeKassa API amount.');
             }
@@ -115,7 +131,7 @@ final class FreeKassaOrderApi
                 throw new RuntimeException('FreeKassa paid amount mismatch.');
             }
         }
-        if ($matched !== 1 || $canonicalId === null) {
+        if ($matched !== 1) {
             throw new RuntimeException('FreeKassa operation not confirmed by API.');
         }
 

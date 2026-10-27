@@ -146,6 +146,7 @@ final class FreeKassaProvider implements RoutablePaymentProvider
                 $signed->operationId, $signed->amountMinor, (string) $order->currency_code,
             );
         }
+
         return new VerifiedPayment(
             orderUuid: $signed->orderUuid,
             providerPaymentId: $canonicalId ?? $signed->operationId,

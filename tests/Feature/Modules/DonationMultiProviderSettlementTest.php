@@ -12,10 +12,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Data\VerifiedReceiptEnvelope;
-use KaevCMS\Modules\Donations\Services\DonationOrders;
-use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
-use KaevCMS\Modules\Donations\Services\DonationPaymentCheckout;
+use KaevCMS\Modules\Donations\Models\DonationOrder;
+use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
+use KaevCMS\Modules\Donations\Services\DonationOrders;
+use KaevCMS\Modules\Donations\Services\DonationPaymentCheckout;
+use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
@@ -38,7 +40,7 @@ final class DonationMultiProviderSettlementTest extends TestCase
         app(ModuleRuntime::class)->bootModule($module);
         $this->app->instance(DonationProviderRegistry::class, new DonationProviderRegistry([
             FakeRoutablePaymentProvider::class,
-            \KaevCMS\Modules\Donations\Providers\YooMoneyProvider::class,
+            YooMoneyProvider::class,
         ]));
         $this->app->forgetInstance(DonationProviderSettings::class);
         $this->app->forgetInstance(DonationPaymentPreparations::class);
@@ -47,7 +49,7 @@ final class DonationMultiProviderSettlementTest extends TestCase
         config()->set('wallet.enabled_sources.donations', true);
     }
 
-    /** @return array{0:Admin,1:User,2:\KaevCMS\Modules\Donations\Models\DonationOrder} */
+    /** @return array{0:Admin,1:User,2:DonationOrder} */
     private function prepared(string $mode = 'live'): array
     {
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
@@ -64,7 +66,7 @@ final class DonationMultiProviderSettlementTest extends TestCase
         return [$owner, $player, $order];
     }
 
-    private function callback(string $orderUuid, string $operation = 'GAMMA_1', int $amount = 1200): ProviderCallback
+    private function signedCallback(string $orderUuid, string $operation = 'GAMMA_1', int $amount = 1200): ProviderCallback
     {
         $reference = 'gamma-'.$orderUuid;
         $signature = hash_hmac('sha256', $reference.'|'.$operation.'|'.$amount, 'fixture-provider-secret');
@@ -82,7 +84,7 @@ final class DonationMultiProviderSettlementTest extends TestCase
         // The original YooMoney callback URL never auto-routes to a different driver.
         $this->post('/payments/yoomoney/notify', [])->assertStatus(400);
         $service = app(DonationPaymentSettlements::class);
-        $signed = $this->callback($order->order_uuid);
+        $signed = $this->signedCallback($order->order_uuid);
         $this->assertSame('credited', $service->receive($signed, 'fixture_gamma'));
         $this->assertSame('credited', $service->receive($signed, 'fixture_gamma'));
         $this->assertDatabaseCount('wallet_entries', 1);
@@ -116,7 +118,7 @@ final class DonationMultiProviderSettlementTest extends TestCase
         [$owner, , $order] = $this->prepared();
         config()->set('donation-payments.credits_enabled', false);
         $service = app(DonationPaymentSettlements::class);
-        $this->assertSame('pending', $service->receive($this->callback($order->order_uuid), 'fixture_gamma'));
+        $this->assertSame('pending', $service->receive($this->signedCallback($order->order_uuid), 'fixture_gamma'));
         $evidence = DB::table('module_donation_payment_receipts')->value('encrypted_notification');
         $restored = VerifiedReceiptEnvelope::restore(Crypt::decryptString((string) $evidence));
         if ($restored === null) {
@@ -137,9 +139,9 @@ final class DonationMultiProviderSettlementTest extends TestCase
     {
         [, , $order] = $this->prepared('test');
         $service = app(DonationPaymentSettlements::class);
-        $this->assertSame('test', $service->receive($this->callback($order->order_uuid), 'fixture_gamma'));
+        $this->assertSame('test', $service->receive($this->signedCallback($order->order_uuid), 'fixture_gamma'));
         $this->assertDatabaseCount('wallet_entries', 0);
-        $forged = $this->callback($order->order_uuid, 'GAMMA_2', 1201);
+        $forged = $this->signedCallback($order->order_uuid, 'GAMMA_2', 1201);
         $forged = new ProviderCallback(str_replace('amount=1201', 'amount=1200', $forged->rawBody), [], '');
         $this->expectException(\InvalidArgumentException::class);
         try {

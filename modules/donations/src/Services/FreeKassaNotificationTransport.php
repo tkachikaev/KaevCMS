@@ -12,10 +12,14 @@ final class FreeKassaNotificationTransport
     {
         $body = $request->getContent();
         $contentType = (string) $request->header('content-type');
-        if ($body === '' || strlen($body) > 16384 || $request->getQueryString() !== null) {
+        if (strlen($body) > 16384 || $request->getQueryString() !== null) {
             throw new InvalidArgumentException('Invalid FreeKassa notification transport.');
         }
         if (preg_match('~\Aapplication/x-www-form-urlencoded(?:\s*;.*)?\z~iD', $contentType)) {
+            if ($body === '') {
+                throw new InvalidArgumentException('Empty FreeKassa notification.');
+            }
+
             return $body;
         }
         if (! preg_match('~\Amultipart/form-data\s*;\s*boundary=(?:"([A-Za-z0-9_\-]{1,70})"|([A-Za-z0-9_\-]{1,70}))\z~iD',
@@ -23,6 +27,30 @@ final class FreeKassaNotificationTransport
             throw new InvalidArgumentException('Unsupported FreeKassa notification Content-Type.');
         }
         $boundary = $m[1] ?: $m[2];
+        if ($body === '') {
+            // PHP normally consumes multipart bodies before Laravel runs. Use
+            // only its parsed form map, without merging query or file inputs.
+            // The exact same canonical map reaches routing and signature checks.
+            $length = $request->server('CONTENT_LENGTH');
+            $fields = $request->request->all();
+            if (! is_string($length) || ! preg_match('/\A[1-9][0-9]{0,4}\z/D', $length)
+                || (int) $length > 16384 || $request->files->all() !== []
+                || $fields === [] || count($fields) > 33) {
+                throw new InvalidArgumentException('Invalid PHP-parsed FreeKassa multipart data.');
+            }
+            foreach ($fields as $name => $value) {
+                if (! preg_match('/\A[A-Za-z][A-Za-z0-9_]{0,63}\z/D', $name)
+                    || ! is_string($value) || strlen($value) > 2048) {
+                    throw new InvalidArgumentException('Invalid PHP-parsed FreeKassa multipart field.');
+                }
+            }
+            $encoded = http_build_query($fields, '', '&', PHP_QUERY_RFC3986);
+            if (strlen($encoded) > 16384) {
+                throw new InvalidArgumentException('Oversized FreeKassa multipart data.');
+            }
+
+            return $encoded;
+        }
         $parts = explode('--'.$boundary, $body);
         $count = count($parts);
         if ($count < 3 || $count > 35 || $parts[0] !== ''
@@ -47,9 +75,6 @@ final class FreeKassaNotificationTransport
                 throw new InvalidArgumentException('Invalid FreeKassa multipart field.');
             }
             $fields[$name[1]] = $value;
-        }
-        if ($fields === []) {
-            throw new InvalidArgumentException('Empty FreeKassa multipart form.');
         }
 
         return http_build_query($fields, '', '&', PHP_QUERY_RFC3986);

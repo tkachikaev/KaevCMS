@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Services\DonationOrders;
-use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
-use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
@@ -54,7 +52,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
         return [$owner, $player, $order];
     }
 
-    private function callback(string $uuid, string $amount = '120.00', string $operation = '888999'): array
+    private function signedCallback(string $uuid, string $amount = '120.00', string $operation = '888999'): array
     {
         $raw = http_build_query([
             'MERCHANT_ID' => '7012', 'AMOUNT' => $amount, 'intid' => $operation,
@@ -80,6 +78,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
         $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertOk();
         $response->assertSee('https://pay.fk.money/', false)->assertSee('name="oa"', false)
             ->assertSee('name="currency"', false)->assertDontSee('merchant-orders-api-key');
+        $this->assertStringContainsString('https://pay.fk.money;', $response->headers->get('Content-Security-Policy'));
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 
@@ -87,7 +86,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
     {
         [$owner, , $order] = $this->prepared();
         $this->fakePaid($order->order_uuid);
-        [$body, $server] = $this->callback($order->order_uuid);
+        [$body, $server] = $this->signedCallback($order->order_uuid);
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)->assertOk()->assertSeeText('YES');
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)->assertOk()->assertSeeText('YES');
         $this->assertDatabaseCount('wallet_entries', 1);
@@ -101,7 +100,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
     {
         [, , $order] = $this->prepared();
         $this->fakePaid($order->order_uuid, status: 'unpaid');
-        [$body, $server] = $this->callback($order->order_uuid);
+        [$body, $server] = $this->signedCallback($order->order_uuid);
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)->assertStatus(503);
         $this->assertDatabaseCount('wallet_entries', 0);
         $this->assertDatabaseCount('module_donation_payment_receipts', 0);
@@ -111,7 +110,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
     {
         [, , $order] = $this->prepared();
         $this->fakePaid($order->order_uuid, operation: '555777');
-        [$body, $server] = $this->callback($order->order_uuid, operation: '888999');
+        [$body, $server] = $this->signedCallback($order->order_uuid, operation: '888999');
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)
             ->assertOk()->assertSeeText('YES');
         $this->assertDatabaseHas('module_donation_payment_receipts', [
@@ -132,7 +131,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
         $this->assertDatabaseCount('wallet_entries', 1);
         // Late signed notifications use the same API canonical ID; the previous
         // reconciliation cannot be exploited for a second coin credit.
-        [$body, $server] = $this->callback($order->order_uuid, operation: '888999');
+        [$body, $server] = $this->signedCallback($order->order_uuid, operation: '888999');
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)
             ->assertOk()->assertSeeText('YES');
         $this->assertDatabaseCount('wallet_entries', 1);
@@ -178,7 +177,7 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
             'secret_2' => 'rotated-callback-secret',
         ]);
         $this->fakePaid($order->order_uuid);
-        [$body, $server] = $this->callback($order->order_uuid);
+        [$body, $server] = $this->signedCallback($order->order_uuid);
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)
             ->assertOk()->assertSeeText('YES');
         $this->assertDatabaseCount('wallet_entries', 1);

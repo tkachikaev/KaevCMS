@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.55.5 - 2026-10-27
+
+**Donations 1.17.5 QA candidate. Not production-certified.** Updates from 0.55.4. Wallet, dependency lockfiles and published migrations are unchanged.
+
+- Fixed FreeKassa multipart callbacks on normal PHP hosting, where PHP consumes the raw request body. A bounded, scalar-only canonical POST map is used consistently when raw multipart is unavailable; signed fields bypass string normalization on this callback only. Raw malformed bodies and mixed query inputs remain rejected.
+- Allowed the fixed FreeKassa checkout origin in the player checkout CSP and the two administrator test-purchase pages; other administration pages retain self-only form actions. Removed an inline callback-address handler blocked by CSP.
+- Serialized merchant API request dispatch, not only nonce allocation, using the existing database cache-lock table. Parallel confirmations preserve FreeKassa's increasing nonce contract without holding a wallet transaction during network I/O.
+- Fixed saving FreeKassa settings with an empty proxy or sender list after Laravel normalizes blank form controls; empty lists remain deny-by-default.
+- Made checkout text provider-neutral in RU/EN. Donations now requires CMS 0.55.5 because FreeKassa relies on its callback middleware and checkout security headers.
+- Fixed incompatible PHPUnit helper method names, PHPStan type/control-flow issues and formatting. Added parsed multipart, exact CSP scope, browser redirect and isolated SQL concurrency coverage without submitting external payments.
+
 ## Unreleased
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.

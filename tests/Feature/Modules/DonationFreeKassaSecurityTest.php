@@ -8,7 +8,6 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
 use Tests\TestCase;
@@ -57,6 +56,24 @@ final class DonationFreeKassaSecurityTest extends TestCase
         $service->save($owner, 'freekassa', false, 'test', [], ['merchant_id' => '12345']);
         $this->assertSame([], app(FreeKassaCallbackSecurity::class)->current()['senders']);
         $this->assertSame([], app(FreeKassaCallbackSecurity::class)->current()['proxies']);
+    }
+
+    public function test_empty_ip_controls_can_be_saved_through_normal_admin_middleware(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $payload = [
+            'enabled' => '0', 'mode' => 'test', 'currency_codes' => [],
+            'credentials' => ['merchant_id' => '7012'],
+            'callback_sender_ips' => '198.51.100.19', 'callback_proxy_ips' => '',
+        ];
+        $url = '/admin/extensions/donations/providers/freekassa';
+        $this->actingAs($owner, 'admin')->put($url, $payload)->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(['198.51.100.19'], app(FreeKassaCallbackSecurity::class)->current()['senders']);
+        $this->assertSame([], app(FreeKassaCallbackSecurity::class)->current()['proxies']);
+        $payload['callback_sender_ips'] = '';
+        $this->put($url, $payload)->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame([], app(FreeKassaCallbackSecurity::class)->current()['senders']);
+        $this->assertSame('7012', app(DonationProviderSettings::class)->credentialsForDriver('freekassa')['merchant_id']);
     }
 
     public function test_invalid_sender_addresses_and_proxy_wildcards_are_rejected_without_changing_existing_policy(): void

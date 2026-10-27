@@ -32,6 +32,10 @@ final class SecurityHeaders
         }
 
         if (! $headers->has('Content-Security-Policy')) {
+            $formAction = "form-action 'self' https://yoomoney.ru";
+            if ($request->routeIs('modules.donations.orders.checkout')) {
+                $formAction .= ' https://pay.fk.money';
+            }
             // Bundled themes use external scripts and Livewire's CSP-safe build.
             // Inline CSS remains necessary for Livewire styles and dynamic UI sizing.
             $headers->set('Content-Security-Policy', implode('; ', [
@@ -43,7 +47,7 @@ final class SecurityHeaders
                 "connect-src 'self'",
                 "object-src 'none'",
                 "base-uri 'self'",
-                "form-action 'self' https://yoomoney.ru",
+                $formAction,
                 "frame-ancestors 'self'",
             ]));
         }
