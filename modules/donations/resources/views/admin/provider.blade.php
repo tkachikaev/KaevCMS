@@ -172,6 +172,39 @@
             @endif
             @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.save_settings') }}</button>@endunless
         </form>
+        @if($driver->code() === 'freekassa')
+            <section class="donations-readiness" data-testid="freekassa-admin-test">
+                <h3>{{ __('module-donations::messages.freekassa_test_title') }}</h3>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_external_warning') }}</p>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_zero_coins') }}</p>
+                @if($errors->has('freekassa_test'))<p class="admin-field-error" role="alert">{{ $errors->first('freekassa_test') }}</p>@endif
+                @unless(request()->attributes->get('admin_read_only'))
+                    <form method="POST" action="{{ route('admin.module-pages.donations.providers.freekassa.test-purchase', ['adminPath' => $adminPath]) }}" target="_blank" rel="noopener noreferrer" class="settings-form" data-testid="freekassa-test-purchase-form">
+                        @csrf
+                        <div class="form-group"><label for="freekassa-test-currency">{{ __('module-donations::messages.freekassa_test_currency') }}</label>
+                            <select id="freekassa-test-currency" name="currency_code" required>
+                                @foreach($state['currency_codes'] as $code)
+                                    <option value="{{ $code }}">{{ $code }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group"><label for="freekassa-test-amount">{{ __('module-donations::messages.freekassa_test_amount') }}</label>
+                            <input id="freekassa-test-amount" name="amount" type="text" inputmode="decimal" value="1.00" maxlength="6" required>
+                        </div>
+                        <button class="button button-secondary" type="submit" @disabled(!$state['enabled'] || $state['mode'] !== 'test')>{{ __('module-donations::messages.freekassa_test_start') }}</button>
+                    </form>
+                @endunless
+                <h3>{{ __('module-donations::messages.freekassa_test_history') }}</h3>
+                @forelse($freeKassaTests as $test)
+                    <p><code>{{ $test->reference }}</code> — {{ app(\KaevCMS\Modules\Donations\Services\DonationMoney::class)->format((int) $test->amount_minor, 2) }} {{ $test->currency_code }} —
+                        {{ $test->status === 'verified' ? __('module-donations::messages.freekassa_test_verified') : (\Carbon\Carbon::parse($test->expires_at)->isPast() ? __('module-donations::messages.freekassa_test_expired') : __('module-donations::messages.freekassa_test_pending')) }}
+                        ({{ $test->created_at }})</p>
+                @empty
+                    <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_empty') }}</p>
+                @endforelse
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_refresh') }}</p>
+            </section>
+        @endif
     @endif
 </section>
 @endsection

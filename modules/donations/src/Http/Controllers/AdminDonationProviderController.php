@@ -15,6 +15,7 @@ use Illuminate\View\View;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
+use KaevCMS\Modules\Donations\Services\FreeKassaAdminTestPayments;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
@@ -96,6 +97,7 @@ final class AdminDonationProviderController extends Controller
             'hasNotificationSecret' => $hasSecret,
             'webhookUrl' => $webhookUrl, 'webhookIsLocal' => $webhookIsLocal,
             'freeKassaPolicy' => $freeKassaPolicy,
+            'freeKassaTests' => $providerCode === 'freekassa' ? app(FreeKassaAdminTestPayments::class)->recent() : [],
             'freeKassaPolicyError' => $freeKassaPolicyError,
             'activation' => $activation->state(),
             'readinessIssues' => $activation->blockers(),
@@ -115,6 +117,26 @@ final class AdminDonationProviderController extends Controller
                         });
                     })->orderByDesc('id')->limit(25)->get(['id', 'name', 'email']) : collect(),
         ]);
+    }
+
+    public function startFreeKassaTestPurchase(Request $request, ModuleAdminAuthorizer $access,
+        FreeKassaAdminTestPayments $tests): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.freekassa.test-purchase', 'POST', $admin);
+        $currency = $request->input('currency_code');
+        $amount = $request->input('amount');
+        if (! is_string($currency) || ! is_string($amount)) {
+            return back()->withErrors(['freekassa_test' => __('module-donations::messages.freekassa_test_invalid')]);
+        }
+        try {
+            $checkout = $tests->start($admin, $currency, $amount);
+        } catch (InvalidArgumentException|\LogicException) {
+            return back()->withErrors(['freekassa_test' => __('module-donations::messages.freekassa_test_invalid')]);
+        }
+        // 303 avoids repeating the POST on browser refresh.
+        return redirect()->away($checkout['url'], 303);
     }
 
     public function updateActivation(Request $request, AdminPathSettings $paths,

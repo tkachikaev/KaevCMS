@@ -9,7 +9,9 @@ use Illuminate\Http\Response;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
+use KaevCMS\Modules\Donations\Services\FreeKassaAdminTestPayments;
 use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
+use KaevCMS\Modules\Donations\Services\FreeKassaNotificationTransport;
 use LogicException;
 use Throwable;
 
@@ -28,10 +30,6 @@ final class FreeKassaNotificationController extends Controller
         if (! $request->isSecure() && ! app()->environment('testing')) {
             return response('HTTPS required', 403);
         }
-        if (! str_starts_with(strtolower((string) $request->header('content-type')), 'application/x-www-form-urlencoded')
-            || $request->getQueryString() !== null || strlen($request->getContent()) > 16384) {
-            return response('Invalid notification', 400);
-        }
         try {
             DonationsTrustedAutoload::register();
             // The raw TCP peer is authoritative. Forwarded headers may be read
@@ -39,9 +37,13 @@ final class FreeKassaNotificationController extends Controller
             if (! app(FreeKassaCallbackSecurity::class)->allows($request)) {
                 return response('Untrusted sender', 403);
             }
-            $status = app(DonationPaymentSettlements::class)->receive(new ProviderCallback(
-                $request->getContent(), [], '',
-            ), 'freekassa');
+            $callback = new ProviderCallback(FreeKassaNotificationTransport::decode($request), [], '');
+            // Dedicated test references are checked first, independent of the
+            // provider's later enabled/live state. Tests can never enter Wallet.
+            $testStatus = app(FreeKassaAdminTestPayments::class)->receiveIfTest($callback);
+            if ($testStatus === null) {
+                app(DonationPaymentSettlements::class)->receive($callback, 'freekassa');
+            }
 
             // FreeKassa expects precisely YES after durable processing. Stored
             // test/review/pending receipts are also acknowledged (never credited).

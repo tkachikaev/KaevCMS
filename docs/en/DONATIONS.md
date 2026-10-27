@@ -75,3 +75,16 @@ Go to **Donations → Payment providers → FreeKassa** in the admin panel. Conf
 - Local diagnostics do not establish that FreeKassa has sent a callback or that any order has actually been paid. Signature checks remain mandatory.
 
 **FreeKassa stays TEST-ONLY in this build:** external admin sandbox checkout and live wallet settlement are deliberately unavailable until the next iterations. YooMoney is unaffected by this IP policy.
+
+## FreeKassa administrator-only sandbox checkout (0.55.2 / Donations 1.17.2)
+
+After configuring secrets, allowed sender IPs, currencies and enabling FreeKassa in **Test** mode, open **Donations → Payment providers → FreeKassa**. Owners and Administrators can start a dedicated test purchase (amount 1.00–100.00, selected enabled currency). The real external FreeKassa checkout opens; refresh the admin page to view signed callback status.
+
+**Enable FreeKassa's test mode in the merchant dashboard FIRST.** KaevCMS cannot toggle the vendor's sandbox remotely or guarantee that a real payment will not be charged if the vendor is left in live mode. The vendor controls minimum amounts and test payment methods. Official docs: https://docs.freekassa.net/.
+
+- These admin test references are durable, separate from player orders and never linked to a wallet or CMS player. No coins are credited on any test, even after provider mode changes or duplicate callbacks.
+- Validation covers trusted callback sender IP, Secret 2 signature, amount, merchant, order UUID and provider `intid`. Acknowledgment `YES` follows durable verification; failed storage does not acknowledge.
+- Both bounded URL-encoded and multipart form-data POST transports are supported with duplicate-field rejection. Set the public HTTPS callback URL shown in the admin panel.
+- “Signed callback received” proves only notification verification, not vendor sandbox state, actual fund movement, or future live readiness.
+- Finish in-flight tests before rotating the notification secret, or start another test.
+- **Live FreeKassa player purchases remain blocked** until API currency/status verification and production acceptance. YooMoney is unaffected.

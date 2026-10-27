@@ -41,6 +41,10 @@ final class DonationPaymentPreparations
                 continue;
             }
             $row = DonationProviderSetting::query()->find($code);
+            // FreeKassa test checkouts belong strictly to the admin workflow.
+            if ($code === 'freekassa' && $row?->mode !== 'live') {
+                continue;
+            }
             if ($row !== null) {
                 $result[] = ['code' => $code, 'name' => $driver->name(), 'mode' => $row->mode];
             }
@@ -96,6 +100,9 @@ final class DonationPaymentPreparations
                 || ! in_array($order->currency_code, $row->currency_codes ?? [], true)
                 || ! in_array($order->currency_code, $driver->supportedCurrencies(), true)) {
                 throw new LogicException('Provider not available for this currency.');
+            }
+            if ($providerCode === 'freekassa' && $row->mode !== 'live') {
+                throw new LogicException('FreeKassa test checkout is restricted to administrators.');
             }
             // Check rate was not disabled, but never reprice the existing order.
             if (! in_array($order->currency_code, $this->providers->localDiagnostic($providerCode)['matched_currencies'], true)) {

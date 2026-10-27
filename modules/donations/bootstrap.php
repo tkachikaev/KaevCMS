@@ -90,7 +90,7 @@ return static function (Application $app, ModuleContext $module): void {
             manageRoles: [AdminRole::Owner, AdminRole::Administrator],
         );
     }
-    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'providers.notification-test.start', 'providers.notification-test.status', 'orders.reviews.store', 'exchange.update', 'exchange.save'] as $route) {
+    foreach (['workspace.update', 'settings.update', 'limits.update', 'rates.store', 'providers.update', 'providers.activation.update', 'providers.notification-test.start', 'providers.notification-test.status', 'providers.freekassa.test-purchase', 'orders.reviews.store', 'exchange.update', 'exchange.save'] as $route) {
         $access->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.donations.'.$route,

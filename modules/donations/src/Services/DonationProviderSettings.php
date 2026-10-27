@@ -333,6 +333,10 @@ final class DonationProviderSettings
                 || array_diff($currencies, $supported) !== []) {
                 return ['state' => 'invalid', 'matched_currencies' => []];
             }
+            // Admin-only sandbox probes pay a nominal amount; no player coin rate is needed.
+            if ($code === 'freekassa' && $row->mode === 'test') {
+                return ['state' => $row->enabled ? 'local_ok' : 'disabled', 'matched_currencies' => $currencies];
+            }
             $matched = [];
             foreach ($currencies as $currency) {
                 if ($this->hasValidEnabledRate($currency)) {

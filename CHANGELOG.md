@@ -4,6 +4,18 @@
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
 
+## 0.55.2 - 2026-10-27
+
+**QA candidate, Donations iteration 4. Not production-certified.** Donations 1.17.2. Full release based on 0.55.1. No Composer or Wallet modifications, no published migrations altered.
+
+- Added administrator-only FreeKassa external test checkout, with a merchant-side test-mode warning, amount 1.00–100.00 (minor units), selected currency and an existing signed SCI GET checkout. The merchant's test setting must be enabled manually; KaevCMS cannot turn it on remotely. **No automatic confirmation that the merchant sandbox is enabled.**
+- Added a small additive `module_donation_freekassa_admin_tests` table to retain admin test references, immutable amounts, currencies, signed callback verification and provider operation IDs. This separate table is necessary because player donation orders require a real player user. No dummy player or Wallet records are ever created.
+- Added callback dispatch to isolated admin test verification before normal donation settlement, independent of later provider enable/disable. Signed duplicate callbacks are acknowledged once durable; conflicting identifiers are rejected. Test transactions never touch player coin balances, and changing provider mode cannot reclassify them.
+- Added support for strict `application/x-www-form-urlencoded` and `multipart/form-data` notification transports, with bounded body size and rejection of duplicated fields before cryptographic verification; existing IP allowlist validation remains mandatory.
+- Prevented FreeKassa test mode from appearing in player payment methods or being selected through the player payment-preparation endpoint. Normal YooMoney payment mode remains unchanged.
+- Added administrative test history and statuses, new RU/EN text and driver/transport/Feature test coverage. Test-only configuration no longer requires a player coin rate; real payments still require it.
+- **Live FreeKassa is still disabled** by the driver's explicit guard. API currency/status reconciliation, live player checkout and recovery follow in iterations 5–6. Full PHPUnit, Laravel, browser and MySQL regression suites remain deferred for Codex, per project instruction; syntax and standalone smoke checks only.
+
 ## 0.55.1 - 2026-10-27
 
 **QA candidate, Donations iteration 3. Not production-certified.** Donations 1.17.1. Based on the full 0.55.0 archive. No Composer, Wallet, schema or published migration changes.
