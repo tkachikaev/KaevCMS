@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\Donations\Services;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use KaevCMS\Modules\Donations\Contracts\DeferredCheckoutProvider;
 use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Data\PaymentCheckout;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
@@ -49,7 +50,11 @@ class DonationPaymentCheckout
         }
 
         try {
-            $this->build($user, $order);
+            [$driver] = $this->validatedTerms($user, $order);
+            // Read-only pages MUST NOT send remote Create Order requests.
+            if (! $driver instanceof DeferredCheckoutProvider) {
+                $this->build($user, $order);
+            }
 
             return true;
         } catch (ModelNotFoundException|LogicException|\InvalidArgumentException|\RuntimeException) {
@@ -59,6 +64,30 @@ class DonationPaymentCheckout
 
     public function build(User $user, DonationOrder $order): PaymentCheckout
     {
+        [$driver, $preparation, $credentials, $intent] = $this->validatedTerms($user, $order);
+        if ($driver instanceof DeferredCheckoutProvider) {
+            if (DB::transactionLevel() !== 0) {
+                throw new LogicException('Remote checkout is forbidden inside a SQL transaction.');
+            }
+            $checkout = $driver->createServerCheckout($intent, $credentials, $preparation);
+        } else {
+            $checkout = $driver->beginPayment($intent, $credentials, 'live');
+        }
+        if ($checkout->method !== $preparation->checkout_method
+            || ! preg_match('/\Ahttps:\/\/[^\s]+\z/D', $checkout->redirectUrl)) {
+            throw new LogicException('Payment checkout differs from prepared terms.');
+        }
+        $driver->assertCheckout($checkout, $intent, $credentials, (string) $preparation->provider_label);
+
+        return $checkout;
+    }
+
+    /**
+     * No side effects, HTTP or writes: this validation is safe on read-only pages.
+     * @return array{RoutablePaymentProvider,DonationPaymentPreparation,array<string,string>,PaymentIntent}
+     */
+    private function validatedTerms(User $user, DonationOrder $order): array
+    {
         if ((int) $order->user_id !== (int) $user->getKey()) {
             throw new ModelNotFoundException;
         }
@@ -67,8 +96,6 @@ class DonationPaymentCheckout
             || $order->expires_at->isPast()) {
             throw new LogicException('Live checkout is not available.');
         }
-
-        // A late or conflicting signed receipt must not cause another checkout.
         if (DB::table('module_donation_payment_receipts')->where('order_id', $order->getKey())->exists()) {
             throw new LogicException('This order already has payment evidence.');
         }
@@ -91,26 +118,19 @@ class DonationPaymentCheckout
             throw new LogicException('Unexpected payment driver.');
         }
         $credentials = $this->providers->credentialsForDriver((string) $preparation->provider_code);
-        $returnUrl = route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]);
         $intent = new PaymentIntent(
             (string) $order->order_uuid, (int) $order->coins, (string) $order->currency_code,
             (int) $order->total_minor, (int) $order->exponent,
-            route($driver->callbackRouteName()), $returnUrl,
+            route($driver->callbackRouteName()),
+            route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]),
         );
         if ($preparation->provider_label !== $driver->referenceForOrder((string) $order->order_uuid)
             || ! in_array($order->currency_code, $driver->supportedCurrencies(), true)) {
             throw new LogicException('Payment provider and immutable order terms differ.');
         }
         $driver->assertConfiguration($credentials, 'live');
-        $checkout = $driver->beginPayment($intent, $credentials, 'live');
-        if ($checkout->method !== $preparation->checkout_method
-            || ! preg_match('/\Ahttps:\/\/[^\s]+\z/D', $checkout->redirectUrl)) {
-            throw new LogicException('Payment checkout differs from prepared terms.');
-        }
-        // The driver must independently validate its static trusted destination,
-        // recipient, immutable amount, return URL and reference.
-        $driver->assertCheckout($checkout, $intent, $credentials, (string) $preparation->provider_label);
 
-        return $checkout;
+        return [$driver, $preparation, $credentials, $intent];
     }
+
 }

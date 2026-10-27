@@ -18,18 +18,28 @@ final class VerifiedReceiptEnvelope
 
     private const FORMAT = 'kaevcms-signed-provider-v2';
 
+    private const MONEY_FORMAT = 'kaevcms-signed-provider-v3';
+
     public static function fingerprint(VerifiedPayment $payment): string
     {
-        return hash('sha256', json_encode([
+        $values = [
             $payment->orderUuid, $payment->providerPaymentId, $payment->status,
             $payment->currencyCode, $payment->amountMinor, $payment->receivedAmountMinor,
             $payment->testNotification, $payment->environment,
-        ], JSON_THROW_ON_ERROR));
+        ];
+        // Keep existing YooMoney/FreeKassa receipt hashes byte-for-byte stable.
+        if (self::hasMoneyMetadata($payment)) {
+            $values[] = $payment->receivedCurrencyCode;
+            $values[] = $payment->feeAmountMinor;
+            $values[] = $payment->feeCurrencyCode;
+        }
+
+        return hash('sha256', json_encode($values, JSON_THROW_ON_ERROR));
     }
 
     public static function seal(VerifiedPayment $payment, string $rawBody, string $providerCode = 'yoomoney'): string
     {
-        if ($rawBody === '' || strlen($rawBody) > 16384) {
+        if ($rawBody === '' || strlen($rawBody) > ($providerCode === 'paypal' ? 65536 : 16384)) {
             throw new InvalidArgumentException('Invalid notification evidence.');
         }
 
@@ -37,10 +47,15 @@ final class VerifiedReceiptEnvelope
             throw new InvalidArgumentException('Invalid evidence provider.');
         }
 
+        self::assertMoneyMetadata($payment);
+        if ($providerCode === 'yoomoney' && self::hasMoneyMetadata($payment)) {
+            throw new InvalidArgumentException('YooMoney v1 cannot store cross-currency metadata.');
+        }
+
         return json_encode([
-            // Keep historical YooMoney v1 writes byte-compatible. Other reviewed
-            // drivers produce v2 with an authenticated provider identity.
-            '_format' => $providerCode === 'yoomoney' ? self::LEGACY_FORMAT : self::FORMAT,
+            // Historical v1/v2 evidence stays readable and fingerprint-compatible.
+            '_format' => $providerCode === 'yoomoney' ? self::LEGACY_FORMAT
+                : (self::hasMoneyMetadata($payment) ? self::MONEY_FORMAT : self::FORMAT),
             ...($providerCode === 'yoomoney' ? [] : ['providerCode' => $providerCode]),
             'rawBody' => $rawBody,
             'payment' => [
@@ -52,6 +67,11 @@ final class VerifiedReceiptEnvelope
                 'receivedAmountMinor' => $payment->receivedAmountMinor,
                 'testNotification' => $payment->testNotification,
                 'environment' => $payment->environment,
+                ...(self::hasMoneyMetadata($payment) ? [
+                    'receivedCurrencyCode' => $payment->receivedCurrencyCode,
+                    'feeAmountMinor' => $payment->feeAmountMinor,
+                    'feeCurrencyCode' => $payment->feeCurrencyCode,
+                ] : []),
             ],
         ], JSON_THROW_ON_ERROR);
     }
@@ -72,9 +92,9 @@ final class VerifiedReceiptEnvelope
             throw new InvalidArgumentException('Invalid stored notification evidence.');
         }
         $format = $payload['_format'] ?? null;
-        if (! is_array($payload) || ! in_array($format, [self::LEGACY_FORMAT, self::FORMAT], true)
+        if (! is_array($payload) || ! in_array($format, [self::LEGACY_FORMAT, self::FORMAT, self::MONEY_FORMAT], true)
             || ! is_string($payload['rawBody'] ?? null)
-            || $payload['rawBody'] === '' || strlen($payload['rawBody']) > 16384
+            || $payload['rawBody'] === '' || strlen($payload['rawBody']) > (($payload['providerCode'] ?? null) === 'paypal' ? 65536 : 16384)
             || ! is_array($payload['payment'] ?? null)) {
             throw new InvalidArgumentException('Invalid stored notification evidence.');
         }
@@ -91,11 +111,30 @@ final class VerifiedReceiptEnvelope
                 : (! is_string($value['currencyCode'] ?? null)
                     || ! preg_match('/\A[A-Z]{3}\z/D', $value['currencyCode'])))
             || ! is_int($value['amountMinor'] ?? null) || $value['amountMinor'] < 1
-            || ! is_int($value['receivedAmountMinor'] ?? null) || $value['receivedAmountMinor'] < 1
-            || $value['receivedAmountMinor'] > $value['amountMinor']
+            || (! array_key_exists('receivedAmountMinor', $value)
+                || ($value['receivedAmountMinor'] !== null && (! is_int($value['receivedAmountMinor']) || $value['receivedAmountMinor'] < 0)))
+            || ($format === self::LEGACY_FORMAT && (! is_int($value['receivedAmountMinor']) || $value['receivedAmountMinor'] < 1))
+            || ($value['receivedAmountMinor'] !== null
+                && ($value['receivedCurrencyCode'] ?? $value['currencyCode']) === $value['currencyCode']
+                && $value['receivedAmountMinor'] > $value['amountMinor'])
             || ! is_bool($value['testNotification'] ?? null)
-            || ! in_array($value['environment'] ?? null, ['test', 'live'], true)) {
+            || ! in_array($value['environment'] ?? null, ['test', 'live'], true)
+            || ($format === self::MONEY_FORMAT && (! array_key_exists('receivedCurrencyCode', $value)
+                || ! array_key_exists('feeAmountMinor', $value) || ! array_key_exists('feeCurrencyCode', $value)))
+            || ($format !== self::MONEY_FORMAT && (array_key_exists('receivedCurrencyCode', $value)
+                || array_key_exists('feeAmountMinor', $value) || array_key_exists('feeCurrencyCode', $value)))) {
             throw new InvalidArgumentException('Invalid stored notification evidence.');
+        }
+
+        $receivedCurrency = $value['receivedCurrencyCode'] ?? null;
+        $feeAmount = $value['feeAmountMinor'] ?? null;
+        $feeCurrency = $value['feeCurrencyCode'] ?? null;
+        if (($receivedCurrency !== null && (! is_string($receivedCurrency) || ! preg_match('/\A[A-Z]{3}\z/D', $receivedCurrency)))
+            || ($feeAmount !== null && (! is_int($feeAmount) || $feeAmount < 0))
+            || ($feeCurrency !== null && (! is_string($feeCurrency) || ! preg_match('/\A[A-Z]{3}\z/D', $feeCurrency)))
+            || ($feeAmount === null) !== ($feeCurrency === null)
+            || ($receivedCurrency !== null && $value['receivedAmountMinor'] === null)) {
+            throw new InvalidArgumentException('Invalid stored receipt currencies or fee.');
         }
 
         return [
@@ -110,7 +149,28 @@ final class VerifiedReceiptEnvelope
                 receivedAmountMinor: $value['receivedAmountMinor'],
                 testNotification: $value['testNotification'],
                 environment: $value['environment'],
+                receivedCurrencyCode: $receivedCurrency,
+                feeAmountMinor: $feeAmount,
+                feeCurrencyCode: $feeCurrency,
             ),
         ];
+    }
+    private static function hasMoneyMetadata(VerifiedPayment $payment): bool
+    {
+        return $payment->receivedCurrencyCode !== null
+            || $payment->feeAmountMinor !== null || $payment->feeCurrencyCode !== null;
+    }
+
+    private static function assertMoneyMetadata(VerifiedPayment $payment): void
+    {
+        if (($payment->receivedCurrencyCode !== null
+                && ! preg_match('/\A[A-Z]{3}\z/D', $payment->receivedCurrencyCode))
+            || ($payment->receivedCurrencyCode !== null && $payment->receivedAmountMinor === null)
+            || ($payment->receivedAmountMinor !== null && $payment->receivedAmountMinor < 0)
+            || ($payment->feeAmountMinor !== null && $payment->feeAmountMinor < 0)
+            || ($payment->feeAmountMinor === null) !== ($payment->feeCurrencyCode === null)
+            || ($payment->feeCurrencyCode !== null && ! preg_match('/\A[A-Z]{3}\z/D', $payment->feeCurrencyCode))) {
+            throw new InvalidArgumentException('Invalid receipt financial metadata.');
+        }
     }
 }

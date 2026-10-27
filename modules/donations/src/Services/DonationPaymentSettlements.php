@@ -104,7 +104,10 @@ final class DonationPaymentSettlements
                         || $receipt->provider_payment_id !== $verified->providerPaymentId
                         || $receipt->currency_code !== $verified->currencyCode
                         || (int) $receipt->payer_amount_minor !== $verified->amountMinor
-                        || (int) $receipt->received_amount_minor !== $verified->receivedAmountMinor
+                        || ($receipt->received_amount_minor === null ? null : (int) $receipt->received_amount_minor) !== $verified->receivedAmountMinor
+                        || ($receipt->received_currency_code ?? null) !== $verified->receivedCurrencyCode
+                        || ($receipt->fee_amount_minor === null ? null : (int) $receipt->fee_amount_minor) !== $verified->feeAmountMinor
+                        || ($receipt->fee_currency_code ?? null) !== $verified->feeCurrencyCode
                         || ! hash_equals((string) $receipt->notification_sha256,
                             VerifiedReceiptEnvelope::fingerprint($verified))) {
                         throw new InvalidArgumentException('Stored payment evidence mismatch.');
@@ -224,6 +227,9 @@ final class DonationPaymentSettlements
                     'currency_code' => $verified->currencyCode,
                     'payer_amount_minor' => $verified->amountMinor,
                     'received_amount_minor' => $verified->receivedAmountMinor,
+                    'received_currency_code' => $verified->receivedCurrencyCode,
+                    'fee_amount_minor' => $verified->feeAmountMinor,
+                    'fee_currency_code' => $verified->feeCurrencyCode,
                     'notification_sha256' => $hash,
                     'encrypted_notification' => Crypt::encryptString(VerifiedReceiptEnvelope::seal($verified, $rawBody, $providerCode)),
                     'status' => 'pending', 'created_at' => now(), 'updated_at' => now(),
@@ -243,8 +249,15 @@ final class DonationPaymentSettlements
                 || $verified->currencyCode !== $preparation->currency_code
                 || (int) $preparation->payer_amount_minor !== (int) $order->total_minor
                 || $verified->amountMinor !== (int) $order->total_minor
-                || $verified->receivedAmountMinor === null || $verified->receivedAmountMinor < 1
-                || $verified->receivedAmountMinor > $verified->amountMinor) {
+                || ($verified->receivedAmountMinor !== null && $verified->receivedAmountMinor < 0)
+                || ($verified->receivedCurrencyCode !== null && ($verified->receivedAmountMinor === null
+                    || ! preg_match('/\A[A-Z]{3}\z/D', $verified->receivedCurrencyCode)))
+                || ($verified->receivedAmountMinor !== null
+                    && ($verified->receivedCurrencyCode === null || $verified->receivedCurrencyCode === $verified->currencyCode)
+                    && $verified->receivedAmountMinor > $verified->amountMinor)
+                || ($verified->feeAmountMinor === null) !== ($verified->feeCurrencyCode === null)
+                || ($verified->feeAmountMinor !== null && $verified->feeAmountMinor < 0)
+                || ($verified->feeCurrencyCode !== null && ! preg_match('/\A[A-Z]{3}\z/D', $verified->feeCurrencyCode))) {
                 $reason = 'amount_or_currency_mismatch';
             } elseif (! in_array($order->status, [
                 DonationOrder::DRAFT, DonationOrder::EXPIRED, DonationOrder::CANCELLED,

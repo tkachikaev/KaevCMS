@@ -7,6 +7,7 @@ use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Contracts\DeferredCheckoutProvider;
 use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
@@ -42,7 +43,7 @@ final class DonationPaymentPreparations
             }
             $row = DonationProviderSetting::query()->find($code);
             // FreeKassa test checkouts belong strictly to the admin workflow.
-            if ($code === 'freekassa' && $row?->mode !== 'live') {
+            if (in_array($code, ['freekassa', 'paypal'], true) && $row?->mode !== 'live') {
                 continue;
             }
             if ($row !== null) {
@@ -101,8 +102,8 @@ final class DonationPaymentPreparations
                 || ! in_array($order->currency_code, $driver->supportedCurrencies(), true)) {
                 throw new LogicException('Provider not available for this currency.');
             }
-            if ($providerCode === 'freekassa' && $row->mode !== 'live') {
-                throw new LogicException('FreeKassa test checkout is restricted to administrators.');
+            if (in_array($providerCode, ['freekassa', 'paypal'], true) && $row->mode !== 'live') {
+                throw new LogicException('Provider test checkout is restricted to administrators.');
             }
             // Check rate was not disabled, but never reprice the existing order.
             if (! in_array($order->currency_code, $this->providers->localDiagnostic($providerCode)['matched_currencies'], true)) {
@@ -118,7 +119,7 @@ final class DonationPaymentPreparations
             }
             // Test mode prepares a non-executable preview. Live preparations are
             // valid only when the trusted driver verifies its checkout terms.
-            if ($row->mode === 'live') {
+            if ($row->mode === 'live' && ! $driver instanceof DeferredCheckoutProvider) {
                 $intent = new PaymentIntent(
                     (string) $order->order_uuid, (int) $order->coins, (string) $order->currency_code,
                     (int) $order->total_minor, (int) $order->exponent,
@@ -136,7 +137,7 @@ final class DonationPaymentPreparations
             $record = new DonationPaymentPreparation;
             $record->forceFill([
                 'order_id' => $order->getKey(), 'provider_code' => $providerCode,
-                'mode' => $row->mode, 'checkout_method' => $method,
+                'mode' => $row->mode, 'checkout_method' => $driver instanceof DeferredCheckoutProvider ? 'GET' : $method,
                 'provider_label' => $label, 'payer_amount_minor' => $order->total_minor,
                 'currency_code' => $order->currency_code,
             ])->save();

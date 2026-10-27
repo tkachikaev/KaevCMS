@@ -248,8 +248,9 @@ final class AdminDashboardOverview
             $now = CarbonImmutable::now();
             $today = $now->startOfDay();
             $start = $today->subDays(self::SERIES_DAYS - 1);
-            // Only successful payments: receipts credited to the wallet. Pending, test and
-            // review receipts and unpaid orders are never counted as income.
+            // Only successful payments, valued at verified payer gross in the order
+            // currency. Net/fee may be NULL or denominated in another currency;
+            // they must never be summed into these turnover charts.
             $credited = DB::table('module_donation_payment_receipts as receipts')
                 ->join('module_donation_orders as orders', 'orders.id', '=', 'receipts.order_id')
                 ->where('receipts.status', 'credited')
@@ -257,7 +258,7 @@ final class AdminDashboardOverview
 
             $payments = (clone $credited)
                 ->where('receipts.credited_at', '>=', $now->subDays(60))
-                ->get(['receipts.currency_code as currency', 'orders.exponent as exponent', 'receipts.received_amount_minor as amount_minor', 'receipts.credited_at as credited_at'])
+                ->get(['receipts.currency_code as currency', 'orders.exponent as exponent', 'receipts.payer_amount_minor as amount_minor', 'receipts.credited_at as credited_at'])
                 // Times stay "Y-m-d H:i:s" strings, compared as text, like registrations.
                 ->map(static fn (object $row): array => [
                     'currency' => strtoupper((string) $row->currency),
@@ -326,7 +327,7 @@ final class AdminDashboardOverview
                 ->join('users', 'users.id', '=', 'orders.user_id')
                 ->orderByDesc('receipts.credited_at')
                 ->limit(5)
-                ->get(['users.name as player', 'receipts.received_amount_minor as amount_minor', 'orders.exponent as exponent', 'receipts.currency_code as currency', 'receipts.credited_at as credited_at', 'orders.order_uuid as order_uuid'])
+                ->get(['users.name as player', 'receipts.payer_amount_minor as amount_minor', 'orders.exponent as exponent', 'receipts.currency_code as currency', 'receipts.credited_at as credited_at', 'orders.order_uuid as order_uuid'])
                 ->map(static fn (object $row): array => [
                     'player' => (string) $row->player,
                     'amount' => (int) $row->amount_minor / (10 ** (int) $row->exponent),

@@ -272,6 +272,8 @@ return [
     'receipt_gross' => 'Debited from payer',
     'receipt_net' => 'Received by merchant',
     'receipt_fee' => 'Difference (fee/deduction)',
+    'receipt_unknown' => 'Not available',
+    'receipt_minor_units' => 'minor units',
     'checkout_title' => 'Pay for your top-up',
     'checkout_description' => 'Review the amount. Payment takes place on the selected payment provider website.',
     'checkout_open' => 'Proceed to payment',

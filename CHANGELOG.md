@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.55.6 - 2026-10-27
+
+**Donations 1.17.6 / PayPal Orders v2 iteration 1 (1A + 1B): QA candidate; NOT production-ready for PayPal.** Full source from 0.55.5; Wallet, Composer lock, installed YooMoney/FreeKassa and published migrations unchanged.
+
+- Added an opt-in deferred checkout interface: immutable local order/pricing preparation stays in a short SQL transaction; server-created REST checkout is invoked only after SQL commit. Read-only order pages cannot launch remote Create Order calls. Existing static YooMoney/FreeKassa checkout remains unchanged.
+- Added one PayPal attempts table with frozen live order terms, merchant/environment identity, separate stable Create/Capture request UUIDs, unique invoice UUID, remote-ID uniqueness per merchant/environment, and SQL-serialized Create/Capture claims. Capture-unknown states forbid automatic POST retries; uncertain Create retries reuse the same request ID inside a bounded window.
+- Added an additive receipts migration: optional net/fee and their explicit currencies, nullable received amount and LONGTEXT encrypted evidence for eventual bounded 64 KiB webhook bodies. Existing receipts are not rewritten; gross always derives from immutable original payer amount. Cross-currency fees are never subtracted in another currency.
+- Preserved old encrypted signed provider receipt formats and hash fingerprints for YooMoney/FreeKassa; added v3 metadata only when explicitly provided. Admin order receipt display distinguishes unknown net/fee from zero. Existing FreeKassa commission remains unknown. Dashboard turnover and latest five payments now use verified payer gross, never nullable net.
+- Added local reservation and deferred checkout Feature tests and no-vendor standalone receipt compatibility checks. PayPal driver, credentials UI, API, webhooks and Wallet settlement are NOT enabled by this release; they belong to iterations 2–5. Full PHPUnit/MySQL concurrency/PHPStan/Pint/Playwright and production acceptance are still required.
+
 ## 0.55.5 - 2026-10-27
 
 **Donations 1.17.5 QA candidate. Not production-certified.** Updates from 0.55.4. Wallet, dependency lockfiles and published migrations are unchanged.

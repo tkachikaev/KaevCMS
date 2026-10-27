@@ -14,5 +14,8 @@ final readonly class VerifiedPayment
         public ?int $receivedAmountMinor = null, // receiver net after fees
         public bool $testNotification = false, // NEVER credit this
         public string $environment = 'live', // test configuration must also never settle
+        public ?string $receivedCurrencyCode = null, // defaults to gross currency for historical receipts
+        public ?int $feeAmountMinor = null, // an absent fee is NOT zero
+        public ?string $feeCurrencyCode = null, // may differ from payer or receiver currency
     ) {}
 }

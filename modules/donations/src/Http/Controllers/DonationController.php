@@ -124,7 +124,9 @@ final class DonationController extends Controller
         ]);
 
         try {
-            return DB::transaction(function () use ($user, $data, $orders, $payments, $checkout, $rates): JsonResponse {
+            // Only local pricing, audit and preparation belong in this transaction.
+            // REST provider Create Order must run AFTER the commit.
+            $prepared = DB::transaction(function () use ($user, $data, $orders, $payments, $rates): DonationOrder|JsonResponse {
                 // Match the existing user -> settings locking order. Price updates take this settings lock too.
                 User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
                 DB::table('module_donation_settings')->where('id', 1)->lockForUpdate()->first();
@@ -145,13 +147,17 @@ final class DonationController extends Controller
                 }
                 $order = $orders->createDraft($user, $data['currency'], (int) $data['coins'], $data['request_key']);
                 $payments->prepare($user, $order->order_uuid, $data['provider']);
-                $form = $checkout->build($user, $order);
-
-                return response()->json([
-                    'action' => $form->redirectUrl, 'method' => $form->method, 'fields' => $form->fields,
-                    'order_url' => route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]),
-                ])->header('Cache-Control', 'private, no-store');
+                return $order;
             });
+            if ($prepared instanceof JsonResponse) {
+                return $prepared; // Changed quote; no external checkout.
+            }
+            $form = $checkout->build($user, $prepared);
+
+            return response()->json([
+                'action' => $form->redirectUrl, 'method' => $form->method, 'fields' => $form->fields,
+                'order_url' => route('modules.donations.orders.show', ['orderUuid' => $prepared->order_uuid]),
+            ])->header('Cache-Control', 'private, no-store');
         } catch (InvalidArgumentException|LogicException|ModelNotFoundException) {
             throw ValidationException::withMessages(['order' => __('module-donations::messages.order_unavailable')]);
         }
