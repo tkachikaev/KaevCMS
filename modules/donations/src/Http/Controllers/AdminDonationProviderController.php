@@ -40,6 +40,7 @@ final class AdminDonationProviderController extends Controller
     public function show(string $providerCode, AdminPathSettings $paths, DonationProviderSettings $settings,
         DonationProviderRegistry $registry, Request $request, DonationLiveActivation $activation): View
     {
+        abort_if($providerCode === 'paypal', 404); // PayPal has a separate verified settings contract.
         try {
             $driver = $registry->get($providerCode);
         } catch (InvalidArgumentException) {

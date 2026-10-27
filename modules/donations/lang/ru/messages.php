@@ -422,4 +422,13 @@ return [
     'freekassa_recovery_test' => 'Тестовое подтверждение; монеты не начислены.',
     'freekassa_recovery_failed' => 'Не удалось безопасно подтвердить платёж через FreeKassa API. Проверьте API, заказ и настройки. Монеты не начислены.',
     'freekassa_fee_unknown' => 'Комиссия провайдера и сумма к получению не подтверждены через API',
+    'paypal_live_enabled' => 'Live-приём платежей PayPal включён.',
+    'paypal_live_disabled' => 'Live-платежи PayPal выключены.',
+    'paypal_live_merchant_help' => 'Для Live укажите Merchant ID (ID бизнес-аккаунта получателя в PayPal). Без него зачисление невозможно.',
+    'paypal_enable_live' => 'Разрешить Live-платежи PayPal игрокам (после настройки webhook и проверки реквизитов)',
+    'paypal_webhook_verify_note' => 'Webhook принимается только после верификации подписи PayPal. Подключите Webhook ID для Live и Sandbox.',
+    'paypal_return_credited' => 'Оплата PayPal подтверждена, монеты начислены.',
+    'paypal_return_pending' => 'PayPal ещё не подтвердил завершение оплаты. Монеты пока не начислены.',
+    'paypal_return_review' => 'Проверка PayPal пока не завершена. Заказ сохранён; не оплачивайте повторно.',
+    'paypal_provider_description' => 'Независимый PayPal Orders v2: Sandbox для администраторов и Live-покупки игроков с проверенным начислением.',
 ];

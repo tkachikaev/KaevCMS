@@ -15,7 +15,7 @@ use KaevCMS\Modules\Donations\Models\DonationSetting;
 use RuntimeException;
 use Throwable;
 
-/** PayPal-only admin configuration; deliberately not registered for player checkout in I3. */
+/** PayPal-specific credentials, independent live enablement and merchant verification. */
 final class PayPalAdminSettings
 {
     // Exact PayPal checkout subset, not the larger ISO 4217 list of the CMS.
@@ -53,17 +53,17 @@ final class PayPalAdminSettings
             'currency_codes' => array_values(array_intersect($row?->currency_codes ?? [], $this->supportedCurrencies())),
             'sandbox_client_id' => $credentials['sandbox_client_id'] ?? '',
             'live_client_id' => $credentials['live_client_id'] ?? '',
+            'live_merchant_id' => $credentials['live_merchant_id'] ?? '',
             'sandbox_secret_saved' => isset($credentials['sandbox_client_secret']),
             'live_secret_saved' => isset($credentials['live_client_secret']),
             'sandbox_webhook_saved' => isset($credentials['sandbox_webhook_id']),
             'live_webhook_saved' => isset($credentials['live_webhook_id']),
-            // IMPORTANT: provider activation remains off throughout iteration 3.
-            'enabled' => false,
+            'enabled' => $row !== null && (bool) $row->enabled,
         ];
     }
 
     /** @param list<mixed> $currencies @param array<string,mixed> $inputs */
-    public function save(Admin $admin, array $currencies, array $inputs): void
+    public function save(Admin $admin, array $currencies, array $inputs, bool $enableLive = false): void
     {
         $this->authorize($admin);
         $allowed = $this->supportedCurrencies();
@@ -79,7 +79,7 @@ final class PayPalAdminSettings
             throw new InvalidArgumentException('Duplicate PayPal currency.');
         }
         $fields = ['sandbox_client_id', 'sandbox_client_secret', 'sandbox_webhook_id',
-            'live_client_id', 'live_client_secret', 'live_webhook_id'];
+            'live_client_id', 'live_client_secret', 'live_webhook_id', 'live_merchant_id'];
         if (array_diff(array_keys($inputs), $fields) !== []) {
             throw new InvalidArgumentException('Unexpected PayPal field.');
         }
@@ -92,7 +92,7 @@ final class PayPalAdminSettings
                 throw new InvalidArgumentException('Invalid PayPal configuration.');
             }
         }
-        DB::transaction(function () use ($admin, $currencies, $inputs): void {
+        DB::transaction(function () use ($admin, $currencies, $inputs, $enableLive): void {
             // The singleton serializes first insert, preventing lost secret rotations.
             DonationSetting::query()->whereKey(1)->lockForUpdate()->firstOrFail();
             $row = DonationProviderSetting::query()->whereKey('paypal')->lockForUpdate()->first();
@@ -107,14 +107,20 @@ final class PayPalAdminSettings
                     $stored[$key] = $value;
                 }
             }
+            if ($enableLive && ($currencies === [] || ! $this->isConfigured($stored, 'live')
+                || ! $this->validField('live_webhook_id', $stored['live_webhook_id'] ?? '')
+                || ! $this->validField('live_merchant_id', $stored['live_merchant_id'] ?? ''))) {
+                throw new InvalidArgumentException('PayPal Live requires configured merchant, webhook and currency.');
+            }
             $row->forceFill([
-                'enabled' => false, 'mode' => 'test', 'currency_codes' => $currencies,
+                'enabled' => $enableLive, 'mode' => $enableLive ? 'live' : 'test', 'currency_codes' => $currencies,
                 'credentials_ciphertext' => $stored === [] ? null : Crypt::encryptString(json_encode($stored, JSON_THROW_ON_ERROR)),
                 'updated_by_admin_id' => $admin->getKey(),
             ])->save();
             if ($this->audit->success('module', 'donations.paypal_settings_saved', $admin,
                 'donations-paypal', ['currencies' => $currencies, 'sandbox_configured' => $this->isConfigured($stored, 'sandbox'),
-                    'live_configured' => $this->isConfigured($stored, 'live')]) === null) {
+                    'live_configured' => $this->isConfigured($stored, 'live'),
+                    'live_enabled' => $enableLive]) === null) {
                 throw new RuntimeException('Unable to audit PayPal configuration.');
             }
         }, 3);
@@ -146,6 +152,37 @@ final class PayPalAdminSettings
         return $stored[$environment.'_webhook_id'] ?? null;
     }
 
+    /** Merchant's PayPal payer/merchant account ID, not OAuth client ID or email. */
+    public function payeeId(string $environment): string
+    {
+        if ($environment !== 'live') {
+            throw new InvalidArgumentException('A merchant ID is only used for Live payments.');
+        }
+        $row = DonationProviderSetting::query()->find('paypal');
+        $stored = $row === null ? [] : $this->decrypt($row);
+        $id = $stored['live_merchant_id'] ?? '';
+        if (! $this->validField('live_merchant_id', $id)) {
+            throw new InvalidArgumentException('PayPal merchant ID is not configured.');
+        }
+        return $id;
+    }
+
+    public function liveReady(): bool
+    {
+        $row = DonationProviderSetting::query()->find('paypal');
+        if ($row === null || ! (bool) $row->enabled || $row->mode !== 'live'
+            || array_values(array_intersect($row->currency_codes ?? [], $this->supportedCurrencies())) === []) {
+            return false;
+        }
+        try {
+            $this->credentials('live');
+            $this->payeeId('live');
+            return $this->webhookId('live') !== null;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     public function selectedCurrency(string $currency): int
     {
         $row = DonationProviderSetting::query()->find('paypal');
@@ -165,6 +202,9 @@ final class PayPalAdminSettings
     {
         if (str_ends_with($field, 'client_id') || $field === 'client_id') {
             return preg_match('/\A[A-Za-z0-9_-]{1,512}\z/D', $value) === 1;
+        }
+        if ($field === 'live_merchant_id') {
+            return preg_match('/\A[A-Z0-9]{8,32}\z/D', $value) === 1;
         }
         if (str_ends_with($field, 'webhook_id')) {
             return preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $value) === 1;

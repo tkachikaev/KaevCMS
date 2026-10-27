@@ -69,6 +69,31 @@ final class DonationPaymentSettlements
         return $this->record($preparation, $verified, $callback->rawBody);
     }
 
+    /** Called ONLY with a verified PayPal API capture, never with browser or unverified webhook data.
+     * The verifying service must first confirm original order, payee, amount and capture ID.
+     */
+    public function recordVerifiedPayPal(\KaevCMS\Modules\Donations\Models\PayPalAttempt $attempt, VerifiedPayment $payment): string
+    {
+        if ($attempt->purpose !== 'player' || $attempt->environment !== 'live'
+            || $attempt->order_id === null || $attempt->preparation_id === null
+            || $attempt->paypal_order_id === null || $attempt->paypal_capture_id === null
+            || $attempt->paypal_capture_id !== $payment->providerPaymentId
+            || $attempt->currency_code !== $payment->currencyCode
+            || (int) $attempt->gross_amount_minor !== $payment->amountMinor
+            || $payment->status !== 'received_unsettled' || $payment->environment !== 'live'
+            || $payment->testNotification) {
+            throw new InvalidArgumentException('PayPal receipt does not match verified attempt.');
+        }
+        $preparation = DonationPaymentPreparation::query()->whereKey($attempt->preparation_id)->firstOrFail();
+        if ($preparation->provider_code !== 'paypal' || $preparation->mode !== 'live'
+            || (int) $preparation->order_id !== (int) $attempt->order_id) {
+            throw new InvalidArgumentException('PayPal receipt has no live preparation.');
+        }
+        // Authentication is via the verified remote order+capture, not raw event fields.
+        $evidence = 'paypal-api-verified:'.$attempt->paypal_order_id.':'.$attempt->paypal_capture_id;
+        return $this->record($preparation, $payment, $evidence);
+    }
+
     /** Re-verifies encrypted originals before activating any retained evidence. */
     public function retryPending(int $limit = 50): int
     {

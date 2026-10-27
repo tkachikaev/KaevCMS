@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Contracts\PaymentProvider;
 use KaevCMS\Modules\Donations\Providers\FreeKassaProvider;
 use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
+use KaevCMS\Modules\Donations\Providers\PayPalProvider;
 use LogicException;
 
 /**
@@ -15,7 +16,7 @@ use LogicException;
 final class DonationProviderRegistry
 {
     /** @var list<class-string<PaymentProvider>> */
-    private const BUNDLED_DRIVERS = [YooMoneyProvider::class, FreeKassaProvider::class];
+    private const BUNDLED_DRIVERS = [YooMoneyProvider::class, FreeKassaProvider::class, PayPalProvider::class];
 
     /** @param list<mixed>|null $driverClasses Installation candidates are validated before loading. */
     public function __construct(private readonly ?array $driverClasses = null) {}

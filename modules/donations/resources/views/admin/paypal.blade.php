@@ -6,7 +6,7 @@
 <section class="form-card" data-testid="donations-paypal-settings">
     <h2>PayPal Orders v2</h2>
     <p class="admin-field-help">{{ __('module-donations::messages.paypal_intro') }}</p>
-    <p class="admin-field-help" role="status"><strong>{{ __('module-donations::messages.paypal_not_live') }}</strong> — {{ __('module-donations::messages.paypal_admin_only') }}</p>
+    <p class="admin-field-help" role="status"><strong>{{ $settings['enabled'] ? __('module-donations::messages.paypal_live_enabled') : __('module-donations::messages.paypal_live_disabled') }}</strong></p>
     @if(session('status'))<p role="status">{{ session('status') }}</p>@endif
     @foreach(['paypal', 'paypal_check', 'paypal_test'] as $errorKey)
         @if($errors->has($errorKey))<p class="admin-field-error" role="alert">{{ $errors->first($errorKey) }}</p>@endif
@@ -22,7 +22,7 @@
         </div>
         @foreach(['sandbox', 'live'] as $environment)
             <h3>{{ $environment === 'sandbox' ? 'Sandbox' : 'Live' }}</h3>
-            @if($environment === 'live')<p class="admin-field-help">{{ __('module-donations::messages.paypal_live_inactive') }}</p>@endif
+            @if($environment === 'live')<p class="admin-field-help">{{ __('module-donations::messages.paypal_live_merchant_help') }}</p>@endif
             <div class="form-group">
                 <label for="paypal-{{ $environment }}-id">Client ID</label>
                 <input id="paypal-{{ $environment }}-id" type="text" name="credentials[{{ $environment }}_client_id]" maxlength="512" value="{{ $settings[$environment.'_client_id'] }}" autocomplete="off" @disabled(request()->attributes->get('admin_read_only'))>
@@ -37,7 +37,13 @@
                 <input id="paypal-{{ $environment }}-webhook" type="password" name="credentials[{{ $environment }}_webhook_id]" maxlength="190" value="" autocomplete="off" @disabled(request()->attributes->get('admin_read_only'))>
                 <small>{{ $settings[$environment.'_webhook_saved'] ? __('module-donations::messages.paypal_webhook_saved') : __('module-donations::messages.paypal_webhook_missing') }}</small>
             </div>
+            @if($environment === 'live')
+                <div class="form-group"><label for="paypal-live-merchant">Merchant ID (PayPal account ID)</label>
+                    <input id="paypal-live-merchant" type="text" name="credentials[live_merchant_id]" maxlength="32" value="{{ $settings['live_merchant_id'] }}" autocomplete="off" @disabled(request()->attributes->get('admin_read_only'))>
+                </div>
+            @endif
         @endforeach
+        <label class="settings-remove-row"><input type="checkbox" name="enable_live" value="1" @checked($settings['enabled']) @disabled(request()->attributes->get('admin_read_only'))> {{ __('module-donations::messages.paypal_enable_live') }}</label>
         @unless(request()->attributes->get('admin_read_only'))<button type="submit" class="button button-primary">{{ __('module-donations::messages.save_settings') }}</button>@endunless
     </form>
     <section class="donations-readiness">
@@ -47,7 +53,7 @@
             <input id="paypal-webhook-url" type="text" readonly value="{{ $callbackUrl }}" spellcheck="false">
         </div>
         @unless($webhookLive)<p class="admin-field-error">{{ __('module-donations::messages.paypal_https_warning') }}</p>@endunless
-        <p class="admin-field-help"><strong>{{ __('module-donations::messages.paypal_webhook_inactive') }}</strong></p>
+        <p class="admin-field-help">{{ __('module-donations::messages.paypal_webhook_verify_note') }}</p>
         <p class="admin-field-help">{{ __('module-donations::messages.paypal_events_title') }}:</p>
         <ul>@foreach($events as $event)<li><code>{{ $event }}</code></li>@endforeach</ul>
         <p class="admin-field-help">{{ __('module-donations::messages.paypal_events_note') }}</p>

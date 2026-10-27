@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.55.9 - 2026-10-27
+
+**Donations 1.17.9 / PayPal Orders v2 iteration 4: QA candidate; Live gateway is disabled by default and NOT yet production-certified.** Full source based on 0.55.8; existing Wallet, previous migrations, PHP framework and Composer dependencies unchanged.
+
+- Registered a dedicated PayPal Orders v2 deferred-checkout driver with an isolated Live configuration; merchant account ID and separate Sandbox/Live webhook IDs are required for enabling player Live checkout. Dedicated settings UI only; the generic provider editor cannot replace the protected PayPal config.
+- Created immutable Live attempts with expected merchant ID, a stable Create/Capture request pair and distinct invoice ID. REST Create/Capture happens outside SQL transactions. Real player redirect return is authenticated and always rechecks PayPal API before attempting Capture.
+- Replaced the inert core PayPal webhook with HTTPS-only raw JSON endpoint (64 KiB/413) and PayPal postback signature verification using the **original JSON bytes** in `webhook_event`. Failed verification never acknowledges a payment. Added a minimal encrypted, deduplicated webhook-event inbox; no refunds or disputes act on Wallet.
+- Verified completed PayPal orders and their canonical capture via server-side REST API before settlement. Order ID, invoice, gross, currency, one completed capture and **merchant payee ID** must all match the immutable CMS attempt. The existing Donations/Wallet transactional idempotency prevents double credit across webhook, return and retry.
+- Kept provider deactivation separate from verification of previously created orders; Sandbox remains entirely disconnected from player orders and Wallet. Unknown Capture results forbid blind POST retries. PayPal is restricted to global full Live mode, not the legacy single-account pilot.
+- Added mocked Feature tests for redirect, forged webhook, duplicate delivery, wrong merchant and Wallet credit; full Laravel/MySQL/Playwright and real Sandbox/Live checks still required in Codex. Iteration 5 handles read-only reconciliation UI and dispute/refund information.
+
+
 ## 0.55.8 - 2026-10-27
 
 **Donations 1.17.8 / PayPal Orders v2 iteration 3: QA candidate; PayPal Live/player checkout is NOT enabled.** Full source based on 0.55.7. Wallet, Composer lock, framework, YooMoney/FreeKassa live drivers and already published migrations unchanged.

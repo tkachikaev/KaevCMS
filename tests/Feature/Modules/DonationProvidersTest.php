@@ -40,7 +40,7 @@ final class DonationProvidersTest extends TestCase
 
     public function test_installed_providers_are_allowlisted_and_payments_are_still_guarded(): void
     {
-        $this->assertSame(['freekassa', 'yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
+        $this->assertSame(['freekassa', 'paypal', 'yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers')
             ->assertOk()->assertSee('yoomoney');

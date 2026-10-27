@@ -19,11 +19,14 @@ use LogicException;
 final class PayPalAttempts
 {
     /** Preserve one active attempt per local order and merchant. */
-    public function reserveLive(DonationPaymentPreparation $preparation, string $merchantIdentity): PayPalAttempt
+    public function reserveLive(DonationPaymentPreparation $preparation, string $merchantIdentity, ?string $expectedPayeeId = null): PayPalAttempt
     {
         self::assertMerchant($merchantIdentity);
+        if ($expectedPayeeId === null || ! preg_match('/\A[A-Z0-9]{8,32}\z/D', $expectedPayeeId)) {
+            throw new InvalidArgumentException('Missing verified PayPal merchant ID.');
+        }
 
-        return DB::transaction(function () use ($preparation, $merchantIdentity): PayPalAttempt {
+        return DB::transaction(function () use ($preparation, $merchantIdentity, $expectedPayeeId): PayPalAttempt {
             $candidate = DonationOrder::query()->whereKey($preparation->order_id)->firstOrFail();
             User::query()->whereKey($candidate->user_id)->lockForUpdate()->firstOrFail();
             $order = DonationOrder::query()->whereKey($candidate->id)->lockForUpdate()->firstOrFail();
@@ -43,6 +46,7 @@ final class PayPalAttempts
             if ($existing !== null) {
                 if ($existing->purpose !== 'player' || $existing->environment !== 'live'
                     || $existing->merchant_identity !== $merchantIdentity
+                    || $existing->expected_payee_id !== $expectedPayeeId
                     || (int) $existing->preparation_id !== (int) $prepared->id
                     || (int) $existing->gross_amount_minor !== (int) $order->total_minor
                     || $existing->currency_code !== $order->currency_code
@@ -58,7 +62,7 @@ final class PayPalAttempts
             $attempt->forceFill([
                 'order_id' => $order->id, 'preparation_id' => $prepared->id,
                 'purpose' => 'player', 'environment' => 'live',
-                'merchant_identity' => $merchantIdentity, 'status' => 'reserved',
+                'merchant_identity' => $merchantIdentity, 'expected_payee_id' => $expectedPayeeId, 'status' => 'reserved',
                 'create_request_id' => (string) Str::uuid(),
                 'capture_request_id' => (string) Str::uuid(),
                 'invoice_id' => 'KC-'.Str::uuid(),

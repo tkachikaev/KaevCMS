@@ -422,4 +422,13 @@ return [
     'freekassa_recovery_test' => 'Test confirmation; no coins credited.',
     'freekassa_recovery_failed' => 'Could not safely verify payment with the FreeKassa API. Check the API, order and configuration. No coins were credited.',
     'freekassa_fee_unknown' => 'Provider fee and net settlement are not available from the verified API result',
+    'paypal_live_enabled' => 'PayPal Live checkout is enabled.',
+    'paypal_live_disabled' => 'PayPal Live checkout is disabled.',
+    'paypal_live_merchant_help' => 'Enter the PayPal business account Merchant ID for Live. Credits cannot be made without the expected payee ID.',
+    'paypal_enable_live' => 'Enable Live PayPal checkout for players (after configuring webhook and testing credentials)',
+    'paypal_webhook_verify_note' => 'Webhooks are accepted only after PayPal signature verification. Configure Live and Sandbox Webhook IDs.',
+    'paypal_return_credited' => 'PayPal payment confirmed and coins credited.',
+    'paypal_return_pending' => 'PayPal has not confirmed the completed payment yet. No coins were credited.',
+    'paypal_return_review' => 'PayPal confirmation is unresolved. Your order is saved; do not pay again.',
+    'paypal_provider_description' => 'Independent PayPal Orders v2: administrator Sandbox and verified Live player checkout.',
 ];

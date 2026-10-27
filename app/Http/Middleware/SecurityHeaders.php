@@ -34,7 +34,7 @@ final class SecurityHeaders
         if (! $headers->has('Content-Security-Policy')) {
             $formAction = "form-action 'self' https://yoomoney.ru";
             if ($request->routeIs('modules.donations.orders.checkout')) {
-                $formAction .= ' https://pay.fk.money';
+                $formAction .= ' https://pay.fk.money https://www.paypal.com';
             }
             // Bundled themes use external scripts and Livewire's CSP-safe build.
             // Inline CSS remains necessary for Livewire styles and dynamic UI sizing.

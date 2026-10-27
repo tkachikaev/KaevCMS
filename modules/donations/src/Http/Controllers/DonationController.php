@@ -23,6 +23,8 @@ use KaevCMS\Modules\Donations\Services\DonationPaymentCheckout;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
+use KaevCMS\Modules\Donations\Services\PayPalLiveReturns;
+use KaevCMS\Modules\Donations\Exceptions\PayPalApiException;
 use LogicException;
 
 final class DonationController extends Controller
@@ -158,7 +160,7 @@ final class DonationController extends Controller
                 'action' => $form->redirectUrl, 'method' => $form->method, 'fields' => $form->fields,
                 'order_url' => route('modules.donations.orders.show', ['orderUuid' => $prepared->order_uuid]),
             ])->header('Cache-Control', 'private, no-store');
-        } catch (InvalidArgumentException|LogicException|ModelNotFoundException) {
+        } catch (InvalidArgumentException|LogicException|ModelNotFoundException|PayPalApiException) {
             throw ValidationException::withMessages(['order' => __('module-donations::messages.order_unavailable')]);
         }
     }
@@ -209,6 +211,28 @@ final class DonationController extends Controller
             ->header('Pragma', 'no-cache')
             ->header('Referrer-Policy', 'no-referrer')
             ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    /** PayPal hosted return is never itself a payment confirmation. */
+    public function paypalReturn(Request $request, string $orderUuid, DonationOrders $orders, PayPalLiveReturns $paypal): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $order = $orders->forUser($user, $orderUuid);
+        abort_unless($order instanceof DonationOrder, 404);
+        $token = $request->query('token');
+        abort_unless(is_string($token) && preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $token), 404);
+        try {
+            $result = $paypal->returned($user, $order, $token);
+            $message = $result === 'credited' ? 'paypal_return_credited' : 'paypal_return_pending';
+            return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])
+                ->with('status', __('module-donations::messages.'.$message));
+        } catch (InvalidArgumentException|LogicException) {
+            abort(404);
+        } catch (\Throwable) {
+            return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])
+                ->withErrors(['order' => __('module-donations::messages.paypal_return_review')]);
+        }
     }
 
     /** This creates only a provider-free draft; there is no checkout or wallet credit. */

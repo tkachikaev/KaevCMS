@@ -51,7 +51,7 @@ final class DonationPayPalAdminSandboxTest extends TestCase
         $page = $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers/paypal');
         $page->assertOk()->assertSee('PayPal Orders v2')->assertDontSee('sandboxPrivateSecret')
             ->assertDontSee('sandboxWebhookId')->assertDontSee('livePrivateSecret');
-        $this->assertSame(['freekassa', 'yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
+        $this->assertSame(['freekassa', 'paypal', 'yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
         $this->assertSame(['USD', 'JPY'], app(PayPalAdminSettings::class)->state()['currency_codes']);
         $this->assertNotContains('HUF', app(PayPalAdminSettings::class)->supportedCurrencies());
         $this->assertNotContains('TWD', app(PayPalAdminSettings::class)->supportedCurrencies());
@@ -146,9 +146,10 @@ final class DonationPayPalAdminSandboxTest extends TestCase
         $this->assertCount(1, $capturePosts);
     }
 
-    public function test_webhook_placeholder_never_accepts_unverified_events(): void
+    public function test_webhook_never_accepts_unverified_events(): void
     {
-        $this->post('/payments/paypal/notify', ['event_type' => 'PAYMENT.CAPTURE.COMPLETED'])->assertStatus(503);
+        config(['donation-payments.callbacks_enabled' => true]);
+        $this->post('/payments/paypal/notify', ['event_type' => 'PAYMENT.CAPTURE.COMPLETED'])->assertStatus(415);
         $this->call('POST', '/payments/paypal/notify', [], [], [], ['CONTENT_TYPE' => 'application/json'],
             str_repeat('a', 65537))->assertStatus(413);
     }

@@ -53,7 +53,7 @@ final class AdminPayPalController extends Controller
             return back()->withErrors(['paypal' => __('module-donations::messages.paypal_invalid')]);
         }
         try {
-            $settings->save($admin, $currency, $fields);
+            $settings->save($admin, $currency, $fields, $request->boolean('enable_live'));
         } catch (InvalidArgumentException|RuntimeException) {
             return back()->withErrors(['paypal' => __('module-donations::messages.paypal_invalid')]);
         }

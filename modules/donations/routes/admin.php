@@ -23,7 +23,7 @@ Route::post('/orders/{orderUuid}/reviews', [AdminDonationController::class, 'rep
 Route::get('/orders/{orderUuid}', [AdminDonationController::class, 'showOrder'])->whereUuid('orderUuid')->name('orders.show');
 Route::get('/providers', [AdminDonationProviderController::class, 'index'])->name('providers.index');
 
-// PayPal is an admin-only Sandbox integration in iteration 3; not in player registry.
+// PayPal has dedicated Sandbox/Live settings and an independently verified player checkout.
 Route::get('/providers/paypal', [AdminPayPalController::class, 'show'])->name('providers.paypal.show');
 Route::put('/providers/paypal', [AdminPayPalController::class, 'save'])->name('providers.paypal.save');
 Route::post('/providers/paypal/check', [AdminPayPalController::class, 'check'])->middleware('throttle:5,1,paypal-check')->name('providers.paypal.check');

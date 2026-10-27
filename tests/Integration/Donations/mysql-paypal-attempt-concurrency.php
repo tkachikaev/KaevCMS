@@ -49,7 +49,7 @@ if (isset($args['worker'])) {
     }
     $service = app(PayPalAttempts::class);
     $preparation = DonationPaymentPreparation::query()->findOrFail((int) ($args['preparation'] ?? 0));
-    $attempt = $service->reserveLive($preparation, 'concurrency_merchant');
+    $attempt = $service->reserveLive($preparation, 'concurrency_merchant', 'MERCHANTABC123');
     echo $attempt->id.':'.($service->claimCreate((int) $attempt->id) ? 'won' : 'skipped')."\n";
     exit(0);
 }

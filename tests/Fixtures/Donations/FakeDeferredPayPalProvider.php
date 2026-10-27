@@ -63,7 +63,7 @@ final class FakeDeferredPayPalProvider implements DeferredCheckoutProvider
             throw new LogicException('External HTTP would run inside a SQL transaction.');
         }
         $attempts = app(PayPalAttempts::class);
-        $attempt = $attempts->reserveLive($preparation, 'fixture_merchant_v1');
+        $attempt = $attempts->reserveLive($preparation, 'fixture_merchant_v1', 'MERCHANTABC123');
         if ($attempts->claimCreate((int) $attempt->id)) {
             self::$remoteCreates++;
             $attempts->markCreated((int) $attempt->id, 'PAYPAL-ORDER-1');

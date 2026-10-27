@@ -15,6 +15,7 @@ use KaevCMS\Modules\Donations\Models\DonationCurrencyRate;
 use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use KaevCMS\Modules\Donations\Models\DonationProviderSetting;
 use KaevCMS\Modules\Donations\Models\DonationSetting;
+use KaevCMS\Modules\Donations\Providers\PayPalProvider;
 use RuntimeException;
 use Throwable;
 
@@ -46,6 +47,9 @@ final class DonationProviderSettings
     {
         $result = [];
         foreach ($this->registry->all() as $code => $driver) {
+            if ($code === 'paypal' && $driver instanceof PayPalProvider) {
+                continue; // Dedicated PayPal credentials / activation UI, never the generic editor.
+            }
             $row = DonationProviderSetting::query()->find($code);
             $configured = [];
             if ($row !== null) {
@@ -140,6 +144,9 @@ final class DonationProviderSettings
         ?array $callbackProxyIps = null,
     ): void {
         $this->authorizeManage($admin);
+        if ($code === 'paypal' && $this->registry->get('paypal') instanceof PayPalProvider) {
+            throw new InvalidArgumentException('Configure PayPal in its dedicated administration page.');
+        }
         $driver = $this->registry->get($code);
         if (! in_array($mode, ['test', 'live'], true) || ($mode === 'test' && ! $driver->supportsTestMode())) {
             throw new InvalidArgumentException('Unsupported provider mode.');

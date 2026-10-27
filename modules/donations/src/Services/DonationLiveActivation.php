@@ -86,6 +86,16 @@ final class DonationLiveActivation
                 }
                 $provider = $states->get($code);
                 $state = $this->providers->localDiagnostic($code);
+                if ($code === 'paypal') {
+                    // PayPal is configured through its own encrypted settings editor,
+                    // so it is intentionally absent from the generic provider overview.
+                    if (app(PayPalAdminSettings::class)->liveReady()
+                        && $state['state'] === 'local_ok' && $state['matched_currencies'] !== []) {
+                        $ready = true;
+                        break;
+                    }
+                    continue;
+                }
                 if (is_array($provider) && $provider['enabled'] === true && $provider['mode'] === 'live'
                     && $state['state'] === 'local_ok' && $state['matched_currencies'] !== []) {
                     $ready = true;

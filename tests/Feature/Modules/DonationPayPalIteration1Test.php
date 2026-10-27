@@ -53,8 +53,8 @@ final class DonationPayPalIteration1Test extends TestCase
         ])->save();
 
         $attempts = app(PayPalAttempts::class);
-        $first = $attempts->reserveLive($preparation, 'merchant_config_a');
-        $second = $attempts->reserveLive($preparation, 'merchant_config_a');
+        $first = $attempts->reserveLive($preparation, 'merchant_config_a', 'MERCHANTABC123');
+        $second = $attempts->reserveLive($preparation, 'merchant_config_a', 'MERCHANTABC123');
         $this->assertSame($first->id, $second->id);
         $this->assertSame($first->create_request_id, $second->create_request_id);
         $this->assertSame($first->capture_request_id, $second->capture_request_id);
@@ -75,7 +75,7 @@ final class DonationPayPalIteration1Test extends TestCase
         Http::assertNothingSent();
 
         try {
-            $attempts->reserveLive($preparation, 'other_merchant');
+            $attempts->reserveLive($preparation, 'other_merchant', 'MERCHANTABC123');
             $this->fail('The ambiguous order must not move between merchants.');
         } catch (LogicException) {
             $this->assertDatabaseCount('module_donation_paypal_attempts', 1);

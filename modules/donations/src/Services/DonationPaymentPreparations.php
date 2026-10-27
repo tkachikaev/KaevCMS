@@ -37,6 +37,9 @@ final class DonationPaymentPreparations
             if (! $driver instanceof RoutablePaymentProvider) {
                 continue; // Unreviewed drivers cannot prepare payments.
             }
+            if ($code === 'paypal' && app(DonationLiveActivation::class)->state()['mode'] !== 'live') {
+                continue; // PayPal never participates in the legacy single-user pilot mode.
+            }
             $state = $this->providers->localDiagnostic($code);
             if ($state['state'] !== 'local_ok' || ! in_array($currencyCode, $state['matched_currencies'], true)) {
                 continue;
@@ -66,6 +69,9 @@ final class DonationPaymentPreparations
             throw new InvalidArgumentException('Invalid payment preparation.');
         }
         $driver = $this->registry->get($providerCode); // Trusted PHP allowlist, not DB class name.
+        if ($providerCode === 'paypal' && app(DonationLiveActivation::class)->state()['mode'] !== 'live') {
+            throw new LogicException('PayPal is available only in full Live mode.');
+        }
         if (! $driver instanceof RoutablePaymentProvider) {
             throw new LogicException('Payment provider has no reviewed checkout contract.');
         }

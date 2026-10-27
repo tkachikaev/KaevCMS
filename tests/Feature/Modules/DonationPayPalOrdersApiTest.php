@@ -53,7 +53,7 @@ final class DonationPayPalOrdersApiTest extends TestCase
             'checkout_method' => 'GET', 'provider_label' => $order->order_uuid,
             'payer_amount_minor' => $order->total_minor, 'currency_code' => 'USD',
         ])->save();
-        $this->attempt = app(PayPalAttempts::class)->reserveLive($preparation, $this->credentials->merchantIdentity());
+        $this->attempt = app(PayPalAttempts::class)->reserveLive($preparation, $this->credentials->merchantIdentity(), 'MERCHANTABC123');
     }
 
     private function createResponse(string $host = 'www.paypal.com'): array
