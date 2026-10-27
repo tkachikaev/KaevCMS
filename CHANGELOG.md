@@ -4,6 +4,17 @@
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
 
+## 0.55.3 - 2026-10-27
+
+**QA candidate, Donations iteration 5. Not production-certified.** Donations 1.17.3. Full release based on 0.55.2; Wallet/Composer/published migrations unchanged.
+
+- Enabled FreeKassa live-mode configuration only with a merchant API key and existing verified SCI credentials. The admin-only test mode and separate no-Wallet test log remain unchanged. Independent enable/disable and provider currency selection work alongside YooMoney.
+- Added authenticated `POST https://api.fk.life/v1/orders` lookup before crediting any real FreeKassa callback. HMAC-SHA256 signs sorted API fields; DB-serialized increasing nonces are stored encrypted with provider settings (no new schema). A remote PAID status (1), matching immutable merchant order UUID, FreeKassa operation `intid` vs API `fk_order_id`, exact currency and exact gross amount in integer minor units are all mandatory. No unchecked provider status or unsigned callback currency ever credits Wallet.
+- Updated provider callback verification to distinguish TEST and LIVE based on the immutable preparation mode. API errors/missing results fail closed with HTTP 503, no `YES` acknowledgment, no receipt and no wallet credit. Verified live receipts still use the existing common transactional/idempotent Wallet settlement and v2 authenticated evidence.
+- Corrected shared player checkout Blade to render provider-supplied GET/POST fields rather than only YooMoney POST inputs and the RUB currency label. Player provider selection and immutable order snapshots reuse existing Donations services.
+- Added FreeKassa admin mode selector, shared payment-master activation controls (clearly labelled as global to all providers), and RU/EN text explaining API-key and merchant-side test-mode requirements. Updated reference docs; added pure-PHP API parser tests and Laravel Feature tests (written, not yet run). Fixed a preexisting standalone YooMoney test that relied on assignment inside disabled PHP `assert()`.
+- **Important:** live merchant verification has NOT been executed; the public API may differ for a particular merchant, especially the relationship between SCI `intid` and API `fk_order_id`. If they differ, the integration fails closed rather than issuing an unverified credit. Lost callback recovery, rotation resilience, full PHPUnit/Playwright/MySQL, and production acceptance remain for iteration 6.
+
 ## 0.55.2 - 2026-10-27
 
 **QA candidate, Donations iteration 4. Not production-certified.** Donations 1.17.2. Full release based on 0.55.1. No Composer or Wallet modifications, no published migrations altered.

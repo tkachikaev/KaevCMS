@@ -157,8 +157,11 @@ final class AdminDonationProviderController extends Controller
             return back()->withErrors(['activation' => __('module-donations::messages.activation_invalid')]);
         }
 
+        $returnProvider = $request->input('return_provider');
+        $returnProvider = in_array($returnProvider, ['yoomoney', 'freekassa'], true) ? $returnProvider : 'yoomoney';
+
         return redirect()->route('admin.module-pages.donations.providers.show', [
-            'adminPath' => $paths->path(), 'providerCode' => 'yoomoney',
+            'adminPath' => $paths->path(), 'providerCode' => $returnProvider,
         ])->with('status', __('module-donations::messages.activation_saved'));
     }
 

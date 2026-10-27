@@ -30,6 +30,8 @@ final class DonationProviderSettings
 
     private const YOOMONEY_GRACE_HOURS = 24;
 
+    private const FREEKASSA_API_NONCE = '_freekassa_api_last_nonce';
+
     public function __construct(
         private readonly DonationProviderRegistry $registry,
         private readonly AuditLogger $audit,
@@ -215,6 +217,9 @@ final class DonationProviderSettings
                 }
             }
             if ($code === 'freekassa') {
+                if (isset($stored[self::FREEKASSA_API_NONCE])) {
+                    $credentials[self::FREEKASSA_API_NONCE] = $stored[self::FREEKASSA_API_NONCE];
+                }
                 // Dedicated metadata is inside the existing encrypted payload;
                 // the public driver never receives the callback security settings.
                 foreach ([
@@ -264,6 +269,34 @@ final class DonationProviderSettings
                 throw new RuntimeException('Unable to audit Donations provider configuration.');
             }
         });
+    }
+
+
+    /**
+     * FreeKassa requires strictly increasing API nonces. Serialize the counter
+     * through the existing provider settings row, including across PHP workers.
+     * Internal metadata is encrypted and never passed to the provider driver.
+     */
+    public function nextFreeKassaApiNonce(string $merchantId): int
+    {
+        return DB::transaction(function () use ($merchantId): int {
+            $row = DonationProviderSetting::query()->whereKey('freekassa')->lockForUpdate()->firstOrFail();
+            $stored = $this->readCredentials($row);
+            if (($stored['merchant_id'] ?? '') !== $merchantId) {
+                throw new RuntimeException('FreeKassa merchant configuration changed.');
+            }
+            $old = $stored[self::FREEKASSA_API_NONCE] ?? '0';
+            if (! preg_match('/\A(?:0|[1-9][0-9]{0,17})\z/D', $old)) {
+                throw new RuntimeException('FreeKassa API nonce storage is invalid.');
+            }
+            $nonce = max(time(), (int) $old + 1);
+            $stored[self::FREEKASSA_API_NONCE] = (string) $nonce;
+            $row->forceFill(['credentials_ciphertext' => Crypt::encryptString(
+                json_encode($stored, JSON_THROW_ON_ERROR),
+            )])->save();
+
+            return $nonce;
+        }, 3);
     }
 
     /** @return array{senders:list<string>,proxies:list<string>,customized:bool} */

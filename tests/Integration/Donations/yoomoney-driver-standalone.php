@@ -33,7 +33,8 @@ assert($verified->amountMinor === 10000 && $verified->receivedAmountMinor === 98
 assert($verified->orderUuid === $intent->orderUuid);
 assert($verified->testNotification === false);
 assert($verified->status === 'received_unsettled');
-assert($driver->referenceForOrder($intent->orderUuid) === $exampleLabel = 'kaevcms-'.$intent->orderUuid);
+$exampleLabel = 'kaevcms-'.$intent->orderUuid;
+assert($driver->referenceForOrder($intent->orderUuid) === $exampleLabel);
 assert($driver->referenceFromCallback($callback) === $exampleLabel);
 $driver->assertCheckout($checkout, $intent, $credentials, $exampleLabel);
 $bad = [

@@ -10,11 +10,11 @@ use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
+use KaevCMS\Modules\Donations\Services\FreeKassaOrderApi;
 
 /**
- * SCI driver, iteration 2. LIVE payments are intentionally unavailable until
- * merchant-side test checkout, trusted-proxy/IP policy and API confirmation of
- * currency/status are implemented in subsequent iterations.
+ * SCI driver. For live payments, every callback requires independent server-side
+ * API confirmation of operation ID, immutable amount, currency and PAID status.
  * https://docs.freekassa.net/
  */
 final class FreeKassaProvider implements RoutablePaymentProvider
@@ -52,21 +52,23 @@ final class FreeKassaProvider implements RoutablePaymentProvider
         ];
     }
 
+    public function __construct(private readonly ?FreeKassaOrderApi $orderApi = null) {}
+
     /** @param array<string,string> $credentials */
     public function assertConfiguration(array $credentials, string $mode): void
     {
         if (! in_array($mode, ['test', 'live'], true)
-            || ! preg_match('/\A[1-9][0-9]{0,19}\z/D', $credentials['merchant_id'] ?? '')
+            || ! preg_match('/\A[1-9][0-9]{0,17}\z/D', $credentials['merchant_id'] ?? '')
             || ! $this->validSecret($credentials['secret_1'] ?? null)
             || ! $this->validSecret($credentials['secret_2'] ?? null)
             || (array_key_exists('api_key', $credentials)
                 && $credentials['api_key'] !== '' && ! $this->validSecret($credentials['api_key']))) {
             throw new InvalidArgumentException('Invalid FreeKassa configuration.');
         }
-        // Deliberate fail-closed release boundary. No real purchase or credit
-        // becomes possible just because a merchant enters credentials early.
-        if ($mode === 'live') {
-            throw new InvalidArgumentException('FreeKassa live payments are not activated in this iteration.');
+        // A live callback alone cannot prove the received currency or status.
+        // Therefore an API key is mandatory for any real player checkout.
+        if ($mode === 'live' && ! $this->validSecret($credentials['api_key'] ?? null)) {
+            throw new InvalidArgumentException('FreeKassa API key is required for live payments.');
         }
     }
 
@@ -116,7 +118,8 @@ final class FreeKassaProvider implements RoutablePaymentProvider
     /** @param array<string,string> $credentials */
     public function assertCheckout(PaymentCheckout $checkout, PaymentIntent $intent, array $credentials, string $reference): void
     {
-        $expected = $this->beginPayment($intent, $credentials, 'test');
+        $expected = $this->beginPayment($intent, $credentials,
+            isset($credentials['api_key']) && $credentials['api_key'] !== '' ? 'live' : 'test');
         if ($checkout->providerPaymentId !== null || $checkout->redirectUrl !== self::CHECKOUT_URL
             || $checkout->method !== 'GET' || $reference !== $this->referenceForOrder($intent->orderUuid)
             || $checkout->fields !== $expected->fields) {
@@ -134,18 +137,24 @@ final class FreeKassaProvider implements RoutablePaymentProvider
             || (int) $order->exponent !== 2) {
             throw new InvalidArgumentException('Invalid FreeKassa order currency.');
         }
-        // Currency is from our IMMUTABLE order, not untrusted CUR_ID. Neither
-        // callback currency nor actual receiver net is proven by this MD5.
-        // Never enable LIVE here until the provider orders API is verified.
+        $live = $mode === 'live';
+        if ($live) {
+            // Query the authenticated orders API before any settlement/credit.
+            // Do not verify remote state while holding Wallet DB row locks.
+            ($this->orderApi ?? app(FreeKassaOrderApi::class))->assertPaid(
+                $credentials['merchant_id'], $credentials['api_key'], $signed->orderUuid,
+                $signed->operationId, $signed->amountMinor, (string) $order->currency_code,
+            );
+        }
         return new VerifiedPayment(
             orderUuid: $signed->orderUuid,
             providerPaymentId: $signed->operationId,
             status: 'received_unsettled',
             currencyCode: (string) $order->currency_code,
             amountMinor: $signed->amountMinor,
-            receivedAmountMinor: $signed->amountMinor, // test-only nominal value, not actual net
-            testNotification: true, // additional fail-closed guard for this iteration
-            environment: 'test',
+            receivedAmountMinor: $signed->amountMinor, // API confirms gross; no signed receiver-net field is available
+            testNotification: ! $live,
+            environment: $live ? 'live' : 'test',
         );
     }
 

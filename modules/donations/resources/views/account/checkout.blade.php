@@ -6,21 +6,17 @@
 @endpush
 @section('content')
 <x-account-page>
-<x-account-panel class="account-section account-donations-card" data-testid="donations-yoomoney-checkout">
+<x-account-panel class="account-section account-donations-card" data-testid="donations-provider-checkout">
     <p>{{ __('module-donations::messages.order_reference') }}: {{ $order->order_uuid }}</p>
     <p>{{ __('module-donations::messages.checkout_description') }}</p>
-    <h2>{{ $money->format((int) $order->total_minor, 2) }} RUB</h2>
+    <h2>{{ $money->format((int) $order->total_minor, (int) $order->exponent) }} {{ $order->currency_code }}</h2>
     <p>{{ __('module-donations::messages.checkout_coins', ['coins' => $order->coins]) }}</p>
     <p class="account-field-help">{{ __('module-donations::messages.checkout_return_warning') }}</p>
-    {{-- Only the receiver/amount/label constructed from trusted DB state go to YooMoney.
-         The player may edit HTML; this never authorizes a Wallet credit. --}}
-    <form action="{{ $form->redirectUrl }}" method="POST" data-testid="donations-checkout-form" autocomplete="off" data-turbo="false">
-        <input type="hidden" name="receiver" value="{{ $form->fields['receiver'] }}">
-        <input type="hidden" name="quickpay-form" value="{{ $form->fields['quickpay-form'] }}">
-        <input type="hidden" name="label" value="{{ $form->fields['label'] }}">
-        <input type="hidden" name="sum" value="{{ $form->fields['sum'] }}">
-        <input type="hidden" name="successURL" value="{{ $form->fields['successURL'] }}">
-        <input type="hidden" name="paymentType" value="{{ $form->fields['paymentType'] }}">
+    {{-- Checkout parameters come only from the trusted provider driver. No browser value is proof of payment. --}}
+    <form action="{{ $form->redirectUrl }}" method="{{ $form->method }}" data-testid="donations-checkout-form" autocomplete="off" data-turbo="false">
+        @foreach($form->fields as $name => $value)
+            <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+        @endforeach
         <div class="account-form-actions">
             <button class="account-button primary" type="submit" data-testid="donations-checkout-submit">{{ __('module-donations::messages.topup_submit') }}</button>
         </div>

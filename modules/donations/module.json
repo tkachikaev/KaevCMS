@@ -2,9 +2,9 @@
     "schema": 1,
     "id": "donations",
     "name": "Donations",
-    "version": "1.17.2",
+    "version": "1.17.3",
     "author": "KaevCMS",
-    "description": "YooMoney and FreeKassa SCI provider with isolated administrator-only test checkout and callback verification; real FreeKassa deposits remain disabled.",
+    "description": "YooMoney and FreeKassa SCI with admin-only test purchases, merchant API verification for live payments, and shared Wallet settlement.",
     "cms_min": "0.50.2",
     "cms_max": null,
     "namespace": "KaevCMS\\Modules\\Donations\\",
@@ -20,11 +20,11 @@
     "locales": {
         "ru": {
             "name": "Пожертвования",
-            "description": "ЮMoney и FreeKassa с тестовой покупкой только в админке и без начисления монет; реальная оплата FreeKassa пока выключена."
+            "description": "ЮMoney и FreeKassa: тестирование в админке и реальные платежи с обязательной серверной проверкой по API перед начислением монет."
         },
         "en": {
             "name": "Donations",
-            "description": "YooMoney and FreeKassa admin-only test payments with no wallet credit; live FreeKassa checkout is still disabled."
+            "description": "YooMoney and FreeKassa: isolated admin test payments and live transactions with mandatory server-side payment verification."
         }
     }
 }

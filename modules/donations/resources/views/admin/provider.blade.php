@@ -165,14 +165,37 @@
             <input type="hidden" name="enabled" value="0">
             <label class="settings-remove-row"><input name="enabled" value="1" type="checkbox" @checked($state['enabled']) @disabled(request()->attributes->get('admin_read_only'))> {{ __('module-donations::messages.provider_on') }}</label>
             @if($driver->code() === 'freekassa')
-                <input type="hidden" name="mode" value="test">
-                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_only') }}</p>
+                <label for="freekassa-mode">{{ __('module-donations::messages.freekassa_mode_label') }}</label>
+                <select id="freekassa-mode" name="mode" @disabled(request()->attributes->get('admin_read_only'))>
+                    <option value="test" @selected($state['mode'] === 'test')>{{ __('module-donations::messages.provider_test') }}</option>
+                    <option value="live" @selected($state['mode'] === 'live')>{{ __('module-donations::messages.provider_live') }}</option>
+                </select>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_live_warning') }}</p>
             @else
                 <select name="mode" @disabled(request()->attributes->get('admin_read_only'))><option value="live" @selected($state['mode']==='live')>{{ __('module-donations::messages.provider_live') }}</option><option value="test" @selected($state['mode']==='test')>{{ __('module-donations::messages.provider_test') }}</option></select>
             @endif
             @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.save_settings') }}</button>@endunless
         </form>
         @if($driver->code() === 'freekassa')
+            <section class="donations-readiness" data-testid="freekassa-global-activation">
+                <h3>{{ __('module-donations::messages.freekassa_global_activation_title') }}</h3>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_global_activation_help') }}</p>
+                @if($errors->has('activation'))<p class="admin-field-error" role="alert">{{ $errors->first('activation') }}</p>@endif
+                <form method="POST" action="{{ route('admin.module-pages.donations.providers.activation.update', ['adminPath' => $adminPath]) }}" class="settings-form">
+                    @csrf @method('PUT')
+                    <input type="hidden" name="return_provider" value="freekassa">
+                    <select name="payment_mode" @disabled(request()->attributes->get('admin_read_only'))>
+                        <option value="off" @selected($activation['mode'] === 'off')>{{ __('module-donations::messages.freekassa_global_off') }}</option>
+                        <option value="live" @selected($activation['mode'] === 'live')>{{ __('module-donations::messages.freekassa_global_live') }}</option>
+                    </select>
+                    @unless(request()->attributes->get('admin_read_only'))
+                        <button class="button button-secondary" type="submit">{{ __('module-donations::messages.save_settings') }}</button>
+                    @endunless
+                </form>
+                @if($readinessIssues !== [] && $activation['mode'] !== 'live')
+                    <p class="admin-field-help">{{ __('module-donations::messages.freekassa_global_blocked') }}</p>
+                @endif
+            </section>
             <section class="donations-readiness" data-testid="freekassa-admin-test">
                 <h3>{{ __('module-donations::messages.freekassa_test_title') }}</h3>
                 <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_external_warning') }}</p>

@@ -88,3 +88,17 @@ After configuring secrets, allowed sender IPs, currencies and enabling FreeKassa
 - “Signed callback received” proves only notification verification, not vendor sandbox state, actual fund movement, or future live readiness.
 - Finish in-flight tests before rotating the notification secret, or start another test.
 - **Live FreeKassa player purchases remain blocked** until API currency/status verification and production acceptance. YooMoney is unaffected.
+
+
+## FreeKassa live top-ups (KaevCMS 0.55.3 / Donations 1.17.3)
+
+**QA candidate only — production verification pending.** Under **Donations → Payment providers → FreeKassa**, configure merchant ID, checkout secret 1, callback secret 2, and the **FreeKassa API key** (required for live). Choose supported currencies and set coin prices. Configure allowed callback sender IPs and trusted proxies, and set the displayed public HTTPS POST notification URL in the merchant dashboard. Turn off the vendor's sandbox before charging real funds.
+
+Select **Live** for FreeKassa and enable the provider; the same admin page now exposes the separate shared Donations master switch. Turn it on only when ready; it affects both FreeKassa and YooMoney new checkouts, but never disables outstanding callbacks. Players can select FreeKassa or YooMoney by supported currency. Checkout is server-priced; return from FreeKassa is NOT proof. Valid callbacks additionally require a merchant-authenticated `POST https://api.fk.life/v1/orders` lookup with paid status `1`, exact `merchant_order_id`, exact provider operation (`intid` compared against `fk_order_id`), exact currency and exact gross amount, handled as integer minor units. `CUR_ID` is a payment method, not the currency.
+
+- API outage/mismatch fails closed with HTTP 503 (never `YES` or Wallet credit). Ensure merchant callback retries are enabled. Lost-callback recovery is part of iteration 6.
+- API HMAC uses a DB-serialized increasing nonce stored in encrypted provider settings. No `.env` toggle or new migration. Disabling new payments does not discard existing order preparations or verification credentials.
+- Isolated admin tests are only allowed in **Test** mode and never credit Wallet. There is no IP reset button.
+- The published documentation does not explicitly guarantee that SCI `intid` equals API `fk_order_id` for every merchant. A real merchant control payment must establish this mapping before production acceptance. Differences fail closed. Full Laravel/browser/DB regression testing remains for iteration 6.
+
+Official API: https://docs.freekassa.net/.

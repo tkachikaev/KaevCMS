@@ -46,7 +46,9 @@ $checkout = $provider->beginPayment($intent, $credentials, 'test');
 ensure($checkout->redirectUrl === 'https://pay.fk.money/' && $checkout->method === 'GET', 'SCI checkout');
 ensure($checkout->fields['s'] === md5('7012:100.00:form-secret-value:EUR:'.$uuid), 'SCI signature');
 $provider->assertCheckout($checkout, $intent, $credentials, $uuid);
-rejects(fn () => $provider->assertConfiguration($credentials, 'live'), 'live closed');
+rejects(fn () => $provider->assertConfiguration($credentials, 'live'), 'API key is required for live');
+$provider->assertConfiguration([...$credentials, 'api_key' => 'verified-server-api-key'], 'live');
+ensure($provider->beginPayment($intent, [...$credentials, 'api_key' => 'verified-server-api-key'], 'live')->method === 'GET', 'live SCI checkout');
 rejects(fn () => $provider->assertCheckout(new \KaevCMS\Modules\Donations\Data\PaymentCheckout(null, 'https://evil.invalid', 'GET', $checkout->fields), $intent, $credentials, $uuid), 'malicious redirect');
 foreach (['100', '100.0', '100.00'] as $amount) {
     $signature = md5('7012:'.$amount.':notification-secret-value:'.$uuid);
