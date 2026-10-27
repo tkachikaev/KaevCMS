@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.55.12 - 2026-10-27
+
+**Donations 1.17.12 / PayPal Orders v2 QA fixes.** Real PayPal Sandbox and a separately approved Live control payment remain release acceptance gates.
+
+- Unify payment provider cards with local FreeKassa/PayPal brand icons, concise RU/EN descriptions and aligned controls on desktop and mobile.
+- Validate the expected PayPal merchant before Capture; preserve verified progress when a concurrent webhook finishes before the Capture response.
+- Complete the PayPal attempt status atomically with its Wallet settlement, including retained-receipt recovery. Verified refund/dispute notices use the exact credited receipt and remain informational only.
+- Keep manual reconciliation results that require review distinct from pending payments. Expired or abandoned Create claims require review without a new request ID; unexpected HTTP redirects remain uncertain outcomes.
+- Preserve applied migration files byte-for-byte; two historical files are excluded from automatic formatting to retain their lifecycle checksums.
+- Repair release metadata, updater file inventory, localized Sandbox expectations and financial integration test isolation. Add concurrent Capture/webhook/recovery regression coverage. Framework dependencies and Wallet Core are unchanged.
+
 ## 0.55.11 - 2026-10-27
 
 **Donations 1.17.11 / PayPal Orders v2 iteration 6 — QA candidate; not production-certified.** Full source based on 0.55.10; PHP/Laravel/Livewire/Composer dependencies, Wallet and previously published migrations unchanged.

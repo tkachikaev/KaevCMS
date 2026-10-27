@@ -1,30 +1,30 @@
 {
-    "schema": 1,
-    "id": "donations",
-    "name": "Donations",
-    "version": "1.17.11",
-    "author": "KaevCMS",
-    "description": "YooMoney, FreeKassa and PayPal Orders v2 with bilingual setup instructions, read-only reconciliation and informational refund/dispute notices.",
-    "cms_min": "0.55.11",
-    "cms_max": null,
-    "namespace": "KaevCMS\\Modules\\Donations\\",
-    "autoload": "src",
-    "bootstrap": "bootstrap.php",
-    "views": "resources/views",
-    "lang": "lang",
-    "migrations": "database/migrations",
-    "routes": {
-        "web": "routes/web.php",
-        "admin": "routes/admin.php"
+  "schema": 1,
+  "id": "donations",
+  "name": "Donations",
+  "version": "1.17.12",
+  "author": "KaevCMS",
+  "description": "YooMoney, FreeKassa and PayPal Orders v2 with bilingual setup instructions, read-only reconciliation and informational refund/dispute notices.",
+  "cms_min": "0.55.12",
+  "cms_max": null,
+  "namespace": "KaevCMS\\Modules\\Donations\\",
+  "autoload": "src",
+  "bootstrap": "bootstrap.php",
+  "views": "resources/views",
+  "lang": "lang",
+  "migrations": "database/migrations",
+  "routes": {
+    "web": "routes/web.php",
+    "admin": "routes/admin.php"
+  },
+  "locales": {
+    "ru": {
+      "name": "Пожертвования",
+      "description": "ЮMoney, FreeKassa и PayPal Orders v2: инструкции RU/EN, безопасная сверка и информационные уведомления о возвратах и спорах."
     },
-    "locales": {
-        "ru": {
-            "name": "Пожертвования",
-            "description": "ЮMoney, FreeKassa и PayPal Orders v2: инструкции RU/EN, безопасная сверка и информационные уведомления о возвратах и спорах."
-        },
-        "en": {
-            "name": "Donations",
-            "description": "YooMoney, FreeKassa and PayPal Orders v2: bilingual guides, safe reconciliation and informational refund/dispute notices."
-        }
+    "en": {
+      "name": "Donations",
+      "description": "YooMoney, FreeKassa and PayPal Orders v2: bilingual guides, safe reconciliation and informational refund/dispute notices."
     }
+  }
 }

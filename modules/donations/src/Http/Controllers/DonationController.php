@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Exceptions\PayPalApiException;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationOrders;
@@ -24,7 +25,6 @@ use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\PayPalLiveReturns;
-use KaevCMS\Modules\Donations\Exceptions\PayPalApiException;
 use LogicException;
 
 final class DonationController extends Controller
@@ -149,6 +149,7 @@ final class DonationController extends Controller
                 }
                 $order = $orders->createDraft($user, $data['currency'], (int) $data['coins'], $data['request_key']);
                 $payments->prepare($user, $order->order_uuid, $data['provider']);
+
                 return $order;
             });
             if ($prepared instanceof JsonResponse) {
@@ -225,6 +226,7 @@ final class DonationController extends Controller
         try {
             $result = $paypal->returned($user, $order, $token);
             $message = $result === 'credited' ? 'paypal_return_credited' : 'paypal_return_pending';
+
             return redirect()->route('modules.donations.orders.show', ['orderUuid' => $orderUuid])
                 ->with('status', __('module-donations::messages.'.$message));
         } catch (InvalidArgumentException|LogicException) {

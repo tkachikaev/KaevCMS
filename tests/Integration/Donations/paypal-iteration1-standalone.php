@@ -44,13 +44,15 @@ foreach ([
     try {
         VerifiedReceiptEnvelope::restore($bad);
         throw new RuntimeException('Invalid receipt metadata was accepted.');
-    } catch (InvalidArgumentException) { /* fail closed */ }
+    } catch (InvalidArgumentException) { /* fail closed */
+    }
 }
 $raw = str_repeat('a', 60000);
 assert(VerifiedReceiptEnvelope::restore(VerifiedReceiptEnvelope::seal($paypal, $raw, 'paypal'))['rawBody'] === $raw);
 try {
     VerifiedReceiptEnvelope::seal($legacy, $raw, 'yoomoney');
     throw new RuntimeException('Legacy oversized body accepted.');
-} catch (InvalidArgumentException) { /* historical limit remains */ }
+} catch (InvalidArgumentException) { /* historical limit remains */
+}
 
 echo "PayPal iteration 1 receipt compatibility: OK\n";

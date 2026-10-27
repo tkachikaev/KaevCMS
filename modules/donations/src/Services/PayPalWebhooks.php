@@ -3,12 +3,13 @@
 namespace KaevCMS\Modules\Donations\Services;
 
 use App\Auth\AdminRole;
+use App\Models\Admin;
 use App\Services\Notifications\AdminNotificationCenter;
 use App\Support\Notifications\AdminNotificationData;
 use App\Support\Notifications\AdminNotificationSeverity;
 use App\Support\Notifications\AdminNotificationType;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Models\PayPalAttempt;
 use LogicException;
@@ -31,6 +32,7 @@ final class PayPalWebhooks
         private readonly AdminNotificationCenter $notifications,
     ) {}
 
+    /** @param array<string, mixed> $headers */
     public function receive(string $raw, array $headers): void
     {
         if (strlen($raw) > 65536 || ! PayPalWebhookVerifier::isJsonObject($raw)) {
@@ -89,13 +91,13 @@ final class PayPalWebhooks
             || strtotime($occurredAt) === false) {
             $occurredAt = null;
         }
-        $candidates = collect();
+        $candidates = (new PayPalAttempt)->newCollection();
         if (is_string($remoteOrderId) && preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $remoteOrderId)) {
             $candidates = PayPalAttempt::query()->where('paypal_order_id', $remoteOrderId)->limit(3)->get();
         } elseif (is_string($captureId) && preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $captureId)) {
             $candidates = PayPalAttempt::query()->where('paypal_capture_id', $captureId)->limit(3)->get();
         }
-        if ($informational && is_string($captureId)) {
+        if ($informational) {
             // Correlate financial warnings with the EXACT already-settled capture,
             // not merely an incoming order_id or another merchant's refund ID.
             $candidates = PayPalAttempt::query()->where('paypal_capture_id', $captureId)->limit(3)->get();
@@ -112,9 +114,15 @@ final class PayPalWebhooks
         if ($informational && str_starts_with($type, 'PAYMENT.CAPTURE.')
             && $this->captureFromUpLink($resource) !== null) {
             // An event signed for Sandbox cannot reference a Live API host or vice versa.
-            $href = collect($resource['links'] ?? [])->first(static fn ($link): bool => is_array($link)
-                && ($link['rel'] ?? null) === 'up' && str_contains((string) ($link['href'] ?? ''), '/v2/payments/captures/'))['href'] ?? '';
-            $host = is_string($href) ? parse_url($href, PHP_URL_HOST) : null;
+            $host = null;
+            foreach ($resource['links'] as $link) {
+                if (is_array($link) && ($link['rel'] ?? null) === 'up'
+                    && is_string($link['href'] ?? null)
+                    && str_contains($link['href'], '/v2/payments/captures/')) {
+                    $host = parse_url($link['href'], PHP_URL_HOST);
+                    break;
+                }
+            }
             $isSandboxHost = in_array($host, ['api-m.sandbox.paypal.com', 'api.sandbox.paypal.com'], true);
             if ($isSandboxHost !== ($attempt->environment === 'sandbox')) {
                 throw new InvalidArgumentException('PayPal capture link environment mismatch.');
@@ -144,8 +152,10 @@ final class PayPalWebhooks
                     || $existing->event_type !== $type) {
                     throw new LogicException('Conflicting PayPal webhook event ID.');
                 }
+
                 return (int) $existing->id;
             }
+
             return DB::table('module_donation_paypal_webhook_events')->insertGetId([
                 'attempt_id' => $attempt->id, 'environment' => $attempt->environment,
                 'event_id' => $id, 'event_type' => $type, 'payload_sha256' => $hash,
@@ -208,7 +218,10 @@ final class PayPalWebhooks
                     && DB::table('module_donation_payment_receipts')
                         ->where('order_id', $current->order_id)->where('provider_code', 'paypal')
                         ->where('provider_payment_id', $captureId)->where('status', 'credited')->exists();
-                if ($current->status !== 'settled' || $current->paypal_capture_id !== $captureId || ! $paid) {
+                // The committed paid order and exact credited receipt are the
+                // authority. Older/crash-interrupted attempts may have a stale
+                // derived status even though their Wallet credit is complete.
+                if ($current->paypal_capture_id !== $captureId || ! $paid) {
                     throw new RuntimeException('PayPal informational event is not bound to a settled capture.');
                 }
             }
@@ -234,7 +247,7 @@ final class PayPalWebhooks
                     routeName: 'admin.module-pages.donations.orders.show',
                     routeParameters: ['orderUuid' => $orderUuid],
                 ), 'donations:paypal:notice:'.$attempt->environment.':'.$type.':'.($record->resource_id ?: $captureId),
-                    recipientFilter: static fn (\App\Models\Admin $admin): bool => in_array(
+                    recipientFilter: static fn (Admin $admin): bool => in_array(
                         $admin->role, [AdminRole::Owner, AdminRole::Administrator], true,
                     ));
             }
@@ -245,6 +258,7 @@ final class PayPalWebhooks
 
     /** The refund `up` relation identifies the original Capture, not the refund ID.
      * Only parse a trusted PayPal URL as an ID; never request arbitrary HATEOAS URLs. */
+    /** @param array<string, mixed> $resource */
     private function captureFromUpLink(array $resource): ?string
     {
         $links = $resource['links'] ?? [];
@@ -284,5 +298,4 @@ final class PayPalWebhooks
 
         return $found;
     }
-
 }

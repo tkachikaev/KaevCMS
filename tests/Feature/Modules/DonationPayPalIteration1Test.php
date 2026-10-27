@@ -81,5 +81,4 @@ final class DonationPayPalIteration1Test extends TestCase
             $this->assertDatabaseCount('module_donation_paypal_attempts', 1);
         }
     }
-
 }

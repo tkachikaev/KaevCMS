@@ -49,6 +49,7 @@ final class PayPalAdminTestPayments
                 if ($existing->currency_code !== $currency || (int) $existing->gross_amount_minor !== $minor) {
                     throw new LogicException('Complete the existing Sandbox test before changing amount.');
                 }
+
                 return $existing;
             }
             $attempt = new PayPalAttempt;
@@ -65,6 +66,7 @@ final class PayPalAdminTestPayments
                     'gross_amount_minor' => $minor]) === null) {
                 throw new RuntimeException('Unable to audit PayPal Sandbox purchase.');
             }
+
             return $attempt;
         }, 3);
         $url = $this->operations->create(
@@ -75,6 +77,7 @@ final class PayPalAdminTestPayments
         if ($url === null) {
             throw new LogicException('Sandbox Create is already processing.');
         }
+
         return ['url' => $url, 'id' => (int) $attempt->id];
     }
 
@@ -86,6 +89,7 @@ final class PayPalAdminTestPayments
             || (int) $attempt->admin_id !== (int) $admin->getKey()) {
             throw new LogicException('Not an administrator Sandbox attempt.');
         }
+
         return $attempt;
     }
 
@@ -95,6 +99,7 @@ final class PayPalAdminTestPayments
         if ($attempt->paypal_order_id === null || ! hash_equals((string) $attempt->paypal_order_id, $token)) {
             throw new InvalidArgumentException('PayPal return token mismatch.');
         }
+
         return $this->operations->checkApproval($id, $this->settings->credentials('sandbox'));
     }
 
@@ -110,6 +115,7 @@ final class PayPalAdminTestPayments
         if ($response !== null && ! in_array($status, ['COMPLETED', 'PENDING', 'DENIED', 'DECLINED'], true)) {
             throw new PayPalApiException('sandbox_capture_status_missing', true);
         }
+
         return $status;
     }
 

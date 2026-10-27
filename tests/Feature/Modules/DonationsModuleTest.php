@@ -37,7 +37,7 @@ class DonationsModuleTest extends TestCase
         $module = app(ModuleManager::class)->inspect('donations');
         $this->assertTrue($module['valid'], implode(PHP_EOL, $module['errors']));
         $this->assertTrue($module['compatible']);
-        $this->assertSame('1.17.5', $module['version']);
+        $this->assertSame('1.17.12', $module['version']);
         $this->assertTrue($module['enabled']);
         $this->assertSame([], $module['pending_migrations']);
         $this->assertTrue(Schema::hasTable('module_donation_settings'));

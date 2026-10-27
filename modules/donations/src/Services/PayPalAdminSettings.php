@@ -37,6 +37,7 @@ final class PayPalAdminSettings
             }
             try {
                 PayPalMoney::assertExponent($currency, (int) $info['exponent']);
+
                 return true;
             } catch (InvalidArgumentException) {
                 return false;
@@ -44,13 +45,18 @@ final class PayPalAdminSettings
         }));
     }
 
-    /** Does not include plaintext Client Secret or Webhook ID. */
+    /**
+     * Does not include plaintext Client Secret or Webhook ID.
+     *
+     * @return array<string, mixed>
+     */
     public function state(): array
     {
         $row = DonationProviderSetting::query()->find('paypal');
         $credentials = $row ? $this->decrypt($row) : [];
+
         return [
-            'currency_codes' => array_values(array_intersect($row?->currency_codes ?? [], $this->supportedCurrencies())),
+            'currency_codes' => array_values(array_intersect($row->currency_codes ?? [], $this->supportedCurrencies())),
             'sandbox_client_id' => $credentials['sandbox_client_id'] ?? '',
             'live_client_id' => $credentials['live_client_id'] ?? '',
             'live_merchant_id' => $credentials['live_merchant_id'] ?? '',
@@ -62,7 +68,10 @@ final class PayPalAdminSettings
         ];
     }
 
-    /** @param list<mixed> $currencies @param array<string,mixed> $inputs */
+    /**
+     * @param  list<mixed>  $currencies
+     * @param  array<string, mixed>  $inputs
+     */
     public function save(Admin $admin, array $currencies, array $inputs, bool $enableLive = false): void
     {
         $this->authorize($admin);
@@ -139,6 +148,7 @@ final class PayPalAdminSettings
         if (! $this->validField('client_id', $id) || ! $this->validField('client_secret', $secret)) {
             throw new InvalidArgumentException('PayPal credentials are not configured.');
         }
+
         return new PayPalApiCredentials($environment, $id, $secret);
     }
 
@@ -149,6 +159,7 @@ final class PayPalAdminSettings
         }
         $row = DonationProviderSetting::query()->find('paypal');
         $stored = $row === null ? [] : $this->decrypt($row);
+
         return $stored[$environment.'_webhook_id'] ?? null;
     }
 
@@ -164,6 +175,7 @@ final class PayPalAdminSettings
         if (! $this->validField('live_merchant_id', $id)) {
             throw new InvalidArgumentException('PayPal merchant ID is not configured.');
         }
+
         return $id;
     }
 
@@ -177,8 +189,9 @@ final class PayPalAdminSettings
         try {
             $this->credentials('live');
             $this->payeeId('live');
+
             return $this->webhookId('live') !== null;
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return false;
         }
     }
@@ -190,9 +203,11 @@ final class PayPalAdminSettings
             || ! in_array($currency, $this->supportedCurrencies(), true)) {
             throw new InvalidArgumentException('PayPal currency not enabled.');
         }
+
         return (int) $this->currencyRegistry->find($currency)['exponent'];
     }
 
+    /** @param array<string, string> $stored */
     private function isConfigured(array $stored, string $environment): bool
     {
         return ! empty($stored[$environment.'_client_id']) && ! empty($stored[$environment.'_client_secret']);
@@ -209,6 +224,7 @@ final class PayPalAdminSettings
         if (str_ends_with($field, 'webhook_id')) {
             return preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $value) === 1;
         }
+
         return preg_match('/\A[!-~]{1,1024}\z/D', $value) === 1;
     }
 
@@ -235,6 +251,7 @@ final class PayPalAdminSettings
                     throw new RuntimeException('Invalid PayPal settings.');
                 }
             }
+
             return $decoded;
         } catch (Throwable) {
             throw new RuntimeException('Protected PayPal configuration unavailable.');

@@ -19,16 +19,31 @@ use LogicException;
 /** PayPal uses server-side Orders v2; incoming callbacks are handled by the separately verified webhook service. */
 final class PayPalProvider implements DeferredCheckoutProvider
 {
-    public function code(): string { return 'paypal'; }
+    public function code(): string
+    {
+        return 'paypal';
+    }
 
-    public function name(): string { return 'PayPal'; }
+    public function name(): string
+    {
+        return 'PayPal';
+    }
 
-    public function supportedCurrencies(): array { return app(PayPalAdminSettings::class)->supportedCurrencies(); }
+    public function supportedCurrencies(): array
+    {
+        return app(PayPalAdminSettings::class)->supportedCurrencies();
+    }
 
-    public function supportsTestMode(): bool { return false; }
+    public function supportsTestMode(): bool
+    {
+        return false;
+    }
 
     /** Credentials are stored encrypted by PayPalAdminSettings, never copied into generic driver config. */
-    public function credentialFields(): array { return []; }
+    public function credentialFields(): array
+    {
+        return [];
+    }
 
     public function assertConfiguration(array $credentials, string $mode): void
     {
@@ -42,10 +57,14 @@ final class PayPalProvider implements DeferredCheckoutProvider
         if (! preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $orderUuid)) {
             throw new InvalidArgumentException('Invalid PayPal order reference.');
         }
+
         return $orderUuid;
     }
 
-    public function callbackRouteName(): string { return 'payments.paypal.notify'; }
+    public function callbackRouteName(): string
+    {
+        return 'payments.paypal.notify';
+    }
 
     public function referenceFromCallback(ProviderCallback $callback): string
     {
@@ -83,6 +102,7 @@ final class PayPalProvider implements DeferredCheckoutProvider
             // A parallel worker is creating this remote order; never start another POST.
             throw new LogicException('PayPal order creation is already running or needs review.');
         }
+
         return new PaymentCheckout($attempt->paypal_order_id, $url, 'GET');
     }
 

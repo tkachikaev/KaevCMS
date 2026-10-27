@@ -7,8 +7,8 @@ declare(strict_types=1);
 require_once __DIR__.'/../../../modules/donations/src/Services/PayPalWebhookVerifier.php';
 require_once __DIR__.'/../../../modules/donations/src/Services/PayPalWebhooks.php';
 
-use KaevCMS\Modules\Donations\Services\PayPalWebhookVerifier;
 use KaevCMS\Modules\Donations\Services\PayPalWebhooks;
+use KaevCMS\Modules\Donations\Services\PayPalWebhookVerifier;
 
 $passed = 0;
 $check = static function (bool $valid, string $reason) use (&$passed): void {

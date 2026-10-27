@@ -78,7 +78,8 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
         $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertOk();
         $response->assertSee('https://pay.fk.money/', false)->assertSee('name="oa"', false)
             ->assertSee('name="currency"', false)->assertDontSee('merchant-orders-api-key');
-        $this->assertStringContainsString('https://pay.fk.money;', $response->headers->get('Content-Security-Policy'));
+        $this->assertMatchesRegularExpression("/(?:^|;)\\s*form-action\\s+(?:[^;]*\\s)?https:\/\/pay\\.fk\\.money(?=\\s|;|$)/",
+            $response->headers->get('Content-Security-Policy'));
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 

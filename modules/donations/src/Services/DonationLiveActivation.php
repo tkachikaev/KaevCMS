@@ -94,6 +94,7 @@ final class DonationLiveActivation
                         $ready = true;
                         break;
                     }
+
                     continue;
                 }
                 if (is_array($provider) && $provider['enabled'] === true && $provider['mode'] === 'live'

@@ -35,6 +35,7 @@ final class PayPalLiveReturns
         if (in_array($attempt->status, ['created', 'approved'], true)) {
             $this->operations->capture((int) $attempt->id, $credentials);
         }
+
         return $this->verified->reconcile((int) $attempt->id);
     }
 }

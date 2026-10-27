@@ -164,7 +164,8 @@ final class PayPalOrdersApi
 
     /**
      * Check a returned HATEOAS URL, never trust arbitrary domains or redirects.
-     * @param array<string,mixed> $data
+     *
+     * @param  array<string,mixed>  $data
      */
     public static function approvalUrl(array $data, string $environment, string $expectedOrderId): string
     {
@@ -207,10 +208,13 @@ final class PayPalOrdersApi
         }
         parse_str($queryString, $query);
 
-        return ($query['token'] ?? null) === $orderId && is_string($query['token'] ?? null);
+        return ($query['token'] ?? null) === $orderId;
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @param  array<string, mixed>|object|null  $json
+     * @return array<string, mixed>
+     */
     private function call(string $method, PayPalApiCredentials $credentials, string $path, array|object|null $json = null, ?string $requestId = null): array
     {
         $token = $this->accessToken($credentials);
@@ -238,7 +242,8 @@ final class PayPalOrdersApi
         if (! $response->successful()) {
             // 408, 429, 5xx and unexpected redirects can occur after remote processing.
             $status = $response->status();
-            throw new PayPalApiException('http_'.$status, $method === 'POST' && ($status >= 500 || in_array($status, [301, 302, 307, 308, 408, 409, 425, 429], true)));
+            throw new PayPalApiException('http_'.$status, $method === 'POST' && ($status >= 500
+                || ($status >= 300 && $status < 400) || in_array($status, [408, 409, 425, 429], true)));
         }
 
         return $this->decode($response, $method === 'POST');

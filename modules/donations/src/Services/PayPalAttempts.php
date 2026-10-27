@@ -87,10 +87,18 @@ final class PayPalAttempts
 
                 return true;
             }
+            if (in_array($attempt->status, ['creating', 'create_unknown'], true)
+                && ($attempt->create_started_at === null
+                    || ! $attempt->create_started_at->greaterThan(now()->subMinutes(350)))) {
+                DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
+                    'status' => 'requires_review', 'diagnostic_code' => 'create_idempotency_expired', 'updated_at' => now(),
+                ]);
+
+                return false;
+            }
             // The ONLY permitted Create retry uses the SAME persisted request ID
             // inside the default 6h window with a 10-minute safety margin after timeout.
             if ($attempt->status === 'create_unknown' && $attempt->paypal_order_id === null
-                && $attempt->create_started_at !== null
                 && $attempt->create_started_at->greaterThan(now()->subMinutes(350))) {
                 DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
                     'status' => 'creating', 'updated_at' => now(),
@@ -133,7 +141,20 @@ final class PayPalAttempts
     /** Requires a signed/API-confirmed APPROVED status before calling this method. */
     public function markApproved(int $attemptId): void
     {
-        $this->transition($attemptId, ['created', 'approved'], 'approved');
+        DB::transaction(function () use ($attemptId): void {
+            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            if (in_array($attempt->status, ['capturing', 'capture_unknown', 'capture_pending',
+                'capture_completed_unsettled', 'capture_denied', 'capture_rejected', 'settled',
+                'requires_review', 'sandbox_verified', 'sandbox_pending', 'sandbox_denied'], true)) {
+                return; // A parallel verified flow has already advanced beyond approval.
+            }
+            if (! in_array($attempt->status, ['created', 'approved'], true)) {
+                throw new LogicException('Invalid PayPal approval transition.');
+            }
+            DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
+                'status' => 'approved', 'updated_at' => now(),
+            ]);
+        }, 3);
     }
 
     /** One in-flight Capture at a time; unknown outcomes MUST be reconciled via GET. */
@@ -175,7 +196,7 @@ final class PayPalAttempts
         };
         DB::transaction(function () use ($attemptId, $captureId, $next): void {
             $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
-            if ($attempt->status !== 'capturing' || ($attempt->paypal_capture_id !== null && $attempt->paypal_capture_id !== $captureId)) {
+            if ($attempt->paypal_capture_id !== null && $attempt->paypal_capture_id !== $captureId) {
                 throw new LogicException('PayPal capture response conflicts with its attempt.');
             }
             // Sandbox has no corresponding wallet order. Do not give future
@@ -185,8 +206,18 @@ final class PayPalAttempts
                     'capture_completed_unsettled' => 'sandbox_verified',
                     'capture_pending' => 'sandbox_pending',
                     'capture_denied' => 'sandbox_denied',
-                    default => throw new LogicException('Invalid sandbox capture transition.'),
                 };
+            }
+            if ($attempt->status !== 'capturing') {
+                $ranks = ['capture_pending' => 1, 'sandbox_pending' => 1,
+                    'capture_denied' => 2, 'sandbox_denied' => 2,
+                    'capture_completed_unsettled' => 3, 'sandbox_verified' => 3, 'settled' => 4];
+                if ($attempt->paypal_capture_id !== $captureId || ! isset($ranks[$attempt->status])) {
+                    throw new LogicException('PayPal capture response conflicts with its attempt.');
+                }
+                if ($ranks[$attempt->status] >= $ranks[$next]) {
+                    return; // Never downgrade an identical capture advanced by a webhook.
+                }
             }
             DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
                 'status' => $next, 'paypal_capture_id' => $captureId,
@@ -210,6 +241,11 @@ final class PayPalAttempts
         DB::transaction(function () use ($attemptId, $allowed, $next, $reason): void {
             $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
             if (! in_array($attempt->status, $allowed, true)) {
+                if ($allowed === ['capturing'] && $attempt->paypal_capture_id !== null
+                    && in_array($attempt->status, ['capture_pending', 'capture_completed_unsettled',
+                        'capture_denied', 'settled', 'sandbox_pending', 'sandbox_verified', 'sandbox_denied'], true)) {
+                    return; // A timeout must not erase a concurrently verified response.
+                }
                 throw new LogicException('Invalid PayPal attempt transition.');
             }
             DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([

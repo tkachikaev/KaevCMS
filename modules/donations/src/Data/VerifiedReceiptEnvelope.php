@@ -155,6 +155,7 @@ final class VerifiedReceiptEnvelope
             ),
         ];
     }
+
     private static function hasMoneyMetadata(VerifiedPayment $payment): bool
     {
         return $payment->receivedCurrencyCode !== null

@@ -21,15 +21,14 @@ use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\PayPalAttempts;
 use KaevCMS\Modules\Donations\Services\PayPalOrderOperations;
-use KaevCMS\Modules\Donations\Services\PayPalOrdersApi;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Tests\Concerns\RefreshDonationIntegrationDatabase;
 use Tests\TestCase;
 
 /** Contract tests with Http::fake(); no external PayPal calls or Wallet credits. */
 final class DonationPayPalOrdersApiTest extends TestCase
 {
     // Feature coverage must not wrap remote I/O in a test transaction.
-    use DatabaseMigrations;
+    use RefreshDonationIntegrationDatabase;
 
     private PayPalApiCredentials $credentials;
 
@@ -67,7 +66,57 @@ final class DonationPayPalOrdersApiTest extends TestCase
     {
         return ['reference_id' => (string) $this->attempt->order->order_uuid,
             'invoice_id' => $this->attempt->invoice_id,
+            'payee' => ['merchant_id' => 'MERCHANTABC123'],
             'amount' => ['currency_code' => 'USD', 'value' => '100.00']];
+    }
+
+    public function test_concurrent_approval_does_not_downgrade_an_in_flight_capture(): void
+    {
+        $this->fakeApi();
+        $operations = app(PayPalOrderOperations::class);
+        $operations->create($this->attempt->id, $this->credentials, 'https://cms.test/return', 'https://cms.test/cancel');
+        $operations->checkApproval($this->attempt->id, $this->credentials);
+        $attempts = app(PayPalAttempts::class);
+        $this->assertTrue($attempts->claimCapture($this->attempt->id));
+        $attempts->markApproved($this->attempt->id);
+        $this->assertSame('capturing', $this->attempt->fresh()->status);
+        $this->assertFalse($attempts->claimCapture($this->attempt->id));
+    }
+
+    public function test_expired_unknown_create_is_explicitly_reviewed_without_a_new_post(): void
+    {
+        $attempts = app(PayPalAttempts::class);
+        $originalRequest = $this->attempt->create_request_id;
+        $this->assertTrue($attempts->claimCreate($this->attempt->id));
+        $attempts->markCreateUnknown($this->attempt->id);
+        $this->travel(351)->minutes();
+        $this->assertFalse($attempts->claimCreate($this->attempt->id));
+        $this->assertSame('requires_review', $this->attempt->fresh()->status);
+        $this->assertSame($originalRequest, $this->attempt->fresh()->create_request_id);
+        Http::assertNothingSent();
+    }
+
+    public function test_abandoned_create_claim_cannot_stay_in_progress_indefinitely(): void
+    {
+        $attempts = app(PayPalAttempts::class);
+        $this->assertTrue($attempts->claimCreate($this->attempt->id));
+        $this->travel(351)->minutes();
+        $this->assertFalse($attempts->claimCreate($this->attempt->id));
+        $this->assertSame('requires_review', $this->attempt->fresh()->status);
+        Http::assertNothingSent();
+    }
+
+    public function test_303_create_response_is_unknown_and_never_followed(): void
+    {
+        $this->fakeApi(createCode: 303);
+        try {
+            app(PayPalOrderOperations::class)->create($this->attempt->id, $this->credentials, 'https://cms.test/return', 'https://cms.test/cancel');
+            $this->fail('An unexpected redirect is not a successful Create.');
+        } catch (PayPalApiException $error) {
+            $this->assertTrue($error->uncertain);
+            $this->assertSame('create_unknown', $this->attempt->fresh()->status);
+        }
+        Http::assertSentCount(2);
     }
 
     private function fakeApi(?array $create = null, ?array $capture = null, int $createCode = 201): void
@@ -115,6 +164,7 @@ final class DonationPayPalOrdersApiTest extends TestCase
             $this->assertSame('100.00', $req['purchase_units'][0]['amount']['value']);
             $this->assertSame('CAPTURE', $req['intent']);
             $this->assertSame('PAY_NOW', $req['payment_source']['paypal']['experience_context']['user_action']);
+
             return true;
         });
         $this->assertDatabaseCount('wallet_entries', 0);
@@ -137,6 +187,7 @@ final class DonationPayPalOrdersApiTest extends TestCase
             }
             $this->assertSame(0, DB::transactionLevel());
             $this->assertSame($this->attempt->capture_request_id, $req->header('PayPal-Request-Id')[0] ?? null);
+
             return true;
         });
         $this->assertSame('CAPTURE1', $workflow->readRemote($this->attempt->id, $this->credentials)['capture']['id']);
@@ -156,8 +207,10 @@ final class DonationPayPalOrdersApiTest extends TestCase
                 if ($calls === 1) {
                     throw new ConnectionException('network timeout');
                 }
+
                 return Http::response($this->createResponse(), 201);
             }
+
             return Http::response([], 404);
         });
         $service = app(PayPalOrderOperations::class);
@@ -185,6 +238,7 @@ final class DonationPayPalOrdersApiTest extends TestCase
                 $calls++;
                 throw new ConnectionException('capture timeout');
             }
+
             return Http::response([], 404);
         });
         try {

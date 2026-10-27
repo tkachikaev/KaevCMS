@@ -35,6 +35,7 @@ final class PayPalNotificationController
         try {
             DonationsTrustedAutoload::register();
             app(PayPalWebhooks::class)->receive($request->getContent(), $headers);
+
             return response('OK', 200);
         } catch (InvalidArgumentException|LogicException|\JsonException) {
             return response('Invalid notification', 400);

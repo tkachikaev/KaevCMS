@@ -11,6 +11,7 @@ use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Payments\FreeKassaNotificationController;
+use App\Http\Controllers\Payments\PayPalNotificationController;
 use App\Http\Controllers\Payments\YooMoneyNotificationController;
 use App\Http\Controllers\ServerMonitorStatusController;
 use App\Http\Controllers\StatisticsController;
@@ -96,5 +97,5 @@ Route::post('/payments/freekassa/notify', FreeKassaNotificationController::class
     ->middleware('throttle:60,1,freekassa-notify')->name('payments.freekassa.notify');
 
 // Core-owned, signature-verified and durable PayPal callback, independent of player checkout visibility.
-Route::post('/payments/paypal/notify', \App\Http\Controllers\Payments\PayPalNotificationController::class)
+Route::post('/payments/paypal/notify', PayPalNotificationController::class)
     ->middleware('throttle:60,1,paypal-notify')->name('payments.paypal.notify');

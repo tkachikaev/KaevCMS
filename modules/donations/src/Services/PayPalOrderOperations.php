@@ -22,6 +22,7 @@ final class PayPalOrderOperations
 
     /**
      * Only a RESERVED or safe 6h CREATE_UNKNOWN attempt can be posted.
+     *
      * @return string|null Saved redirect URL; null if another worker owns the claim.
      */
     public function create(int $attemptId, PayPalApiCredentials $credentials, string $returnUrl, string $cancelUrl): ?string
@@ -56,6 +57,7 @@ final class PayPalOrderOperations
 
     /**
      * GET order is necessary evidence for APPROVED, never a browser `return` flag.
+     *
      * @return string Remote status (CREATED, APPROVED, COMPLETED, etc.)
      */
     public function checkApproval(int $attemptId, PayPalApiCredentials $credentials): string
@@ -78,6 +80,7 @@ final class PayPalOrderOperations
     /**
      * Capture is sent once after authenticated GET shows APPROVED. A timeout
      * permanently blocks further POST for this attempt until read-only reconciliation.
+     *
      * @return array<string,mixed>|null Null means another worker owns/finished capture.
      */
     public function capture(int $attemptId, PayPalApiCredentials $credentials): ?array
@@ -132,7 +135,11 @@ final class PayPalOrderOperations
         }
     }
 
-    /** Read-only remote lookup for later recovery, NEVER posts or credits Wallet. */
+    /**
+     * Read-only remote lookup for later recovery, NEVER posts or credits Wallet.
+     *
+     * @return array{order: array<string, mixed>, capture: array<string, mixed>|null}
+     */
     public function readRemote(int $attemptId, PayPalApiCredentials $credentials): array
     {
         $this->assertOutsideTransaction();
@@ -153,6 +160,9 @@ final class PayPalOrderOperations
         $units = $order['purchase_units'] ?? null;
         $unit = is_array($units) && count($units) === 1 ? $units[0] : null;
         if (! is_array($unit) || ($unit['invoice_id'] ?? null) !== $attempt->invoice_id
+            || ($attempt->purpose === 'player' && ($attempt->environment !== 'live'
+                || $attempt->expected_payee_id === null
+                || ($unit['payee']['merchant_id'] ?? null) !== $attempt->expected_payee_id))
             || ! is_array($unit['amount'] ?? null)
             || ($unit['amount']['currency_code'] ?? null) !== $attempt->currency_code
             || ! PayPalMoney::matches($unit['amount']['value'] ?? null, (int) $attempt->gross_amount_minor, (int) $attempt->exponent)) {

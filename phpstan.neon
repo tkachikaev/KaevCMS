@@ -3,6 +3,9 @@ includes:
     - vendor/nesbot/carbon/extension.neon
 
 parameters:
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+
     paths:
         - app
         - routes

@@ -3,7 +3,6 @@
 namespace KaevCMS\Modules\Donations\Services;
 
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Exceptions\PayPalApiException;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
@@ -107,6 +106,7 @@ final class PayPalVerifiedPayments
             DB::table('module_donation_paypal_attempts')->where('id', $attemptId)
                 ->where('paypal_capture_id', $captureId)->update(['status' => 'settled', 'updated_at' => now()]);
         }
+
         return $result;
     }
 }

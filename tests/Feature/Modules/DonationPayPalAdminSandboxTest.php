@@ -6,19 +6,19 @@ use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\PayPalAdminSettings;
+use Tests\Concerns\RefreshDonationIntegrationDatabase;
 use Tests\TestCase;
 
 /** Admin-only Sandbox flow with mock HTTP; never a Wallet or DonationOrder. */
 final class DonationPayPalAdminSandboxTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDonationIntegrationDatabase;
 
     protected function setUp(): void
     {
@@ -120,6 +120,7 @@ final class DonationPayPalAdminSandboxTest extends TestCase
                         'amount' => ['currency_code' => 'USD', 'value' => '1.00']]]],
                 ]]], 201);
             }
+
             return Http::response(['error' => 'unexpected'], 500);
         });
         $this->actingAs($owner, 'admin')->post('/admin/extensions/donations/providers/paypal/test-purchase', [
@@ -131,9 +132,9 @@ final class DonationPayPalAdminSandboxTest extends TestCase
         $this->assertNull($attempt->preparation_id);
         $this->assertSame('sandbox', $attempt->environment);
         $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers/paypal/test/'.$attempt->id.'/return?token=WRONG')
-            ->assertOk()->assertSee('UNKNOWN')->assertDontSee('Confirm Sandbox Capture');
+            ->assertOk()->assertSee('UNKNOWN')->assertDontSee(__('module-donations::messages.paypal_test_capture'));
         $this->get('/admin/extensions/donations/providers/paypal/test/'.$attempt->id.'/return?token=SBXORDER1')
-            ->assertOk()->assertSee('APPROVED')->assertSee('Confirm Sandbox Capture');
+            ->assertOk()->assertSee('APPROVED')->assertSee(__('module-donations::messages.paypal_test_capture'));
         $this->post('/admin/extensions/donations/providers/paypal/test/'.$attempt->id.'/capture')->assertRedirect();
         $this->assertSame('sandbox_verified', DB::table('module_donation_paypal_attempts')->value('status'));
         $this->assertSame(0, DB::table('module_donation_orders')->count());

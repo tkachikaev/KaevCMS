@@ -3,24 +3,31 @@
 namespace Tests\Feature\Modules;
 
 use App\Auth\AdminRole;
+use App\Contracts\WalletGateway;
 use App\Models\Admin;
 use App\Models\User;
+use App\Services\Admin\AdminPathSettings;
+use App\Services\AuditLogger;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\PayPalAdminSettings;
+use KaevCMS\Modules\Donations\Services\PayPalManualReconciliation;
+use KaevCMS\Modules\Donations\Services\PayPalOrderOperations;
+use KaevCMS\Modules\Donations\Services\PayPalVerifiedPayments;
+use Tests\Concerns\RefreshDonationIntegrationDatabase;
 use Tests\TestCase;
 
 /** Integration contracts; PayPal HTTP is mocked, no live or Sandbox payments. */
 final class DonationPayPalLiveSettlementTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDonationIntegrationDatabase;
 
     private Admin $owner;
 
@@ -50,9 +57,9 @@ final class DonationPayPalLiveSettlementTest extends TestCase
         ], $live);
     }
 
-    private function mockPaypal(int &$capturePosts, bool &$validSignature, bool $badPayee = false): void
+    private function mockPaypal(int &$capturePosts, bool &$validSignature, bool $badPayee = false, ?callable $onCapture = null): void
     {
-        Http::fake(function ($request) use (&$capturePosts, &$validSignature, $badPayee) {
+        Http::fake(function ($request) use (&$capturePosts, &$validSignature, $badPayee, $onCapture) {
             $url = $request->url();
             if (str_ends_with($url, '/v1/oauth2/token')) {
                 return Http::response(['access_token' => 'bearerTest123', 'expires_in' => 3600]);
@@ -71,6 +78,10 @@ final class DonationPayPalLiveSettlementTest extends TestCase
                 'amount' => ['currency_code' => 'USD', 'value' => '100.00']];
             if (str_ends_with($url, '/v2/checkout/orders/LIVEORDER123/capture')) {
                 $capturePosts++;
+                if ($onCapture !== null) {
+                    $onCapture();
+                }
+
                 return Http::response(['id' => 'LIVEORDER123', 'status' => 'COMPLETED',
                     'purchase_units' => [[...$unit, 'payments' => ['captures' => [$capture]]]]], 201);
             }
@@ -82,6 +93,7 @@ final class DonationPayPalLiveSettlementTest extends TestCase
                 return Http::response([...$capture,
                     'supplementary_data' => ['related_ids' => ['order_id' => 'LIVEORDER123']]]);
             }
+
             return Http::response(['error' => 'unexpected_api'], 500);
         });
     }
@@ -95,7 +107,50 @@ final class DonationPayPalLiveSettlementTest extends TestCase
         ])->assertOk()->assertJsonPath('method', 'GET')
             ->assertJsonPath('action', 'https://www.paypal.com/checkoutnow?token=LIVEORDER123');
         $order = DB::table('module_donation_orders')->sole();
+
         return [$player, $order];
+    }
+
+    public function test_wallet_failure_does_not_acknowledge_or_partially_settle_paypal(): void
+    {
+        $this->assertFailedSettlementIsAtomic('wallet');
+    }
+
+    public function test_final_audit_failure_rolls_back_the_entire_paypal_credit(): void
+    {
+        $this->assertFailedSettlementIsAtomic('audit');
+    }
+
+    private function assertFailedSettlementIsAtomic(string $failure): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [, $order] = $this->createPlayerAttempt();
+        $attempt = DB::table('module_donation_paypal_attempts')->sole();
+        app(PayPalOrderOperations::class)
+            ->capture($attempt->id, app(PayPalAdminSettings::class)->credentials('live'));
+        if ($failure === 'wallet') {
+            $this->mock(WalletGateway::class)->shouldReceive('creditFromModule')
+                ->once()->andThrow(new \RuntimeException('Injected Wallet storage failure'));
+        } else {
+            $this->partialMock(AuditLogger::class)->shouldReceive('system')
+                ->with('module', 'donations.payment_credited', 'donation-order', \Mockery::type('array'))
+                ->once()->andReturnNull();
+        }
+        $raw = json_encode(['id' => 'WH-FAILED-SETTLEMENT', 'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
+            'resource' => ['id' => 'LIVECAPTURE123', 'supplementary_data' => ['related_ids' => [
+                'order_id' => 'LIVEORDER123',
+            ]]]], JSON_THROW_ON_ERROR);
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $this->webhookHeaders(), $raw)->assertStatus(503);
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 0);
+        $this->assertSame('draft', DB::table('module_donation_orders')->where('id', $order->id)->value('status'));
+        $this->assertSame('received', DB::table('module_donation_paypal_webhook_events')->value('status'));
+        $this->assertNotSame('settled', DB::table('module_donation_paypal_attempts')->value('status'));
+        $this->assertSame(1, $capturePosts);
     }
 
     public function test_live_checkout_only_credits_after_remote_capture_and_repeated_return_never_posts_twice(): void
@@ -130,6 +185,78 @@ final class DonationPayPalLiveSettlementTest extends TestCase
             ->assertRedirect();
         $this->assertDatabaseCount('wallet_entries', 0);
         $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+        $this->assertSame(0, $capturePosts, 'A mismatched payee must be rejected before charging the buyer.');
+    }
+
+    public function test_completed_webhook_can_settle_before_the_capture_response_arrives(): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed, onCapture: function (): void {
+            $raw = json_encode(['id' => 'WH-EARLY-COMPLETED', 'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
+                'resource' => ['id' => 'LIVECAPTURE123', 'supplementary_data' => [
+                    'related_ids' => ['order_id' => 'LIVEORDER123'],
+                ]]], JSON_THROW_ON_ERROR);
+            $this->call('POST', '/payments/paypal/notify', [], [], [], $this->webhookHeaders(), $raw)->assertOk();
+            $this->assertDatabaseCount('wallet_entries', 1);
+        });
+        [$player, $order] = $this->createPlayerAttempt();
+        $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/paypal-return?token=LIVEORDER123')
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(1, $capturePosts);
+        $this->assertSame('settled', DB::table('module_donation_paypal_attempts')->value('status'));
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_verified_notice_survives_pending_receipt_recovery_and_a_stale_attempt_status(): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [, $order] = $this->createPlayerAttempt();
+        $attemptId = DB::table('module_donation_paypal_attempts')->value('id');
+        $credentials = app(PayPalAdminSettings::class)->credentials('live');
+        app(PayPalOrderOperations::class)->capture($attemptId, $credentials);
+        config()->set('donation-payments.credits_enabled', false);
+        $this->assertSame('pending', app(PayPalVerifiedPayments::class)->reconcile($attemptId));
+        $this->assertDatabaseCount('wallet_entries', 0);
+        config()->set('donation-payments.credits_enabled', true);
+        $settlements = app(DonationPaymentSettlements::class);
+        $this->assertSame(1, $settlements->retryPending());
+        $this->assertSame(0, $settlements->retryPending());
+        $this->assertSame('settled', DB::table('module_donation_paypal_attempts')->value('status'));
+        // Also cover already-credited attempts left stale by a pre-fix crash.
+        DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update(['status' => 'capture_completed_unsettled']);
+        $walletBefore = DB::table('wallets')->get()->toJson();
+        $raw = json_encode(['id' => 'WH-RECOVERED-REFUND', 'event_type' => 'PAYMENT.CAPTURE.REFUNDED',
+            'resource' => ['id' => 'RECOVERED-REFUND', 'links' => [[
+                'rel' => 'up', 'method' => 'GET', 'href' => 'https://api.paypal.com/v2/payments/captures/LIVECAPTURE123',
+            ]]]], JSON_THROW_ON_ERROR);
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $this->webhookHeaders(), $raw)->assertOk();
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $this->webhookHeaders(), $raw)->assertOk();
+        $this->assertSame($walletBefore, DB::table('wallets')->get()->toJson());
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertSame('credited', DB::table('module_donation_orders')->where('id', $order->id)->value('status'));
+        $this->assertSame(1, DB::table('admin_notifications')->where('type', 'donation_paypal_notice')->count());
+    }
+
+    public function test_manual_reconciliation_preserves_a_terminal_review_result(): void
+    {
+        $this->configure();
+        $capturePosts = 1; // Authenticated API reports an already completed capture.
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [, $order] = $this->createPlayerAttempt();
+        $attemptId = DB::table('module_donation_paypal_attempts')->value('id');
+        // A conflicting paid local order is not eligible for another financial effect.
+        DB::table('module_donation_orders')->where('id', $order->id)->update(['status' => 'credited']);
+        $result = app(PayPalManualReconciliation::class)->check($attemptId, $order->id);
+        $this->assertSame('review', $result);
+        $this->assertSame('review', DB::table('module_donation_payment_receipts')->value('status'));
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertSame(1, $capturePosts);
     }
 
     public function test_forged_and_replayed_webhooks_never_duplicate_wallet_credit(): void
@@ -260,7 +387,7 @@ final class DonationPayPalLiveSettlementTest extends TestCase
         DB::table('module_donation_paypal_attempts')->where('id', $attempt->id)
             ->update(['status' => 'capture_unknown', 'capture_started_at' => now()]);
         $route = route('admin.module-pages.donations.orders.paypal.recovery', [
-            'adminPath' => app(\App\Services\Admin\AdminPathSettings::class)->path(),
+            'adminPath' => app(AdminPathSettings::class)->path(),
             'orderUuid' => $order->order_uuid, 'attemptId' => $attempt->id,
         ]);
         $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
@@ -271,5 +398,4 @@ final class DonationPayPalLiveSettlementTest extends TestCase
         $this->assertSame(0, $capturePosts);
         $this->assertDatabaseCount('wallet_entries', 0);
     }
-
 }

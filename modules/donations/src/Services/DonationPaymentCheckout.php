@@ -84,6 +84,7 @@ class DonationPaymentCheckout
 
     /**
      * No side effects, HTTP or writes: this validation is safe on read-only pages.
+     *
      * @return array{RoutablePaymentProvider,DonationPaymentPreparation,array<string,string>,PaymentIntent}
      */
     private function validatedTerms(User $user, DonationOrder $order): array
@@ -132,5 +133,4 @@ class DonationPaymentCheckout
 
         return [$driver, $preparation, $credentials, $intent];
     }
-
 }

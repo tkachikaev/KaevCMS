@@ -7,7 +7,6 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -19,13 +18,14 @@ use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use LogicException;
+use Tests\Concerns\RefreshDonationIntegrationDatabase;
 use Tests\Fixtures\Donations\FakeDeferredPayPalProvider;
 use Tests\TestCase;
 
 /** Must not wrap tests in a global SQL transaction: it verifies remote I/O after commit. */
 final class DonationPayPalDeferredCheckoutTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDonationIntegrationDatabase;
 
     private Admin $owner;
 

@@ -1,0 +1,7 @@
+{
+    "preset": "laravel",
+    "notPath": [
+        "modules/donations/database/migrations/2026_10_27_030000_add_paypal_approval_url.php",
+        "modules/donations/database/migrations/2026_10_27_060000_paypal_event_reference.php"
+    ]
+}

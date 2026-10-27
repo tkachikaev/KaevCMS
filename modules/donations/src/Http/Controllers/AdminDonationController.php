@@ -18,6 +18,7 @@ use KaevCMS\Modules\Donations\Http\Requests\SaveDonationWorkspaceRequest;
 use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationLimitsRequest;
 use KaevCMS\Modules\Donations\Http\Requests\UpdateDonationSettingsRequest;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
+use KaevCMS\Modules\Donations\Models\PayPalAttempt;
 use KaevCMS\Modules\Donations\Services\DonationCurrencyRegistry;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationPaymentReviews;
@@ -26,7 +27,6 @@ use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationWorkspace;
 use KaevCMS\Modules\Donations\Services\PayPalManualReconciliation;
-use KaevCMS\Modules\Donations\Models\PayPalAttempt;
 use LogicException;
 
 final class AdminDonationController extends Controller

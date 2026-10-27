@@ -55,9 +55,10 @@ final class PayPalManualReconciliation
                 // The common, independently verified settlement validates GET Capture,
                 // immutable amounts, payee and Wallet idempotency before crediting.
                 $result = $this->payments->reconcile($attemptId);
-                $this->saveState($attemptId, null, 'manual_remote_completed');
+                $this->saveState($attemptId, $result === 'review' ? 'requires_review' : null,
+                    $result === 'review' ? 'manual_payment_review' : 'manual_remote_completed');
 
-                return $result === 'credited' ? 'credited' : 'pending';
+                return in_array($result, ['credited', 'review'], true) ? $result : 'pending';
             }
             // A non-COMPLETED GET is never grounds for calling Capture again.
             // In particular, a prior timeout remains unresolved even if approval is visible.

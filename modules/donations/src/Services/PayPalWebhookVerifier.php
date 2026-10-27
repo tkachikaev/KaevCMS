@@ -13,6 +13,7 @@ final class PayPalWebhookVerifier
 {
     public function __construct(private readonly PayPalOrdersApi $api) {}
 
+    /** @param array<string, mixed> $headers */
     public function verified(string $rawBody, array $headers, string $webhookId, PayPalApiCredentials $credentials): bool
     {
         if ($rawBody === '' || strlen($rawBody) > 65536 || ! self::isJsonObject($rawBody)
@@ -56,6 +57,7 @@ final class PayPalWebhookVerifier
         if (! is_array($data) || ! in_array($data['verification_status'] ?? null, ['SUCCESS', 'FAILURE'], true)) {
             throw new RuntimeException('Invalid PayPal signature verification response.');
         }
+
         return $data['verification_status'] === 'SUCCESS';
     }
 
@@ -63,6 +65,7 @@ final class PayPalWebhookVerifier
     {
         try {
             $value = json_decode($raw, false, 32, JSON_THROW_ON_ERROR);
+
             return is_object($value);
         } catch (\JsonException) {
             return false;

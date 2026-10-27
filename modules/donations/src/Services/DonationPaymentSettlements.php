@@ -16,6 +16,7 @@ use KaevCMS\Modules\Donations\Data\VerifiedReceiptEnvelope;
 use KaevCMS\Modules\Donations\Exceptions\InvalidPaymentSignature;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
+use KaevCMS\Modules\Donations\Models\PayPalAttempt;
 use LogicException;
 use RuntimeException;
 
@@ -72,7 +73,7 @@ final class DonationPaymentSettlements
     /** Called ONLY with a verified PayPal API capture, never with browser or unverified webhook data.
      * The verifying service must first confirm original order, payee, amount and capture ID.
      */
-    public function recordVerifiedPayPal(\KaevCMS\Modules\Donations\Models\PayPalAttempt $attempt, VerifiedPayment $payment): string
+    public function recordVerifiedPayPal(PayPalAttempt $attempt, VerifiedPayment $payment): string
     {
         if ($attempt->purpose !== 'player' || $attempt->environment !== 'live'
             || $attempt->order_id === null || $attempt->preparation_id === null
@@ -91,6 +92,7 @@ final class DonationPaymentSettlements
         }
         // Authentication is via the verified remote order+capture, not raw event fields.
         $evidence = 'paypal-api-verified:'.$attempt->paypal_order_id.':'.$attempt->paypal_capture_id;
+
         return $this->record($preparation, $payment, $evidence);
     }
 
@@ -329,6 +331,18 @@ final class DonationPaymentSettlements
             ]);
             DB::table('module_donation_payment_receipts')->where('id', $id)
                 ->update(['status' => 'credited', 'credited_at' => now(), 'updated_at' => now()]);
+            if ($providerCode === 'paypal') {
+                // Keep the derived attempt state in the same commit as Wallet,
+                // including deferred receipt replay after the credit guard reopens.
+                $bound = DB::table('module_donation_paypal_attempts')
+                    ->where('preparation_id', $preparation->id)->where('order_id', $order->id)
+                    ->where('purpose', 'player')->where('environment', 'live')
+                    ->where('paypal_capture_id', $verified->providerPaymentId)
+                    ->update(['status' => 'settled', 'updated_at' => now()]);
+                if ($bound !== 1) {
+                    throw new RuntimeException('PayPal settlement has no matching player attempt.');
+                }
+            }
             $this->auditOrFail('donations.payment_credited', $order, [
                 'provider_code' => $providerCode, 'payment_event_id' => $id,
                 'wallet_entry_id' => $entry->id,

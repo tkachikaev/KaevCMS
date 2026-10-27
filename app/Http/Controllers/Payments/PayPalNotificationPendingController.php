@@ -13,6 +13,7 @@ final class PayPalNotificationPendingController
         if ((int) $request->server('CONTENT_LENGTH', 0) > 65536 || strlen($request->getContent()) > 65536) {
             return response('Payload too large', 413);
         }
+
         return response('PayPal webhook verification not active', 503);
     }
 }

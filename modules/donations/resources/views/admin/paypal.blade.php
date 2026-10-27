@@ -15,7 +15,7 @@
         @csrf @method('PUT')
         <h3>{{ __('module-donations::messages.provider_currencies') }}</h3>
         <p class="admin-field-help">{{ __('module-donations::messages.paypal_currencies_help') }}</p>
-        <div class="donations-provider-currencies">
+        <div class="donations-paypal-currencies">
             @foreach($currencies as $currency)
                 <label class="settings-remove-row"><input type="checkbox" name="currency_codes[]" value="{{ $currency }}" @checked(in_array($currency, $settings['currency_codes'], true)) @disabled(request()->attributes->get('admin_read_only'))> {{ $currency }}</label>
             @endforeach
@@ -44,7 +44,7 @@
             @endif
         @endforeach
         <label class="settings-remove-row"><input type="checkbox" name="enable_live" value="1" @checked($settings['enabled']) @disabled(request()->attributes->get('admin_read_only'))> {{ __('module-donations::messages.paypal_enable_live') }}</label>
-        @unless(request()->attributes->get('admin_read_only'))<button type="submit" class="button button-primary">{{ __('module-donations::messages.save_settings') }}</button>@endunless
+        @unless(request()->attributes->get('admin_read_only'))<button type="submit" class="button button-primary">{{ __('module-donations::messages.paypal_save_settings') }}</button>@endunless
     </form>
     <section class="donations-readiness">
         <h3>{{ __('module-donations::messages.paypal_webhook_title') }}</h3>
@@ -83,8 +83,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group"><label for="paypal-test-amount">{{ __('module-donations::messages.freekassa_test_amount') }}</label>
-                    <input type="text" name="amount" id="paypal-test-amount" value="1.00" maxlength="6" inputmode="decimal" required>
+                <div class="form-group"><label for="paypal-test-amount">{{ __('module-donations::messages.paypal_test_amount') }}</label>
+                    <input type="text" name="amount" id="paypal-test-amount" value="1" maxlength="6" inputmode="decimal" required>
                     <small>{{ __('module-donations::messages.paypal_test_jpy') }}</small>
                 </div>
                 <button type="submit" class="button button-secondary" @disabled(!$settings['sandbox_secret_saved'] || !$settings['sandbox_client_id'] || $settings['currency_codes'] === [])>{{ __('module-donations::messages.paypal_test_start') }}</button>

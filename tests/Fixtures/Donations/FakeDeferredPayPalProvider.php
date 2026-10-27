@@ -2,8 +2,8 @@
 
 namespace Tests\Fixtures\Donations;
 
-use InvalidArgumentException;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Contracts\DeferredCheckoutProvider;
 use KaevCMS\Modules\Donations\Data\PaymentCheckout;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
@@ -18,13 +18,25 @@ final class FakeDeferredPayPalProvider implements DeferredCheckoutProvider
 {
     public static int $remoteCreates = 0;
 
-    public function code(): string { return 'paypal'; }
+    public function code(): string
+    {
+        return 'paypal';
+    }
 
-    public function name(): string { return 'PayPal fixture'; }
+    public function name(): string
+    {
+        return 'PayPal fixture';
+    }
 
-    public function supportedCurrencies(): array { return ['USD']; }
+    public function supportedCurrencies(): array
+    {
+        return ['USD'];
+    }
 
-    public function supportsTestMode(): bool { return true; }
+    public function supportsTestMode(): bool
+    {
+        return true;
+    }
 
     public function credentialFields(): array
     {
@@ -38,9 +50,15 @@ final class FakeDeferredPayPalProvider implements DeferredCheckoutProvider
         }
     }
 
-    public function callbackRouteName(): string { return 'payments.yoomoney.notify'; }
+    public function callbackRouteName(): string
+    {
+        return 'payments.yoomoney.notify';
+    }
 
-    public function referenceForOrder(string $orderUuid): string { return $orderUuid; }
+    public function referenceForOrder(string $orderUuid): string
+    {
+        return $orderUuid;
+    }
 
     public function referenceFromCallback(ProviderCallback $callback): string
     {

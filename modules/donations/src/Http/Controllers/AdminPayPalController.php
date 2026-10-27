@@ -23,6 +23,7 @@ final class AdminPayPalController extends Controller
         $admin = $request->user('admin');
         abort_unless($admin instanceof Admin, 403);
         $access->authorize('admin.module-pages.donations.providers.paypal.'.$route, $method, $admin);
+
         return $admin;
     }
 
@@ -31,6 +32,7 @@ final class AdminPayPalController extends Controller
     {
         $this->authorize($request, $access, 'show', 'GET');
         $callbackUrl = route('payments.paypal.notify');
+
         return view('module-donations::admin.paypal', [
             'adminPath' => $paths->path(), 'settings' => $settings->state(),
             'currencies' => $settings->supportedCurrencies(), 'tests' => $tests->recent(),
@@ -57,6 +59,7 @@ final class AdminPayPalController extends Controller
         } catch (InvalidArgumentException|RuntimeException) {
             return back()->withErrors(['paypal' => __('module-donations::messages.paypal_invalid')]);
         }
+
         return redirect()->route('admin.module-pages.donations.providers.paypal.show', [
             'adminPath' => $paths->path(),
         ])->with('status', __('module-donations::messages.paypal_saved'));
@@ -75,6 +78,7 @@ final class AdminPayPalController extends Controller
         } catch (InvalidArgumentException|RuntimeException) {
             return back()->withErrors(['paypal_check' => __('module-donations::messages.paypal_check_failed')]);
         }
+
         return back()->with('status', __('module-donations::messages.paypal_check_ok'));
     }
 
@@ -91,6 +95,7 @@ final class AdminPayPalController extends Controller
         } catch (InvalidArgumentException|LogicException|RuntimeException) {
             return back()->withErrors(['paypal_test' => __('module-donations::messages.paypal_test_failed')]);
         }
+
         return redirect()->away($result['url'], 303);
     }
 
@@ -106,6 +111,7 @@ final class AdminPayPalController extends Controller
         } catch (InvalidArgumentException|LogicException|RuntimeException) {
             $status = 'UNKNOWN';
         }
+
         return view('module-donations::admin.paypal-return', [
             'status' => $status, 'attemptId' => $attemptId, 'adminPath' => $paths->path(),
         ]);
@@ -116,6 +122,7 @@ final class AdminPayPalController extends Controller
     {
         $admin = $this->authorize($request, $access, 'test.cancel', 'GET');
         $tests->findOwn($admin, $attemptId);
+
         // A browser cancel is not payment evidence and must never erase the remote attempt.
         return redirect()->route('admin.module-pages.donations.providers.paypal.show', [
             'adminPath' => $paths->path(),
@@ -129,6 +136,7 @@ final class AdminPayPalController extends Controller
         try {
             $status = $tests->capture($admin, $attemptId);
             $message = $status === 'COMPLETED' ? 'paypal_test_completed' : 'paypal_test_pending';
+
             return redirect()->route('admin.module-pages.donations.providers.paypal.show', [
                 'adminPath' => $paths->path(),
             ])->with('status', __('module-donations::messages.'.$message));
