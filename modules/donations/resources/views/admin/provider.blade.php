@@ -107,6 +107,14 @@
         </form>
     @else
         <h2>{{ $driver->name() }}</h2>
+        @if($driver->code() === 'freekassa')
+            <p class="admin-field-help" role="status">{{ __('module-donations::messages.freekassa_iteration2_warning') }}</p>
+            <div class="form-group">
+                <label>{{ __('module-donations::messages.freekassa_notification_address') }}</label>
+                <code class="donations-callback-url">{{ $webhookUrl }}</code>
+                <small>{{ __('module-donations::messages.freekassa_callback_hint') }}</small>
+            </div>
+        @endif
         @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
         <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => $driver->code()]) }}" class="settings-form" autocomplete="off">
             @csrf @method('PUT')
@@ -121,7 +129,12 @@
             @endforeach
             <input type="hidden" name="enabled" value="0">
             <label class="settings-remove-row"><input name="enabled" value="1" type="checkbox" @checked($state['enabled']) @disabled(request()->attributes->get('admin_read_only'))> {{ __('module-donations::messages.provider_on') }}</label>
-            <select name="mode" @disabled(request()->attributes->get('admin_read_only'))><option value="live" @selected($state['mode']==='live')>{{ __('module-donations::messages.provider_live') }}</option><option value="test" @selected($state['mode']==='test')>{{ __('module-donations::messages.provider_test') }}</option></select>
+            @if($driver->code() === 'freekassa')
+                <input type="hidden" name="mode" value="test">
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_only') }}</p>
+            @else
+                <select name="mode" @disabled(request()->attributes->get('admin_read_only'))><option value="live" @selected($state['mode']==='live')>{{ __('module-donations::messages.provider_live') }}</option><option value="test" @selected($state['mode']==='test')>{{ __('module-donations::messages.provider_test') }}</option></select>
+            @endif
             @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.save_settings') }}</button>@endunless
         </form>
     @endif

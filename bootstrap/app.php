@@ -29,7 +29,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->replace(LaravelTrustProxies::class, TrustProxies::class);
 
-        $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify']);
+        $middleware->validateCsrfTokens(except: ['payments/yoomoney/notify', 'payments/freekassa/notify']);
         // The maintenance bypass cookie is read before cookie decryption and carries its own
         // HMAC, exactly as Laravel issues it; the updater sets it for the finalisation step.
         $middleware->encryptCookies(except: ['laravel_maintenance']);

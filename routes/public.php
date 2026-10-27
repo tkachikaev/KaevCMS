@@ -11,6 +11,7 @@ use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Payments\YooMoneyNotificationController;
+use App\Http\Controllers\Payments\FreeKassaNotificationController;
 use App\Http\Controllers\ServerMonitorStatusController;
 use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Route;
@@ -88,3 +89,8 @@ Route::get('/language/{locale}', [LocaleController::class, 'public'])
 // disabled. Its trusted static guard is independent of database activation.
 Route::post('/payments/yoomoney/notify', YooMoneyNotificationController::class)
     ->middleware('throttle:60,1,yoomoney-notify')->name('payments.yoomoney.notify');
+
+// Stable callback endpoint reserved for FreeKassa. Iteration 2 is test-only;
+// real money settlement remains gated inside the bundled driver.
+Route::post('/payments/freekassa/notify', FreeKassaNotificationController::class)
+    ->middleware('throttle:60,1,freekassa-notify')->name('payments.freekassa.notify');

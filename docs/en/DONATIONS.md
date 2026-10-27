@@ -53,3 +53,13 @@ A trusted, explicitly installed driver must implement `RoutablePaymentProvider` 
 Previously sealed YooMoney evidence in `kaevcms-signed-yoomoney-v1` remains readable, including deferred credits after key rotation. Other reviewed drivers use the provider-bound `kaevcms-signed-provider-v2` evidence format authenticated with Laravel Crypt. No Wallet or database schema change was made.
 
 **Iteration 1 covers architecture only.** FreeKassa credentials, its callback endpoint, administrative sandbox payments and live activation are deferred. The planned IP allowlist editor will not have a reset-to-defaults button.
+
+## FreeKassa — staged integration (KaevCMS 0.55.0 / Donations 1.17.0)
+
+The bundled `freekassa` driver implements the documented SCI signed payment form. The permanent core-owned `POST /payments/freekassa/notify` endpoint uses signature verification over the original amount string, exact integer minor-unit comparisons, and unique FreeKassa `intid` IDs.
+
+**IMPORTANT: FreeKassa live money collection is deliberately disabled at the driver level in this build.** Admin sandbox checkout has not been built yet. The provider rejects `live` mode, and test callbacks never credit any wallet. Do NOT use this build to accept FreeKassa payments.
+
+FreeKassa's callback `CUR_ID` identifies a payment method, not a cryptographically proven order currency or status. Server-to-server verification, notification IP/trusted proxy controls, and an admin-only external test checkout are required before unlocking live. The provider test mode must also be enabled in FreeKassa's merchant dashboard.
+
+The planned admin IP editor will not include a restore-default-IP button. Official SCI documentation: https://docs.freekassa.net/.

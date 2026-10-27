@@ -2,9 +2,9 @@
     "schema": 1,
     "id": "donations",
     "name": "Donations",
-    "version": "1.16.3",
+    "version": "1.17.0",
     "author": "KaevCMS",
-    "description": "YooMoney payments and optional direct CMS coin exchange into per-server Web Inventory.",
+    "description": "YooMoney and staged FreeKassa provider, plus optional direct coin exchange into Web Inventory.",
     "cms_min": "0.50.2",
     "cms_max": null,
     "namespace": "KaevCMS\\Modules\\Donations\\",
@@ -20,11 +20,11 @@
     "locales": {
         "ru": {
             "name": "Пожертвования",
-            "description": "Пополнение монет через ЮMoney и настраиваемый обмен монет CMS на игровые предметы в веб-инвентаре."
+            "description": "Пополнение монет через ЮMoney, поэтапное подключение FreeKassa и обмен монет на игровые предметы."
         },
         "en": {
             "name": "Donations",
-            "description": "YooMoney top-ups and optional CMS coin exchange into game items in Web Inventory."
+            "description": "YooMoney top-ups, staged FreeKassa integration and optional CMS coin exchange into game items."
         }
     }
 }

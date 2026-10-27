@@ -319,4 +319,8 @@ return [
     'topup_failed' => 'Could not prepare the top-up. Please try again.',
     'topup_pending' => 'Preparing your top-up…',
     'topup_price_changed' => 'The price has changed. Review the new total and click Top up again.',
+    'freekassa_iteration2_warning' => 'FreeKassa is still under development. Credentials can be configured, but real and admin test payments are blocked. FreeKassa cannot credit wallets in this build.',
+    'freekassa_notification_address' => 'FreeKassa notification URL',
+    'freekassa_callback_hint' => 'Configure this URL as the merchant notification endpoint (POST). Enable test mode separately in the FreeKassa merchant dashboard.',
+    'freekassa_test_only' => 'FreeKassa is configuration-only in this version. Live mode will be enabled after the remaining integration and security checks.',
 ];

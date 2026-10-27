@@ -4,6 +4,17 @@
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
 
+## 0.55.0 - 2026-10-27
+
+**QA candidate, Donations iteration 2. Not production-certified.** Donations module 1.17.0. Based on the complete 0.54.5 archive. No changes to Composer dependencies, database schema or Wallet.
+
+- Bundled the independently registered FreeKassa SCI driver with strict signed checkout construction and separate signing secrets for the payment form and merchant callback. The original YooMoney provider remains unchanged.
+- FreeKassa signed callback parser rejects duplicate and array parameters, unsigned query data, malformed amounts/IDs, modified signatures, wrong merchant identities and unsafe checkout destinations. MD5 is computed using the original signed AMOUNT string while money is compared as integer minor units (e.g. 100, 100.0, 100.00).
+- Added stable core-owned `/payments/freekassa/notify` POST endpoint, independent of the Donations UI toggle, with HTTPS, POST form encoding and CSRF exception matching the public provider callback model. The endpoint returns precisely `YES` after durable processing. The existing unique `(provider_code, provider_payment_id)` index covers FreeKassa `intid` replay detection.
+- **FreeKassa is intentionally TEST-ONLY in 0.55.0.** The driver refuses `live` configuration; test notification evidence always stays non-crediting. External test checkout in the admin panel, IP allowlist editor, trusted proxy handling and server-side confirmation of provider currency/status are deferred. A new real payment cannot start in this build.
+- Added standalone smoke coverage for checkout signatures, signed amount normalization, tampering, duplicate fields and live gating. No real merchant credentials used and no external payment API called.
+- FreeKassa has no reset-to-default-IP control. Full PHPUnit, browser and MySQL concurrency tests are deferred to end-to-end Codex validation at the user's request.
+
 ## 0.54.5 - 2026-10-27
 
 **QA candidate, iteration 1 of the Donations multi-provider work. Not production-certified.** Based on 0.54.4. No payment provider added yet: YooMoney remains the only bundled driver. No changes to Wallet, database schema, composer.json or composer.lock.

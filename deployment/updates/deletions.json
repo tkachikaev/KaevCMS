@@ -784,5 +784,8 @@
   ],
   "0.54.5": [
     "core/deployment/windows/apply-0.54.4.ps1"
+  ],
+  "0.55.0": [
+    "core/deployment/windows/apply-0.54.5.ps1"
   ]
 }

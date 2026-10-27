@@ -56,7 +56,7 @@ final class AdminDonationProviderController extends Controller
                 // Never reveal errors containing credentials in the admin UI.
             }
         }
-        $webhookUrl = route('payments.yoomoney.notify');
+        $webhookUrl = route($driver->callbackRouteName());
         $webhookHost = strtolower((string) parse_url($webhookUrl, PHP_URL_HOST));
         $webhookIsLocal = ! str_starts_with($webhookUrl, 'https://')
             || in_array($webhookHost, ['localhost', '127.0.0.1', '::1'], true)
