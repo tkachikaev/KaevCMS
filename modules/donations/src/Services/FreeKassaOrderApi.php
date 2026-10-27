@@ -21,12 +21,12 @@ final class FreeKassaOrderApi
         string $merchantId,
         string $apiKey,
         string $orderUuid,
-        string $operationId,
+        ?string $operationId,
         int $amountMinor,
         string $currency,
-    ): void {
+    ): string {
         if (! preg_match('/\A[1-9][0-9]{0,17}\z/D', $merchantId)
-            || ! preg_match('/\A[1-9][0-9]{0,63}\z/D', $operationId)
+            || ($operationId !== null && ! preg_match('/\A[1-9][0-9]{0,63}\z/D', $operationId))
             || ! preg_match('/\A[0-9a-f-]{36}\z/D', $orderUuid)
             || ! preg_match('/\A[A-Z]{3}\z/D', $currency)
             || $apiKey === '' || $amountMinor < 1) {
@@ -45,7 +45,9 @@ final class FreeKassaOrderApi
         if (! $response->successful() || strlen($response->body()) > 131072) {
             throw new RuntimeException('Unable to verify FreeKassa order by API.');
         }
-        self::assertPaidResponse($response->body(), $orderUuid, $operationId, $amountMinor, $currency);
+        // intid is NOT covered by SCI signature. Canonical financial operation
+        // identity comes from authenticated merchant API, never callback intid.
+        return self::paidOrderIdFromResponse($response->body(), $orderUuid, $amountMinor, $currency);
     }
 
     /**
@@ -53,13 +55,12 @@ final class FreeKassaOrderApi
      * JSON numeric amount tokens are quoted before json_decode to avoid float.
      * A mismatch or unavailable API is never permission to credit Wallet.
      */
-    public static function assertPaidResponse(
+    public static function paidOrderIdFromResponse(
         string $json,
         string $orderUuid,
-        string $operationId,
         int $amountMinor,
         string $currency,
-    ): void {
+    ): string {
         if ($json === '' || strlen($json) > 131072) {
             throw new RuntimeException('Invalid FreeKassa API response.');
         }
@@ -79,20 +80,26 @@ final class FreeKassaOrderApi
         }
         if (! is_array($payload) || ($payload['type'] ?? null) !== 'success'
             || ! is_array($payload['orders'] ?? null) || ! array_is_list($payload['orders'])
-            || count($payload['orders']) > 100) {
+            || count($payload['orders']) > 100
+            || (isset($payload['pages']) && (! is_int($payload['pages']) || $payload['pages'] !== 1))) {
             throw new RuntimeException('FreeKassa did not confirm the paid order.');
         }
         $matched = 0;
+        $canonicalId = null;
         foreach ($payload['orders'] as $order) {
             if (! is_array($order)) {
                 throw new RuntimeException('Malformed FreeKassa order row.');
             }
-            // Filter by our immutable order reference AND the provider operation ID.
-            // Do not trust intid alone: it is NOT covered by the SCI MD5 signature.
-            if (($order['merchant_order_id'] ?? null) !== $orderUuid
-                || ! self::matchesIntegerId($order['fk_order_id'] ?? null, $operationId)) {
-                continue;
+            // Query was scoped to our immutable UUID. An unrelated row is
+            // an invalid/ambiguous response, not permission to credit.
+            if (($order['merchant_order_id'] ?? null) !== $orderUuid) {
+                throw new RuntimeException('FreeKassa API returned an unrelated order.');
             }
+            $candidateId = $order['fk_order_id'] ?? null;
+            if (! self::validIntegerId($candidateId)) {
+                throw new RuntimeException('FreeKassa API order ID missing.');
+            }
+            $canonicalId = (string) $candidateId;
             $matched++;
             if ($matched > 1 || ($order['status'] ?? null) !== 1
                 || ($order['currency'] ?? null) !== $currency
@@ -108,18 +115,20 @@ final class FreeKassaOrderApi
                 throw new RuntimeException('FreeKassa paid amount mismatch.');
             }
         }
-        if ($matched !== 1) {
+        if ($matched !== 1 || $canonicalId === null) {
             throw new RuntimeException('FreeKassa operation not confirmed by API.');
         }
+
+        return $canonicalId;
     }
 
-    private static function matchesIntegerId(mixed $candidate, string $expected): bool
+    private static function validIntegerId(mixed $candidate): bool
     {
         if ((! is_string($candidate) && ! is_int($candidate))
             || ! preg_match('/\A[1-9][0-9]{0,63}\z/D', (string) $candidate)) {
             return false;
         }
 
-        return ltrim((string) $candidate, '0') === ltrim($expected, '0');
+        return true;
     }
 }

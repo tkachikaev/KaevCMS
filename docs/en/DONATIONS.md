@@ -99,6 +99,17 @@ Select **Live** for FreeKassa and enable the provider; the same admin page now e
 - API outage/mismatch fails closed with HTTP 503 (never `YES` or Wallet credit). Ensure merchant callback retries are enabled. Lost-callback recovery is part of iteration 6.
 - API HMAC uses a DB-serialized increasing nonce stored in encrypted provider settings. No `.env` toggle or new migration. Disabling new payments does not discard existing order preparations or verification credentials.
 - Isolated admin tests are only allowed in **Test** mode and never credit Wallet. There is no IP reset button.
-- The published documentation does not explicitly guarantee that SCI `intid` equals API `fk_order_id` for every merchant. A real merchant control payment must establish this mapping before production acceptance. Differences fail closed. Full Laravel/browser/DB regression testing remains for iteration 6.
+- The published documentation does not explicitly guarantee that SCI `intid` equals API `fk_order_id` for every merchant. A real merchant control payment must establish this mapping before production acceptance. The 0.55.4 handler uses the authenticated API canonical ID instead of assuming these values are equal. Full Laravel/browser/DB regression testing is still required before production.
 
 Official API: https://docs.freekassa.net/.
+
+
+## FreeKassa API recovery and callback key rotation (0.55.4 / Donations 1.17.4)
+
+**QA candidate only; not certified for live production collections.** When a completed live payment receives no callback, an owner or administrator can open **Donations → Orders → Order details** and use **Verify with FreeKassa**. This action is limited to an existing unpaid live FreeKassa preparation and uses merchant-authenticated `POST /v1/orders` with the immutable CMS order UUID, not user-submitted amounts or wallet IDs. Exactly one order with paid status `1`, exact currency and amount must be returned. Verified evidence is saved in the encrypted payment ledger and settled through the ordinary transactional Wallet service. Duplicate checks and late notifications do not double-credit. Unavailable/ambiguous API results never authorize a credit.
+
+FreeKassa SCI `intid` and API `fk_order_id` are separately named and their equality is not documented. The canonical financial identifier comes from the authenticated API row (`fk_order_id`) after verifying its `merchant_order_id`, exact total, currency and paid status. The SCI callback `intid` remains untrusted metadata for matching purposes.
+
+Up to four previous callback Secret 2 keys can remain encrypted for at most 24 hours after rotation and are accepted only for live payment preparations preceding that rotation. New orders always use current credentials. After the grace window, use merchant API reconciliation for confirmed old payments when the API remains available.
+
+Before going live, validate real vendor API responses, the merchant's notification settings and retries (`YES`), trusted callback IP/proxy chain, amount/currency, duplicate processing, and Laravel/MySQL/browser tests. No default-IP restore button is provided. Official provider documentation: https://docs.freekassa.net/.

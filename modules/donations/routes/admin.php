@@ -16,6 +16,8 @@ Route::put('/settings', [AdminDonationController::class, 'update'])->name('setti
 Route::put('/limits', [AdminDonationController::class, 'limits'])->name('limits.update');
 Route::post('/rates', [AdminDonationController::class, 'rate'])->name('rates.store');
 Route::get('/orders', [AdminDonationController::class, 'orders'])->name('orders.index');
+Route::post('/orders/{orderUuid}/freekassa-recovery', [AdminDonationController::class, 'recoverFreeKassa'])
+    ->whereUuid('orderUuid')->middleware('throttle:5,1,donations-freekassa-recovery')->name('orders.freekassa.recovery');
 Route::post('/orders/{orderUuid}/reviews', [AdminDonationController::class, 'reportReview'])->whereUuid('orderUuid')->name('orders.reviews.store');
 Route::get('/orders/{orderUuid}', [AdminDonationController::class, 'showOrder'])->whereUuid('orderUuid')->name('orders.show');
 Route::get('/providers', [AdminDonationProviderController::class, 'index'])->name('providers.index');

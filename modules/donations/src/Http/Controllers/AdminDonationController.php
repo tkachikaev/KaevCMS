@@ -21,6 +21,7 @@ use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Services\DonationCurrencyRegistry;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationPaymentReviews;
+use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationWorkspace;
@@ -170,8 +171,33 @@ final class AdminDonationController extends Controller
         return view($view, [
             'order' => $order, 'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'reviews' => $reviews,
             'canReport' => $admin instanceof Admin && DonationPaymentReviews::canReport($admin),
+            'canRecoverFreeKassa' => $admin instanceof Admin && app(ModuleAdminAuthorizer::class)
+                ->can('admin.module-pages.donations.orders.freekassa.recovery', 'POST', $admin)
+                && $order->status !== 'credited'
+                && DB::table('module_donation_payment_preparations')
+                    ->where('order_id', $order->getKey())->where('provider_code', 'freekassa')
+                    ->where('mode', 'live')->exists(),
             'reportRequestUuid' => (string) Str::uuid(), 'money' => $money, 'adminPath' => $paths->path(),
         ]);
+    }
+
+    public function recoverFreeKassa(string $orderUuid, Request $request, AdminPathSettings $paths,
+        ModuleAdminAuthorizer $access, DonationPaymentSettlements $settlements): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.orders.freekassa.recovery', 'POST', $admin);
+        try {
+            $status = $settlements->recoverFreeKassaByApi($orderUuid);
+        } catch (\Throwable) {
+            // Never disclose remote API responses, credentials or payment metadata.
+            return back()->withErrors(['freekassa_recovery' =>
+                __('module-donations::messages.freekassa_recovery_failed')]);
+        }
+
+        return redirect()->route('admin.module-pages.donations.orders.show', [
+            'adminPath' => $paths->path(), 'orderUuid' => $orderUuid,
+        ])->with('status', __('module-donations::messages.freekassa_recovery_'.$status));
     }
 
     public function reportReview(string $orderUuid, Request $request, AdminPathSettings $paths,

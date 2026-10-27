@@ -132,6 +132,54 @@ final class DonationPaymentSettlements
         return $completed;
     }
 
+    /**
+     * Operator-initiated recovery when SCI callbacks were lost. This must only
+     * be called by an authorized administrative action, never from a public
+     * user-supplied order UUID. All financial data comes from the locked,
+     * immutable CMS order and from FreeKassa's authenticated merchant API.
+     * An API outage or ambiguous response cannot create payment evidence.
+     */
+    public function recoverFreeKassaByApi(string $orderUuid): string
+    {
+        if (! preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $orderUuid)) {
+            throw new InvalidArgumentException('Invalid recovery order UUID.');
+        }
+        $order = DonationOrder::query()->where('order_uuid', $orderUuid)->firstOrFail();
+        $preparation = DonationPaymentPreparation::query()
+            ->where('order_id', $order->getKey())->where('provider_code', 'freekassa')->firstOrFail();
+        if ($preparation->mode !== 'live' || $preparation->provider_label !== $orderUuid
+            || $preparation->currency_code !== $order->currency_code
+            || (int) $preparation->payer_amount_minor !== (int) $order->total_minor
+            || (int) $order->exponent !== 2 || (int) $order->total_minor < 1
+            || $order->status === 'credited') {
+            throw new LogicException('Order is not eligible for FreeKassa API recovery.');
+        }
+        // This may succeed after the provider is disabled for NEW purchases.
+        // Use currently valid encrypted API credentials and fail closed if gone.
+        $credentials = $this->providerSettings->credentialsForDriver('freekassa');
+        if (! preg_match('/\A[1-9][0-9]{0,17}\z/D', $credentials['merchant_id'] ?? '')
+            || ! is_string($credentials['api_key'] ?? null) || strlen($credentials['api_key']) < 8) {
+            throw new LogicException('FreeKassa merchant API credentials are unavailable.');
+        }
+        $canonicalId = app(FreeKassaOrderApi::class)->assertPaid(
+            $credentials['merchant_id'], $credentials['api_key'], $orderUuid, null,
+            (int) $order->total_minor, (string) $order->currency_code,
+        );
+        $verified = new VerifiedPayment(
+            orderUuid: $orderUuid,
+            providerPaymentId: $canonicalId,
+            status: 'received_unsettled',
+            currencyCode: (string) $order->currency_code,
+            amountMinor: (int) $order->total_minor,
+            receivedAmountMinor: (int) $order->total_minor,
+            testNotification: false,
+            environment: 'live',
+        );
+        // This is explicitly API-confirmed evidence, NOT a forged SCI callback.
+        // Its encrypted v2 receipt can still be replayed by retryPending().
+        return $this->record($preparation, $verified, 'freekassa-api-recovery:'.$orderUuid.':'.$canonicalId);
+    }
+
     private function record(DonationPaymentPreparation $initialPreparation, VerifiedPayment $verified, string $rawBody): string
     {
         $providerCode = (string) $initialPreparation->provider_code;

@@ -30,6 +30,10 @@ final class DonationProviderSettings
 
     private const YOOMONEY_GRACE_HOURS = 24;
 
+    private const FREEKASSA_RETIRED_KEYS = '_freekassa_retired_secret2_keys';
+
+    private const FREEKASSA_GRACE_HOURS = 24;
+
     private const FREEKASSA_API_NONCE = '_freekassa_api_last_nonce';
 
     public function __construct(
@@ -100,17 +104,19 @@ final class DonationProviderSettings
         $stored = $this->readCredentials($row);
         $current = array_intersect_key($stored, $driver->credentialFields());
         $result = [$current];
-        if ($code !== 'yoomoney' || $preparation->mode !== 'live') {
+        if ($preparation->mode !== 'live' || ! in_array($code, ['yoomoney', 'freekassa'], true)) {
             return $result;
         }
         $now = CarbonImmutable::now();
-        foreach ($this->readRetiredYooMoneyKeys($stored) as $retired) {
+        $retiredKeys = $code === 'yoomoney' ? $this->readRetiredYooMoneyKeys($stored)
+            : $this->readRetiredFreeKassaKeys($stored);
+        foreach ($retiredKeys as $retired) {
             $expiresAt = CarbonImmutable::parse($retired['expires_at']);
             // The serialized provider-settings lock also guards preparation.
             // Compare the immutable ID boundary, not seconds-precision timestamps.
             if ((int) $preparation->getKey() <= $retired['max_preparation_id']
                 && $now->lessThan($expiresAt)) {
-                $result[] = [...$current, 'notification_secret' => $retired['secret']];
+                $result[] = [...$current, $code === 'yoomoney' ? 'notification_secret' : 'secret_2' => $retired['secret']];
             }
         }
 
@@ -180,15 +186,15 @@ final class DonationProviderSettings
             $stored = $this->readCredentials($row);
             $credentials = array_intersect_key($stored, $fields);
             $oldSecret = $credentials['notification_secret'] ?? null;
+            $oldFreeKassaSecret = $credentials['secret_2'] ?? null;
             foreach ($suppliedCredentials as $key => $value) {
                 // Empty secret input means "keep", never "clear". Rotations overwrite atomically.
                 if ($value !== '') {
                     $credentials[$key] = $value;
                 }
             }
-            // Keep a short, private grace window if YooMoney rotates its HMAC key.
-            // Existing live payment preparations may already have been signed using
-            // the previous key. Never retain retired credentials for other drivers.
+            // Preserve a bounded, encrypted verification grace for existing live
+            // preparations when YooMoney or FreeKassa rotate callback secrets.
             $retired = [];
             if ($code === 'yoomoney') {
                 $now = CarbonImmutable::now();
@@ -217,6 +223,28 @@ final class DonationProviderSettings
                 }
             }
             if ($code === 'freekassa') {
+                $now = CarbonImmutable::now();
+                $retiredFreeKassa = [];
+                foreach ($this->readRetiredFreeKassaKeys($stored) as $entry) {
+                    if ($now->lessThan(CarbonImmutable::parse($entry['expires_at']))) {
+                        $retiredFreeKassa[] = $entry;
+                    }
+                }
+                if (is_string($oldFreeKassaSecret) && $oldFreeKassaSecret !== ''
+                    && isset($credentials['secret_2']) && $oldFreeKassaSecret !== $credentials['secret_2']) {
+                    $retiredFreeKassa[] = [
+                        'secret' => $oldFreeKassaSecret,
+                        'rotated_at' => $now->toIso8601String(),
+                        'max_preparation_id' => (int) (DonationPaymentPreparation::query()
+                            ->where('provider_code', 'freekassa')->max('id') ?? 0),
+                        'expires_at' => $now->addHours(self::FREEKASSA_GRACE_HOURS)->toIso8601String(),
+                    ];
+                }
+                if ($retiredFreeKassa !== []) {
+                    $credentials[self::FREEKASSA_RETIRED_KEYS] = json_encode(
+                        array_slice($retiredFreeKassa, -4), JSON_THROW_ON_ERROR,
+                    );
+                }
                 if (isset($stored[self::FREEKASSA_API_NONCE])) {
                     $credentials[self::FREEKASSA_API_NONCE] = $stored[self::FREEKASSA_API_NONCE];
                 }
@@ -412,13 +440,23 @@ final class DonationProviderSettings
      * @param  array<string,string>  $stored
      * @return list<array{secret:string,rotated_at:string,max_preparation_id:int,expires_at:string}>
      */
+    private function readRetiredFreeKassaKeys(array $stored): array
+    {
+        return $this->readRetiredKeys($stored, self::FREEKASSA_RETIRED_KEYS);
+    }
+
     private function readRetiredYooMoneyKeys(array $stored): array
     {
-        if (! isset($stored[self::YOOMONEY_RETIRED_KEYS])) {
+        return $this->readRetiredKeys($stored, self::YOOMONEY_RETIRED_KEYS);
+    }
+
+    private function readRetiredKeys(array $stored, string $field): array
+    {
+        if (! isset($stored[$field])) {
             return [];
         }
         try {
-            $values = json_decode($stored[self::YOOMONEY_RETIRED_KEYS], true, 512, JSON_THROW_ON_ERROR);
+            $values = json_decode($stored[$field], true, 512, JSON_THROW_ON_ERROR);
             if (! is_array($values) || count($values) > 4) {
                 throw new RuntimeException('Invalid retained payment secrets.');
             }

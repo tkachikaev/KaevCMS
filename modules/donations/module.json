@@ -2,9 +2,9 @@
     "schema": 1,
     "id": "donations",
     "name": "Donations",
-    "version": "1.17.3",
+    "version": "1.17.4",
     "author": "KaevCMS",
-    "description": "YooMoney and FreeKassa SCI with admin-only test purchases, merchant API verification for live payments, and shared Wallet settlement.",
+    "description": "YooMoney + FreeKassa with merchant API verification, administrator-controlled recovery of missing callbacks, short key-rotation grace, and idempotent Wallet settlement.",
     "cms_min": "0.50.2",
     "cms_max": null,
     "namespace": "KaevCMS\\Modules\\Donations\\",
@@ -20,11 +20,11 @@
     "locales": {
         "ru": {
             "name": "Пожертвования",
-            "description": "ЮMoney и FreeKassa: тестирование в админке и реальные платежи с обязательной серверной проверкой по API перед начислением монет."
+            "description": "ЮMoney и FreeKassa: серверная проверка платежей, восстановление по API из админки, безопасная смена секретов и однократное зачисление в Wallet."
         },
         "en": {
             "name": "Donations",
-            "description": "YooMoney and FreeKassa: isolated admin test payments and live transactions with mandatory server-side payment verification."
+            "description": "YooMoney and FreeKassa: merchant API verification, admin-triggered API recovery, safe secret rotation and exactly-once Wallet settlement."
         }
     }
 }

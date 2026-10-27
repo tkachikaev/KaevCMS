@@ -14,7 +14,7 @@ use KaevCMS\Modules\Donations\Services\FreeKassaOrderApi;
 
 /**
  * SCI driver. For live payments, every callback requires independent server-side
- * API confirmation of operation ID, immutable amount, currency and PAID status.
+ * API confirmation of canonical provider order ID, immutable amount, currency and PAID status.
  * https://docs.freekassa.net/
  */
 final class FreeKassaProvider implements RoutablePaymentProvider
@@ -141,14 +141,14 @@ final class FreeKassaProvider implements RoutablePaymentProvider
         if ($live) {
             // Query the authenticated orders API before any settlement/credit.
             // Do not verify remote state while holding Wallet DB row locks.
-            ($this->orderApi ?? app(FreeKassaOrderApi::class))->assertPaid(
+            $canonicalId = ($this->orderApi ?? app(FreeKassaOrderApi::class))->assertPaid(
                 $credentials['merchant_id'], $credentials['api_key'], $signed->orderUuid,
                 $signed->operationId, $signed->amountMinor, (string) $order->currency_code,
             );
         }
         return new VerifiedPayment(
             orderUuid: $signed->orderUuid,
-            providerPaymentId: $signed->operationId,
+            providerPaymentId: $canonicalId ?? $signed->operationId,
             status: 'received_unsettled',
             currencyCode: (string) $order->currency_code,
             amountMinor: $signed->amountMinor,

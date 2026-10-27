@@ -374,4 +374,13 @@ return [
     'freekassa_global_off' => 'Off — block new payments',
     'freekassa_global_live' => 'On — allow ready providers',
     'freekassa_global_blocked' => 'If activation fails, check local provider diagnostics, player visibility, HTTPS, production/debug mode and database readiness.',
+    'freekassa_recovery_title' => 'FreeKassa API recovery',
+    'freekassa_recovery_help' => 'For previously initiated live payments only. CMS verifies the exact order, amount, currency and paid status using the FreeKassa merchant API. Coins are credited only on confirmation, and retrying cannot duplicate the credit. Not applicable to admin test payments.',
+    'freekassa_recovery_start' => 'Verify payment with FreeKassa',
+    'freekassa_recovery_credited' => 'Payment verified by the FreeKassa API and coins credited.',
+    'freekassa_recovery_pending' => 'API evidence stored; Wallet credit is pending trusted payment processing.',
+    'freekassa_recovery_review' => 'Payment requires manual review; coins were not credited.',
+    'freekassa_recovery_test' => 'Test confirmation; no coins credited.',
+    'freekassa_recovery_failed' => 'Could not safely verify payment with the FreeKassa API. Check the API, order and configuration. No coins were credited.',
+    'freekassa_fee_unknown' => 'Provider fee and net settlement are not available from the verified API result',
 ];

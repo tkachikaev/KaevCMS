@@ -4,6 +4,17 @@
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
 
+## 0.55.4 - 2026-10-27
+
+**Donations iteration 6 QA candidate — Donations 1.17.4. Not production-certified.** Full build from 0.55.3, with unchanged Wallet, Composer lockfile, and published migrations.
+
+- Removed the undocumented assumption that FreeKassa SCI callback `intid` equals merchant API `fk_order_id`. The canonical provider payment ID now comes only from an authenticated, exact-match `POST /v1/orders` query by the immutable CMS merchant order UUID, requiring one paid row, correct amount, currency and status. The callback's unsigned `intid` is validated and kept in original encrypted evidence, not used as financial identity. Fail-closed handling remains for missing, ambiguous or inconsistent API responses.
+- Added an explicit owner/administrator-only, CSRF-protected and rate-limited **Verify with FreeKassa API** action on unpaid FreeKassa LIVE orders. It can recover a missing callback using only merchant-authenticated API evidence and the existing immutable order snapshot, not arbitrary browser-supplied data. Recovery reuses the transactional Wallet settlement/receipt uniqueness and encrypted v2 evidence so late callbacks and repeats do not double-credit. API failures leave orders unpaid.
+- Added a bounded 24-hour encrypted grace list (at most four entries) for rotated FreeKassa callback Secret 2 keys. A retired key is valid only for payment preparations whose IDs predate rotation. New checkouts use current keys. Key rotation does not bypass remote API proof.
+- FreeKassa receipts show **gross** confirmed payment amount, while net settlement/fee are marked **unknown** in the order UI; the SCI commission field is not covered by the payment signature.
+- Added RU/EN admin texts and implementation documentation; new API parser and feature regression scenarios include mismatched callback/API IDs, lost callbacks, forbidden admin roles, replay and delayed old-secret notifications. Old YooMoney compatibility is unchanged.
+- Pure PHP FreeKassa and YooMoney driver checks, PHP lint, dependency guard, release metadata and archive integrity were checked. Full Laravel/PHPUnit, Pint, PHPStan, Playwright and real FreeKassa checkout were not run in this environment (missing vendor/runtime/merchant credentials). **Live receipt behavior remains unverified with a real merchant — do not open production payments yet.**
+
 ## 0.55.3 - 2026-10-27
 
 **QA candidate, Donations iteration 5. Not production-certified.** Donations 1.17.3. Full release based on 0.55.2; Wallet/Composer/published migrations unchanged.

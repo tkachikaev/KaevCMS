@@ -107,6 +107,83 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
         $this->assertDatabaseCount('module_donation_payment_receipts', 0);
     }
 
+    public function test_api_order_id_can_differ_from_callback_intid_and_still_credits_once(): void
+    {
+        [, , $order] = $this->prepared();
+        $this->fakePaid($order->order_uuid, operation: '555777');
+        [$body, $server] = $this->callback($order->order_uuid, operation: '888999');
+        $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)
+            ->assertOk()->assertSeeText('YES');
+        $this->assertDatabaseHas('module_donation_payment_receipts', [
+            'provider_code' => 'freekassa', 'provider_payment_id' => '555777', 'status' => 'credited',
+        ]);
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_admin_can_reconcile_lost_callback_using_merchant_api_and_cannot_credit_twice(): void
+    {
+        [$owner, , $order] = $this->prepared();
+        $this->fakePaid($order->order_uuid, operation: '555777');
+        $url = '/admin/extensions/donations/orders/'.$order->order_uuid.'/freekassa-recovery';
+        $this->actingAs($owner, 'admin')->post($url)->assertRedirect();
+        $this->assertDatabaseHas('module_donation_payment_receipts', [
+            'provider_code' => 'freekassa', 'provider_payment_id' => '555777', 'status' => 'credited',
+        ]);
+        $this->assertDatabaseCount('wallet_entries', 1);
+        // Late signed notifications use the same API canonical ID; the previous
+        // reconciliation cannot be exploited for a second coin credit.
+        [$body, $server] = $this->callback($order->order_uuid, operation: '888999');
+        $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)
+            ->assertOk()->assertSeeText('YES');
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 1);
+    }
+
+    public function test_api_recovery_after_disabling_new_free_kassa_payments_still_works(): void
+    {
+        [$owner, , $order] = $this->prepared();
+        app(DonationProviderSettings::class)->save($owner, 'freekassa', false, 'live', ['RUB']);
+        $this->fakePaid($order->order_uuid, operation: '555777');
+        $url = '/admin/extensions/donations/orders/'.$order->order_uuid.'/freekassa-recovery';
+        $this->actingAs($owner, 'admin')->post($url)->assertRedirect();
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 1);
+    }
+
+    public function test_api_recovery_is_not_available_to_editor_or_auditor(): void
+    {
+        [, , $order] = $this->prepared();
+        $url = '/admin/extensions/donations/orders/'.$order->order_uuid.'/freekassa-recovery';
+        foreach ([AdminRole::Editor, AdminRole::Auditor] as $role) {
+            $admin = Admin::factory()->create(['role' => $role]);
+            $this->actingAs($admin, 'admin')->post($url)->assertForbidden();
+        }
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_recovery_of_an_unpaid_order_fails_closed_without_wallet_credit(): void
+    {
+        [$owner, , $order] = $this->prepared();
+        $this->fakePaid($order->order_uuid, status: 'unpaid');
+        $url = '/admin/extensions/donations/orders/'.$order->order_uuid.'/freekassa-recovery';
+        $this->actingAs($owner, 'admin')->post($url)->assertSessionHasErrors('freekassa_recovery');
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+    }
+
+    public function test_old_free_kassa_secret_only_verifies_pre_rotation_preparations(): void
+    {
+        [$owner, , $order] = $this->prepared();
+        app(DonationProviderSettings::class)->save($owner, 'freekassa', true, 'live', ['RUB'], [
+            'secret_2' => 'rotated-callback-secret',
+        ]);
+        $this->fakePaid($order->order_uuid);
+        [$body, $server] = $this->callback($order->order_uuid);
+        $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, $body)
+            ->assertOk()->assertSeeText('YES');
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
     public function test_invalid_or_missing_api_key_prevents_live_mode(): void
     {
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);

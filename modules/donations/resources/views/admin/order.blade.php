@@ -10,13 +10,26 @@
     <p>{{ __('module-donations::messages.order_status') }}: {{ __('module-donations::messages.status_'.$order->displayStatus()) }}</p>
     <p>{{ $order->coins }} × {{ $money->format((int) $order->unit_price_minor, (int) $order->exponent) }} {{ $order->currency_code }} = <strong>{{ $money->format((int) $order->total_minor, (int) $order->exponent) }} {{ $order->currency_code }}</strong></p>
     <p>{{ __('module-donations::messages.order_expires_at') }}: {{ $order->expires_at->format('Y-m-d H:i') }}</p>
+    @if($canRecoverFreeKassa)
+        <h3>{{ __('module-donations::messages.freekassa_recovery_title') }}</h3>
+        <p class="admin-field-help">{{ __('module-donations::messages.freekassa_recovery_help') }}</p>
+        @error('freekassa_recovery')<p role="alert">{{ $message }}</p>@enderror
+        <form method="POST" action="{{ route('admin.module-pages.donations.orders.freekassa.recovery', ['adminPath' => $adminPath, 'orderUuid' => $order->order_uuid]) }}" class="settings-form" data-testid="freekassa-api-recovery">
+            @csrf
+            <button type="submit" class="button button-secondary">{{ __('module-donations::messages.freekassa_recovery_start') }}</button>
+        </form>
+    @endif
     <h3>{{ __('module-donations::messages.receipts_title') }}</h3>
     @forelse($receipts as $receipt)
         <p data-testid="donations-payment-receipt">{{ $receipt->provider_code }} #{{ $receipt->provider_payment_id }} · {{ $receipt->status }}
         @if($receipt->review_reason) ({{ $receipt->review_reason }}) @endif
         · {{ __('module-donations::messages.receipt_gross') }}: {{ $money->format((int) $receipt->payer_amount_minor, (int) $order->exponent) }} {{ $receipt->currency_code }}
-        · {{ __('module-donations::messages.receipt_net') }}: {{ $money->format((int) $receipt->received_amount_minor, (int) $order->exponent) }} {{ $receipt->currency_code }}
-        · {{ __('module-donations::messages.receipt_fee') }}: {{ $money->format((int) $receipt->payer_amount_minor - (int) $receipt->received_amount_minor, (int) $order->exponent) }} {{ $receipt->currency_code }}</p>
+        @if($receipt->provider_code === 'freekassa')
+            · {{ __('module-donations::messages.freekassa_fee_unknown') }}
+        @else
+            · {{ __('module-donations::messages.receipt_net') }}: {{ $money->format((int) $receipt->received_amount_minor, (int) $order->exponent) }} {{ $receipt->currency_code }}
+            · {{ __('module-donations::messages.receipt_fee') }}: {{ $money->format((int) $receipt->payer_amount_minor - (int) $receipt->received_amount_minor, (int) $order->exponent) }} {{ $receipt->currency_code }}
+        @endif</p>
     @empty<p>{{ __('module-donations::messages.no_receipts') }}</p>@endforelse
     <h3>{{ __('module-donations::messages.review_title') }}</h3>
     <p>{{ __('module-donations::messages.review_manual_notice') }}</p>

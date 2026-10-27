@@ -5,9 +5,11 @@ namespace KaevCMS\Modules\Donations\Data;
 use InvalidArgumentException;
 
 /**
- * Only wrap a notification AFTER the provider has verified its HMAC signature.
+ * Only wrap a payment after trusted verification: signed provider notification
+ * (with merchant API confirmation where required), or an authenticated
+ * merchant API reconciliation of the exact previously prepared order.
  * Laravel Crypt then authenticates this immutable evidence for deferred credits:
- * HMAC-key rotation must not invalidate a callback we already verified and
+ * Secret rotation must not invalidate a payment we already verified and
  * committed with the receipt and audit. This is NOT for unsigned history scans.
  */
 final class VerifiedReceiptEnvelope
