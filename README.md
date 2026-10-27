@@ -1,4 +1,4 @@
-# KaevCMS 0.55.6
+# KaevCMS 0.55.7
 
 **QA candidate — not a production release. / Кандидат для проверки, не production-релиз.**
 

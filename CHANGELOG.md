@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.55.7 - 2026-10-27
+
+**Donations 1.17.7 / PayPal Orders v2 iteration 2: QA candidate; PayPal is NOT enabled for players or administrators.** Full source built on 0.55.6. The live YooMoney/FreeKassa drivers, Wallet code, existing published migrations, Composer lock and framework versions remain unchanged.
+
+- Added an isolated PayPal Orders v2 HTTP client: OAuth2 client credentials with encrypted cached access tokens scoped to Sandbox/Live and credential rotation, server-side Create/Show/Capture/Get Capture, bounded response parsing, HTTPS-only fixed API endpoints, no redirects and separate immutable PayPal-Request-Id values for Create and Capture.
+- Added an idempotent local operations service that reserves and persists the first PayPal order ID and safe approval redirect outside SQL transactions. A repeated Create uses the same ID within the bounded window. APPROVED is established only with authenticated GET, never a browser return flag.
+- Capture claims remain exclusive; known remote results are stored as pending/denied/completed-unsettled **without Wallet credit**. A timeout or malformed response becomes capture_unknown, blocks further POST and can only be inspected by GET in this iteration.
+- Added strict remote URL domain/environment/order-token validation, immutable invoice/gross/currency comparison and PayPal decimal precision checks. Non-2xx errors/transport failures are classified without recording secrets or speculative successful payments.
+- Additive migration saves the trusted PayPal approval URL; test-only Sandbox attempt remains separate from all CMS users and wallets. No PayPal driver, credentials admin UI, webhook endpoint, real Sandbox run or player checkout are enabled (iterations 3–5).
+- Added mocked HTTP Feature scenarios and standalone pure-PHP parser checks. Full PHPUnit/MySQL/PHPStan/Pint/Playwright and merchant Sandbox tests remain for Codex/iteration 6. This ZIP is a source QA candidate, not a production-certified release.
+
 ## 0.55.6 - 2026-10-27
 
 **Donations 1.17.6 / PayPal Orders v2 iteration 1 (1A + 1B): QA candidate; NOT production-ready for PayPal.** Full source from 0.55.5; Wallet, Composer lock, installed YooMoney/FreeKassa and published migrations unchanged.

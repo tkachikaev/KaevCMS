@@ -84,10 +84,10 @@ final class PayPalAttempts
                 return true;
             }
             // The ONLY permitted Create retry uses the SAME persisted request ID
-            // within the default 6h idempotency window, after a known timeout.
+            // inside the default 6h window with a 10-minute safety margin after timeout.
             if ($attempt->status === 'create_unknown' && $attempt->paypal_order_id === null
                 && $attempt->create_started_at !== null
-                && $attempt->create_started_at->greaterThan(now()->subHours(6))) {
+                && $attempt->create_started_at->greaterThan(now()->subMinutes(350))) {
                 DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
                     'status' => 'creating', 'updated_at' => now(),
                 ]);
@@ -106,10 +106,13 @@ final class PayPalAttempts
     }
 
     /** Save the stable remote ID; unique across environment and merchant. */
-    public function markCreated(int $attemptId, string $remoteOrderId): void
+    public function markCreated(int $attemptId, string $remoteOrderId, ?string $approvalUrl = null): void
     {
         self::assertRemoteId($remoteOrderId);
-        DB::transaction(function () use ($attemptId, $remoteOrderId): void {
+        if ($approvalUrl !== null && strlen($approvalUrl) > 2048) {
+            throw new InvalidArgumentException('Invalid PayPal approval link.');
+        }
+        DB::transaction(function () use ($attemptId, $remoteOrderId, $approvalUrl): void {
             $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
             if (! in_array($attempt->status, ['creating', 'create_unknown', 'created'], true)
                 || ($attempt->paypal_order_id !== null && $attempt->paypal_order_id !== $remoteOrderId)) {
@@ -117,6 +120,7 @@ final class PayPalAttempts
             }
             DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
                 'paypal_order_id' => $remoteOrderId, 'status' => 'created',
+                'approval_url' => $approvalUrl ?? $attempt->approval_url,
                 'diagnostic_code' => null, 'updated_at' => now(),
             ]);
         }, 3);
@@ -147,6 +151,40 @@ final class PayPalAttempts
     public function markCaptureUnknown(int $attemptId, string $reason = 'api_timeout'): void
     {
         $this->transition($attemptId, ['capturing'], 'capture_unknown', $reason);
+    }
+
+    /** A definitive 4xx Create rejection needs a new operator decision, never a blind new attempt. */
+    public function markCreateRejected(int $attemptId, string $reason): void
+    {
+        $this->transition($attemptId, ['creating'], 'create_rejected', $reason);
+    }
+
+    /** A confirmed remote capture is evidence to be VERIFIED in iteration 4, not credit. */
+    public function markCaptureResponse(int $attemptId, string $captureId, string $captureStatus): void
+    {
+        self::assertRemoteId($captureId);
+        $next = match ($captureStatus) {
+            'COMPLETED' => 'capture_completed_unsettled',
+            'PENDING' => 'capture_pending',
+            'DENIED', 'DECLINED' => 'capture_denied',
+            default => throw new InvalidArgumentException('Invalid PayPal capture status.'),
+        };
+        DB::transaction(function () use ($attemptId, $captureId, $next): void {
+            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            if ($attempt->status !== 'capturing' || ($attempt->paypal_capture_id !== null && $attempt->paypal_capture_id !== $captureId)) {
+                throw new LogicException('PayPal capture response conflicts with its attempt.');
+            }
+            DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
+                'status' => $next, 'paypal_capture_id' => $captureId,
+                'last_checked_at' => now(), 'diagnostic_code' => null, 'updated_at' => now(),
+            ]);
+        }, 3);
+    }
+
+    /** Definitive POST rejection; no automatic replay, no Wallet credit. */
+    public function markCaptureRejected(int $attemptId, string $reason): void
+    {
+        $this->transition($attemptId, ['capturing'], 'capture_rejected', $reason);
     }
 
     /** @param list<string> $allowed */
