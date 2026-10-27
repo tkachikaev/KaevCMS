@@ -38,9 +38,9 @@ final class DonationProvidersTest extends TestCase
         $this->app->forgetInstance(DonationProviderSettings::class);
     }
 
-    public function test_yoomoney_is_allowlisted_but_no_real_payment_or_webhook_routes_exist(): void
+    public function test_installed_providers_are_allowlisted_and_payments_are_still_guarded(): void
     {
-        $this->assertSame(['yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
+        $this->assertSame(['freekassa', 'yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
         $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers')
             ->assertOk()->assertSee('yoomoney');

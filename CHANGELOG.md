@@ -4,6 +4,18 @@
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
 
+## 0.55.1 - 2026-10-27
+
+**QA candidate, Donations iteration 3. Not production-certified.** Donations 1.17.1. Based on the full 0.55.0 archive. No Composer, Wallet, schema or published migration changes.
+
+- Added an audited FreeKassa-only callback sender IP allowlist editor in the Donations admin. Initially shown addresses match FreeKassa's official SCI notification IP list at release time. After the first save, explicitly configured addresses remain authoritative, including intentional deletions. No reset-to-default button, disabling the IP check, or implicit fallback after user customization.
+- Added an independent optional trusted reverse-proxy IPv4/IPv6/CIDR list. Source-IP resolution checks the actual TCP peer (`REMOTE_ADDR`) and reads `X-Forwarded-For` only from explicitly trusted immediate proxies, using the rightmost untrusted hop. Arbitrary or malformed forwarded headers cannot whitelist an unknown sender. This callback-specific list works independently of unrelated framework proxy configuration.
+- Both lists are validated, limited and stored in the provider's existing Laravel-encrypted settings document with admin authorization and fail-closed audit. No new tables or migrations. A blank IP list rejects new callback traffic and cannot be used with FreeKassa enabled. The original YooMoney settings and callbacks are unchanged.
+- Added FreeKassa security UI and local diagnostics in Russian and English. The notification URL is selectable; warnings link to the official vendor documentation and explain external merchant sandbox activation, moderation and HTTPS limitations. Secrets are never rendered back to the browser.
+- Added isolated IP-chain smoke coverage and Feature tests for editing, persistence, malformed IPs, permissions and spoofing. Updated the existing allowlist assertion for both bundled payment drivers.
+- **Still TEST-ONLY:** external admin test checkout and real settlement remain disabled. Test checkout belongs to iteration 4; authoritative API currency/status reconciliation is required before live settlement.
+- PHP syntax and stand-alone driver/IP tests were checked locally. PHPUnit, Pint, PHPStan and browser/regression suites are intentionally deferred for Codex review per user preference.
+
 ## 0.55.0 - 2026-10-27
 
 **QA candidate, Donations iteration 2. Not production-certified.** Donations module 1.17.0. Based on the complete 0.54.5 archive. No changes to Composer dependencies, database schema or Wallet.

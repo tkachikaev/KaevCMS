@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
+use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
@@ -46,7 +47,15 @@ final class AdminDonationProviderController extends Controller
         abort_unless($state !== null, 404);
 
         $wallet = '';
+        $publicMerchantId = '';
         $hasSecret = false;
+        if ($providerCode === 'freekassa') {
+            try {
+                $publicMerchantId = $settings->credentialsForDriver('freekassa')['merchant_id'] ?? '';
+            } catch (Throwable) {
+                // Public merchant id is optional; never expose decryption errors.
+            }
+        }
         if ($providerCode === 'yoomoney') {
             try {
                 $stored = $settings->credentialsForDriver('yoomoney');
@@ -62,6 +71,19 @@ final class AdminDonationProviderController extends Controller
             || in_array($webhookHost, ['localhost', '127.0.0.1', '::1'], true)
             || str_ends_with($webhookHost, '.localhost');
 
+        $freeKassaPolicy = null;
+        $freeKassaPolicyError = false;
+        if ($providerCode === 'freekassa') {
+            try {
+                $freeKassaPolicy = app(FreeKassaCallbackSecurity::class)->current();
+            } catch (Throwable) {
+                // Damaged policy blocks callbacks but must not lock the admin out
+                // of editing the sender list. Never display the stored ciphertext.
+                $freeKassaPolicy = ['senders' => [], 'proxies' => [], 'customized' => true];
+                $freeKassaPolicyError = true;
+            }
+        }
+
         /** @var view-string $view */
         $view = 'module-donations::admin.provider';
 
@@ -70,8 +92,11 @@ final class AdminDonationProviderController extends Controller
             'fields' => $driver->credentialFields(),
             'availableCurrencies' => $settings->configuredCurrencies($driver),
             'diagnostic' => $settings->localDiagnostic($providerCode),
-            'publicWalletNumber' => $wallet, 'hasNotificationSecret' => $hasSecret,
+            'publicWalletNumber' => $wallet, 'publicMerchantId' => $publicMerchantId,
+            'hasNotificationSecret' => $hasSecret,
             'webhookUrl' => $webhookUrl, 'webhookIsLocal' => $webhookIsLocal,
+            'freeKassaPolicy' => $freeKassaPolicy,
+            'freeKassaPolicyError' => $freeKassaPolicyError,
             'activation' => $activation->state(),
             'readinessIssues' => $activation->blockers(),
             'pilotPlayer' => $activation->state()['pilot_user_id']
@@ -216,7 +241,16 @@ final class AdminDonationProviderController extends Controller
             }
         }
         try {
-            $settings->save($admin, $providerCode, (string) $enabled === '1', $mode, $codes, $credentials);
+            $senders = null;
+            $proxies = null;
+            if ($providerCode === 'freekassa') {
+                $senders = $request->exists('callback_sender_ips')
+                    ? FreeKassaCallbackSecurity::parseSubmitted($request->input('callback_sender_ips')) : null;
+                $proxies = $request->exists('callback_proxy_ips')
+                    ? FreeKassaCallbackSecurity::parseSubmitted($request->input('callback_proxy_ips'), true) : null;
+            }
+            $settings->save($admin, $providerCode, (string) $enabled === '1', $mode,
+                $codes, $credentials, $senders, $proxies);
         } catch (InvalidArgumentException) {
             return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
         }

@@ -126,6 +126,8 @@ final class DonationProviderSettings
         string $mode,
         array $currencyCodes,
         array $suppliedCredentials = [],
+        ?array $callbackSenderIps = null,
+        ?array $callbackProxyIps = null,
     ): void {
         $this->authorizeManage($admin);
         $driver = $this->registry->get($code);
@@ -154,9 +156,16 @@ final class DonationProviderSettings
             }
             $validatedCredentials[$key] = $value;
         }
+        if ($code !== 'freekassa' && ($callbackSenderIps !== null || $callbackProxyIps !== null)) {
+            throw new InvalidArgumentException('Unexpected provider callback IP policy.');
+        }
+        if (($callbackSenderIps !== null && ! FreeKassaCallbackSecurity::validateStored($callbackSenderIps))
+            || ($callbackProxyIps !== null && ! FreeKassaCallbackSecurity::validateStored($callbackProxyIps, true))) {
+            throw new InvalidArgumentException('Invalid FreeKassa callback IP policy.');
+        }
         $currencyCodes = $validatedCurrencies;
         $suppliedCredentials = $validatedCredentials;
-        DB::transaction(function () use ($admin, $code, $enabled, $mode, $currencyCodes, $suppliedCredentials, $fields, $driver): void {
+        DB::transaction(function () use ($admin, $code, $enabled, $mode, $currencyCodes, $suppliedCredentials, $callbackSenderIps, $callbackProxyIps, $fields, $driver): void {
             // Serialize the initial insert too, not only updates to an existing provider row.
             DonationSetting::query()->whereKey(1)->lockForUpdate()->firstOrFail();
             $row = DonationProviderSetting::query()->whereKey($code)->lockForUpdate()->first();
@@ -205,6 +214,27 @@ final class DonationProviderSettings
                     );
                 }
             }
+            if ($code === 'freekassa') {
+                // Dedicated metadata is inside the existing encrypted payload;
+                // the public driver never receives the callback security settings.
+                foreach ([
+                    FreeKassaCallbackSecurity::SENDERS_KEY => $callbackSenderIps,
+                    FreeKassaCallbackSecurity::PROXIES_KEY => $callbackProxyIps,
+                ] as $key => $values) {
+                    if ($values !== null) {
+                        $credentials[$key] = json_encode($values, JSON_THROW_ON_ERROR);
+                    } elseif (isset($stored[$key])) {
+                        $credentials[$key] = $stored[$key];
+                    }
+                }
+                if ($enabled && $callbackSenderIps === []) {
+                    throw new InvalidArgumentException('Cannot enable FreeKassa with no trusted callback addresses.');
+                }
+                if ($enabled && $callbackSenderIps === null && isset($stored[FreeKassaCallbackSecurity::SENDERS_KEY])
+                    && $this->freeKassaPolicyList($stored, FreeKassaCallbackSecurity::SENDERS_KEY, false) === []) {
+                    throw new InvalidArgumentException('Cannot enable FreeKassa with no trusted callback addresses.');
+                }
+            }
             if ($enabled) {
                 if ($currencyCodes === []) {
                     throw new InvalidArgumentException('Select at least one provider currency.');
@@ -236,6 +266,39 @@ final class DonationProviderSettings
         });
     }
 
+    /** @return array{senders:list<string>,proxies:list<string>,customized:bool} */
+    public function freeKassaCallbackPolicy(): array
+    {
+        $row = DonationProviderSetting::query()->find('freekassa');
+        $stored = $row === null ? [] : $this->readCredentials($row);
+
+        return [
+            'senders' => $this->freeKassaPolicyList($stored, FreeKassaCallbackSecurity::SENDERS_KEY, false),
+            'proxies' => $this->freeKassaPolicyList($stored, FreeKassaCallbackSecurity::PROXIES_KEY, true),
+            'customized' => array_key_exists(FreeKassaCallbackSecurity::SENDERS_KEY, $stored),
+        ];
+    }
+
+    /** @param array<string,string> $stored
+     *  @return list<string>
+     */
+    private function freeKassaPolicyList(array $stored, string $key, bool $proxies): array
+    {
+        if (! array_key_exists($key, $stored)) {
+            return $proxies ? [] : FreeKassaCallbackSecurity::INITIAL_SENDERS;
+        }
+        try {
+            $items = json_decode($stored[$key], true, 512, JSON_THROW_ON_ERROR);
+            if (! FreeKassaCallbackSecurity::validateStored($items, $proxies)) {
+                throw new RuntimeException('Invalid stored FreeKassa IP policy.');
+            }
+
+            return $items;
+        } catch (Throwable) {
+            throw new RuntimeException('Unable to read FreeKassa callback security policy.');
+        }
+    }
+
     /**
      * Safe local checks only; a successful result does NOT prove the remote API or webhook works.
      *
@@ -254,6 +317,10 @@ final class DonationProviderSettings
                 return ['state' => 'invalid', 'matched_currencies' => []];
             }
             $credentials = $this->readCredentials($row);
+            if ($code === 'freekassa' && $this->freeKassaPolicyList($credentials,
+                FreeKassaCallbackSecurity::SENDERS_KEY, false) === []) {
+                return ['state' => 'invalid', 'matched_currencies' => []];
+            }
             foreach ($driver->credentialFields() as $field => $spec) {
                 if ($spec['required'] && (! isset($credentials[$field]) || $credentials[$field] === '')) {
                     return ['state' => 'invalid', 'matched_currencies' => []];

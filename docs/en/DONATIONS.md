@@ -63,3 +63,15 @@ The bundled `freekassa` driver implements the documented SCI signed payment form
 FreeKassa's callback `CUR_ID` identifies a payment method, not a cryptographically proven order currency or status. Server-to-server verification, notification IP/trusted proxy controls, and an admin-only external test checkout are required before unlocking live. The provider test mode must also be enabled in FreeKassa's merchant dashboard.
 
 The planned admin IP editor will not include a restore-default-IP button. Official SCI documentation: https://docs.freekassa.net/.
+
+## FreeKassa callback IP security (KaevCMS 0.55.1 / Donations 1.17.1)
+
+Go to **Donations → Payment providers → FreeKassa** in the admin panel. Configure merchant ID, payment secrets, currencies and permitted callback source IPs. The selectable notification URL is `POST /payments/freekassa/notify` on the public HTTPS site. Set that URL and POST method in FreeKassa's merchant panel, and enable the merchant's test mode separately. Merchant approval may be required.
+
+- The initial editor list matches vendor SCI docs as of 2026-10-27: `168.119.157.136`, `168.119.60.227`, `178.154.197.79`, `51.250.54.238`. This is **not automatically synced**; verify the latest addresses at https://docs.freekassa.net/.
+- IPs can be added or removed, one per line. Once saved, only the merchant's stored list is used, including deletions. There is **no restore-default-IP button or IP security disable switch**.
+- If traffic passes through Cloudflare or nginx, open **Trusted proxies** and specify only the actual proxy peers (IP or CIDR). A proxy must append the true client address to `X-Forwarded-For`. Untrusted TCP peers cannot spoof this header.
+- Empty source-IP lists reject all callbacks. The provider must be disabled before saving an empty list, and IPs must be restored manually before re-enabling.
+- Local diagnostics do not establish that FreeKassa has sent a callback or that any order has actually been paid. Signature checks remain mandatory.
+
+**FreeKassa stays TEST-ONLY in this build:** external admin sandbox checkout and live wallet settlement are deliberately unavailable until the next iterations. YooMoney is unaffected by this IP policy.

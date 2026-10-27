@@ -110,9 +110,23 @@
         @if($driver->code() === 'freekassa')
             <p class="admin-field-help" role="status">{{ __('module-donations::messages.freekassa_iteration2_warning') }}</p>
             <div class="form-group">
-                <label>{{ __('module-donations::messages.freekassa_notification_address') }}</label>
-                <code class="donations-callback-url">{{ $webhookUrl }}</code>
+                <label for="freekassa-callback-url">{{ __('module-donations::messages.freekassa_notification_address') }}</label>
+                <input id="freekassa-callback-url" class="donations-callback-url" type="text" readonly value="{{ $webhookUrl }}" onclick="this.select()" aria-label="{{ __('module-donations::messages.freekassa_notification_address') }}">
                 <small>{{ __('module-donations::messages.freekassa_callback_hint') }}</small>
+            </div>
+            @if($webhookIsLocal)
+                <p class="admin-field-error" role="status">{{ __('module-donations::messages.freekassa_https_warning') }}</p>
+            @endif
+            @if($freeKassaPolicyError)
+                <p class="admin-field-error" role="alert">{{ __('module-donations::messages.freekassa_policy_corrupt') }}</p>
+            @endif
+            <p class="admin-field-help">{{ __('module-donations::messages.freekassa_merchant_warning') }}</p>
+            <div class="donations-readiness" role="status" data-testid="freekassa-local-diagnostic">
+                <h3>{{ __('module-donations::messages.freekassa_local_diagnostic_title') }}</h3>
+                <p>{{ __('module-donations::messages.freekassa_diagnostic_'.$diagnostic['state']) }}</p>
+                <p>{{ __('module-donations::messages.freekassa_diagnostic_ip_count', ['count' => count($freeKassaPolicy['senders'])]) }}</p>
+                <p>{{ __('module-donations::messages.freekassa_diagnostic_proxy_count', ['count' => count($freeKassaPolicy['proxies'])]) }}</p>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_diagnostic_not_remote') }}</p>
             </div>
         @endif
         @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
@@ -123,10 +137,31 @@
                 <label class="settings-remove-row"><input type="checkbox" name="currency_codes[]" value="{{ $code }}" @checked(in_array($code, $state['currency_codes'], true)) @disabled(request()->attributes->get('admin_read_only'))> {{ $code }}</label>
             @endforeach
             @foreach($fields as $field => $spec)
-                <div class="form-group"><label for="provider-field-{{ $field }}">{{ $spec['label'] }}</label>
-                    <input id="provider-field-{{ $field }}" name="credentials[{{ $field }}]" type="{{ $spec['secret'] ? 'password' : 'text' }}" value="" autocomplete="off" maxlength="1024" @disabled(request()->attributes->get('admin_read_only'))>
+                <div class="form-group"><label for="provider-field-{{ $field }}">{{ $driver->code() === 'freekassa' ? __('module-donations::messages.freekassa_field_'.$field) : $spec['label'] }}</label>
+                    <input id="provider-field-{{ $field }}" name="credentials[{{ $field }}]" type="{{ $spec['secret'] ? 'password' : 'text' }}" value="{{ $driver->code() === 'freekassa' && $field === 'merchant_id' ? $publicMerchantId : '' }}" autocomplete="off" maxlength="1024" @disabled(request()->attributes->get('admin_read_only'))>
+                    @if(in_array($field, $state['configured_fields'], true))
+                        <small>{{ __('module-donations::messages.freekassa_field_saved') }}</small>
+                    @endif
                 </div>
             @endforeach
+            @if($driver->code() === 'freekassa')
+                <h3>{{ __('module-donations::messages.freekassa_security_title') }}</h3>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_sender_help') }} <a href="https://docs.freekassa.net/" target="_blank" rel="noopener noreferrer">{{ __('module-donations::messages.freekassa_official_docs') }}</a></p>
+                <div class="form-group">
+                    <label for="freekassa-sender-ips">{{ __('module-donations::messages.freekassa_sender_label') }}</label>
+                    <textarea id="freekassa-sender-ips" data-testid="freekassa-sender-ips" name="callback_sender_ips" rows="4" spellcheck="false" maxlength="8192" @disabled(request()->attributes->get('admin_read_only'))>{{ implode("\n", $freeKassaPolicy['senders']) }}</textarea>
+                    <small>{{ $freeKassaPolicy['customized'] ? __('module-donations::messages.freekassa_custom_list') : __('module-donations::messages.freekassa_initial_list') }}</small>
+                </div>
+                <details>
+                    <summary>{{ __('module-donations::messages.freekassa_proxy_title') }}</summary>
+                    <p class="admin-field-help">{{ __('module-donations::messages.freekassa_proxy_help') }}</p>
+                    <div class="form-group">
+                        <label for="freekassa-proxy-ips">{{ __('module-donations::messages.freekassa_proxy_label') }}</label>
+                        <textarea id="freekassa-proxy-ips" name="callback_proxy_ips" rows="3" spellcheck="false" maxlength="8192" @disabled(request()->attributes->get('admin_read_only'))>{{ implode("\n", $freeKassaPolicy['proxies']) }}</textarea>
+                    </div>
+                </details>
+                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_sender_warning') }}</p>
+            @endif
             <input type="hidden" name="enabled" value="0">
             <label class="settings-remove-row"><input name="enabled" value="1" type="checkbox" @checked($state['enabled']) @disabled(request()->attributes->get('admin_read_only'))> {{ __('module-donations::messages.provider_on') }}</label>
             @if($driver->code() === 'freekassa')

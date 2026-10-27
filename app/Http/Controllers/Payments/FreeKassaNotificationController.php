@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
+use KaevCMS\Modules\Donations\Services\FreeKassaCallbackSecurity;
 use LogicException;
 use Throwable;
 
@@ -33,6 +34,11 @@ final class FreeKassaNotificationController extends Controller
         }
         try {
             DonationsTrustedAutoload::register();
+            // The raw TCP peer is authoritative. Forwarded headers may be read
+            // only when the peer is an explicitly allowed reverse proxy.
+            if (! app(FreeKassaCallbackSecurity::class)->allows($request)) {
+                return response('Untrusted sender', 403);
+            }
             $status = app(DonationPaymentSettlements::class)->receive(new ProviderCallback(
                 $request->getContent(), [], '',
             ), 'freekassa');
