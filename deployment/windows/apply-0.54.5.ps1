@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Donations: YooMoney and optional Game Coin Exchange are configured from Admin. No .env edits.'
+Write-Host 'Donations: YooMoney and payment driver foundations; optional Game Coin Exchange are configured from Admin. No .env edits.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

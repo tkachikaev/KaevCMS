@@ -8,7 +8,8 @@ use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 /** Run without Laravel/vendor: php tests/Integration/Donations/yoomoney-driver-standalone.php */
 $root = dirname(__DIR__, 3);
 foreach ([
-    'src/Contracts/PaymentProvider.php', 'src/Data/PaymentCheckout.php',
+    'src/Contracts/PaymentProvider.php', 'src/Contracts/RoutablePaymentProvider.php',
+    'src/Exceptions/InvalidPaymentSignature.php', 'src/Data/PaymentCheckout.php',
     'src/Data/PaymentIntent.php', 'src/Data/ProviderCallback.php',
     'src/Data/VerifiedPayment.php', 'src/Data/VerifiedReceiptEnvelope.php', 'src/Services/DonationMoney.php',
     'src/Providers/YooMoneyProvider.php',
@@ -32,6 +33,9 @@ assert($verified->amountMinor === 10000 && $verified->receivedAmountMinor === 98
 assert($verified->orderUuid === $intent->orderUuid);
 assert($verified->testNotification === false);
 assert($verified->status === 'received_unsettled');
+assert($driver->referenceForOrder($intent->orderUuid) === $exampleLabel = 'kaevcms-'.$intent->orderUuid);
+assert($driver->referenceFromCallback($callback) === $exampleLabel);
+$driver->assertCheckout($checkout, $intent, $credentials, $exampleLabel);
 $bad = [
     str_replace('withdraw_amount=100.00', 'withdraw_amount=101.00', $callback->rawBody),
     $callback->rawBody.'&amount=98.00',
@@ -62,6 +66,7 @@ assert(hash_hmac('sha256', $official, 'secret123') === 'a452af731650e2c5b39abcdc
 $sealed = VerifiedReceiptEnvelope::seal($verified, $callback->rawBody);
 $restored = VerifiedReceiptEnvelope::restore($sealed);
 if ($restored === null || $restored['rawBody'] !== $callback->rawBody
+    || $restored['providerCode'] !== 'yoomoney'
     || VerifiedReceiptEnvelope::fingerprint($restored['verified']) !== VerifiedReceiptEnvelope::fingerprint($verified)
     || VerifiedReceiptEnvelope::restore($callback->rawBody) !== null) {
     throw new RuntimeException('Verified callback evidence round-trip failed.');
@@ -78,4 +83,25 @@ foreach ([
         // Expected. Real stored evidence is additionally authenticated by Crypt.
     }
 }
-echo "YooMoney standalone driver, HMAC and evidence contract tests passed\n";
+// v2 evidence includes authenticated provider identity and currency, but it cannot
+// be replayed as a legacy YooMoney envelope.
+$other = new \KaevCMS\Modules\Donations\Data\VerifiedPayment(
+    $verified->orderUuid, 'PAYMENT-A_42', 'received_unsettled', 'USD', 10000, 9900,
+);
+$sealedV2 = VerifiedReceiptEnvelope::seal($other, 'test-signed-payload', 'fixture_gamma');
+$v2 = VerifiedReceiptEnvelope::restore($sealedV2);
+if ($v2 === null || $v2['providerCode'] !== 'fixture_gamma' || $v2['verified']->currencyCode !== 'USD') {
+    throw new RuntimeException('Provider-specific evidence v2 round-trip failed.');
+}
+foreach ([
+    str_replace('"providerCode":"fixture_gamma"', '"providerCode":"!!!"', $sealedV2),
+    str_replace('"receivedAmountMinor":9900', '"receivedAmountMinor":10001', $sealedV2),
+] as $tampered) {
+    try {
+        VerifiedReceiptEnvelope::restore($tampered);
+        throw new RuntimeException('Invalid v2 evidence was accepted.');
+    } catch (InvalidArgumentException) {
+        // Expected: Laravel Crypt supplies additional integrity protection in storage.
+    }
+}
+echo "YooMoney standalone driver, legacy/v2 evidence and signature contracts passed\n";

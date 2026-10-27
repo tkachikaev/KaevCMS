@@ -10,6 +10,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -19,6 +20,7 @@ final class DonationLiveActivation
 {
     public function __construct(
         private readonly DonationProviderSettings $providers,
+        private readonly DonationProviderRegistry $registry,
         private readonly DonationSettings $settings,
         private readonly AuditLogger $audit,
     ) {}
@@ -76,10 +78,21 @@ final class DonationLiveActivation
             $issues[] = 'visibility';
         }
         try {
-            $state = $this->providers->localDiagnostic('yoomoney');
-            $provider = collect($this->providers->overview())->firstWhere('code', 'yoomoney');
-            if (! is_array($provider) || $provider['enabled'] !== true || $provider['mode'] !== 'live'
-                || $state['state'] !== 'local_ok' || ! in_array('RUB', $state['matched_currencies'], true)) {
+            $ready = false;
+            $states = collect($this->providers->overview())->keyBy('code');
+            foreach ($this->registry->all() as $code => $driver) {
+                if (! $driver instanceof RoutablePaymentProvider) {
+                    continue;
+                }
+                $provider = $states->get($code);
+                $state = $this->providers->localDiagnostic($code);
+                if (is_array($provider) && $provider['enabled'] === true && $provider['mode'] === 'live'
+                    && $state['state'] === 'local_ok' && $state['matched_currencies'] !== []) {
+                    $ready = true;
+                    break;
+                }
+            }
+            if (! $ready) {
                 $issues[] = 'provider';
             }
         } catch (Throwable) {

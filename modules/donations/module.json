@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "donations",
     "name": "Donations",
-    "version": "1.16.2",
+    "version": "1.16.3",
     "author": "KaevCMS",
     "description": "YooMoney payments and optional direct CMS coin exchange into per-server Web Inventory.",
     "cms_min": "0.50.2",

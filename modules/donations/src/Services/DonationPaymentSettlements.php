@@ -9,9 +9,11 @@ use App\Services\Wallet\WalletSource;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Data\VerifiedReceiptEnvelope;
+use KaevCMS\Modules\Donations\Exceptions\InvalidPaymentSignature;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use LogicException;
@@ -31,23 +33,23 @@ final class DonationPaymentSettlements
         private readonly AuditLogger $audit,
     ) {}
 
-    public function receive(ProviderCallback $callback): string
+    public function receive(ProviderCallback $callback, string $providerCode = 'yoomoney'): string
     {
         if (strlen($callback->rawBody) < 1 || strlen($callback->rawBody) > 16384) {
             throw new InvalidArgumentException('Invalid signed notification.');
         }
-        // Routing hint ONLY. parse_str may silently discard duplicates, which the
-        // driver's strict parser ALWAYS rejects before any database mutation.
-        parse_str($callback->rawBody, $hint);
-        $label = $hint['label'] ?? null;
-        if (! is_string($label) || ! preg_match('/\Akaevcms-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $label)) {
-            throw new InvalidArgumentException('Invalid payment reference.');
+        // The endpoint supplies the installed provider code. Never infer the
+        // driver class from a request parameter or unverified callback field.
+        $driver = $this->registry->get($providerCode);
+        if (! $driver instanceof RoutablePaymentProvider) {
+            throw new InvalidArgumentException('Provider has no reviewed payment callback contract.');
         }
-        $preparation = DonationPaymentPreparation::query()->where('provider_label', $label)->first();
-        if ($preparation === null || $preparation->provider_code !== 'yoomoney') {
+        $reference = $driver->referenceFromCallback($callback); // UNTRUSTED routing hint
+        $preparation = DonationPaymentPreparation::query()->where('provider_code', $providerCode)
+            ->where('provider_label', $reference)->first();
+        if ($preparation === null) {
             throw new InvalidArgumentException('Unknown payment reference.');
         }
-        $driver = $this->registry->get('yoomoney');
         $verified = null;
         // One current key, then only bounded historical keys eligible for this
         // preparation. Do not fall back after malformed payload/amount/label.
@@ -55,14 +57,13 @@ final class DonationPaymentSettlements
             try {
                 $verified = $driver->verifyCallback($callback, $credentials, (string) $preparation->mode);
                 break;
-            } catch (InvalidArgumentException $e) {
-                if ($e->getMessage() !== 'Invalid YooMoney signature.') {
-                    throw $e;
-                }
+            } catch (InvalidPaymentSignature) {
+                // Only invalid signatures may try the bounded retired keys.
+                // Invalid amounts, malformed payloads and references must fail closed.
             }
         }
         if ($verified === null) {
-            throw new InvalidArgumentException('Invalid YooMoney signature.');
+            throw new InvalidPaymentSignature('Invalid payment signature.');
         }
 
         return $this->record($preparation, $verified, $callback->rawBody);
@@ -88,7 +89,10 @@ final class DonationPaymentSettlements
                 if ($envelope === null) {
                     // Legacy C3/C4 receipts only carried the signed original. They
                     // still need a currently eligible provider key to be verified.
-                    $result = $this->receive(new ProviderCallback($body, [], ''));
+                    if ($receipt->provider_code !== 'yoomoney') {
+                        throw new InvalidArgumentException('Unsupported legacy receipt provider.');
+                    }
+                    $result = $this->receive(new ProviderCallback($body, [], ''), 'yoomoney');
                 } else {
                     // The original callback was already verified before we stored
                     // this authenticated Laravel-Crypt envelope. Rotating the
@@ -96,7 +100,7 @@ final class DonationPaymentSettlements
                     // Bind it to the exact existing receipt; never trust an
                     // unsigned provider-history candidate for this path.
                     $verified = $envelope['verified'];
-                    if ($receipt->provider_code !== 'yoomoney'
+                    if ($receipt->provider_code !== $envelope['providerCode']
                         || $receipt->provider_payment_id !== $verified->providerPaymentId
                         || $receipt->currency_code !== $verified->currencyCode
                         || (int) $receipt->payer_amount_minor !== $verified->amountMinor
@@ -106,9 +110,11 @@ final class DonationPaymentSettlements
                         throw new InvalidArgumentException('Stored payment evidence mismatch.');
                     }
                     $preparation = DonationPaymentPreparation::query()->whereKey($receipt->preparation_id)->firstOrFail();
-                    if ((int) $preparation->order_id !== (int) $receipt->order_id
-                        || $preparation->provider_code !== 'yoomoney'
-                        || $preparation->provider_label !== 'kaevcms-'.$verified->orderUuid) {
+                    $driver = $this->registry->get((string) $receipt->provider_code);
+                    if (! $driver instanceof RoutablePaymentProvider
+                        || (int) $preparation->order_id !== (int) $receipt->order_id
+                        || $preparation->provider_code !== $receipt->provider_code
+                        || $preparation->provider_label !== $driver->referenceForOrder($verified->orderUuid)) {
                         throw new InvalidArgumentException('Stored payment reference mismatch.');
                     }
                     $result = $this->record($preparation, $verified, $envelope['rawBody']);
@@ -128,25 +134,30 @@ final class DonationPaymentSettlements
 
     private function record(DonationPaymentPreparation $initialPreparation, VerifiedPayment $verified, string $rawBody): string
     {
+        $providerCode = (string) $initialPreparation->provider_code;
+        $driver = $this->registry->get($providerCode);
+        if (! $driver instanceof RoutablePaymentProvider) {
+            throw new InvalidArgumentException('Unreviewed payment provider.');
+        }
         $hash = VerifiedReceiptEnvelope::fingerprint($verified);
         $candidate = DonationOrder::query()->whereKey($initialPreparation->order_id)->first();
         if ($candidate === null) {
             throw new InvalidArgumentException('Unknown payment reference.');
         }
 
-        return DB::transaction(function () use ($initialPreparation, $verified, $hash, $candidate, $rawBody): string {
+        return DB::transaction(function () use ($initialPreparation, $verified, $hash, $candidate, $rawBody, $providerCode, $driver): string {
             // Same lock ordering as core Wallet: user -> order -> provider event -> wallet.
             $user = User::query()->whereKey($candidate->user_id)->lockForUpdate()->firstOrFail();
             $order = DonationOrder::query()->whereKey($candidate->id)->lockForUpdate()->firstOrFail();
             $preparation = DonationPaymentPreparation::query()->whereKey($initialPreparation->id)->firstOrFail();
             if ((int) $preparation->order_id !== (int) $order->id
-                || $preparation->provider_code !== 'yoomoney'
-                || $preparation->provider_label !== 'kaevcms-'.$verified->orderUuid
+                || $preparation->provider_code !== $providerCode
+                || $preparation->provider_label !== $driver->referenceForOrder($verified->orderUuid)
                 || $order->order_uuid !== $verified->orderUuid) {
                 throw new InvalidArgumentException('Mismatched payment reference.');
             }
             $existing = DB::table('module_donation_payment_receipts')
-                ->where('provider_code', 'yoomoney')->where('provider_payment_id', $verified->providerPaymentId)
+                ->where('provider_code', $providerCode)->where('provider_payment_id', $verified->providerPaymentId)
                 ->lockForUpdate()->first();
             if ($existing !== null) {
                 if ((int) $existing->order_id !== (int) $order->id || ! hash_equals($existing->notification_sha256, $hash)) {
@@ -160,16 +171,16 @@ final class DonationPaymentSettlements
             } else {
                 $id = DB::table('module_donation_payment_receipts')->insertGetId([
                     'order_id' => $order->id, 'preparation_id' => $preparation->id,
-                    'provider_code' => 'yoomoney', 'provider_payment_id' => $verified->providerPaymentId,
+                    'provider_code' => $providerCode, 'provider_payment_id' => $verified->providerPaymentId,
                     'currency_code' => $verified->currencyCode,
                     'payer_amount_minor' => $verified->amountMinor,
                     'received_amount_minor' => $verified->receivedAmountMinor,
                     'notification_sha256' => $hash,
-                    'encrypted_notification' => Crypt::encryptString(VerifiedReceiptEnvelope::seal($verified, $rawBody)),
+                    'encrypted_notification' => Crypt::encryptString(VerifiedReceiptEnvelope::seal($verified, $rawBody, $providerCode)),
                     'status' => 'pending', 'created_at' => now(), 'updated_at' => now(),
                 ]);
                 $this->auditOrFail('donations.payment_verified', $order, [
-                    'provider_code' => 'yoomoney', 'payment_event_id' => $id,
+                    'provider_code' => $providerCode, 'payment_event_id' => $id,
                 ]);
             }
             // Honor the immutable preparation snapshot: disabling a provider or
@@ -217,7 +228,7 @@ final class DonationPaymentSettlements
             $updated = DB::table('module_donation_orders')->where('id', $order->id)
                 ->whereIn('status', [DonationOrder::DRAFT, DonationOrder::EXPIRED, DonationOrder::CANCELLED])
                 ->update([
-                    'status' => 'credited', 'provider_code' => 'yoomoney',
+                    'status' => 'credited', 'provider_code' => $providerCode,
                     'provider_payment_id' => $verified->providerPaymentId,
                     'checkout_total_minor' => $verified->amountMinor,
                     'paid_at' => now(), 'credited_at' => now(), 'updated_at' => now(),
@@ -232,7 +243,7 @@ final class DonationPaymentSettlements
             DB::table('module_donation_payment_receipts')->where('id', $id)
                 ->update(['status' => 'credited', 'credited_at' => now(), 'updated_at' => now()]);
             $this->auditOrFail('donations.payment_credited', $order, [
-                'provider_code' => 'yoomoney', 'payment_event_id' => $id,
+                'provider_code' => $providerCode, 'payment_event_id' => $id,
                 'wallet_entry_id' => $entry->id,
             ]);
 

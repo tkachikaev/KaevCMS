@@ -47,10 +47,10 @@ final class DonationPlayerHistory implements WalletTopUpHistory
         $result = [];
         $money = app(DonationMoney::class);
         $payments = app(DonationPaymentPreparations::class);
-        $checkout = app(DonationYooMoneyCheckout::class);
+        $checkout = app(DonationPaymentCheckout::class);
         $appearance = app(WalletAppearanceSettings::class);
         $canPay = app(DonationSettings::class)->isVisibleToPlayers()
-            && DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user);
+            && DonationPaymentCheckout::enabled() && DonationPaymentCheckout::allowedForUser($user);
         foreach (DonationOrder::query()->where('user_id', $user->getKey())->whereIn('id', $ids)->get() as $order) {
             $state = $order->displayStatus();
             $waiting = $state === 'draft' && $order->expires_at?->isFuture();

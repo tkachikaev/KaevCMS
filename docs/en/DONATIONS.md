@@ -43,3 +43,13 @@ The player selects a game server and a coin quantity. One atomic primary-databas
 The exchange works independently from YooMoney and requires no `.env` edits. Disabling it does not erase grant or wallet history. Failed exchanges roll back coin debits.
 
 Deleting a game server that only has an exchange rate also removes that rate. Exchange history, rewards and deliveries prevent server deletion and remain protected even when Donations is disabled. Other database-protected references produce a readable warning in the deletion dialog. The new migration changes only the rate's server relationship; existing users, wallets, operations and payment-provider credentials are preserved.
+
+## Provider architecture (0.54.5 / Donations 1.16.3)
+
+The shared payment services now support a reviewed provider extension contract, but **FreeKassa is not installed yet**. YooMoney is still the only bundled payment driver; its configured wallet, notification URL, and legacy checkout behavior are unchanged.
+
+A trusted, explicitly installed driver must implement `RoutablePaymentProvider` to opt into checkout and callbacks. A callback reference is an untrusted routing hint, not payment proof: the driver's cryptographic verification must succeed before any durable receipt or Wallet credit. HTTP input never chooses the PHP driver class.
+
+Previously sealed YooMoney evidence in `kaevcms-signed-yoomoney-v1` remains readable, including deferred credits after key rotation. Other reviewed drivers use the provider-bound `kaevcms-signed-provider-v2` evidence format authenticated with Laravel Crypt. No Wallet or database schema change was made.
+
+**Iteration 1 covers architecture only.** FreeKassa credentials, its callback endpoint, administrative sandbox payments and live activation are deferred. The planned IP allowlist editor will not have a reset-to-defaults button.

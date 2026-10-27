@@ -4,6 +4,18 @@
 
 - Fixed HTTP 500 on the mail delivery settings page after Scheduler had recorded a heartbeat: corrected the Carbon class namespace in the last-run timestamp display.
 
+## 0.54.5 - 2026-10-27
+
+**QA candidate, iteration 1 of the Donations multi-provider work. Not production-certified.** Based on 0.54.4. No payment provider added yet: YooMoney remains the only bundled driver. No changes to Wallet, database schema, composer.json or composer.lock.
+
+- Added an opt-in `RoutablePaymentProvider` contract for the trusted callback reference, provider-owned checkout validation and hard-coded callback route. Unreviewed `PaymentProvider` fixtures remain configurable but cannot be used for player payments.
+- Separated shared payment preparations, provider checkout and settlement from YooMoney-specific references; existing YooMoney checkout remains available under its original class name and the public `/payments/yoomoney/notify` route is unchanged.
+- Signature failures use a typed exception, so previous YooMoney keys are retried only when the signature itself is invalid, not for corrupted body, bad amount or unknown order.
+- Stored signed YooMoney v1 receipt evidence remains compatible, including deferred credits after credential rotation. Added an authenticated provider-aware v2 receipt envelope, bound to the immutable preparation and receipt identity.
+- Generalized readiness to any explicitly installed reviewed live driver while preserving the audited off/pilot/live switch currently used by YooMoney.
+- Added second-driver (test fixture) feature tests for independent receipts, replay protection, test-mode non-credit, and pending receipt recovery after signing-key rotation. Expanded standalone YooMoney HMAC/evidence tests.
+- Deferred until later iterations: FreeKassa API, IP allowlist UI, test checkout, FreeKassa callback endpoint, production activation and public documentation changes. No reset-to-default-IP button will be introduced.
+
 ## 0.54.4 - 2026-10-26
 
 Updates from 0.54.3. No dependency updates, database migrations or payment changes. Universal drivers remain experimental.

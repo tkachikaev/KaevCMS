@@ -22,7 +22,7 @@ use KaevCMS\Modules\Donations\Services\DonationOrders;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
-use KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout;
+use KaevCMS\Modules\Donations\Services\DonationPaymentCheckout;
 use LogicException;
 
 final class DonationController extends Controller
@@ -43,7 +43,7 @@ final class DonationController extends Controller
 
         $limits = $rates->limits();
         $currencies = $rates->availableForPlayers(app()->getLocale());
-        $canStartCheckout = DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user);
+        $canStartCheckout = DonationPaymentCheckout::enabled() && DonationPaymentCheckout::allowedForUser($user);
         $paymentProviders = [];
         if ($canStartCheckout) {
             $currencies = array_values(array_filter($currencies, static function (array $currency) use ($payments, &$paymentProviders): bool {
@@ -111,7 +111,7 @@ final class DonationController extends Controller
     }
 
     /** A deliberate top-up action creates immutable terms, never a transfer or Wallet credit. */
-    public function topUp(Request $request, DonationOrders $orders, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout, DonationRates $rates): JsonResponse
+    public function topUp(Request $request, DonationOrders $orders, DonationPaymentPreparations $payments, DonationPaymentCheckout $checkout, DonationRates $rates): JsonResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -128,7 +128,7 @@ final class DonationController extends Controller
                 // Match the existing user -> settings locking order. Price updates take this settings lock too.
                 User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
                 DB::table('module_donation_settings')->where('id', 1)->lockForUpdate()->first();
-                if (! DonationYooMoneyCheckout::enabled() || ! DonationYooMoneyCheckout::allowedForUser($user)
+                if (! DonationPaymentCheckout::enabled() || ! DonationPaymentCheckout::allowedForUser($user)
                     || ! app(DonationSettings::class)->isVisibleToPlayers()
                     || ! collect($payments->available($data['currency']))->contains(fn (array $provider): bool => $provider['code'] === $data['provider'] && $provider['mode'] === 'live')) {
                     throw new LogicException('Payment provider unavailable.');
@@ -166,7 +166,7 @@ final class DonationController extends Controller
         return redirect()->to(public_route('wallet.index', $request->only(['inactive', 'page'])));
     }
 
-    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout): View
+    public function show(Request $request, string $orderUuid, DonationOrders $orders, DonationMoney $money, DonationSettings $settings, DonationPaymentPreparations $payments, DonationPaymentCheckout $checkout): View
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -182,13 +182,13 @@ final class DonationController extends Controller
             'paymentPreparation' => $payments->forOrder($order),
             'canCheckout' => $checkout->available($user, $order),
             'availableProviders' => $settings->isVisibleToPlayers()
-                && DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user)
+                && DonationPaymentCheckout::enabled() && DonationPaymentCheckout::allowedForUser($user)
                 ? array_values(array_filter($payments->available($order->currency_code), static fn (array $provider): bool => $provider['mode'] === 'live')) : [],
         ]);
     }
 
     /** Read-only render of a server-built POST checkout. Browser return is NOT payment proof. */
-    public function checkout(Request $request, string $orderUuid, DonationOrders $orders, DonationYooMoneyCheckout $checkout, DonationMoney $money): Response
+    public function checkout(Request $request, string $orderUuid, DonationOrders $orders, DonationPaymentCheckout $checkout, DonationMoney $money): Response
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -206,7 +206,7 @@ final class DonationController extends Controller
     }
 
     /** This creates only a provider-free draft; there is no checkout or wallet credit. */
-    public function store(Request $request, DonationOrders $orders, DonationPaymentPreparations $payments, DonationYooMoneyCheckout $checkout): RedirectResponse
+    public function store(Request $request, DonationOrders $orders, DonationPaymentPreparations $payments, DonationPaymentCheckout $checkout): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -223,7 +223,7 @@ final class DonationController extends Controller
 
         // Exactly one available payment provider needs no separate selection page.
         // A draft remains recoverable in order history if preparation is unavailable.
-        if (DonationYooMoneyCheckout::enabled() && DonationYooMoneyCheckout::allowedForUser($user)) {
+        if (DonationPaymentCheckout::enabled() && DonationPaymentCheckout::allowedForUser($user)) {
             $available = array_values(array_filter($payments->available($order->currency_code),
                 static fn (array $provider): bool => $provider['mode'] === 'live'));
             if (count($available) === 1) {
@@ -255,7 +255,7 @@ final class DonationController extends Controller
             return back()->withErrors(['order' => __('module-donations::messages.preparation_unavailable')]);
         }
 
-        if (app(DonationYooMoneyCheckout::class)->available($user, app(DonationOrders::class)->forUser($user, $orderUuid))) {
+        if (app(DonationPaymentCheckout::class)->available($user, app(DonationOrders::class)->forUser($user, $orderUuid))) {
             return redirect()->route('modules.donations.orders.checkout', ['orderUuid' => $orderUuid]);
         }
 

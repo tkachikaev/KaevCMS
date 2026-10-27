@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
+use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Models\DonationOrder;
 use KaevCMS\Modules\Donations\Models\DonationPaymentPreparation;
 use KaevCMS\Modules\Donations\Models\DonationProviderSetting;
 use KaevCMS\Modules\Donations\Models\DonationSetting;
-use KaevCMS\Modules\Donations\Providers\YooMoneyProvider;
 use LogicException;
 use RuntimeException;
 
@@ -33,8 +33,8 @@ final class DonationPaymentPreparations
     {
         $result = [];
         foreach ($this->registry->all() as $code => $driver) {
-            if ($code !== 'yoomoney') {
-                continue; // Other drivers must opt in to a reviewed preparation flow.
+            if (! $driver instanceof RoutablePaymentProvider) {
+                continue; // Unreviewed drivers cannot prepare payments.
             }
             $state = $this->providers->localDiagnostic($code);
             if ($state['state'] !== 'local_ok' || ! in_array($currencyCode, $state['matched_currencies'], true)) {
@@ -61,6 +61,9 @@ final class DonationPaymentPreparations
             throw new InvalidArgumentException('Invalid payment preparation.');
         }
         $driver = $this->registry->get($providerCode); // Trusted PHP allowlist, not DB class name.
+        if (! $driver instanceof RoutablePaymentProvider) {
+            throw new LogicException('Payment provider has no reviewed checkout contract.');
+        }
 
         return DB::transaction(function () use ($user, $orderUuid, $providerCode, $driver): DonationPaymentPreparation {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->first();
@@ -101,26 +104,27 @@ final class DonationPaymentPreparations
             $credentials = $this->providers->credentialsForDriver($providerCode);
             $driver->assertConfiguration($credentials, (string) $row->mode);
             $method = 'PREVIEW';
-            $label = YooMoneyProvider::label($order->order_uuid);
-            if ($providerCode === 'yoomoney') {
-                // In test mode no payment endpoint exists. In live, build a DTO but
-                // NEVER expose URL/fields to the player until C3 safeguards are ready.
-                if ($row->mode === 'live') {
-                    $checkout = $driver->beginPayment(new PaymentIntent(
-                        $order->order_uuid, (int) $order->coins, $order->currency_code,
-                        (int) $order->total_minor, (int) $order->exponent, '',
-                        route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]),
-                    ), $credentials, 'live');
-                    if ($checkout->method !== 'POST' || $checkout->redirectUrl !== YooMoneyProvider::CHECKOUT_URL
-                        || ($checkout->fields['sum'] ?? null) !== (new DonationMoney)->format((int) $order->total_minor, 2)
-                        || ($checkout->fields['label'] ?? null) !== $label) {
-                        throw new LogicException('Invalid checkout terms.');
-                    }
-                    $method = $checkout->method;
+            $label = $driver->referenceForOrder((string) $order->order_uuid);
+            if ($label === '' || strlen($label) > 64
+                || ! preg_match('/\A[a-zA-Z0-9_-]{1,64}\z/D', $label)) {
+                throw new LogicException('Invalid provider payment reference.');
+            }
+            // Test mode prepares a non-executable preview. Live preparations are
+            // valid only when the trusted driver verifies its checkout terms.
+            if ($row->mode === 'live') {
+                $intent = new PaymentIntent(
+                    (string) $order->order_uuid, (int) $order->coins, (string) $order->currency_code,
+                    (int) $order->total_minor, (int) $order->exponent,
+                    route($driver->callbackRouteName()),
+                    route('modules.donations.orders.show', ['orderUuid' => $order->order_uuid]),
+                );
+                $checkout = $driver->beginPayment($intent, $credentials, 'live');
+                if (! in_array($checkout->method, ['GET', 'POST'], true)
+                    || ! preg_match('/\Ahttps:\/\/[^\s]+\z/D', $checkout->redirectUrl)) {
+                    throw new LogicException('Unsafe payment checkout.');
                 }
-            } else {
-                // Future trusted providers require an explicit implementation here.
-                throw new LogicException('Provider preparation not supported yet.');
+                $driver->assertCheckout($checkout, $intent, $credentials, $label);
+                $method = $checkout->method;
             }
             $record = new DonationPaymentPreparation;
             $record->forceFill([

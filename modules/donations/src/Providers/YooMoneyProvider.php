@@ -3,12 +3,13 @@
 namespace KaevCMS\Modules\Donations\Providers;
 
 use InvalidArgumentException;
-use KaevCMS\Modules\Donations\Contracts\PaymentProvider;
+use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Data\PaymentCheckout;
 use KaevCMS\Modules\Donations\Data\PaymentIntent;
 use KaevCMS\Modules\Donations\Data\ProviderCallback;
 use KaevCMS\Modules\Donations\Data\VerifiedPayment;
 use KaevCMS\Modules\Donations\Services\DonationMoney;
+use KaevCMS\Modules\Donations\Exceptions\InvalidPaymentSignature;
 
 /**
  * YooMoney wallet P2P collection, NOT YooKassa. Checkout requires trusted static
@@ -16,7 +17,7 @@ use KaevCMS\Modules\Donations\Services\DonationMoney;
  * and in-flight Wallet settlement remain available when new sales are closed.
  * https://yoomoney.ru/docs/payment-buttons/using-api/notifications
  */
-final class YooMoneyProvider implements PaymentProvider
+final class YooMoneyProvider implements RoutablePaymentProvider
 {
     public const CHECKOUT_URL = 'https://yoomoney.ru/quickpay/confirm';
 
@@ -100,6 +101,43 @@ final class YooMoneyProvider implements PaymentProvider
         return 'kaevcms-'.strtolower($orderUuid);
     }
 
+    public function referenceForOrder(string $orderUuid): string
+    {
+        return self::label($orderUuid);
+    }
+
+    public function referenceFromCallback(ProviderCallback $callback): string
+    {
+        // This is ONLY a hint to find a preparation; verifyCallback() rejects
+        // duplicate/array parameters and verifies the full signed payload.
+        parse_str($callback->rawBody, $hint);
+        $label = $hint['label'] ?? null;
+        if (! is_string($label) || ! preg_match('/\Akaevcms-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $label)) {
+            throw new InvalidArgumentException('Invalid payment reference.');
+        }
+
+        return $label;
+    }
+
+    public function callbackRouteName(): string
+    {
+        return 'payments.yoomoney.notify';
+    }
+
+    /** @param array<string,string> $credentials */
+    public function assertCheckout(PaymentCheckout $checkout, PaymentIntent $intent, array $credentials, string $reference): void
+    {
+        if ($checkout->redirectUrl !== self::CHECKOUT_URL || $checkout->method !== 'POST'
+            || ($checkout->fields['receiver'] ?? null) !== ($credentials['receiver'] ?? null)
+            || ($checkout->fields['label'] ?? null) !== $reference
+            || ($checkout->fields['sum'] ?? null) !== (new DonationMoney)->format($intent->amountMinor, 2)
+            || ($checkout->fields['quickpay-form'] ?? null) !== 'button'
+            || ($checkout->fields['paymentType'] ?? null) !== 'PC'
+            || ($checkout->fields['successURL'] ?? null) !== $intent->returnUrl) {
+            throw new InvalidArgumentException('Invalid trusted YooMoney checkout terms.');
+        }
+    }
+
     /** @param array<string,string> $credentials */
     public function verifyCallback(ProviderCallback $callback, array $credentials, string $mode): VerifiedPayment
     {
@@ -120,7 +158,7 @@ final class YooMoneyProvider implements PaymentProvider
         }
         $signature = $params['sign'] ?? '';
         if (! preg_match('/\A[a-fA-F0-9]{64}\z/D', $signature)) {
-            throw new InvalidArgumentException('Invalid YooMoney signature.');
+            throw new InvalidPaymentSignature('Invalid YooMoney signature.');
         }
         unset($params['sign']);
         ksort($params, SORT_STRING);
@@ -130,7 +168,7 @@ final class YooMoneyProvider implements PaymentProvider
         }
         $expected = hash_hmac('sha256', implode('&', $parts), $credentials['notification_secret']);
         if (! hash_equals($expected, strtolower($signature))) {
-            throw new InvalidArgumentException('Invalid YooMoney signature.');
+            throw new InvalidPaymentSignature('Invalid YooMoney signature.');
         }
         if (! in_array($params['notification_type'] ?? null, ['p2p-incoming', 'card-incoming'], true)
             || ($params['currency'] ?? null) !== '643'

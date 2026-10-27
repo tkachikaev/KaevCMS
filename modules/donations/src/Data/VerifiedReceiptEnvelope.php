@@ -12,7 +12,9 @@ use InvalidArgumentException;
  */
 final class VerifiedReceiptEnvelope
 {
-    private const FORMAT = 'kaevcms-signed-yoomoney-v1';
+    private const LEGACY_FORMAT = 'kaevcms-signed-yoomoney-v1';
+
+    private const FORMAT = 'kaevcms-signed-provider-v2';
 
     public static function fingerprint(VerifiedPayment $payment): string
     {
@@ -23,14 +25,21 @@ final class VerifiedReceiptEnvelope
         ], JSON_THROW_ON_ERROR));
     }
 
-    public static function seal(VerifiedPayment $payment, string $rawBody): string
+    public static function seal(VerifiedPayment $payment, string $rawBody, string $providerCode = 'yoomoney'): string
     {
         if ($rawBody === '' || strlen($rawBody) > 16384) {
             throw new InvalidArgumentException('Invalid notification evidence.');
         }
 
+        if (! preg_match('/\A[a-z][a-z0-9_-]{1,39}\z/D', $providerCode)) {
+            throw new InvalidArgumentException('Invalid evidence provider.');
+        }
+
         return json_encode([
-            '_format' => self::FORMAT,
+            // Keep historical YooMoney v1 writes byte-compatible. Other reviewed
+            // drivers produce v2 with an authenticated provider identity.
+            '_format' => $providerCode === 'yoomoney' ? self::LEGACY_FORMAT : self::FORMAT,
+            ...($providerCode === 'yoomoney' ? [] : ['providerCode' => $providerCode]),
             'rawBody' => $rawBody,
             'payment' => [
                 'orderUuid' => $payment->orderUuid,
@@ -46,7 +55,7 @@ final class VerifiedReceiptEnvelope
     }
 
     /**
-     * @return array{verified:VerifiedPayment,rawBody:string}|null
+     * @return array{verified:VerifiedPayment,rawBody:string,providerCode:string}|null
      *                                                             Returns null for unmodified legacy receipts (raw URL-encoded body).
      *                                                             Caller MUST decrypt using Laravel Crypt before invoking this method.
      */
@@ -60,19 +69,25 @@ final class VerifiedReceiptEnvelope
         } catch (\JsonException) {
             throw new InvalidArgumentException('Invalid stored notification evidence.');
         }
-        if (! is_array($payload) || ($payload['_format'] ?? null) !== self::FORMAT
+        $format = $payload['_format'] ?? null;
+        if (! is_array($payload) || ! in_array($format, [self::LEGACY_FORMAT, self::FORMAT], true)
             || ! is_string($payload['rawBody'] ?? null)
             || $payload['rawBody'] === '' || strlen($payload['rawBody']) > 16384
             || ! is_array($payload['payment'] ?? null)) {
             throw new InvalidArgumentException('Invalid stored notification evidence.');
         }
+        $providerCode = $format === self::LEGACY_FORMAT ? 'yoomoney' : ($payload['providerCode'] ?? null);
         $value = $payload['payment'];
-        if (! is_string($value['orderUuid'] ?? null)
+        if (! is_string($providerCode) || ! preg_match('/\A[a-z][a-z0-9_-]{1,39}\z/D', $providerCode)
+            || ! is_string($value['orderUuid'] ?? null)
             || ! preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/D', $value['orderUuid'])
             || ! is_string($value['providerPaymentId'] ?? null)
-            || ! preg_match('/\A[0-9]{1,64}\z/D', $value['providerPaymentId'])
+            || ! preg_match($format === self::LEGACY_FORMAT ? '/\A[0-9]{1,64}\z/D' : '/\A[a-zA-Z0-9_-]{1,190}\z/D', $value['providerPaymentId'])
             || ($value['status'] ?? null) !== 'received_unsettled'
-            || ($value['currencyCode'] ?? null) !== 'RUB'
+            || ($format === self::LEGACY_FORMAT
+                ? ($value['currencyCode'] ?? null) !== 'RUB'
+                : (! is_string($value['currencyCode'] ?? null)
+                    || ! preg_match('/\A[A-Z]{3}\z/D', $value['currencyCode'])))
             || ! is_int($value['amountMinor'] ?? null) || $value['amountMinor'] < 1
             || ! is_int($value['receivedAmountMinor'] ?? null) || $value['receivedAmountMinor'] < 1
             || $value['receivedAmountMinor'] > $value['amountMinor']
@@ -82,6 +97,7 @@ final class VerifiedReceiptEnvelope
         }
 
         return [
+            'providerCode' => $providerCode,
             'rawBody' => $payload['rawBody'],
             'verified' => new VerifiedPayment(
                 orderUuid: $value['orderUuid'],

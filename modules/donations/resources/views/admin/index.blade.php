@@ -21,7 +21,7 @@
     }
 @endphp
 @include('module-donations::admin.navigation')
-@php($paymentMode = \KaevCMS\Modules\Donations\Services\DonationYooMoneyCheckout::enabled() ? app(\KaevCMS\Modules\Donations\Services\DonationLiveActivation::class)->state()['mode'] : 'off')
+@php($paymentMode = \KaevCMS\Modules\Donations\Services\DonationPaymentCheckout::enabled() ? app(\KaevCMS\Modules\Donations\Services\DonationLiveActivation::class)->state()['mode'] : 'off')
 <div class="donations-payment-status">
     <span @class(['status-badge', 'status-badge-success' => $paymentMode === 'live'])>{{ __('module-donations::messages.payment_status_'.$paymentMode) }}</span>
     <a wire:navigate href="{{ route('admin.module-pages.donations.providers.show', ['adminPath' => $adminPath, 'providerCode' => 'yoomoney']) }}">{{ __('module-donations::messages.payment_settings') }} →</a>
