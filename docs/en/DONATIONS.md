@@ -1,4 +1,6 @@
-# Donations and YooMoney
+# Donations: YooMoney, FreeKassa and PayPal
+
+> **Current status (0.55.11):** Donations includes YooMoney, FreeKassa and PayPal Orders v2. The historical implementation notes below can say “not implemented yet” for older versions; those statements are not current. See [PayPal Orders v2 setup](PAYPAL.md). Real PayPal Live acceptance is still pending.
 
 The bundled Donations module sells CMS wallet coins through YooMoney and can exchange coins for game items. Coins are credited to the player's [wallet](WALLET.md).
 

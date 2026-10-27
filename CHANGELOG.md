@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.55.11 - 2026-10-27
+
+**Donations 1.17.11 / PayPal Orders v2 iteration 6 — QA candidate; not production-certified.** Full source based on 0.55.10; PHP/Laravel/Livewire/Composer dependencies, Wallet and previously published migrations unchanged.
+
+- Added complete bilingual PayPal Orders v2 setup and operations guides (`docs/ru/PAYPAL.md`, `docs/en/PAYPAL.md`): independently configured Sandbox/Live credentials, webhook ID and events, supported currencies, admin-only Sandbox purchase, Live readiness, read-only reconciliation, informational refunds/disputes and merchant policy responsibility. Linked these guides from Donations, Modules and documentation indexes and marked older phased documentation as historical.
+- Improved PayPal webhook event-inbox processing order: the notification step is attempted before marking a verified, settled refund/dispute event processed. In a crash between these steps, a redelivery can safely retry with the existing `AdminNotificationCenter::notifyOnce()` deduplication. Refund/dispute events never debit Wallet or modify settled orders.
+- Added a no-vendor negative standalone test for raw JSON-object requirements and refund capture-ID URL parsing (HTTPS PayPal host, no URL credentials/query/fragment/port, unique capture identity). Existing YooMoney/FreeKassa/PayPal standalone suites run without composer vendor.
+- **Release acceptance pending:** complete PHPUnit/Feature/MySQL concurrency, PHPStan/Pint, Windows quality/browser-quality/Playwright, upgrade/fresh migrations and actual PayPal Sandbox+approved Live control payment. Production readiness is not asserted and PayPal should remain disabled until these steps pass.
+
 ## 0.55.10 - 2026-10-27
 
 **Donations 1.17.10 / PayPal Orders v2 iteration 5 — QA candidate, not production certified.** Based on full 0.55.9 source, with unchanged Wallet, other payment providers, existing migration files and Composer dependencies.

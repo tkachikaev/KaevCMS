@@ -213,8 +213,8 @@ final class PayPalWebhooks
                 }
             }
         }
-        DB::table('module_donation_paypal_webhook_events')->where('id', $eventId)
-            ->update(['status' => 'processed', 'updated_at' => now()]);
+        // Notification delivery is idempotent. Keep the durable inbox unprocessed until
+        // the notification step finishes: a crash must not skip the notice on retry.
         if ($attempt->environment === 'live' && $attempt->purpose === 'player'
             && $attempt->order_id !== null
             && in_array($type, ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED', 'CUSTOMER.DISPUTE.CREATED'], true)) {
@@ -239,6 +239,8 @@ final class PayPalWebhooks
                     ));
             }
         }
+        DB::table('module_donation_paypal_webhook_events')->where('id', $eventId)
+            ->update(['status' => 'processed', 'updated_at' => now()]);
     }
 
     /** The refund `up` relation identifies the original Capture, not the refund ID.

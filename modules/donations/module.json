@@ -2,10 +2,10 @@
     "schema": 1,
     "id": "donations",
     "name": "Donations",
-    "version": "1.17.10",
+    "version": "1.17.11",
     "author": "KaevCMS",
-    "description": "YooMoney, FreeKassa and PayPal Orders v2; read-only recovery, verified refund/dispute notices and no automatic Wallet penalties.",
-    "cms_min": "0.55.10",
+    "description": "YooMoney, FreeKassa and PayPal Orders v2 with bilingual setup instructions, read-only reconciliation and informational refund/dispute notices.",
+    "cms_min": "0.55.11",
     "cms_max": null,
     "namespace": "KaevCMS\\Modules\\Donations\\",
     "autoload": "src",
@@ -20,11 +20,11 @@
     "locales": {
         "ru": {
             "name": "Пожертвования",
-            "description": "ЮMoney, FreeKassa и PayPal Orders v2: ручная API-сверка, уведомления о возвратах и спорах без санкций для игроков."
+            "description": "ЮMoney, FreeKassa и PayPal Orders v2: инструкции RU/EN, безопасная сверка и информационные уведомления о возвратах и спорах."
         },
         "en": {
             "name": "Donations",
-            "description": "YooMoney, FreeKassa and PayPal Orders v2: read-only recovery and verified refund/dispute notices, without Wallet sanctions."
+            "description": "YooMoney, FreeKassa and PayPal Orders v2: bilingual guides, safe reconciliation and informational refund/dispute notices."
         }
     }
 }

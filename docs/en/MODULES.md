@@ -54,3 +54,5 @@ Audit event display labels for bundled modules live in `lang/ru/audit.php` and `
 ## What a module asks of the game or login database driver
 
 The `driver_extensions` field in `module.json` lets a module declare where in the administrator's database the data it needs lives (for example a premium-account table). The administrator fills it in on the driver, and enabling the module is blocked until the required values are set. Details, an example and the security rules: [UNIVERSAL_DRIVERS.md](UNIVERSAL_DRIVERS.md#extension-point-for-modules-driver_extensions).
+
+**PayPal:** [PayPal Orders v2 setup guide](PAYPAL.md).
