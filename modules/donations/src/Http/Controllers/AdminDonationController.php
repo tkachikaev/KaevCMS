@@ -25,6 +25,8 @@ use KaevCMS\Modules\Donations\Services\DonationPaymentSettlements;
 use KaevCMS\Modules\Donations\Services\DonationRates;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
 use KaevCMS\Modules\Donations\Services\DonationWorkspace;
+use KaevCMS\Modules\Donations\Services\PayPalManualReconciliation;
+use KaevCMS\Modules\Donations\Models\PayPalAttempt;
 use LogicException;
 
 final class AdminDonationController extends Controller
@@ -162,6 +164,14 @@ final class AdminDonationController extends Controller
             ->select(['r.id', 'r.receipt_id', 'r.kind', 'r.source', 'r.reason', 'r.created_at', 'a.name as admin_name'])
             ->orderByDesc('r.id')->limit(100)->get();
         $admin = auth('admin')->user();
+        $paypalAttempts = PayPalAttempt::query()->where('order_id', $order->id)->orderByDesc('id')->get();
+        $paypalNotices = DB::table('module_donation_paypal_webhook_events as e')
+            ->join('module_donation_paypal_attempts as p', 'p.id', '=', 'e.attempt_id')
+            ->where('p.order_id', $order->id)->where('p.purpose', 'player')->where('p.environment', 'live')
+            ->where('e.status', 'processed')
+            ->whereIn('e.event_type', ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED', 'CUSTOMER.DISPUTE.CREATED'])
+            ->select(['e.event_id', 'e.event_type', 'e.resource_id', 'e.event_occurred_at', 'e.created_at', 'p.paypal_capture_id'])
+            ->orderByDesc('e.id')->limit(30)->get();
         $events = DB::table('module_donation_order_events')
             ->where('order_id', $order->id)->orderByDesc('id')->paginate(30);
 
@@ -169,7 +179,10 @@ final class AdminDonationController extends Controller
         $view = 'module-donations::admin.order';
 
         return view($view, [
-            'order' => $order, 'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'reviews' => $reviews,
+            'order' => $order, 'paypalAttempts' => $paypalAttempts, 'paypalNotices' => $paypalNotices,
+            'canRecoverPayPal' => $admin instanceof Admin && app(ModuleAdminAuthorizer::class)
+                ->can('admin.module-pages.donations.orders.paypal.recovery', 'POST', $admin),
+            'events' => $events, 'receipts' => $receipts, 'recovery' => $recovery, 'reviews' => $reviews,
             'canReport' => $admin instanceof Admin && DonationPaymentReviews::canReport($admin),
             'canRecoverFreeKassa' => $admin instanceof Admin && app(ModuleAdminAuthorizer::class)
                 ->can('admin.module-pages.donations.orders.freekassa.recovery', 'POST', $admin)
@@ -179,6 +192,27 @@ final class AdminDonationController extends Controller
                     ->where('mode', 'live')->exists(),
             'reportRequestUuid' => (string) Str::uuid(), 'money' => $money, 'adminPath' => $paths->path(),
         ]);
+    }
+
+    public function recoverPayPal(string $orderUuid, int $attemptId, Request $request, AdminPathSettings $paths,
+        ModuleAdminAuthorizer $access, PayPalManualReconciliation $reconciliation): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.orders.paypal.recovery', 'POST', $admin);
+        $order = DonationOrder::query()->where('order_uuid', $orderUuid)->firstOrFail();
+        $attempt = PayPalAttempt::query()->findOrFail($attemptId);
+        abort_unless((int) $attempt->order_id === (int) $order->getKey()
+            && $attempt->purpose === 'player' && $attempt->environment === 'live', 404);
+        try {
+            $result = $reconciliation->check($attemptId, (int) $order->getKey());
+        } catch (\Throwable) {
+            return back()->withErrors(['paypal_recovery' => __('module-donations::messages.paypal_recovery_failed')]);
+        }
+
+        return redirect()->route('admin.module-pages.donations.orders.show', [
+            'adminPath' => $paths->path(), 'orderUuid' => $orderUuid,
+        ])->with('status', __('module-donations::messages.paypal_recovery_'.$result));
     }
 
     public function recoverFreeKassa(string $orderUuid, Request $request, AdminPathSettings $paths,

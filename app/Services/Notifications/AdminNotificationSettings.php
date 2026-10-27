@@ -147,6 +147,7 @@ final class AdminNotificationSettings
             AdminNotificationType::CoreMigrationPending,
             AdminNotificationType::SystemUpdateFailed,
             AdminNotificationType::ImportantOperationSucceeded => self::CATEGORY_CMS_UPDATES,
+            AdminNotificationType::DonationPayPalNotice => self::CATEGORY_MODULES,
             AdminNotificationType::QueueProblem => self::CATEGORY_BACKGROUND_TASKS,
             AdminNotificationType::ServerUnavailable => $data->routeName === 'admin.settings.login-server'
                 ? self::CATEGORY_LOGIN_SERVER

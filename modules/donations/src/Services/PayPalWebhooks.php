@@ -2,6 +2,11 @@
 
 namespace KaevCMS\Modules\Donations\Services;
 
+use App\Auth\AdminRole;
+use App\Services\Notifications\AdminNotificationCenter;
+use App\Support\Notifications\AdminNotificationData;
+use App\Support\Notifications\AdminNotificationSeverity;
+use App\Support\Notifications\AdminNotificationType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
 use InvalidArgumentException;
@@ -23,6 +28,7 @@ final class PayPalWebhooks
         private readonly PayPalWebhookVerifier $verifier,
         private readonly PayPalOrderOperations $operations,
         private readonly PayPalVerifiedPayments $verified,
+        private readonly AdminNotificationCenter $notifications,
     ) {}
 
     public function receive(string $raw, array $headers): void
@@ -39,16 +45,49 @@ final class PayPalWebhooks
             throw new InvalidArgumentException('Unknown PayPal event.');
         }
         $resource = $event['resource'];
+        $informational = in_array($type, ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED', 'CUSTOMER.DISPUTE.CREATED'], true);
         $remoteOrderId = str_starts_with($type, 'CHECKOUT.') ? ($resource['id'] ?? null)
             : ($resource['supplementary_data']['related_ids']['order_id'] ?? null);
-        $captureId = str_starts_with($type, 'PAYMENT.CAPTURE.') ? ($resource['id'] ?? null) : null;
-        if (str_starts_with($type, 'PAYMENT.CAPTURE.')
+        $captureId = null;
+        if (str_starts_with($type, 'PAYMENT.CAPTURE.')) {
+            // A refund resource may use its own refund ID; never treat it as the capture ID.
+            $upId = $informational ? $this->captureFromUpLink($resource) : null;
+            $captureId = $resource['supplementary_data']['related_ids']['capture_id']
+                ?? $resource['capture_id'] ?? $upId
+                ?? ($type === 'PAYMENT.CAPTURE.REFUNDED' ? null : ($resource['id'] ?? null));
+            if ($upId !== null && $captureId !== $upId) {
+                throw new InvalidArgumentException('PayPal capture links are contradictory.');
+            }
+        } elseif ($type === 'CUSTOMER.DISPUTE.CREATED') {
+            $transactions = $resource['disputed_transactions'] ?? [];
+            if (! is_array($transactions) || count($transactions) !== 1) {
+                throw new InvalidArgumentException('PayPal dispute has no unique transaction.');
+            }
+            $captureId = $transactions[0]['seller_transaction_id'] ?? null;
+        }
+        if ($type === 'PAYMENT.CAPTURE.REFUNDED' && $captureId === null
+            && is_string($resource['id'] ?? null)
+            && PayPalAttempt::query()->where('paypal_capture_id', $resource['id'])->exists()) {
+            // Some capture-refund event formats identify the original capture directly.
+            // Only allow this form when the ID is ALREADY stored as a known capture.
+            $captureId = $resource['id'];
+        }
+        if ($informational && (! is_string($captureId) || ! preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $captureId))) {
+            throw new InvalidArgumentException('PayPal informational event has no original capture ID.');
+        }
+        if (str_starts_with($type, 'PAYMENT.CAPTURE.') && ! $informational
             && (! is_string($captureId) || ! preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $captureId))) {
             throw new InvalidArgumentException('Missing PayPal capture ID.');
         }
-        if ($type === 'CUSTOMER.DISPUTE.CREATED') {
-            // Handle dispute correlation in iteration 5; persist only when a known capture is provided.
-            $captureId = $resource['disputed_transactions'][0]['seller_transaction_id'] ?? null;
+        $resourceId = $resource['dispute_id'] ?? $resource['id'] ?? null;
+        if (! is_string($resourceId) || ! preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $resourceId)) {
+            $resourceId = null;
+        }
+        // PayPal event timestamps are untrusted until the signature is checked below.
+        $occurredAt = $event['create_time'] ?? null;
+        if (! is_string($occurredAt) || strlen($occurredAt) > 40
+            || strtotime($occurredAt) === false) {
+            $occurredAt = null;
         }
         $candidates = collect();
         if (is_string($remoteOrderId) && preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $remoteOrderId)) {
@@ -56,11 +95,31 @@ final class PayPalWebhooks
         } elseif (is_string($captureId) && preg_match('/\A[A-Za-z0-9_-]{1,190}\z/D', $captureId)) {
             $candidates = PayPalAttempt::query()->where('paypal_capture_id', $captureId)->limit(3)->get();
         }
+        if ($informational && is_string($captureId)) {
+            // Correlate financial warnings with the EXACT already-settled capture,
+            // not merely an incoming order_id or another merchant's refund ID.
+            $candidates = PayPalAttempt::query()->where('paypal_capture_id', $captureId)->limit(3)->get();
+        }
         if ($candidates->count() !== 1) {
             throw new InvalidArgumentException('PayPal webhook has no unambiguous known order.');
         }
         /** @var PayPalAttempt $attempt */
         $attempt = $candidates->first();
+        if ($informational && is_string($remoteOrderId)
+            && $remoteOrderId !== $attempt->paypal_order_id) {
+            throw new InvalidArgumentException('PayPal notice order and capture disagree.');
+        }
+        if ($informational && str_starts_with($type, 'PAYMENT.CAPTURE.')
+            && $this->captureFromUpLink($resource) !== null) {
+            // An event signed for Sandbox cannot reference a Live API host or vice versa.
+            $href = collect($resource['links'] ?? [])->first(static fn ($link): bool => is_array($link)
+                && ($link['rel'] ?? null) === 'up' && str_contains((string) ($link['href'] ?? ''), '/v2/payments/captures/'))['href'] ?? '';
+            $host = is_string($href) ? parse_url($href, PHP_URL_HOST) : null;
+            $isSandboxHost = in_array($host, ['api-m.sandbox.paypal.com', 'api.sandbox.paypal.com'], true);
+            if ($isSandboxHost !== ($attempt->environment === 'sandbox')) {
+                throw new InvalidArgumentException('PayPal capture link environment mismatch.');
+            }
+        }
         if ($captureId !== null && $attempt->paypal_capture_id !== null
             && $attempt->paypal_capture_id !== $captureId
             && str_starts_with($type, 'PAYMENT.CAPTURE.')) {
@@ -75,7 +134,7 @@ final class PayPalWebhooks
         if ($webhookId === null || ! $this->verifier->verified($raw, $headers, $webhookId, $credentials)) {
             throw new InvalidArgumentException('Invalid PayPal webhook signature.');
         }
-        $eventId = DB::transaction(function () use ($attempt, $id, $type, $raw): int {
+        $eventId = DB::transaction(function () use ($attempt, $id, $type, $raw, $resourceId, $occurredAt): int {
             $existing = DB::table('module_donation_paypal_webhook_events')
                 ->where('environment', $attempt->environment)->where('event_id', $id)->lockForUpdate()->first();
             $hash = hash('sha256', $raw);
@@ -91,6 +150,7 @@ final class PayPalWebhooks
                 'attempt_id' => $attempt->id, 'environment' => $attempt->environment,
                 'event_id' => $id, 'event_type' => $type, 'payload_sha256' => $hash,
                 'encrypted_raw_event' => Crypt::encryptString($raw),
+                'resource_id' => $resourceId, 'event_occurred_at' => $occurredAt === null ? null : date('Y-m-d H:i:s', strtotime($occurredAt)),
                 'status' => 'received', 'created_at' => now(), 'updated_at' => now(),
             ]);
         }, 3);
@@ -137,10 +197,90 @@ final class PayPalWebhooks
                     ->whereNotIn('status', ['settled', 'capture_completed_unsettled'])
                     ->update(['status' => 'approval_reversed', 'updated_at' => now()]);
             }
-            // Refund/dispute events are recorded as verified evidence only.
-            // They do not debit Wallet or change the credited order (iteration 5 adds UI).
+            if (in_array($type, ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED', 'CUSTOMER.DISPUTE.CREATED'], true)) {
+                // A signed notice alone is not a reason to mark an arbitrary order.
+                // The capture must already have passed the shared Live settlement and
+                // remain bound to the original paid receipt. No debit or penalty.
+                $current = PayPalAttempt::query()->findOrFail($attempt->id);
+                $paid = $current->order_id !== null
+                    && DB::table('module_donation_orders')->where('id', $current->order_id)
+                        ->where('status', 'credited')->exists()
+                    && DB::table('module_donation_payment_receipts')
+                        ->where('order_id', $current->order_id)->where('provider_code', 'paypal')
+                        ->where('provider_payment_id', $captureId)->where('status', 'credited')->exists();
+                if ($current->status !== 'settled' || $current->paypal_capture_id !== $captureId || ! $paid) {
+                    throw new RuntimeException('PayPal informational event is not bound to a settled capture.');
+                }
+            }
         }
         DB::table('module_donation_paypal_webhook_events')->where('id', $eventId)
             ->update(['status' => 'processed', 'updated_at' => now()]);
+        if ($attempt->environment === 'live' && $attempt->purpose === 'player'
+            && $attempt->order_id !== null
+            && in_array($type, ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED', 'CUSTOMER.DISPUTE.CREATED'], true)) {
+            $orderUuid = DB::table('module_donation_orders')->where('id', $attempt->order_id)->value('order_uuid');
+            if (is_string($orderUuid) && $orderUuid !== '') {
+                $key = match ($type) {
+                    'PAYMENT.CAPTURE.REFUNDED' => 'paypal_notice_refunded',
+                    'PAYMENT.CAPTURE.REVERSED' => 'paypal_notice_reversed',
+                    default => 'paypal_notice_dispute',
+                };
+                $this->notifications->notifyOnce(new AdminNotificationData(
+                    type: AdminNotificationType::DonationPayPalNotice,
+                    severity: AdminNotificationSeverity::Warning,
+                    titleKey: 'module-donations::messages.'.$key,
+                    messageKey: 'module-donations::messages.paypal_notice_notification_help',
+                    parameters: ['order' => $orderUuid],
+                    routeName: 'admin.module-pages.donations.orders.show',
+                    routeParameters: ['orderUuid' => $orderUuid],
+                ), 'donations:paypal:notice:'.$attempt->environment.':'.$type.':'.($record->resource_id ?: $captureId),
+                    recipientFilter: static fn (\App\Models\Admin $admin): bool => in_array(
+                        $admin->role, [AdminRole::Owner, AdminRole::Administrator], true,
+                    ));
+            }
+        }
     }
+
+    /** The refund `up` relation identifies the original Capture, not the refund ID.
+     * Only parse a trusted PayPal URL as an ID; never request arbitrary HATEOAS URLs. */
+    private function captureFromUpLink(array $resource): ?string
+    {
+        $links = $resource['links'] ?? [];
+        if (! is_array($links) || count($links) > 50) {
+            throw new InvalidArgumentException('Malformed PayPal capture links.');
+        }
+        $found = null;
+        foreach ($links as $link) {
+            if (! is_array($link) || ($link['rel'] ?? null) !== 'up') {
+                continue;
+            }
+            $href = $link['href'] ?? null;
+            if (! is_string($href) || strlen($href) > 2048) {
+                throw new InvalidArgumentException('Invalid PayPal capture reference.');
+            }
+            $parts = parse_url($href);
+            if (is_array($parts) && preg_match('#\A/v2/checkout/orders/[A-Za-z0-9_-]{1,190}\z#D', $parts['path'] ?? '') === 1) {
+                // A completed capture uses `up` to identify the order, not a capture.
+                continue;
+            }
+            if (($link['method'] ?? null) !== 'GET') {
+                throw new InvalidArgumentException('Invalid PayPal capture reference.');
+            }
+            if (! is_array($parts) || ($parts['scheme'] ?? null) !== 'https'
+                || ! in_array($parts['host'] ?? '', [
+                    'api-m.paypal.com', 'api.paypal.com', 'api-m.sandbox.paypal.com', 'api.sandbox.paypal.com',
+                ], true) || isset($parts['user']) || isset($parts['pass']) || isset($parts['query'])
+                || isset($parts['fragment']) || (isset($parts['port']) && $parts['port'] !== 443)
+                || preg_match('#\A/v2/payments/captures/([A-Za-z0-9_-]{1,190})\z#D', $parts['path'] ?? '', $match) !== 1) {
+                throw new InvalidArgumentException('Unsafe PayPal capture up-link.');
+            }
+            if ($found !== null && $found !== $match[1]) {
+                throw new InvalidArgumentException('Ambiguous PayPal capture up-link.');
+            }
+            $found = $match[1];
+        }
+
+        return $found;
+    }
+
 }

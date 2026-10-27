@@ -16,6 +16,7 @@ enum AdminNotificationType: string
     case InstallerPresent = 'installer_present';
     case DiagnosticProblem = 'diagnostic_problem';
     case ImportantOperationSucceeded = 'important_operation_succeeded';
+    case DonationPayPalNotice = 'donation_paypal_notice';
 
     /** @return list<string> */
     public function allowedRoutes(): array
@@ -38,6 +39,7 @@ enum AdminNotificationType: string
                 'admin.settings.game-server',
                 'admin.settings.login-server',
             ],
+            self::DonationPayPalNotice => ['admin.module-pages.donations.orders.show'],
             self::ImportantOperationSucceeded => [
                 'admin.dashboard',
                 'admin.settings.system',

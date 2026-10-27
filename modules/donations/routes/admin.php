@@ -19,6 +19,8 @@ Route::post('/rates', [AdminDonationController::class, 'rate'])->name('rates.sto
 Route::get('/orders', [AdminDonationController::class, 'orders'])->name('orders.index');
 Route::post('/orders/{orderUuid}/freekassa-recovery', [AdminDonationController::class, 'recoverFreeKassa'])
     ->whereUuid('orderUuid')->middleware('throttle:5,1,donations-freekassa-recovery')->name('orders.freekassa.recovery');
+Route::post('/orders/{orderUuid}/paypal-recovery/{attemptId}', [AdminDonationController::class, 'recoverPayPal'])
+    ->whereUuid('orderUuid')->whereNumber('attemptId')->middleware('throttle:5,1,donations-paypal-recovery')->name('orders.paypal.recovery');
 Route::post('/orders/{orderUuid}/reviews', [AdminDonationController::class, 'reportReview'])->whereUuid('orderUuid')->name('orders.reviews.store');
 Route::get('/orders/{orderUuid}', [AdminDonationController::class, 'showOrder'])->whereUuid('orderUuid')->name('orders.show');
 Route::get('/providers', [AdminDonationProviderController::class, 'index'])->name('providers.index');

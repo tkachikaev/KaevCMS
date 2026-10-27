@@ -159,4 +159,117 @@ final class DonationPayPalLiveSettlementTest extends TestCase
         $this->assertSame(1, $capturePosts);
         $this->assertDatabaseCount('wallet_entries', 1);
     }
+
+    private function webhookHeaders(): array
+    {
+        return [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_PAYPAL_TRANSMISSION_ID' => 'transmission-i5',
+            'HTTP_PAYPAL_TRANSMISSION_TIME' => '2026-10-27T16:00:00Z',
+            'HTTP_PAYPAL_CERT_URL' => 'https://api-m.paypal.com/v1/notifications/certs/CERT-abc',
+            'HTTP_PAYPAL_AUTH_ALGO' => 'SHA256withRSA',
+            'HTTP_PAYPAL_TRANSMISSION_SIG' => 'QUJDREVGR0hJSktMTU4=',
+        ];
+    }
+
+    public function test_verified_refund_and_dispute_are_information_only_and_deduplicated(): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [$player, $order] = $this->createPlayerAttempt();
+        $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/paypal-return?token=LIVEORDER123');
+        $this->assertDatabaseCount('wallet_entries', 1);
+
+        $headers = $this->webhookHeaders();
+        $refund = json_encode(['id' => 'WH-I5-REFUND', 'event_type' => 'PAYMENT.CAPTURE.REFUNDED',
+            'create_time' => '2026-10-27T16:00:00Z',
+            'resource' => ['id' => 'REFUND123', 'links' => [[
+                'rel' => 'up', 'method' => 'GET',
+                'href' => 'https://api.paypal.com/v2/payments/captures/LIVECAPTURE123',
+            ]]]], JSON_THROW_ON_ERROR);
+        $signed = false;
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $headers, $refund)->assertStatus(400);
+        $this->assertDatabaseCount('module_donation_paypal_webhook_events', 0);
+        $signed = true;
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $headers, $refund)->assertOk();
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $headers, $refund)->assertOk();
+        // The same refund may arrive with a new PayPal webhook event ID.
+        $otherEnvelope = str_replace('WH-I5-REFUND', 'WH-I5-REFUND2', $refund);
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $headers, $otherEnvelope)->assertOk();
+        $this->assertSame(1, DB::table('admin_notifications')->where('type', 'donation_paypal_notice')->count());
+        $this->assertSame(2, DB::table('module_donation_paypal_webhook_events')->count());
+
+        $dispute = json_encode(['id' => 'WH-I5-DISPUTE', 'event_type' => 'CUSTOMER.DISPUTE.CREATED',
+            'resource' => ['dispute_id' => 'DISPUTE123', 'disputed_transactions' => [
+                ['seller_transaction_id' => 'LIVECAPTURE123'],
+            ]]], JSON_THROW_ON_ERROR);
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $headers, $dispute)->assertOk();
+        $this->assertSame(2, DB::table('admin_notifications')->where('type', 'donation_paypal_notice')->count());
+        $this->assertSame(1, $capturePosts);
+        $this->assertDatabaseCount('wallet_entries', 1);
+        $this->assertSame('credited', DB::table('module_donation_orders')->where('id', $order->id)->value('status'));
+        $this->assertSame('settled', DB::table('module_donation_paypal_attempts')->value('status'));
+    }
+
+    public function test_signed_foreign_capture_cannot_mark_order_or_send_notification(): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [$player, $order] = $this->createPlayerAttempt();
+        $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/paypal-return?token=LIVEORDER123');
+        $raw = json_encode(['id' => 'WH-I5-FORGED-CORRELATION', 'event_type' => 'PAYMENT.CAPTURE.REVERSED',
+            'resource' => ['id' => 'FOREIGNCAPTURE', 'supplementary_data' => ['related_ids' => [
+                'order_id' => 'LIVEORDER123',
+            ]]]], JSON_THROW_ON_ERROR);
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $this->webhookHeaders(), $raw)->assertStatus(400);
+        $this->assertDatabaseCount('module_donation_paypal_webhook_events', 0);
+        $this->assertSame(0, DB::table('admin_notifications')->where('type', 'donation_paypal_notice')->count());
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_refund_link_must_point_to_real_paypal_capture_without_redirects(): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [$player] = $this->createPlayerAttempt();
+        $this->actingAs($player)->get('/modules/donations/orders/'.DB::table('module_donation_orders')->value('order_uuid').'/paypal-return?token=LIVEORDER123');
+        $bad = json_encode(['id' => 'WH-I5-INVALID-UP', 'event_type' => 'PAYMENT.CAPTURE.REFUNDED',
+            'resource' => ['id' => 'REFUND123', 'links' => [[
+                'rel' => 'up', 'method' => 'GET',
+                'href' => 'https://attacker.example/v2/payments/captures/LIVECAPTURE123',
+            ]]]], JSON_THROW_ON_ERROR);
+        $this->call('POST', '/payments/paypal/notify', [], [], [], $this->webhookHeaders(), $bad)->assertStatus(400);
+        $this->assertDatabaseCount('module_donation_paypal_webhook_events', 0);
+        $this->assertDatabaseCount('wallet_entries', 1);
+    }
+
+    public function test_manual_api_recovery_never_reposts_capture_after_timeout_and_is_admin_only(): void
+    {
+        $this->configure();
+        $capturePosts = 0;
+        $signed = true;
+        $this->mockPaypal($capturePosts, $signed);
+        [$player, $order] = $this->createPlayerAttempt();
+        $attempt = DB::table('module_donation_paypal_attempts')->sole();
+        DB::table('module_donation_paypal_attempts')->where('id', $attempt->id)
+            ->update(['status' => 'capture_unknown', 'capture_started_at' => now()]);
+        $route = route('admin.module-pages.donations.orders.paypal.recovery', [
+            'adminPath' => app(\App\Services\Admin\AdminPathSettings::class)->path(),
+            'orderUuid' => $order->order_uuid, 'attemptId' => $attempt->id,
+        ]);
+        $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
+        $this->actingAs($editor, 'admin')->post($route)->assertForbidden();
+        $this->actingAs($this->owner, 'admin')->post($route)->assertRedirect();
+        $this->assertSame('requires_review', DB::table('module_donation_paypal_attempts')->value('status'));
+        $this->assertNotNull(DB::table('module_donation_paypal_attempts')->value('last_checked_at'));
+        $this->assertSame(0, $capturePosts);
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
 }

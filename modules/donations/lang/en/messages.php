@@ -1,6 +1,19 @@
 <?php
 
 return [
+    'paypal_recovery_title' => 'PayPal API payment verification',
+    'paypal_recovery_help' => 'Read-only GET using the saved PayPal Order ID. No second Capture POST. Credit only after a verified Capture.',
+    'paypal_recovery_start' => 'Check with PayPal API',
+    'paypal_recovery_credited' => 'PayPal payment verified and coins credited at most once.',
+    'paypal_recovery_pending' => 'Capture not yet confirmed; no credit.',
+    'paypal_recovery_review' => 'Capture outcome remains ambiguous; no second Capture was attempted.',
+    'paypal_recovery_failed' => 'Could not safely verify PayPal payment. Inspect the order and configuration; no second Capture was attempted.',
+    'paypal_notice_title' => 'PayPal refunds and dispute notices',
+    'paypal_notice_help' => 'Information only. Previously credited coins are not debited and the paid order is unchanged.',
+    'paypal_notice_refunded' => 'Payment refunded',
+    'paypal_notice_reversed' => 'Payment reversed',
+    'paypal_notice_dispute' => 'Dispute opened',
+    'paypal_notice_notification_help' => 'Verified PayPal notice for order :order. Review the order in the administration panel.',
     'paypal_intro' => 'PayPal Orders v2: separate Sandbox and Live configuration. Only administrator Sandbox testing is available; player checkout is not implemented yet.',
     'paypal_admin_only' => 'Administrator settings and Sandbox testing only. Players cannot access PayPal and Wallet is never credited.',
     'paypal_not_live' => 'Live checkout is disabled until a later iteration',

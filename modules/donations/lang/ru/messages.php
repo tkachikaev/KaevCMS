@@ -1,6 +1,19 @@
 <?php
 
 return [
+    'paypal_recovery_title' => 'Проверка оплаты через PayPal API',
+    'paypal_recovery_help' => 'Проверка только по сохранённому PayPal Order ID: запросы GET, без повторного списания. Начисление возможно лишь при подтверждённом Capture.',
+    'paypal_recovery_start' => 'Проверить через PayPal API',
+    'paypal_recovery_credited' => 'Оплата PayPal подтверждена, монеты начислены один раз.',
+    'paypal_recovery_pending' => 'PayPal пока не подтвердил Capture; начисления нет.',
+    'paypal_recovery_review' => 'Исход Capture неоднозначен, требуется проверка; повторный Capture не выполнялся.',
+    'paypal_recovery_failed' => 'Не удалось надёжно проверить оплату PayPal. Проверьте конфигурацию и заказ; повторный Capture не выполнялся.',
+    'paypal_notice_title' => 'События PayPal: возвраты и споры',
+    'paypal_notice_help' => 'Это только информация: уже выданные монеты не списываются, заказ остаётся оплаченным.',
+    'paypal_notice_refunded' => 'Платёж возвращён',
+    'paypal_notice_reversed' => 'Платёж отозван',
+    'paypal_notice_dispute' => 'Открыт спор',
+    'paypal_notice_notification_help' => 'Проверенное уведомление PayPal по заказу :order. Проверьте заказ в админке.',
     'paypal_intro' => 'PayPal Orders v2: отдельные настройки Sandbox и Live. Пока доступно только тестирование администратором; оплата игроков будет добавлена позднее.',
     'paypal_admin_only' => 'Только настройки и Sandbox-тесты администратора. Игроки не видят PayPal, Wallet не начисляется.',
     'paypal_not_live' => 'Live-оплата выключена до следующей итерации',

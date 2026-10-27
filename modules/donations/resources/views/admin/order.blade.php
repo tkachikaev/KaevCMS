@@ -19,6 +19,45 @@
             <button type="submit" class="button button-secondary">{{ __('module-donations::messages.freekassa_recovery_start') }}</button>
         </form>
     @endif
+    @if($paypalAttempts->isNotEmpty())
+        <h3>{{ __('module-donations::messages.paypal_recovery_title') }}</h3>
+        <p class="admin-field-help">{{ __('module-donations::messages.paypal_recovery_help') }}</p>
+        @error('paypal_recovery')<p role="alert">{{ $message }}</p>@enderror
+        @foreach($paypalAttempts as $attempt)
+            <div data-testid="paypal-attempt" class="admin-field-help">
+                <strong>#{{ $attempt->id }}</strong> · {{ $attempt->status }}
+                · PayPal Order: {{ $attempt->paypal_order_id ?? '—' }}
+                · Capture: {{ $attempt->paypal_capture_id ?? '—' }}
+                @if($attempt->diagnostic_code) · {{ $attempt->diagnostic_code }} @endif
+                @if($attempt->last_checked_at) · {{ $attempt->last_checked_at->format('Y-m-d H:i') }} @endif
+                @if($canRecoverPayPal && $attempt->purpose === 'player' && $attempt->environment === 'live' && $attempt->paypal_order_id)
+                    <form method="POST" action="{{ route('admin.module-pages.donations.orders.paypal.recovery', ['adminPath' => $adminPath, 'orderUuid' => $order->order_uuid, 'attemptId' => $attempt->id]) }}" data-testid="paypal-api-recovery">
+                        @csrf
+                        <button type="submit" class="button button-secondary">{{ __('module-donations::messages.paypal_recovery_start') }}</button>
+                    </form>
+                @endif
+            </div>
+        @endforeach
+    @endif
+    @if($paypalNotices->isNotEmpty())
+        <h3>{{ __('module-donations::messages.paypal_notice_title') }}</h3>
+        <p class="admin-field-help">{{ __('module-donations::messages.paypal_notice_help') }}</p>
+        @foreach($paypalNotices as $notice)
+            @php
+                $noticeKey = match ($notice->event_type) {
+                    'PAYMENT.CAPTURE.REFUNDED' => 'paypal_notice_refunded',
+                    'PAYMENT.CAPTURE.REVERSED' => 'paypal_notice_reversed',
+                    default => 'paypal_notice_dispute',
+                };
+            @endphp
+            <p role="status" data-testid="paypal-notice">
+                <strong>{{ __('module-donations::messages.'.$noticeKey) }}</strong>
+                · {{ $notice->event_occurred_at ?? $notice->created_at }}
+                · PayPal ID: {{ $notice->resource_id ?? $notice->event_id }}
+                · Capture: {{ $notice->paypal_capture_id }}
+            </p>
+        @endforeach
+    @endif
     <h3>{{ __('module-donations::messages.receipts_title') }}</h3>
     @forelse($receipts as $receipt)
         <p data-testid="donations-payment-receipt">{{ $receipt->provider_code }} #{{ $receipt->provider_payment_id }} · {{ $receipt->status }}

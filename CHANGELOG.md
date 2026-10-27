@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.55.10 - 2026-10-27
+
+**Donations 1.17.10 / PayPal Orders v2 iteration 5 — QA candidate, not production certified.** Based on full 0.55.9 source, with unchanged Wallet, other payment providers, existing migration files and Composer dependencies.
+
+- Added administrator-only, CSRF-protected, rate-limited **Check with PayPal API** on known Live order attempts. Only remote GET order and GET capture are used, with immutable invoice, gross, currency, merchant and capture validation; shared settlement is invoked only when completed proof is established. No blind Capture POST, including after timeouts or prior unknown outcomes.
+- Unknown/ambiguous Capture and remote API/key rotation failures preserve attempt IDs and a sanitized diagnostic, with `requires_review`. Previously settled attempts cannot be downgraded.
+- Refund, reversal and dispute webhook events remain signed/durable and now require a previously credited Live receipt bound to the exact original capture before appearing in the order. They never debit Wallet, undo credit, block players or change the paid order status.
+- Added an additive migration only for minimal PayPal event resource ID and timestamp (same webhook event inbox, no dispute subsystem). Show PayPal notices/history and API verification in the existing admin order card; one deduplicated Owner/Administrator notification per event type + PayPal resource ID, linked to the order.
+- Added RU/EN text and negative mocked Feature tests (forgery, wrong capture, duplicates, manual recovery, roles) and no-vendor source checks. PHPUnit/MySQL, browser testing and real PayPal Sandbox/Live confirmation remain necessary for acceptance.
+
 ## 0.55.9 - 2026-10-27
 
 **Donations 1.17.9 / PayPal Orders v2 iteration 4: QA candidate; Live gateway is disabled by default and NOT yet production-certified.** Full source based on 0.55.8; existing Wallet, previous migrations, PHP framework and Composer dependencies unchanged.
