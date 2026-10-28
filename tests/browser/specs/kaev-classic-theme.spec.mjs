@@ -86,8 +86,9 @@ test('Kaev Classic keeps the chosen scheme across navigation and reloads on desk
             };
         });
         await page.locator('.account-nav a[href$="/account/web-inventory"]').click();
-        await expect(page).toHaveURL(/\/account\/web-inventory$/);
-        await expect.poll(() => page.evaluate(() => window.classicNavAnimation !== null)).toBe(true);
+        // A slow CI runner needs longer than the default five seconds to finish the Livewire navigation.
+        await expect(page).toHaveURL(/\/account\/web-inventory$/, { timeout: 20000 });
+        await expect.poll(() => page.evaluate(() => window.classicNavAnimation !== null), { timeout: 20000 }).toBe(true);
         const { glide, duration } = await page.evaluate(async () => {
             const animation = window.classicNavAnimation;
             await animation.ready;

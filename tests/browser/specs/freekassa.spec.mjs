@@ -59,11 +59,9 @@ test('FreeKassa settings persist, admin checkout redirects correctly and CSP per
         expect(target.searchParams.get('oa')).toBe('1.00');
         expect(target.searchParams.get('currency')).toBe('RUB');
         testReference = target.searchParams.get('o');
-        await route.fulfill({ status: 301, headers: { location: 'https://checkout.example.test/payment' }, body: '' });
+        // Playwright does not route the redirect target of a fulfilled 3xx, so the provider page itself is stubbed.
+        await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Local dummy provider</h1>' });
     });
-    await context.route('https://checkout.example.test/**', route => route.fulfill({
-        status: 200, contentType: 'text/html', body: '<h1>Local dummy provider</h1>',
-    }));
     // Exercise the real POST/303/GET hand-off without replacing the controller response.
     await page.screenshot({ path: 'storage/framework/testing/freekassa-settings.png', fullPage: true });
     await page.locator('[data-provider-test-open="freekassa"]').click();
