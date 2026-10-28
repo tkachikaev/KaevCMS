@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "composer_json_sha256": "d7266e9d89f17195b8022cdf916f0dfbc8abe66e064edd804ebcfe3be8c720d9",
-  "composer_lock_sha256": "c6f54ebc7877807ce6ed5d8a32d3b4c919775a8865167f554a2e621eece7a718",
+  "composer_lock_sha256": "59d45288f6e9d928c986320146f7509a38dbb3f829518791703d40e38bc30bc3",
   "key_packages": {
     "laravel/framework": "v13.37.0",
     "livewire/livewire": "v4.4.8"
   },
   "approved_by": "KaevCMS owner",
-  "approved_at": "2026-10-24",
-  "reason": "Livewire 4.4.8: security fix GHSA-mhf7-xp6r-6qrc"
+  "approved_at": "2026-10-28",
+  "reason": "symfony/mime 7.4.22: fix CVE-2026-45070"
 }
