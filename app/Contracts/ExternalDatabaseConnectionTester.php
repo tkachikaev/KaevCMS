@@ -13,6 +13,8 @@ interface ExternalDatabaseConnectionTester
      *     server_version:string|null,
      *     error:string|null,
      *     error_class:string|null,
+     *     error_stage?:string,
+     *     sqlstate?:string|null,
      *     latency_ms:int|null,
      *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>,matched_optional_columns:list<string>}>
      * }

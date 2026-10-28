@@ -4,10 +4,12 @@ namespace App\Services\Servers;
 
 use App\Contracts\ExternalDatabaseConnectionTester;
 use Illuminate\Database\Connection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PDO;
+use PDOException;
 use RuntimeException;
 use Throwable;
 
@@ -24,6 +26,8 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
      *     server_version:string|null,
      *     error:string|null,
      *     error_class:string|null,
+     *     error_stage?:string,
+     *     sqlstate?:string|null,
      *     latency_ms:int|null,
      *     checks:list<array{table:string,required:bool,table_exists:bool,missing_columns:list<string>,matched_any_columns:list<string>,matched_optional_columns:list<string>}>
      * }
@@ -73,26 +77,51 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
             ],
         ];
 
+        $stage = 'connection';
+        $connected = false;
+        $serverVersion = null;
+        $latencyMs = null;
+        $checks = [];
+        $failure = null;
+
         try {
             $database = DB::connectUsing($connectionName, $configuration, true);
             if (! $database instanceof Connection) {
                 throw new RuntimeException('Unsupported external database connection type.');
             }
 
-            $serverVersionValue = $this->queryTimeout
-                ->withNetworkReadTimeout(static fn (): PDO => $database->getPdo())
-                ->getAttribute(PDO::ATTR_SERVER_VERSION);
-            $serverVersion = is_scalar($serverVersionValue) ? (string) $serverVersionValue : null;
-            $this->queryTimeout->apply($database, $serverVersion);
+            $pdo = $this->queryTimeout->withNetworkReadTimeout(static fn (): PDO => $database->getPdo());
+            $connected = true;
+            $stage = 'health_check';
             $queryStartedAt = hrtime(true);
             $database->selectOne('select 1 as kaevcms_health');
             $latencyMs = $this->millisecondsSince($queryStartedAt);
+            $stage = 'server_version';
+            $versionValue = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+            $version = is_string($versionValue) ? $versionValue : '';
+            $maria = stripos($version, 'MariaDB') !== false;
+            // MariaDB may prefix its actual version with MySQL's compatibility version.
+            $version = $maria ? preg_replace('/^5\.5\.5-/', '', $version) : $version;
+            if (preg_match('/^(\d+\.\d+\.\d+)/', (string) $version, $matches) !== 1) {
+                $failure = 'version_check_failed';
+                throw new RuntimeException('Unrecognized external database version.');
+            }
+            $serverVersion = $matches[1].($maria ? '-MariaDB' : '');
+            if (version_compare($matches[1], $maria ? '10.3.0' : '5.7.0', '<')) {
+                $failure = 'unsupported_version';
+                throw new RuntimeException('Unsupported external database version.');
+            }
+            $stage = 'session_setup';
+            $this->queryTimeout->apply($database, $serverVersion);
+            $stage = 'schema_tables';
             $schema = $database->getSchemaBuilder();
             $checks = [];
             $compatible = $driverReady;
 
             foreach ($requirements as $requirement) {
+                $stage = 'schema_tables';
                 $tableExists = $schema->hasTable($requirement['table']);
+                $stage = 'schema_columns';
                 $tableColumns = $tableExists
                     ? array_map(strtolower(...), $schema->getColumnListing($requirement['table']))
                     : [];
@@ -130,6 +159,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
 
             $profileIssues = [];
             if ($compatible && $profile !== null) {
+                $stage = 'profile_schema';
                 $profileIssues = (new UniversalProfileSchemaProbe)->problems($database, $profile);
                 if ($profileIssues !== []) {
                     $compatible = false;
@@ -147,20 +177,41 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 'checks' => $checks,
             ];
         } catch (Throwable $exception) {
-            Log::warning('External database connection test failed.', [
+            $info = $exception instanceof PDOException ? $exception->errorInfo : null;
+            $sqlstate = is_array($info) ? ($info[0] ?? null) : (string) $exception->getCode();
+            $sqlstate = is_string($sqlstate) && preg_match('/\A[A-Z0-9]{5}\z/D', $sqlstate) ? $sqlstate : null;
+            $nativeCode = is_array($info) && is_numeric($info[1] ?? null) ? (int) $info[1] : null;
+            $error = $failure ?? match (true) {
+                in_array($nativeCode, [1045, 1698], true) => 'authentication_failed',
+                $nativeCode === 1049 => 'database_not_found',
+                in_array($nativeCode, [2002, 2003, 2005, 2006, 2013], true) => 'server_unreachable',
+                in_array($stage, ['schema_tables', 'schema_columns', 'profile_schema'], true) => 'schema_check_failed',
+                $stage === 'health_check' => 'health_check_failed',
+                $stage === 'server_version' => 'version_check_failed',
+                default => 'connection_failed',
+            };
+            Log::warning('External database diagnostic failed.', [
+                'stage' => $stage,
                 'exception_class' => $exception::class,
-                'code' => (string) $exception->getCode(),
+                'sqlstate' => $sqlstate,
+                'driver_error_code' => $nativeCode,
+                'server_version' => $serverVersion,
+                'connected' => $connected,
+                // A fingerprint allows comparison without logging SQL identifiers or bindings.
+                'sql_sha256' => $exception instanceof QueryException ? hash('sha256', $exception->getSql()) : null,
             ]);
 
             return [
                 'profile_issues' => [],
-                'connected' => false,
+                'connected' => $connected,
                 'compatible' => false,
-                'server_version' => null,
-                'error' => 'connection_failed',
+                'server_version' => $serverVersion,
+                'error' => $error,
                 'error_class' => $exception::class,
-                'latency_ms' => null,
-                'checks' => [],
+                'error_stage' => $stage,
+                'sqlstate' => $sqlstate,
+                'latency_ms' => $latencyMs,
+                'checks' => $checks,
             ];
         } finally {
             try {

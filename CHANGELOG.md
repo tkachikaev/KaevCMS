@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Distinguish external LoginServer/GameServer authentication, network, server-version and schema SQL failures. Preserve successful connections and safe stage/SQLSTATE diagnostics; reject unsupported MySQL/MariaDB versions before schema inspection.
+
 - Use consistent payment acceptance switches at the bottom of YooMoney and FreeKassa settings.
 
 - Add per-administrator cleanup of completed and expired FreeKassa test requests; preserve in-flight tests, player orders and Wallet history.

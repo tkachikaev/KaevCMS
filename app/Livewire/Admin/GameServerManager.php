@@ -12,6 +12,7 @@ use App\Services\AuditLogger;
 use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
+use App\Services\Servers\ExternalDatabaseInformation;
 use App\Services\Servers\GameServerAdministration;
 use App\Services\Servers\GameServerFormSchema;
 use App\Services\Servers\GameServerFormState;
@@ -509,6 +510,11 @@ class GameServerManager extends Component
      */
     private function cardTestResult(array $report): array
     {
+        $diagnostic = app(ExternalDatabaseInformation::class)->probeErrorMessage($report['error'] ?? null);
+        if ($diagnostic !== null) {
+            return ['state' => 'failed', 'message' => $diagnostic];
+        }
+
         if (! ($report['connected'] ?? false)) {
             return ['state' => 'failed', 'message' => __('Database connection failed.')];
         }

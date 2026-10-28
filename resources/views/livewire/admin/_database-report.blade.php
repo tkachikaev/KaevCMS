@@ -1,5 +1,6 @@
 @if(is_array($report))
     @php
+        $diagnostic = app(\App\Services\Servers\ExternalDatabaseInformation::class)->probeErrorMessage($report['error'] ?? null);
         $connected = (bool) ($report['connected'] ?? false);
         $incompatible = $connected && ($report['compatible'] ?? null) === false;
         $checks = is_array($report['checks'] ?? null) ? $report['checks'] : [];
@@ -13,7 +14,9 @@
             @endif
         </div>
 
-        @if(! $connected)
+        @if($diagnostic !== null)
+            <p>{{ $diagnostic }}</p>
+        @elseif(! $connected)
             <p>{{ __('Check the host, port, database name, credentials and firewall rules.') }}</p>
         @elseif(! ($report['driver_ready'] ?? true))
             <p>{{ __('The database is reachable. This driver is a placeholder, so its tables are not checked yet.') }}</p>

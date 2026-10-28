@@ -6,6 +6,7 @@ use App\Auth\AdminPermission;
 use App\Models\Admin;
 use App\Models\LoginServer;
 use App\Services\AuditLogger;
+use App\Services\Servers\ExternalDatabaseInformation;
 use App\Services\Servers\LoginServerAdministration;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Services\Servers\UniversalDriverActivation;
@@ -328,6 +329,11 @@ class LoginServerManager extends Component
      */
     private function cardTestResult(array $report): array
     {
+        $diagnostic = app(ExternalDatabaseInformation::class)->probeErrorMessage($report['error'] ?? null);
+        if ($diagnostic !== null) {
+            return ['state' => 'failed', 'message' => $diagnostic];
+        }
+
         if (! ($report['connected'] ?? false)) {
             return ['state' => 'failed', 'message' => __('Database connection failed.')];
         }

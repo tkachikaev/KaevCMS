@@ -342,12 +342,12 @@ final class ServerConnectionTester
      */
     private function withDriver(array $report, string $driverKey, string $driverLabel, bool $driverReady): array
     {
-        if (! $driverReady) {
+        if (! $driverReady && ($report['error'] ?? null) === null) {
             $report['compatible'] = null;
             if (($report['connected'] ?? false) === true) {
                 $report['error_class'] = ExternalDatabaseDriverUnavailable::class;
             }
-        } elseif (($report['connected'] ?? false) === true && ($report['compatible'] ?? false) !== true) {
+        } elseif (($report['connected'] ?? false) === true && ($report['compatible'] ?? false) !== true && ($report['error'] ?? null) === null) {
             $report['error_class'] = ExternalDatabaseSchemaMismatch::class;
         }
 

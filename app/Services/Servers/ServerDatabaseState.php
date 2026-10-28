@@ -85,6 +85,10 @@ final class ServerDatabaseState
     /** @param array<string,mixed> $report */
     private function errorCode(array $report): string
     {
+        if (in_array($report['error'] ?? null, ['authentication_failed', 'database_not_found', 'server_unreachable', 'schema_check_failed', 'health_check_failed', 'version_check_failed', 'unsupported_version'], true)) {
+            return $report['error'];
+        }
+
         if (($report['connected'] ?? false) !== true) {
             return 'connection_failed';
         }

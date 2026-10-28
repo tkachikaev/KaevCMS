@@ -14,6 +14,7 @@ use App\Models\UserGameAccount;
 use App\Services\GameServerSettings;
 use App\Services\Localization\LanguageManager;
 use App\Services\SiteSettings;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -30,6 +31,37 @@ class ReactiveServerManagementTest extends TestCase
         parent::setUp();
 
         $this->app->instance(ExternalDatabaseConnectionTester::class, new FakeExternalDatabaseConnectionTester);
+    }
+
+    public function test_precise_database_errors_are_preserved_in_login_and_game_cards_and_localized_drawer(): void
+    {
+        $this->actingAs($this->createAdmin(), 'admin');
+        $login = LoginServer::factory()->create(['driver' => 'l2j_mobius']);
+        $game = GameServer::factory()->for($login, 'loginServer')->create(['driver' => 'l2j_mobius']);
+        foreach (['unsupported_version', 'schema_check_failed', 'authentication_failed', 'server_unreachable'] as $error) {
+            $fake = new FakeExternalDatabaseConnectionTester;
+            $fake->report = array_replace($fake->report, [
+                'connected' => in_array($error, ['unsupported_version', 'schema_check_failed'], true),
+                'compatible' => false, 'error' => $error,
+                'error_class' => QueryException::class,
+            ]);
+            $this->app->instance(ExternalDatabaseConnectionTester::class, $fake);
+            foreach ([[LoginServerManager::class, $login], [GameServerManager::class, $game]] as [$manager, $server]) {
+                Livewire::test($manager)->call('testStored', $server->id)
+                    ->assertSet("cardTestResults.{$server->id}.message", __('external_databases.error.'.$error));
+                $this->assertSame($error, $server->fresh()->database_error);
+                $this->assertSame(QueryException::class, $server->fresh()->database_last_error_class);
+            }
+            foreach (['ru', 'en'] as $locale) {
+                app()->setLocale($locale);
+                $html = view('livewire.admin._database-report', ['report' => $fake->report, 'showChecks' => false])->render();
+                $this->assertStringContainsString(__('external_databases.error.'.$error), $html);
+                if ($fake->report['connected']) {
+                    $this->assertStringNotContainsString(__('Database connection failed.'), $html);
+                }
+            }
+            app()->setLocale('ru');
+        }
     }
 
     public function test_login_connection_is_checked_inside_the_livewire_drawer_without_saving(): void

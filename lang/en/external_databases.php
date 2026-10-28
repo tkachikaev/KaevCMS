@@ -60,6 +60,14 @@ return [
         'unknown' => 'Not checked',
     ],
     'error' => [
+        'authentication_failed' => 'The database server rejected authentication. Check the username, password and allowed connection host.',
+        'database_not_found' => 'The database server is reachable, but the specified database was not found. Check the database name.',
+        'server_unreachable' => 'The database server is unreachable or the connection was interrupted. Check the address, port, network access and firewall.',
+        'schema_check_failed' => 'The connection was established, but the schema SQL check failed. Check metadata read permissions and database server compatibility. This is not a connection failure.',
+        'health_check_failed' => 'The connection was established, but SELECT 1 failed. Check database availability and user permissions.',
+        'version_check_failed' => 'The connection was established, but the database server version could not be determined. The schema was not checked.',
+        'unsupported_version' => 'The connection was established, but the database version is unsupported. MySQL 5.7+ or MariaDB 10.3+ is required. The schema was not checked.',
+
         'connection_failed' => 'Connection failed',
         'driver_unavailable' => 'Driver is not ready',
         'incompatible_schema' => 'Schema is incompatible',
