@@ -320,8 +320,15 @@ final class AdminDonationProviderController extends Controller
             }
             $settings->save($admin, $providerCode, (string) $enabled === '1', $mode,
                 $codes, $credentials, $senders, $proxies);
+            $opened = (string) $enabled !== '1' || $mode !== 'live'
+                || app(DonationLiveActivation::class)->openForPlayers($admin);
         } catch (InvalidArgumentException) {
             return back()->withErrors(['provider' => __('module-donations::messages.provider_invalid_config')]);
+        }
+        if (! $opened) {
+            return redirect()->route('admin.module-pages.donations.providers.show', [
+                'adminPath' => $paths->path(), 'providerCode' => $providerCode,
+            ])->withErrors(['provider' => __('module-donations::messages.provider_not_ready')]);
         }
 
         return redirect()->route('admin.module-pages.donations.providers.show', [

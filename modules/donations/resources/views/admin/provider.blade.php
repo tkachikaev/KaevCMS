@@ -3,25 +3,32 @@
 @section('description', __('module-donations::messages.providers_admin_description'))
 @section('content')
 @include('module-donations::admin.navigation')
-<section class="form-card donations-provider-setup" data-testid="donations-provider-detail">
+<section class="form-card donations-provider-setup setup-page" data-testid="donations-provider-detail">
     @if($driver->code() === 'yoomoney')
-        <h2>ЮMoney</h2>
-        <p class="admin-field-help">{{ __('module-donations::messages.yoomoney_simple_intro') }}</p>
-        @if($webhookIsLocal && ! in_array('https', $readinessIssues, true))
-            <p class="admin-field-error" role="status">{{ __('module-donations::messages.yoomoney_local_warning') }}</p>
-        @elseif(! $webhookIsLocal)
-            <div class="form-group">
-                <label>{{ __('module-donations::messages.yoomoney_notification_address') }}</label>
-                <div class="donations-callback-row">
-                    <code class="donations-callback-url">{{ $webhookUrl }}</code>
-                    @unless(request()->attributes->get('admin_read_only'))
+        <header class="setup-head">
+            <span class="setup-logo"><img src="{{ asset('assets/modules/yoomoney.svg') }}" alt="" width="40" height="40"></span>
+            <div class="setup-head-copy">
+                <h2>ЮMoney</h2>
+                <p class="setup-status" data-status="{{ $activation['mode'] !== 'off' ? 'live' : 'off' }}" role="status">{{ __('module-donations::messages.provider_status_'.($activation['mode'] !== 'off' ? 'live' : 'off')) }}</p>
+            </div>
+        </header>
+        <p class="setup-card-help">{{ __('module-donations::messages.yoomoney_simple_intro') }}</p>
+            <section class="setup-card">
+                <h3 class="setup-card-title">{{ __('module-donations::messages.yoomoney_notification_address') }}</h3>
+                <div class="setup-copy-row">
+                    <input id="yoomoney-callback-url" class="donations-callback-url" type="text" readonly value="{{ $webhookUrl }}" spellcheck="false" data-donations-select-copy aria-label="{{ __('module-donations::messages.yoomoney_notification_address') }}">
+                    <button class="button button-secondary" type="button" data-copy-target="#yoomoney-callback-url" data-copied="{{ __('module-donations::messages.provider_copied') }}">{{ __('module-donations::messages.provider_copy') }}</button>
+                    @unless(request()->attributes->get('admin_read_only') || $webhookIsLocal)
                         <button class="button button-secondary donations-test-open" type="button" data-yoomoney-test-open
                             data-start-url="{{ route('admin.module-pages.donations.providers.notification-test.start', ['adminPath' => $adminPath]) }}"
                             data-status-url="{{ route('admin.module-pages.donations.providers.notification-test.status', ['adminPath' => $adminPath, 'token' => str_repeat('0', 40)]) }}">{{ __('module-donations::messages.yoomoney_test_button') }}</button>
                     @endunless
                 </div>
-                <small>{{ __('module-donations::messages.yoomoney_notification_help') }}</small>
-            </div>
+                @if($webhookIsLocal)
+                    <p class="setup-warning" role="status">{{ __('module-donations::messages.provider_https_warning') }}</p>
+                @endif
+                <p class="setup-card-help setup-note">{{ __('module-donations::messages.yoomoney_notification_help') }}</p>
+            </section>
             @unless(request()->attributes->get('admin_read_only'))
                 {{-- Waits for the test notification sent from YooMoney's settings; on success the
                      settings form below is saved as with its own button. --}}
@@ -61,7 +68,6 @@
                     </div>
                 </dialog>
             @endunless
-        @endif
         @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
         @if($readinessIssues !== [])
             <div class="donations-readiness" role="status" data-testid="donations-payment-blockers">
@@ -87,8 +93,10 @@
                 </ul>
             </div>
         @endif
-        <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => 'yoomoney']) }}" class="settings-form" autocomplete="off" data-testid="donations-yoomoney-simple-settings">
+        <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => 'yoomoney']) }}" class="settings-form setup-form" autocomplete="off" data-testid="donations-yoomoney-simple-settings">
             @csrf @method('PUT')
+            <section class="setup-card">
+            <h3 class="setup-card-title">{{ __('module-donations::messages.provider_card_credentials_title') }}</h3>
             <div class="form-group">
                 <label for="yoomoney-wallet-number">{{ __('module-donations::messages.yoomoney_wallet_number') }}</label>
                 <input id="yoomoney-wallet-number" name="credentials[receiver]" type="text" inputmode="numeric" value="{{ $publicWalletNumber }}" maxlength="30" @disabled(request()->attributes->get('admin_read_only'))>
@@ -99,37 +107,46 @@
                 <input id="yoomoney-secret" name="credentials[notification_secret]" type="password" value="" placeholder="{{ $hasNotificationSecret ? '••••••••' : __('module-donations::messages.yoomoney_secret_placeholder') }}" autocomplete="new-password" maxlength="1024" @disabled(request()->attributes->get('admin_read_only'))>
                 <small>{{ $hasNotificationSecret ? __('module-donations::messages.yoomoney_secret_saved') : __('module-donations::messages.yoomoney_secret_missing') }}</small>
             </div>
-            <p class="admin-field-help">{{ __('module-donations::messages.yoomoney_rub_info') }}</p>
-            <p class="admin-field-help">{{ __('module-donations::messages.yoomoney_stop_help') }}</p>
-            <x-admin.toggle id="yoomoney-payment-enabled" name="payment_enabled" :label="__('module-donations::messages.yoomoney_accept_payments')" :checked="$activation['mode'] !== 'off'" :disabled="request()->attributes->get('admin_read_only')" />
-            @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.provider_save_settings') }}</button>@endunless
+            </section>
+            <p class="setup-card-help setup-note">{{ __('module-donations::messages.yoomoney_rub_info') }} {{ __('module-donations::messages.yoomoney_stop_help') }}</p>
+            <div class="setup-savebar">
+                <x-admin.toggle id="yoomoney-payment-enabled" name="payment_enabled" :label="__('module-donations::messages.yoomoney_accept_payments')" :checked="$activation['mode'] !== 'off'" :disabled="request()->attributes->get('admin_read_only')" />
+                @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.provider_save_settings') }}</button>@endunless
+            </div>
         </form>
     @else
-        <h2>{{ $driver->name() }}</h2>
-        @if($driver->code() === 'freekassa')
-            <p class="admin-field-help" role="status">{{ __('module-donations::messages.'.($state['enabled'] && $state['mode'] === 'test' ? 'provider_status_test' : ($state['enabled'] && $state['mode'] === 'live' && $activation['mode'] === 'live' ? 'provider_status_live' : 'provider_status_off'))) }}</p>
-        @endif
-        @if($driver->code() === 'freekassa')
-            @if(session('freekassa_test_checkout_url'))
-                <section class="donations-readiness" role="status">
-                    <p>{{ __('module-donations::messages.freekassa_test_continue_help') }}</p>
-                    <a class="button button-primary" data-testid="freekassa-test-continue" rel="noreferrer noopener" href="{{ session('freekassa_test_checkout_url') }}">{{ __('module-donations::messages.freekassa_test_continue') }}</a>
-                </section>
-            @endif
-
-            <div class="form-group">
-                <label for="freekassa-callback-url">{{ __('module-donations::messages.freekassa_notification_address') }}</label>
-                <div class="donations-callback-row"><input id="freekassa-callback-url" class="donations-callback-url" type="text" readonly value="{{ $webhookUrl }}" data-donations-select-copy aria-label="{{ __('module-donations::messages.freekassa_notification_address') }}"><button class="button button-secondary" type="button" data-provider-test-open="freekassa" disabled>{{ __('module-donations::messages.provider_test_button') }}</button></div>
-                <small>{{ __('module-donations::messages.freekassa_callback_hint') }}</small>
+        @php($fkStatus = $driver->code() !== 'freekassa' ? ($state['enabled'] ? 'live' : 'off') : ($state['enabled'] && $state['mode'] === 'test' ? 'test' : ($state['enabled'] && $state['mode'] === 'live' && $activation['mode'] === 'live' ? 'live' : 'off')))
+        <header class="setup-head">
+            @if($driver->code() === 'freekassa')<span class="setup-logo"><img src="{{ asset('assets/modules/freekassa.png') }}" alt="" width="40" height="40"></span>@endif
+            <div class="setup-head-copy">
+                <h2>{{ $driver->name() }}</h2>
+                <p class="setup-status" data-status="{{ $fkStatus }}" role="status">{{ __('module-donations::messages.provider_status_'.$fkStatus) }}</p>
             </div>
+            <span class="status-badge setup-badge" title="{{ __('module-donations::messages.provider_alpha_help') }}">{{ __('module-donations::messages.provider_alpha') }}</span>
+        </header>
+        @if(session('freekassa_test_checkout_url'))
+            <section class="setup-continue" role="status">
+                <p>{{ __('module-donations::messages.freekassa_test_continue_help') }}</p>
+                <a class="button button-primary" data-testid="freekassa-test-continue" rel="noreferrer noopener" href="{{ session('freekassa_test_checkout_url') }}">{{ __('module-donations::messages.freekassa_test_continue') }}</a>
+            </section>
+        @endif
+        @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
+        @if($freeKassaPolicyError)
+            <p class="admin-field-error" role="alert">{{ __('module-donations::messages.freekassa_policy_corrupt') }}</p>
+        @endif
+
+        <div class="setup-steps">
+        @if($driver->code() === 'freekassa')
+        <section class="setup-card">
+            <h3 class="setup-card-title">{{ __('module-donations::messages.provider_card_notify_title') }}</h3>
+            <p class="setup-card-help">{{ __('module-donations::messages.freekassa_callback_hint') }}</p>
+            <label class="setup-sr" for="freekassa-callback-url">{{ __('module-donations::messages.freekassa_notification_address') }}</label>
+            <div class="setup-copy-row"><input id="freekassa-callback-url" class="donations-callback-url" type="text" readonly value="{{ $webhookUrl }}" spellcheck="false" data-donations-select-copy aria-label="{{ __('module-donations::messages.freekassa_notification_address') }}"><button class="button button-secondary" type="button" data-copy-target="#freekassa-callback-url" data-copied="{{ __('module-donations::messages.provider_copied') }}">{{ __('module-donations::messages.provider_copy') }}</button><button class="button button-secondary" type="button" data-provider-test-open="freekassa" disabled>{{ __('module-donations::messages.provider_test_button') }}</button></div>
             @if($webhookIsLocal)
-                <p class="admin-field-error" role="status">{{ __('module-donations::messages.freekassa_https_warning') }}</p>
+                <p class="setup-warning" role="status">{{ __('module-donations::messages.provider_https_warning') }}</p>
             @endif
-            @if($freeKassaPolicyError)
-                <p class="admin-field-error" role="alert">{{ __('module-donations::messages.freekassa_policy_corrupt') }}</p>
-            @endif
-            <p class="admin-field-help">{{ __('module-donations::messages.freekassa_merchant_warning') }}</p>
-            <details class="donations-provider-details"><summary>{{ __('module-donations::messages.provider_diagnostics') }}</summary>
+            <p class="setup-card-help setup-note">{{ __('module-donations::messages.freekassa_merchant_warning') }}</p>
+            <details class="setup-more"><summary>{{ __('module-donations::messages.provider_diagnostics') }}</summary>
             <div class="donations-readiness" role="status" data-testid="freekassa-local-diagnostic">
                 <h3>{{ __('module-donations::messages.freekassa_local_diagnostic_title') }}</h3>
                 <p>{{ __('module-donations::messages.freekassa_diagnostic_'.$diagnostic['state']) }}</p>
@@ -138,27 +155,45 @@
                 <p class="admin-field-help">{{ __('module-donations::messages.freekassa_diagnostic_not_remote') }}</p>
             </div>
             </details>
+        </section>
         @endif
-        @if($errors->has('provider'))<p class="admin-field-error" role="alert">{{ $errors->first('provider') }}</p>@endif
-        <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => $driver->code()]) }}" class="settings-form" autocomplete="off">
+        <form method="POST" action="{{ route('admin.module-pages.donations.providers.update', ['adminPath' => $adminPath, 'providerCode' => $driver->code()]) }}" class="settings-form setup-form" autocomplete="off">
             @csrf @method('PUT')
-            <h3>{{ __('module-donations::messages.provider_checkout_currencies') }}</h3>
-            <p class="admin-field-help">{{ __('module-donations::messages.provider_currency_help') }}</p>
-            @foreach($availableCurrencies as $code)
-                <label class="settings-remove-row"><input type="checkbox" name="currency_codes[]" value="{{ $code }}" @checked(in_array($code, $state['currency_codes'], true)) @disabled(request()->attributes->get('admin_read_only'))> {{ $code }}</label>
-            @endforeach
-            <div class="donations-provider-fields">
-            @foreach($fields as $field => $spec)
-                <div class="form-group"><label for="provider-field-{{ $field }}">{{ $driver->code() === 'freekassa' ? __('module-donations::messages.freekassa_field_'.$field) : $spec['label'] }}</label>
-                    <input id="provider-field-{{ $field }}" name="credentials[{{ $field }}]" type="{{ $spec['secret'] ? 'password' : 'text' }}" value="{{ $driver->code() === 'freekassa' && $field === 'merchant_id' ? $publicMerchantId : '' }}" autocomplete="off" maxlength="1024" @disabled(request()->attributes->get('admin_read_only'))>
-                    @if(in_array($field, $state['configured_fields'], true))
-                        <small>{{ __('module-donations::messages.freekassa_field_saved') }}</small>
-                    @endif
+            <section class="setup-card">
+                <h3 class="setup-card-title">{{ __('module-donations::messages.provider_card_credentials_title') }}</h3>
+                <div class="donations-provider-fields">
+                @foreach($fields as $field => $spec)
+                    <div class="form-group"><label for="provider-field-{{ $field }}">{{ $driver->code() === 'freekassa' ? __('module-donations::messages.freekassa_field_'.$field) : $spec['label'] }}</label>
+                        <input id="provider-field-{{ $field }}" name="credentials[{{ $field }}]" type="{{ $spec['secret'] ? 'password' : 'text' }}" value="{{ $driver->code() === 'freekassa' && $field === 'merchant_id' ? $publicMerchantId : '' }}" autocomplete="off" maxlength="1024" @disabled(request()->attributes->get('admin_read_only'))>
+                        @if(in_array($field, $state['configured_fields'], true))
+                            <small class="setup-saved">{{ __('module-donations::messages.freekassa_field_saved') }}</small>
+                        @endif
+                    </div>
+                @endforeach
                 </div>
-            @endforeach
-            </div>
+            </section>
+            <section class="setup-card">
+                <h3 class="setup-card-title">{{ __('module-donations::messages.provider_card_payments_title') }}</h3>
+                <div class="form-group"><label for="freekassa-mode">{{ __('module-donations::messages.provider_mode_label') }}</label>
+                <select id="freekassa-mode" name="mode" @disabled(request()->attributes->get('admin_read_only'))>
+                    <option value="test" @selected($state['mode'] === 'test')>{{ __('module-donations::messages.freekassa_mode_test') }}</option>
+                    <option value="live" @selected($state['mode'] === 'live')>{{ __('module-donations::messages.freekassa_mode_live') }}</option>
+                </select>
+                @if($driver->code() === 'freekassa')<small>{{ __('module-donations::messages.freekassa_live_warning') }}</small>@endif
+                </div>
+                <fieldset class="setup-chips">
+                    <legend>{{ __('module-donations::messages.provider_checkout_currencies') }}</legend>
+                    <p class="setup-card-help">{{ __('module-donations::messages.provider_currency_help') }}</p>
+                    <div class="setup-chip-list">
+                    @foreach($availableCurrencies as $code)
+                        <label class="setup-chip"><input type="checkbox" name="currency_codes[]" value="{{ $code }}" @checked(in_array($code, $state['currency_codes'], true)) @disabled(request()->attributes->get('admin_read_only'))><span>{{ $code }}</span></label>
+                    @endforeach
+                    </div>
+                </fieldset>
+            </section>
             @if($driver->code() === 'freekassa')
-                <details class="donations-provider-details" data-testid="freekassa-security"><summary>{{ __('module-donations::messages.freekassa_security_title') }}</summary>
+            <section class="setup-card setup-card-quiet">
+                <details class="setup-more" data-testid="freekassa-security"><summary>{{ __('module-donations::messages.freekassa_security_title') }}</summary>
                 <p class="admin-field-help">{{ __('module-donations::messages.freekassa_sender_help') }} <a href="https://docs.freekassa.net/" target="_blank" rel="noopener noreferrer">{{ __('module-donations::messages.freekassa_official_docs') }}</a></p>
                 <div class="form-group">
                     <label for="freekassa-sender-ips">{{ __('module-donations::messages.freekassa_sender_label') }}</label>
@@ -175,42 +210,15 @@
                 </details>
                 <p class="admin-field-help">{{ __('module-donations::messages.freekassa_sender_warning') }}</p>
                 </details>
-            @endif
-            @if($driver->code() === 'freekassa')
-                <div class="form-group"><label for="freekassa-mode">{{ __('module-donations::messages.provider_mode_label') }}</label>
-                <select id="freekassa-mode" name="mode" @disabled(request()->attributes->get('admin_read_only'))>
-                    <option value="test" @selected($state['mode'] === 'test')>{{ __('module-donations::messages.provider_mode_test') }}</option>
-                    <option value="live" @selected($state['mode'] === 'live')>{{ __('module-donations::messages.provider_mode_live') }}</option>
-                </select>
-                </div><p class="admin-field-help">{{ __('module-donations::messages.freekassa_live_warning') }}</p>
-            @else
-                <select name="mode" @disabled(request()->attributes->get('admin_read_only'))><option value="live" @selected($state['mode']==='live')>{{ __('module-donations::messages.provider_live') }}</option><option value="test" @selected($state['mode']==='test')>{{ __('module-donations::messages.provider_test') }}</option></select>
-            @endif
-            <x-admin.toggle id="provider-enabled" name="enabled" :label="__('module-donations::messages.provider_connection_enabled')" :checked="$state['enabled']" :disabled="request()->attributes->get('admin_read_only')" />
-            @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.provider_save_settings') }}</button>@endunless
-        </form>
-        @if($driver->code() === 'freekassa')
-            <details class="donations-provider-details"><summary>{{ __('module-donations::messages.freekassa_global_activation_title') }}</summary>
-            <section class="donations-readiness" data-testid="freekassa-global-activation">
-                <h3>{{ __('module-donations::messages.freekassa_global_activation_title') }}</h3>
-                <p class="admin-field-help">{{ __('module-donations::messages.freekassa_global_activation_help') }}</p>
-                @if($errors->has('activation'))<p class="admin-field-error" role="alert">{{ $errors->first('activation') }}</p>@endif
-                <form method="POST" action="{{ route('admin.module-pages.donations.providers.activation.update', ['adminPath' => $adminPath]) }}" class="settings-form">
-                    @csrf @method('PUT')
-                    <input type="hidden" name="return_provider" value="freekassa">
-                    <div class="form-group"><select name="payment_mode" @disabled(request()->attributes->get('admin_read_only'))>
-                        <option value="off" @selected($activation['mode'] === 'off')>{{ __('module-donations::messages.freekassa_global_off') }}</option>
-                        <option value="live" @selected($activation['mode'] === 'live')>{{ __('module-donations::messages.freekassa_global_live') }}</option>
-                    </select></div>
-                    @unless(request()->attributes->get('admin_read_only'))
-                        <button class="button button-secondary" type="submit">{{ __('module-donations::messages.provider_save_settings') }}</button>
-                    @endunless
-                </form>
-                @if($readinessIssues !== [] && $activation['mode'] !== 'live')
-                    <p class="admin-field-help">{{ __('module-donations::messages.freekassa_global_blocked') }}</p>
-                @endif
             </section>
-            </details>
+            @endif
+            <div class="setup-savebar">
+                <x-admin.toggle id="provider-enabled" name="enabled" :label="__('module-donations::messages.provider_connection_enabled')" :checked="$state['enabled']" :disabled="request()->attributes->get('admin_read_only')" />
+                @unless(request()->attributes->get('admin_read_only'))<button class="button button-primary" type="submit">{{ __('module-donations::messages.provider_save_settings') }}</button>@endunless
+            </div>
+        </form>
+        </div>
+        @if($driver->code() === 'freekassa')
             <dialog class="donations-provider-test-dialog" data-provider-test-dialog="freekassa" aria-labelledby="freekassa-test-heading">
                 <div class="donations-provider-test-header"><h2 id="freekassa-test-heading">{{ __('module-donations::messages.provider_test_freekassa') }}</h2><button class="button button-secondary" type="button" data-provider-test-close aria-label="{{ __('module-donations::messages.provider_test_close') }}">×</button></div>
                 <div class="donations-provider-test-body">
@@ -218,9 +226,9 @@
 
                 <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_external_warning') }}</p>
                 <p class="admin-field-help">{{ __('module-donations::messages.freekassa_test_zero_coins') }}</p>
-                @if(!$state['enabled'] || $state['mode'] !== 'test')<p class="admin-field-help" role="status">{{ __('module-donations::messages.provider_freekassa_test_setup') }}</p>@endif
+                @if($state['mode'] !== 'test')<p class="admin-field-help" role="status">{{ __('module-donations::messages.provider_freekassa_test_setup') }}</p>@endif
                 @if($errors->has('freekassa_test'))<p class="admin-field-error" role="alert">{{ $errors->first('freekassa_test') }}</p>@endif
-                <div class="donations-freekassa-result" role="status" aria-live="polite" data-freekassa-result
+                <div class="donations-freekassa-result setup-result" role="status" aria-live="polite" data-freekassa-result
                     data-state="{{ $freeKassaTestStatus['state'] }}" data-reference="{{ $freeKassaTestStatus['reference'] }}"
                     data-status-url="{{ route('admin.module-pages.donations.providers.show', ['adminPath' => $adminPath, 'providerCode' => 'freekassa']) }}">
                     @foreach(['none', 'pending', 'verified', 'expired', 'error'] as $resultState)
@@ -234,7 +242,10 @@
                 @unless(request()->attributes->get('admin_read_only'))
                     <form method="POST" action="{{ route('admin.module-pages.donations.providers.freekassa.test-purchase', ['adminPath' => $adminPath]) }}" target="_blank" rel="noopener noreferrer" class="settings-form" data-testid="freekassa-test-purchase-form">
                         @csrf
-                        <div class="form-group"><label for="freekassa-test-currency">{{ __('module-donations::messages.freekassa_test_currency') }}</label>
+                        @if($state['currency_codes'] === [])
+                            <p class="setup-warning" role="status" data-testid="freekassa-no-currency">{{ __('module-donations::messages.provider_test_no_currency') }}</p>
+                        @endif
+                        <div class="form-group" @if($state['currency_codes'] === []) hidden @endif><label for="freekassa-test-currency">{{ __('module-donations::messages.freekassa_test_currency') }}</label>
                             <select id="freekassa-test-currency" name="currency_code" required>
                                 @foreach($state['currency_codes'] as $code)
                                     <option value="{{ $code }}">{{ $code }}</option>
@@ -244,7 +255,7 @@
                         <div class="form-group"><label for="freekassa-test-amount">{{ __('module-donations::messages.freekassa_test_amount') }}</label>
                             <input id="freekassa-test-amount" name="amount" type="text" inputmode="decimal" value="1.00" maxlength="6" required>
                         </div>
-                        <button class="button button-secondary" type="submit" @disabled(!$state['enabled'] || $state['mode'] !== 'test')>{{ __('module-donations::messages.freekassa_test_start') }}</button>
+                        <button class="button button-secondary" type="submit" @disabled($state['mode'] !== 'test' || $state['currency_codes'] === [])>{{ __('module-donations::messages.freekassa_test_start') }}</button>
                     </form>
                 @endunless
                 <details class="donations-provider-details"><summary>{{ __('module-donations::messages.freekassa_test_history') }}</summary>
@@ -275,5 +286,5 @@
 </section>
 @endsection
 @push('scripts')
-<script src="{{ asset('assets/modules/donations-admin.js') }}?v={{ cms_version() }}&ui=provider-tests" defer data-navigate-once></script>
+<script src="{{ asset('assets/modules/donations-admin.js') }}?v={{ cms_version() }}&ui=provider-cards" defer data-navigate-once></script>
 @endpush

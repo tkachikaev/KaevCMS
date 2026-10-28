@@ -49,8 +49,13 @@
                                 <label class="donations-provider" data-donations-provider data-currencies="{{ implode(',', $provider['currencies']) }}">
                                     <input type="radio" name="provider" value="{{ $provider['code'] }}" @checked($loop->first) required>
                                     <span class="donations-provider-card">
-                                        @if($provider['code'] === 'yoomoney')<span class="donations-provider-logo"><img src="{{ asset('assets/modules/yoomoney.svg') }}" alt="" width="100" height="24"></span>@endif
-                                        <span><strong>{{ $provider['name'] }}</strong><small>{{ __('module-donations::messages.topup_provider_hint', ['provider' => $provider['name']]) }}</small></span><span class="donations-provider-check" aria-hidden="true">✓</span>
+                                        @php($providerLogo = ['yoomoney' => 'yoomoney.svg', 'freekassa' => 'freekassa.png', 'paypal' => 'paypal.svg'][$provider['code']] ?? null)
+                                        @if($providerLogo !== null)<span class="donations-provider-logo"><img src="{{ asset('assets/modules/'.$providerLogo) }}" alt="" width="100" height="24"></span>@endif
+                                        <span><strong>{{ $provider['name'] }}</strong><small>{{ match ($provider['code']) {
+                                            'freekassa' => __('module-donations::messages.freekassa_provider_description'),
+                                            'paypal' => __('module-donations::messages.paypal_provider_description'),
+                                            default => __('module-donations::messages.topup_provider_hint', ['provider' => $provider['name']]),
+                                        } }}</small></span><span class="donations-provider-check" aria-hidden="true">✓</span>
                                     </span>
                                 </label>
                             @endforeach

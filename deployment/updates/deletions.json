@@ -826,5 +826,8 @@
     "core/deployment/windows/apply-0.55.9.ps1",
     "core/deployment/windows/apply-0.55.10.ps1",
     "core/deployment/windows/apply-0.55.11.ps1"
+  ],
+  "0.55.13": [
+    "core/deployment/windows/apply-0.55.12.ps1"
   ]
 }

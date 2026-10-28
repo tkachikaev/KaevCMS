@@ -38,7 +38,7 @@ final class FreeKassaAdminTestPayments
         $checkout = DB::transaction(function () use ($admin, $currency, $minor, $uuid) {
             // Lock serializes changes to mode, credentials and creation of a test order.
             $row = DonationProviderSetting::query()->whereKey('freekassa')->lockForUpdate()->first();
-            if ($row === null || ! in_array($row->getRawOriginal('enabled'), [true, 1, '1'], true)
+            if ($row === null
                 || $row->mode !== 'test' || ! in_array($currency, $row->currency_codes ?? [], true)
                 || ! in_array($currency, $this->driver->supportedCurrencies(), true)) {
                 throw new LogicException('FreeKassa administrative test is not enabled.');

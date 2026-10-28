@@ -126,4 +126,22 @@ final class PayPalAdminTestPayments
             ->whereNull('order_id')->whereNull('preparation_id')->orderByDesc('id')
             ->limit(min(20, max(1, $limit)))->get()->all();
     }
+
+    /** @return array{state:string,reference:?string,summary:string} */
+    public function latestStatus(): array
+    {
+        $attempt = $this->recent(1)[0] ?? null;
+        if ($attempt === null) {
+            return ['state' => 'none', 'reference' => null, 'summary' => ''];
+        }
+        $state = match (true) {
+            $attempt->status === 'capture_completed_unsettled' => 'verified',
+            in_array($attempt->status, ['capture_denied', 'capture_rejected', 'capture_unknown', 'requires_review', 'approval_reversed'], true) => 'error',
+            $attempt->created_at?->lessThan(now()->subMinutes(30)) => 'expired',
+            default => 'pending',
+        };
+
+        return ['state' => $state, 'reference' => (string) $attempt->invoice_id,
+            'summary' => $this->money->format((int) $attempt->gross_amount_minor, (int) $attempt->exponent).' '.$attempt->currency_code];
+    }
 }

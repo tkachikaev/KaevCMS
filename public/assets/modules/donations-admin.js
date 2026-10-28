@@ -222,14 +222,14 @@
         return () => cleanups.forEach(cleanup => cleanup());
     };
     const initializeFreeKassaResult = () => {
-        const box = document.querySelector('[data-freekassa-result]');
+        const box = document.querySelector('[data-freekassa-result], [data-paypal-result]');
         if (!(box instanceof HTMLElement)) return;
-        const form = document.querySelector('[data-testid="freekassa-test-purchase-form"]');
+        const form = box.parentElement?.querySelector('form[target="_blank"]');
         let timer, controller, requestTimeout, disposed = false, busy = false, awaitingNew = false, submittedAt = 0;
         const show = (state, summary = '') => {
             box.dataset.state = state;
-            box.querySelectorAll('[data-freekassa-state]').forEach(item => { item.hidden = item.dataset.freekassaState !== state; });
-            box.querySelector('[data-freekassa-summary]').textContent = summary;
+            box.querySelectorAll('[data-freekassa-state], [data-test-state]').forEach(item => { item.hidden = (item.dataset.freekassaState ?? item.dataset.testState) !== state; });
+            const summaryNode = box.querySelector('[data-freekassa-summary], [data-test-summary]'); if (summaryNode) summaryNode.textContent = summary;
         };
         const poll = async () => {
             clearTimeout(timer);
@@ -245,7 +245,7 @@
                 if (!response.ok) throw new Error('Status unavailable');
                 const result = await response.json();
                 if (disposed) return;
-                if (!['none', 'pending', 'verified', 'expired'].includes(result.state)) throw new Error('Invalid status');
+                if (!['none', 'pending', 'verified', 'expired', 'error'].includes(result.state)) throw new Error('Invalid status');
                 if (awaitingNew && (result.reference || '') === box.dataset.reference) {
                     if (Date.now() - submittedAt > 30000) { awaitingNew = false; show('error'); }
                 } else {
@@ -277,6 +277,21 @@
             document.removeEventListener('visibilitychange', focus);
         };
     };
+    const initializeCopyButtons = () => {
+        const buttons = Array.from(document.querySelectorAll('[data-copy-target]'));
+        const copy = async (event) => {
+            const button = event.currentTarget;
+            const field = document.querySelector(button.dataset.copyTarget);
+            if (!(field instanceof HTMLInputElement)) return;
+            field.select();
+            try { await navigator.clipboard.writeText(field.value); } catch { document.execCommand('copy'); }
+            const label = button.textContent;
+            button.textContent = button.dataset.copied || label;
+            window.setTimeout(() => { button.textContent = label; }, 1800);
+        };
+        buttons.forEach(button => button.addEventListener('click', copy));
+        return () => buttons.forEach(button => button.removeEventListener('click', copy));
+    };
     const initializeCopyFields = () => {
         const fields = Array.from(document.querySelectorAll('[data-donations-select-copy]'));
         const select = (event) => {
@@ -290,6 +305,7 @@
         window.KaevCMSAdmin.registerPage('donations-activation', initializeActivation);
         window.KaevCMSAdmin.registerPage('donations-yoomoney-test', initializeNotificationTest);
         window.KaevCMSAdmin.registerPage('donations-copy-fields', initializeCopyFields);
+        window.KaevCMSAdmin.registerPage('donations-copy-buttons', initializeCopyButtons);
         window.KaevCMSAdmin.registerPage('donations-freekassa-result', initializeFreeKassaResult);
         window.KaevCMSAdmin.registerPage('donations-provider-tests', initializeProviderTests);
     } else {
@@ -297,6 +313,7 @@
         initializeActivation();
         initializeNotificationTest();
         initializeCopyFields();
+        initializeCopyButtons();
         initializeFreeKassaResult();
         initializeProviderTests();
     }

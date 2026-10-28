@@ -113,6 +113,25 @@ final class DonationLiveActivation
         return $issues;
     }
 
+    /**
+     * Switching a provider on is the only switch the owner needs: this makes the donation page
+     * visible and opens payments unless an explicit pilot or live state is already in place.
+     *
+     * @return bool false when blockers still keep payments closed
+     */
+    public function openForPlayers(Admin $admin): bool
+    {
+        $this->settings->updateVisibility(true, $admin);
+        if ($this->blockers() !== []) {
+            return false;
+        }
+        if ($this->state()['mode'] === 'off') {
+            $this->update($admin, 'live', null);
+        }
+
+        return true;
+    }
+
     public function update(Admin $admin, string $mode, ?int $pilotUserId): void
     {
         $current = Auth::guard('admin')->user();

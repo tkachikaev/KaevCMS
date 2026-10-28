@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $create_started_at
  * @property CarbonImmutable|null $capture_started_at
  * @property CarbonImmutable|null $last_checked_at
+ * @property CarbonImmutable|null $created_at
  */
 final class PayPalAttempt extends Model
 {
@@ -54,6 +55,7 @@ final class PayPalAttempt extends Model
             'create_started_at' => 'immutable_datetime',
             'capture_started_at' => 'immutable_datetime',
             'last_checked_at' => 'immutable_datetime',
+            'created_at' => 'immutable_datetime',
         ];
     }
 }

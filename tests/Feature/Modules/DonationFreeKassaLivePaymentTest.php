@@ -72,6 +72,22 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
         Http::fake(['https://api.fk.life/v1/orders' => Http::response($api, 200)]);
     }
 
+    public function test_free_kassa_in_test_mode_is_never_offered_to_players(): void
+    {
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        app(DonationSettings::class)->updateVisibility(true, $owner);
+        app(DonationRates::class)->saveRate('RUB', '10', true, $owner);
+        app(DonationProviderSettings::class)->save($owner, 'freekassa', true, 'test', ['RUB'], [
+            'merchant_id' => '7012', 'secret_1' => 'checkout-provider-secret',
+            'secret_2' => 'signed-callback-secret', 'api_key' => 'merchant-orders-api-key',
+        ], ['198.51.100.19'], []);
+        DB::table('module_donation_live_settings')->where('id', 1)->update(['mode' => 'live', 'pilot_user_id' => null]);
+
+        $offered = array_column(app(DonationPaymentPreparations::class)->available('RUB'), 'code');
+
+        $this->assertNotContains('freekassa', $offered);
+    }
+
     public function test_live_checkout_is_get_and_never_exposes_api_secret(): void
     {
         [, $player, $order] = $this->prepared();

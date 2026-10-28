@@ -30,8 +30,6 @@ for (const width of [1440, 390]) {
         const form = page.getByTestId('paypal-config-form');
         await expect(form.locator('input[type="checkbox"][name="enable_live"]')).not.toBeChecked();
         await expect(page.locator('#paypal-test-amount')).toHaveValue('1');
-        const currencies = form.locator('details').first();
-        if (!await currencies.getAttribute('open').then(value => value !== null)) await currencies.locator('summary').click();
         for (const currency of ['USD', 'JPY']) {
             await form.locator(`[name="currency_codes[]"][value="${currency}"]`).check();
         }

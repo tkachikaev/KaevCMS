@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Donations: PayPal Orders v2 release QA, bilingual setup documentation and improved notification retry ordering. No Wallet debits on disputes.'
+Write-Host 'Donations: one clear card layout for YooMoney, FreeKassa and PayPal settings, live test results, a single payment switch per provider.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

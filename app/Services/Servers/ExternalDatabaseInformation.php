@@ -283,13 +283,13 @@ final class ExternalDatabaseInformation
     public function probeErrorMessage(?string $error): ?string
     {
         return in_array($error, ['authentication_failed', 'database_not_found', 'server_unreachable', 'schema_check_failed', 'health_check_failed', 'version_check_failed', 'unsupported_version'], true)
-            ? (string) __('external_databases.error.'.$error) : null;
+            ? (string) (__('external_databases.error')[$error] ?? '') : null;
     }
 
     private function errorLabel(?string $error): ?string
     {
         return match ($error) {
-            'authentication_failed', 'database_not_found', 'server_unreachable', 'schema_check_failed', 'health_check_failed', 'version_check_failed', 'unsupported_version' => (string) __('external_databases.error.'.$error),
+            'authentication_failed', 'database_not_found', 'server_unreachable', 'schema_check_failed', 'health_check_failed', 'version_check_failed', 'unsupported_version' => (string) (__('external_databases.error')[$error] ?? ''),
             'connection_failed' => (string) __('external_databases.error.connection_failed'),
             'driver_unavailable' => (string) __('external_databases.error.driver_unavailable'),
             'incompatible_schema' => (string) __('external_databases.error.incompatible_schema'),

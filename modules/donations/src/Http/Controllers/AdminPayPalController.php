@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Services\Admin\AdminPathSettings;
 use App\Support\Modules\ModuleAdminAuthorizer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
 use KaevCMS\Modules\Donations\Services\PayPalAdminSettings;
 use KaevCMS\Modules\Donations\Services\PayPalAdminTestPayments;
 use KaevCMS\Modules\Donations\Services\PayPalOrdersApi;
@@ -28,14 +30,17 @@ final class AdminPayPalController extends Controller
     }
 
     public function show(Request $request, ModuleAdminAuthorizer $access, AdminPathSettings $paths,
-        PayPalAdminSettings $settings, PayPalAdminTestPayments $tests): View
+        PayPalAdminSettings $settings, PayPalAdminTestPayments $tests): View|JsonResponse
     {
         $this->authorize($request, $access, 'show', 'GET');
+        if ($request->boolean('test_status') && $request->expectsJson()) {
+            return response()->json($tests->latestStatus())->header('Cache-Control', 'private, no-store');
+        }
         $callbackUrl = route('payments.paypal.notify');
 
         return view('module-donations::admin.paypal', [
             'adminPath' => $paths->path(), 'settings' => $settings->state(),
-            'currencies' => $settings->supportedCurrencies(), 'tests' => $tests->recent(),
+            'currencies' => $settings->supportedCurrencies(), 'tests' => $tests->recent(), 'testStatus' => $tests->latestStatus(),
             'callbackUrl' => $callbackUrl, 'webhookLive' => str_starts_with($callbackUrl, 'https://'),
             'events' => [
                 'CHECKOUT.ORDER.APPROVED', 'CHECKOUT.PAYMENT-APPROVAL.REVERSED',
@@ -56,8 +61,14 @@ final class AdminPayPalController extends Controller
         }
         try {
             $settings->save($admin, $currency, $fields, $request->boolean('enable_live'));
+            $opened = ! $request->boolean('enable_live') || app(DonationLiveActivation::class)->openForPlayers($admin);
         } catch (InvalidArgumentException|RuntimeException) {
             return back()->withErrors(['paypal' => __('module-donations::messages.paypal_invalid')]);
+        }
+        if (! $opened) {
+            return redirect()->route('admin.module-pages.donations.providers.paypal.show', [
+                'adminPath' => $paths->path(),
+            ])->withErrors(['paypal' => __('module-donations::messages.provider_not_ready')]);
         }
 
         return redirect()->route('admin.module-pages.donations.providers.paypal.show', [

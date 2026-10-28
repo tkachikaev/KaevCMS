@@ -1446,3 +1446,81 @@ p.field-error,
     .admin-wallet-table .wallet-amount { text-align: left; white-space: normal; }
     .admin-wallet-balance { justify-content: flex-start; }
 }
+
+/* Setup pages: numbered cards, address with copy button, chips and a sticky save bar.
+   Shared by payment providers and any module settings page; type and colours come from tokens. */
+.setup-page { counter-reset: setup-step; }
+.setup-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.setup-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.setup-logo { display: grid; place-items: center; flex: 0 0 56px; width: 56px; height: 56px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); background: var(--admin-surface-subtle); }
+.setup-logo img { display: block; width: 32px; height: 32px; object-fit: contain; }
+.setup-head-copy { flex: 1; min-width: 0; }
+.setup-head-copy h2 { margin: 0; font-size: var(--admin-text-title); }
+.setup-status { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 0; color: var(--admin-text-muted); font-size: var(--admin-text-small); }
+.setup-status::before { content: ""; width: 8px; height: 8px; border-radius: var(--admin-radius-pill); background: var(--admin-border-strong); }
+.setup-status[data-status="live"] { color: var(--admin-success); }
+.setup-status[data-status="live"]::before { background: var(--admin-success); }
+.setup-status[data-status="test"] { color: var(--admin-warning); }
+.setup-status[data-status="test"]::before { background: var(--admin-warning); }
+.setup-badge { padding: 4px 8px; border: 1px solid var(--admin-warning-border); border-radius: var(--admin-radius-inner); background: var(--admin-warning-soft); color: var(--admin-warning); font-size: var(--admin-text-caption); font-weight: 600; }
+.setup-steps, .setup-form { display: grid; gap: 16px; margin: 0; }
+.setup-card { margin: 0; padding: 20px 22px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); background: var(--admin-surface); }
+.setup-card-quiet { background: var(--admin-surface-subtle); }
+.setup-card-plain .setup-card-title::before, .setup-card-quiet .setup-card-title::before { display: none; }
+.setup-card-title { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; font-size: var(--admin-text-title-sm); }
+.setup-card-title::before { counter-increment: setup-step; content: counter(setup-step); display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: var(--admin-radius-pill); background: var(--admin-text); color: var(--admin-surface); font-size: var(--admin-text-caption); font-weight: 700; }
+.setup-card-help { margin: 0 0 14px; color: var(--admin-text-muted); font-size: var(--admin-text-small); line-height: 1.55; }
+.setup-note { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--admin-radius-control); background: var(--admin-surface-subtle); }
+.setup-card .form-group { margin: 0 0 14px; }
+.setup-card .form-group:last-child { margin-bottom: 0; }
+.setup-card .form-group small { display: block; margin-top: 6px; color: var(--admin-text-muted); font-size: var(--admin-text-caption); }
+.setup-card .form-group small.setup-saved { color: var(--admin-success); }
+.setup-card select { width: 100%; max-width: 360px; }
+.setup-copy-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.setup-copy-row > input { flex: 1 1 280px; min-width: 0; background: var(--admin-surface-subtle); }
+.setup-more { margin-top: 14px; }
+.setup-more > summary { cursor: pointer; color: var(--admin-text-muted); font-size: var(--admin-text-small); font-weight: 600; }
+.setup-more[open] > summary { margin-bottom: 12px; }
+.setup-card-quiet > .setup-more { margin: 0; }
+.setup-chips { margin: 18px 0 0; padding: 0; border: 0; min-width: 0; }
+.setup-chips legend { padding: 0; margin-bottom: 6px; font-size: var(--admin-text-small); font-weight: 600; }
+.setup-chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.setup-chip { position: relative; cursor: pointer; }
+.setup-chip input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.setup-chip span { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border: 1px solid var(--admin-border-strong); border-radius: var(--admin-radius-pill); background: var(--admin-surface); color: var(--admin-text); font-size: var(--admin-text-small); font-weight: 600; transition: background 120ms, border-color 120ms; }
+.setup-chip input:checked + span { border-color: var(--admin-text); background: var(--admin-text); color: var(--admin-surface); }
+.setup-chip input:focus-visible + span { outline: 2px solid var(--admin-primary); outline-offset: 2px; }
+.setup-chip input:disabled + span { opacity: .6; cursor: default; }
+.setup-savebar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; padding: 14px 20px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); background: var(--admin-surface); box-shadow: var(--admin-shadow-card); }
+.setup-savebar .admin-toggle-row { margin: 0; padding: 0; border: 0; background: none; }
+.setup-savebar .button { margin: 0; }
+@media (max-width: 640px) {
+    .setup-head { flex-wrap: wrap; }
+    .setup-card { padding: 16px; }
+    .setup-card select { max-width: none; }
+    .setup-copy-row .button { flex: 1 1 auto; }
+    .setup-savebar { padding: 12px 14px; }
+    .setup-savebar .button { width: 100%; }
+}
+
+/* Live result of a test payment: spinner while waiting, green tick or red cross, stays until the next test. */
+div.setup-result { position: relative; margin: 14px 0; padding: 16px 18px 16px 62px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); background: var(--admin-surface-subtle); min-height: 64px; }
+.setup-result::before { content: ""; position: absolute; left: 18px; top: 16px; width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--admin-radius-pill); border: 2px solid var(--admin-border-strong); }
+.setup-result[data-state="pending"] { border-color: var(--admin-warning-border); background: var(--admin-warning-soft); }
+.setup-result[data-state="pending"]::before { border-color: var(--admin-border-strong); border-top-color: var(--admin-primary); animation: setup-spin .8s linear infinite; }
+.setup-result[data-state="verified"] { border-color: var(--admin-success-border); background: var(--admin-success-soft); color: var(--admin-success); }
+.setup-result[data-state="verified"]::before { content: "\2713"; display: grid; place-items: center; border-color: var(--admin-success); background: var(--admin-success); color: #fff; font-weight: 700; }
+.setup-result:is([data-state="error"], [data-state="expired"]) { border-color: var(--admin-danger-border, var(--admin-danger)); background: var(--admin-danger-soft); color: var(--admin-danger); }
+.setup-result:is([data-state="error"], [data-state="expired"])::before { content: "\00d7"; display: grid; place-items: center; border-color: var(--admin-danger); background: var(--admin-danger); color: #fff; font-weight: 700; }
+.setup-result[data-state="none"]::before { opacity: .35; }
+.setup-result [hidden] { display: none; }
+.setup-result small { display: block; margin-top: 6px; }
+@keyframes setup-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .setup-result[data-state="pending"]::before { animation-duration: 2.4s; } }
+
+.setup-warning { margin: 12px 0 0; padding: 10px 14px; border: 1px solid var(--admin-warning-border); border-radius: var(--admin-radius-control); background: var(--admin-warning-soft); color: var(--admin-text); font-size: var(--admin-text-small); line-height: 1.5; }
+.setup-subtitle { margin: 0 0 6px; font-size: var(--admin-text-body); font-weight: 600; }
+.form-group[hidden] { display: none; }
+.setup-continue { display: grid; justify-items: start; gap: 12px; margin: 0 0 16px; padding: 18px 20px; border: 1px solid var(--admin-warning-border); border-radius: var(--admin-radius-card); background: var(--admin-warning-soft); color: var(--admin-text); }
+.setup-continue p { margin: 0; line-height: 1.55; }
+.setup-continue a.button, .setup-continue a.button:hover { text-decoration: none; }

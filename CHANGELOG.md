@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.55.13 - 2026-10-28
+
+**Donations 1.17.13 — payment provider settings.** FreeKassa and PayPal are still alpha; real payments are not yet certified.
+
+- Rebuild the YooMoney, FreeKassa and PayPal settings pages on one shared card layout (header with status and Alpha badge, numbered cards, copy button for the notification address, currency chips, sticky save bar) built from the common administration typography and colour tokens.
+- Show the result of FreeKassa and PayPal test payments in the Test window with a spinner, green tick or red cross; the result is kept on the server and survives returning from the provider's site.
+- Explain a missing currency in the Test window instead of an empty list, show one common HTTPS warning for every provider, and use "Test mode" / "Live mode" naming (Sandbox only where PayPal has it).
+- Remove the separate "show payment to players" switch: switching a provider on opens payments for players when the site is ready, otherwise it says what is missing. FreeKassa test payments no longer need the provider to be switched on.
+- Separate Live and Sandbox credentials for PayPal in the interface.
+- Show the FreeKassa and PayPal logos and short descriptions next to YooMoney in the player top-up form.
 
 - Distinguish external LoginServer/GameServer authentication, network, server-version and schema SQL failures. Preserve successful connections and safe stage/SQLSTATE diagnostics; reject unsupported MySQL/MariaDB versions before schema inspection.
 

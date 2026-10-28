@@ -102,6 +102,28 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
         $this->assertSame(0, DB::table('module_donation_payment_settlements')->count());
     }
 
+    public function test_test_purchase_does_not_require_accepting_payments_to_be_switched_on(): void
+    {
+        $owner = $this->configuredOwner();
+        app(DonationProviderSettings::class)->save($owner, 'freekassa', false, 'test', ['RUB']);
+
+        $this->actingAs($owner, 'admin')->post('/admin/extensions/donations/providers/freekassa/test-purchase',
+            ['currency_code' => 'RUB', 'amount' => '1.00'])->assertStatus(303);
+
+        $this->assertDatabaseCount('module_donation_freekassa_admin_tests', 1);
+    }
+
+    public function test_saving_live_freekassa_without_a_ready_site_reports_it_instead_of_opening_payments(): void
+    {
+        $owner = $this->configuredOwner();
+
+        $this->actingAs($owner, 'admin')->put('/admin/extensions/donations/providers/freekassa', [
+            'enabled' => '1', 'mode' => 'live', 'currency_codes' => ['RUB'], 'credentials' => [],
+        ])->assertRedirect()->assertSessionHasErrors('provider');
+
+        $this->assertSame('off', DB::table('module_donation_live_settings')->where('id', 1)->value('mode') ?? 'off');
+    }
+
     public function test_invalid_signature_does_not_mark_test_verified(): void
     {
         $owner = $this->configuredOwner();
