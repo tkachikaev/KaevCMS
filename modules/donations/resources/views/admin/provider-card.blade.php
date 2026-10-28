@@ -18,6 +18,9 @@
     <p class="donations-provider-description">{{ $description }}</p>
     <div class="donations-provider-badges">
         <span @class(['status-badge', 'status-badge-success' => $accepting])>{{ $accepting ? __('module-donations::messages.provider_on') : __('module-donations::messages.provider_off') }}</span>
+        @if(in_array($code, ['freekassa', 'paypal'], true))
+            <span class="status-badge status-badge-warning" title="{{ __('module-donations::messages.provider_alpha_help') }}">{{ __('module-donations::messages.provider_alpha') }}</span>
+        @endif
     </div>
     <a class="button button-secondary" wire:navigate href="{{ $settingsUrl }}">{{ __('module-donations::messages.provider_configure') }}</a>
 </x-admin.card>

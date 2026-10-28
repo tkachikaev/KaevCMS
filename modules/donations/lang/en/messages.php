@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'provider_alpha' => 'Alpha',
+    'provider_alpha_help' => 'Test payments have been checked. Full verification of real payments is not yet complete.',
     'freekassa_tests_clear' => 'Clear',
     'freekassa_tests_clear_help' => 'Removes completed and expired tests. Tests still awaiting a response are kept.',
     'freekassa_tests_cleared' => 'Test requests removed: :count.',

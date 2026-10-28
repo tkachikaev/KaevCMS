@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'provider_alpha' => 'Альфа',
+    'provider_alpha_help' => 'Тестовые платежи проверены. Полная проверка реальных платежей ещё не завершена.',
     'freekassa_tests_clear' => 'Очистить',
     'freekassa_tests_clear_help' => 'Удаляются завершённые и просроченные тесты. Текущие проверки сохраняются.',
     'freekassa_tests_cleared' => 'Удалено тестовых запросов: :count.',

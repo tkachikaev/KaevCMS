@@ -153,3 +153,5 @@
 .donations-provider-fields > .form-group { margin:0; align-content:start; }
 .donations-callback-row > input { min-height:42px; padding:10px 12px; border:1px solid var(--admin-border-strong); border-radius:var(--admin-radius-control); background:var(--admin-surface); color:var(--admin-text); font:inherit; }
 .donations-provider-setup > .settings-form > .button { justify-self:end; }
+
+.donations-provider-badges .status-badge-warning { background:var(--admin-warning-soft); border-color:var(--admin-warning-border); color:var(--admin-warning); }
