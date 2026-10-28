@@ -32,7 +32,7 @@ final readonly class FreeKassaSignedNotification
         return $reference;
     }
 
-    public static function verify(ProviderCallback $callback, string $merchantId, string $secret): self
+    public static function verify(ProviderCallback $callback, string $merchantId, string $secret, bool $allowZeroTestOperationId = false): self
     {
         $fields = self::fields($callback);
         $reference = $fields['MERCHANT_ORDER_ID'] ?? '';
@@ -44,7 +44,8 @@ final readonly class FreeKassaSignedNotification
         if (! self::isUuid($reference)
             || ! preg_match('/\A[1-9][0-9]{0,19}\z/D', $shop)
             || ! hash_equals($merchantId, $shop)
-            || ! preg_match('/\A[1-9][0-9]{0,63}\z/D', $operationId)
+            || (! ($allowZeroTestOperationId && $operationId === '0')
+                && ! preg_match('/\A[1-9][0-9]{0,63}\z/D', $operationId))
             || ! preg_match('/\A[1-9][0-9]{0,9}\z/D', $paymentMethod)) {
             throw new InvalidArgumentException('Invalid FreeKassa payment notification.');
         }

@@ -8,6 +8,7 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use KaevCMS\Modules\Donations\Services\DonationPaymentPreparations;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use Tests\TestCase;
@@ -55,6 +56,11 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
         $row = DB::table('module_donation_freekassa_admin_tests')->first();
         $this->assertNotNull($row);
         $this->assertSame('pending', $row->status);
+        $statusPath = '/admin/extensions/donations/providers/freekassa?test_status=1';
+        $this->getJson($statusPath)->assertOk()->assertExactJson([
+            'state' => 'pending', 'reference' => $row->reference, 'summary' => '1.00 RUB',
+        ])->assertHeader('Cache-Control');
+        $this->assertStringContainsString('no-store', $this->getJson($statusPath)->headers->get('Cache-Control'));
         $this->assertSame(100, (int) $row->amount_minor);
         $this->assertSame(0, DB::table('module_donation_orders')->count());
         $this->assertSame(0, DB::table('module_donation_payment_receipts')->count());
@@ -71,6 +77,7 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $sender, $body)->assertOk()->assertSeeText('YES');
         $this->call('POST', '/payments/freekassa/notify', [], [], [], $sender, $body)->assertOk()->assertSeeText('YES');
         $this->assertSame('verified', DB::table('module_donation_freekassa_admin_tests')->value('status'));
+        $this->getJson($statusPath)->assertOk()->assertJsonPath('state', 'verified');
         $this->assertSame(0, DB::table('module_donation_orders')->count());
         $this->assertSame(0, DB::table('module_donation_payment_receipts')->count());
         $this->assertSame(0, DB::table('module_donation_payment_settlements')->count());
@@ -149,5 +156,95 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
         $this->actingAs($auditor, 'admin')->post('/admin/extensions/donations/providers/freekassa/test-purchase', [
             'currency_code' => 'RUB', 'amount' => '1.00',
         ])->assertForbidden();
+    }
+
+    public function test_signed_zero_operation_id_is_accepted_only_for_known_admin_tests(): void
+    {
+        $owner = $this->configuredOwner();
+        for ($i = 0; $i < 2; $i++) {
+            $this->actingAs($owner, 'admin')->post('/admin/extensions/donations/providers/freekassa/test-purchase',
+                ['currency_code' => 'RUB', 'amount' => '1.00'])->assertStatus(303);
+            $reference = DB::table('module_donation_freekassa_admin_tests')->latest('id')->value('reference');
+            $fields = ['MERCHANT_ID' => '12345', 'AMOUNT' => '1.00', 'intid' => '0',
+                'MERCHANT_ORDER_ID' => $reference, 'CUR_ID' => '26',
+                'SIGN' => md5('12345:1.00:test-callback-secret:'.$reference)];
+            $server = ['REMOTE_ADDR' => '198.51.100.19', 'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'HTTPS' => 'on'];
+            $bad = $fields;
+            $bad['SIGN'] = str_repeat('0', 32);
+            $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, http_build_query($bad))->assertStatus(400);
+            $this->assertSame('pending', DB::table('module_donation_freekassa_admin_tests')->where('reference', $reference)->value('status'));
+            for ($repeat = 0; $repeat < 2; $repeat++) {
+                $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, http_build_query($fields))->assertOk()->assertContent('YES');
+            }
+        }
+        $this->assertSame(2, DB::table('module_donation_freekassa_admin_tests')->where('status', 'verified')->count());
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 0);
+    }
+
+    public function test_test_status_is_private_read_only_and_does_not_confirm_browser_claims(): void
+    {
+        $owner = $this->configuredOwner();
+        $url = '/admin/extensions/donations/providers/freekassa?test_status=1';
+        $this->getJson($url)->assertRedirect('/admin/login');
+        $this->actingAs($owner, 'admin')->getJson($url)->assertJsonPath('state', 'none');
+        $this->actingAs($owner, 'admin')->post('/admin/extensions/donations/providers/freekassa/test-purchase',
+            ['currency_code' => 'RUB', 'amount' => '1.00'])->assertStatus(303);
+        $this->getJson($url.'&state=verified&success=1')->assertJsonPath('state', 'pending');
+        DB::table('module_donation_freekassa_admin_tests')->update(['expires_at' => now()->subMinute()]);
+        $this->getJson($url)->assertJsonPath('state', 'expired');
+        $other = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $this->actingAs($other, 'admin')->getJson($url)->assertExactJson(['state' => 'none', 'reference' => null, 'summary' => '']);
+        $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
+        $this->actingAs($editor, 'admin')->getJson($url)->assertForbidden();
+        $this->assertSame('pending', DB::table('module_donation_freekassa_admin_tests')->value('status'));
+        $this->assertDatabaseCount('wallet_entries', 0);
+    }
+
+    public function test_cleanup_removes_only_own_finished_tests_and_preserves_active_tests_and_wallet(): void
+    {
+        $owner = $this->configuredOwner();
+        $this->actingAs($owner, 'admin')->post('/admin/extensions/donations/providers/freekassa/test-purchase',
+            ['currency_code' => 'RUB', 'amount' => '1.00'])->assertStatus(303);
+        $active = (array) DB::table('module_donation_freekassa_admin_tests')->first();
+        unset($active['id']);
+        foreach (['verified', 'expired', 'foreign'] as $kind) {
+            $row = $active;
+            $row['reference'] = (string) Str::uuid();
+            if ($kind === 'verified') {
+                $row['status'] = 'verified';
+            } else {
+                $row['expires_at'] = now()->subMinute();
+            }
+            if ($kind === 'foreign') {
+                $row['admin_id'] = Admin::factory()->create(['role' => AdminRole::Owner])->getKey();
+            }
+            DB::table('module_donation_freekassa_admin_tests')->insert($row);
+        }
+        $url = '/admin/extensions/donations/providers/freekassa/test-history';
+        $this->delete($url)->assertRedirect('/admin/extensions/donations/providers/freekassa')
+            ->assertSessionHas('status', __('module-donations::messages.freekassa_tests_cleared', ['count' => 2]));
+        $this->assertDatabaseCount('module_donation_freekassa_admin_tests', 2);
+        $this->assertDatabaseHas('module_donation_freekassa_admin_tests', ['reference' => $active['reference']]);
+        $this->get('/admin/extensions/donations/providers/freekassa')->assertOk()
+            ->assertDontSee($row['reference']);
+        $this->delete($url)->assertRedirect()->assertSessionHas('status',
+            __('module-donations::messages.freekassa_tests_cleared', ['count' => 0]));
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('module_donation_orders', 0);
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+    }
+
+    public function test_cleanup_requires_manage_access(): void
+    {
+        $url = '/admin/extensions/donations/providers/freekassa/test-history';
+        $this->delete($url)->assertRedirect('/admin/login');
+        foreach ([AdminRole::Auditor, AdminRole::Editor] as $role) {
+            $admin = Admin::factory()->create(['role' => $role]);
+            $this->actingAs($admin, 'admin')->delete($url)->assertForbidden();
+        }
+        $admin = Admin::factory()->create(['role' => AdminRole::Administrator]);
+        $this->actingAs($admin, 'admin')->delete($url)->assertRedirect('/admin/extensions/donations/providers/freekassa');
     }
 }

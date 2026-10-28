@@ -1,6 +1,34 @@
 <?php
 
 return [
+    'freekassa_tests_clear' => 'Clear',
+    'freekassa_tests_clear_help' => 'Removes completed and expired tests. Tests still awaiting a response are kept.',
+    'freekassa_tests_cleared' => 'Test requests removed: :count.',
+
+    'provider_paypal_accept' => 'Accept payments through PayPal',
+    'provider_save_settings' => 'Save settings',
+    'provider_mode_label' => 'Operating mode',
+    'provider_mode_test' => 'Testing (Test)',
+    'provider_mode_live' => 'Real payments (Live)',
+    'provider_freekassa_test_setup' => 'To start a test, enable the connection, select Testing (Test) in the main form, and save the settings.',
+
+    'provider_paypal_description' => 'Connect PayPal and test payments.',
+    'provider_notification_address' => 'Notification address',
+
+    'provider_test_button' => 'Test',
+    'provider_test_paypal' => 'Test PayPal (Sandbox)',
+    'provider_test_freekassa' => 'Test FreeKassa',
+    'provider_test_close' => 'Close testing',
+    'provider_test_credentials' => 'Test credentials (Sandbox)',
+    'provider_connection_guide' => 'Connection instructions',
+    'provider_diagnostics' => 'Connection settings check',
+    'provider_checkout_currencies' => 'Checkout currencies',
+    'provider_currency_help' => 'The currency of the order price. Payment methods and conversion are shown by the payment provider.',
+    'provider_connection_enabled' => 'Accept payments through FreeKassa',
+    'provider_status_test' => 'Test mode — real payments are unavailable',
+    'provider_status_off' => 'Real payments are disabled',
+    'provider_status_live' => 'Real payments are enabled',
+
     'paypal_recovery_title' => 'PayPal API payment verification',
     'paypal_recovery_help' => 'Read-only GET using the saved PayPal Order ID. No second Capture POST. Credit only after a verified Capture.',
     'paypal_recovery_start' => 'Check with PayPal API',
@@ -409,6 +437,12 @@ return [
     'freekassa_field_secret_2' => 'Secret word 2 (notifications)',
 
     'freekassa_field_api_key' => 'FreeKassa API key (required for live payments)',
+    'freekassa_result_none' => 'No test payment yet',
+    'freekassa_result_pending' => 'Waiting for FreeKassa confirmation…',
+    'freekassa_result_verified' => '✓ Test payment confirmed',
+    'freekassa_result_expired' => 'The waiting period has expired. You can start a new test.',
+    'freekassa_result_error' => 'Unable to refresh the result. Reload the page.',
+    'freekassa_result_verified_help' => 'The signed notification was received and verified. No coins were credited.',
     'freekassa_test_title' => 'FreeKassa test checkout (administrators only)',
     'freekassa_test_external_warning' => 'WARNING: enable FreeKassa test mode in the merchant dashboard first. CMS cannot switch it remotely. Otherwise real funds may be charged. Provider minimums may vary.',
     'freekassa_test_zero_coins' => 'These tests are stored separately from player orders. No player receives coins, even after mode changes.',

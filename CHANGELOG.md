@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Use consistent payment acceptance switches at the bottom of YooMoney and FreeKassa settings.
+
+- Add per-administrator cleanup of completed and expired FreeKassa test requests; preserve in-flight tests, player orders and Wallet history.
+
+- Simplify PayPal and FreeKassa settings with consistent Test dialogs, compact credentials, responsive layouts and folded instructions; keep Sandbox credentials and diagnostics separate from everyday setup. Retry FreeKassa test-status checks after temporary network errors.
+
+- Accept FreeKassa's zero operation placeholder only for signed, pre-created administrative tests; keep it invalid for real player payments.
+- Show a clear, automatically refreshed FreeKassa test result in the administration panel, with per-administrator isolation and RU/EN messages.
+
 - Fix CSP-blocked FreeKassa checkout navigation: finish the administrator test POST on the CMS origin and continue through a link; use a signed GET link for player checkout. Keep the existing CSP restrictions and POST checkout providers unchanged.
 - Cover the real test-purchase hand-off and an additional provider redirect in browser regression tests.
 

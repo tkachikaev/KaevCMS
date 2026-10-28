@@ -10,11 +10,13 @@ use App\Support\Modules\ModuleAdminAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use InvalidArgumentException;
 use KaevCMS\Modules\Donations\Contracts\RoutablePaymentProvider;
 use KaevCMS\Modules\Donations\Services\DonationLiveActivation;
+use KaevCMS\Modules\Donations\Services\DonationMoney;
 use KaevCMS\Modules\Donations\Services\DonationProviderRegistry;
 use KaevCMS\Modules\Donations\Services\DonationProviderSettings;
 use KaevCMS\Modules\Donations\Services\DonationSettings;
@@ -38,7 +40,7 @@ final class AdminDonationProviderController extends Controller
     }
 
     public function show(string $providerCode, AdminPathSettings $paths, DonationProviderSettings $settings,
-        DonationProviderRegistry $registry, Request $request, DonationLiveActivation $activation): View
+        DonationProviderRegistry $registry, Request $request, DonationLiveActivation $activation): View|JsonResponse
     {
         abort_if($providerCode === 'paypal', 404); // PayPal has a separate verified settings contract.
         try {
@@ -48,6 +50,13 @@ final class AdminDonationProviderController extends Controller
         }
         $state = collect($settings->overview())->firstWhere('code', $providerCode);
         abort_unless($state !== null, 404);
+
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $testStatus = $providerCode === 'freekassa' ? $this->freeKassaTestStatus($admin) : null;
+        if ($providerCode === 'freekassa' && $request->boolean('test_status') && $request->expectsJson()) {
+            return response()->json($testStatus)->header('Cache-Control', 'private, no-store');
+        }
 
         $wallet = '';
         $publicMerchantId = '';
@@ -100,8 +109,9 @@ final class AdminDonationProviderController extends Controller
             'hasNotificationSecret' => $hasSecret,
             'webhookUrl' => $webhookUrl, 'webhookIsLocal' => $webhookIsLocal,
             'freeKassaPolicy' => $freeKassaPolicy,
-            'freeKassaTests' => $providerCode === 'freekassa' ? app(FreeKassaAdminTestPayments::class)->recent() : [],
+            'freeKassaTests' => $providerCode === 'freekassa' ? app(FreeKassaAdminTestPayments::class)->recent($admin) : [],
             'freeKassaPolicyError' => $freeKassaPolicyError,
+            'freeKassaTestStatus' => $testStatus,
             'activation' => $activation->state(),
             'readinessIssues' => $activation->blockers(),
             'pilotPlayer' => $activation->state()['pilot_user_id']
@@ -120,6 +130,33 @@ final class AdminDonationProviderController extends Controller
                         });
                     })->orderByDesc('id')->limit(25)->get(['id', 'name', 'email']) : collect(),
         ]);
+    }
+
+    /** @return array{state:string, reference:?string, summary:string} */
+    private function freeKassaTestStatus(Admin $admin): array
+    {
+        $test = DB::table('module_donation_freekassa_admin_tests')->where('admin_id', $admin->getKey())->latest('id')->first();
+        if ($test === null) {
+            return ['state' => 'none', 'reference' => null, 'summary' => ''];
+        }
+        $state = $test->status === 'verified' ? 'verified'
+            : (Carbon::parse($test->expires_at)->isPast() ? 'expired' : 'pending');
+
+        return ['state' => $state, 'reference' => (string) $test->reference,
+            'summary' => app(DonationMoney::class)->format((int) $test->amount_minor, 2).' '.$test->currency_code];
+    }
+
+    public function clearFreeKassaTests(Request $request, ModuleAdminAuthorizer $access,
+        FreeKassaAdminTestPayments $tests): RedirectResponse
+    {
+        $admin = $request->user('admin');
+        abort_unless($admin instanceof Admin, 403);
+        $access->authorize('admin.module-pages.donations.providers.freekassa.tests.clear', 'DELETE', $admin);
+        $count = $tests->clearCompleted($admin);
+
+        return redirect()->route('admin.module-pages.donations.providers.show', [
+            'adminPath' => app(AdminPathSettings::class)->path(), 'providerCode' => 'freekassa',
+        ])->with('status', __('module-donations::messages.freekassa_tests_cleared', ['count' => $count]));
     }
 
     public function startFreeKassaTestPurchase(Request $request, ModuleAdminAuthorizer $access,

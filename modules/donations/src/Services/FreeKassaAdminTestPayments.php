@@ -90,6 +90,7 @@ final class FreeKassaAdminTestPayments
         $credentials = $this->settings->credentialsForDriver('freekassa');
         $verified = FreeKassaSignedNotification::verify(
             $callback, (string) $test->merchant_id, $credentials['secret_2'] ?? '',
+            allowZeroTestOperationId: true,
         );
         if (! hash_equals((string) $test->merchant_id, (string) ($credentials['merchant_id'] ?? ''))
             || $verified->orderUuid !== $reference || $verified->amountMinor !== (int) $test->amount_minor) {
@@ -101,14 +102,19 @@ final class FreeKassaAdminTestPayments
             $test->merchant_id,
         ]));
 
-        return DB::transaction(function () use ($reference, $verified, $fingerprint): string {
+        // Zero is a shared test placeholder, not a unique provider operation.
+        // Keep it in the signed evidence fingerprint; reserve the unique ID column
+        // for actual non-zero IDs. Each test is independently bound by reference.
+        $paymentId = $verified->operationId === '0' ? null : $verified->operationId;
+
+        return DB::transaction(function () use ($reference, $verified, $fingerprint, $paymentId): string {
             $row = DB::table('module_donation_freekassa_admin_tests')
                 ->where('reference', $reference)->lockForUpdate()->first();
             if ($row === null) {
                 throw new InvalidArgumentException('Unknown FreeKassa administrative test.');
             }
             if ($row->status === 'verified') {
-                if ($row->provider_payment_id !== $verified->operationId
+                if ($row->provider_payment_id !== $paymentId
                     || ! hash_equals((string) $row->notification_sha256, $fingerprint)) {
                     throw new LogicException('Conflicting FreeKassa administrative test operation.');
                 }
@@ -119,7 +125,7 @@ final class FreeKassaAdminTestPayments
                 throw new LogicException('Invalid FreeKassa administrative test state.');
             }
             DB::table('module_donation_freekassa_admin_tests')->where('id', $row->id)->update([
-                'status' => 'verified', 'provider_payment_id' => $verified->operationId,
+                'status' => 'verified', 'provider_payment_id' => $paymentId,
                 'notification_sha256' => $fingerprint, 'verified_at' => now(), 'updated_at' => now(),
             ]);
             if ($this->audit->system('module', 'donations.freekassa_test_verified', 'donations-freekassa-test', [
@@ -133,10 +139,27 @@ final class FreeKassaAdminTestPayments
         }, 3);
     }
 
-    /** @return array<int, object> */
-    public function recent(int $limit = 8): array
+    public function clearCompleted(Admin $admin): int
     {
-        return DB::table('module_donation_freekassa_admin_tests')->orderByDesc('id')
+        return DB::transaction(function () use ($admin): int {
+            $count = DB::table('module_donation_freekassa_admin_tests')
+                ->where('admin_id', $admin->getKey())
+                ->where(function ($query): void {
+                    $query->where('status', 'verified')->orWhere('expires_at', '<=', now());
+                })->delete();
+            if ($count > 0 && $this->audit->success('module', 'donations.freekassa_tests_cleared', $admin,
+                'donations-freekassa-test', ['count' => $count]) === null) {
+                throw new RuntimeException('Unable to audit test history cleanup.');
+            }
+
+            return $count;
+        }, 3);
+    }
+
+    /** @return array<int, object> */
+    public function recent(Admin $admin, int $limit = 8): array
+    {
+        return DB::table('module_donation_freekassa_admin_tests')->where('admin_id', $admin->getKey())->orderByDesc('id')
             ->limit(max(1, min(20, $limit)))->get()->all();
     }
 }

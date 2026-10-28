@@ -28,36 +28,72 @@ for (const width of [1440, 390]) {
         if (await enable.count()) await enable.locator('button').click();
         await gotoWithLocalNetworkRetry(page, settingsPath);
         const form = page.getByTestId('paypal-config-form');
-        await expect(form.locator('[name="enable_live"]')).not.toBeChecked();
+        await expect(form.locator('input[type="checkbox"][name="enable_live"]')).not.toBeChecked();
         await expect(page.locator('#paypal-test-amount')).toHaveValue('1');
+        const currencies = form.locator('details').first();
+        if (!await currencies.getAttribute('open').then(value => value !== null)) await currencies.locator('summary').click();
         for (const currency of ['USD', 'JPY']) {
             await form.locator(`[name="currency_codes[]"][value="${currency}"]`).check();
         }
-        await form.locator('#paypal-sandbox-id').fill(`QaBrowserClient${width}`);
-        await form.locator('#paypal-sandbox-secret').fill(`QaBrowserSecret${width}`);
-        await form.locator('#paypal-sandbox-webhook').fill(`QaBrowserHook${width}`);
-        await form.locator('button[type="submit"]').click();
-        await expect(form.locator('#paypal-sandbox-id')).toHaveValue(`QaBrowserClient${width}`);
+        await page.locator('[data-provider-test-open="paypal"]').click();
+        const dialog = page.locator('[data-provider-test-dialog="paypal"]');
+        await expect(dialog).toBeVisible();
+        const credentials = page.getByTestId('paypal-sandbox-credentials');
+        if (await credentials.getAttribute('open') === null) await credentials.locator('summary').click();
+        await page.locator('#paypal-sandbox-id').fill(`QaBrowserClient${width}`);
+        await page.locator('#paypal-sandbox-secret').fill(`QaBrowserSecret${width}`);
+        await page.locator('#paypal-sandbox-webhook').fill(`QaBrowserHook${width}`);
+        await dialog.locator('button[form="paypal-settings-form"]').click();
+        await expect(page.locator('#paypal-sandbox-id')).toHaveValue(`QaBrowserClient${width}`);
         for (const locale of ['en', 'ru']) {
+            await expect(dialog).toBeVisible();
+            await dialog.locator('[data-provider-test-close]').click();
+            await expect(dialog).not.toBeVisible();
             await page.locator('.admin-language-menu > summary').click();
             await page.locator(`.admin-language-menu button[lang="${locale}"]`).click();
             await expect(page.locator('html')).toHaveAttribute('lang', locale);
             await expect(page.getByTestId('donations-paypal-settings')).toBeVisible();
             await expect(form.getByRole('button', { name: locale === 'ru' ? 'Сохранить настройки' : 'Save settings', exact: true })).toBeVisible();
-            await expect(form.locator('#paypal-sandbox-secret')).toHaveValue('');
-            await expect(form.locator('#paypal-sandbox-webhook')).toHaveValue('');
+            await page.locator('[data-provider-test-open="paypal"]').click();
+            await expect(dialog).toBeVisible();
+            await expect(page.locator('#paypal-sandbox-secret')).toHaveValue('');
+            await expect(page.locator('#paypal-sandbox-webhook')).toHaveValue('');
             expect(await page.content()).not.toContain(`QaBrowserSecret${width}`);
             expect(await page.content()).not.toContain(`QaBrowserHook${width}`);
-            await expect(form.locator('[name="enable_live"]')).not.toBeChecked();
+            await expect(form.locator('input[type="checkbox"][name="enable_live"]')).not.toBeChecked();
             await expect(page.locator('#paypal-webhook-url')).toHaveValue(/\/payments\/paypal\/notify$/);
             expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
             await page.reload();
         }
         // A blank secret must preserve the saved credential across another save.
-        await form.locator('button[type="submit"]').click();
+        if (await credentials.getAttribute('open') === null) await credentials.locator('summary').click();
+        await dialog.locator('button[form="paypal-settings-form"]').click();
         await expect(page.getByTestId('paypal-admin-sandbox').locator('button[type="submit"]')).toBeEnabled();
         expect(remote).toEqual([]);
+        await page.waitForFunction(() => [...document.querySelectorAll('[data-provider-test-dialog]')].every(dialog => !dialog.getAnimations({ subtree: true }).some(animation => animation.playState === 'running')));
+        await expect(dialog).toHaveCSS('flex-direction', 'column');
+        await expect(dialog).toHaveCSS('opacity', '1');
+        const regions = await dialog.evaluate(element => ({ header: element.querySelector('.donations-provider-test-header').getBoundingClientRect().bottom, body: element.querySelector('.donations-provider-test-body').getBoundingClientRect().top }));
+        expect(regions.body).toBeGreaterThanOrEqual(regions.header - 1);
+        await page.screenshot({ path: `storage/framework/testing/paypal-test-dialog-${width}.png` });
+        await dialog.locator('[data-provider-test-close]').click();
+        await page.waitForFunction(() => [...document.querySelectorAll('[data-provider-test-dialog]')].every(dialog => !dialog.getAnimations({ subtree: true }).some(animation => animation.playState === 'running')));
+        await expect(dialog).toHaveCSS('overlay', 'none');
         await page.screenshot({ path: `storage/framework/testing/paypal-settings-${width}.png`, fullPage: true });
+        await page.locator('[data-provider-test-open="paypal"]').click();
+        await expect(dialog).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(dialog).not.toBeVisible();
+        await page.waitForFunction(() => typeof window.KaevCMSAdminAppearance?.apply === 'function');
+        await page.evaluate(() => window.KaevCMSAdminAppearance.apply('dark'));
+        await expect(page.locator('html')).toHaveAttribute('data-admin-color-scheme', 'dark');
+        await expect(page.locator('html')).not.toHaveClass(/admin-theme-changing/);
+        await page.locator('[data-provider-test-open="paypal"]').click();
+        await expect(dialog).toHaveCSS('opacity', '1');
+        await expect(dialog).toHaveCSS('background-color', 'rgb(22, 23, 26)');
+        await page.screenshot({ path: `storage/framework/testing/paypal-test-dialog-dark-${width}.png` });
+        await page.keyboard.press('Escape');
+        await expect(dialog).not.toBeVisible();
     });
 }
 
@@ -66,7 +102,7 @@ test('PayPal auditor view is read-only and settings POST requires CSRF', async (
     await gotoWithLocalNetworkRetry(page, settingsPath);
     await expect(page.getByTestId('donations-paypal-settings')).toBeVisible();
     const form = page.getByTestId('paypal-config-form');
-    await expect(form.locator('#paypal-sandbox-id')).toBeDisabled();
+    await expect(page.locator('#paypal-sandbox-id')).toBeDisabled();
     await expect(form.locator('button[type="submit"]')).toHaveCount(0);
     const context = await browser.newContext();
     const owner = await context.newPage();
@@ -95,6 +131,7 @@ for (const width of [1440, 390]) {
             }
             await expect(page.locator('html')).toHaveAttribute('lang', locale);
             for (const scheme of ['light', 'dark']) {
+                await page.waitForFunction(() => typeof window.KaevCMSAdminAppearance?.apply === 'function');
                 await page.evaluate(scheme => window.KaevCMSAdminAppearance.apply(scheme), scheme);
                 await expect(page.locator('html')).toHaveAttribute('data-admin-color-scheme', scheme);
                 await expect(page.locator('html')).not.toHaveClass(/admin-theme-changing/);

@@ -190,6 +190,93 @@
             dialog.removeEventListener('close', stop);
         };
     };
+    const initializeProviderTests = () => {
+        const cleanups = [];
+        document.querySelectorAll('[data-provider-test-dialog]').forEach(dialog => {
+            if (!(dialog instanceof HTMLDialogElement)) return;
+            const provider = dialog.dataset.providerTestDialog;
+            const open = document.querySelector(`[data-provider-test-open="${provider}"]`);
+            const close = dialog.querySelector('[data-provider-test-close]');
+            if (!(open instanceof HTMLButtonElement) || !(close instanceof HTMLButtonElement)) return;
+            const key = `kaevcms.provider-test.${provider}`;
+            const remember = value => { try { if (value) sessionStorage.setItem(key, 'open'); else sessionStorage.removeItem(key); } catch {} };
+            const show = () => { if (!dialog.open) dialog.showModal(); remember(true); };
+            const hide = () => { if (dialog.open) dialog.close(); };
+            const closed = () => remember(false);
+            open.addEventListener('click', show);
+            close.addEventListener('click', hide);
+            dialog.addEventListener('close', closed);
+            open.disabled = false;
+            try {
+                if (sessionStorage.getItem(key) === 'open' && !document.querySelector('[data-testid="freekassa-test-continue"]')) show();
+            } catch {}
+            cleanups.push(() => {
+                open.disabled = true;
+                open.removeEventListener('click', show);
+                close.removeEventListener('click', hide);
+                dialog.removeEventListener('close', closed);
+                hide();
+                remember(false);
+            });
+        });
+        return () => cleanups.forEach(cleanup => cleanup());
+    };
+    const initializeFreeKassaResult = () => {
+        const box = document.querySelector('[data-freekassa-result]');
+        if (!(box instanceof HTMLElement)) return;
+        const form = document.querySelector('[data-testid="freekassa-test-purchase-form"]');
+        let timer, controller, requestTimeout, disposed = false, busy = false, awaitingNew = false, submittedAt = 0;
+        const show = (state, summary = '') => {
+            box.dataset.state = state;
+            box.querySelectorAll('[data-freekassa-state]').forEach(item => { item.hidden = item.dataset.freekassaState !== state; });
+            box.querySelector('[data-freekassa-summary]').textContent = summary;
+        };
+        const poll = async () => {
+            clearTimeout(timer);
+            if (disposed || busy || document.hidden) return;
+            busy = true;
+            controller = new AbortController();
+            requestTimeout = setTimeout(() => controller.abort(), 10000);
+            try {
+                const url = new URL(box.dataset.statusUrl, location.origin);
+                if (url.origin !== location.origin) throw new Error('Unexpected status origin');
+                url.searchParams.set('test_status', '1');
+                const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store', signal: controller.signal });
+                if (!response.ok) throw new Error('Status unavailable');
+                const result = await response.json();
+                if (disposed) return;
+                if (!['none', 'pending', 'verified', 'expired'].includes(result.state)) throw new Error('Invalid status');
+                if (awaitingNew && (result.reference || '') === box.dataset.reference) {
+                    if (Date.now() - submittedAt > 30000) { awaitingNew = false; show('error'); }
+                } else {
+                    awaitingNew = false;
+                    box.dataset.reference = result.reference || '';
+                    show(result.state, result.summary || '');
+                }
+            } catch (error) {
+                if (!disposed) { awaitingNew = false; show('error'); }
+            } finally {
+                clearTimeout(requestTimeout);
+                busy = false;
+                if (!disposed && (awaitingNew || ['pending', 'error'].includes(box.dataset.state))) timer = setTimeout(poll, 3000);
+            }
+        };
+        const start = () => { clearTimeout(timer); awaitingNew = true; submittedAt = Date.now(); show('pending'); timer = setTimeout(poll, 1500); };
+        const focus = () => { if (!document.hidden) poll(); };
+        form?.addEventListener('submit', start);
+        window.addEventListener('focus', focus);
+        document.addEventListener('visibilitychange', focus);
+        poll();
+        return () => {
+            disposed = true;
+            clearTimeout(timer);
+            clearTimeout(requestTimeout);
+            controller?.abort();
+            form?.removeEventListener('submit', start);
+            window.removeEventListener('focus', focus);
+            document.removeEventListener('visibilitychange', focus);
+        };
+    };
     const initializeCopyFields = () => {
         const fields = Array.from(document.querySelectorAll('[data-donations-select-copy]'));
         const select = (event) => {
@@ -203,10 +290,14 @@
         window.KaevCMSAdmin.registerPage('donations-activation', initializeActivation);
         window.KaevCMSAdmin.registerPage('donations-yoomoney-test', initializeNotificationTest);
         window.KaevCMSAdmin.registerPage('donations-copy-fields', initializeCopyFields);
+        window.KaevCMSAdmin.registerPage('donations-freekassa-result', initializeFreeKassaResult);
+        window.KaevCMSAdmin.registerPage('donations-provider-tests', initializeProviderTests);
     } else {
         initialize();
         initializeActivation();
         initializeNotificationTest();
         initializeCopyFields();
+        initializeFreeKassaResult();
+        initializeProviderTests();
     }
 })();

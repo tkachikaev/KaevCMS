@@ -120,3 +120,36 @@
 .donations-test-dialog [hidden] { display: none !important; }
 @keyframes donations-test-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .donations-test-spinner { animation-duration: 2.4s; } }
+
+.donations-freekassa-result { margin:18px 0; padding:18px 20px; border:1px solid var(--admin-border); border-radius:10px; background:var(--admin-surface-subtle); }
+.donations-freekassa-result[data-state="verified"] { border-color:var(--admin-success-border); background:var(--admin-success-soft); color:var(--admin-success); }
+.donations-freekassa-result[data-state="pending"] { border-color:var(--admin-warning-border); background:var(--admin-warning-soft); }
+.donations-freekassa-result p { margin:8px 0; }
+.donations-freekassa-result small { display:block; margin-top:8px; }
+.donations-freekassa-result [hidden] { display:none; }
+
+/* Provider setup keeps operational settings visible and testing in a focused dialog. */
+.donations-provider-setup { max-width:960px; }
+.donations-provider-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
+.donations-provider-fields > .admin-field-help { grid-column:1/-1; }
+.donations-provider-details { margin:16px 0; padding:14px 16px; border:1px solid var(--admin-border); border-radius:10px; }
+.donations-provider-details > summary { cursor:pointer; font-weight:600; color:var(--admin-text); }
+.donations-provider-details[open] > summary { margin-bottom:16px; }
+.donations-callback-row > input { flex:1; min-width:160px; width:auto; }
+.donations-provider-test-dialog { flex-direction:column; width:min(680px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); padding:0; border:1px solid var(--admin-border); border-radius:var(--admin-radius-card); background:var(--admin-surface); color:var(--admin-text); box-shadow:var(--admin-shadow-card); opacity:0; transform:translateY(8px); transition:opacity 200ms,transform 200ms,display 200ms allow-discrete,overlay 200ms allow-discrete; }
+.donations-provider-test-dialog[open] { display:flex; flex-direction:column; opacity:1; transform:none; }
+@starting-style { .donations-provider-test-dialog[open] { opacity:0; transform:translateY(8px); } }
+.donations-provider-test-dialog::backdrop { background:rgba(10,11,12,.55); backdrop-filter:blur(2px); }
+.donations-provider-test-header { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 24px; border-bottom:1px solid var(--admin-border); flex-shrink:0; }
+.donations-provider-test-header h2 { margin:0; font-size:18px; }
+.donations-provider-test-header button { padding:6px 12px; font-size:22px; }
+.donations-provider-test-body { padding:4px 24px 24px; overflow:auto; overscroll-behavior:contain; min-height:0; }
+.donations-provider-test-body > .donations-readiness { margin:20px 0; padding:0; border:0; background:none; }
+.donations-provider-test-body .donations-provider-details { margin:16px 0; }
+@media (max-width:600px) { .donations-provider-fields { grid-template-columns:1fr; } .donations-provider-test-header { padding:16px; } .donations-provider-test-body { padding:4px 16px 16px; } }
+@media (prefers-reduced-motion:reduce) { .donations-provider-test-dialog { transition:none; } }
+
+.donations-provider-fields { gap:18px; }
+.donations-provider-fields > .form-group { margin:0; align-content:start; }
+.donations-callback-row > input { min-height:42px; padding:10px 12px; border:1px solid var(--admin-border-strong); border-radius:var(--admin-radius-control); background:var(--admin-surface); color:var(--admin-text); font:inherit; }
+.donations-provider-setup > .settings-form > .button { justify-self:end; }

@@ -49,7 +49,7 @@ final class DonationPayPalAdminSandboxTest extends TestCase
         $this->assertStringNotContainsString('sandboxPrivateSecret', $row->credentials_ciphertext);
         $this->assertSame('sandboxWebhookId', json_decode(Crypt::decryptString($row->credentials_ciphertext), true)['sandbox_webhook_id']);
         $page = $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers/paypal');
-        $page->assertOk()->assertSee('PayPal Orders v2')->assertDontSee('sandboxPrivateSecret')
+        $page->assertOk()->assertSee('data-testid="donations-paypal-settings"', false)->assertDontSee('sandboxPrivateSecret')
             ->assertDontSee('sandboxWebhookId')->assertDontSee('livePrivateSecret');
         $this->assertSame(['freekassa', 'paypal', 'yoomoney'], array_keys(app(DonationProviderRegistry::class)->all()));
         $this->assertSame(['USD', 'JPY'], app(PayPalAdminSettings::class)->state()['currency_codes']);

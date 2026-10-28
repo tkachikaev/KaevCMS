@@ -38,6 +38,7 @@ Route::post('/providers/yoomoney/notification-test', [AdminDonationProviderContr
     ->middleware('throttle:10,1,donations-notification-test')->name('providers.notification-test.start');
 Route::get('/providers/yoomoney/notification-test/{token}', [AdminDonationProviderController::class, 'notificationTestStatus'])
     ->where('token', '[A-Za-z0-9]{40}')->name('providers.notification-test.status');
+Route::delete('/providers/freekassa/test-history', [AdminDonationProviderController::class, 'clearFreeKassaTests'])->name('providers.freekassa.tests.clear');
 Route::post('/providers/freekassa/test-purchase', [AdminDonationProviderController::class, 'startFreeKassaTestPurchase'])
     ->middleware('throttle:5,1,donations-freekassa-test')->name('providers.freekassa.test-purchase');
 Route::get('/providers/{providerCode}', [AdminDonationProviderController::class, 'show'])->where('providerCode', '[a-z][a-z0-9_-]{1,39}')->name('providers.show');

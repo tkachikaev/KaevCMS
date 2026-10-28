@@ -204,4 +204,18 @@ final class DonationFreeKassaLivePaymentTest extends TestCase
             'secret_2' => 'signed-callback-secret',
         ]);
     }
+
+    public function test_zero_operation_id_cannot_confirm_a_real_player_order(): void
+    {
+        [, , $order] = $this->prepared();
+        Http::preventStrayRequests();
+        [$body, $server] = $this->signedCallback($order->order_uuid);
+        parse_str($body, $fields);
+        $fields['intid'] = '0';
+        $this->call('POST', '/payments/freekassa/notify', [], [], [], $server, http_build_query($fields))->assertStatus(400);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('wallet_entries', 0);
+        $this->assertDatabaseCount('module_donation_payment_receipts', 0);
+        $this->assertDatabaseCount('module_donation_payment_settlements', 0);
+    }
 }

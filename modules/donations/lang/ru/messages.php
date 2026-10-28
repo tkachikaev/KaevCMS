@@ -1,6 +1,34 @@
 <?php
 
 return [
+    'freekassa_tests_clear' => 'Очистить',
+    'freekassa_tests_clear_help' => 'Удаляются завершённые и просроченные тесты. Текущие проверки сохраняются.',
+    'freekassa_tests_cleared' => 'Удалено тестовых запросов: :count.',
+
+    'provider_paypal_accept' => 'Принимать платежи через PayPal',
+    'provider_save_settings' => 'Сохранить настройки',
+    'provider_mode_label' => 'Режим работы',
+    'provider_mode_test' => 'Тестирование (Test)',
+    'provider_mode_live' => 'Реальные платежи (Live)',
+    'provider_freekassa_test_setup' => 'Для запуска теста включите подключение, выберите «Тестирование (Test)» в основной форме и сохраните настройки.',
+
+    'provider_paypal_description' => 'Подключение PayPal и проверка платежей.',
+    'provider_notification_address' => 'Адрес уведомлений',
+
+    'provider_test_button' => 'Тест',
+    'provider_test_paypal' => 'Тестирование PayPal (Sandbox)',
+    'provider_test_freekassa' => 'Тестирование FreeKassa',
+    'provider_test_close' => 'Закрыть тестирование',
+    'provider_test_credentials' => 'Тестовые реквизиты (Sandbox)',
+    'provider_connection_guide' => 'Инструкция по подключению',
+    'provider_diagnostics' => 'Проверка настроек подключения',
+    'provider_checkout_currencies' => 'Валюты оплаты на сайте',
+    'provider_currency_help' => 'Валюта цены заявки. Доступные способы оплаты и пересчёт показывает платёжная система.',
+    'provider_connection_enabled' => 'Принимать платежи через FreeKassa',
+    'provider_status_test' => 'Тестовый режим — реальные оплаты недоступны',
+    'provider_status_off' => 'Приём реальных платежей выключен',
+    'provider_status_live' => 'Приём реальных платежей включён',
+
     'paypal_recovery_title' => 'Проверка оплаты через PayPal API',
     'paypal_recovery_help' => 'Проверка только по сохранённому PayPal Order ID: запросы GET, без повторного списания. Начисление возможно лишь при подтверждённом Capture.',
     'paypal_recovery_start' => 'Проверить через PayPal API',
@@ -409,6 +437,12 @@ return [
     'freekassa_field_secret_2' => 'Секретное слово 2 (уведомления)',
 
     'freekassa_field_api_key' => 'API-ключ FreeKassa (обязателен для реальных оплат)',
+    'freekassa_result_none' => 'Тестовая оплата ещё не проводилась',
+    'freekassa_result_pending' => 'Ожидаем подтверждение FreeKassa…',
+    'freekassa_result_verified' => '✓ Тестовая оплата подтверждена',
+    'freekassa_result_expired' => 'Время ожидания истекло. Можно начать новый тест.',
+    'freekassa_result_error' => 'Не удалось обновить результат. Обновите страницу.',
+    'freekassa_result_verified_help' => 'Подписанное уведомление получено и проверено. Монеты не начислялись.',
     'freekassa_test_title' => 'Тестовая покупка FreeKassa (только администратор)',
     'freekassa_test_external_warning' => 'ВНИМАНИЕ: сначала включите тестовый режим в кабинете мерчанта FreeKassa. CMS не может переключить его автоматически. Иначе возможно реальное списание денег. Минимальная сумма у провайдера может отличаться.',
     'freekassa_test_zero_coins' => 'Результат теста сохраняется отдельно от заказов игроков. Монеты никому не начисляются, в том числе после переключения режима.',
