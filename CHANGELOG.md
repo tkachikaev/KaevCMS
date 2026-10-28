@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add a "Documentation" link to the administration sidebar footer. It opens the guide page for the section being used: payment providers, drivers and mail have their own pages, every other page opens the documentation home. The link follows the interface language (RU/EN) and keeps working across in-panel navigation.
+
 ## 0.55.13 - 2026-10-28
 
 **Donations 1.17.13 — payment provider settings.** FreeKassa and PayPal are still alpha; real payments are not yet certified.

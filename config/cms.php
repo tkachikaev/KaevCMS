@@ -8,6 +8,11 @@ return [
     'installed_version_marker' => storage_path('app/kaevcms/installed-version.json'),
     'modules_path' => base_path('modules'),
 
+    // Public documentation site; admin pages link to its pages by topic (see App\Support\Documentation).
+    'docs' => [
+        'base_url' => 'https://tkachikaev.github.io/KaevCMS-docs',
+    ],
+
     'updates' => [
         'maximum_upload_kilobytes' => 524288,
         // Folder for packages placed through FTP or the file manager; null = storage/app/kaevcms/updates/incoming.

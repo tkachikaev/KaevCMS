@@ -1,5 +1,6 @@
 @extends('admin.layouts.panel')
 @section('title', __('Mail'))
+@section('docs', 'mail')
 @section('description', __('SMTP for email verification and password recovery.'))
 @section('content')
 @include('admin.settings._mail_tabs')

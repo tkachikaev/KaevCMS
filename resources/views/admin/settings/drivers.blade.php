@@ -1,6 +1,7 @@
 @extends('admin.layouts.panel')
 
 @section('title', __('drivers.title'))
+@section('docs', 'driver-builder')
 @section('description', __('drivers.description'))
 
 @push('head')

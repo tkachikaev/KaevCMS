@@ -1,5 +1,6 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.admin_title'))
+@section('docs', 'donations')
 @section('description', __('module-donations::messages.admin_description'))
 @section('content')
 @php

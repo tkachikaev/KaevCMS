@@ -285,6 +285,17 @@
         synchronizeSidebar();
     });
 
+    // The sidebar survives page navigation, so the documentation link takes the address of the
+    // page currently shown (published by the page itself) at the moment it is used.
+    document.addEventListener('click', (event) => {
+        const link = event.target instanceof Element ? event.target.closest('[data-admin-docs-link]') : null;
+        const page = document.querySelector('[data-admin-docs-url]');
+
+        if (link instanceof HTMLAnchorElement && page instanceof HTMLElement && page.dataset.adminDocsUrl) {
+            link.href = page.dataset.adminDocsUrl;
+        }
+    });
+
     reducedMotion.addEventListener('change', () => pageEntryAnimation?.cancel());
     document.addEventListener('livewire:navigating', () => pageEntryAnimation?.cancel());
     document.addEventListener('livewire:navigate', beginNavigation);

@@ -124,6 +124,22 @@ final class DonationFreeKassaAdminTestPurchaseTest extends TestCase
         $this->assertSame('off', DB::table('module_donation_live_settings')->where('id', 1)->value('mode') ?? 'off');
     }
 
+    public function test_the_documentation_link_follows_the_open_provider_page(): void
+    {
+        $owner = $this->configuredOwner();
+        config()->set('cms.docs.base_url', 'https://docs.example.test');
+
+        foreach (['freekassa' => 'donations-freekassa', 'paypal' => 'donations-paypal', 'yoomoney' => 'donations-yoomoney'] as $provider => $topic) {
+            $this->actingAs($owner, 'admin')->get('/admin/extensions/donations/providers/'.$provider)->assertOk()
+                ->assertSee('data-admin-docs-url="https://docs.example.test/guide/'.$topic.'"', false)
+                ->assertSee('href="https://docs.example.test/guide/'.$topic.'" data-admin-docs-link', false);
+        }
+        $this->get('/admin/extensions/donations/providers')->assertOk()
+            ->assertSee('data-admin-docs-url="https://docs.example.test/guide/donations-providers"', false);
+        $this->get('/admin')->assertOk()
+            ->assertSee('data-admin-docs-url="https://docs.example.test/"', false);
+    }
+
     public function test_invalid_signature_does_not_mark_test_verified(): void
     {
         $owner = $this->configuredOwner();

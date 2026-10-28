@@ -1,6 +1,7 @@
 @extends('admin.layouts.panel')
 
 @section('title', __('Mail settings'))
+@section('docs', 'mail')
 @section('description', __('Ready-to-use system email templates with safe text editing.'))
 
 @section('content')

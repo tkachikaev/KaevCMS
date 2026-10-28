@@ -1,6 +1,7 @@
 @extends('admin.layouts.panel')
 @section('title', 'PayPal — '. __('module-donations::messages.providers_title'))
 @section('description', __('module-donations::messages.provider_paypal_description'))
+@section('docs', 'donations-paypal')
 @section('content')
 @include('module-donations::admin.navigation')
 <section class="form-card donations-provider-setup setup-page" data-testid="donations-paypal-settings">

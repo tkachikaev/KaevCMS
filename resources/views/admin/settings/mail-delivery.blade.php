@@ -1,5 +1,6 @@
 @extends('admin.layouts.panel')
 @section('title', __('Mail delivery'))
+@section('docs', 'mail-modes')
 @section('description', __('Choose and verify how automatic account emails are sent.'))
 @section('content')
 @include('admin.settings._mail_tabs')

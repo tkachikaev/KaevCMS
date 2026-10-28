@@ -1,6 +1,7 @@
 @extends('admin.layouts.panel')
 
 @section('title', __('Send custom email'))
+@section('docs', 'mail')
 @section('description', __('Send one custom HTML email without changing the system templates.'))
 
 @section('content')

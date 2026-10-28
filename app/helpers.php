@@ -10,6 +10,7 @@ use App\Services\Pages\PageKeys;
 use App\Services\RegistrationSettings;
 use App\Services\SiteSettings;
 use App\Support\DisplayFormat;
+use App\Support\Documentation;
 use App\Support\KaevCMS;
 use App\Support\Themes\AccountThemeManager;
 use App\Support\Themes\ThemeManager;
@@ -19,6 +20,14 @@ if (! function_exists('cms_version')) {
     function cms_version(): string
     {
         return KaevCMS::version();
+    }
+}
+
+if (! function_exists('docs_url')) {
+    /** Link to the documentation site, or to one of its guide pages by slug ("donations-freekassa"). */
+    function docs_url(?string $topic = null): string
+    {
+        return Documentation::url($topic);
     }
 }
 

@@ -37,6 +37,7 @@
 
             <div class="admin-sidebar-footer">
                 <a href="{{ public_route('home') }}" target="_blank" rel="noopener">{{ __('Open website') }} <span aria-hidden="true">↗</span></a>
+                <a href="{{ docs_url(trim($__env->yieldContent('docs')) ?: null) }}" data-admin-docs-link target="_blank" rel="noopener" title="{{ __('Open the documentation for this page') }}">{{ __('Documentation') }} <span aria-hidden="true">↗</span></a>
                 <span>{{ __('Version :version', ['version' => cms_version()]) }}</span>
             </div>
         </aside>
@@ -52,6 +53,7 @@
     ></button>
 
     <main class="admin-main">
+        <span hidden data-admin-docs-url="{{ docs_url(trim($__env->yieldContent('docs')) ?: null) }}"></span>
         <div class="admin-mobile-toolbar" data-admin-mobile-toolbar>
             <button
                 type="button"

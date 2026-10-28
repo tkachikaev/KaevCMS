@@ -1,6 +1,7 @@
 @extends('admin.layouts.panel')
 @section('title', __('module-donations::messages.providers_title'))
 @section('description', __('module-donations::messages.providers_admin_description'))
+@section('docs', 'donations-'.$driver->code())
 @section('content')
 @include('module-donations::admin.navigation')
 <section class="form-card donations-provider-setup setup-page" data-testid="donations-provider-detail">
