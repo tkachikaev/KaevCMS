@@ -54,3 +54,11 @@ Open **Settings → Notifications** or use the gear to the right of **All / Unre
 Disabling a source stops new events without deleting entries that are already in an administrator's list. Disabling an active recurring problem resolves its notification lifecycle; if the source is enabled again while the problem still exists, the next scan creates a new event. The underlying diagnostics and current state are never disabled.
 
 The scheduler runs `kaevcms:notifications-scan` every minute and `kaevcms:notifications-clean` daily. Settings can keep records for 30, 60, 90 or 180 days and can disable automatic physical cleanup. A manual `kaevcms:notifications-clean --days=<number>` run remains available. Notification delivery is fail-safe and never blocks ticket creation, update rollback or monitoring.
+
+## Google sign-in (social-auth rollout)
+
+On **Admin → Settings → Registration**, find the Social authorization section and expand Google. Create a *Web application* in [Google Cloud Console](https://console.cloud.google.com/apis/credentials), register the exact callback URL shown by KaevCMS, save **Client ID** and **Client Secret**, and explicitly enable Google. Production `APP_URL` must be HTTPS; localhost is allowed for development. Saving credentials alone does not enable sign-in.
+
+Players can log in with Google and create CMS accounts. Email matching never links existing CMS accounts automatically: players sign in normally and connect Google in Account → Security after confirming their identity. External addresses (outside Gmail/Google Workspace) require an additional verification email from KaevCMS; configure mail delivery first. Disabling the provider preserves existing links but prevents further Google logins.
+
+Only Google is implemented at this stage; the other five providers are planned separately. Full QA and a test login against an isolated HTTPS environment are required before production enablement.

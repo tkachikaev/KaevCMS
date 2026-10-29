@@ -1801,3 +1801,11 @@ html.ka-intro .page-content > *, html.ka-intro .auth-card { animation-delay: .5s
     html.ka-intro .site-header, html.ka-intro .hero-copy-block > *, html.ka-intro .page-hero .container > *,
     html.ka-intro .hero-feature-card, html.ka-intro .server-panel, html.ka-intro .page-content > *, html.ka-intro .auth-card { animation: none; }
 }
+
+/* Social sign-in, shared layout for both public themes. */
+.social-signin-section { margin-top: 20px; border-top: 1px solid rgba(145,145,145,.22); padding-top: 18px; text-align: center; }
+.social-signin-section .muted { margin: 0 0 12px; }
+.social-google-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; text-decoration: none; background: #fff; color: #23262d; border: 1px solid #bbc1cc; border-radius: 9px; padding: 9px 18px; font-weight: 650; }
+.social-google-button:hover, .social-google-button:focus-visible { background: #f3f6fa; color: #17191f; outline-offset: 3px; }
+.social-google-mark { font: 800 22px/1 Arial,sans-serif; color: #4285f4; }
+@media (max-width: 600px) { .social-google-button { width: 100%; } }

@@ -37,6 +37,8 @@
             <button class="button button-gold" type="submit">{{ __('Create account') }}</button>
         </form>
 
+        @include('auth.social-google-button')
+
         <div class="auth-links auth-links-center">
             <a href="{{ public_route('login') }}">{{ __('Already registered? Sign in') }}</a>
         </div>

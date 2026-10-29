@@ -10,6 +10,7 @@ use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Account\WalletController;
 use App\Http\Controllers\Account\WebInventoryController;
 use App\Http\Controllers\Auth\AccountController;
+use App\Http\Controllers\Auth\GoogleSocialAuthController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -32,6 +33,12 @@ $registerAccountRoutes = static function (bool $localized = false): void {
             Route::get('/account', AccountController::class)->name($namePrefix.'account');
             Route::get('/account/profile', [ProfileController::class, 'edit'])
                 ->name($namePrefix.'profile.edit');
+            Route::get('/account/security/social/google/continue', [GoogleSocialAuthController::class, 'continueLink'])
+                ->middleware('throttle:8,1')->name($namePrefix.'security.social.google.continue');
+            Route::post('/account/security/social/google/link', [GoogleSocialAuthController::class, 'startLink'])
+                ->middleware('throttle:8,1')->name($namePrefix.'security.social.google.link');
+            Route::delete('/account/security/social/google', [GoogleSocialAuthController::class, 'unlink'])
+                ->middleware('throttle:8,1')->name($namePrefix.'security.social.google.unlink');
             Route::get('/account/security', [SecurityController::class, 'edit'])
                 ->name($namePrefix.'security.edit');
             Route::get('/account/characters', CharacterController::class)

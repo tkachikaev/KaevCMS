@@ -667,3 +667,9 @@ html.account-is-navigating .account-content { opacity: 0.54; transform: translat
     --account-shared-operation-reward-background: rgba(25, 34, 48, .56);
     --account-shared-operation-actions-background: rgba(8, 13, 21, .22);
 }
+
+/* Linked external sign-in methods in the existing Security panel. */
+.account-social-form { margin-top: 12px; }
+.account-social-form form { display: grid; gap: 13px; justify-items: start; }
+.account-social-form form label { width: min(100%, 440px); }
+.account-social-form .account-button { min-height: 42px; }

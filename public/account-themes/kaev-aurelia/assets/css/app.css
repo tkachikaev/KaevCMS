@@ -1466,3 +1466,9 @@ body.account-body :is(.account-character-filters label > span, .account-characte
     --account-shared-operation-reward-background: rgba(255, 255, 255, .48);
     --account-shared-operation-actions-background: rgba(255, 255, 255, .24);
 }
+
+/* Linked external sign-in methods in the existing Security panel. */
+.account-social-form { margin-top: 12px; }
+.account-social-form form { display: grid; gap: 13px; justify-items: start; }
+.account-social-form form label { width: min(100%, 440px); }
+.account-social-form .account-button { min-height: 42px; }

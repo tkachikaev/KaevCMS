@@ -387,3 +387,11 @@
 }
 /* Footer navigation: built-in and custom links share one presentation. */
 .footer-section-links a{display:block;margin:7px 0;color:#8e9495;font-size:13px;line-height:1.6}.footer-section-links a:hover{color:var(--gold2)}
+
+/* Social sign-in, shared layout for both public themes. */
+.social-signin-section { margin-top: 20px; border-top: 1px solid rgba(145,145,145,.22); padding-top: 18px; text-align: center; }
+.social-signin-section .muted { margin: 0 0 12px; }
+.social-google-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; text-decoration: none; background: #fff; color: #23262d; border: 1px solid #bbc1cc; border-radius: 9px; padding: 9px 18px; font-weight: 650; }
+.social-google-button:hover, .social-google-button:focus-visible { background: #f3f6fa; color: #17191f; outline-offset: 3px; }
+.social-google-mark { font: 800 22px/1 Arial,sans-serif; color: #4285f4; }
+@media (max-width: 600px) { .social-google-button { width: 100%; } }

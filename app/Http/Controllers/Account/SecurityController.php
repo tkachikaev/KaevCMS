@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Account\ChangeAccountPasswordRequest;
 use App\Models\User;
 use App\Services\Account\AccountPasswordChanger;
+use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,8 @@ class SecurityController extends Controller
             'user' => $user,
             'passwordPolicy' => $this->registrationSettings->values(),
             'passwordRequirements' => $this->registrationSettings->passwordRequirements(),
+            'googleAvailable' => app(SocialAuthSettings::class)->isAvailable('google'),
+            'googleLinked' => $user->socialAccounts()->where('provider', 'google')->exists(),
         ]);
     }
 

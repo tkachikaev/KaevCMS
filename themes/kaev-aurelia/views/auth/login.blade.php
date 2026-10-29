@@ -28,6 +28,8 @@
             <button class="button button-gold" type="submit">{{ __('Log in') }}</button>
         </form>
 
+        @include('auth.social-google-button')
+
         <div class="auth-links">
             <a wire:navigate.hover href="{{ public_route('password.request') }}">{{ __('Forgot your password?') }}</a>
             @if (registration_available())
