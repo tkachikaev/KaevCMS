@@ -8,6 +8,7 @@ use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
@@ -43,7 +44,7 @@ class VkSocialAuthTest extends TestCase
     {
         $user = User::factory()->create();
         $user->socialAccounts()->create(['provider' => 'vk', 'provider_user_id' => '111222333']);
-        $this->callback('111222333', $user->email)->assertRedirect(route('account'));
+        $this->oauthCallback('111222333', $user->email)->assertRedirect(route('account'));
         $this->assertAuthenticatedAs($user, 'web');
         $this->assertGuest('admin');
     }
@@ -51,7 +52,7 @@ class VkSocialAuthTest extends TestCase
     public function test_vk_unlinked_email_never_automatically_links_existing_account(): void
     {
         $user = User::factory()->create(['email' => 'victim@example.test']);
-        $this->callback('111222333', 'victim@example.test')->assertRedirect(route('social.vk.register'));
+        $this->oauthCallback('111222333', 'victim@example.test')->assertRedirect(route('social.vk.register'));
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $user->id, 'provider' => 'vk']);
         $this->assertDatabaseCount('users', 1);
         $this->post('/auth/social/vk/register', ['name' => 'attacker'])->assertRedirect(route('login'));
@@ -60,7 +61,7 @@ class VkSocialAuthTest extends TestCase
 
     public function test_vk_email_from_profile_always_needs_cms_verification(): void
     {
-        $this->callback('111222333', 'player@mail.ru')->assertRedirect(route('social.vk.register'));
+        $this->oauthCallback('111222333', 'player@mail.ru')->assertRedirect(route('social.vk.register'));
         $this->get('/auth/social/vk/register')->assertOk()->assertSee('player@mail.ru');
         $this->post('/auth/social/vk/register', ['name' => 'playername'])->assertRedirect(route('login'));
         $this->assertDatabaseCount('users', 0);
@@ -68,14 +69,14 @@ class VkSocialAuthTest extends TestCase
 
     public function test_vk_profile_without_email_can_request_email_in_cms(): void
     {
-        $this->callback('111222333', null)->assertRedirect(route('social.vk.register'));
+        $this->oauthCallback('111222333', null)->assertRedirect(route('social.vk.register'));
         $this->get('/auth/social/vk/register')->assertOk();
         $this->assertDatabaseCount('users', 0);
     }
 
     public function test_vk_verified_registration_creates_social_only_account(): void
     {
-        $this->callback('111222333', 'player@mail.ru')->assertRedirect(route('social.vk.register'));
+        $this->oauthCallback('111222333', 'player@mail.ru')->assertRedirect(route('social.vk.register'));
         $this->withSession(['social_auth.registration' => [
             'provider' => 'vk', 'subject' => '111222333', 'email' => 'player@mail.ru',
             'assured' => true, 'issued' => now()->timestamp, 'email_verification_hash' => null,
@@ -99,7 +100,7 @@ class VkSocialAuthTest extends TestCase
         $mail->markTested();
         Notification::fake();
 
-        $this->callback('111222333', 'player@mail.ru')->assertRedirect(route('social.vk.register'));
+        $this->oauthCallback('111222333', 'player@mail.ru')->assertRedirect(route('social.vk.register'));
         $this->post('/auth/social/vk/email', ['email' => 'player@mail.ru'])
             ->assertRedirect(route('social.vk.register'));
         $url = null;
@@ -219,7 +220,7 @@ class VkSocialAuthTest extends TestCase
         $this->post('/account/security/social/vk/link', ['current_password' => 'wrong'])
             ->assertSessionHasErrors('social');
         $this->post('/account/security/social/vk/link', ['current_password' => 'Secret123!'])
-            ->assertRedirect(route('security.social.vk.continue'));
+            ->assertOk()->assertViewIs('auth.social-continue')->assertViewHas('continueUrl');
         $url = (string) $this->get('/account/security/social/vk/continue')->assertRedirect()->headers->get('Location');
         $this->assertStringStartsWith('https://id.vk.ru/authorize?', $url);
         parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
@@ -246,10 +247,10 @@ class VkSocialAuthTest extends TestCase
 
     public function test_vk_provider_toggle_hides_button_and_blocks_callbacks(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Continue with VK ID');
+        $this->get('/login')->assertOk()->assertSee(__('Continue with :provider', ['provider' => 'VK ID']));
         $start = $this->start();
         app(SocialAuthSettings::class)->setEnabled('vk', false);
-        $this->get('/login')->assertOk()->assertDontSee('Continue with VK ID');
+        $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'VK ID']));
         $this->get('/auth/social/vk')->assertNotFound();
         $this->get($this->callbackUrl($start))->assertRedirect(route('login'));
     }
@@ -271,7 +272,7 @@ class VkSocialAuthTest extends TestCase
         ]);
     }
 
-    private function callback(string $id, ?string $email)
+    private function oauthCallback(string $id, ?string $email)
     {
         $start = $this->start();
         $this->fakeVk($id, $email, $start['state']);
@@ -281,6 +282,8 @@ class VkSocialAuthTest extends TestCase
 
     private function fakeVk(string $id, ?string $email, string $state, ?string $tokenSubject = null): void
     {
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
         Http::fake([
             'https://id.vk.ru/oauth2/auth' => Http::response([
                 'access_token' => 'test-vk-access', 'state' => $state,

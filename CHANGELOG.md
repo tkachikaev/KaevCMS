@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix Social Auth account-session initialization and provider unlink errors; discard failed OAuth attempts consistently. Start provider linking through a local continuation page without relaxing CSP. Correct implemented-provider statuses, shared account templates and QA compatibility.
+
 - Add a "Documentation" link to the administration sidebar footer. It opens the guide page for the section being used: payment providers, drivers and mail have their own pages, every other page opens the documentation home. The link follows the interface language (RU/EN) and keeps working across in-panel navigation.
 
 ## 0.55.13 - 2026-10-28

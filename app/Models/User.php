@@ -26,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $attributes = [
         'is_active' => true,
+        'auth_session_version' => 1,
     ];
 
     protected function casts(): array

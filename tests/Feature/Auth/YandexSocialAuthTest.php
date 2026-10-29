@@ -4,8 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Notifications\SocialRegistrationEmailVerification;
-use App\Services\MailSettings;
 use App\Services\Auth\Social\SocialAuthSettings;
+use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -44,7 +44,7 @@ class YandexSocialAuthTest extends TestCase
     {
         $user = User::factory()->create();
         $user->socialAccounts()->create(['provider' => 'yandex', 'provider_user_id' => '1000034426']);
-        $this->callback('1000034426', $user->email)->assertRedirect(route('account'));
+        $this->oauthCallback('1000034426', $user->email)->assertRedirect(route('account'));
         $this->assertAuthenticatedAs($user, 'web');
         $this->assertGuest('admin');
     }
@@ -52,7 +52,7 @@ class YandexSocialAuthTest extends TestCase
     public function test_unlinked_yandex_identity_never_automatically_joins_existing_email(): void
     {
         $user = User::factory()->create(['email' => 'victim@yandex.ru']);
-        $this->callback('1000034426', 'victim@yandex.ru')->assertRedirect(route('social.yandex.register'));
+        $this->oauthCallback('1000034426', 'victim@yandex.ru')->assertRedirect(route('social.yandex.register'));
         $this->assertDatabaseCount('users', 1);
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $user->id, 'provider' => 'yandex']);
         $this->post('/auth/social/yandex/register', ['name' => 'attacker'])->assertRedirect(route('login'));
@@ -61,7 +61,7 @@ class YandexSocialAuthTest extends TestCase
 
     public function test_even_yandex_domain_email_requires_cms_verification_before_registration(): void
     {
-        $this->callback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
+        $this->oauthCallback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
         $this->get('/auth/social/yandex/register')->assertOk()->assertSee('player@yandex.ru');
         $this->post('/auth/social/yandex/register', ['name' => 'yandexplayer'])
             ->assertRedirect(route('login'));
@@ -70,7 +70,7 @@ class YandexSocialAuthTest extends TestCase
 
     public function test_verified_registration_uses_only_yandex_id_and_creates_a_social_only_account(): void
     {
-        $this->callback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
+        $this->oauthCallback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
         $this->withSession(['social_auth.registration' => [
             'provider' => 'yandex', 'subject' => '1000034426', 'email' => 'player@yandex.ru',
             'assured' => true, 'issued' => now()->timestamp, 'email_verification_hash' => null,
@@ -94,7 +94,7 @@ class YandexSocialAuthTest extends TestCase
         $mail->markTested();
         Notification::fake();
 
-        $this->callback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
+        $this->oauthCallback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
         $this->post('/auth/social/yandex/email', ['email' => 'player@yandex.ru'])
             ->assertRedirect(route('social.yandex.register'));
         $url = null;
@@ -116,7 +116,7 @@ class YandexSocialAuthTest extends TestCase
 
     public function test_pending_yandex_registration_cannot_be_used_for_google_registration(): void
     {
-        $this->callback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
+        $this->oauthCallback('1000034426', 'player@yandex.ru')->assertRedirect(route('social.yandex.register'));
         $this->get('/auth/social/google/register')->assertRedirect(route('login'));
         $this->post('/auth/social/google/email', ['email' => 'player@yandex.ru'])->assertNotFound();
         $this->get('/auth/social/yandex/register')->assertOk();
@@ -178,7 +178,7 @@ class YandexSocialAuthTest extends TestCase
         $this->post('/account/security/social/yandex/link', ['current_password' => 'invalid'])
             ->assertSessionHasErrors('social');
         $this->post('/account/security/social/yandex/link', ['current_password' => 'MySecret123!'])
-            ->assertRedirect(route('security.social.yandex.continue'));
+            ->assertOk()->assertViewIs('auth.social-continue')->assertViewHas('continueUrl');
         $url = (string) $this->get('/account/security/social/yandex/continue')->assertRedirect()->headers->get('Location');
         $this->assertStringStartsWith('https://oauth.yandex.ru/authorize?', $url);
         parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
@@ -204,10 +204,10 @@ class YandexSocialAuthTest extends TestCase
 
     public function test_enabled_buttons_are_independent_and_disabled_callback_fails_closed(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Continue with Яндекс ID');
+        $this->get('/login')->assertOk()->assertSee(__('Continue with :provider', ['provider' => 'Яндекс ID']));
         $start = $this->start();
         app(SocialAuthSettings::class)->setEnabled('yandex', false);
-        $this->get('/login')->assertOk()->assertDontSee('Continue with Яндекс ID');
+        $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'Яндекс ID']));
         $this->get('/auth/social/yandex')->assertNotFound();
         $this->get($this->callbackUrl($start))->assertRedirect(route('login'));
     }
@@ -226,7 +226,7 @@ class YandexSocialAuthTest extends TestCase
         return '/auth/social/yandex/callback?'.http_build_query(['code' => 'test-code', 'state' => $start['state']]);
     }
 
-    private function callback(string $subject, string $email)
+    private function oauthCallback(string $subject, string $email)
     {
         $start = $this->start();
         $this->fakeYandex($subject, $email);

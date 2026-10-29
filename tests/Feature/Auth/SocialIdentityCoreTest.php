@@ -4,10 +4,12 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Services\Auth\Social\SocialAccountConflict;
+use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\Auth\Social\SocialFlowState;
 use App\Services\Auth\Social\SocialIdentity;
-use App\Services\Auth\Social\SocialIdentityService;
 use App\Services\Auth\Social\SocialIdentityProvider;
+use App\Services\Auth\Social\SocialIdentityService;
+use App\Services\RegistrationSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
@@ -17,6 +19,29 @@ use Tests\TestCase;
 class SocialIdentityCoreTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_password_registration_records_a_real_password_and_allows_social_link_step_up(): void
+    {
+        app(RegistrationSettings::class)->update(true, false);
+        $this->post('/register', ['name' => 'normalplayer', 'email' => 'normal@example.test',
+            'password' => 'NormalPassword123!', 'password_confirmation' => 'NormalPassword123!'])
+            ->assertRedirect(route('account'));
+        $user = User::query()->where('email', 'normal@example.test')->firstOrFail();
+        $this->assertNotNull($user->password_set_at);
+        $this->assertSame(1, $user->auth_session_version);
+        $settings = app(SocialAuthSettings::class);
+        $settings->updateCredentials('google', 'dummy-client', 'dummy-secret');
+        $settings->setEnabled('google', true);
+        $this->post('/account/security/social/google/link', ['current_password' => 'NormalPassword123!'])
+            ->assertOk()->assertViewIs('auth.social-continue');
+    }
+
+    public function test_new_user_session_version_matches_the_persisted_database_default(): void
+    {
+        $user = User::factory()->create();
+        $this->assertSame(1, $user->auth_session_version);
+        $this->assertSame($user->fresh()->auth_session_version, $user->auth_session_version);
+    }
 
     public function test_existing_accounts_have_password_and_unique_social_identities(): void
     {
@@ -59,7 +84,7 @@ class SocialIdentityCoreTest extends TestCase
                 return 'https://accounts.example.test/oauth?'.http_build_query(['state' => $state, 'code_challenge' => $codeChallenge, 'nonce' => $nonce]);
             }
 
-            public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce): SocialIdentity
+            public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce, array $callback = []): SocialIdentity
             {
                 if ($code !== 'valid-test-code') {
                     throw new RuntimeException('Invalid test authorization code.');

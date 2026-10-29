@@ -10,10 +10,10 @@ use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Account\WalletController;
 use App\Http\Controllers\Account\WebInventoryController;
 use App\Http\Controllers\Auth\AccountController;
-use App\Http\Controllers\Auth\SocialOAuthController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\SocialOAuthController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 

@@ -473,8 +473,9 @@
 /* Social identity provider configuration on registration settings. */
 .social-auth-settings { margin-top: 22px; }
 .social-provider-list { display: grid; gap: 12px; }
-.social-provider-item { padding: 14px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface-subtle); min-width: 0; }
-.social-provider-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.social-auth-settings > .settings-inline-notice + .social-provider-list { margin-top: 16px; }
+.social-provider-item { display: flex; align-items: center; gap: 16px; padding: 10px 12px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface-subtle); min-width: 0; }
+.social-provider-head { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
 .social-provider-mark { display: grid; place-items: center; flex: 0 0 37px; width: 37px; height: 37px; border-radius: 9px; font-weight: 760; background: var(--admin-surface); border: 1px solid var(--admin-border); color: var(--admin-text); }
 .social-provider-mark-google { color: #4285f4; }
 .social-provider-mark-yandex { color: #e24b45; }
@@ -485,17 +486,14 @@
 .social-provider-copy { display: grid; gap: 2px; min-width: 0; flex: 1; }
 .social-provider-copy strong { font-size: 13px; color: var(--admin-text); }
 .social-provider-copy small { font-size: 11px; color: var(--admin-text-muted); }
-.social-provider-quick-actions { padding: 12px 0 0 49px; display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.social-provider-quick-actions { padding: 0; margin-left: auto; display: flex; flex-wrap: nowrap; gap: 9px; align-items: center; }
 .social-provider-quick-actions form { margin: 0; }
-.social-provider-details { flex: 1 1 100%; min-width: 0; }
-.social-provider-details summary { display: inline-flex; cursor: pointer; list-style: none; user-select: none; }
-.social-provider-details summary::-webkit-details-marker { display: none; }
 .social-provider-form-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--admin-border); display: grid; gap: 12px; }
 .social-provider-form-wrap form { display: grid; gap: 12px; }
 .social-provider-form-wrap .form-group { margin: 0; }
 .social-provider-form-wrap input { width: 100%; max-width: 100%; }
 .social-provider-callback { display: flex; gap: 8px; align-items: stretch; }
-.social-provider-callback input { min-width: 0; flex: 1; }
+.social-provider-callback input { min-width: 0; flex: 1; padding: 10px 12px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface-subtle); color: var(--admin-text); font: inherit; }
 .social-provider-callback button { flex: 0 0 auto; }
 .social-provider-form-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .social-provider-form-actions a { font-size: 12px; }
@@ -509,3 +507,21 @@
     .social-provider-callback { flex-direction: column; }
     .social-provider-callback button { align-self: flex-start; }
 }
+
+/* Compact social provider rows and native, focus-trapping settings dialogs. */
+.social-provider-quick-actions .admin-toggle-row { margin: 0; padding: 0; border: 0; background: transparent; gap: 10px; }
+.social-provider-quick-actions .admin-toggle-copy strong { font-size: 12px; white-space: nowrap; }
+.social-provider-dialog { width: min(620px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); box-sizing: border-box; overflow: auto; padding: 24px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface); color: var(--admin-text); box-shadow: 0 24px 80px rgba(0,0,0,.3); }
+.social-provider-dialog::backdrop { background: rgba(15,23,42,.6); backdrop-filter: blur(3px); }
+.social-provider-dialog[open] { animation: social-dialog-in 200ms ease-out; }
+.social-provider-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.social-provider-dialog-heading h2 { margin: 0; font-size: 20px; }
+.social-provider-dialog .social-provider-form-wrap { margin-top: 16px; }
+@keyframes social-dialog-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 640px) {
+    .social-provider-item { flex-wrap: wrap; gap: 10px; }
+    .social-provider-head { flex-basis: 100%; }
+    .social-provider-quick-actions { width: 100%; justify-content: space-between; }
+    .social-provider-dialog { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .social-provider-dialog[open] { animation: none; } }

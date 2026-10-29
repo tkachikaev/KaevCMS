@@ -493,7 +493,8 @@ class MailDeliveryModeTest extends TestCase
             dispatch(new SendUserMailNotification($user, new VerifyEmailNotification, $deliveryId))->onConnection('database')->onQueue('mail');
         }
 
-        $this->artisan('queue:work', ['connection' => 'database', '--queue' => 'mail', '--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0]);
+        // The worker shares PHPUnit's process and its 512 MB memory budget.
+        $this->artisan('queue:work', ['connection' => 'database', '--queue' => 'mail', '--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0, '--memory' => 512])->assertExitCode(0);
 
         $this->assertTrue(Cache::has(SendUserMailNotification::PROVIDER_PAUSE_KEY), 'The first refusal must pause queued mail.');
         $this->assertSame(3, DB::table('jobs')->where('queue', 'mail')->count(), 'Paused and failed-once mail stays queued.');
@@ -504,7 +505,7 @@ class MailDeliveryModeTest extends TestCase
         Cache::forget(SendUserMailNotification::PROVIDER_PAUSE_KEY);
         DB::table('jobs')->update(['available_at' => now()->getTimestamp()]);
         Notification::fake();
-        $this->artisan('queue:work', ['connection' => 'database', '--queue' => 'mail', '--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0]);
+        $this->artisan('queue:work', ['connection' => 'database', '--queue' => 'mail', '--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0, '--memory' => 512])->assertExitCode(0);
 
         $this->assertSame(0, DB::table('jobs')->where('queue', 'mail')->count());
         $this->assertSame(3, DB::table('mail_deliveries')->whereIn('id', $deliveries)->where('status', MailDelivery::STATUS_SENT)->count());

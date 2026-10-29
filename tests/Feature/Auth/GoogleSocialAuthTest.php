@@ -6,9 +6,12 @@ use App\Models\User;
 use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 class GoogleSocialAuthTest extends TestCase
@@ -51,6 +54,8 @@ class GoogleSocialAuthTest extends TestCase
         $this->assertNotNull($player->email_verified_at);
         $this->assertDatabaseHas('user_social_accounts', ['user_id' => $player->id, 'provider' => 'google', 'provider_user_id' => 'subject-one']);
         $this->assertAuthenticatedAs($player, 'web');
+        Auth::forgetGuards();
+        $this->get('/account')->assertOk();
         $this->post('/auth/social/google/register', ['name' => 'second'])
             ->assertRedirect();
         $this->assertDatabaseCount('users', 1);
@@ -106,9 +111,9 @@ class GoogleSocialAuthTest extends TestCase
 
     public function test_google_buttons_disappear_and_start_is_blocked_after_admin_disables_provider(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Continue with Google');
+        $this->get('/login')->assertOk()->assertSee(__('Continue with :provider', ['provider' => 'Google']));
         app(SocialAuthSettings::class)->setEnabled('google', false);
-        $this->get('/login')->assertOk()->assertDontSee('Continue with Google');
+        $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'Google']));
         $this->get('/auth/social/google')->assertNotFound();
     }
 
@@ -141,7 +146,7 @@ class GoogleSocialAuthTest extends TestCase
             ->assertSessionHasErrors('social');
         $this->assertDatabaseCount('user_social_accounts', 0);
         $this->post('/account/security/social/google/link', ['current_password' => 'CorrectPass-123'])
-            ->assertRedirect(route('security.social.google.continue'));
+            ->assertOk()->assertViewIs('auth.social-continue')->assertViewHas('continueUrl');
         $url = (string) $this->get('/account/security/social/google/continue')
             ->assertRedirect()->headers->get('Location');
         parse_str((string) parse_url($url, PHP_URL_QUERY), $args);
@@ -155,7 +160,7 @@ class GoogleSocialAuthTest extends TestCase
         $this->assertDatabaseCount('user_social_accounts', 0);
     }
 
-    /** @return \Illuminate\Testing\TestResponse<\Symfony\Component\HttpFoundation\Response> */
+    /** @return TestResponse<Response> */
     private function completeGoogleCallback(string $subject, string $email)
     {
         $url = (string) $this->get('/auth/social/google')->headers->get('Location');

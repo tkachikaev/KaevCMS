@@ -48,7 +48,7 @@ class DiscordSocialAuthTest extends TestCase
     {
         $user = User::factory()->create();
         $user->socialAccounts()->create(['provider' => 'discord', 'provider_user_id' => self::SUBJECT]);
-        $this->callback(email: $user->email)->assertRedirect(route('account'));
+        $this->oauthCallback(email: $user->email)->assertRedirect(route('account'));
         $this->assertAuthenticatedAs($user, 'web');
         $this->assertGuest('admin');
     }
@@ -56,7 +56,7 @@ class DiscordSocialAuthTest extends TestCase
     public function test_discord_matching_email_never_automatically_claims_existing_cms_account(): void
     {
         $victim = User::factory()->create(['email' => 'victim@example.test']);
-        $this->callback(email: 'victim@example.test', verified: true)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: 'victim@example.test', verified: true)->assertRedirect(route('social.discord.register'));
         $this->assertDatabaseCount('users', 1);
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $victim->id, 'provider' => 'discord']);
         $this->post('/auth/social/discord/register', ['name' => 'wrongowner'])->assertRedirect(route('login'));
@@ -65,7 +65,7 @@ class DiscordSocialAuthTest extends TestCase
 
     public function test_discord_email_verified_flag_is_not_sufficient_to_create_a_cms_account(): void
     {
-        $this->callback(email: 'player@example.test', verified: true)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: 'player@example.test', verified: true)->assertRedirect(route('social.discord.register'));
         $this->get('/auth/social/discord/register')->assertOk()->assertSee('player@example.test');
         $this->post('/auth/social/discord/register', ['name' => 'discordplayer'])->assertRedirect(route('login'));
         $this->assertDatabaseCount('users', 0);
@@ -73,18 +73,18 @@ class DiscordSocialAuthTest extends TestCase
 
     public function test_missing_email_and_unverified_discord_email_use_local_verification(): void
     {
-        $this->callback(email: null)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.discord.register'));
         $this->get('/auth/social/discord/register')->assertOk();
         $this->assertDatabaseCount('users', 0);
 
-        $this->callback(email: 'player@example.test', verified: false)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: 'player@example.test', verified: false)->assertRedirect(route('social.discord.register'));
         $this->post('/auth/social/discord/register', ['name' => 'discordplayer'])->assertRedirect(route('login'));
         $this->assertDatabaseCount('users', 0);
     }
 
     public function test_verified_local_email_registration_creates_separate_social_only_player(): void
     {
-        $this->callback(email: null)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.discord.register'));
         $this->withSession(['social_auth.registration' => [
             'provider' => 'discord', 'subject' => self::SUBJECT, 'email' => 'new@example.test',
             'assured' => true, 'issued' => now()->timestamp, 'email_verification_hash' => null,
@@ -110,7 +110,7 @@ class DiscordSocialAuthTest extends TestCase
         $mail->markTested();
         Notification::fake();
 
-        $this->callback(email: null)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.discord.register'));
         $this->post('/auth/social/discord/email', ['email' => 'player@example.test'])
             ->assertRedirect(route('social.discord.register'));
         $url = null;
@@ -213,7 +213,7 @@ class DiscordSocialAuthTest extends TestCase
         $this->post('/account/security/social/discord/link', ['current_password' => 'wrong'])
             ->assertSessionHasErrors('social');
         $this->post('/account/security/social/discord/link', ['current_password' => 'MySecret123!'])
-            ->assertRedirect(route('security.social.discord.continue'));
+            ->assertOk()->assertViewIs('auth.social-continue')->assertViewHas('continueUrl');
         $url = (string) $this->get('/account/security/social/discord/continue')
             ->assertRedirect()->headers->get('Location');
         $this->assertStringStartsWith('https://discord.com/oauth2/authorize?', $url);
@@ -240,17 +240,17 @@ class DiscordSocialAuthTest extends TestCase
         $this->delete('/account/security/social/discord')->assertSessionHasErrors('social');
         $this->assertDatabaseHas('user_social_accounts', ['user_id' => $user->id, 'provider' => 'discord']);
         $this->app['auth']->guard('web')->logout();
-        $this->get('/login')->assertOk()->assertSee('Continue with Discord');
+        $this->get('/login')->assertOk()->assertSee(__('Continue with :provider', ['provider' => 'Discord']));
         $start = $this->start();
         app(SocialAuthSettings::class)->setEnabled('discord', false);
-        $this->get('/login')->assertOk()->assertDontSee('Continue with Discord');
+        $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'Discord']));
         $this->get('/auth/social/discord')->assertNotFound();
         $this->get($this->callbackUrl($start))->assertRedirect(route('login'));
     }
 
     public function test_pending_discord_registration_cannot_be_consumed_by_other_provider(): void
     {
-        $this->callback(email: null)->assertRedirect(route('social.discord.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.discord.register'));
         $this->get('/auth/social/yandex/register')->assertRedirect(route('login'));
         $this->post('/auth/social/google/register', ['name' => 'wrong'])->assertForbidden();
         $this->assertDatabaseCount('users', 0);
@@ -282,7 +282,7 @@ class DiscordSocialAuthTest extends TestCase
         return '/auth/social/discord/callback?'.http_build_query($params);
     }
 
-    private function callback(?string $email, bool $verified = false)
+    private function oauthCallback(?string $email, bool $verified = false)
     {
         $start = $this->start();
         $this->fakeDiscord(email: $email, verified: $verified);

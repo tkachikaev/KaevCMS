@@ -123,8 +123,7 @@ final class VkIdentityProvider implements SocialIdentityProvider
     private function credentials(): array
     {
         $values = $this->settings->credentialsFor($this->name());
-        if (! is_array($values) || ! is_string($values['client_id'] ?? null)
-            || ! is_string($values['redirect_uri'] ?? null)) {
+        if (! is_array($values) || ! is_string($values['redirect_uri'] ?? null)) {
             throw new RuntimeException('VK ID provider is unavailable.');
         }
 

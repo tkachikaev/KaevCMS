@@ -3,10 +3,10 @@
 namespace App\Notifications;
 
 use App\Services\MailTemplateSettings;
-use Illuminate\Support\Facades\App;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\App;
 
 class PasswordChangedNotification extends Notification
 {

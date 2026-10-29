@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\Auth\Social\InvalidSocialPasswordResetToken;
-use App\Services\Auth\Social\SocialPasswordRecovery;
 use App\Notifications\PasswordChangedNotification;
 use App\Rules\PasswordWithinHasherLimit;
 use App\Services\AuditLogger;
+use App\Services\Auth\Social\InvalidSocialPasswordResetToken;
+use App\Services\Auth\Social\SocialPasswordRecovery;
 use App\Services\Mail\MailDeliveryDispatcher;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;

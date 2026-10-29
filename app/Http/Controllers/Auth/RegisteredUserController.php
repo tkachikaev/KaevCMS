@@ -60,7 +60,6 @@ class RegisteredUserController extends Controller
             'name' => Str::lower(trim((string) $validated['name'])),
             'email' => Str::lower(trim((string) $validated['email'])),
             'password' => Hash::make((string) $validated['password']),
-            'password_set_at' => now(),
             'locale' => app()->getLocale(),
         ]);
 
@@ -68,7 +67,7 @@ class RegisteredUserController extends Controller
             $user->markEmailAsVerified();
         }
 
-        $user->forceFill(['last_login_at' => now()])->save();
+        $user->forceFill(['last_login_at' => now(), 'password_set_at' => now()])->save();
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();

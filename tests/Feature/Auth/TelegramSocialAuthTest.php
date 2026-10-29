@@ -44,7 +44,7 @@ class TelegramSocialAuthTest extends TestCase
         if (app(TelegramIdTokenVerifier::class)->available()) {
             $this->markTestSkipped('Only applies before JWT verifier installation.');
         }
-        $this->get('/login')->assertOk()->assertDontSee('Continue with Telegram');
+        $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'Telegram']));
         $this->get('/auth/social/telegram')->assertNotFound();
         $this->get('/auth/social/telegram/callback?state=fake&code=fake')->assertRedirect(route('login'));
     }
@@ -158,7 +158,7 @@ class TelegramSocialAuthTest extends TestCase
         $this->fakeTelegram();
         $this->get('/auth/social/google/callback?'.http_build_query(['state' => $start['state'], 'code' => 'test-code']))
             ->assertRedirect(route('login'));
-        $this->get($this->callbackUrl($start))->assertRedirect(route('social.telegram.register'));
+        $this->get($this->callbackUrl($start))->assertRedirect(route('login'));
         $this->assertDatabaseCount('users', 0);
         $start = $this->start();
         $this->get($this->callbackUrl($start))->assertRedirect(route('social.telegram.register'));
@@ -173,7 +173,7 @@ class TelegramSocialAuthTest extends TestCase
         $this->post('/account/security/social/telegram/link', ['current_password' => 'wrong'])
             ->assertSessionHasErrors('social');
         $this->post('/account/security/social/telegram/link', ['current_password' => 'Secret123!'])
-            ->assertRedirect(route('security.social.telegram.continue'));
+            ->assertOk()->assertViewIs('auth.social-continue')->assertViewHas('continueUrl');
         $url = (string) $this->get('/account/security/social/telegram/continue')->assertRedirect()->headers->get('Location');
         $this->assertStringStartsWith('https://oauth.telegram.org/auth?', $url);
         parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
@@ -201,7 +201,10 @@ class TelegramSocialAuthTest extends TestCase
         {
             public function __construct(private readonly bool $reject) {}
 
-            public function available(): bool { return true; }
+            public function available(): bool
+            {
+                return true;
+            }
 
             public function verify(string $idToken, string $clientId, string $nonce): array
             {

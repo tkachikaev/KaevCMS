@@ -17,8 +17,8 @@ use App\Services\Auth\Social\SocialIdentityService;
 use App\Services\Auth\Social\SocialProviders;
 use App\Services\Auth\Social\SocialRegistrationSession;
 use App\Services\Auth\Social\TelegramIdentityProvider;
-use App\Services\Auth\Social\YandexIdentityProvider;
 use App\Services\Auth\Social\VkIdentityProvider;
+use App\Services\Auth\Social\YandexIdentityProvider;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Database\QueryException;
@@ -46,7 +46,7 @@ final class SocialOAuthController extends Controller
         return redirect()->away($this->client($request)->authorizationUrl($attempt->state, $attempt->codeChallenge, $attempt->nonce));
     }
 
-    public function startLink(Request $request, SocialAuthSettings $settings, SocialFlowState $flows): RedirectResponse
+    public function startLink(Request $request, SocialAuthSettings $settings, SocialFlowState $flows): View|RedirectResponse
     {
         abort_unless($settings->isAvailable($this->provider($request)), 404);
         $user = Auth::guard('web')->user();
@@ -56,14 +56,18 @@ final class SocialOAuthController extends Controller
         }
         $attempt = $flows->start($request, $this->provider($request), 'link', $user);
         $request->session()->put('social_auth.link_confirmed_at', now()->timestamp);
+        $authorizationUrl = $this->client($request)->authorizationUrl($attempt->state, $attempt->codeChallenge, $attempt->nonce);
         $request->session()->put('social_auth.'.$this->provider($request).'.continue', [
-            'url' => $this->client($request)->authorizationUrl($attempt->state, $attempt->codeChallenge, $attempt->nonce),
+            'url' => $authorizationUrl,
             'issued' => now()->timestamp,
         ]);
 
-        // A local GET hop prevents CSP form-action from treating the external redirect
-        // as a continuation of the local POST form submission.
-        return redirect()->route('security.social.'.$this->provider($request).'.continue');
+        // Finish the form submission locally. A fresh navigation starts the GET hop;
+        // a redirect chain alone is still subject to CSP form-action in Chromium.
+        return view('auth.social-continue', [
+            'continueUrl' => $authorizationUrl,
+            'continueLabel' => __('Continue with :provider', ['provider' => $settings->values($this->provider($request))['name']]),
+        ]);
     }
 
     public function continueLink(Request $request, SocialAuthSettings $settings): RedirectResponse
@@ -77,6 +81,7 @@ final class SocialOAuthController extends Controller
             SocialProviders::TELEGRAM => 'https://oauth.telegram.org/auth?',
             SocialProviders::DISCORD => 'https://discord.com/oauth2/authorize?',
             SocialProviders::FACEBOOK => 'https://www.facebook.com/v25.0/dialog/oauth?',
+            default => abort(404),
         };
         if (! is_array($data) || ! is_string($data['url'] ?? null)
             || ! str_starts_with($data['url'], $authorizePrefix)
@@ -153,7 +158,7 @@ final class SocialOAuthController extends Controller
 
             return redirect()->route('social.'.$this->provider($request).'.register');
         } catch (Throwable $exception) {
-            $request->session()->forget(['social_auth.link_confirmed_at', 'social_auth.registration']);
+            $request->session()->forget(['social_auth.pending', 'social_auth.link_confirmed_at', 'social_auth.registration']);
             $audit->failed('user', 'social.login_failed', null, __('Account area'), ['provider' => $this->provider($request), 'reason' => $exception::class]);
 
             return redirect()->to($link ? public_route('security.edit') : public_route('login'))
@@ -282,7 +287,7 @@ final class SocialOAuthController extends Controller
             return back()->withErrors(['social' => __('Confirm your identity before changing sign-in methods.')]);
         }
         try {
-            DB::transaction(function () use ($user, $settings): void {
+            DB::transaction(function () use ($user, $settings, $request): void {
                 $locked = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
                 $linked = $locked->socialAccounts()->where('provider', $this->provider($request))->first();
                 if ($linked === null) {
@@ -323,6 +328,7 @@ final class SocialOAuthController extends Controller
             SocialProviders::TELEGRAM => app(TelegramIdentityProvider::class),
             SocialProviders::DISCORD => app(DiscordIdentityProvider::class),
             SocialProviders::FACEBOOK => app(FacebookIdentityProvider::class),
+            default => abort(404),
         };
     }
 

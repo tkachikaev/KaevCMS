@@ -47,7 +47,7 @@ class FacebookSocialAuthTest extends TestCase
     {
         $user = User::factory()->create();
         $user->socialAccounts()->create(['provider' => 'facebook', 'provider_user_id' => self::SUBJECT]);
-        $this->callback(email: $user->email)->assertRedirect(route('account'));
+        $this->oauthCallback(email: $user->email)->assertRedirect(route('account'));
         $this->assertAuthenticatedAs($user, 'web');
         $this->assertGuest('admin');
     }
@@ -55,7 +55,7 @@ class FacebookSocialAuthTest extends TestCase
     public function test_matching_facebook_email_never_claims_existing_cms_account(): void
     {
         $victim = User::factory()->create(['email' => 'victim@example.test']);
-        $this->callback(email: 'victim@example.test')->assertRedirect(route('social.facebook.register'));
+        $this->oauthCallback(email: 'victim@example.test')->assertRedirect(route('social.facebook.register'));
         $this->assertDatabaseCount('users', 1);
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $victim->id, 'provider' => 'facebook']);
         $this->post('/auth/social/facebook/register', ['name' => 'notvictim'])->assertRedirect(route('login'));
@@ -64,7 +64,7 @@ class FacebookSocialAuthTest extends TestCase
 
     public function test_facebook_email_is_not_assured_and_requires_cms_verification(): void
     {
-        $this->callback(email: 'new@example.test')->assertRedirect(route('social.facebook.register'));
+        $this->oauthCallback(email: 'new@example.test')->assertRedirect(route('social.facebook.register'));
         $this->get('/auth/social/facebook/register')->assertOk()->assertSee('new@example.test');
         $this->post('/auth/social/facebook/register', ['name' => 'facebookplayer'])->assertRedirect(route('login'));
         $this->assertDatabaseCount('users', 0);
@@ -72,14 +72,14 @@ class FacebookSocialAuthTest extends TestCase
 
     public function test_missing_email_can_be_supplied_in_cms_registration_form(): void
     {
-        $this->callback(email: null)->assertRedirect(route('social.facebook.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.facebook.register'));
         $this->get('/auth/social/facebook/register')->assertOk();
         $this->assertDatabaseCount('users', 0);
     }
 
     public function test_verified_cms_email_creates_new_social_only_player(): void
     {
-        $this->callback(email: null)->assertRedirect(route('social.facebook.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.facebook.register'));
         $this->withSession(['social_auth.registration' => [
             'provider' => 'facebook', 'subject' => self::SUBJECT, 'email' => 'new@example.test',
             'assured' => true, 'issued' => now()->timestamp, 'email_verification_hash' => null,
@@ -104,7 +104,7 @@ class FacebookSocialAuthTest extends TestCase
         ]);
         $mail->markTested();
         Notification::fake();
-        $this->callback(email: null)->assertRedirect(route('social.facebook.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.facebook.register'));
         $this->post('/auth/social/facebook/email', ['email' => 'new@example.test'])
             ->assertRedirect(route('social.facebook.register'));
         $url = null;
@@ -218,7 +218,7 @@ class FacebookSocialAuthTest extends TestCase
         $this->post('/account/security/social/facebook/link', ['current_password' => 'wrong'])
             ->assertSessionHasErrors('social');
         $this->post('/account/security/social/facebook/link', ['current_password' => 'MySecret123!'])
-            ->assertRedirect(route('security.social.facebook.continue'));
+            ->assertOk()->assertViewIs('auth.social-continue')->assertViewHas('continueUrl');
         $url = (string) $this->get('/account/security/social/facebook/continue')->assertRedirect()->headers->get('Location');
         $this->assertStringStartsWith('https://www.facebook.com/v25.0/dialog/oauth?', $url);
         $this->fakeFacebook();
@@ -241,17 +241,17 @@ class FacebookSocialAuthTest extends TestCase
         $this->delete('/account/security/social/facebook')->assertSessionHasErrors('social');
         $this->assertDatabaseHas('user_social_accounts', ['user_id' => $user->id, 'provider' => 'facebook']);
         $this->app['auth']->guard('web')->logout();
-        $this->get('/login')->assertOk()->assertSee('Continue with Facebook');
+        $this->get('/login')->assertOk()->assertSee(__('Continue with :provider', ['provider' => 'Facebook']));
         $start = $this->start();
         app(SocialAuthSettings::class)->setEnabled('facebook', false);
-        $this->get('/login')->assertOk()->assertDontSee('Continue with Facebook');
+        $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'Facebook']));
         $this->get('/auth/social/facebook')->assertNotFound();
         $this->get($this->callbackUrl($start))->assertRedirect(route('login'));
     }
 
     public function test_pending_facebook_registration_cannot_be_used_for_google_or_discord(): void
     {
-        $this->callback(email: null)->assertRedirect(route('social.facebook.register'));
+        $this->oauthCallback(email: null)->assertRedirect(route('social.facebook.register'));
         $this->get('/auth/social/google/register')->assertRedirect(route('login'));
         $this->post('/auth/social/discord/register', ['name' => 'other'])->assertForbidden();
         $this->assertDatabaseCount('users', 0);
@@ -278,7 +278,7 @@ class FacebookSocialAuthTest extends TestCase
         return '/auth/social/facebook/callback?'.http_build_query(['code' => 'test-code', 'state' => $start['state']]);
     }
 
-    private function callback(?string $email)
+    private function oauthCallback(?string $email)
     {
         $start = $this->start();
         $this->fakeFacebook(email: $email);

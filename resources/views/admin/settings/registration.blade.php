@@ -6,7 +6,7 @@
 @section('content')
 @include('admin.settings._system_tabs')
 
-<form class="settings-form" method="POST" action="{{ route('admin.settings.registration.update') }}">
+<form id="registration-settings-form" class="settings-form" method="POST" action="{{ route('admin.settings.registration.update') }}">
     @csrf
     @method('PUT')
 
@@ -95,9 +95,6 @@
         @endforeach
     </section>
 
-    <div class="admin-actions-panel settings-actions settings-actions-narrow">
-        <button class="button button-primary" type="submit">{{ __('Save settings') }}</button>
-    </div>
 </form>
 
 <section class="form-card settings-narrow-card social-auth-settings" aria-labelledby="social-auth-title">
@@ -108,9 +105,6 @@
         </div>
     </div>
 
-    <div class="notice notice-info settings-inline-notice">
-        <p>{{ __('Social sign-in buttons and callbacks will be connected in the next development iterations. Saving credentials does not test the external provider.') }}</p>
-    </div>
     @unless($mailReady)
         <div class="notice notice-warning settings-inline-notice">
             <p>{{ __('Email delivery is not verified. Players who register through social services may be unable to verify their email or recover access.') }}</p>
@@ -124,7 +118,6 @@
                     <span class="social-provider-mark social-provider-mark-{{ $provider }}" aria-hidden="true">{{ ['google' => 'G', 'yandex' => 'Я', 'vk' => 'VK', 'telegram' => 'T', 'discord' => 'D', 'facebook' => 'f'][$provider] }}</span>
                     <span class="social-provider-copy">
                         <strong>{{ $social['name'] }}</strong>
-                        <small>{{ $social['enabled'] && $social['available'] ? __('Sign-in enabled') : __('Sign-in disabled') }}</small>
                     </span>
                     <span @class([
                         'status-badge',
@@ -140,23 +133,26 @@
                     ][$social['status']]) }}</span>
                 </div>
 
-                @if($provider === 'telegram' && ! $social['integration_ready'])
-                    <p class="muted-admin">{{ __('Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.') }}</p>
-                @endif
                 <div class="social-provider-quick-actions">
-                    <form method="POST" action="{{ route('admin.settings.registration.social.toggle', ['provider' => $provider]) }}">
+                    <button type="button" class="button button-secondary" data-social-open="social-{{ $provider }}" aria-haspopup="dialog">{{ __('Configure') }}</button>
+                    <form method="POST" action="{{ route('admin.settings.registration.social.toggle', ['provider' => $provider]) }}" data-social-toggle>
                         @csrf
-                        <input type="hidden" name="enabled" value="{{ $social['enabled'] ? '0' : '1' }}">
-                        <button type="submit" class="button {{ $social['enabled'] ? 'button-secondary' : 'button-primary' }}" @disabled(! $social['enabled'] && (! $social['configured'] || ! $social['integration_ready']))>
-                            {{ $social['enabled'] ? __('Disable sign-in') : __('Enable sign-in') }}
-                        </button>
+                        <x-admin.toggle :id="'social-enabled-'.$provider" name="enabled" :label="__('Enable sign-in')" :checked="$social['enabled']" :disabled="! $social['enabled'] && (! $social['configured'] || ! $social['integration_ready'])" :compact="true" />
                     </form>
-                    <details class="social-provider-details" id="social-{{ $provider }}">
-                        <summary class="button button-secondary">{{ __('Configure') }}</summary>
+                </div>
+                <dialog class="social-provider-dialog" id="social-{{ $provider }}" aria-labelledby="social-title-{{ $provider }}" data-social-dialog data-open-on-error="{{ $errors->any() && old('_social_provider') === $provider ? '1' : '0' }}">
+                    <header class="social-provider-dialog-heading">
+                        <h2 id="social-title-{{ $provider }}">{{ $social['name'] }}</h2>
+                        <button type="button" class="button button-secondary" data-social-close aria-label="{{ __('Close') }}">×</button>
+                    </header>
+                    @if($provider === 'telegram' && ! $social['integration_ready'])
+                        <p class="notice notice-warning">{{ __('Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.') }}</p>
+                    @endif
                         <div class="social-provider-form-wrap">
                             <form method="POST" action="{{ route('admin.settings.registration.social.update', ['provider' => $provider]) }}" autocomplete="off">
                                 @csrf
                                 @method('PUT')
+                                <input type="hidden" name="_social_provider" value="{{ $provider }}">
                                 <div class="form-group">
                                     <label for="social-client-{{ $provider }}">{{ $provider === 'vk' ? __('Application ID (VK ID)') : ($provider === 'telegram' ? __('Client ID (BotFather)') : __('Client ID / App ID')) }}</label>
                                     <input id="social-client-{{ $provider }}" name="client_id" type="text" required maxlength="255" value="{{ $social['client_id'] }}" autocomplete="off" spellcheck="false">
@@ -196,11 +192,13 @@
                             @endif
                             <p class="muted-admin">{{ __('Changing the Client ID disables sign-in until it is enabled again. Existing player links are never deleted.') }}</p>
                         </div>
-                    </details>
-                </div>
+                </dialog>
             </div>
         @endforeach
     </div>
 </section>
+<div class="admin-actions-panel settings-actions settings-actions-narrow">
+    <button class="button button-primary" type="submit" form="registration-settings-form">{{ __('Save settings') }}</button>
+</div>
 <script src="{{ asset('assets/admin/js/social-providers.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
 @endsection

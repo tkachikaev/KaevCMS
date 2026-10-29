@@ -4,12 +4,15 @@ namespace Tests\Feature\Admin;
 
 use App\Auth\AdminRole;
 use App\Models\Admin;
+use App\Models\AuditLog;
 use App\Models\CmsSetting;
 use App\Models\User;
+use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\Auth\Social\SocialIdentity;
 use App\Services\Auth\Social\SocialIdentityService;
-use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\Auth\Social\SocialProviders;
+use App\Services\Auth\Social\TelegramIdTokenVerifier;
+use App\Services\CmsSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +26,19 @@ class SocialProviderSettingsTest extends TestCase
     {
         parent::setUp();
         config()->set('app.url', 'https://cms.example.test');
+    }
+
+    public function test_implemented_providers_report_that_social_sign_in_is_enabled(): void
+    {
+        $admin = $this->admin();
+        foreach (['discord', 'facebook'] as $provider) {
+            $settings = app(SocialAuthSettings::class);
+            $settings->updateCredentials($provider, 'test-client', 'test-secret');
+            $this->actingAs($admin, 'admin')
+                ->post('/admin/settings/registration/social/'.$provider.'/toggle', ['enabled' => '1'])
+                ->assertRedirect()
+                ->assertSessionHas('status', __('Social sign-in provider enabled.'));
+        }
     }
 
     public function test_all_six_providers_start_disabled_and_are_visible_on_existing_registration_page(): void
@@ -64,7 +80,7 @@ class SocialProviderSettingsTest extends TestCase
             ])->assertRedirect();
         $this->assertSame($encrypted, CmsSetting::query()->where('key', 'social_auth.google.client_secret_encrypted')->value('value'));
         $this->assertDatabaseHas('audit_logs', ['action' => 'settings.social_provider_updated', 'result' => 'success']);
-        $this->assertStringNotContainsString('UltraSensitivePassword#123', \App\Models\AuditLog::query()->get()->toJson());
+        $this->assertStringNotContainsString('UltraSensitivePassword#123', AuditLog::query()->get()->toJson());
     }
 
     public function test_validation_failure_does_not_flash_plaintext_secret_to_session(): void
@@ -120,10 +136,13 @@ class SocialProviderSettingsTest extends TestCase
     public function test_invalid_ciphertext_and_insecure_app_url_fail_closed(): void
     {
         // Simulate an installed verifier so this test isolates the encryption failure.
-        $this->app->instance(\App\Services\Auth\Social\TelegramIdTokenVerifier::class,
-            new class extends \App\Services\Auth\Social\TelegramIdTokenVerifier
+        $this->app->instance(TelegramIdTokenVerifier::class,
+            new class extends TelegramIdTokenVerifier
             {
-                public function available(): bool { return true; }
+                public function available(): bool
+                {
+                    return true;
+                }
             });
         $admin = $this->admin();
         $this->actingAs($admin, 'admin')->put('/admin/settings/registration/social/telegram', [
@@ -133,7 +152,7 @@ class SocialProviderSettingsTest extends TestCase
             ->assertRedirect();
 
         CmsSetting::query()->where('key', 'social_auth.telegram.client_secret_encrypted')->update(['value' => 'corrupted']);
-        app(\App\Services\CmsSettings::class)->forget();
+        app(CmsSettings::class)->forget();
         $this->assertFalse(app(SocialAuthSettings::class)->isAvailable('telegram'));
         $this->assertSame('invalid', app(SocialAuthSettings::class)->values('telegram')['status']);
 
