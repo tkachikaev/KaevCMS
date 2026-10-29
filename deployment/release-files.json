@@ -111,6 +111,7 @@
     "app/Providers/ModuleServiceProvider.php",
     "app/Providers/ThemeServiceProvider.php",
     "app/Services/Account/WalletHistory.php",
+    "app/Services/Auth/Social/DiscordIdentityProvider.php",
     "app/Services/Auth/Social/GoogleIdentityProvider.php",
     "app/Services/Auth/Social/InvalidSocialPasswordResetToken.php",
     "app/Services/Auth/Social/SocialAccountConflict.php",

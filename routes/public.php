@@ -103,7 +103,7 @@ Route::post('/payments/paypal/notify', PayPalNotificationController::class)
 
 // Exact non-localized OAuth callbacks registered at Google and Yandex.
 // These actions only use the website `web` guard; admin login remains separate.
-foreach (['google', 'yandex', 'vk', 'telegram'] as $provider) {
+foreach (['google', 'yandex', 'vk', 'telegram', 'discord'] as $provider) {
     Route::get('/auth/social/'.$provider, [SocialOAuthController::class, 'start'])
         ->middleware(['guest:web', 'throttle:15,1'])->defaults('social_provider', $provider)->name('social.'.$provider.'.start');
     Route::get('/auth/social/'.$provider.'/callback', [SocialOAuthController::class, 'callback'])

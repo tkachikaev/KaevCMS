@@ -33,7 +33,7 @@ $registerAccountRoutes = static function (bool $localized = false): void {
             Route::get('/account', AccountController::class)->name($namePrefix.'account');
             Route::get('/account/profile', [ProfileController::class, 'edit'])
                 ->name($namePrefix.'profile.edit');
-            foreach (['google', 'yandex', 'vk', 'telegram'] as $provider) {
+            foreach (['google', 'yandex', 'vk', 'telegram', 'discord'] as $provider) {
                 Route::get('/account/security/social/'.$provider.'/continue', [SocialOAuthController::class, 'continueLink'])
                     ->middleware('throttle:8,1')->defaults('social_provider', $provider)->name($namePrefix.'security.social.'.$provider.'.continue');
                 Route::post('/account/security/social/'.$provider.'/link', [SocialOAuthController::class, 'startLink'])

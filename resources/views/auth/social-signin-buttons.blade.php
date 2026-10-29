@@ -1,5 +1,5 @@
 @php
-    $availableSocialMethods = collect(['google' => ['name' => 'Google', 'mark' => 'G'], 'yandex' => ['name' => 'Яндекс ID', 'mark' => 'Я'], 'vk' => ['name' => 'VK ID', 'mark' => 'VK'], 'telegram' => ['name' => 'Telegram', 'mark' => 'T']])
+    $availableSocialMethods = collect(['google' => ['name' => 'Google', 'mark' => 'G'], 'yandex' => ['name' => 'Яндекс ID', 'mark' => 'Я'], 'vk' => ['name' => 'VK ID', 'mark' => 'VK'], 'telegram' => ['name' => 'Telegram', 'mark' => 'T'], 'discord' => ['name' => 'Discord', 'mark' => 'D']])
         ->filter(fn (array $method, string $provider) => app(\App\Services\Auth\Social\SocialAuthSettings::class)->isAvailable($provider));
 @endphp
 @if ($availableSocialMethods->isNotEmpty())

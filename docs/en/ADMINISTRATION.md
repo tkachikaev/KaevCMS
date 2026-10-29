@@ -89,3 +89,12 @@ Telegram OIDC does **not** provide an email address. First-time players enter an
 **Iteration 6 limitation:** the currently approved `composer.lock` has no JWT/JWKS verification library. The dependency guard prohibits installing one without owner approval. Telegram **cannot be enabled** until a vetted library is approved and installed (fail-closed). Code is prepared for maintained `firebase/php-jwt` v6 (`Firebase\JWT\JWT` + `JWK`), but no dependency was changed. Once approved, validate RS256 signatures using Telegram's fixed JWKS and claims `iss/aud/azp/exp/iat/nonce`, test rejection of other algorithms and perform a real HTTPS callback test. Configure **RS256** in BotFather.
 
 Official documentation: https://core.telegram.org/bots/telegram-login
+
+
+## Discord sign-in (iteration 7)
+
+On **Admin → Settings → Registration → Social sign-in**, open Discord. Create a web application in [Discord Developer Portal](https://discord.com/developers/applications), register the exact redirect URL shown by KaevCMS under OAuth2 → Redirects, then save Client ID and Client Secret. Enable Discord separately. Use HTTPS in production and `identify` + `email` scopes only. Discord may return `email: null`, and a verified Discord email is **not** automatically trusted for CMS registration: the player must confirm an email using a KaevCMS message before choosing a username. Keep mail delivery configured.
+
+Existing players can link or unlink Discord under **Account → Security** after confirming their identity. One Discord user can belong to only one CMS account; no email-based auto-linking. The authorization flow verifies `state`, PKCE S256 and Discord `iss`, exchanges the code server-side, then requests `/users/@me`. No Bot permissions or guild access are required. Disabling Discord leaves existing links stored. Test the real flow on a dedicated HTTPS test installation before production.
+
+Official reference: https://github.com/discord/discord-api-docs/blob/main/developers/topics/oauth2.mdx

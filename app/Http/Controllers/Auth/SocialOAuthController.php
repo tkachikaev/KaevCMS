@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\SocialRegistrationEmailVerification;
 use App\Services\AuditLogger;
+use App\Services\Auth\Social\DiscordIdentityProvider;
 use App\Services\Auth\Social\GoogleIdentityProvider;
 use App\Services\Auth\Social\SocialAccountConflict;
 use App\Services\Auth\Social\SocialAuthSettings;
@@ -72,7 +73,8 @@ final class SocialOAuthController extends Controller
             || ! str_starts_with($data['url'], $this->provider($request) === SocialProviders::GOOGLE
                 ? 'https://accounts.google.com/o/oauth2/v2/auth?' : ($this->provider($request) === SocialProviders::YANDEX
                     ? 'https://oauth.yandex.ru/authorize?' : ($this->provider($request) === SocialProviders::TELEGRAM
-                        ? 'https://oauth.telegram.org/auth?' : 'https://id.vk.ru/authorize?')))
+                        ? 'https://oauth.telegram.org/auth?' : ($this->provider($request) === SocialProviders::DISCORD
+                            ? 'https://discord.com/oauth2/authorize?' : 'https://id.vk.ru/authorize?'))))
             || ! is_int($data['issued'] ?? null) || $data['issued'] > now()->timestamp
             || now()->timestamp - $data['issued'] > 60) {
             return redirect()->to(public_route('security.edit'))
@@ -300,7 +302,7 @@ final class SocialOAuthController extends Controller
     private function provider(Request $request): string
     {
         $provider = $request->route('social_provider');
-        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK, SocialProviders::TELEGRAM], true)) {
+        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK, SocialProviders::TELEGRAM, SocialProviders::DISCORD], true)) {
             abort(404);
         }
 
@@ -314,6 +316,7 @@ final class SocialOAuthController extends Controller
             SocialProviders::YANDEX => app(YandexIdentityProvider::class),
             SocialProviders::VK => app(VkIdentityProvider::class),
             SocialProviders::TELEGRAM => app(TelegramIdentityProvider::class),
+            SocialProviders::DISCORD => app(DiscordIdentityProvider::class),
         };
     }
 
@@ -335,7 +338,7 @@ final class SocialOAuthController extends Controller
             $data = $request->query();
         }
         $callback = [];
-        foreach (['state', 'code', 'device_id', 'error'] as $key) {
+        foreach (['state', 'code', 'device_id', 'error', 'iss'] as $key) {
             if (array_key_exists($key, $data)) {
                 if (! is_string($data[$key]) || strlen($data[$key]) > 4096) {
                     throw new RuntimeException('Invalid authorization parameter.');

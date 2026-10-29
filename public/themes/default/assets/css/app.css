@@ -410,3 +410,8 @@
 .social-provider-telegram { background: #fff; color: #253449; border-color: #bfd9ed; }
 .social-provider-telegram:hover, .social-provider-telegram:focus-visible { background: #eef8ff; color: #253449; }
 .social-provider-mark-telegram { color: #229ed9; font-size: 18px; }
+
+/* Discord social sign-in */
+.social-provider-discord { background: #5865f2; color: #fff; border-color: #4752c4; }
+.social-provider-discord:hover, .social-provider-discord:focus-visible { background: #4752c4; color: #fff; }
+.social-provider-mark-discord { color: #fff; font-size: 18px; }
