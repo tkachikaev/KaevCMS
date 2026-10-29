@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\SocialRegistrationEmailVerification;
 use App\Services\AuditLogger;
 use App\Services\Auth\Social\DiscordIdentityProvider;
+use App\Services\Auth\Social\FacebookIdentityProvider;
 use App\Services\Auth\Social\GoogleIdentityProvider;
 use App\Services\Auth\Social\SocialAccountConflict;
 use App\Services\Auth\Social\SocialAuthSettings;
@@ -69,12 +70,16 @@ final class SocialOAuthController extends Controller
     {
         abort_unless($settings->isAvailable($this->provider($request)) && Auth::guard('web')->check(), 403);
         $data = $request->session()->pull('social_auth.'.$this->provider($request).'.continue');
+        $authorizePrefix = match ($this->provider($request)) {
+            SocialProviders::GOOGLE => 'https://accounts.google.com/o/oauth2/v2/auth?',
+            SocialProviders::YANDEX => 'https://oauth.yandex.ru/authorize?',
+            SocialProviders::VK => 'https://id.vk.ru/authorize?',
+            SocialProviders::TELEGRAM => 'https://oauth.telegram.org/auth?',
+            SocialProviders::DISCORD => 'https://discord.com/oauth2/authorize?',
+            SocialProviders::FACEBOOK => 'https://www.facebook.com/v25.0/dialog/oauth?',
+        };
         if (! is_array($data) || ! is_string($data['url'] ?? null)
-            || ! str_starts_with($data['url'], $this->provider($request) === SocialProviders::GOOGLE
-                ? 'https://accounts.google.com/o/oauth2/v2/auth?' : ($this->provider($request) === SocialProviders::YANDEX
-                    ? 'https://oauth.yandex.ru/authorize?' : ($this->provider($request) === SocialProviders::TELEGRAM
-                        ? 'https://oauth.telegram.org/auth?' : ($this->provider($request) === SocialProviders::DISCORD
-                            ? 'https://discord.com/oauth2/authorize?' : 'https://id.vk.ru/authorize?'))))
+            || ! str_starts_with($data['url'], $authorizePrefix)
             || ! is_int($data['issued'] ?? null) || $data['issued'] > now()->timestamp
             || now()->timestamp - $data['issued'] > 60) {
             return redirect()->to(public_route('security.edit'))
@@ -302,7 +307,7 @@ final class SocialOAuthController extends Controller
     private function provider(Request $request): string
     {
         $provider = $request->route('social_provider');
-        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK, SocialProviders::TELEGRAM, SocialProviders::DISCORD], true)) {
+        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK, SocialProviders::TELEGRAM, SocialProviders::DISCORD, SocialProviders::FACEBOOK], true)) {
             abort(404);
         }
 
@@ -317,6 +322,7 @@ final class SocialOAuthController extends Controller
             SocialProviders::VK => app(VkIdentityProvider::class),
             SocialProviders::TELEGRAM => app(TelegramIdentityProvider::class),
             SocialProviders::DISCORD => app(DiscordIdentityProvider::class),
+            SocialProviders::FACEBOOK => app(FacebookIdentityProvider::class),
         };
     }
 

@@ -98,3 +98,14 @@ On **Admin → Settings → Registration → Social sign-in**, open Discord. Cre
 Existing players can link or unlink Discord under **Account → Security** after confirming their identity. One Discord user can belong to only one CMS account; no email-based auto-linking. The authorization flow verifies `state`, PKCE S256 and Discord `iss`, exchanges the code server-side, then requests `/users/@me`. No Bot permissions or guild access are required. Disabling Discord leaves existing links stored. Test the real flow on a dedicated HTTPS test installation before production.
 
 Official reference: https://github.com/discord/discord-api-docs/blob/main/developers/topics/oauth2.mdx
+
+
+## Facebook sign-in (iteration 8)
+
+In **Admin → Settings → Registration → Social sign-in → Facebook**, create an app on [Meta for Developers](https://developers.facebook.com/apps/), configure **Facebook Login** for the web, and register the exact KaevCMS callback under **Valid OAuth Redirect URIs**. Save the **App ID** as Client ID and **App Secret** as Client Secret, then explicitly enable the provider. For public access, the Meta app must be Live and have the necessary permissions, including `email`; Development mode usually restricts login to app roles. Production requires HTTPS `APP_URL`.
+
+KaevCMS requests only email permission and retrieves `id,name,email` through Graph API. Identity is bound to the app-scoped **Facebook user ID**, never email. Meta can omit email even if the permission was requested. **Every new registration** must confirm its email with a KaevCMS message first; players can enter an email if Meta returns none. Configure mail delivery. Email matches never auto-link existing users. Players can connect or disconnect Facebook under **Account → Security** after confirming their identity. Disabling Facebook preserves existing links.
+
+The server-side Authorization Code flow uses a session-bound single-use `state` and a server-held App Secret. **PKCE is not claimed for this Facebook web endpoint**. Provider tokens are not stored. Test a real Meta app on a dedicated HTTPS installation, then run full QA before production.
+
+Meta reference: https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/
