@@ -119,6 +119,12 @@ class SocialProviderSettingsTest extends TestCase
 
     public function test_invalid_ciphertext_and_insecure_app_url_fail_closed(): void
     {
+        // Simulate an installed verifier so this test isolates the encryption failure.
+        $this->app->instance(\App\Services\Auth\Social\TelegramIdTokenVerifier::class,
+            new class extends \App\Services\Auth\Social\TelegramIdTokenVerifier
+            {
+                public function available(): bool { return true; }
+            });
         $admin = $this->admin();
         $this->actingAs($admin, 'admin')->put('/admin/settings/registration/social/telegram', [
             'client_id' => 'telegram-app', 'client_secret' => 'correct-secret',

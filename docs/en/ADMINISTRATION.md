@@ -78,3 +78,14 @@ Under **Admin → Settings → Registration → Social authentication**, open **
 KaevCMS uses the **new** VK ID (`id.vk.ru`), not legacy `oauth.vk.com`. The callback's `device_id` and PKCE S256 are required; no web SDK or CDN is needed. Email must **always be verified using a CMS message** before registering a new user. A matching email never automatically links accounts. Existing users connect VK ID through **Account → Security**, after step-up verification. Disabling VK ID leaves existing links intact.
 
 **Note:** applications requiring `service_token` need a separately approved server configuration; this implementation supports the standard PKCE web flow without it. Verify a real callback and browser behavior against an isolated HTTPS site before enabling production sign-in.
+
+
+## Telegram sign-in (iteration 6: integration staged, pending approved JWT library)
+
+In **Admin → Settings → Registration → Social authentication**, open Telegram. Create a bot using [@BotFather](https://t.me/BotFather) and register both your origin and the exact CMS Callback URL under **Login Widget**. Enter **Client ID** and **Client Secret** in KaevCMS. Production requires an HTTPS `APP_URL`. The integration requests `openid profile` with Authorization Code + PKCE S256; it never requests message access or phone numbers and does not use the legacy iframe/HMAC widget.
+
+Telegram OIDC does **not** provide an email address. First-time players enter an email and verify it through KaevCMS before choosing a username. Existing players can link Telegram under **Account → Security** after re-confirming their identity. Accounts are never automatically merged by email and only one Telegram identity can be linked per CMS user.
+
+**Iteration 6 limitation:** the currently approved `composer.lock` has no JWT/JWKS verification library. The dependency guard prohibits installing one without owner approval. Telegram **cannot be enabled** until a vetted library is approved and installed (fail-closed). Code is prepared for maintained `firebase/php-jwt` v6 (`Firebase\JWT\JWT` + `JWK`), but no dependency was changed. Once approved, validate RS256 signatures using Telegram's fixed JWKS and claims `iss/aud/azp/exp/iat/nonce`, test rejection of other algorithms and perform a real HTTPS callback test. Configure **RS256** in BotFather.
+
+Official documentation: https://core.telegram.org/bots/telegram-login

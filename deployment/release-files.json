@@ -123,6 +123,8 @@
     "app/Services/Auth/Social/SocialPasswordRecovery.php",
     "app/Services/Auth/Social/SocialProviders.php",
     "app/Services/Auth/Social/SocialRegistrationSession.php",
+    "app/Services/Auth/Social/TelegramIdTokenVerifier.php",
+    "app/Services/Auth/Social/TelegramIdentityProvider.php",
     "app/Services/Auth/Social/VkIdentityProvider.php",
     "app/Services/Auth/Social/YandexIdentityProvider.php",
     "app/Services/Diagnostics/DiagnosticPackageBuilder.php",

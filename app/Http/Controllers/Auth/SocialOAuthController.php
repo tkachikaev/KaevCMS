@@ -14,6 +14,7 @@ use App\Services\Auth\Social\SocialIdentityProvider;
 use App\Services\Auth\Social\SocialIdentityService;
 use App\Services\Auth\Social\SocialProviders;
 use App\Services\Auth\Social\SocialRegistrationSession;
+use App\Services\Auth\Social\TelegramIdentityProvider;
 use App\Services\Auth\Social\YandexIdentityProvider;
 use App\Services\Auth\Social\VkIdentityProvider;
 use App\Services\MailSettings;
@@ -70,7 +71,8 @@ final class SocialOAuthController extends Controller
         if (! is_array($data) || ! is_string($data['url'] ?? null)
             || ! str_starts_with($data['url'], $this->provider($request) === SocialProviders::GOOGLE
                 ? 'https://accounts.google.com/o/oauth2/v2/auth?' : ($this->provider($request) === SocialProviders::YANDEX
-                    ? 'https://oauth.yandex.ru/authorize?' : 'https://id.vk.ru/authorize?'))
+                    ? 'https://oauth.yandex.ru/authorize?' : ($this->provider($request) === SocialProviders::TELEGRAM
+                        ? 'https://oauth.telegram.org/auth?' : 'https://id.vk.ru/authorize?')))
             || ! is_int($data['issued'] ?? null) || $data['issued'] > now()->timestamp
             || now()->timestamp - $data['issued'] > 60) {
             return redirect()->to(public_route('security.edit'))
@@ -298,7 +300,7 @@ final class SocialOAuthController extends Controller
     private function provider(Request $request): string
     {
         $provider = $request->route('social_provider');
-        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK], true)) {
+        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK, SocialProviders::TELEGRAM], true)) {
             abort(404);
         }
 
@@ -311,6 +313,7 @@ final class SocialOAuthController extends Controller
             SocialProviders::GOOGLE => app(GoogleIdentityProvider::class),
             SocialProviders::YANDEX => app(YandexIdentityProvider::class),
             SocialProviders::VK => app(VkIdentityProvider::class),
+            SocialProviders::TELEGRAM => app(TelegramIdentityProvider::class),
         };
     }
 

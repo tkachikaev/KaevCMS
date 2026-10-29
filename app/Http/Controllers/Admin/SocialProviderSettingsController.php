@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\ToggleSocialProviderRequest;
 use App\Services\AuditLogger;
 use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\Auth\Social\SocialProviders;
+use App\Services\Auth\Social\TelegramIdTokenVerifier;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 
@@ -50,6 +51,10 @@ final class SocialProviderSettingsController extends Controller
         try {
             $settings->setEnabled($provider, $enabled);
         } catch (DomainException) {
+            if ($provider === SocialProviders::TELEGRAM && ! app(TelegramIdTokenVerifier::class)->available()) {
+                return back()->withErrors(['enabled' => __('Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.')]);
+            }
+
             return back()->withErrors(['enabled' => __('Fill in the provider credentials and a valid HTTPS APP_URL first.')]);
         }
         $this->auditLogger->success(
@@ -60,7 +65,7 @@ final class SocialProviderSettingsController extends Controller
         );
 
         return $this->redirectWithStatus($enabled
-            ? (in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK], true)
+            ? (in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK, SocialProviders::TELEGRAM], true)
                 ? __('Social sign-in provider enabled.')
                 : __('Social sign-in provider enabled. The login integration is not yet implemented.'))
             : __('Social sign-in provider disabled. Existing player links are retained.'));

@@ -31,7 +31,7 @@ class SecurityController extends Controller
             'user' => $user,
             'passwordPolicy' => $this->registrationSettings->values(),
             'passwordRequirements' => $this->registrationSettings->passwordRequirements(),
-            'socialMethods' => collect(['google' => 'Google', 'yandex' => 'Яндекс ID', 'vk' => 'VK ID'])
+            'socialMethods' => collect(['google' => 'Google', 'yandex' => 'Яндекс ID', 'vk' => 'VK ID', 'telegram' => 'Telegram'])
                 ->map(fn (string $name, string $provider): array => [
                     'name' => $name,
                     'available' => app(SocialAuthSettings::class)->isAvailable($provider),

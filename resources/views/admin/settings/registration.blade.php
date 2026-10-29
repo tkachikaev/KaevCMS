@@ -129,21 +129,25 @@
                     <span @class([
                         'status-badge',
                         'status-badge-success' => $social['status'] === 'enabled',
-                        'status-badge-warning' => in_array($social['status'], ['invalid', 'ready'], true),
+                        'status-badge-warning' => in_array($social['status'], ['invalid', 'ready', 'pending'], true),
                         'status-badge-muted' => $social['status'] === 'unconfigured',
                     ])>{{ __([
                         'enabled' => 'Enabled',
                         'ready' => 'Ready to enable',
                         'invalid' => 'Configuration error',
+                        'pending' => 'JWT verification library required',
                         'unconfigured' => 'Not configured',
                     ][$social['status']]) }}</span>
                 </div>
 
+                @if($provider === 'telegram' && ! $social['integration_ready'])
+                    <p class="muted-admin">{{ __('Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.') }}</p>
+                @endif
                 <div class="social-provider-quick-actions">
                     <form method="POST" action="{{ route('admin.settings.registration.social.toggle', ['provider' => $provider]) }}">
                         @csrf
                         <input type="hidden" name="enabled" value="{{ $social['enabled'] ? '0' : '1' }}">
-                        <button type="submit" class="button {{ $social['enabled'] ? 'button-secondary' : 'button-primary' }}" @disabled(! $social['enabled'] && ! $social['configured'])>
+                        <button type="submit" class="button {{ $social['enabled'] ? 'button-secondary' : 'button-primary' }}" @disabled(! $social['enabled'] && (! $social['configured'] || ! $social['integration_ready']))>
                             {{ $social['enabled'] ? __('Disable sign-in') : __('Enable sign-in') }}
                         </button>
                     </form>

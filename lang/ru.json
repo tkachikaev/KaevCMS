@@ -3043,5 +3043,7 @@
     "Email confirmation expired. Start social sign-in again.": "Подтверждение почты истекло. Повторите вход через социальный сервис.",
     "An account already uses this email. Sign in normally or reset your password, then connect the provider in Security.": "Аккаунт с этой почтой уже существует. Войдите обычным способом или восстановите пароль, затем подключите социальный сервис в разделе «Безопасность».",
     "Set a password or connect another available sign-in method before disconnecting this provider.": "Перед отключением этого сервиса установите пароль или подключите другой доступный способ входа.",
-    "Social sign-in provider enabled.": "Социальный вход включён."
+    "Social sign-in provider enabled.": "Социальный вход включён.",
+    "JWT verification library required": "Требуется библиотека проверки JWT",
+    "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.": "Вход через Telegram нельзя включить до согласования и установки проверенной библиотеки JWT/JWKS."
 }

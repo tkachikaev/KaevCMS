@@ -1819,3 +1819,8 @@ html.ka-intro .page-content > *, html.ka-intro .auth-card { animation-delay: .5s
 .social-provider-vk:hover, .social-provider-vk:focus-visible { background: #f0f5ff; color: #202a3c; }
 .social-provider-mark-vk { color: #0077ff; font-size: 18px; }
 @media (max-width: 600px) { .social-signin-options { display: flex; flex-direction: column; } .social-signin-options .social-google-button { width: 100%; } }
+
+/* Telegram social sign-in */
+.social-provider-telegram { background: #fff; color: #253449; border-color: #bfd9ed; }
+.social-provider-telegram:hover, .social-provider-telegram:focus-visible { background: #eef8ff; color: #253449; }
+.social-provider-mark-telegram { color: #229ed9; font-size: 18px; }

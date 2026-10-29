@@ -61,9 +61,10 @@ final class SocialAuthSettings
         $enabled = $data[$this->key($provider, 'enabled')] === '1';
         $requiresSecret = $provider !== SocialProviders::VK;
         $configured = $clientId !== '' && (! $requiresSecret || $secretValid) && $callback !== null;
-        $status = $enabled && $configured ? 'enabled' : (
-            $secretSaved && ! $secretValid ? 'invalid' : (
-                $enabled ? 'invalid' : ($configured ? 'ready' : 'unconfigured')
+        $integrationReady = $provider !== SocialProviders::TELEGRAM || app(TelegramIdTokenVerifier::class)->available();
+        $status = $secretSaved && ! $secretValid ? 'invalid' : (
+            $configured && ! $integrationReady ? 'pending' : (
+                $enabled && $configured ? 'enabled' : ($enabled ? 'invalid' : ($configured ? 'ready' : 'unconfigured'))
             )
         );
 
@@ -76,7 +77,8 @@ final class SocialAuthSettings
             'requires_secret' => $requiresSecret,
             'configured' => $configured,
             'enabled' => $enabled,
-            'available' => $enabled && $configured,
+            'integration_ready' => $integrationReady,
+            'available' => $enabled && $configured && $integrationReady,
             'status' => $status,
             'callback_url' => $callback,
         ];
@@ -140,7 +142,7 @@ final class SocialAuthSettings
     public function setEnabled(string $provider, bool $enabled): void
     {
         SocialProviders::assertAllowed($provider);
-        if ($enabled && ! $this->values($provider)['configured']) {
+        if ($enabled && (! $this->values($provider)['configured'] || ! $this->values($provider)['integration_ready'])) {
             throw new DomainException('Social login provider configuration is incomplete.');
         }
         $this->settings->set($this->key($provider, 'enabled'), $enabled ? '1' : '0');
