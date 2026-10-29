@@ -46,6 +46,9 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = $guard->user();
+        if ($user !== null) {
+            $request->session()->put('auth_session_version_web', (int) $user->auth_session_version);
+        }
         $user?->forceFill([
             'last_login_at' => now(),
             'locale' => app()->getLocale(),

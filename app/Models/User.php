@@ -37,7 +37,15 @@ class User extends Authenticatable implements MustVerifyEmail
             'locale' => 'string',
             'avatar_filename' => 'string',
             'password' => 'hashed',
+            'password_set_at' => 'datetime',
+            'auth_session_version' => 'integer',
         ];
+    }
+
+    /** @return HasMany<UserSocialAccount, $this> */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(UserSocialAccount::class);
     }
 
     /** @return HasOne<Wallet, $this> */

@@ -27,6 +27,8 @@
                 <input id="password_confirmation" name="password_confirmation" type="password" minlength="{{ $passwordPolicy['password_min'] }}" required autocomplete="new-password">
             </label>
 
+            <p class="auth-notice">{{ __('Resetting your password also disconnects all previously linked social sign-in methods.') }}</p>
+
             <button class="button button-gold" type="submit">{{ __('Save new password') }}</button>
         </form>
     </div>

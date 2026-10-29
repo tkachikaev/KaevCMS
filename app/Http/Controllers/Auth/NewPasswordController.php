@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Auth\Social\InvalidSocialPasswordResetToken;
+use App\Services\Auth\Social\SocialPasswordRecovery;
 use App\Notifications\PasswordChangedNotification;
 use App\Rules\PasswordWithinHasherLimit;
 use App\Services\AuditLogger;
@@ -13,7 +15,6 @@ use App\Services\RegistrationSettings;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -69,24 +70,23 @@ class NewPasswordController extends Controller
         ]);
 
         $changedUser = null;
-        $status = Password::reset(
-            $validated,
-            function (User $user, string $password) use ($auditLogger, &$changedUser): void {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
-
-                $changedUser = $user;
-                event(new PasswordReset($user));
-                $auditLogger->success(
-                    category: 'user',
-                    action: 'user.password_changed',
-                    actor: $user,
-                    target: $user,
-                );
-            }
-        );
+        try {
+            $status = Password::reset(
+                $validated,
+                function (User $user, string $password) use ($auditLogger, &$changedUser, $validated): void {
+                    $changedUser = app(SocialPasswordRecovery::class)->reset($user, $password, (string) $validated['token']);
+                    event(new PasswordReset($changedUser));
+                    $auditLogger->success(
+                        category: 'user',
+                        action: 'user.password_changed',
+                        actor: $changedUser,
+                        target: $changedUser,
+                    );
+                }
+            );
+        } catch (InvalidSocialPasswordResetToken) {
+            $status = Password::INVALID_TOKEN;
+        }
 
         if ($status !== Password::PASSWORD_RESET) {
             Log::warning('Password reset request was rejected.', [
@@ -100,7 +100,7 @@ class NewPasswordController extends Controller
 
         if ($changedUser instanceof User && $mailSettings->isReady()) {
             try {
-                $mailDelivery->send($changedUser, new PasswordChangedNotification, 'password_changed');
+                $mailDelivery->send($changedUser, new PasswordChangedNotification(true), 'password_changed');
                 $auditLogger->success(
                     category: 'mail',
                     action: 'mail.password_changed_sent',

@@ -7,6 +7,7 @@ use App\Services\MailTemplateSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\App;
 
 class ResetPasswordNotification extends Notification
 {
@@ -41,7 +42,7 @@ class ResetPasswordNotification extends Notification
 
         $templates = app(MailTemplateSettings::class);
 
-        return $templates->mailMessage(
+        $message = $templates->mailMessage(
             MailTemplateSettings::PASSWORD_RESET,
             $templates->userVariables($notifiable, [
                 'reset_url' => $url,
@@ -50,5 +51,15 @@ class ResetPasswordNotification extends Notification
             $url,
             $locale,
         );
+
+        $previousLocale = App::getLocale();
+        App::setLocale($locale);
+        try {
+            $message->line(e(__('Resetting your password also disconnects all previously linked social sign-in methods.')));
+        } finally {
+            App::setLocale($previousLocale);
+        }
+
+        return $message;
     }
 }

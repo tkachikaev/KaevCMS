@@ -37,6 +37,7 @@ class AccountPasswordChanger
 
         $user->forceFill([
             'password' => Hash::make($newPassword),
+            'password_set_at' => now(),
             'remember_token' => Str::random(60),
         ])->save();
 

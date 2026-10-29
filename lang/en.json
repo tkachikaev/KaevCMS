@@ -2957,5 +2957,7 @@
     "{1} :count payment|[2,*] :count payments": "{1} :count payment|[2,*] :count payments",
     "{1} :count reward delivery needs a decision|[2,*] :count reward deliveries need a decision": "{1} :count reward delivery needs a decision|[2,*] :count reward deliveries need a decision",
     "{1} :count support request is waiting|[2,*] :count support requests are waiting": "{1} :count support request is waiting|[2,*] :count support requests are waiting",
-    "{1} :count waiting|[2,*] :count waiting": "{1} :count waiting|[2,*] :count waiting"
+    "{1} :count waiting|[2,*] :count waiting": "{1} :count waiting|[2,*] :count waiting",
+    "Resetting your password also disconnects all previously linked social sign-in methods.": "Resetting your password also disconnects all previously linked social sign-in methods.",
+    "After password recovery, previously connected social sign-in methods were disconnected. Connect them again in your account settings.": "After password recovery, previously connected social sign-in methods were disconnected. Connect them again in your account settings."
 }

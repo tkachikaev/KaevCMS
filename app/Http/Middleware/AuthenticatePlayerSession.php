@@ -22,11 +22,18 @@ final class AuthenticatePlayerSession
 {
     private const SESSION_KEY = 'password_hash_web';
 
+    private const VERSION_KEY = 'auth_session_version_web';
+
     public function __construct(private readonly AuthFactory $auth) {}
 
     /** @param Closure(Request): Response $next */
     public function handle(Request $request, Closure $next): Response
     {
+        // Player session state must never interfere with the independent admin guard.
+        if ($request->routeIs('admin.*') && $this->auth->guard('admin')->check()) {
+            return $next($request);
+        }
+
         $guard = $this->auth->guard('web');
         if (! $request->hasSession() || ! $guard instanceof SessionGuard) {
             return $next($request);
@@ -49,6 +56,20 @@ final class AuthenticatePlayerSession
         }
 
         $session = $request->session();
+        $version = (int) $user->auth_session_version;
+        if (! $session->has(self::VERSION_KEY)) {
+            // A valid remember-cookie was checked above against the current password
+            // and remember_token. It can safely establish a new web session.
+            // Ordinary pre-upgrade sessions cannot silently adopt a new version.
+            if ($guard->viaRemember()) {
+                $session->put(self::VERSION_KEY, $version);
+            } else {
+                $this->signOut($request, $guard);
+            }
+        } elseif ((int) $session->get(self::VERSION_KEY) !== $version) {
+            $this->signOut($request, $guard);
+        }
+
         if (! $session->has(self::SESSION_KEY)) {
             // Sessions created before this protection existed adopt the current hash.
             $session->put(self::SESSION_KEY, $currentHash);
@@ -59,11 +80,13 @@ final class AuthenticatePlayerSession
         $response = $next($request);
 
         // Keep the current browser signed in after it changed the password itself.
-        $freshPassword = $guard->user()?->getAuthPassword();
+        $freshUser = $guard->user();
+        $freshPassword = $freshUser?->getAuthPassword();
         if (is_string($freshPassword) && $freshPassword !== '') {
             $session->put(self::SESSION_KEY, $guard->hashPasswordForCookie($freshPassword));
+            // Do not promote a stale session by refreshing the version here.
         } else {
-            $session->forget(self::SESSION_KEY);
+            $session->forget([self::SESSION_KEY, self::VERSION_KEY]);
         }
 
         return $response;
@@ -79,7 +102,7 @@ final class AuthenticatePlayerSession
     private function signOut(Request $request, SessionGuard $guard): never
     {
         $guard->logoutCurrentDevice();
-        $request->session()->forget(self::SESSION_KEY);
+        $request->session()->forget([self::SESSION_KEY, self::VERSION_KEY]);
         $request->session()->regenerateToken();
 
         throw new AuthenticationException('Unauthenticated.', ['web'], public_route('login'));

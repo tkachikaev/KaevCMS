@@ -1,0 +1,146 @@
+<?php
+
+namespace Tests\Feature\Auth;
+
+use App\Models\User;
+use App\Services\Auth\Social\SocialAccountConflict;
+use App\Services\Auth\Social\SocialFlowState;
+use App\Services\Auth\Social\SocialIdentity;
+use App\Services\Auth\Social\SocialIdentityService;
+use App\Services\Auth\Social\SocialIdentityProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use InvalidArgumentException;
+use RuntimeException;
+use Tests\TestCase;
+
+class SocialIdentityCoreTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_existing_accounts_have_password_and_unique_social_identities(): void
+    {
+        $first = User::factory()->create();
+        $second = User::factory()->create();
+
+        $this->assertNotNull($first->password_set_at);
+        $service = app(SocialIdentityService::class);
+        $google = new SocialIdentity('google', 'google-subject-123', $second->email, true, true);
+
+        $this->assertNull($service->findLinkedUser($google)); // Email is never an identity lookup.
+        $linked = $service->link($first, $google, (int) $first->auth_session_version);
+        $this->assertSame($first->id, $service->findLinkedUser($google)?->id);
+        $this->assertSame($linked->id, $service->link($first, $google, (int) $first->auth_session_version)->id);
+
+        $this->expectException(SocialAccountConflict::class);
+        $service->link($second, $google, (int) $second->auth_session_version);
+    }
+
+    public function test_player_may_link_only_one_identity_per_provider(): void
+    {
+        $user = User::factory()->create();
+        $service = app(SocialIdentityService::class);
+        $service->link($user, new SocialIdentity('discord', 'discord-one'), (int) $user->auth_session_version);
+        $this->expectException(SocialAccountConflict::class);
+        $service->link($user, new SocialIdentity('discord', 'discord-two'), (int) $user->auth_session_version);
+    }
+
+    public function test_mock_provider_fulfills_the_common_adapter_contract(): void
+    {
+        $adapter = new class implements SocialIdentityProvider
+        {
+            public function name(): string
+            {
+                return 'google';
+            }
+
+            public function authorizationUrl(string $state, ?string $codeChallenge, ?string $nonce): string
+            {
+                return 'https://accounts.example.test/oauth?'.http_build_query(['state' => $state, 'code_challenge' => $codeChallenge, 'nonce' => $nonce]);
+            }
+
+            public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce): SocialIdentity
+            {
+                if ($code !== 'valid-test-code') {
+                    throw new RuntimeException('Invalid test authorization code.');
+                }
+
+                return new SocialIdentity('google', 'stable-mock-subject', 'victim@example.com', true, false);
+            }
+        };
+
+        $identity = $adapter->verifyAuthorizationCode('valid-test-code', 'verifier', 'nonce');
+        $this->assertSame('google', $adapter->name());
+        $this->assertSame('stable-mock-subject', $identity->providerUserId);
+        $this->assertFalse($identity->emailOwnershipAssured);
+        $this->assertNull(app(SocialIdentityService::class)->findLinkedUser($identity));
+    }
+
+    public function test_provider_allowlist_rejects_unknown_services(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        new SocialIdentity('evil-provider', 'subject');
+    }
+
+    public function test_an_external_unverified_email_cannot_claim_assured_ownership(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        new SocialIdentity('google', 'subject', 'victim@example.com', false, true);
+    }
+
+    public function test_password_recovery_version_blocks_stale_social_link(): void
+    {
+        $user = User::factory()->create();
+        $before = (int) $user->auth_session_version;
+        $user->increment('auth_session_version');
+        $this->expectException(SocialAccountConflict::class);
+        app(SocialIdentityService::class)->link($user, new SocialIdentity('google', 'old-callback'), $before);
+    }
+
+    public function test_starting_new_social_flow_invalidates_first_tab_and_consumes_state_once(): void
+    {
+        $request = Request::create('/');
+        $request->setLaravelSession(app('session')->driver());
+        $flows = app(SocialFlowState::class);
+
+        $old = $flows->start($request, 'google', 'login');
+        $current = $flows->start($request, 'google', 'login');
+        $this->assertNotSame($old->state, $current->state);
+        try {
+            $flows->consume($request, 'google', $old->state);
+            $this->fail('The first tab should be invalidated.');
+        } catch (RuntimeException) {
+            // The old state was correctly rejected and the pending state consumed.
+        }
+
+        $this->expectException(RuntimeException::class);
+        $flows->consume($request, 'google', $current->state);
+    }
+
+    public function test_valid_social_flow_can_be_consumed_only_once(): void
+    {
+        $request = Request::create('/');
+        $request->setLaravelSession(app('session')->driver());
+        $flows = app(SocialFlowState::class);
+        $state = $flows->start($request, 'telegram', 'login');
+        $data = $flows->consume($request, 'telegram', $state->state);
+        $this->assertSame('telegram', $data['provider']);
+        $challenge = rtrim(strtr(base64_encode(hash('sha256', $data['code_verifier'], true)), '+/', '-_'), '=');
+        $this->assertSame($state->codeChallenge, $challenge);
+        $this->assertSame($state->nonce, $data['nonce']);
+        $this->expectException(RuntimeException::class);
+        $flows->consume($request, 'telegram', $state->state);
+    }
+
+    public function test_social_link_intent_fails_after_password_reset_session_bump(): void
+    {
+        $user = User::factory()->create();
+        $request = Request::create('/');
+        $request->setLaravelSession(app('session')->driver());
+        $flows = app(SocialFlowState::class);
+        $state = $flows->start($request, 'discord', 'link', $user);
+        $user->increment('auth_session_version');
+        $this->expectException(RuntimeException::class);
+        $flows->consume($request, 'discord', $state->state, $user);
+    }
+}

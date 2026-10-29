@@ -60,6 +60,7 @@ class RegisteredUserController extends Controller
             'name' => Str::lower(trim((string) $validated['name'])),
             'email' => Str::lower(trim((string) $validated['email'])),
             'password' => Hash::make((string) $validated['password']),
+            'password_set_at' => now(),
             'locale' => app()->getLocale(),
         ]);
 
@@ -71,6 +72,7 @@ class RegisteredUserController extends Controller
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        $request->session()->put('auth_session_version_web', (int) $user->auth_session_version);
 
         $auditLogger->success(
             category: 'user',

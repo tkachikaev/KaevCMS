@@ -2957,5 +2957,7 @@
     "{1} :count payment|[2,*] :count payments": ":count платёж|:count платежа|:count платежей",
     "{1} :count reward delivery needs a decision|[2,*] :count reward deliveries need a decision": ":count выдача награды ждёт решения|:count выдачи наград ждут решения|:count выдач наград ждут решения",
     "{1} :count support request is waiting|[2,*] :count support requests are waiting": ":count обращение ждёт ответа|:count обращения ждут ответа|:count обращений ждут ответа",
-    "{1} :count waiting|[2,*] :count waiting": ":count письмо ждёт|:count письма ждут|:count писем ждут"
+    "{1} :count waiting|[2,*] :count waiting": ":count письмо ждёт|:count письма ждут|:count писем ждут",
+    "Resetting your password also disconnects all previously linked social sign-in methods.": "Сброс пароля также отключит все ранее привязанные способы входа через социальные сервисы.",
+    "After password recovery, previously connected social sign-in methods were disconnected. Connect them again in your account settings.": "После восстановления пароля все социальные способы входа отключены. Привяжите их повторно в настройках аккаунта."
 }
