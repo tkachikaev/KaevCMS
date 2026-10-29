@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Concerns\InteractsWithSettingsAudit;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveRegistrationSettingsRequest;
 use App\Services\AuditLogger;
+use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Http\RedirectResponse;
@@ -17,11 +18,12 @@ class RegistrationSettingsController extends Controller
 
     public function __construct(private readonly AuditLogger $auditLogger) {}
 
-    public function registration(RegistrationSettings $registrationSettings, MailSettings $mailSettings): View
+    public function registration(RegistrationSettings $registrationSettings, MailSettings $mailSettings, SocialAuthSettings $socialAuthSettings): View
     {
         return view('admin.settings.registration', [
             'settings' => $registrationSettings->values(),
             'mailReady' => $mailSettings->isReady(),
+            'socialProviders' => $socialAuthSettings->all(),
         ]);
     }
 

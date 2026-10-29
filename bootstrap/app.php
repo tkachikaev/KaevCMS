@@ -68,6 +68,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
             'database_password',
             'game_password',
             'game_password_confirmation',
+            'client_secret',
             'current_password',
             'password',
             'password_confirmation',

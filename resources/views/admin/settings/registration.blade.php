@@ -99,4 +99,104 @@
         <button class="button button-primary" type="submit">{{ __('Save settings') }}</button>
     </div>
 </form>
+
+<section class="form-card settings-narrow-card social-auth-settings" aria-labelledby="social-auth-title">
+    <div class="settings-card-heading">
+        <div>
+            <h2 id="social-auth-title">{{ __('Social sign-in') }}</h2>
+            <p>{{ __('Configure which services players can use to sign in. Existing website passwords and administrator access are unchanged.') }}</p>
+        </div>
+    </div>
+
+    <div class="notice notice-info settings-inline-notice">
+        <p>{{ __('Social sign-in buttons and callbacks will be connected in the next development iterations. Saving credentials does not test the external provider.') }}</p>
+    </div>
+    @unless($mailReady)
+        <div class="notice notice-warning settings-inline-notice">
+            <p>{{ __('Email delivery is not verified. Players who register through social services may be unable to verify their email or recover access.') }}</p>
+        </div>
+    @endunless
+
+    <div class="social-provider-list">
+        @foreach($socialProviders as $provider => $social)
+            <div class="social-provider-item">
+                <div class="social-provider-head">
+                    <span class="social-provider-mark social-provider-mark-{{ $provider }}" aria-hidden="true">{{ ['google' => 'G', 'yandex' => 'Я', 'vk' => 'VK', 'telegram' => 'T', 'discord' => 'D', 'facebook' => 'f'][$provider] }}</span>
+                    <span class="social-provider-copy">
+                        <strong>{{ $social['name'] }}</strong>
+                        <small>{{ $social['enabled'] && $social['available'] ? __('Sign-in enabled') : __('Sign-in disabled') }}</small>
+                    </span>
+                    <span @class([
+                        'status-badge',
+                        'status-badge-success' => $social['status'] === 'enabled',
+                        'status-badge-warning' => in_array($social['status'], ['invalid', 'ready'], true),
+                        'status-badge-muted' => $social['status'] === 'unconfigured',
+                    ])>{{ __([
+                        'enabled' => 'Enabled',
+                        'ready' => 'Ready to enable',
+                        'invalid' => 'Configuration error',
+                        'unconfigured' => 'Not configured',
+                    ][$social['status']]) }}</span>
+                </div>
+
+                <div class="social-provider-quick-actions">
+                    <form method="POST" action="{{ route('admin.settings.registration.social.toggle', ['provider' => $provider]) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="{{ $social['enabled'] ? '0' : '1' }}">
+                        <button type="submit" class="button {{ $social['enabled'] ? 'button-secondary' : 'button-primary' }}" @disabled(! $social['enabled'] && ! $social['configured'])>
+                            {{ $social['enabled'] ? __('Disable sign-in') : __('Enable sign-in') }}
+                        </button>
+                    </form>
+                    <details class="social-provider-details" id="social-{{ $provider }}">
+                        <summary class="button button-secondary">{{ __('Configure') }}</summary>
+                        <div class="social-provider-form-wrap">
+                            <form method="POST" action="{{ route('admin.settings.registration.social.update', ['provider' => $provider]) }}" autocomplete="off">
+                                @csrf
+                                @method('PUT')
+                                <div class="form-group">
+                                    <label for="social-client-{{ $provider }}">{{ $provider === 'vk' ? __('Application ID (VK ID)') : ($provider === 'telegram' ? __('Client ID (BotFather)') : __('Client ID / App ID')) }}</label>
+                                    <input id="social-client-{{ $provider }}" name="client_id" type="text" required maxlength="255" value="{{ $social['client_id'] }}" autocomplete="off" spellcheck="false">
+                                </div>
+                                @if($social['requires_secret'])
+                                    <div class="form-group">
+                                        <label for="social-secret-{{ $provider }}">{{ __('Client Secret') }}</label>
+                                        <input id="social-secret-{{ $provider }}" name="client_secret" type="password" maxlength="2048" value="" autocomplete="new-password" placeholder="{{ $social['secret_saved'] && $social['secret_valid'] ? __('Secret saved') : __('Enter client secret') }}">
+                                        <small>{{ $social['secret_saved'] && ! $social['secret_valid'] ? __('Saved secret cannot be decrypted. Enter a new secret.') : __('Leave the field empty to retain the saved secret. Secrets are encrypted and never displayed.') }}</small>
+                                    </div>
+                                @else
+                                    <p class="muted-admin">{{ __('VK ID uses PKCE and does not require a client secret.') }}</p>
+                                @endif
+                                <div class="form-group">
+                                    <label for="social-callback-{{ $provider }}">{{ __('Redirect / callback URL') }}</label>
+                                    @if($social['callback_url'])
+                                        <div class="social-provider-callback">
+                                            <input id="social-callback-{{ $provider }}" type="text" readonly value="{{ $social['callback_url'] }}" aria-label="{{ __('Redirect / callback URL') }}">
+                                            <button class="button button-secondary" type="button" data-social-copy="social-callback-{{ $provider }}" data-social-copy-success="{{ __('Copied') }}" data-social-copy-failure="{{ __('Copy failed. Select and copy the URL manually.') }}">{{ __('Copy') }}</button>
+                                        </div>
+                                        <small>{{ __('Register this exact address with the provider. It comes from APP_URL, not the current browser address.') }}</small>
+                                    @else
+                                        <p class="notice notice-warning">{{ __('Configure an HTTPS APP_URL before enabling social sign-in. HTTP is allowed only for local development.') }}</p>
+                                    @endif
+                                </div>
+                                <div class="social-provider-form-actions">
+                                    <button class="button button-primary" type="submit">{{ __('Save provider settings') }}</button>
+                                    <a href="{{ $social['console'] }}" target="_blank" rel="noopener noreferrer">{{ __('Open provider console') }} ↗</a>
+                                </div>
+                            </form>
+                            @if($social['secret_saved'])
+                                <form method="POST" action="{{ route('admin.settings.registration.social.secret.clear', ['provider' => $provider]) }}" class="social-provider-remove-secret">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="button button-secondary">{{ __('Remove saved secret and disable sign-in') }}</button>
+                                </form>
+                            @endif
+                            <p class="muted-admin">{{ __('Changing the Client ID disables sign-in until it is enabled again. Existing player links are never deleted.') }}</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</section>
+<script src="{{ asset('assets/admin/js/social-providers.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
 @endsection

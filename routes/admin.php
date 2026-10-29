@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\QueueOperationsController as AdminQueueOperations
 use App\Http\Controllers\Admin\RegistrationSettingsController as AdminRegistrationSettingsController;
 use App\Http\Controllers\Admin\RewardDeliveryController as AdminRewardDeliveryController;
 use App\Http\Controllers\Admin\SecuritySettingsController as AdminSecuritySettingsController;
+use App\Http\Controllers\Admin\SocialProviderSettingsController as AdminSocialProviderSettingsController;
 use App\Http\Controllers\Admin\SystemSettingsController as AdminSystemSettingsController;
 use App\Http\Controllers\Admin\SystemUpdateController as AdminSystemUpdateController;
 use App\Http\Controllers\Admin\ThemeController as AdminThemeController;
@@ -211,6 +212,12 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.notifications.update');
         Route::get('/settings/registration', [AdminRegistrationSettingsController::class, 'registration'])->name('settings.registration');
         Route::put('/settings/registration', [AdminRegistrationSettingsController::class, 'updateRegistration'])->name('settings.registration.update');
+        Route::put('/settings/registration/social/{provider}', [AdminSocialProviderSettingsController::class, 'update'])
+            ->middleware('throttle:20,1')->name('settings.registration.social.update');
+        Route::post('/settings/registration/social/{provider}/toggle', [AdminSocialProviderSettingsController::class, 'toggle'])
+            ->middleware('throttle:20,1')->name('settings.registration.social.toggle');
+        Route::delete('/settings/registration/social/{provider}/secret', [AdminSocialProviderSettingsController::class, 'clearSecret'])
+            ->middleware('throttle:10,1')->name('settings.registration.social.secret.clear');
         Route::get('/settings/game-accounts', [AdminGameAccountSettingsController::class, 'index'])
             ->name('settings.game-accounts');
         Route::put('/settings/game-accounts', [AdminGameAccountSettingsController::class, 'update'])

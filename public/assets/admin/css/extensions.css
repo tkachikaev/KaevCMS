@@ -469,3 +469,43 @@
 @keyframes update-progress-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .update-progress-spinner { animation-duration: 1.8s; } }
 @media (max-width: 560px) { .update-progress-card { padding: 20px; } }
+
+/* Social identity provider configuration on registration settings. */
+.social-auth-settings { margin-top: 22px; }
+.social-provider-list { display: grid; gap: 12px; }
+.social-provider-item { padding: 14px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface-subtle); min-width: 0; }
+.social-provider-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.social-provider-mark { display: grid; place-items: center; flex: 0 0 37px; width: 37px; height: 37px; border-radius: 9px; font-weight: 760; background: var(--admin-surface); border: 1px solid var(--admin-border); color: var(--admin-text); }
+.social-provider-mark-google { color: #4285f4; }
+.social-provider-mark-yandex { color: #e24b45; }
+.social-provider-mark-vk { color: #0077ff; }
+.social-provider-mark-telegram { color: #229ed9; }
+.social-provider-mark-discord { color: #5865f2; }
+.social-provider-mark-facebook { color: #1877f2; }
+.social-provider-copy { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.social-provider-copy strong { font-size: 13px; color: var(--admin-text); }
+.social-provider-copy small { font-size: 11px; color: var(--admin-text-muted); }
+.social-provider-quick-actions { padding: 12px 0 0 49px; display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.social-provider-quick-actions form { margin: 0; }
+.social-provider-details { flex: 1 1 100%; min-width: 0; }
+.social-provider-details summary { display: inline-flex; cursor: pointer; list-style: none; user-select: none; }
+.social-provider-details summary::-webkit-details-marker { display: none; }
+.social-provider-form-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--admin-border); display: grid; gap: 12px; }
+.social-provider-form-wrap form { display: grid; gap: 12px; }
+.social-provider-form-wrap .form-group { margin: 0; }
+.social-provider-form-wrap input { width: 100%; max-width: 100%; }
+.social-provider-callback { display: flex; gap: 8px; align-items: stretch; }
+.social-provider-callback input { min-width: 0; flex: 1; }
+.social-provider-callback button { flex: 0 0 auto; }
+.social-provider-form-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.social-provider-form-actions a { font-size: 12px; }
+.social-provider-remove-secret { padding-top: 9px; border-top: 1px solid var(--admin-border); }
+.social-provider-copy-state { font-size: 11px; color: var(--admin-text-muted); }
+@media (max-width: 640px) {
+    .social-provider-item { padding: 12px; }
+    .social-provider-quick-actions { padding-left: 0; }
+    .social-provider-head { flex-wrap: wrap; }
+    .social-provider-head .status-badge { margin-left: auto; }
+    .social-provider-callback { flex-direction: column; }
+    .social-provider-callback button { align-self: flex-start; }
+}
