@@ -37,7 +37,7 @@
             <button class="button button-gold" type="submit">{{ __('Create account') }}</button>
         </form>
 
-        @include('auth.social-google-button')
+        @include('auth.social-signin-buttons')
 
         <div class="auth-links auth-links-center">
             <a wire:navigate.hover href="{{ public_route('login') }}">{{ __('Already registered? Sign in') }}</a>

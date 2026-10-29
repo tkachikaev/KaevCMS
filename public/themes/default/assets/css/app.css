@@ -395,3 +395,10 @@
 .social-google-button:hover, .social-google-button:focus-visible { background: #f3f6fa; color: #17191f; outline-offset: 3px; }
 .social-google-mark { font: 800 22px/1 Arial,sans-serif; color: #4285f4; }
 @media (max-width: 600px) { .social-google-button { width: 100%; } }
+
+/* Social identity buttons: share existing layout, keep brands visually distinct. */
+.social-signin-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.social-provider-yandex { background: #fff; color: #202020; border-color: #bbc1cc; }
+.social-provider-yandex:hover, .social-provider-yandex:focus-visible { background: #f5f5f5; color: #202020; }
+.social-provider-mark-yandex { color: #e12b27; }
+@media (max-width: 600px) { .social-signin-options { display: flex; flex-direction: column; } .social-signin-options .social-google-button { width: 100%; } }

@@ -3028,5 +3028,19 @@
     "Verify your email to finish social registration": "Подтвердите почту для завершения регистрации",
     "Confirm this email address to finish signing up for your CMS account.": "Подтвердите этот адрес почты, чтобы завершить регистрацию аккаунта CMS.",
     "Confirm email": "Подтвердить почту",
-    "The verification link expires in 15 minutes.": "Ссылка для подтверждения действует 15 минут."
+    "The verification link expires in 15 minutes.": "Ссылка для подтверждения действует 15 минут.",
+    "Continue with :provider": "Продолжить через :provider",
+    "Connected social accounts": "Подключённые социальные аккаунты",
+    "Social accounts never link automatically by email. You can connect one account per provider.": "Социальные аккаунты не привязываются автоматически по совпадению почты. Для каждого сервиса можно подключить один аккаунт.",
+    "Connect": "Подключить",
+    "Disconnect": "Отключить",
+    "This sign-in method is not currently available on this site.": "Этот способ входа сейчас недоступен на сайте.",
+    "Complete social registration": "Завершение регистрации через социальный сервис",
+    "Social sign-in could not be completed. Please try again.": "Не удалось завершить вход через социальный сервис. Повторите попытку.",
+    "Social sign-in has been connected.": "Социальный аккаунт подключён.",
+    "Social sign-in has been disconnected.": "Социальный аккаунт отключён.",
+    "Your account was created using a social account.": "Аккаунт создан через социальный сервис.",
+    "Email confirmation expired. Start social sign-in again.": "Подтверждение почты истекло. Повторите вход через социальный сервис.",
+    "An account already uses this email. Sign in normally or reset your password, then connect the provider in Security.": "Аккаунт с этой почтой уже существует. Войдите обычным способом или восстановите пароль, затем подключите социальный сервис в разделе «Безопасность».",
+    "Set a password or connect another available sign-in method before disconnecting this provider.": "Перед отключением этого сервиса установите пароль или подключите другой доступный способ входа."
 }

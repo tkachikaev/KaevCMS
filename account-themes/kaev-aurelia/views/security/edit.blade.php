@@ -64,7 +64,7 @@
             <button type="submit" class="account-button primary">{{ __('Change password') }}</button>
         </div>
     </form>
-    @include('account.social-google-links')
+    @include('account.social-signin-links')
 </x-account-panel>
 </x-account-page>
 @endsection

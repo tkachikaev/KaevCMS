@@ -62,3 +62,10 @@ On **Admin → Settings → Registration**, find the Social authorization sectio
 Players can log in with Google and create CMS accounts. Email matching never links existing CMS accounts automatically: players sign in normally and connect Google in Account → Security after confirming their identity. External addresses (outside Gmail/Google Workspace) require an additional verification email from KaevCMS; configure mail delivery first. Disabling the provider preserves existing links but prevents further Google logins.
 
 Only Google is implemented at this stage; the other five providers are planned separately. Full QA and a test login against an isolated HTTPS environment are required before production enablement.
+
+
+## Yandex ID sign-in (social authentication stage)
+
+Open **Admin → Settings → Registration → Social authentication**, then Yandex ID. Register a **user sign-in application** at [Yandex OAuth](https://oauth.yandex.ru/), add the exact callback URL shown in the admin panel, and request `login:email` and `login:info` permissions. Save Client ID and Client Secret; enable the provider separately. HTTPS `APP_URL` is required. Password and Google sign-in remain independent.
+
+On first sign-in, players verify their email through a CMS message and choose a username. Matching an existing email **never links accounts automatically**; sign in normally and connect Yandex under **Account → Security**. Existing links are found using Yandex's numeric `id`, not email or `psuid`. OAuth does not grant access to game accounts or payments.

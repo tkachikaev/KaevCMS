@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\GoogleSocialAuthController;
+use App\Http\Controllers\Auth\SocialOAuthController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -101,16 +101,21 @@ Route::post('/payments/freekassa/notify', FreeKassaNotificationController::class
 Route::post('/payments/paypal/notify', PayPalNotificationController::class)
     ->middleware('throttle:60,1,paypal-notify')->name('payments.paypal.notify');
 
-// Social provider callback is non-localized: this exact URI is registered with Google.
-// Only the website `web` guard is used. Admin authentication is never affected.
-Route::get('/auth/social/google', [GoogleSocialAuthController::class, 'start'])
-    ->middleware(['guest:web', 'throttle:15,1'])->name('social.google.start');
-Route::get('/auth/social/google/callback', [GoogleSocialAuthController::class, 'callback'])
-    ->middleware('throttle:30,1')->name('social.google.callback');
-Route::middleware(['guest:web', 'throttle:20,1'])->group(function (): void {
-    Route::get('/auth/social/google/register', [GoogleSocialAuthController::class, 'registrationForm'])->name('social.google.register');
-    Route::post('/auth/social/google/register', [GoogleSocialAuthController::class, 'register'])->name('social.google.register.store');
-    Route::post('/auth/social/google/email', [GoogleSocialAuthController::class, 'sendVerification'])->name('social.google.email.send');
-    Route::get('/auth/social/google/email/verify', [GoogleSocialAuthController::class, 'verifyEmail'])
-        ->middleware('signed:relative')->name('social.google.email.verify');
-});
+// Exact non-localized OAuth callbacks registered at Google and Yandex.
+// These actions only use the website `web` guard; admin login remains separate.
+foreach (['google', 'yandex'] as $provider) {
+    Route::get('/auth/social/'.$provider, [SocialOAuthController::class, 'start'])
+        ->middleware(['guest:web', 'throttle:15,1'])->defaults('social_provider', $provider)->name('social.'.$provider.'.start');
+    Route::get('/auth/social/'.$provider.'/callback', [SocialOAuthController::class, 'callback'])
+        ->middleware('throttle:30,1')->defaults('social_provider', $provider)->name('social.'.$provider.'.callback');
+    Route::middleware(['guest:web', 'throttle:20,1'])->group(function () use ($provider): void {
+        Route::get('/auth/social/'.$provider.'/register', [SocialOAuthController::class, 'registrationForm'])
+            ->defaults('social_provider', $provider)->name('social.'.$provider.'.register');
+        Route::post('/auth/social/'.$provider.'/register', [SocialOAuthController::class, 'register'])
+            ->defaults('social_provider', $provider)->name('social.'.$provider.'.register.store');
+        Route::post('/auth/social/'.$provider.'/email', [SocialOAuthController::class, 'sendVerification'])
+            ->defaults('social_provider', $provider)->name('social.'.$provider.'.email.send');
+        Route::get('/auth/social/'.$provider.'/email/verify', [SocialOAuthController::class, 'verifyEmail'])
+            ->middleware('signed:relative')->defaults('social_provider', $provider)->name('social.'.$provider.'.email.verify');
+    });
+}

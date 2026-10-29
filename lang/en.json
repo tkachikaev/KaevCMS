@@ -3028,5 +3028,19 @@
     "Verify your email to finish social registration": "Verify your email to finish social registration",
     "Confirm this email address to finish signing up for your CMS account.": "Confirm this email address to finish signing up for your CMS account.",
     "Confirm email": "Confirm email",
-    "The verification link expires in 15 minutes.": "The verification link expires in 15 minutes."
+    "The verification link expires in 15 minutes.": "The verification link expires in 15 minutes.",
+    "Continue with :provider": "Continue with :provider",
+    "Connected social accounts": "Connected social accounts",
+    "Social accounts never link automatically by email. You can connect one account per provider.": "Social accounts never link automatically by email. You can connect one account per provider.",
+    "Connect": "Connect",
+    "Disconnect": "Disconnect",
+    "This sign-in method is not currently available on this site.": "This sign-in method is not currently available on this site.",
+    "Complete social registration": "Complete social registration",
+    "Social sign-in could not be completed. Please try again.": "Social sign-in could not be completed. Please try again.",
+    "Social sign-in has been connected.": "Social sign-in has been connected.",
+    "Social sign-in has been disconnected.": "Social sign-in has been disconnected.",
+    "Your account was created using a social account.": "Your account was created using a social account.",
+    "Email confirmation expired. Start social sign-in again.": "Email confirmation expired. Start social sign-in again.",
+    "An account already uses this email. Sign in normally or reset your password, then connect the provider in Security.": "An account already uses this email. Sign in normally or reset your password, then connect the provider in Security.",
+    "Set a password or connect another available sign-in method before disconnecting this provider.": "Set a password or connect another available sign-in method before disconnecting this provider."
 }

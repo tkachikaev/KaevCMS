@@ -10,7 +10,7 @@ use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Account\WalletController;
 use App\Http\Controllers\Account\WebInventoryController;
 use App\Http\Controllers\Auth\AccountController;
-use App\Http\Controllers\Auth\GoogleSocialAuthController;
+use App\Http\Controllers\Auth\SocialOAuthController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -33,12 +33,14 @@ $registerAccountRoutes = static function (bool $localized = false): void {
             Route::get('/account', AccountController::class)->name($namePrefix.'account');
             Route::get('/account/profile', [ProfileController::class, 'edit'])
                 ->name($namePrefix.'profile.edit');
-            Route::get('/account/security/social/google/continue', [GoogleSocialAuthController::class, 'continueLink'])
-                ->middleware('throttle:8,1')->name($namePrefix.'security.social.google.continue');
-            Route::post('/account/security/social/google/link', [GoogleSocialAuthController::class, 'startLink'])
-                ->middleware('throttle:8,1')->name($namePrefix.'security.social.google.link');
-            Route::delete('/account/security/social/google', [GoogleSocialAuthController::class, 'unlink'])
-                ->middleware('throttle:8,1')->name($namePrefix.'security.social.google.unlink');
+            foreach (['google', 'yandex'] as $provider) {
+                Route::get('/account/security/social/'.$provider.'/continue', [SocialOAuthController::class, 'continueLink'])
+                    ->middleware('throttle:8,1')->defaults('social_provider', $provider)->name($namePrefix.'security.social.'.$provider.'.continue');
+                Route::post('/account/security/social/'.$provider.'/link', [SocialOAuthController::class, 'startLink'])
+                    ->middleware('throttle:8,1')->defaults('social_provider', $provider)->name($namePrefix.'security.social.'.$provider.'.link');
+                Route::delete('/account/security/social/'.$provider, [SocialOAuthController::class, 'unlink'])
+                    ->middleware('throttle:8,1')->defaults('social_provider', $provider)->name($namePrefix.'security.social.'.$provider.'.unlink');
+            }
             Route::get('/account/security', [SecurityController::class, 'edit'])
                 ->name($namePrefix.'security.edit');
             Route::get('/account/characters', CharacterController::class)

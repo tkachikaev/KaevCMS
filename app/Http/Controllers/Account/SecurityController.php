@@ -31,8 +31,12 @@ class SecurityController extends Controller
             'user' => $user,
             'passwordPolicy' => $this->registrationSettings->values(),
             'passwordRequirements' => $this->registrationSettings->passwordRequirements(),
-            'googleAvailable' => app(SocialAuthSettings::class)->isAvailable('google'),
-            'googleLinked' => $user->socialAccounts()->where('provider', 'google')->exists(),
+            'socialMethods' => collect(['google' => 'Google', 'yandex' => 'Яндекс ID'])
+                ->map(fn (string $name, string $provider): array => [
+                    'name' => $name,
+                    'available' => app(SocialAuthSettings::class)->isAvailable($provider),
+                    'linked' => $user->socialAccounts()->where('provider', $provider)->exists(),
+                ])->all(),
         ]);
     }
 
