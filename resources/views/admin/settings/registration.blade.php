@@ -115,7 +115,7 @@
         @foreach($socialProviders as $provider => $social)
             <div class="social-provider-item">
                 <div class="social-provider-head">
-                    <span class="social-provider-mark social-provider-mark-{{ $provider }}" aria-hidden="true">{{ ['google' => 'G', 'yandex' => 'Я', 'vk' => 'VK', 'telegram' => 'T', 'discord' => 'D', 'facebook' => 'f'][$provider] }}</span>
+                    <span class="social-provider-mark" aria-hidden="true"><img src="{{ asset('assets/images/social/'.$provider.'.svg') }}" width="20" height="20" alt=""></span>
                     <span class="social-provider-copy">
                         <strong>{{ $social['name'] }}</strong>
                     </span>

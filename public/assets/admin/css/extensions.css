@@ -477,12 +477,7 @@
 .social-provider-item { display: flex; align-items: center; gap: 16px; padding: 10px 12px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-control); background: var(--admin-surface-subtle); min-width: 0; }
 .social-provider-head { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
 .social-provider-mark { display: grid; place-items: center; flex: 0 0 37px; width: 37px; height: 37px; border-radius: 9px; font-weight: 760; background: var(--admin-surface); border: 1px solid var(--admin-border); color: var(--admin-text); }
-.social-provider-mark-google { color: #4285f4; }
-.social-provider-mark-yandex { color: #e24b45; }
-.social-provider-mark-vk { color: #0077ff; }
-.social-provider-mark-telegram { color: #229ed9; }
-.social-provider-mark-discord { color: #5865f2; }
-.social-provider-mark-facebook { color: #1877f2; }
+.social-provider-mark img { display: block; width: 20px; height: 20px; object-fit: contain; }
 .social-provider-copy { display: grid; gap: 2px; min-width: 0; flex: 1; }
 .social-provider-copy strong { font-size: 13px; color: var(--admin-text); }
 .social-provider-copy small { font-size: 11px; color: var(--admin-text-muted); }

@@ -1,3 +1,4 @@
+@if ($socialMethods !== [])
 <div class="account-settings-card-heading account-panel-header">
     <div>
         <span class="account-eyebrow">{{ __('Sign-in methods') }}</span>
@@ -39,6 +40,7 @@
         @endif
     </div>
 @endforeach
+@endif
 @if ($user->password_set_at === null)
     <p>{{ __('You have not set a CMS password. You can set one using email password recovery.') }}</p>
 @endif

@@ -36,7 +36,7 @@ class SecurityController extends Controller
                     'name' => $name,
                     'available' => app(SocialAuthSettings::class)->isAvailable($provider),
                     'linked' => $user->socialAccounts()->where('provider', $provider)->exists(),
-                ])->all(),
+                ])->filter(fn (array $method): bool => $method['available'] || $method['linked'])->all(),
         ]);
     }
 

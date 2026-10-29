@@ -20,6 +20,27 @@ class SocialIdentityCoreTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_security_hides_unavailable_providers_but_keeps_existing_links(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $this->actingAs($user)->get('/account/security')->assertOk()
+            ->assertDontSee(__('Connected social accounts'));
+
+        $settings = app(SocialAuthSettings::class);
+        $settings->updateCredentials('google', 'dummy-client', 'dummy-secret');
+        $this->get('/account/security')->assertDontSee(__('Connected social accounts'));
+        $settings->setEnabled('google', true);
+        $this->get('/account/security')->assertOk()
+            ->assertSee('/account/security/social/google/link', false)
+            ->assertDontSee('/account/security/social/discord/link', false);
+
+        app(SocialIdentityService::class)->link($user, new SocialIdentity('google', 'linked-player'), (int) $user->auth_session_version);
+        $settings->setEnabled('google', false);
+        $this->get('/account/security')->assertOk()
+            ->assertSee(public_route('security.social.google.unlink'), false)
+            ->assertDontSee('/account/security/social/google/link', false);
+    }
+
     public function test_password_registration_records_a_real_password_and_allows_social_link_step_up(): void
     {
         app(RegistrationSettings::class)->update(true, false);
