@@ -60,7 +60,9 @@ final class SocialProviderSettingsController extends Controller
         );
 
         return $this->redirectWithStatus($enabled
-            ? __('Social sign-in provider enabled. The login integration is not yet implemented.')
+            ? (in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK], true)
+                ? __('Social sign-in provider enabled.')
+                : __('Social sign-in provider enabled. The login integration is not yet implemented.'))
             : __('Social sign-in provider disabled. Existing player links are retained.'));
     }
 

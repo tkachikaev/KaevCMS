@@ -39,7 +39,8 @@ final class YandexIdentityProvider implements SocialIdentityProvider
         ], '', '&', PHP_QUERY_RFC3986);
     }
 
-    public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce): SocialIdentity
+    /** @param array<string, string> $callback */
+    public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce, array $callback = []): SocialIdentity
     {
         $credentials = $this->credentials();
         if ($code === '' || strlen($code) > 4096 || ! is_string($codeVerifier)

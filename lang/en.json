@@ -3042,5 +3042,6 @@
     "Your account was created using a social account.": "Your account was created using a social account.",
     "Email confirmation expired. Start social sign-in again.": "Email confirmation expired. Start social sign-in again.",
     "An account already uses this email. Sign in normally or reset your password, then connect the provider in Security.": "An account already uses this email. Sign in normally or reset your password, then connect the provider in Security.",
-    "Set a password or connect another available sign-in method before disconnecting this provider.": "Set a password or connect another available sign-in method before disconnecting this provider."
+    "Set a password or connect another available sign-in method before disconnecting this provider.": "Set a password or connect another available sign-in method before disconnecting this provider.",
+    "Social sign-in provider enabled.": "Social sign-in provider enabled."
 }

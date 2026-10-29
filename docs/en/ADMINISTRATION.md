@@ -61,7 +61,7 @@ On **Admin → Settings → Registration**, find the Social authorization sectio
 
 Players can log in with Google and create CMS accounts. Email matching never links existing CMS accounts automatically: players sign in normally and connect Google in Account → Security after confirming their identity. External addresses (outside Gmail/Google Workspace) require an additional verification email from KaevCMS; configure mail delivery first. Disabling the provider preserves existing links but prevents further Google logins.
 
-Only Google is implemented at this stage; the other five providers are planned separately. Full QA and a test login against an isolated HTTPS environment are required before production enablement.
+Google, Yandex ID and VK ID are implemented in this rollout. Full QA and a test login against an isolated HTTPS environment are required before production enablement.
 
 
 ## Yandex ID sign-in (social authentication stage)
@@ -69,3 +69,12 @@ Only Google is implemented at this stage; the other five providers are planned s
 Open **Admin → Settings → Registration → Social authentication**, then Yandex ID. Register a **user sign-in application** at [Yandex OAuth](https://oauth.yandex.ru/), add the exact callback URL shown in the admin panel, and request `login:email` and `login:info` permissions. Save Client ID and Client Secret; enable the provider separately. HTTPS `APP_URL` is required. Password and Google sign-in remain independent.
 
 On first sign-in, players verify their email through a CMS message and choose a username. Matching an existing email **never links accounts automatically**; sign in normally and connect Yandex under **Account → Security**. Existing links are found using Yandex's numeric `id`, not email or `psuid`. OAuth does not grant access to game accounts or payments.
+
+
+## VK ID sign-in (social authentication stage)
+
+Under **Admin → Settings → Registration → Social authentication**, open **VK ID**. Register a web application in [VK ID](https://id.vk.ru/), add the exact callback URL shown in KaevCMS, enter its **Client ID**, and explicitly enable it. Client Secret is not required for the regular browser Authorization Code + PKCE flow. Production requires HTTPS `APP_URL`. Request `email` permission in VK ID.
+
+KaevCMS uses the **new** VK ID (`id.vk.ru`), not legacy `oauth.vk.com`. The callback's `device_id` and PKCE S256 are required; no web SDK or CDN is needed. Email must **always be verified using a CMS message** before registering a new user. A matching email never automatically links accounts. Existing users connect VK ID through **Account → Security**, after step-up verification. Disabling VK ID leaves existing links intact.
+
+**Note:** applications requiring `service_token` need a separately approved server configuration; this implementation supports the standard PKCE web flow without it. Verify a real callback and browser behavior against an isolated HTTPS site before enabling production sign-in.

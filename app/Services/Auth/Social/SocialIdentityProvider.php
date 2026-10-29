@@ -11,5 +11,6 @@ interface SocialIdentityProvider
     public function authorizationUrl(string $state, ?string $codeChallenge, ?string $nonce): string;
 
     /** Exchange the code on the backend and validate the external identity. */
-    public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce): SocialIdentity;
+    /** @param array<string, string> $callback */
+    public function verifyAuthorizationCode(string $code, ?string $codeVerifier, ?string $nonce, array $callback = []): SocialIdentity;
 }

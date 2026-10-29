@@ -15,6 +15,7 @@ use App\Services\Auth\Social\SocialIdentityService;
 use App\Services\Auth\Social\SocialProviders;
 use App\Services\Auth\Social\SocialRegistrationSession;
 use App\Services\Auth\Social\YandexIdentityProvider;
+use App\Services\Auth\Social\VkIdentityProvider;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
 use Illuminate\Database\QueryException;
@@ -68,7 +69,8 @@ final class SocialOAuthController extends Controller
         $data = $request->session()->pull('social_auth.'.$this->provider($request).'.continue');
         if (! is_array($data) || ! is_string($data['url'] ?? null)
             || ! str_starts_with($data['url'], $this->provider($request) === SocialProviders::GOOGLE
-                ? 'https://accounts.google.com/o/oauth2/v2/auth?' : 'https://oauth.yandex.ru/authorize?')
+                ? 'https://accounts.google.com/o/oauth2/v2/auth?' : ($this->provider($request) === SocialProviders::YANDEX
+                    ? 'https://oauth.yandex.ru/authorize?' : 'https://id.vk.ru/authorize?'))
             || ! is_int($data['issued'] ?? null) || $data['issued'] > now()->timestamp
             || now()->timestamp - $data['issued'] > 60) {
             return redirect()->to(public_route('security.edit'))
@@ -93,11 +95,12 @@ final class SocialOAuthController extends Controller
             if (! $settings->isAvailable($this->provider($request))) {
                 throw new RuntimeException('Provider disabled.');
             }
-            $flow = $flows->consume($request, $this->provider($request), (string) $request->query('state', ''), Auth::guard('web')->user());
-            if ($request->query('error') !== null || ! is_string($request->query('code')) || $request->query('code') === '') {
+            $callback = $this->callbackParameters($request);
+            $flow = $flows->consume($request, $this->provider($request), $callback['state'] ?? '', Auth::guard('web')->user());
+            if (isset($callback['error']) || ! is_string($callback['code'] ?? null) || $callback['code'] === '') {
                 throw new RuntimeException('Authorization denied.');
             }
-            $identity = $this->client($request)->verifyAuthorizationCode((string) $request->query('code'), $flow['code_verifier'], $flow['nonce']);
+            $identity = $this->client($request)->verifyAuthorizationCode($callback['code'], $flow['code_verifier'], $flow['nonce'], $callback);
             if ($flow['purpose'] === 'link') {
                 $user = Auth::guard('web')->user();
                 if (! $user instanceof User || ! $this->recentLinkConfirmation($request)) {
@@ -295,7 +298,7 @@ final class SocialOAuthController extends Controller
     private function provider(Request $request): string
     {
         $provider = $request->route('social_provider');
-        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX], true)) {
+        if (! in_array($provider, [SocialProviders::GOOGLE, SocialProviders::YANDEX, SocialProviders::VK], true)) {
             abort(404);
         }
 
@@ -307,7 +310,38 @@ final class SocialOAuthController extends Controller
         return match ($this->provider($request)) {
             SocialProviders::GOOGLE => app(GoogleIdentityProvider::class),
             SocialProviders::YANDEX => app(YandexIdentityProvider::class),
+            SocialProviders::VK => app(VkIdentityProvider::class),
         };
+    }
+
+    /** @return array<string, string> */
+    private function callbackParameters(Request $request): array
+    {
+        $payload = $request->query('payload');
+        if ($payload !== null) {
+            if ($this->provider($request) !== SocialProviders::VK || ! is_string($payload)
+                || strlen($payload) > 8192 || $request->query('state') !== null
+                || $request->query('code') !== null || $request->query('device_id') !== null) {
+                throw new RuntimeException('Invalid authorization payload.');
+            }
+            $data = json_decode($payload, true);
+            if (! is_array($data) || array_is_list($data)) {
+                throw new RuntimeException('Invalid authorization payload.');
+            }
+        } else {
+            $data = $request->query();
+        }
+        $callback = [];
+        foreach (['state', 'code', 'device_id', 'error'] as $key) {
+            if (array_key_exists($key, $data)) {
+                if (! is_string($data[$key]) || strlen($data[$key]) > 4096) {
+                    throw new RuntimeException('Invalid authorization parameter.');
+                }
+                $callback[$key] = $data[$key];
+            }
+        }
+
+        return $callback;
     }
 
     private function stepUp(Request $request, User $user): bool
