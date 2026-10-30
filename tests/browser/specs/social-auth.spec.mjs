@@ -45,6 +45,14 @@ test('social settings keep secrets private and player linking reaches the provid
     await page.locator('#social-google [data-social-close]').click();
     await page.locator('form[action$="/social/google/toggle"] input[type=checkbox]').click();
     await expect(page.locator('form[action$="/social/telegram/toggle"] input[type=checkbox]')).toBeDisabled();
+    await page.locator('[data-social-open="social-telegram"]').click();
+    const telegramForm = page.locator('form[action$="/registration/social/telegram"]');
+    await telegramForm.locator('[name=client_id]').fill('123456789');
+    await telegramForm.locator('[name=client_secret]').fill('isolated-telegram-secret');
+    await telegramForm.locator('button[type=submit]').click();
+    const telegramToggle = page.locator('form[action$="/social/telegram/toggle"] input[type=checkbox]');
+    await expect(telegramToggle).toBeEnabled();
+    await expect(telegramToggle).not.toBeChecked();
     const player = await context.newPage();
     await gotoWithLocalNetworkRetry(player, '/login');
     await player.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);

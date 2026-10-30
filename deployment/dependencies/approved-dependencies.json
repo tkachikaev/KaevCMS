@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "composer_json_sha256": "d7266e9d89f17195b8022cdf916f0dfbc8abe66e064edd804ebcfe3be8c720d9",
-  "composer_lock_sha256": "59d45288f6e9d928c986320146f7509a38dbb3f829518791703d40e38bc30bc3",
+  "composer_json_sha256": "2c15428b997c1054048a69d16c6cca0ae2996b6d8d0e57276e4b7006e3299475",
+  "composer_lock_sha256": "b571f9e2829f5096ab21982abe7913ebbc8c43b8ea6b7b9759bbd86d1c0d03cd",
   "key_packages": {
     "laravel/framework": "v13.37.0",
     "livewire/livewire": "v4.4.8"
   },
   "approved_by": "KaevCMS owner",
-  "approved_at": "2026-10-28",
-  "reason": "symfony/mime 7.4.22: fix CVE-2026-45070"
+  "approved_at": "2026-10-30",
+  "reason": "Add firebase/php-jwt ^7.2 for Telegram OIDC"
 }

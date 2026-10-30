@@ -682,6 +682,7 @@
     "tests/Feature/Admin/WalletStatusManagementTest.php",
     "tests/Feature/Auth/FacebookSocialAuthTest.php",
     "tests/Feature/Auth/GoogleSocialAuthTest.php",
+    "tests/Feature/Auth/TelegramJwtVerificationTest.php",
     "tests/Feature/BrandingTest.php",
     "tests/Feature/BrowserDependencyLockTest.php",
     "tests/Feature/BundledAureliaThemesTest.php",

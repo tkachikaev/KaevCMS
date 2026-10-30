@@ -28,6 +28,7 @@
     "ext-dom": "*",
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
+    "firebase/php-jwt": "^7.2",
     "laravel/framework": "^13.0",
     "laravel/tinker": "^3.0",
     "livewire/livewire": "^4.2"

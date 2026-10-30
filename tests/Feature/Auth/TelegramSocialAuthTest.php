@@ -28,10 +28,7 @@ class TelegramSocialAuthTest extends TestCase
 
     public function test_without_approved_jwt_library_telegram_cannot_be_enabled_or_displayed(): void
     {
-        // This is the current approved composer.lock state: no JWT/JWKS dependency.
-        if (app(TelegramIdTokenVerifier::class)->available()) {
-            $this->markTestSkipped('The owner has since approved and installed a JWT verifier.');
-        }
+        $this->simulateUnavailableLibrary();
         $settings = app(SocialAuthSettings::class);
         $this->assertSame('pending', $settings->values('telegram')['status']);
         $this->assertFalse($settings->isAvailable('telegram'));
@@ -41,9 +38,7 @@ class TelegramSocialAuthTest extends TestCase
 
     public function test_unavailable_telegram_never_shows_button_or_accepts_callback(): void
     {
-        if (app(TelegramIdTokenVerifier::class)->available()) {
-            $this->markTestSkipped('Only applies before JWT verifier installation.');
-        }
+        $this->simulateUnavailableLibrary();
         $this->get('/login')->assertOk()->assertDontSee(__('Continue with :provider', ['provider' => 'Telegram']));
         $this->get('/auth/social/telegram')->assertNotFound();
         $this->get('/auth/social/telegram/callback?state=fake&code=fake')->assertRedirect(route('login'));
@@ -193,6 +188,17 @@ class TelegramSocialAuthTest extends TestCase
         $this->get($this->callbackUrl($start))->assertRedirect(route('login'));
         $this->assertDatabaseCount('users', 0);
         $this->assertDatabaseCount('user_social_accounts', 0);
+    }
+
+    private function simulateUnavailableLibrary(): void
+    {
+        $this->app->instance(TelegramIdTokenVerifier::class, new class extends TelegramIdTokenVerifier
+        {
+            public function available(): bool
+            {
+                return false;
+            }
+        });
     }
 
     private function enableFakeVerifier(bool $reject = false): void
