@@ -87,14 +87,42 @@ test('social settings keep secrets private and player linking reaches the provid
     await player.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);
     await player.locator('#password').fill(process.env.PLAYWRIGHT_PLAYER_PASSWORD);
     await submitLogin({ page: player, postPath: '/login', label: 'Social link player login', submit: () => player.locator('form button[type=submit]').first().click() });
+    await player.emulateMedia({ reducedMotion: 'reduce' });
     for (const theme of ['luxury', 'kaev-aurelia', 'kaev-classic']) {
         await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
         const activate = page.locator(`form[action$="/account-themes/${theme}/activate"]`);
         if (await activate.count()) { await activate.getByRole('button').click(); await expect(activate).toHaveCount(0); }
+        await gotoWithLocalNetworkRetry(player, '/account/profile');
+        await expect(player.locator('.account-settings-details')).toBeVisible();
+        await expect(player.locator('.account-profile-social-icons')).toHaveCount(0);
         await gotoWithLocalNetworkRetry(player, '/account/security');
         for (const width of [1440, 390]) {
             await player.setViewportSize({ width, height: 900 });
+            const row = player.locator('[data-account-social="google"]');
+            await expect(row.locator('[data-account-social-open]')).toBeVisible();
+            await expect(row.locator('[name=current_password]')).not.toBeVisible();
+            expect(await row.locator('.account-social-row-head img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+            await row.locator('[data-account-social-open]').click();
             await expect(player.locator('form[action$="/social/google/link"] [name=current_password]')).toBeVisible();
+            if (theme === 'kaev-classic') {
+                await row.scrollIntoViewIfNeeded();
+                await player.screenshot({ path: testInfo.outputPath(`account-social-${width}.png`) });
+                await row.locator('[name=current_password]').fill('discard-on-close');
+                await player.locator('#account-social-google [data-account-social-close]').first().click();
+                await expect(row.locator('[name=current_password]')).toHaveValue('');
+                await expect(row.locator('[data-account-social-open]')).toBeFocused();
+                await player.locator('[data-account-social="yandex"] [data-account-social-open]').click();
+                await expect(row.locator('[name=current_password]')).not.toBeVisible();
+                await player.keyboard.press('Escape');
+                await player.locator('[data-account-scheme-toggle]').click();
+                await expect(player.locator('html')).toHaveAttribute('data-account-scheme', 'dark');
+                await player.locator('[data-account-social="yandex"] [data-account-social-open]').click();
+                await player.screenshot({ path: testInfo.outputPath(`account-social-dark-${width}.png`) });
+                await player.keyboard.press('Escape');
+                await player.locator('[data-account-scheme-toggle]').click();
+            }
+            await player.keyboard.press('Escape');
+            await expect(player.locator('[data-account-social-dialog][open]')).toHaveCount(0);
             expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
         }
     }
@@ -109,8 +137,24 @@ test('social settings keep secrets private and player linking reaches the provid
                 await visitor.goto(new URL('/language/'+locale, page.url()).href);
                 await visitor.goto(new URL('/login', page.url()).href);
                 await expect(visitor.locator('html')).toHaveAttribute('lang', locale);
+                if (locale === 'ru') {
+                    await visitor.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);
+                    await visitor.locator('#password').fill('intentionally-wrong-browser-password');
+                    await Promise.all([
+                        visitor.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+                        visitor.locator('form button[type=submit]').first().click(),
+                    ]);
+                    await expect(visitor.locator('.auth-card .public-flash-error')).toBeVisible();
+                    await expect(visitor.locator('.container.public-flash-stack')).toHaveCount(0);
+                }
                 for (const width of [1440, 390]) {
                     await visitor.setViewportSize({ width, height: 900 });
+                    if (locale === 'ru') {
+                        const card = await visitor.locator('.auth-card').boundingBox();
+                        const alert = await visitor.locator('.auth-card .public-flash-error').boundingBox();
+                        expect(alert.x).toBeGreaterThan(card.x);
+                        expect(alert.x + alert.width).toBeLessThan(card.x + card.width);
+                    }
                     await expect(visitor.locator('a[href$="/auth/social/google"]')).toHaveText('Google');
                     const google = visitor.locator('a[href$="/auth/social/google"]');
                     await expect(google.locator('img')).toHaveAttribute('src', /images\/social\/google\.svg$/);
@@ -162,6 +206,7 @@ test('social settings keep secrets private and player linking reaches the provid
     });
     await gotoWithLocalNetworkRetry(player, '/account/security');
     const link = player.locator('form[action$="/social/google/link"]');
+    await player.locator('[data-account-social="google"] [data-account-social-open]').click();
     await link.locator('[name=current_password]').fill(process.env.PLAYWRIGHT_PLAYER_PASSWORD);
     await link.locator('button[type=submit]').click();
     await expect(player.getByRole('heading', { name: 'Isolated OAuth provider' })).toBeVisible();

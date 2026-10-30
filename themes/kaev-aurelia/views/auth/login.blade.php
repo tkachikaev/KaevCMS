@@ -2,12 +2,16 @@
 
 @section('title', __('Sign in').' — '.site_name())
 
+@section('inline-auth-feedback', '1')
+
 @section('content')
 <section class="auth-page">
     <div class="panel auth-card">
         <p class="eyebrow">{{ __('Personal account eyebrow') }}</p>
         <h1>{{ __('Sign in') }}</h1>
         <p class="muted">{{ __('Use the login or email of your site account.') }}</p>
+
+        @include('auth.inline-feedback')
 
         <form method="POST" action="{{ public_route('login.store') }}">
             @csrf

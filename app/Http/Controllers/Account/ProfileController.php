@@ -27,6 +27,10 @@ class ProfileController extends Controller
 
         return view('account-theme::profile.edit', [
             'user' => $user,
+            'linkedSocialProviders' => array_intersect_key([
+                'google' => 'Google', 'yandex' => 'Яндекс ID', 'vk' => 'VK ID',
+                'telegram' => 'Telegram', 'discord' => 'Discord', 'facebook' => 'Facebook',
+            ], array_fill_keys($user->socialAccounts()->pluck('provider')->all(), true)),
         ]);
     }
 

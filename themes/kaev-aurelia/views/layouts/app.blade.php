@@ -29,7 +29,7 @@
     @endif
     <title>@yield('title', site_name())</title>
     <script src="{{ theme_asset('js/scheme.js') }}" data-navigate-once></script>
-    <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}&ui=mobile-portrait" data-navigate-track>
+    <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}&feedback=inline&ui=mobile-portrait" data-navigate-track>
     <link rel="stylesheet" href="{{ theme_asset('css/dark.css') }}" data-navigate-track>
     <script src="{{ theme_asset('js/app.js') }}&ui=mobile-portrait" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
@@ -51,7 +51,7 @@
         @include('theme::partials.header')
     @endpersist
 
-    @if (session('status') || session('warning') || $errors->any())
+    @if (! View::hasSection('inline-auth-feedback') && (session('status') || session('warning') || $errors->any()))
         <div class="container public-flash-stack">
             @if (session('status'))
                 <div class="public-flash public-flash-success" role="status">{{ session('status') }}</div>

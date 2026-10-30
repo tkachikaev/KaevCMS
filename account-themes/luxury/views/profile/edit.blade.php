@@ -24,6 +24,7 @@
         <div><dt>{{ __('Username') }}</dt><dd>{{ $user->name }}</dd></div>
         <div><dt>{{ __('Email address') }}</dt><dd>{{ $user->email }}</dd></div>
         <div><dt>{{ __('Email status') }}</dt><dd>{{ $user->hasVerifiedEmail() ? __('Verified') : __('Not verified') }}</dd></div>
+        @include('auth.social-profile-icons')
     </dl>
 
     <div class="account-form-actions account-settings-actions">

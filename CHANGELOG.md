@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.56.1 - 2026-10-30
+
+- Simplify connected social accounts into compact provider rows with password confirmation dialogs across all account themes; add linked-provider icons to player profiles.
+- Display login errors and status messages inside the sign-in card in both public themes.
+- Keep all required release files in canonical order, including the new shared authentication templates, so the full quality gate validates the release manifest.
+
 ## 0.56.0 - 2026-10-30
 
 - Use compact, centered social sign-in buttons with local provider logos in both public themes, including responsive wrapping and light/dark styling.

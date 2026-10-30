@@ -3046,5 +3046,10 @@
     "Social sign-in provider enabled.": "Social sign-in provider enabled.",
     "JWT verification library required": "JWT verification library required",
     "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.": "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.",
-    "Could not save settings. Please try again.": "Could not save settings. Please try again."
+    "Could not save settings. Please try again.": "Could not save settings. Please try again.",
+    "Connect a service to sign in to your account more easily.": "Connect a service to sign in to your account more easily.",
+    "Account connected": "Account connected",
+    "Account not connected": "Account not connected",
+    "Enter your website password to confirm this change.": "Enter your website password to confirm this change.",
+    "Manage :provider account": "Manage :provider account"
 }

@@ -26,7 +26,7 @@
         <meta name="robots" content="noindex, nofollow, noarchive">
     @endif
     <title>@yield('title', site_name())</title>
-    <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}&feedback=inline">
     @stack('head')
 </head>
 <body>
@@ -39,7 +39,7 @@
 
     @include('theme::partials.header')
 
-    @if (session('status') || session('warning') || $errors->any())
+    @if (! View::hasSection('inline-auth-feedback') && (session('status') || session('warning') || $errors->any()))
         <div class="container public-flash-stack">
             @if (session('status'))
                 <div class="public-flash public-flash-success" role="status">{{ session('status') }}</div>

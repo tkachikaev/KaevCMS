@@ -5,6 +5,8 @@ namespace Tests\Feature\Account;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\Account\AccountAvatarCatalog;
+use App\Services\RegistrationSettings;
+use App\Support\Themes\AccountThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -31,6 +33,34 @@ class AccountAvatarProfileTest extends TestCase
         File::deleteDirectory($this->avatarRoot);
 
         parent::tearDown();
+    }
+
+    public function test_profile_shows_only_own_linked_social_accounts_even_when_provider_is_disabled(): void
+    {
+        $user = $this->user();
+        $other = User::factory()->create();
+        $user->socialAccounts()->create(['provider' => 'google', 'provider_user_id' => 'own-private-identity']);
+        $other->socialAccounts()->create(['provider' => 'discord', 'provider_user_id' => 'other-private-identity']);
+        foreach (['kaev-classic', 'kaev-aurelia', 'luxury'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            $this->actingAs($user)->get('/account/profile')->assertOk()
+                ->assertViewHas('linkedSocialProviders', ['google' => 'Google'])
+                ->assertSee('assets/images/social/google.svg')->assertDontSee('assets/images/social/discord.svg')
+                ->assertDontSee('own-private-identity')->assertDontSee('other-private-identity');
+        }
+        $user->socialAccounts()->delete();
+        $this->get('/account/profile')->assertOk()->assertViewHas('linkedSocialProviders', [])
+            ->assertDontSee('account-profile-social-icons');
+    }
+
+    public function test_profile_email_status_matches_the_stored_verification_date(): void
+    {
+        $user = $this->user(['email_verified_at' => null]);
+        $this->actingAs($user)->get('/account/profile')->assertRedirect(route('verification.notice'));
+        app(RegistrationSettings::class)->update(true, false);
+        $this->get('/account/profile')->assertOk()->assertSee(__('Not verified'));
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $this->get('/account/profile')->assertOk()->assertSee(__('Verified'))->assertDontSee(__('Not verified'));
     }
 
     public function test_avatar_profile_requires_authentication_and_supports_localized_routes(): void

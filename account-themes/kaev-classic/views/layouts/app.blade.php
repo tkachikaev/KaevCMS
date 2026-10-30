@@ -16,8 +16,8 @@
     <script src="{{ account_theme_asset('assets/js/banner-effects.js') }}" defer data-navigate-once></script>
     <link rel="stylesheet" href="{{ account_theme_asset('assets/css/app.css') }}" data-navigate-track>
     @stack('preload')
-    <link rel="stylesheet" href="{{ asset('assets/account/css/components.css') }}?v={{ cms_version() }}&ui=account-consistency" data-navigate-track>
-    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}&ui=account-consistency" defer data-navigate-track data-navigate-once></script>
+    <link rel="stylesheet" href="{{ asset('assets/account/css/components.css') }}?v={{ cms_version() }}&ui=account-social-dialog" data-navigate-track>
+    <script src="{{ asset('assets/account/js/navigation.js') }}?v={{ cms_version() }}&ui=account-social-dialog" defer data-navigate-track data-navigate-once></script>
     @livewireStyles
     @stack('head')
     @includeIf('module-donations::account.assets')

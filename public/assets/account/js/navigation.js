@@ -42,6 +42,31 @@
     };
 
     const profileMenus = () => document.querySelectorAll('.account-profile-menu[open]');
+    // Native dialogs contain focus, restore it to the opener and handle Escape.
+    document.addEventListener('click', event => {
+        if (!(event.target instanceof Element)) return;
+        const opener = event.target.closest('[data-account-social-open]');
+        if (opener) {
+            const dialog = document.getElementById(opener.dataset.accountSocialOpen);
+            if (dialog instanceof HTMLDialogElement && !dialog.open) {
+                dialog.showModal();
+                document.documentElement.classList.add('account-social-modal-open');
+            }
+        }
+        if (event.target.closest('[data-account-social-close]')) {
+            event.target.closest('dialog')?.close();
+        }
+    });
+    document.addEventListener('close', event => {
+        const dialog = event.target;
+        if (!(dialog instanceof HTMLDialogElement) || !dialog.matches('[data-account-social-dialog]')) return;
+        dialog.querySelector('form')?.reset();
+        document.documentElement.classList.remove('account-social-modal-open');
+    }, true);
+    document.addEventListener('livewire:navigating', () => {
+        document.querySelectorAll('[data-account-social-dialog][open]').forEach(dialog => dialog.close());
+    });
+
     const avatarModal = () => document.querySelector('[data-avatar-modal]');
     const operationModal = () => document.querySelector('[data-account-operation-modal]');
     const characterRescueModal = () => document.querySelector('[data-character-rescue-modal]');

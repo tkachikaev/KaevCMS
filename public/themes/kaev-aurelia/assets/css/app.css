@@ -1811,3 +1811,6 @@ html.ka-intro .page-content > *, html.ka-intro .auth-card { animation-delay: .5s
 .auth-card .social-signin-button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .social-signin-icon { display: block; width: 18px; height: 18px; flex: 0 0 18px; object-fit: contain; }
 @media (prefers-reduced-motion: reduce) { .auth-card .social-signin-button { transition: none; } }
+
+.auth-inline-feedback { display:grid; gap:8px; margin:20px 0; min-width:0; }
+.auth-inline-feedback .public-flash { font-size:14px; line-height:1.5; overflow-wrap:anywhere; box-shadow:none; }

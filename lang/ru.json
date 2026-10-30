@@ -3046,5 +3046,10 @@
     "Social sign-in provider enabled.": "Социальный вход включён.",
     "JWT verification library required": "Требуется библиотека проверки JWT",
     "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.": "Вход через Telegram нельзя включить до согласования и установки проверенной библиотеки JWT/JWKS.",
-    "Could not save settings. Please try again.": "Не удалось сохранить настройки. Попробуйте ещё раз."
+    "Could not save settings. Please try again.": "Не удалось сохранить настройки. Попробуйте ещё раз.",
+    "Connect a service to sign in to your account more easily.": "Подключите удобный сервис для быстрого входа в аккаунт.",
+    "Account connected": "Подключён",
+    "Account not connected": "Не подключён",
+    "Enter your website password to confirm this change.": "Для подтверждения введите пароль от аккаунта сайта.",
+    "Manage :provider account": "Управление аккаунтом :provider"
 }

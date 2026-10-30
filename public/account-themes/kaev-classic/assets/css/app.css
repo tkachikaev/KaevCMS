@@ -763,9 +763,3 @@ html body.account-body .account-character-rescue-button { min-height: 44px; padd
     --account-shared-operation-reward-background: var(--account-panel-raised);
     --account-shared-operation-actions-background: var(--account-panel-raised);
 }
-
-/* Linked external sign-in methods in the existing Security panel. */
-.account-social-form { margin-top: 12px; }
-.account-social-form form { display: grid; gap: 13px; justify-items: start; }
-.account-social-form form label { width: min(100%, 440px); }
-.account-social-form .account-button { min-height: 42px; }
