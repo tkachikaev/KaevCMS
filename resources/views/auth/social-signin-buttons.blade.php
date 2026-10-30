@@ -1,5 +1,5 @@
 @php
-    $availableSocialMethods = collect(['google' => ['name' => 'Google', 'mark' => 'G'], 'yandex' => ['name' => 'Яндекс ID', 'mark' => 'Я'], 'vk' => ['name' => 'VK ID', 'mark' => 'VK'], 'telegram' => ['name' => 'Telegram', 'mark' => 'T'], 'discord' => ['name' => 'Discord', 'mark' => 'D'], 'facebook' => ['name' => 'Facebook', 'mark' => 'f']])
+    $availableSocialMethods = collect(['google' => ['name' => 'Google'], 'yandex' => ['name' => 'Яндекс ID'], 'vk' => ['name' => 'VK ID'], 'telegram' => ['name' => 'Telegram'], 'discord' => ['name' => 'Discord'], 'facebook' => ['name' => 'Facebook']])
         ->filter(fn (array $method, string $provider) => app(\App\Services\Auth\Social\SocialAuthSettings::class)->isAvailable($provider));
 @endphp
 @if ($availableSocialMethods->isNotEmpty())
@@ -7,9 +7,9 @@
         <p class="muted">{{ __('Or continue with') }}</p>
         <div class="social-signin-options">
             @foreach ($availableSocialMethods as $provider => $method)
-                <a class="button social-google-button social-provider-{{ $provider }}" href="{{ route('social.'.$provider.'.start') }}" rel="nofollow" aria-label="{{ __('Continue with :provider', ['provider' => $method['name']]) }}">
-                    <span class="social-google-mark social-provider-mark-{{ $provider }}" aria-hidden="true">{{ $method['mark'] }}</span>
-                    {{ __('Continue with :provider', ['provider' => $method['name']]) }}
+                <a class="social-signin-button" href="{{ route('social.'.$provider.'.start') }}" rel="nofollow" aria-label="{{ __('Continue with :provider', ['provider' => $method['name']]) }}">
+                    <img class="social-signin-icon" src="{{ asset('assets/images/social/'.$provider.'.svg') }}" width="18" height="18" alt="" aria-hidden="true">
+                    <span>{{ $method['name'] }}</span>
                 </a>
             @endforeach
         </div>

@@ -6,7 +6,7 @@
 @section('content')
 @include('admin.settings._system_tabs')
 
-<form id="registration-settings-form" class="settings-form" method="POST" action="{{ route('admin.settings.registration.update') }}">
+<form id="registration-settings-form" class="settings-form" data-registration-save method="POST" action="{{ route('admin.settings.registration.update') }}">
     @csrf
     @method('PUT')
 
@@ -113,13 +113,13 @@
 
     <div class="social-provider-list">
         @foreach($socialProviders as $provider => $social)
-            <div class="social-provider-item">
+            <div class="social-provider-item" data-social-provider="{{ $provider }}">
                 <div class="social-provider-head">
                     <span class="social-provider-mark" aria-hidden="true"><img src="{{ asset('assets/images/social/'.$provider.'.svg') }}" width="20" height="20" alt=""></span>
                     <span class="social-provider-copy">
                         <strong>{{ $social['name'] }}</strong>
                     </span>
-                    <span @class([
+                    <span data-social-badge data-labels="{{ json_encode(['enabled' => __('Enabled'), 'ready' => __('Ready to enable'), 'invalid' => __('Configuration error'), 'pending' => __('JWT verification library required'), 'unconfigured' => __('Not configured')]) }}" @class([
                         'status-badge',
                         'status-badge-success' => $social['status'] === 'enabled',
                         'status-badge-warning' => in_array($social['status'], ['invalid', 'ready', 'pending'], true),
@@ -135,10 +135,9 @@
 
                 <div class="social-provider-quick-actions">
                     <button type="button" class="button button-secondary" data-social-open="social-{{ $provider }}" aria-haspopup="dialog">{{ __('Configure') }}</button>
-                    <form method="POST" action="{{ route('admin.settings.registration.social.toggle', ['provider' => $provider]) }}" data-social-toggle>
-                        @csrf
-                        <x-admin.toggle :id="'social-enabled-'.$provider" name="enabled" :label="__('Enable sign-in')" :checked="$social['enabled']" :disabled="! $social['enabled'] && (! $social['configured'] || ! $social['integration_ready'])" :compact="true" />
-                    </form>
+                    <div data-social-toggle>
+                        <x-admin.toggle :id="'social-enabled-'.$provider" :name="'social_providers['.$provider.']'" :label="__('Enable sign-in')" :checked="(bool) old('social_providers.'.$provider, $social['enabled'])" :disabled="! $social['enabled'] && (! $social['configured'] || ! $social['integration_ready'])" :compact="true" :input-attributes="['form' => 'registration-settings-form']" />
+                    </div>
                 </div>
                 <dialog class="social-provider-dialog" id="social-{{ $provider }}" aria-labelledby="social-title-{{ $provider }}" data-social-dialog data-open-on-error="{{ $errors->any() && old('_social_provider') === $provider ? '1' : '0' }}">
                     <header class="social-provider-dialog-heading">
@@ -149,7 +148,7 @@
                         <p class="notice notice-warning">{{ __('Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.') }}</p>
                     @endif
                         <div class="social-provider-form-wrap">
-                            <form method="POST" action="{{ route('admin.settings.registration.social.update', ['provider' => $provider]) }}" autocomplete="off">
+                            <form method="POST" action="{{ route('admin.settings.registration.social.update', ['provider' => $provider]) }}" autocomplete="off" data-social-save>
                                 @csrf
                                 @method('PUT')
                                 <input type="hidden" name="_social_provider" value="{{ $provider }}">
@@ -183,13 +182,11 @@
                                     <a href="{{ $social['console'] }}" target="_blank" rel="noopener noreferrer">{{ __('Open provider console') }} ↗</a>
                                 </div>
                             </form>
-                            @if($social['secret_saved'])
-                                <form method="POST" action="{{ route('admin.settings.registration.social.secret.clear', ['provider' => $provider]) }}" class="social-provider-remove-secret">
+                                <form method="POST" action="{{ route('admin.settings.registration.social.secret.clear', ['provider' => $provider]) }}" class="social-provider-remove-secret" data-social-save @if(! $social['secret_saved']) hidden @endif>
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="button button-secondary">{{ __('Remove saved secret and disable sign-in') }}</button>
                                 </form>
-                            @endif
                             <p class="muted-admin">{{ __('Changing the Client ID disables sign-in until it is enabled again. Existing player links are never deleted.') }}</p>
                         </div>
                 </dialog>
@@ -200,5 +197,6 @@
 <div class="admin-actions-panel settings-actions settings-actions-narrow">
     <button class="button button-primary" type="submit" form="registration-settings-form">{{ __('Save settings') }}</button>
 </div>
-<script src="{{ asset('assets/admin/js/social-providers.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+<p data-social-message role="status" data-save-error="{{ __('Could not save settings. Please try again.') }}" data-secret-saved="{{ __('Secret saved') }}"></p>
+<script src="{{ asset('assets/admin/js/social-providers.js') }}?v={{ cms_version() }}&ui=social-save" defer data-navigate-once></script>
 @endsection

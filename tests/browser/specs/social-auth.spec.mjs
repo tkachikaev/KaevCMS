@@ -37,22 +37,51 @@ test('social settings keep secrets private and player linking reaches the provid
     await dialog.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
     await page.screenshot({ path: testInfo.outputPath('social-settings-dark.png') });
     const form = page.locator('form[action$="/registration/social/google"]');
+    await form.locator('[name=client_id]').fill(' ');
+    await form.locator('[name=client_secret]').fill('isolated-rejected-secret');
+    await page.evaluate(() => window.socialSaveSentinel = true);
+    await form.locator('button[type=submit]').click();
+    await expect(dialog.locator('[data-save-error-message]')).toBeVisible();
+    await expect(form.locator('[name=client_secret]')).toHaveValue('isolated-rejected-secret');
+    expect(await page.evaluate(() => window.socialSaveSentinel)).toBe(true);
     await form.locator('[name=client_id]').fill('isolated-browser-client');
     await form.locator('[name=client_secret]').fill('isolated-browser-secret');
+    await page.evaluate(() => window.socialSaveSentinel = true);
+    const scrollBefore = await page.evaluate(() => window.scrollY);
     await form.locator('button[type=submit]').click();
+    await expect(dialog).not.toBeVisible();
+    expect(await page.evaluate(() => window.socialSaveSentinel)).toBe(true);
+    expect(Math.abs(await page.evaluate(() => window.scrollY) - scrollBefore)).toBeLessThan(2);
     await page.locator('[data-social-open="social-google"]').click();
     await expect(form.locator('[name=client_secret]')).toHaveValue('');
     await page.locator('#social-google [data-social-close]').click();
-    await page.locator('form[action$="/social/google/toggle"] input[type=checkbox]').click();
-    await expect(page.locator('form[action$="/social/telegram/toggle"] input[type=checkbox]')).toBeDisabled();
+    await page.locator('#social-enabled-google').click();
+    const persisted = await page.request.get('/admin/settings/registration');
+    expect(await persisted.text()).not.toMatch(/id="social-enabled-google"[^>]*checked/);
+    await page.locator('button[form="registration-settings-form"]').click();
+    await expect(page.locator('[data-social-message]')).not.toBeEmpty();
+    await expect(page.locator('#social-enabled-telegram')).toBeDisabled();
     await page.locator('[data-social-open="social-telegram"]').click();
     const telegramForm = page.locator('form[action$="/registration/social/telegram"]');
     await telegramForm.locator('[name=client_id]').fill('123456789');
     await telegramForm.locator('[name=client_secret]').fill('isolated-telegram-secret');
     await telegramForm.locator('button[type=submit]').click();
-    const telegramToggle = page.locator('form[action$="/social/telegram/toggle"] input[type=checkbox]');
+    await expect(page.locator('#social-telegram')).not.toBeVisible();
+    const telegramToggle = page.locator('#social-enabled-telegram');
     await expect(telegramToggle).toBeEnabled();
     await expect(telegramToggle).not.toBeChecked();
+    for (const provider of ['yandex', 'vk', 'discord', 'facebook']) {
+        await page.locator(`[data-social-open="social-${provider}"]`).click();
+        const setup = page.locator(`form[action$="/registration/social/${provider}"]`);
+        await setup.locator('[name=client_id]').fill('123456789');
+        if (await setup.locator('[name=client_secret]').count()) await setup.locator('[name=client_secret]').fill('isolated-visual-secret');
+        await setup.locator('button[type=submit]').click();
+        await expect(page.locator(`#social-${provider}`)).not.toBeVisible();
+        await page.locator(`#social-enabled-${provider}`).check();
+    }
+    await page.locator('#social-enabled-telegram').check();
+    await page.locator('button[form="registration-settings-form"]').click();
+    await expect(page.locator('[data-social-message]')).not.toBeEmpty();
     const player = await context.newPage();
     await gotoWithLocalNetworkRetry(player, '/login');
     await player.locator('#login').fill(process.env.PLAYWRIGHT_PLAYER_EMAIL);
@@ -69,7 +98,7 @@ test('social settings keep secrets private and player linking reaches the provid
             expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
         }
     }
-    const guest = await context.browser().newContext();
+    const guest = await context.browser().newContext({ reducedMotion: 'reduce' });
     const visitor = await guest.newPage();
     try {
         for (const theme of ['default', 'kaev-aurelia']) {
@@ -82,11 +111,44 @@ test('social settings keep secrets private and player linking reaches the provid
                 await expect(visitor.locator('html')).toHaveAttribute('lang', locale);
                 for (const width of [1440, 390]) {
                     await visitor.setViewportSize({ width, height: 900 });
-                    await expect(visitor.locator('a[href$="/auth/social/google"]')).toHaveText(locale === 'ru' ? /Продолжить через Google/ : /Continue with Google/);
+                    await expect(visitor.locator('a[href$="/auth/social/google"]')).toHaveText('Google');
+                    const google = visitor.locator('a[href$="/auth/social/google"]');
+                    await expect(google.locator('img')).toHaveAttribute('src', /images\/social\/google\.svg$/);
+                    expect((await google.boundingBox()).width).toBeLessThan(160);
+                    expect(await google.locator('img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+                    await expect(visitor.locator('.social-signin-button')).toHaveCount(6);
+                    for (const button of await visitor.locator('.social-signin-button').all()) {
+                        expect((await button.boundingBox()).width).toBeLessThan(160);
+                        expect(await button.locator('img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+                    }
+                    if (locale === 'ru') {
+                        await visitor.locator('.social-signin-section').scrollIntoViewIfNeeded();
+                        await visitor.screenshot({ path: testInfo.outputPath(`social-login-${theme}-${width}.png`) });
+                        if (theme === 'kaev-aurelia' && width === 1440) {
+                            await visitor.locator('[data-site-scheme-toggle]:visible').first().click();
+                            await expect(visitor.locator('html')).toHaveAttribute('data-site-scheme', 'dark');
+                            await visitor.screenshot({ path: testInfo.outputPath('social-login-aurelia-dark.png') });
+                            await visitor.locator('[data-site-scheme-toggle]:visible').first().click();
+                        }
+                    }
                     expect(await visitor.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
                 }
             }
         }
+        await gotoWithLocalNetworkRetry(page, '/admin/settings/registration');
+        for (const provider of ['yandex', 'vk', 'telegram', 'discord', 'facebook']) {
+            await page.locator(`#social-enabled-${provider}`).uncheck();
+        }
+        await page.locator('button[form="registration-settings-form"]').click();
+        await expect(page.locator('[data-social-message]')).not.toBeEmpty();
+        await visitor.setViewportSize({ width: 1440, height: 1000 });
+        await visitor.goto(new URL('/language/ru', page.url()).href);
+        await visitor.goto(new URL('/login', page.url()).href);
+        await expect(visitor.locator('.social-signin-button')).toHaveCount(1);
+        const onlyButton = await visitor.locator('.social-signin-button').boundingBox();
+        const options = await visitor.locator('.social-signin-options').boundingBox();
+        expect(Math.abs(onlyButton.x + onlyButton.width / 2 - options.x - options.width / 2)).toBeLessThanOrEqual(1);
+        await visitor.screenshot({ path: testInfo.outputPath('social-login-google-only.png') });
     } finally { await guest.close(); }
     let intercepted = 0;
     await player.route('https://accounts.google.com/**', async route => {

@@ -1802,35 +1802,12 @@ html.ka-intro .page-content > *, html.ka-intro .auth-card { animation-delay: .5s
     html.ka-intro .hero-feature-card, html.ka-intro .server-panel, html.ka-intro .page-content > *, html.ka-intro .auth-card { animation: none; }
 }
 
-/* Social sign-in, shared layout for both public themes. */
+/* Compact social sign-in buttons shared by both public themes. */
 .social-signin-section { margin-top: 20px; border-top: 1px solid rgba(145,145,145,.22); padding-top: 18px; text-align: center; }
 .social-signin-section .muted { margin: 0 0 12px; }
-.social-google-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; text-decoration: none; background: #fff; color: #23262d; border: 1px solid #bbc1cc; border-radius: 9px; padding: 9px 18px; font-weight: 650; }
-.social-google-button:hover, .social-google-button:focus-visible { background: #f3f6fa; color: #17191f; outline-offset: 3px; }
-.social-google-mark { font: 800 22px/1 Arial,sans-serif; color: #4285f4; }
-@media (max-width: 600px) { .social-google-button { width: 100%; } }
-
-/* Social identity buttons: share existing layout, keep brands visually distinct. */
-.social-signin-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.social-provider-yandex { background: #fff; color: #202020; border-color: #bbc1cc; }
-.social-provider-yandex:hover, .social-provider-yandex:focus-visible { background: #f5f5f5; color: #202020; }
-.social-provider-mark-yandex { color: #e12b27; }
-.social-provider-vk { background: #fff; color: #202a3c; border-color: #c4d5ef; }
-.social-provider-vk:hover, .social-provider-vk:focus-visible { background: #f0f5ff; color: #202a3c; }
-.social-provider-mark-vk { color: #0077ff; font-size: 18px; }
-@media (max-width: 600px) { .social-signin-options { display: flex; flex-direction: column; } .social-signin-options .social-google-button { width: 100%; } }
-
-/* Telegram social sign-in */
-.social-provider-telegram { background: #fff; color: #253449; border-color: #bfd9ed; }
-.social-provider-telegram:hover, .social-provider-telegram:focus-visible { background: #eef8ff; color: #253449; }
-.social-provider-mark-telegram { color: #229ed9; font-size: 18px; }
-
-/* Discord social sign-in */
-.social-provider-discord { background: #5865f2; color: #fff; border-color: #4752c4; }
-.social-provider-discord:hover, .social-provider-discord:focus-visible { background: #4752c4; color: #fff; }
-.social-provider-mark-discord { color: #fff; font-size: 18px; }
-
-/* Facebook sign-in: minimal and accessible in both public themes. */
-.social-provider-facebook { background: #fff; color: #253449; border-color: #bed0e9; }
-.social-provider-facebook:hover, .social-provider-facebook:focus-visible { background: #edf4ff; color: #253449; }
-.social-provider-mark-facebook { color: #0866ff; font-size: 19px; font-weight: 750; }
+.social-signin-options { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+.auth-card .social-signin-button { display: inline-flex; flex: 0 1 auto; align-items: center; justify-content: center; gap: 8px; width: auto; max-width: 100%; min-height: 40px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper, var(--panel)); color: var(--ink, var(--text)); font: inherit; font-size: 13px; font-weight: 600; line-height: 1.3; letter-spacing: normal; text-transform: none; text-decoration: none; transition: border-color 160ms ease, background-color 160ms ease; }
+.auth-card .social-signin-button:hover { border-color: var(--gold); }
+.auth-card .social-signin-button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.social-signin-icon { display: block; width: 18px; height: 18px; flex: 0 0 18px; object-fit: contain; }
+@media (prefers-reduced-motion: reduce) { .auth-card .social-signin-button { transition: none; } }

@@ -13,6 +13,7 @@ use App\Services\Auth\Social\SocialIdentityService;
 use App\Services\Auth\Social\SocialProviders;
 use App\Services\Auth\Social\TelegramIdTokenVerifier;
 use App\Services\CmsSettings;
+use App\Services\RegistrationSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +22,43 @@ use Tests\TestCase;
 class SocialProviderSettingsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_credentials_can_be_saved_as_json_without_exposing_secrets(): void
+    {
+        $this->actingAs($this->admin(), 'admin')->putJson('/admin/settings/registration/social/google', [
+            'client_id' => 'ajax-client', 'client_secret' => 'ajax-private-secret',
+        ])->assertOk()->assertJsonPath('provider.configured', true)->assertJsonPath('provider.enabled', false)
+            ->assertDontSee('ajax-private-secret');
+    }
+
+    public function test_json_validation_keeps_secrets_private_and_json_secret_removal_disables_sign_in(): void
+    {
+        $this->actingAs($this->admin(), 'admin')->putJson('/admin/settings/registration/social/google', [
+            'client_id' => '', 'client_secret' => 'rejected-private-secret',
+        ])->assertUnprocessable()->assertJsonValidationErrors('client_id')->assertDontSee('rejected-private-secret');
+        $settings = app(SocialAuthSettings::class);
+        $settings->updateCredentials('google', 'clear-client', 'clear-private-secret');
+        $settings->setEnabled('google', true);
+        $this->deleteJson('/admin/settings/registration/social/google/secret')
+            ->assertOk()->assertJsonPath('provider.secret_saved', false)->assertJsonPath('provider.enabled', false)
+            ->assertDontSee('clear-private-secret');
+        $this->assertFalse($settings->isAvailable('google'));
+    }
+
+    public function test_global_save_applies_provider_switches_and_rejects_incomplete_settings_atomically(): void
+    {
+        $settings = app(SocialAuthSettings::class);
+        $settings->updateCredentials('google', 'global-client', 'global-secret');
+        $this->actingAs($this->admin(), 'admin')->putJson('/admin/settings/registration', [
+            'registration_enabled' => true, 'social_providers' => ['google' => true],
+        ])->assertOk();
+        $this->assertTrue($settings->isAvailable('google'));
+        $this->putJson('/admin/settings/registration', [
+            'registration_enabled' => false, 'social_providers' => ['google' => false, 'discord' => true],
+        ])->assertUnprocessable()->assertJsonValidationErrors('social_providers.discord');
+        $this->assertTrue($settings->isAvailable('google'));
+        $this->assertTrue(app(RegistrationSettings::class)->enabled());
+    }
 
     protected function setUp(): void
     {

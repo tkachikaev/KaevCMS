@@ -79,7 +79,7 @@ final class PayPalAttempts
     public function claimCreate(int $attemptId): bool
     {
         return DB::transaction(function () use ($attemptId): bool {
-            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            $attempt = $this->lockAttempt($attemptId);
             if ($attempt->status === 'reserved') {
                 DB::table('module_donation_paypal_attempts')->where('id', $attemptId)->update([
                     'status' => 'creating', 'create_started_at' => now(), 'updated_at' => now(),
@@ -125,7 +125,7 @@ final class PayPalAttempts
             throw new InvalidArgumentException('Invalid PayPal approval link.');
         }
         DB::transaction(function () use ($attemptId, $remoteOrderId, $approvalUrl): void {
-            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            $attempt = $this->lockAttempt($attemptId);
             if (! in_array($attempt->status, ['creating', 'create_unknown', 'created'], true)
                 || ($attempt->paypal_order_id !== null && $attempt->paypal_order_id !== $remoteOrderId)) {
                 throw new LogicException('Conflicting PayPal Create result.');
@@ -142,7 +142,7 @@ final class PayPalAttempts
     public function markApproved(int $attemptId): void
     {
         DB::transaction(function () use ($attemptId): void {
-            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            $attempt = $this->lockAttempt($attemptId);
             if (in_array($attempt->status, ['capturing', 'capture_unknown', 'capture_pending',
                 'capture_completed_unsettled', 'capture_denied', 'capture_rejected', 'settled',
                 'requires_review', 'sandbox_verified', 'sandbox_pending', 'sandbox_denied'], true)) {
@@ -161,7 +161,7 @@ final class PayPalAttempts
     public function claimCapture(int $attemptId): bool
     {
         return DB::transaction(function () use ($attemptId): bool {
-            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            $attempt = $this->lockAttempt($attemptId);
             if ($attempt->status !== 'approved' || $attempt->paypal_order_id === null) {
                 return false;
             }
@@ -195,7 +195,7 @@ final class PayPalAttempts
             default => throw new InvalidArgumentException('Invalid PayPal capture status.'),
         };
         DB::transaction(function () use ($attemptId, $captureId, $next): void {
-            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            $attempt = $this->lockAttempt($attemptId);
             if ($attempt->paypal_capture_id !== null && $attempt->paypal_capture_id !== $captureId) {
                 throw new LogicException('PayPal capture response conflicts with its attempt.');
             }
@@ -239,7 +239,7 @@ final class PayPalAttempts
             throw new InvalidArgumentException('Invalid PayPal diagnostic code.');
         }
         DB::transaction(function () use ($attemptId, $allowed, $next, $reason): void {
-            $attempt = PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
+            $attempt = $this->lockAttempt($attemptId);
             if (! in_array($attempt->status, $allowed, true)) {
                 if ($allowed === ['capturing'] && $attempt->paypal_capture_id !== null
                     && in_array($attempt->status, ['capture_pending', 'capture_completed_unsettled',
@@ -252,6 +252,19 @@ final class PayPalAttempts
                 'status' => $next, 'diagnostic_code' => $reason, 'updated_at' => now(),
             ]);
         }, 3);
+    }
+
+    /** Follow the reservation lock order before updating indexed attempt state. */
+    private function lockAttempt(int $attemptId): PayPalAttempt
+    {
+        $candidate = PayPalAttempt::query()->findOrFail($attemptId);
+        if ($candidate->order_id !== null) {
+            $order = DonationOrder::query()->findOrFail($candidate->order_id);
+            User::query()->whereKey($order->user_id)->lockForUpdate()->firstOrFail();
+            DonationOrder::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+        }
+
+        return PayPalAttempt::query()->whereKey($attemptId)->lockForUpdate()->firstOrFail();
     }
 
     private static function assertMerchant(string $merchant): void

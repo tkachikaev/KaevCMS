@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Donations: one clear card layout for YooMoney, FreeKassa and PayPal settings, live test results, a single payment switch per provider.'
+Write-Host 'Social sign-in: Google, Yandex ID, VK ID, Telegram OIDC, Discord and Facebook; provider setup and account security.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

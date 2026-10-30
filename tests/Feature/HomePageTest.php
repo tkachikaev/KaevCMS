@@ -39,7 +39,7 @@ class HomePageTest extends TestCase
     {
         $this->seed();
 
-        foreach (['default' => '0.8.5', 'kaev-aurelia' => '1.1.0'] as $theme => $version) {
+        foreach (['default' => '0.8.6', 'kaev-aurelia' => '1.1.1'] as $theme => $version) {
             app(ThemeManager::class)->activate($theme);
             $this->get('/')->assertOk()
                 ->assertSee('/themes/'.$theme.'/assets/css/app.css?v='.$version, false)

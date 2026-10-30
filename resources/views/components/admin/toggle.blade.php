@@ -27,7 +27,7 @@
         @endif
     </span>
     <span class="admin-switch-control">
-        <input name="{{ $name }}" type="hidden" value="{{ $hiddenValue }}" @disabled($disabled)>
+        <input name="{{ $name }}" type="hidden" value="{{ $hiddenValue }}" @disabled($disabled) {{ $inputAttributes->only(['form']) }}>
         <input id="{{ $id }}" name="{{ $name }}" type="checkbox" value="{{ $value }}" @checked($checked) @disabled($disabled) {{ $inputAttributes }}>
         <span aria-hidden="true"></span>
     </span>

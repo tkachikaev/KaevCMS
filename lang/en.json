@@ -3045,5 +3045,6 @@
     "Set a password or connect another available sign-in method before disconnecting this provider.": "Set a password or connect another available sign-in method before disconnecting this provider.",
     "Social sign-in provider enabled.": "Social sign-in provider enabled.",
     "JWT verification library required": "JWT verification library required",
-    "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.": "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed."
+    "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.": "Telegram sign-in cannot be enabled until a verified JWT/JWKS library is approved and installed.",
+    "Could not save settings. Please try again.": "Could not save settings. Please try again."
 }

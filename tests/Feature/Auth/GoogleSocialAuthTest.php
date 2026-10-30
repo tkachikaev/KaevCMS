@@ -172,9 +172,10 @@ class GoogleSocialAuthTest extends TestCase
 
     private function fakeGoogle(string $subject, string $email, string $nonce, bool $tamper = false): void
     {
-        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        $csr = openssl_csr_new(['commonName' => 'unit-test.example'], $key);
-        $certificate = openssl_csr_sign($csr, null, $key, 1);
+        $options = ['config' => base_path('tests/Fixtures/openssl.cnf'), 'private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA];
+        $key = openssl_pkey_new($options);
+        $csr = openssl_csr_new(['commonName' => 'unit-test.example'], $key, $options);
+        $certificate = openssl_csr_sign($csr, null, $key, 1, $options);
         openssl_x509_export($certificate, $pem);
         $header = $this->base64url(json_encode(['alg' => 'RS256', 'kid' => 'test-key']));
         $payload = $this->base64url(json_encode([

@@ -10,7 +10,9 @@ use App\Services\Auth\Social\SocialAuthSettings;
 use App\Services\Auth\Social\SocialProviders;
 use App\Services\Auth\Social\TelegramIdTokenVerifier;
 use DomainException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 final class SocialProviderSettingsController extends Controller
 {
@@ -20,7 +22,7 @@ final class SocialProviderSettingsController extends Controller
         SaveSocialProviderSettingsRequest $request,
         string $provider,
         SocialAuthSettings $settings,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $this->assertProvider($provider);
         $validated = $request->validated();
         $secret = $validated['client_secret'] ?? null;
@@ -36,9 +38,14 @@ final class SocialProviderSettingsController extends Controller
             details: $changes,
         );
 
-        return $this->redirectWithStatus($changes['disabled_on_id_change']
+        $message = $changes['disabled_on_id_change']
             ? __('Provider settings saved. Sign-in was disabled because Client ID changed.')
-            : __('Provider settings saved. Enable sign-in separately.'));
+            : __('Provider settings saved. Enable sign-in separately.');
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message, 'provider' => $settings->values($provider), 'id_changed' => $changes['client_id_changed']]);
+        }
+
+        return $this->redirectWithStatus($message);
     }
 
     public function toggle(
@@ -69,7 +76,7 @@ final class SocialProviderSettingsController extends Controller
             : __('Social sign-in provider disabled. Existing player links are retained.'));
     }
 
-    public function clearSecret(string $provider, SocialAuthSettings $settings): RedirectResponse
+    public function clearSecret(Request $request, string $provider, SocialAuthSettings $settings): RedirectResponse|JsonResponse
     {
         $this->assertProvider($provider);
         $settings->clearSecret($provider);
@@ -79,6 +86,10 @@ final class SocialProviderSettingsController extends Controller
             target: $provider,
             details: ['enabled' => false, 'secret_saved' => false],
         );
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => __('Saved provider secret removed and social sign-in disabled.'), 'provider' => $settings->values($provider), 'id_changed' => true]);
+        }
 
         return $this->redirectWithStatus(__('Saved provider secret removed and social sign-in disabled.'));
     }

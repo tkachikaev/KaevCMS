@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.56.0 - 2026-10-30
+
+- Use compact, centered social sign-in buttons with local provider logos in both public themes, including responsive wrapping and light/dark styling.
+
+- Donations 1.17.14: serialize PayPal attempt state changes with order reservation to prevent MariaDB deadlocks during concurrent checkout preparation.
+
+- Add social sign-in with Google, Yandex ID, VK ID, Telegram OIDC, Discord and Facebook, explicit provider activation and account linking in Security. External provider setup and real HTTPS acceptance remain required.
 
 - Complete Telegram OIDC verification with the approved firebase/php-jwt 7.2 library, bounded JWKS key rotation, strict claims and signed-token regression coverage. Keep provider activation explicit.
 

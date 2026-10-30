@@ -220,9 +220,10 @@ class TelegramJwtVerificationTest extends TestCase
     private function signer(string $kid): array
     {
         if (! isset(self::$signers[$kid])) {
-            $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+            $options = ['config' => base_path('tests/Fixtures/openssl.cnf'), 'private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA];
+            $key = openssl_pkey_new($options);
             $this->assertNotFalse($key);
-            openssl_pkey_export($key, $private);
+            openssl_pkey_export($key, $private, null, $options);
             $details = openssl_pkey_get_details($key);
             self::$signers[$kid] = ['private' => $private, 'jwk' => ['kty' => 'RSA', 'alg' => 'RS256', 'use' => 'sig', 'kid' => $kid, 'n' => JWT::urlsafeB64Encode($details['rsa']['n']), 'e' => JWT::urlsafeB64Encode($details['rsa']['e'])]];
         }

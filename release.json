@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "version": "0.55.13",
-  "previous_version": "0.55.12",
-  "released_at": "2026-10-28",
+  "version": "0.56.0",
+  "previous_version": "0.55.13",
+  "released_at": "2026-10-30",
   "recovery_floor_version": "0.42.4",
   "cumulative_base_version": "0.42.4",
-  "apply_script": "deployment/windows/apply-0.55.13.ps1",
+  "apply_script": "deployment/windows/apply-0.56.0.ps1",
   "update_script": "deployment/windows/update.ps1",
-  "previous_apply_script": "deployment/windows/apply-0.55.12.ps1",
-  "previous_apply_sha256": "a779f094e58f36d84b122fcd6b60b2b98a8cfc8ac3a5a83eb4fab3d5d0952ed3",
+  "previous_apply_script": "deployment/windows/apply-0.55.13.ps1",
+  "previous_apply_sha256": "a953557eb81c9f5347a7a2214f198e83e998a8aa0e5ed76351d9030f98630c99",
   "composer_lock": {
-    "previous_sha256": "c6f54ebc7877807ce6ed5d8a32d3b4c919775a8865167f554a2e621eece7a718",
+    "previous_sha256": "59d45288f6e9d928c986320146f7509a38dbb3f829518791703d40e38bc30bc3",
     "current_sha256": "b571f9e2829f5096ab21982abe7913ebbc8c43b8ea6b7b9759bbd86d1c0d03cd"
   },
   "repair_files": []

@@ -1,0 +1,8 @@
+# Self-contained configuration for ephemeral test keys and certificates only.
+[req]
+distinguished_name = test_dn
+default_md = sha256
+prompt = no
+
+[test_dn]
+CN = unit-test.example
