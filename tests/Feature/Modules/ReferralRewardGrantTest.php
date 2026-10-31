@@ -202,6 +202,26 @@ class ReferralRewardGrantTest extends TestCase
         $this->assertDatabaseCount('reward_inventory_grants', 3);
     }
 
+    public function test_frozen_older_invitation_does_not_reserve_optional_reward_slot(): void
+    {
+        [$frozen, $server] = $this->scenario();
+        [$active] = $this->scenario($frozen->inviter, $server);
+        ReferralServerSetting::query()->where('game_server_id', $server->id)
+            ->update(['max_rewarded_invitees' => 1]);
+
+        $frozenReward = $this->earned($frozen, $server, 'inviter', 20, 57, 1);
+        $activeReward = $this->earned($active, $server, 'inviter', 20, 57, 1);
+        $frozen->update(['status' => 'frozen', 'frozen_reason' => 'Manual review']);
+
+        // Without the active-invitation filter, the frozen first snapshot
+        // consumes the only candidate slot and the newer active friend starves.
+        $service = app(ReferralRewardGrantService::class);
+        $this->assertSame('granted', $service->grantEntitlement($activeReward->id));
+        $this->assertSame('deferred', $service->grantEntitlement($frozenReward->id));
+        $this->assertDatabaseCount('reward_inventory_grants', 1);
+        $this->assertSame('earned', $frozenReward->fresh()->status);
+    }
+
     public function test_failed_audit_rolls_back_grant_and_entitlement_together(): void
     {
         [$invite, $server] = $this->scenario();

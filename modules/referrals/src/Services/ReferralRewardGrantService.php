@@ -251,6 +251,10 @@ final class ReferralRewardGrantService
         $nextIds = ReferralSnapshot::query()->select('module_referral_snapshots.invite_id')
             ->join('module_referral_invites as ri', 'ri.id', '=', 'module_referral_snapshots.invite_id')
             ->where('ri.inviter_user_id', $invite->inviter_user_id)
+            // Frozen invitations are not candidates for a new reward slot.
+            // Otherwise a frozen older invite can permanently starve an active
+            // invite when the administrator sets an optional inviter limit.
+            ->where('ri.status', 'active')
             ->where('module_referral_snapshots.game_server_id', $server->id)
             ->whereExists(static function ($query): void {
                 $query->selectRaw('1')->from('module_referral_entitlements as e')
