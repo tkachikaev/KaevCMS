@@ -8,9 +8,11 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
+use App\Support\Modules\ModuleUserRegistrationRegistry;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -47,6 +49,7 @@ class RegisteredUserController extends Controller
         RegistrationSettings $settings,
         MailSettings $mailSettings,
         AuditLogger $auditLogger,
+        ModuleUserRegistrationRegistry $registrationHooks,
     ): RedirectResponse {
         abort_unless($settings->enabled(), 403, __('New user registration is disabled.'));
         abort_if(
@@ -56,18 +59,26 @@ class RegisteredUserController extends Controller
         );
 
         $validated = $request->validated();
-        $user = User::query()->create([
-            'name' => Str::lower(trim((string) $validated['name'])),
-            'email' => Str::lower(trim((string) $validated['email'])),
-            'password' => Hash::make((string) $validated['password']),
-            'locale' => app()->getLocale(),
-        ]);
+        $passwordHash = Hash::make((string) $validated['password']);
+        // A referral belongs to the creation of a new CMS user, not to a later login.
+        // Creating both records in one transaction prevents partially linked accounts.
+        $user = DB::transaction(static function () use ($validated, $settings, $registrationHooks, $request, $passwordHash): User {
+            $user = User::query()->create([
+                'name' => Str::lower(trim((string) $validated['name'])),
+                'email' => Str::lower(trim((string) $validated['email'])),
+                'password' => $passwordHash,
+                'locale' => app()->getLocale(),
+            ]);
 
-        if (! $settings->emailVerificationRequired()) {
-            $user->markEmailAsVerified();
-        }
+            if (! $settings->emailVerificationRequired()) {
+                $user->markEmailAsVerified();
+            }
 
-        $user->forceFill(['last_login_at' => now(), 'password_set_at' => now()])->save();
+            $user->forceFill(['last_login_at' => now(), 'password_set_at' => now()])->save();
+            $registrationHooks->created($user, $request);
+
+            return $user;
+        });
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();

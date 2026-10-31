@@ -14,6 +14,7 @@
     "lang": "lang",
     "migrations": "database/migrations",
     "routes": {
+        "web": "routes/web.php",
         "admin": "routes/admin.php"
     },
     "locales": {

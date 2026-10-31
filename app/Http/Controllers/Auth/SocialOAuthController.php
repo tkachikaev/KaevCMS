@@ -21,6 +21,7 @@ use App\Services\Auth\Social\VkIdentityProvider;
 use App\Services\Auth\Social\YandexIdentityProvider;
 use App\Services\MailSettings;
 use App\Services\RegistrationSettings;
+use App\Support\Modules\ModuleUserRegistrationRegistry;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -229,7 +230,7 @@ final class SocialOAuthController extends Controller
         return redirect()->route('social.'.$this->provider($request).'.register')->with('status', __('Email confirmed. Choose a username.'));
     }
 
-    public function register(Request $request, SocialRegistrationSession $registrations, RegistrationSettings $settings, SocialAuthSettings $socialSettings, AuditLogger $audit): RedirectResponse
+    public function register(Request $request, SocialRegistrationSession $registrations, RegistrationSettings $settings, SocialAuthSettings $socialSettings, AuditLogger $audit, ModuleUserRegistrationRegistry $registrationHooks): RedirectResponse
     {
         abort_unless($settings->enabled() && $socialSettings->isAvailable($this->provider($request)), 403);
         $pending = $registrations->get($request);
@@ -248,7 +249,7 @@ final class SocialOAuthController extends Controller
         }
         try {
             $registration = $registrations->consume($request);
-            $user = DB::transaction(static function () use ($validated, $registration): User {
+            $user = DB::transaction(static function () use ($validated, $registration, $registrationHooks, $request): User {
                 $user = User::query()->create([
                     'name' => $validated['name'],
                     'email' => $registration['email'],
@@ -260,6 +261,7 @@ final class SocialOAuthController extends Controller
                     'provider' => $registration['provider'],
                     'provider_user_id' => $registration['subject'],
                 ]);
+                $registrationHooks->created($user, $request);
 
                 return $user;
             });

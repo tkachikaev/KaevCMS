@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Localization\LocaleController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ReferralShortLinkController;
 use App\Http\Controllers\Payments\FreeKassaNotificationController;
 use App\Http\Controllers\Payments\PayPalNotificationController;
 use App\Http\Controllers\Payments\YooMoneyNotificationController;
@@ -100,6 +101,13 @@ Route::post('/payments/freekassa/notify', FreeKassaNotificationController::class
 // Core-owned, signature-verified and durable PayPal callback, independent of player checkout visibility.
 Route::post('/payments/paypal/notify', PayPalNotificationController::class)
     ->middleware('throttle:60,1,paypal-notify')->name('payments.paypal.notify');
+
+// The short public invitation address is core-owned so it works with route:cache.
+// The module gate rejects disabled or uninstalled referrals before controller resolution.
+Route::get('/r/{code}', ReferralShortLinkController::class)
+    ->where('code', '[A-Za-z0-9]{32,64}')
+    ->middleware(['module.enabled:referrals', 'throttle:30,1'])
+    ->name('referrals.invite');
 
 // Exact non-localized OAuth callbacks registered at Google and Yandex.
 // These actions only use the website `web` guard; admin login remains separate.

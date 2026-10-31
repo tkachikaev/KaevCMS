@@ -10,6 +10,7 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleMigrationManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\Modules\ModuleUserRegistrationRegistry;
 use App\Support\Modules\ModuleValidator;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
@@ -40,6 +41,7 @@ class ModuleServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleAdminAuthorizer::class);
         $this->app->singleton(ModuleNavigationRegistry::class);
         $this->app->singleton(ModuleGameServerDependencyRegistry::class);
+        $this->app->singleton(ModuleUserRegistrationRegistry::class);
 
         // Laravel requires the core route cache in an app-booted callback registered after the
         // module callback below, and the cache replaces the whole route collection, so module

@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'invitation_title' => 'You were invited',
+    'invitation_text' => 'Create a new account to join your friend. The invitation remains available for :days day(s) unless you cancel it.',
+    'invitation_register' => 'Register',
+    'invitation_cancel' => 'Decline invitation',
     'admin_navigation_label' => 'Referrals',
     'admin_navigation_description' => 'Player invitations and level milestone rewards.',
     'admin_title' => 'Referral system',

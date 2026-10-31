@@ -13,6 +13,7 @@ parameters:
         - modules/daily-rewards/src
         - modules/donations/src
         - modules/promo-codes/src
+        - modules/referrals/src
         - modules/support-tickets/src
 
     level: 6

@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'invitation_title' => 'Вы пришли по приглашению',
+    'invitation_text' => 'Зарегистрируйтесь, чтобы присоединиться к другу. Приглашение сохраняется на :days дн., если вы не отмените его.',
+    'invitation_register' => 'Зарегистрироваться',
+    'invitation_cancel' => 'Отказаться от приглашения',
     'admin_navigation_label' => 'Реферальная система',
     'admin_navigation_description' => 'Приглашения друзей и награды за уровни.',
     'admin_title' => 'Реферальная система',
