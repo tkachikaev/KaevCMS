@@ -14,6 +14,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schedule;
+use KaevCMS\Modules\Referrals\Console\Commands\GrantReferralRewardsCommand;
 use KaevCMS\Modules\Referrals\Console\Commands\ScanReferralsCommand;
 use KaevCMS\Modules\Referrals\Services\ReferralInvitationService;
 
@@ -68,9 +69,12 @@ return static function (Application $app, ModuleContext $module): void {
     );
     if ($app->runningInConsole()) {
         ArtisanApplication::starting(static function (ArtisanApplication $artisan): void {
-            $artisan->resolveCommands([ScanReferralsCommand::class]);
+            $artisan->resolveCommands([ScanReferralsCommand::class, GrantReferralRewardsCommand::class]);
         });
         Schedule::command('kaevcms:referrals-scan --batch=30')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(10);
+        Schedule::command('kaevcms:referrals-grants --batch=30')
             ->everyFiveMinutes()
             ->withoutOverlapping(10);
     }

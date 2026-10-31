@@ -2,7 +2,7 @@
 
 An independent KaevCMS module for invitations and character-level rewards on each GameServer.
 
-## Development stage: iteration 4
+## Development stage: iteration 5
 
 - Iterations 1–3: module schema, invitation links, protected cookie, standard/social registration, admin reward rules and audited invitation freezing.
 - Bounded `kaevcms:referrals-scan --batch=30` command registered through the existing module Scheduler (`everyFiveMinutes`, overlap protection). Cron uses the existing `schedule:run`; no new daemon or Composer dependency.

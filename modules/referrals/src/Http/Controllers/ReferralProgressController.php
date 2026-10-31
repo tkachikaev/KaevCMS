@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use KaevCMS\Modules\Referrals\Models\ReferralInvite;
 use KaevCMS\Modules\Referrals\Services\ReferralLevelScanner;
+use KaevCMS\Modules\Referrals\Services\ReferralRewardGrantService;
 
 final class ReferralProgressController extends Controller
 {
@@ -21,6 +22,7 @@ final class ReferralProgressController extends Controller
         ReferralInvite $invite,
         GameServer $server,
         ReferralLevelScanner $scanner,
+        ReferralRewardGrantService $rewards,
     ): RedirectResponse {
         $user = $request->user('web');
         abort_unless($user !== null && $user->is_active, 403);
@@ -39,6 +41,9 @@ final class ReferralProgressController extends Controller
         }
 
         $result = $scanner->scan($invite, $server, true);
+        if (in_array($result, ['updated', 'completed'], true)) {
+            $rewards->grantForPair($invite, $server);
+        }
 
         return back()->with('referral_check', $result);
     }
