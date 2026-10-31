@@ -18,6 +18,19 @@
                     <span>{{ $invite->accepted_at?->format('d.m.Y H:i') }}</span>
                     @if($invite->status === 'frozen')<span>{{ $invite->frozen_reason }}</span>@endif
                 </div>
+                @foreach($progressByInvite->get($invite->id, collect()) as $progress)
+                    <div class="content-row-meta">
+                        <span>{{ __('module-referrals::messages.progress_server', ['id' => format_number($progress->game_server_id)]) }}</span>
+                        <span>{{ __('module-referrals::messages.progress_max_level', ['level' => format_number($progress->max_seen_level)]) }}</span>
+                        <span>{{ __('module-referrals::messages.progress_state_'.$progress->status) }}</span>
+                        @if($progress->last_error_code)
+                            <span>{{ __('module-referrals::messages.scan_error_'.$progress->last_error_code) }}</span>
+                        @endif
+                        @if($progress->next_check_at)
+                            <span>{{ __('module-referrals::messages.progress_next_check', ['date' => $progress->next_check_at->format('d.m.Y H:i')]) }}</span>
+                        @endif
+                    </div>
+                @endforeach
             </div>
             @if($canManage)
                 @if($invite->status === 'frozen')

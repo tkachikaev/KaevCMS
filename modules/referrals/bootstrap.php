@@ -8,10 +8,13 @@ use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleUserRegistrationRegistry;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Console\Application as ArtisanApplication;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schedule;
+use KaevCMS\Modules\Referrals\Console\Commands\ScanReferralsCommand;
 use KaevCMS\Modules\Referrals\Services\ReferralInvitationService;
 
 return static function (Application $app, ModuleContext $module): void {
@@ -63,4 +66,12 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
+    if ($app->runningInConsole()) {
+        ArtisanApplication::starting(static function (ArtisanApplication $artisan): void {
+            $artisan->resolveCommands([ScanReferralsCommand::class]);
+        });
+        Schedule::command('kaevcms:referrals-scan --batch=30')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(10);
+    }
 };

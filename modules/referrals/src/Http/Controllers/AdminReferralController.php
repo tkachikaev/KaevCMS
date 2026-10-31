@@ -18,6 +18,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use KaevCMS\Modules\Referrals\Models\ReferralEntitlement;
 use KaevCMS\Modules\Referrals\Models\ReferralInvite;
+use KaevCMS\Modules\Referrals\Models\ReferralProgress;
 use KaevCMS\Modules\Referrals\Models\ReferralRule;
 use KaevCMS\Modules\Referrals\Models\ReferralServerSetting;
 use KaevCMS\Modules\Referrals\Models\ReferralSetting;
@@ -194,8 +195,14 @@ final class AdminReferralController extends Controller
 
     public function invites(Request $request): View
     {
+        $invites = ReferralInvite::query()->orderByDesc('id')->paginate(25);
+        $progressByInvite = ReferralProgress::query()
+            ->whereIn('invite_id', $invites->getCollection()->pluck('id'))
+            ->orderBy('game_server_id')->get()->groupBy('invite_id');
+
         return view('module-referrals::admin.invites', [
-            'invites' => ReferralInvite::query()->orderByDesc('id')->paginate(25),
+            'invites' => $invites,
+            'progressByInvite' => $progressByInvite,
             'frozenCount' => ReferralInvite::query()->where('status', 'frozen')->count(),
             'canManage' => $this->canManage($request),
         ]);
