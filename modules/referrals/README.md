@@ -2,7 +2,7 @@
 
 An independent KaevCMS module for invitations and character-level rewards on each GameServer.
 
-## Development stage: iteration 5
+## Development stage: iteration 6
 
 - Iterations 1–3: module schema, invitation links, protected cookie, standard/social registration, admin reward rules and audited invitation freezing.
 - Bounded `kaevcms:referrals-scan --batch=30` command registered through the existing module Scheduler (`everyFiveMinutes`, overlap protection). Cron uses the existing `schedule:run`; no new daemon or Composer dependency.
@@ -14,6 +14,9 @@ An independent KaevCMS module for invitations and character-level rewards on eac
 - The admin invitation journal now shows safe progress states, max confirmed level, last error category, and next check time. No private game account data or raw driver errors are displayed.
 - Existing rule snapshots remain unchanged when administrators edit or remove the current rules. Module or server disable, checks pause, and invitation freezing halt scanning without deleting progress.
 
-The optional maximum rewarded invitees and web inventory issuance are **not yet enforced**; these belong to iteration 5. Player dashboards and final admin UX belong to iteration 6. Testing is required in the full PHP/Composer environment and for concurrent workers against real MySQL/MariaDB before deployment.
+- Iteration 5: grants flow only through `RewardInventoryService`, with idempotent keys, independent recipients, freezes, optional invitee limits and the dedicated `kaevcms:referrals-grants` scheduled command.
+- Iteration 6: the player page uses the bundled account layout and shared components for all account themes, including link copy, server-specific current rules, personal progress and inventory history. The admin now has a searchable reward journal, using the existing admin filter component. A runtime visibility resolver hides the account sidebar link until invitations and a participating server are enabled. No new CSS, fonts, palettes or external scripts were added.
 
-The module's migrations are applied through **Admin → Modules**. No migration is added in iteration 4. `VERSION`, module version and Composer dependencies are unchanged.
+Full Laravel/Browser/MySQL QA is required before deployment. Browser-visible progress and rewards are never proof that game items were delivered to a character.
+
+The module's migrations are applied through **Admin → Modules**. No new migration is added in iteration 6. `VERSION`, module version and Composer dependencies are unchanged.

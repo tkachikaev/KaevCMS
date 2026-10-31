@@ -9,6 +9,7 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('module-referrals::messages.invites') }}</span><strong class="admin-num">{{ format_number($inviteCount) }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('module-referrals::messages.grants') }}</span><strong class="admin-num">{{ format_number($grantCount) }}</strong></div>
     <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.referrals.invites.index', ['adminPath' => $adminPath]) }}">{{ __('module-referrals::messages.invitation_journal') }}</a>
+    <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.referrals.grants.index', ['adminPath' => $adminPath]) }}">{{ __('module-referrals::messages.reward_journal') }}</a>
 </div>
 @if(session('status'))<div class="notice notice-success" role="status">{{ session('status') }}</div>@endif
 @if($errors->any())<div class="notice notice-error" role="alert"><strong>{{ __('module-referrals::messages.validation_error') }}</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif

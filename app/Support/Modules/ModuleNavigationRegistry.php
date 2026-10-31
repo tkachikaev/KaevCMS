@@ -14,6 +14,9 @@ final class ModuleNavigationRegistry
     /** @var array<string, array<string, mixed>> */
     private array $accountLinks = [];
 
+    /** @var array<string, Closure(): bool> */
+    private array $accountVisibilityResolvers = [];
+
     /** @var array<string, true> Modules whose account link stays out of the sidebar. */
     private array $outsideSidebar = [];
 
@@ -40,6 +43,7 @@ final class ModuleNavigationRegistry
         string $descriptionKey,
         int $sortOrder = 100,
         bool $inSidebar = true,
+        ?Closure $visibleWhen = null,
     ): void {
         $this->accountLinks[$moduleId] = $this->validatedLink(
             moduleId: $moduleId,
@@ -53,6 +57,11 @@ final class ModuleNavigationRegistry
             unset($this->outsideSidebar[$moduleId]);
         } else {
             $this->outsideSidebar[$moduleId] = true;
+        }
+        if ($visibleWhen === null) {
+            unset($this->accountVisibilityResolvers[$moduleId]);
+        } else {
+            $this->accountVisibilityResolvers[$moduleId] = $visibleWhen;
         }
     }
 
@@ -112,7 +121,17 @@ final class ModuleNavigationRegistry
     /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
     public function accountLinks(): array
     {
-        return $this->availableLinks($this->accountLinks);
+        return array_values(array_filter($this->availableLinks($this->accountLinks), function (array $link): bool {
+            $resolver = $this->accountVisibilityResolvers[$link['module_id']] ?? null;
+            if ($resolver === null) {
+                return true;
+            }
+            try {
+                return $resolver();
+            } catch (Throwable) {
+                return false;
+            }
+        }));
     }
 
     /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */

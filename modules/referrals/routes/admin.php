@@ -15,3 +15,5 @@ Route::patch('/invites/{invite}/freeze', [AdminReferralController::class, 'freez
     ->whereNumber('invite')->name('invites.freeze');
 Route::patch('/invites/{invite}/unfreeze', [AdminReferralController::class, 'unfreeze'])
     ->whereNumber('invite')->name('invites.unfreeze');
+
+Route::get('/grants', [AdminReferralController::class, 'grants'])->name('grants.index');

@@ -386,6 +386,29 @@
         }
     });
 
+    // Shared clipboard action for read-only account fields; no inline JS, no theme CSS.
+    document.addEventListener('click', async (event) => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest('[data-account-copy-target]');
+        if (!(button instanceof HTMLButtonElement)) return;
+        const input = document.getElementById(button.dataset.accountCopyTarget);
+        if (!(input instanceof HTMLInputElement) || !input.readOnly) return;
+        const status = button.parentElement?.querySelector('[data-account-copy-status]');
+        let copied = false;
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(input.value);
+                copied = true;
+            } else {
+                input.focus();
+                input.select();
+                copied = document.execCommand('copy');
+                input.setSelectionRange(0, 0);
+            }
+        } catch { copied = false; }
+        if (status) status.textContent = copied ? button.dataset.copiedLabel : button.dataset.copyFailedLabel;
+    });
+
     // CSP forbids inline handlers such as onchange; filters opt in with this attribute.
     document.addEventListener('change', (event) => {
         if (event.target instanceof HTMLSelectElement && event.target.hasAttribute('data-account-auto-submit')) {

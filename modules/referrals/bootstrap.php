@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Schedule;
 use KaevCMS\Modules\Referrals\Console\Commands\GrantReferralRewardsCommand;
 use KaevCMS\Modules\Referrals\Console\Commands\ScanReferralsCommand;
 use KaevCMS\Modules\Referrals\Services\ReferralInvitationService;
+use KaevCMS\Modules\Referrals\Models\ReferralServerSetting;
+use KaevCMS\Modules\Referrals\Models\ReferralSetting;
 
 return static function (Application $app, ModuleContext $module): void {
     // Archive rows must never disappear when an administrator deletes a GameServer.
@@ -51,8 +53,19 @@ return static function (Application $app, ModuleContext $module): void {
         }
     });
 
-    // The player link is registered only when the player experience exists (iteration 6).
-    // Until then enabling this foundation cannot lead players to an unfinished page.
+    // Account navigation uses the shared registry's runtime visibility resolver,
+    // so settings changes take effect without re-registering the module.
+    $app->make(ModuleNavigationRegistry::class)->registerAccountLink(
+        moduleId: $module->id,
+        routeName: 'modules.referrals.index',
+        labelKey: 'module-referrals::messages.account_navigation_label',
+        descriptionKey: 'module-referrals::messages.account_navigation_description',
+        sortOrder: 60,
+        visibleWhen: static fn (): bool => ReferralSetting::query()
+            ->where('setting_key', 'global')->where('enabled', true)->exists()
+            && ReferralServerSetting::query()->availableForInvitations()->exists(),
+    );
+
     $app->make(ModuleNavigationRegistry::class)->registerAdminLink(
         moduleId: $module->id,
         routeName: 'admin.module-pages.referrals.index',

@@ -208,6 +208,29 @@ final class AdminReferralController extends Controller
         ]);
     }
 
+    public function grants(Request $request): View
+    {
+        $filters = $request->validate([
+            'server' => ['nullable', 'integer', 'min:1'],
+            'user' => ['nullable', 'integer', 'min:1'],
+            'level' => ['nullable', 'integer', 'between:1,65535'],
+            'status' => ['nullable', Rule::in(['pending', 'earned', 'granted'])],
+        ]);
+        $rewards = ReferralEntitlement::query()
+            ->with('gameServer.translations')
+            ->when(isset($filters['server']), fn ($query) => $query->where('game_server_id', $filters['server']))
+            ->when(isset($filters['user']), fn ($query) => $query->where('recipient_user_id', $filters['user']))
+            ->when(isset($filters['level']), fn ($query) => $query->where('level', $filters['level']))
+            ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
+            ->orderByDesc('id')->paginate(25)->withQueryString();
+
+        return view('module-referrals::admin.grants', [
+            'rewards' => $rewards,
+            'servers' => GameServer::query()->with('translations')->orderBy('sort_order')->orderBy('id')->get(),
+            'filters' => $filters,
+        ]);
+    }
+
     public function freeze(Request $request, ReferralInvite $invite): RedirectResponse
     {
         $admin = $this->admin($request);
