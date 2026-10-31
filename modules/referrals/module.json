@@ -1,0 +1,29 @@
+{
+    "schema": 1,
+    "id": "referrals",
+    "name": "Referrals",
+    "version": "1.0.0",
+    "author": "KaevCMS",
+    "description": "Server-specific referral invitations and level milestone rewards delivered to the web inventory.",
+    "cms_min": "0.56.1",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\Referrals\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Реферальная система",
+            "description": "Приглашения друзей и награды за уровни персонажей на игровых серверах."
+        },
+        "en": {
+            "name": "Referrals",
+            "description": "Invite friends and earn character-level milestone rewards on game servers."
+        }
+    }
+}
