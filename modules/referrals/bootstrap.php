@@ -57,9 +57,9 @@ return static function (Application $app, ModuleContext $module): void {
         sortOrder: 70,
     );
 
-    $app->make(ModuleAdminAccessRegistry::class)->registerExact(
+    $app->make(ModuleAdminAccessRegistry::class)->registerPrefix(
         moduleId: $module->id,
-        routeName: 'admin.module-pages.referrals.index',
+        routePrefix: 'admin.module-pages.referrals.',
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );

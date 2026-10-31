@@ -1,20 +1,25 @@
 # Referrals
 
-A separate KaevCMS module for invitation-based GameServer milestone rewards.
+An independent KaevCMS module that links invitations to new CMS accounts and
+configures per-GameServer character-level milestone rewards.
 
-## Current development stage
+## Development stage: iteration 3
 
-Iteration 2 adds stable, opaque links at `/r/{code}`, a Laravel-encrypted,
-HttpOnly, SameSite=Lax invitation cookie (default 7 days), and one-time binding
-when the invited person creates a **new** CMS account using password or an
-enabled social provider. Existing users never acquire a referral by signing in.
-The invitation can be declined before registration.
+- Stable, opaque referral URLs `/r/{code}` and encrypted 7-day invitation cookie.
+- Invites attach only to newly registered CMS users (password or social auth).
+- Admin controls: global switch and invitation TTL, independent GameServer and
+  audience switches, up to 30 unique levels per audience and server, item IDs
+  and quantities, optional per-server rewarded-invitee limit, and audited manual
+  freezing/unfreezing of invitations.
+- Rules use the native item catalog where available; unknown custom item IDs
+  remain configurable with a warning.
+- Existing immutable snapshots, entitlements and progress remain untouched by
+  rule changes or deletion. **Snapshots are not created by admin forms.** They
+  will be captured at first verified GameServer participation in iteration 4.
+- No character polling or rewards are performed at this stage. The optional
+  rewarded-invitee limit is stored but not yet enforced.
 
-The module remains disabled by default. Module migrations are applied by the
-administrator from **Admin → Modules**. The global invitation switch remains
-disabled until the administrator enables it. Per-server reward settings, level
-checks and delivery are not available yet. There are no wallet or inventory
-operations in this stage.
-
-Invitations are linked to new CMS users, not game accounts. Enabling this early
-foundation does not award items or read live GameServer databases.
+Module migrations are applied manually from **Admin → Modules**. The module
+and its global invitations switch are disabled by default. No new migration,
+Composer dependency, CMS version change or payment operation is needed in
+iteration 3.
