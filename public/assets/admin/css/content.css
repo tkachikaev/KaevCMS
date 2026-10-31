@@ -195,6 +195,8 @@
     border-radius: 50%;
     background: var(--swatch, #fff);
 }
+.rich-editor-toolbar .editor-swatch:hover,
+.rich-editor-toolbar .editor-swatch.is-active { background: var(--swatch, #fff); }
 .rich-editor-toolbar .editor-swatch-default { color: #64748b; font-size: 20px; line-height: 1; }
 .editor-swatch[data-editor-color="gold"] { --swatch: #a16207; }
 .editor-swatch[data-editor-color="amber"] { --swatch: #d97706; }
