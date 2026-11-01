@@ -6,7 +6,7 @@
 @include('module-referrals::admin.navigation')
 <x-admin.filter-bar :action="route('admin.module-pages.referrals.grants.index', ['adminPath' => $adminPath])" class="users-filters">
     <div class="form-group"><label for="ref-reward-server">{{ __('module-referrals::messages.servers') }}</label><select id="ref-reward-server" name="server"><option value="">{{ __('module-referrals::messages.filter_all') }}</option>@foreach($servers as $server)<option value="{{ $server->id }}" @selected((int) ($filters['server'] ?? 0) === $server->id)>{{ $server->nameFor() }}</option>@endforeach</select></div>
-    <div class="form-group"><label for="ref-reward-user">{{ __('module-referrals::messages.filter_recipient') }}</label><input id="ref-reward-user" type="number" min="1" name="user" value="{{ $filters['user'] ?? '' }}"></div>
+    <div class="form-group"><label for="ref-reward-user">{{ __('module-referrals::messages.filter_recipient') }}</label><input id="ref-reward-user" type="search" name="account" value="{{ $filters['account'] ?? '' }}"></div>
     <div class="form-group"><label for="ref-reward-level">{{ __('module-referrals::messages.level') }}</label><input id="ref-reward-level" type="number" min="1" max="65535" name="level" value="{{ $filters['level'] ?? '' }}"></div>
     <div class="form-group"><label for="ref-reward-status">{{ __('module-referrals::messages.filter_status') }}</label><select id="ref-reward-status" name="status"><option value="">{{ __('module-referrals::messages.filter_all') }}</option>@foreach(['pending','earned','granted'] as $status)<option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ __('module-referrals::messages.reward_status_'.$status) }}</option>@endforeach</select></div>
     <div class="admin-row-actions"><x-admin.button type="submit" variant="primary">{{ __('module-referrals::messages.filter_apply') }}</x-admin.button><x-admin.button wire:navigate :href="route('admin.module-pages.referrals.grants.index', ['adminPath' => $adminPath])">{{ __('module-referrals::messages.filter_reset') }}</x-admin.button></div>
@@ -16,18 +16,18 @@
 @else
     <div class="admin-card-list content-list">
         @foreach($rewards as $reward)
-            <article class="admin-card-row content-row referrals-reward-row">
-                <div class="content-row-preview" aria-hidden="true">
+            <article class="admin-card-row referrals-reward-row">
+                <div class="referrals-item-icon" aria-hidden="true">
                     @if($itemDetails[$reward->id]['icon'] ?? null)
                         <img src="{{ $itemDetails[$reward->id]['icon'] }}" alt="" width="40" height="40">
                     @else
                         ◇
                     @endif
                 </div>
-                <div class="content-row-main">
+                <div class="referrals-row-main">
                     <strong class="content-row-title">{{ $reward->gameServer?->nameFor() ?? '—' }} · {{ __('module-referrals::messages.level_required', ['level' => format_number($reward->level)]) }}</strong>
-                    <p>{{ $itemDetails[$reward->id]['name'] }} · {{ __('module-referrals::messages.filter_recipient') }}: #{{ format_number($reward->recipient_user_id) }} · {{ __('module-referrals::messages.item_id') }}: {{ format_number($reward->item_id) }} · × {{ format_number($reward->amount) }}</p>
-                    <div class="content-row-meta">
+                    <p>{{ $itemDetails[$reward->id]['name'] }} · {{ __('module-referrals::messages.filter_recipient') }}: @if($reward->recipient)<a wire:navigate href="{{ route('admin.users.show', ['adminPath' => $adminPath, 'user' => $reward->recipient]) }}">{{ $reward->recipient->name }}</a>@else — @endif · {{ __('module-referrals::messages.item_id') }}: {{ format_number($reward->item_id) }} · × {{ format_number($reward->amount) }}</p>
+                    <div class="referrals-row-meta">
                         <span>{{ __('module-referrals::messages.invitation_number', ['number' => format_number($reward->invite_id)]) }}</span>
                         <span>{{ __('module-referrals::messages.audience_'.$reward->audience) }}</span>
                         <span>{{ __('module-referrals::messages.reward_status_'.$reward->status) }}</span>

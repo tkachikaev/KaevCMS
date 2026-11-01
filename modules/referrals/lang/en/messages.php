@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'save_failed' => 'Could not add the reward. Reload and check the list before trying again.',
+    'database_supported' => 'Database supports this module',
+    'invites_purpose' => 'See who invited whom. Pause rewards for an invitation if you suspect abuse. Previously granted rewards are retained.',
+    'pause_help' => 'On pauses new checks and grants. Off allows them while the server participates in the program.',
+    'paused_label' => 'Checks and grants paused',
+    'running_label' => 'Checks and grants running',
+
     'you_receive' => 'You will receive',
     'friend_receives' => 'Your friend will receive',
     'friend_level' => 'When your friend’s character reaches level :level',
@@ -146,7 +153,7 @@ return [
     'reward_journal' => 'Reward journal',
     'reward_journal_description' => 'All reward entitlements and grant results with filters.',
     'filter_all' => 'All',
-    'filter_recipient' => 'Recipient ID',
+    'filter_recipient' => 'Recipient',
     'filter_status' => 'Status',
     'filter_apply' => 'Apply',
     'filter_reset' => 'Reset',

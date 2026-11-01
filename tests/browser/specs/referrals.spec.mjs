@@ -35,6 +35,40 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
             await page.goto(url);
             await expect(page.locator('h1')).toBeVisible();
             await expect(page.locator('html')).toHaveAttribute('lang', locale);
+            if (url === serverUrl) {
+                await page.evaluate(() => window.referralDocumentMarker = 'same-document');
+                await page.locator('#ref_inviter_level').fill('23');
+                await page.locator('[data-referral-audience="invitee"]').click();
+                await expect(page.locator('#referral-panel-invitee')).toBeVisible();
+                await expect(page.locator('#referral-panel-inviter')).toBeHidden();
+                expect(await page.evaluate(() => window.referralDocumentMarker)).toBe('same-document');
+                await page.locator('[data-referral-audience="inviter"]').click();
+                await expect(page.locator('#ref_inviter_level')).toHaveValue('23');
+                await page.locator('#ref_inviter_level').fill('');
+                if (locale === 'ru') {
+                    const form = page.locator('#referral-panel-inviter [data-referrals-add-rule]');
+                    await form.locator('[name=level]').fill('55');
+                    await form.locator('[name=item_id]').fill('57');
+                    await form.locator('[name=amount]').fill('100');
+                    const add = form.locator('button[type=submit]');
+                    await add.scrollIntoViewIfNeeded();
+                    const formTop = await form.evaluate(el => el.getBoundingClientRect().top);
+                    const before = await page.locator('#referral-panel-inviter [data-referral-rule-id]').count();
+                    await add.click();
+                    await expect(page.locator('#referral-panel-inviter [data-referral-rule-id]')).toHaveCount(before + 1);
+                    await expect(form.locator('[name=level]')).toHaveValue('');
+                    await expect(form.locator('[data-referrals-form-status]')).toBeVisible();
+                    expect(await page.evaluate(() => window.referralDocumentMarker)).toBe('same-document');
+                    expect(Math.abs(await form.evaluate(el => el.getBoundingClientRect().top) - formTop)).toBeLessThan(3);
+                    await form.locator('[name=level]').fill('55');
+                    await form.locator('[name=item_id]').fill('57');
+                    await form.locator('[name=amount]').fill('100');
+                    await add.click();
+                    await expect(form.locator('[data-referrals-form-error]')).toBeVisible();
+                    await expect(page.locator('#referral-panel-inviter [data-referral-rule-id]')).toHaveCount(before + 1);
+                    expect(await page.evaluate(() => window.referralDocumentMarker)).toBe('same-document');
+                }
+            }
             for (const scheme of ['light', 'dark']) {
                 await page.evaluate(value => document.documentElement.dataset.adminColorScheme = value, scheme);
                 for (const width of [1440, 390]) {

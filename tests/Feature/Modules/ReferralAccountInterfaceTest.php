@@ -210,6 +210,21 @@ class ReferralAccountInterfaceTest extends TestCase
             ->assertDontSee(__('module-referrals::messages.rules_current_notice'));
     }
 
+    public function test_admin_journals_show_linked_accounts_and_filter_by_account_name(): void
+    {
+        $server = $this->configureServer();
+        $inviter = User::factory()->create(['name' => 'InviterReadable']);
+        $invitee = User::factory()->create(['name' => 'InviteeReadable']);
+        $invite = $this->invite($inviter, $invitee);
+        $this->entitlement($invite, $server, $inviter, 20, 57);
+        $owner = Admin::factory()->create();
+        $this->actingAs($owner, 'admin')->get('/admin/extensions/referrals/invites')->assertOk()
+            ->assertSee('InviterReadable')->assertSee('InviteeReadable')->assertSee(route('admin.users.show', ['adminPath' => 'admin', 'user' => $inviter]));
+        $this->get('/admin/extensions/referrals/grants?account=InviterRead')->assertOk()->assertSee('InviterReadable');
+        $response = $this->get('/admin/extensions/referrals/grants?account=InviteeReadable')->assertOk();
+        $this->assertSame(0, $response->viewData('rewards')->total());
+    }
+
     private function configureServer(): GameServer
     {
         ReferralSetting::query()->where('setting_key', 'global')->update(['enabled' => true]);

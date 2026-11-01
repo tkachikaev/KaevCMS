@@ -13,6 +13,7 @@ use KaevCMS\Modules\Referrals\Models\ReferralCode;
 use KaevCMS\Modules\Referrals\Models\ReferralEntitlement;
 use KaevCMS\Modules\Referrals\Models\ReferralInvite;
 use KaevCMS\Modules\Referrals\Models\ReferralRule;
+use KaevCMS\Modules\Referrals\Models\ReferralServerSetting;
 use KaevCMS\Modules\Referrals\Models\ReferralSnapshot;
 use Tests\TestCase;
 
@@ -25,6 +26,42 @@ class ReferralAdminSettingsTest extends TestCase
         parent::setUp();
         $module = app(ModuleManager::class)->enable('referrals');
         app(ModuleRuntime::class)->bootModule($module);
+    }
+
+    public function test_new_server_defaults_to_three_rewarded_friends_and_preserves_explicit_unlimited(): void
+    {
+        $owner = Admin::factory()->create();
+        $server = GameServer::factory()->create();
+        $response = $this->actingAs($owner, 'admin')->get('/admin/extensions/referrals/servers/'.$server->id)->assertOk();
+        $this->assertSame(3, $response->viewData('settings')->max_rewarded_invitees);
+        $settings = ReferralServerSetting::query()->create(['game_server_id' => $server->id]);
+        $this->assertSame(3, $settings->fresh()->max_rewarded_invitees);
+        $settings->update(['max_rewarded_invitees' => null]);
+        $response = $this->get('/admin/extensions/referrals/servers/'.$server->id)->assertOk();
+        $this->assertNull($response->viewData('settings')->max_rewarded_invitees);
+    }
+
+    public function test_adding_invitee_reward_returns_to_same_audience(): void
+    {
+        $owner = Admin::factory()->create();
+        $server = GameServer::factory()->create();
+        $this->actingAs($owner, 'admin')->post('/admin/extensions/referrals/servers/'.$server->id.'/rules', [
+            'audience' => 'invitee', 'level' => 10, 'item_id' => 57, 'amount' => 1,
+        ])->assertRedirect(route('admin.module-pages.referrals.servers.show', ['adminPath' => 'admin', 'server' => $server->id, 'audience' => 'invitee']));
+    }
+
+    public function test_async_rule_creation_returns_rendered_row_and_duplicate_validation_without_second_insert(): void
+    {
+        $server = GameServer::factory()->create();
+        $owner = Admin::factory()->create();
+        $url = '/admin/extensions/referrals/servers/'.$server->id.'/rules';
+        $payload = ['audience' => 'invitee', 'level' => 55, 'item_id' => 57, 'amount' => 100];
+        $response = $this->actingAs($owner, 'admin')->postJson($url, $payload)->assertOk()
+            ->assertJsonPath('audience', 'invitee');
+        $this->assertStringContainsString('referrals-rule-row', $response->json('html'));
+        $this->assertSame(1, ReferralRule::query()->where('game_server_id', $server->id)->count());
+        $this->postJson($url, $payload)->assertUnprocessable()->assertJsonValidationErrors('level');
+        $this->assertSame(1, ReferralRule::query()->where('game_server_id', $server->id)->count());
     }
 
     public function test_owner_configures_global_invitations_and_ttl_with_audit(): void

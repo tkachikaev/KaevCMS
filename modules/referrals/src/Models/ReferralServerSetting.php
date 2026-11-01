@@ -23,6 +23,8 @@ final class ReferralServerSetting extends Model
 {
     protected $table = 'module_referral_server_settings';
 
+    protected $attributes = ['max_rewarded_invitees' => 3];
+
     protected $fillable = [
         'game_server_id',
         'enabled',

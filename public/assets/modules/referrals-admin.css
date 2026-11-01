@@ -18,4 +18,24 @@
     .referrals-server-row > .referrals-actions { align-self: flex-end; }
 }
 
-.referrals-reward-row { grid-template-columns: 40px minmax(0, 1fr); }
+
+
+.referrals-reward-row, .referrals-rule-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 16px; padding: 18px; border: 1px solid var(--admin-border); }
+.referrals-rule-row { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.referrals-item-icon { display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden; border-radius: var(--admin-radius-control); background: var(--admin-surface-muted); }
+.referrals-item-icon img { display: block; width: 40px; height: 40px; object-fit: contain; }
+.referrals-row-main { min-width: 0; overflow-wrap: anywhere; }
+.referrals-row-main p { margin: 6px 0; }
+.referrals-row-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; color: var(--admin-text-muted); font-size: 12px; }
+.referrals-invite-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); align-items: start; gap: 24px; padding: 20px; border: 1px solid var(--admin-border); }
+.referrals-freeze-form { display: grid; gap: 12px; min-width: 0; }
+.referrals-freeze-form > .button { justify-self: end; }
+.referrals-audience-panel[hidden] { display: none !important; }
+.referrals-rule-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) {
+ .referrals-invite-row { grid-template-columns: minmax(0, 1fr); }
+ .referrals-rule-fields { grid-template-columns: minmax(0, 1fr); }
+ .referrals-rule-row { grid-template-columns: 40px minmax(0, 1fr); }
+ .referrals-rule-row > form { grid-column: 2; justify-self: end; }
+}
+[data-referrals-add-rule] [hidden] { display: none !important; }

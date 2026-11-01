@@ -10,6 +10,7 @@ use App\Services\AuditLogger;
 use App\Services\GameAssets\GameAssetUrlResolver;
 use App\Services\GameAssets\GameItemCatalog;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -143,7 +144,7 @@ final class AdminReferralController extends Controller
         return $this->back('servers.show', ['server' => $server->id])->with('status', __('module-referrals::messages.saved'));
     }
 
-    public function storeRule(Request $request, GameServer $server): RedirectResponse
+    public function storeRule(Request $request, GameServer $server): RedirectResponse|JsonResponse
     {
         $admin = $this->admin($request);
         $data = $request->validate([
@@ -153,7 +154,7 @@ final class AdminReferralController extends Controller
             'amount' => ['required', 'integer', 'min:1', 'max:9223372036854775807'],
         ]);
 
-        DB::transaction(function () use ($server, $data, $admin): void {
+        $rule = DB::transaction(function () use ($server, $data, $admin): ReferralRule {
             GameServer::query()->whereKey($server->id)->lockForUpdate()->firstOrFail();
             $rules = ReferralRule::query()->where('game_server_id', $server->id)
                 ->where('audience', $data['audience']);
@@ -173,9 +174,28 @@ final class AdminReferralController extends Controller
                 'enabled' => true,
             ]);
             $this->auditRequired('referrals.rule_created', $admin, $rule, $rule->only(['game_server_id', 'audience', 'level', 'item_id', 'amount']));
+
+            return $rule;
         }, 3);
 
-        return $this->back('servers.show', ['server' => $server->id])->with('status', __('module-referrals::messages.rule_added'));
+        if ($request->expectsJson()) {
+            return response()->json([
+                'audience' => $rule->audience,
+                'message' => __('module-referrals::messages.rule_added'),
+                'html' => view('module-referrals::admin.rule-row', [
+                    'rule' => $rule,
+                    'server' => $server,
+                    'adminPath' => $request->route('adminPath'),
+                    'canManage' => true,
+                    'itemDetails' => [$rule->id => [
+                        'name' => $this->catalog->knownName($server, $rule->item_id),
+                        'icon' => $this->assets->itemIcon($server, $rule->item_id),
+                    ]],
+                ])->render(),
+            ]);
+        }
+
+        return redirect()->route('admin.module-pages.referrals.servers.show', ['adminPath' => request()->route('adminPath'), 'server' => $server->id, 'audience' => $data['audience']])->with('status', __('module-referrals::messages.rule_added'));
     }
 
     public function destroyRule(Request $request, GameServer $server, ReferralRule $rule): RedirectResponse
@@ -190,14 +210,14 @@ final class AdminReferralController extends Controller
             $this->auditRequired('referrals.rule_deleted', $admin, 'referral-rule:'.$rule->id, $before);
         }, 3);
 
-        return $this->back('servers.show', ['server' => $server->id])->with('status', __('module-referrals::messages.rule_deleted'));
+        return redirect()->route('admin.module-pages.referrals.servers.show', ['adminPath' => request()->route('adminPath'), 'server' => $server->id, 'audience' => $rule->audience])->with('status', __('module-referrals::messages.rule_deleted'));
     }
 
     public function invites(Request $request): View
     {
-        $invites = ReferralInvite::query()->orderByDesc('id')->paginate(25);
+        $invites = ReferralInvite::query()->with(['inviter', 'invitee'])->orderByDesc('id')->paginate(25);
         $progressByInvite = ReferralProgress::query()
-            ->whereIn('invite_id', $invites->getCollection()->pluck('id'))
+            ->with('gameServer.translations')->whereIn('invite_id', $invites->getCollection()->pluck('id'))
             ->orderBy('game_server_id')->get()->groupBy('invite_id');
 
         return view('module-referrals::admin.invites', [
@@ -213,13 +233,15 @@ final class AdminReferralController extends Controller
         $filters = $request->validate([
             'server' => ['nullable', 'integer', 'min:1'],
             'user' => ['nullable', 'integer', 'min:1'],
+            'account' => ['nullable', 'string', 'max:190'],
             'level' => ['nullable', 'integer', 'between:1,65535'],
             'status' => ['nullable', Rule::in(['pending', 'earned', 'granted'])],
         ]);
         $rewards = ReferralEntitlement::query()
-            ->with('gameServer.translations')
+            ->with(['gameServer.translations', 'recipient'])
             ->when(isset($filters['server']), fn ($query) => $query->where('game_server_id', $filters['server']))
             ->when(isset($filters['user']), fn ($query) => $query->where('recipient_user_id', $filters['user']))
+            ->when(filled($filters['account'] ?? null), fn ($query) => $query->whereHas('recipient', fn ($recipient) => $recipient->where(fn ($identity) => $identity->where('name', 'like', '%'.$filters['account'].'%')->orWhere('email', 'like', '%'.$filters['account'].'%'))))
             ->when(isset($filters['level']), fn ($query) => $query->where('level', $filters['level']))
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->orderByDesc('id')->paginate(25)->withQueryString();
