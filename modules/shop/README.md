@@ -1,6 +1,20 @@
-# Shop 1.0.3
+# Shop 1.0.4
 
 Shop provides a separate item and bundle catalogue for each GameServer. Players spend CMS wallet coins and receive purchases in Web Inventory. Transferring items into the game remains a separate player action handled by the existing inventory delivery system.
+
+## Catalogue simplification (development, I1/4)
+
+The simplified model is **GameServer → Section → Product**. Each product will
+contain one or several game item IDs, and will have a localized name, description
+and one total coin price. An existing tab is reused as the section, with its
+original ID and physical table preserved.
+
+Migration `2026_11_01_050000_prepare_shop_sections.php` adds direct `section_id`
+and optional descriptions to products, and copies section IDs from existing
+categories. Legacy categories, bundle components, purchases, Wallet state and
+visibility are deliberately left untouched. **I1 is a compatibility stage**:
+current admin and storefront still show categories. Do not delete them or enable
+new section-only editing until I2 replaces the old UI and validation safely.
 
 ## Configuration
 

@@ -39,6 +39,12 @@ final class ShopTab extends Model
         return $this->hasMany(ShopCategory::class, 'tab_id')->orderBy('sort_order')->orderBy('id');
     }
 
+    /** @return HasMany<ShopProduct, $this> */
+    public function products(): HasMany
+    {
+        return $this->hasMany(ShopProduct::class, 'section_id')->orderBy('sort_order')->orderBy('id');
+    }
+
     public function nameFor(?string $locale = null): string
     {
         return str_starts_with(strtolower($locale ?? app()->getLocale()), 'ru') ? $this->name_ru : $this->name_en;

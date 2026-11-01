@@ -183,6 +183,12 @@ final class AdminShopController extends Controller
                 ->lockForUpdate()->firstOrFail();
             $before = $category->only(['tab_id', 'name_ru', 'name_en', 'sort_order', 'is_active']);
             $category->update($values + ['updated_by_admin_id' => $admin->id]);
+            if ((int) $before['tab_id'] !== (int) $category->tab_id) {
+                // Keep the direct section link in sync during the legacy UI
+                // transition. Commit category, products and audit together.
+                DB::table('module_shop_products')->where('category_id', $category->id)
+                    ->update(['section_id' => $category->tab_id]);
+            }
             $this->auditRequired('shop.category_updated', $admin, $category, ['before' => $before, 'after' => $category->only(array_keys($before))]);
         }, 3);
 

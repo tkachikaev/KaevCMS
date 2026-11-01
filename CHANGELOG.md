@@ -2,6 +2,8 @@
 
 ## Unreleased (development)
 
+- Shop 1.0.4 / catalogue redesign I1: prepare the direct server → section → product data model, reusing existing tab IDs and preserving legacy categories and purchases. Add an additive migration to populate product section IDs and store localized descriptions. Existing category-based UI and checkout remain compatible until I2; no CSS or wallet changes.
+
 - Shop activation through audited administration settings, with new installations keeping sales disabled.
 - Shop catalogue and receipt rendering, invalid bundle visibility and responsive administration layouts.
 - Shop static analysis declarations and real-database migration/concurrency coverage.

@@ -191,6 +191,10 @@ final class AdminShopProductController extends Controller
             ->whereHas('tab', fn ($query) => $query->where('game_server_id', $server->id))->exists()) {
             throw ValidationException::withMessages(['category_id' => __('module-shop::messages.category_wrong_server')]);
         }
+        // Persist the canonical section together with the legacy category while
+        // I1 retains the existing forms. I2 will remove the category field.
+        $values['section_id'] = (int) ShopCategory::query()
+            ->whereKey($values['category_id'])->value('tab_id');
         $values['name_ru'] = trim($values['name_ru']);
         $values['name_en'] = trim($values['name_en']);
         if ($values['name_ru'] === '' || $values['name_en'] === '') {
