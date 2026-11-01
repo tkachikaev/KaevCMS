@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.57.0 - 2026-11-01
+
+- Add Referrals 1.0.0: invitation links, protected seven-day cookies, password/social registration tracking and per-GameServer character-level rewards delivered to Web Inventory.
+- Preserve reward-rule snapshots, prevent duplicate grants, support invitation freezing and per-inviter reward limits; new server configurations default to three rewarded friends.
+- Add RU/EN player sections for invitations, progress and reward history, using the shared Web Inventory layout, per-server navigation and compact clipboard feedback across all account themes.
+- Add administrator invitation and reward journals with linked player accounts, item icons and account-name search; switch reward recipients and add milestones without reloading or losing form position.
+- Keep referral registration working when visitors switch languages before creating an account.
+- Harden reward-slot eligibility and module diagnostics; retain existing reward history, server settings and previously granted inventory items.
+
 ## 0.56.1 - 2026-10-30
 
 - Simplify connected social accounts into compact provider rows with password confirmation dialogs across all account themes; add linked-provider icons to player profiles.

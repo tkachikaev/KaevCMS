@@ -1,22 +1,26 @@
-# Referrals
+# Referrals 1.0.0
 
-An independent KaevCMS module for invitations and character-level rewards on each GameServer.
+Invitations and character-level rewards for KaevCMS 0.57.0 or later. Rewards go to Web Inventory; players request any subsequent game delivery from there.
 
-## Development stage: iteration 7 — QA candidate, not a production release
+## Setup
 
-- Iterations 1–3: module schema, invitation links, protected cookie, standard/social registration, admin reward rules and audited invitation freezing.
-- Bounded `kaevcms:referrals-scan --batch=30` command registered through the existing module Scheduler (`everyFiveMinutes`, overlap protection). Cron uses the existing `schedule:run`; no new daemon or Composer dependency.
-- First GameServer participation is only confirmed when the supported `GameAccountGateway` actually returns a character for a newly completed CMS-created account belonging to the invitee and applicable to that GameServer's LoginServer. A shared LoginServer alone does **not** establish participation.
-- Immutable per-invitation/per-server rule snapshots and one entitlement per side and level are created in a short CMS transaction. Levels already reached are marked `earned` and are never reset. Inventory grants are implemented separately in iteration 5.
-- Batch checks distinguish new-server discovery from ongoing progress, honor `next_check_at`, stop after all snapshot levels are reached, and back off on unknown or failed server reads. `ExternalServerCooldown` and the native short-lived character cache protect the GameServer from repeated failed reads.
-- Snapshot capture and progress updates recheck global/individual settings and frozen invitation status inside the write transaction. Cache locks and unique indexes prevent competing scans from creating duplicate snapshots. The same server lock ordering as the admin rule editor is used.
-- Optional manual check: authenticated POST `/modules/referrals/check/{invite}/{server}` only for the inviter/invitee; a server-side five-minute cooldown is applied. The player-facing control was added in iteration 6.
-- The admin invitation journal now shows safe progress states, max confirmed level, last error category, and next check time. No private game account data or raw driver errors are displayed.
-- Existing rule snapshots remain unchanged when administrators edit or remove the current rules. Module or server disable, checks pause, and invitation freezing halt scanning without deleting progress.
+1. Enable the module and apply its migrations in the administrator Modules section.
+2. Enable invitations, configure each GameServer, and add reward milestones for the inviter and invitee.
+3. Set the maximum rewarded friends per inviter and GameServer. New configurations default to three; an explicitly empty value means unlimited. This limits rewards, not registrations.
+4. Enable the existing CMS Scheduler (`schedule:run` every minute). The module registers bounded scan and grant commands every five minutes, with overlap protection.
 
-- Iteration 5: grants flow only through `RewardInventoryService`, with idempotent keys, independent recipients, freezes, optional invitee limits and the dedicated `kaevcms:referrals-grants` scheduled command.
-- Iteration 6: the player page uses the bundled account layout and shared components for all account themes, including link copy, server-specific current rules, personal progress and inventory history. The admin now has a searchable reward journal, using the existing admin filter component. A runtime visibility resolver hides the account sidebar link until invitations and a participating server are enabled. No new CSS, fonts, palettes or external scripts were added.
+## Behavior
 
-Iteration 7 adds administrator guides `docs/ru/REFERRALS.md` and `docs/en/REFERRALS.md` plus regression coverage for frozen invitations under an optional invitee cap. Full Laravel/Browser/MySQL QA is still required before deployment. Browser-visible progress and rewards are never proof that game items were delivered to a character.
+- A protected, HttpOnly invitation cookie lasts seven days by default. Only a newly registered CMS user is attached, including new users created through Social Auth. Existing-account sign-in never creates a referral.
+- A qualifying game account must be newly provisioned through the CMS after accepting the invitation, belong to the invitee and use the corresponding LoginServer. Imported accounts do not qualify.
+- Character levels are read through the configured game driver. Progress, retry backoff, cooldown and short-lived character caching protect external databases.
+- The first confirmed character creates an immutable per-invitation/per-GameServer rule snapshot. Later rule edits do not rewrite existing entitlements. Multiple already-reached milestones may qualify together.
+- Rewards are granted through RewardInventoryService with transactional audit, inventory idempotency and concurrent-state checks. The module does not write Wallet balances or character inventories directly.
+- Disabling a server or module, pausing checks, or freezing an invitation prevents further processing without deleting history or previously granted rewards. Freezing requires an administrator reason.
+- Administrators can see linked CMS accounts, filter the reward journal and manage milestones. Players see their invitation link, progress and own rewards. All bundled account themes support RU/EN and responsive layouts.
 
-The module's migrations are applied through **Admin → Modules**. No new migration is added in iteration 7. `VERSION`, module version and Composer dependencies are unchanged.
+## Deployment boundaries
+
+Use a supported game driver and confirm its character-level reads against the actual server schema. Configure and monitor the hosting Scheduler; larger backlogs may delay grants. A character deleted before its first successful scan cannot be observed by polling.
+
+The Java-side game-delivery queue and its processor are managed by the game-server administrator. Their absence does not prevent Referrals from granting items to Web Inventory.
