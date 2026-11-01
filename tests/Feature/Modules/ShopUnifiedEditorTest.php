@@ -101,6 +101,25 @@ final class ShopUnifiedEditorTest extends TestCase
             ->assertSee(__('module-shop::messages.card_contents', ['count' => format_number(2)]));
     }
 
+    public function test_disabled_section_marks_products_hidden_in_both_admin_views(): void
+    {
+        [$server, $section] = $this->section();
+        $this->actingAs(Admin::factory()->create(), 'admin');
+        $base = '/admin/extensions/shop/servers/'.$server->id;
+        $this->post($base.'/products', $this->payload($section->id, [
+            ['item_id' => 57, 'quantity' => 1],
+        ]))->assertRedirect();
+
+        // A product may be individually active, but an inactive section must
+        // never be labelled visible in either admin preview mode.
+        $section->update(['is_active' => false]);
+        $disabled = $this->get($base)->assertOk()->assertSee(__('module-shop::messages.hidden'));
+        $this->assertSame(2, substr_count($disabled->getContent(), 'data-shop-product-visible="0"'));
+        $section->update(['is_active' => true]);
+        $enabled = $this->get($base)->assertOk()->assertSee(__('module-shop::messages.active'));
+        $this->assertSame(2, substr_count($enabled->getContent(), 'data-shop-product-visible="1"'));
+    }
+
     public function test_validates_duplicate_ids_count_price_and_foreign_server(): void
     {
         [$server, $section] = $this->section();

@@ -46,8 +46,8 @@
                 </div>
                 <div class="shop-product-grid shop-admin-cards" data-shop-view-panel="cards">
                     @foreach($sectionProducts as $product)
-                        @php($effectiveActive = $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
-                        <article class="shop-product-card" data-shop-product="{{ $product->id }}">
+                        @php($effectiveActive = $selectedSection->is_active && $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
+                        <article class="shop-product-card" data-shop-product="{{ $product->id }}" data-shop-product-visible="{{ $effectiveActive ? '1' : '0' }}">
                             @include('module-shop::partials.product-artwork', ['visual' => $productVisuals[$product->id] ?? []])
                             <div class="shop-product-card-body">
                                 <h3>{{ $product->nameFor() }}</h3>
@@ -76,8 +76,8 @@
                             </tr></thead>
                             <tbody>
                                 @foreach($sectionProducts as $product)
-                                    @php($effectiveActive = $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
-                                    <tr>
+                                    @php($effectiveActive = $selectedSection->is_active && $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
+                                    <tr data-shop-product-visible="{{ $effectiveActive ? '1' : '0' }}">
                                         <td>{{ $product->nameFor() }}</td>
                                         <td>{{ format_number($product->type === 'item' ? 1 : $product->bundleItems->count()) }}</td>
                                         <td class="admin-num">{{ format_number($product->price_coins) }}</td>

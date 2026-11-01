@@ -2,9 +2,9 @@
 
 Shop provides a separate item and bundle catalogue for each GameServer. Players spend CMS wallet coins and receive purchases in Web Inventory. Transferring items into the game remains a separate player action handled by the existing inventory delivery system.
 
-## Catalog redesign (development, I2/4)
+## Catalog redesign (development, I4/4)
 
-The administration catalog now uses **GameServer → Section → Product**. The former tabs are sections; products can contain **one or multiple items** at one total price. Open **Shop → GameServer**, select a section, then use **New product** to add localized names/descriptions, price, item IDs and quantities in one dialog. Adding an item row automatically makes a bundle. The administration displays a compact list; player cards will be redesigned in I3.
+The administration catalog now uses **GameServer → Section → Product**. The former tabs are sections; products can contain **one or multiple items** at one total price. Open **Shop → GameServer**, select a section, then use **New product** to add localized names/descriptions, price, item IDs and quantities in one dialog. Adding an item row automatically makes a bundle. The administration displays the same product cards as the player storefront by default, with an optional compact table view. Products inside a disabled section are marked hidden in both views.
 
 Migration `2026_11_01_050000_prepare_shop_sections.php` backfills existing `section_id` values without altering their original category or purchase records. Migration `2026_11_02_010000_shop_products_optional_legacy_category.php` allows new products to use a direct section instead of a nested category. **Apply both pending migrations manually in Modules** on a backed-up copy before using the new editor. Existing legacy categories remain in the database so old hidden categories stay hidden, and old purchases remain intact. New products have `category_id = null`. Old admin endpoints remain for compatibility but are no longer part of the new UI.
 
@@ -12,7 +12,7 @@ Server-side rules: only Owner/Administrator can write; the selected section must
 
 Sales are disabled by default. Enable globally and for the appropriate GameServer only after acceptance on a test installation. The financial gate does not change with this redesign. Legacy hidden category visibility is enforced for both catalog browsing and checkout.
 
-## Player cards and administrator preview (redesign I3)
+## Player cards and administrator preview (redesign I3–I4)
 
 Each product is displayed in a vertical card with its own localized name, description, price and existing game-item icons. A single item has one large icon; a bundle shows up to three icons with `+N` for further items. The details disclosure contains **every** configured item ID and quantity, even when the preview is shortened. Missing game assets use the existing neutral fallback. Icon lookup uses the actual GameServer profile and only resolves the first three item icons per product. The same artwork partial and card proportions are used in player and administrator views.
 
