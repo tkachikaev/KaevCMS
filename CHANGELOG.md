@@ -2,6 +2,8 @@
 
 ## Unreleased (development)
 
+- Shop 1.0.1 iteration 2: per-GameServer catalog tabs and nested categories with RU/EN names, ordering and visibility; admin creation/editing/deletion with audit and server isolation. Uses existing admin components without new CSS. The player storefront and all payments remain disabled.
+
 - Add Shop 1.0.0 iteration 1 foundation: standalone module registration, RU/EN administration overview using the existing admin UI, default-disabled global and GameServer settings, and role-based read-only access for auditors. No storefront, coin charges or rewards are available yet.
 
 ## 0.57.0 - 2026-11-01

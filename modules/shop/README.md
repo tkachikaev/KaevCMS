@@ -1,17 +1,19 @@
-# Shop 1.0.0 — iteration 1
+# Shop 1.0.1 — iteration 2 (development)
 
-This bundled module is the initial Shop foundation for KaevCMS 0.57.0+.
+Shop is an **admin-only catalog editor**. It is not a storefront and does not debit coins or award items. All sales remain disabled even if old settings contain `true`.
 
-- The module can be installed and enabled through the existing **Modules** administration flow.
-- It adds an admin overview using existing admin components and CSS, with read-only access for auditors; Editors have no access.
-- Schema: `module_shop_settings` and `module_shop_server_settings`. The global `sales_enabled` and per-server `enabled` flags default to `false`; there are deliberately no routes to turn on sales during iteration 1.
-- No player storefront, checkout, Wallet operation, inventory grants or game queue integration exists in this iteration.
-- Catalog, bundle and order schema will be added by **new immutable migrations** in the next iterations; do not modify this migration after deployment.
+- I1 (`2026_11_01_010000`): global and per-GameServer settings. This migration remains unchanged.
+- I2 (`2026_11_01_020000`): `module_shop_tabs` and `module_shop_categories`, titles in RU/EN, ordering and visibility flags. Categories belong to a tab; tabs belong to exactly one GameServer.
+- Owner and Administrator can add/edit/delete tabs and categories. Auditor can only view; Editor has no access.
+- A tab cannot be deleted while it contains categories. Deleting a GameServer with catalog tabs is blocked by the module dependency guard and the database foreign key; empty per-server settings may be removed.
+- Administrative changes are transactional and written to the common audit log; audit write failure rolls back the operation.
+- Views use the standard `x-admin.*`, `admin-card-row`, `content-list`, `admin-overview`, `notice` and `button` styles; no new stylesheet or JavaScript.
+- There are **no account, checkout, wallet, inventory or game-database routes**.
 
-## Installing
+## Installation and upgrade
 
-The owner enables `shop` under **Modules**, which applies its pending migrations through the normal module flow. This does not allow sales. Disabling the module removes its administration route without deleting settings.
+Enable/update Shop through **Modules** and apply its pending migrations using the standard admin workflow. Existing settings are preserved. New tables are additive; do not rewrite the I1 migration.
 
 ## Next
 
-Iteration 2: GameServer selection, tabs and categories using the existing CMS design tokens and UI components. Separate migrations will introduce their tables.
+Iteration 3: products/bundles and prices attached to categories. Checkout comes later as a separate audited operation.
