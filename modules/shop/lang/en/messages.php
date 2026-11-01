@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'sales_settings' => 'Sales settings',
+    'accept_purchases' => 'Accept shop purchases',
+    'server_sales_enabled' => 'Allow purchases on this server',
+    'sales_enabled' => 'Sales enabled',
     'admin_navigation_label' => 'Shop',
     'admin_navigation_description' => 'Game items and bundles for CMS coins.',
     'admin_title' => 'Shop',
@@ -11,9 +15,9 @@ return [
     'not_ready' => 'Unavailable',
     'disabled' => 'Disabled',
     'setup_title' => 'Shop setup',
-    'setup_description' => 'Configure game servers, sections, products and bundles. Sales are still disabled.',
+    'setup_description' => 'Configure game servers, sections, products and bundles.',
     'unavailable_title' => 'Purchases are disabled by default',
-    'unavailable_description' => 'Sales require transaction verification and separate authorization. Completed purchase history is available even while sales are off.',
+    'unavailable_description' => 'Sales start disabled. Allow purchases in general shop settings and on the required server. History remains available when sales stop.',
 
     'servers_title' => 'Game servers',
     'servers_description' => 'Select a game server to manage its own tabs and categories. Each server has a separate catalog.',
@@ -29,7 +33,7 @@ return [
     'tabs_description' => 'Create a tab, then add categories inside it. Each tab can have multiple categories.',
     'no_tabs_title' => 'No tabs yet',
     'no_tabs_description' => 'Create the first tab to start adding categories.',
-    'sales_disabled_notice' => 'Players can browse the catalogue via its direct URL. Purchases and wallet debits stay disabled until QA is complete.',
+    'sales_disabled_notice' => 'Product visibility does not enable sales. Allow purchases in general shop settings and on the selected server.',
     'add_tab' => 'Add tab',
     'add_category' => 'Add category',
     'name_ru' => 'Name in Russian',
@@ -37,7 +41,7 @@ return [
     'sort_order' => 'Display order',
     'sort_hint' => 'Lower numbers appear first.',
     'visible_in_catalog' => 'Visible in catalog',
-    'active_hint' => 'For now this option only configures the section. It does not enable sales.',
+    'active_hint' => 'A hidden section and its products are unavailable to players.',
     'active' => 'Visible',
     'hidden' => 'Hidden',
     'order_value' => 'Order: :value',
@@ -65,7 +69,7 @@ return [
     'no_categories_description' => 'Create a category inside one of the tabs.',
 
     'products_title' => 'Items and bundles',
-    'products_description' => 'Catalog of the selected game server. Prices are in CMS coins; sales are still disabled.',
+    'products_description' => 'Catalog for the selected game server. Prices use wallet coins.',
     'no_products_title' => 'No products yet',
     'no_products_description' => 'Create a category first, then add an item or bundle.',
     'add_item_product' => 'Add item',
@@ -86,7 +90,7 @@ return [
     'bundle_items_title' => 'Bundle contents',
     'bundle_items_description' => 'Add items using their ID and quantity. Duplicate item IDs are not allowed.',
     'no_bundle_items' => 'This bundle is empty',
-    'bundle_components_hint' => 'Add bundle contents after saving. Purchases will only be enabled in later iterations.',
+    'bundle_components_hint' => 'After saving, add the bundle contents. Empty bundles cannot be purchased.',
     'add_bundle_item' => 'Add item to bundle',
     'bundle_item_added' => 'Item added to bundle',
     'bundle_item_removed' => 'Item removed from bundle',

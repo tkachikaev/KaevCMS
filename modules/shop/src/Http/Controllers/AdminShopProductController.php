@@ -16,6 +16,7 @@ use Illuminate\View\View;
 use KaevCMS\Modules\Shop\Models\ShopBundleItem;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
+use KaevCMS\Modules\Shop\Models\ShopTab;
 use RuntimeException;
 
 final class AdminShopProductController extends Controller
@@ -153,13 +154,16 @@ final class AdminShopProductController extends Controller
     private function viewData(Request $request, GameServer $server, ?ShopProduct $product, string $type): array
     {
         $server->load('translations');
-        $tabs = \KaevCMS\Modules\Shop\Models\ShopTab::query()->where('game_server_id', $server->id)
+        $tabs = ShopTab::query()->where('game_server_id', $server->id)
             ->with('categories')->orderBy('sort_order')->orderBy('id')->get();
         // The category select never contains entries belonging to another server.
-        $categories = $tabs->flatMap(fn ($tab) => $tab->categories->map(fn ($category) => [
-            'id' => $category->id,
-            'name' => $tab->nameFor().' / '.$category->nameFor(),
-        ]));
+        $categoryOptions = [];
+        foreach ($tabs as $tab) {
+            foreach ($tab->categories as $category) {
+                $categoryOptions[] = ['id' => $category->id, 'name' => $tab->nameFor().' / '.$category->nameFor()];
+            }
+        }
+        $categories = collect($categoryOptions);
 
         return [
             'server' => $server, 'product' => $product, 'type' => $type,

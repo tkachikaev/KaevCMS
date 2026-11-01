@@ -64,7 +64,7 @@ final class ShopPurchaseService
                 }
 
                 // Fail closed: server-side configuration AND trusted Wallet source must
-                // be enabled. I4 ships with all three switches off and no checkout URL.
+                // be enabled. New installations keep sales off in database settings.
                 if (! ModuleState::query()->whereKey('shop')->where('enabled', true)->exists()
                     || config('wallet.enabled_sources.shop') !== true
                     || ! DB::table('module_shop_settings')->where('setting_key', 'global')->where('sales_enabled', true)->exists()) {

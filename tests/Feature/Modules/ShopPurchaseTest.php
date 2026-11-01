@@ -21,7 +21,6 @@ use InvalidArgumentException;
 use KaevCMS\Modules\Shop\Models\ShopBundleItem;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
-use KaevCMS\Modules\Shop\Models\ShopPurchase;
 use KaevCMS\Modules\Shop\Models\ShopServerSetting;
 use KaevCMS\Modules\Shop\Models\ShopSetting;
 use KaevCMS\Modules\Shop\Models\ShopTab;
@@ -77,8 +76,9 @@ final class ShopPurchaseTest extends TestCase
         ShopServerSetting::query()->create(['game_server_id' => $server->id, 'enabled' => true]);
     }
 
-    public function test_checkout_route_exists_but_trusted_source_remains_disabled(): void
+    public function test_checkout_route_rejects_a_disabled_trusted_source(): void
     {
+        config()->set('wallet.enabled_sources.shop', false);
         [$user, $server, $product] = $this->catalog();
         $this->assertTrue(Route::has('modules.shop.checkout'));
         $this->assertFalse(config('wallet.enabled_sources.shop'));

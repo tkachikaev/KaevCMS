@@ -5,6 +5,12 @@ namespace KaevCMS\Modules\Shop\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property int $item_id
+ * @property int $quantity
+ */
 final class ShopBundleItem extends Model
 {
     protected $table = 'module_shop_bundle_items';

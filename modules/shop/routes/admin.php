@@ -6,6 +6,8 @@ use KaevCMS\Modules\Shop\Http\Controllers\AdminShopProductController;
 use KaevCMS\Modules\Shop\Http\Controllers\AdminShopPurchaseController;
 
 Route::get('/', [AdminShopController::class, 'index'])->name('index');
+Route::put('/settings', [AdminShopController::class, 'updateSettings'])->name('settings.update');
+Route::put('/servers/{server}/settings', [AdminShopController::class, 'updateServerSettings'])->whereNumber('server')->name('servers.settings.update');
 Route::get('/purchases', [AdminShopPurchaseController::class, 'index'])->name('purchases.index');
 Route::get('/purchases/{purchase}', [AdminShopPurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
 Route::get('/servers/{server}', [AdminShopController::class, 'server'])->whereNumber('server')->name('servers.show');

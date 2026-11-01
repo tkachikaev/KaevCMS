@@ -10,6 +10,7 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 use RuntimeException;
@@ -144,10 +145,11 @@ final class ShopCatalogTest extends TestCase
         $this->assertSame(0, ShopTab::query()->count());
     }
 
-    public function test_public_catalog_routes_are_registered_but_wallet_source_stays_disabled(): void
+    public function test_public_catalog_routes_and_trusted_adapter_are_registered_but_sales_stay_disabled(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('modules.shop.index'));
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('modules.shop.checkout'));
-        $this->assertSame(false, config('wallet.enabled_sources.shop'));
+        $this->assertTrue(Route::has('modules.shop.index'));
+        $this->assertTrue(Route::has('modules.shop.checkout'));
+        $this->assertSame(true, config('wallet.enabled_sources.shop'));
+        $this->assertDatabaseHas('module_shop_settings', ['setting_key' => 'global', 'sales_enabled' => false]);
     }
 }

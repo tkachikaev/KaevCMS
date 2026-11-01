@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
+use KaevCMS\Modules\Shop\Models\ShopServerSetting;
 use KaevCMS\Modules\Shop\Models\ShopSetting;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 use RuntimeException;
@@ -23,7 +24,7 @@ final class AdminShopController extends Controller
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $servers = GameServer::query()->with('translations')->orderBy('sort_order')->orderBy('id')->get();
         $tabCounts = ShopTab::query()->selectRaw('game_server_id, COUNT(*) as total')
@@ -35,6 +36,9 @@ final class AdminShopController extends Controller
             'tabCounts' => $tabCounts,
             'serverCount' => $servers->count(),
             'configuredCount' => $tabCounts->count(),
+            'serverSettings' => ShopServerSetting::query()->get()->keyBy('game_server_id'),
+            'canManage' => $this->canManage($request),
+            'sourceEnabled' => config('wallet.enabled_sources.shop') === true,
         ]);
     }
 
@@ -50,7 +54,34 @@ final class AdminShopController extends Controller
             'products' => ShopProduct::query()->whereHas('category.tab', fn ($query) => $query->where('game_server_id', $server->id))
                 ->with(['category.tab', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get(),
             'canManage' => $this->canManage($request),
+            'settings' => ShopServerSetting::query()->where('game_server_id', $server->id)->first(),
         ]);
+    }
+
+    public function updateSettings(Request $request): RedirectResponse
+    {
+        $admin = $this->admin($request);
+        $values = $request->validate(['sales_enabled' => ['required', 'boolean']]);
+        DB::transaction(function () use ($admin, $values): void {
+            $settings = ShopSetting::query()->where('setting_key', 'global')->lockForUpdate()->firstOrFail();
+            $settings->update($values + ['updated_by_admin_id' => $admin->id]);
+            $this->auditRequired('shop.settings_updated', $admin, 'shop_settings', $values);
+        }, 3);
+
+        return $this->back('index')->with('status', __('module-shop::messages.saved'));
+    }
+
+    public function updateServerSettings(Request $request, GameServer $server): RedirectResponse
+    {
+        $admin = $this->admin($request);
+        $values = $request->validate(['enabled' => ['required', 'boolean']]);
+        DB::transaction(function () use ($admin, $server, $values): void {
+            GameServer::query()->whereKey($server->id)->lockForUpdate()->firstOrFail();
+            ShopServerSetting::query()->updateOrCreate(['game_server_id' => $server->id], $values + ['updated_by_admin_id' => $admin->id]);
+            $this->auditRequired('shop.server_settings_updated', $admin, 'shop_server:'.$server->id, $values);
+        }, 3);
+
+        return $this->back('servers.show', ['server' => $server->id])->with('status', __('module-shop::messages.saved'));
     }
 
     public function storeTab(Request $request, GameServer $server): RedirectResponse

@@ -2,6 +2,7 @@
 @section('title', __('module-shop::messages.server_title', ['server' => $server->nameFor()]))
 @section('description', __('module-shop::messages.server_description'))
 @section('content')
+<div class="admin-section-stack">
 @php($adminPath = request()->route('adminPath'))
 <p><x-admin.button wire:navigate :href="route('admin.module-pages.shop.index', ['adminPath' => $adminPath])">{{ __('module-shop::messages.back') }}</x-admin.button></p>
 @if(session('status'))<div class="notice notice-success" role="status">{{ session('status') }}</div>@endif
@@ -11,7 +12,14 @@
         <ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
     </div>
 @endif
-<div class="notice notice-info" role="note">{{ __('module-shop::messages.sales_disabled_notice') }}</div>
+<x-admin.card>
+    <x-admin.card-heading :title="__('module-shop::messages.sales_settings')" />
+    <form method="POST" action="{{ route('admin.module-pages.shop.servers.settings.update', ['adminPath' => $adminPath, 'server' => $server->id]) }}">
+        @csrf @method('PUT')
+        <x-admin.toggle id="shop_server_enabled" name="enabled" :label="__('module-shop::messages.server_sales_enabled')" :checked="(bool) old('enabled', $settings?->enabled ?? false)" :disabled="! $canManage" />
+        @if($canManage)<div class="admin-row-actions"><x-admin.button type="submit" variant="primary">{{ __('module-shop::messages.save') }}</x-admin.button></div>@endif
+    </form>
+</x-admin.card>
 <x-admin.card>
     <x-admin.card-heading :title="__('module-shop::messages.tabs_title')" :description="__('module-shop::messages.tabs_description')" />
     @if($tabs->isEmpty())
@@ -22,7 +30,7 @@
     @else
         <div class="admin-card-list content-list">
             @foreach($tabs as $tab)
-                <article class="content-row admin-card-row">
+                <article class="admin-card-row admin-card-row-simple">
                     <div>
                         <strong class="content-row-title">{{ $tab->nameFor() }}</strong>
                         <p>{{ __('module-shop::messages.category_count', ['count' => format_number($tab->categories->count())]) }} · {{ __('module-shop::messages.order_value', ['value' => format_number($tab->sort_order)]) }}</p>
@@ -45,7 +53,7 @@
         <div class="admin-card-list content-list">
             @foreach($tabs as $tab)
                 @foreach($tab->categories as $category)
-                    <article class="content-row admin-card-row">
+                    <article class="admin-card-row admin-card-row-simple">
                         <div>
                             <strong class="content-row-title">{{ $category->nameFor() }}</strong>
                             <p>{{ $tab->nameFor() }} · {{ __('module-shop::messages.order_value', ['value' => format_number($category->sort_order)]) }}</p>
@@ -65,7 +73,7 @@
     @else
         <div class="admin-card-list content-list">
             @foreach($products as $product)
-                <article class="content-row admin-card-row">
+                <article class="admin-card-row admin-card-row-simple">
                     <div>
                         <strong class="content-row-title">{{ $product->nameFor() }}</strong>
                         <p>{{ $product->category->tab->nameFor() }} / {{ $product->category->nameFor() }} · {{ $product->type === 'item' ? __('module-shop::messages.item_type') : __('module-shop::messages.bundle_type') }} · {{ __('module-shop::messages.price_value', ['count' => format_number($product->price_coins)]) }}</p>
@@ -108,4 +116,5 @@
         </x-admin.card>
     @endif
 @endif
+</div>
 @endsection

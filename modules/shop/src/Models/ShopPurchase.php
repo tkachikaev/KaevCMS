@@ -6,7 +6,24 @@ use App\Models\GameServer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $request_uuid
+ * @property int $user_id
+ * @property int $game_server_id
+ * @property int $product_id
+ * @property string $product_type
+ * @property string $product_name_ru
+ * @property string $product_name_en
+ * @property int $price_coins
+ * @property list<array{item_id:int,quantity:int}> $items_snapshot
+ * @property int $wallet_entry_id
+ * @property int $reward_inventory_grant_id
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 final class ShopPurchase extends Model
 {
     protected $table = 'module_shop_purchases';

@@ -148,7 +148,7 @@ final class ShopProductsTest extends TestCase
         $this->delete('/admin/extensions/shop/servers/'.$other->id.'/products/'.$product->id, ['confirm' => 1])->assertNotFound();
         $this->delete($base.'/categories/'.$category->id, ['confirm' => 1])->assertSessionHasErrors('confirm');
         $this->assertDatabaseHas('module_shop_products', ['id' => $product->id, 'category_id' => $category->id]);
-        $this->assertSame(false, config('wallet.enabled_sources.shop'));
+        $this->assertDatabaseHas('module_shop_settings', ['setting_key' => 'global', 'sales_enabled' => false]);
     }
 
     public function test_bundle_items_cannot_be_managed_through_another_server_or_item(): void

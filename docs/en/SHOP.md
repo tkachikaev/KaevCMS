@@ -1,39 +1,31 @@
-# Shop — pre-release
+# Shop
 
-**Status:** Shop 1.0.3 — DEV. Checkout code exists, but Laravel, real test MySQL/MariaDB concurrency and browser acceptance have not passed yet. **Do not enable sales.**
+Shop sells items and bundles for CMS wallet coins. Each game server has its own catalogue.
 
-## Catalogue and purchases
+## Setup
 
-An Owner or Administrator can create GameServer-specific tabs, categories and products. Products may be one item (game item ID and quantity) or a bundle containing several items. RU/EN names, integer CMS coin prices, order and visibility are configurable. Empty bundles are not published. A bundle can contain up to 100 distinct item IDs; the administration editor enforces this limit.
+1. Enable Shop and apply pending migrations under **Modules**.
+2. Open **Shop** and select a game server.
+3. Create a tab, category and products. Provide RU/EN names, an integer coin price, item IDs and quantities. Bundles contain at most 100 distinct item IDs. Empty or invalid bundles are not published.
+4. Enable **Allow purchases on this server** in the selected server settings.
+5. Enable **Accept shop purchases** in general settings.
 
-Checkout is designed to debit coins through the existing WalletGateway, grant items to **Web Inventory**, store an immutable price/item snapshot and write an audit record in one transaction. A replay of the same UUID must return the previous purchase without another debit. **Web Inventory is not direct character delivery**: the player initiates transfer later, and the game-server administrator configures the reward-queue consumer.
+Both switches start disabled. Activation requires no PHP, environment or database edits. Visibility is separate: hidden products, categories and tabs cannot be purchased.
 
-## Administration
+Owner and Administrator may configure Shop. Auditor has read-only access to settings and history; Editor has no access.
 
-1. On an isolated test installation, enable Shop under **Modules**.
-2. Apply the module's pending migrations via **Modules**. Four additive migration batches are provided; applied migrations must remain unchanged.
-3. Open **Shop** in administration and select a GameServer.
-4. Add a tab, category and products. For a bundle, configure its constituent item IDs and quantities separately.
-5. Set catalogue visibility and ordering. **This does not enable sales.**
+## Purchases
 
-Owner and Administrator can edit; Auditor is read-only; Editor has no access. The administration purchase journal only shows completed purchases. Manual refunds, re-grants and editing settled operations are not implemented.
+Purchases debit wallet coins and deliver items to **Web Inventory**. Players initiate in-game transfer from there separately; the game-server administrator configures the queue consumer.
 
-## Player cabinet
+The server determines prices and contents. Debit, inventory grant, completed purchase and mandatory audit commit together. Retrying the same operation does not charge twice. Insufficient funds, blocked wallets and inactive users cannot buy.
 
-Test catalogue URL: `/modules/shop` (authentication required). While sales are disabled, users may browse published products and prices but cannot buy. The account navigation link remains hidden until sales are enabled, except that prior buyers may retain it for access to history.
+## History
 
-Purchase history: `/modules/shop/history`. Receipts retain the product name, price, server and items at purchase time. Players can see only their own purchases. The page links to Web Inventory.
+**My purchases** is available at `/modules/shop/history`. Players can read only their own purchases. Names, prices and contents are retained as purchased even after catalogue changes or product deletion.
 
-## Why sales are disabled
+Stopping sales keeps history accessible. Disabling the module preserves records but removes its pages until re-enabled. Refunds, manual re-grants and editing completed purchases are not implemented.
 
-Three independent controls are all initially off:
+## Before opening sales
 
-- trusted wallet source `config/wallet.php` → `enabled_sources.shop = false`;
-- Shop global database setting `module_shop_settings.sales_enabled = false`;
-- per-server database setting `module_shop_server_settings.enabled = false`.
-
-**Do not edit production database settings or code to bypass the acceptance gate.** This DEV build does not offer a supported sales activation flow in administration. Activation requires a separate acceptance and owner decision.
-
-## Release acceptance gate
-
-On an isolated installation with dependencies installed from the approved `composer.lock`, run Shop Feature tests, Wallet/RewardInventory tests, both PowerShell quality scripts under `deployment/windows/`, and `tests/Integration/Shop/mysql-purchase-concurrency.php` on a dedicated real MySQL/MariaDB `shop_test` database with explicit test-only environment flags. **That script runs `migrate:fresh` and destroys data in the selected database.** Inspect all three account themes in both colour schemes and on mobile widths. Until all gates pass, the module remains DEV.
+Verify a test purchase and Web Inventory delivery on an isolated installation. Never use an existing user database for integration tests: `tests/Integration/Shop/mysql-purchase-concurrency.php` runs `migrate:fresh` and requires a dedicated MySQL/MariaDB `shop_test` database with explicit testing permissions.

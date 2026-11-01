@@ -2,6 +2,10 @@
 
 ## Unreleased (development)
 
+- Shop activation through audited administration settings, with new installations keeping sales disabled.
+- Shop catalogue and receipt rendering, invalid bundle visibility and responsive administration layouts.
+- Shop static analysis declarations and real-database migration/concurrency coverage.
+
 - Shop I8 QA follow-up: prevent configuring a 101st bundle item, hide invalid oversized bundles from the player catalog, and add the 100/101 boundary regression test. No CSS, dependencies, wallet core or migrations changed; full QA remains pending.
 - Shop I8 (module 1.0.3, DEV): synchronize RU/EN public documentation with the existing storefront, checkout and history; document default-off trusted wallet source, Web Inventory delivery, and the outstanding test/activation gate. No sale activation or dependency changes.
 - Shop I7 (module 1.0.3, DEV): recheck player activity under the purchase lock, safely resolve cross-player UUID races after a rolled-back transaction, and extend retry and concurrency regression scenarios. Keep sales off; no schema, wallet core or CSS changes.

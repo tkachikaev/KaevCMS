@@ -100,6 +100,20 @@ class BrowserTestSeeder extends Seeder
             ],
         );
 
+        // Shop checkout changes the balance and ledger. Keep it isolated from
+        // scenarios that verify the main player's initially empty wallet.
+        User::query()->updateOrCreate(
+            ['email' => 'browser-shop-player@example.test'],
+            [
+                'name' => 'browser-shop-player',
+                'email_verified_at' => now(),
+                'password' => Hash::make($playerPassword),
+                'password_set_at' => now(),
+                'is_active' => true,
+                'locale' => 'ru',
+            ],
+        );
+
         $loginServer = LoginServer::query()->updateOrCreate(
             ['name' => 'Browser LoginServer'],
             [

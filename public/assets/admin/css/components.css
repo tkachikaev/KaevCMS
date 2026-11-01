@@ -351,6 +351,33 @@
     gap: 12px;
 }
 
+.admin-section-stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    min-width: 0;
+}
+
+.admin-section-stack > * { min-width: 0; }
+
+.admin-card-row-simple {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid var(--admin-border);
+}
+
+.admin-card-row-simple > div:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .admin-card-row-simple { grid-template-columns: minmax(0, 1fr); }
+}
+
 .admin-card-row,
 .admin-data-card {
     border-color: var(--admin-border) !important;

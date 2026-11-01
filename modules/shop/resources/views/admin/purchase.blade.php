@@ -2,11 +2,12 @@
 @section('title', __('module-shop::messages.purchase_receipt', ['id' => format_number($purchase->id)]))
 @section('description', __('module-shop::messages.purchase_admin_description'))
 @section('content')
+<div class="admin-section-stack">
 @php($adminPath = request()->route('adminPath'))
 <p><x-admin.button wire:navigate :href="route('admin.module-pages.shop.purchases.index', ['adminPath' => $adminPath])">{{ __('module-shop::messages.purchase_admin_back') }}</x-admin.button></p>
 <x-admin.card>
     <x-admin.card-heading :title="$purchase->nameFor()" :description="__('module-shop::messages.purchase_snapshot_hint')" />
-    <div class="table-responsive">
+    <div class="admin-table-wrap">
         <table class="admin-table"><tbody>
             <tr><th>{{ __('module-shop::messages.purchase_reference') }}</th><td>{{ $purchase->request_uuid }}</td></tr>
             <tr><th>{{ __('module-shop::messages.purchase_date') }}</th><td><time datetime="{{ $purchase->created_at->toIso8601String() }}">{{ $purchase->created_at->format('d.m.Y H:i') }}</time></td></tr>
@@ -21,7 +22,7 @@
 </x-admin.card>
 <x-admin.card>
     <x-admin.card-heading :title="__('module-shop::messages.purchase_contents')" />
-    <div class="table-responsive"><table class="admin-table"><thead><tr>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr>
         <th>{{ __('module-shop::messages.item_id') }}</th><th>{{ __('module-shop::messages.quantity') }}</th>
     </tr></thead><tbody>
         @forelse($purchase->items_snapshot ?? [] as $item)
@@ -32,4 +33,5 @@
     </tbody></table></div>
     <p>{{ __('module-shop::messages.purchase_read_only') }}</p>
 </x-admin.card>
+</div>
 @endsection

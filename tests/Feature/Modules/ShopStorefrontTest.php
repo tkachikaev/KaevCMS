@@ -80,22 +80,22 @@ final class ShopStorefrontTest extends TestCase
 
     public function test_catalog_filters_hidden_products_servers_tabs_and_categories(): void
     {
-        [$visibleServer, $visibleTab, $visibleCategory, $visible] = $this->published('Visible');
-        [$hiddenServer, $hiddenTab, $hiddenCategory, $hidden] = $this->published('Hidden');
+        [$visibleServer, $visibleTab, $visibleCategory, $visible] = $this->published('Visible shop product');
+        [$hiddenServer, $hiddenTab, $hiddenCategory, $hidden] = $this->published('Hidden shop product');
         $visibleServer->update(['name' => 'Visible World']);
         $hiddenServer->update(['name' => 'Hidden World']);
         $hidden->update(['is_active' => false]);
         $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop?server='.$hiddenServer->id)
-            ->assertOk()->assertSee('Visible')->assertDontSee('Hidden')
-            ->assertDontSee('Hidden World');
+            ->assertOk()->assertSee('Visible shop product')->assertDontSee('Hidden shop product')
+            ->assertViewHas('servers', fn ($servers) => ! $servers->contains('id', $hiddenServer->id));
         $hidden->update(['is_active' => true]);
         $hiddenTab->update(['is_active' => false]);
-        $this->get('/modules/shop')->assertDontSee('Hidden');
+        $this->get('/modules/shop')->assertDontSee('Hidden shop product');
         $hiddenTab->update(['is_active' => true]);
         $hiddenCategory->update(['is_active' => false]);
-        $this->get('/modules/shop')->assertDontSee('Hidden');
+        $this->get('/modules/shop')->assertDontSee('Hidden shop product');
         $visible->update(['price_coins' => 0]);
-        $this->get('/modules/shop')->assertDontSee('Visible');
+        $this->get('/modules/shop')->assertDontSee('Visible shop product');
     }
 
     public function test_each_visible_product_gets_a_distinct_checkout_uuid(): void
@@ -142,8 +142,17 @@ final class ShopStorefrontTest extends TestCase
             ->get('/modules/shop')->assertOk()->assertDontSee('Oversized bundle');
     }
 
+    public function test_bundle_with_invalid_components_is_not_published(): void
+    {
+        [$server, $tab, $category, $bundle] = $this->published('Invalid component bundle', 'bundle');
+        $bundle->bundleItems()->update(['quantity' => 0]);
+        $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop')
+            ->assertOk()->assertDontSee('Invalid component bundle');
+    }
+
     public function test_manually_submitted_checkout_is_rejected_while_source_disabled(): void
     {
+        config()->set('wallet.enabled_sources.shop', false);
         [$server, $tab, $category, $product] = $this->published();
         $player = User::factory()->create();
         ShopSetting::query()->where('setting_key', 'global')->update(['sales_enabled' => true]);

@@ -32,7 +32,7 @@ final class ShopAccountController extends Controller
         // unconfigured products never appear in the player catalogue.
         $serverIds = ShopTab::query()->where('is_active', true)
             ->whereHas('categories', static fn ($query) => $query->where('is_active', true)
-                ->whereHas('products', static fn ($products) => $products->published()))
+                ->whereIn('id', ShopProduct::query()->published()->select('category_id')))
             ->pluck('game_server_id')->unique();
         $servers = GameServer::query()->with('translations')->whereIn('id', $serverIds)
             ->orderBy('sort_order')->orderBy('id')->get();
@@ -51,13 +51,13 @@ final class ShopAccountController extends Controller
         if ($server !== null) {
             $tabs = ShopTab::query()->where('game_server_id', $server->id)->where('is_active', true)
                 ->whereHas('categories', static fn ($query) => $query->where('is_active', true)
-                    ->whereHas('products', static fn ($products) => $products->published()))
+                    ->whereIn('id', ShopProduct::query()->published()->select('category_id')))
                 ->orderBy('sort_order')->orderBy('id')->get();
             $requestedTab = filter_var($request->query('tab'), FILTER_VALIDATE_INT);
             $tab = $tabs->firstWhere('id', $requestedTab) ?? $tabs->first();
             if ($tab !== null) {
                 $categories = ShopCategory::query()->where('tab_id', $tab->id)->where('is_active', true)
-                    ->whereHas('products', static fn ($query) => $query->published())
+                    ->whereIn('id', ShopProduct::query()->published()->select('category_id'))
                     ->orderBy('sort_order')->orderBy('id')->get();
                 $requestedCategory = filter_var($request->query('category'), FILTER_VALIDATE_INT);
                 $category = $categories->firstWhere('id', $requestedCategory) ?? $categories->first();
@@ -74,13 +74,14 @@ final class ShopAccountController extends Controller
                     }
                 }
             }
-            // Trusted Wallet source is deliberately false in shipped config.
+            // The trusted adapter alone never enables sales.
             $canBuy = config('wallet.enabled_sources.shop') === true
                 && DB::table('module_shop_settings')->where('setting_key', 'global')->where('sales_enabled', true)->exists()
                 && DB::table('module_shop_server_settings')->where('game_server_id', $server->id)->where('enabled', true)->exists();
         }
 
         return view('module-shop::account.index', [
+            'user' => $user,
             'servers' => $servers, 'server' => $server, 'tabs' => $tabs, 'tab' => $tab,
             'categories' => $categories, 'category' => $category, 'products' => $products,
             'productIcons' => $productIcons, 'requestUuids' => $requestUuids, 'canBuy' => $canBuy,
@@ -98,7 +99,7 @@ final class ShopAccountController extends Controller
         $purchases = ShopPurchase::query()->where('user_id', $user->id)
             ->with('gameServer.translations')->orderByDesc('id')->paginate(15);
 
-        return view('module-shop::account.history', ['purchases' => $purchases]);
+        return view('module-shop::account.history', ['user' => $user, 'purchases' => $purchases]);
     }
 
     public function showPurchase(Request $request, int $purchase): View
@@ -109,7 +110,7 @@ final class ShopAccountController extends Controller
         $record = ShopPurchase::query()->whereKey($purchase)
             ->where('user_id', $user->id)->with('gameServer.translations')->firstOrFail();
 
-        return view('module-shop::account.receipt', ['purchase' => $record]);
+        return view('module-shop::account.receipt', ['user' => $user, 'purchase' => $record]);
     }
 
     public function store(Request $request, ShopPurchaseService $purchases): RedirectResponse

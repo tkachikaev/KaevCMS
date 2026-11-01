@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $game_server_id
+ * @property string $name_ru
+ * @property string $name_en
+ * @property int $sort_order
+ * @property bool $is_active
+ * @property int|null $updated_by_admin_id
+ */
 final class ShopTab extends Model
 {
     protected $table = 'module_shop_tabs';

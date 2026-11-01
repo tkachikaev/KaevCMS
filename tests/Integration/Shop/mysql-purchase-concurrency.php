@@ -42,8 +42,6 @@ if (config('app.env') !== 'testing' || DB::connection()->getDriverName() !== 'my
     throw new RuntimeException('Refusing to run: requires APP_ENV=testing and an explicitly authorized shop_test MySQL database.');
 }
 
-config()->set('wallet.enabled_sources.shop', true); // Worker-only override, never persisted.
-
 if (($argv[1] ?? '') === '--worker') {
     $user = User::query()->findOrFail((int) ($argv[2] ?? 0));
     $productId = (int) ($argv[3] ?? 0);
@@ -80,7 +78,7 @@ function requireShop(bool $assertion, string $message): void
 }
 
 /** @param list<array{user_id:int,product_id:int,uuid:string}> $jobs
- *  @return list<string>
+ * @return list<string>
  */
 function raceShopJobs(array $jobs): array
 {
@@ -111,7 +109,7 @@ function raceShopJobs(array $jobs): array
 }
 
 /** @param list<string> $uuids
- *  @return list<string>
+ * @return list<string>
  */
 function raceShop(int $userId, int $productId, array $uuids): array
 {
@@ -183,3 +181,12 @@ $balances = [
 sort($balances);
 requireShop($balances === [0, 25], 'Losing buyer wallet was modified.');
 echo "PASS cross-user identical UUID race -> one debit, one grant, one rejected request\n";
+
+// Re-applying the supported upgrade path must preserve settings and settled data.
+Artisan::call('migrate', ['--force' => true]);
+app(ModuleManager::class)->enable('shop');
+requireShop(DB::table('module_shop_purchases')->count() === 5, 'Upgrade lost purchase history.');
+requireShop(DB::table('wallet_entries')->where('source', 'shop')->count() === 5, 'Upgrade changed wallet history.');
+requireShop(DB::table('reward_inventory_grants')->where('source_type', 'shop')->count() === 5, 'Upgrade changed inventory history.');
+requireShop(ShopSetting::query()->where('setting_key', 'global')->value('sales_enabled') === true, 'Upgrade changed sales settings.');
+echo "PASS repeated CMS and module migrations preserve purchases, wallet, inventory and settings\n";

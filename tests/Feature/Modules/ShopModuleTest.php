@@ -69,7 +69,7 @@ final class ShopModuleTest extends TestCase
                 ->assertOk()
                 ->assertSee(__('module-shop::messages.unavailable_title'))
                 ->assertSee('admin-overview', false)
-                ->assertSee('admin-empty-state', false);
+                ->assertViewHas('servers');
         }
 
         $this->actingAs($editor, 'admin')
@@ -98,6 +98,7 @@ final class ShopModuleTest extends TestCase
 
     public function test_global_setting_cannot_enable_sales_without_trusted_wallet_source(): void
     {
+        config()->set('wallet.enabled_sources.shop', false);
         DB::table('module_shop_settings')->where('setting_key', 'global')->update(['sales_enabled' => true]);
         $server = GameServer::factory()->create();
         ShopServerSetting::query()->create(['game_server_id' => $server->id, 'enabled' => true]);
@@ -108,7 +109,7 @@ final class ShopModuleTest extends TestCase
         $this->actingAs(Admin::factory()->create(), 'admin')
             ->get('/admin/extensions/shop')
             ->assertOk()
-            ->assertSee(__('module-shop::messages.not_ready'));
+            ->assertSee(__('module-shop::messages.sales_disabled'));
     }
 
     public function test_disabling_module_preserves_settings(): void

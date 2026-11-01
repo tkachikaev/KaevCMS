@@ -2,6 +2,7 @@
 @section('title', __('module-shop::messages.edit_title'))
 @section('description', __('module-shop::messages.server_title', ['server' => $server->nameFor()]))
 @section('content')
+<div class="admin-section-stack">
 @php($adminPath = request()->route('adminPath'))
 @php($isTab = $kind === 'tabs')
 @php($routeIds = ['adminPath' => $adminPath, 'server' => $server->id, $isTab ? 'tab' : 'category' => $record->id])
@@ -30,4 +31,5 @@
         </form>
     </x-admin.card>
 @endif
+</div>
 @endsection

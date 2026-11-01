@@ -2,6 +2,7 @@
 @section('title', __('module-shop::messages.purchase_admin_title'))
 @section('description', __('module-shop::messages.purchase_admin_description'))
 @section('content')
+<div class="admin-section-stack">
 @php($adminPath = request()->route('adminPath'))
 <p><x-admin.button wire:navigate :href="route('admin.module-pages.shop.index', ['adminPath' => $adminPath])">{{ __('module-shop::messages.purchase_shop_back') }}</x-admin.button></p>
 <x-admin.card>
@@ -36,7 +37,7 @@
 </x-admin.card>
 <x-admin.card>
     <x-admin.card-heading :title="__('module-shop::messages.purchase_admin_title')" :description="__('module-shop::messages.purchase_snapshot_hint')" />
-    <div class="table-responsive">
+    <div class="admin-table-wrap">
         <table class="admin-table">
             <thead><tr>
                 <th>{{ __('module-shop::messages.purchase_reference') }}</th>
@@ -64,4 +65,5 @@
     </div>
     {{ $purchases->links() }}
 </x-admin.card>
+</div>
 @endsection
