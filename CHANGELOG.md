@@ -2,6 +2,7 @@
 
 ## Unreleased (development)
 
+- Shop I8 (module 1.0.3, DEV): synchronize RU/EN public documentation with the existing storefront, checkout and history; document default-off trusted wallet source, Web Inventory delivery, and the outstanding test/activation gate. No sale activation or dependency changes.
 - Shop I7 (module 1.0.3, DEV): recheck player activity under the purchase lock, safely resolve cross-player UUID races after a rolled-back transaction, and extend retry and concurrency regression scenarios. Keep sales off; no schema, wallet core or CSS changes.
 
 - Shop I6 (module 1.0.3, DEV): read-only purchase journal and receipts in the player cabinet, read-only admin purchase filters and details. Completed purchase snapshots survive catalog changes and remain accessible with sales off; no migrations or CSS changes.

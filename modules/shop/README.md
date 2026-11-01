@@ -1,4 +1,4 @@
-# Shop 1.0.3 — iteration 7 (development)
+# Shop 1.0.3 — iteration 8 documentation / acceptance pending (development)
 
 Shop now has a player-facing, authenticated storefront and POST checkout route. **Sales remain disabled** in the shipped configuration (`config/wallet.php`: `shop = false`), and database settings also default to off. The page is a browse-only catalogue until an explicitly reviewed later activation. The account sidebar link is hidden while sales are not enabled; direct GET is available for local visual verification.
 
@@ -38,3 +38,7 @@ Enable/update Shop through **Modules** and apply its pending migrations using th
 ## Next
 
 Iteration 8: full QA with Composer dependencies, MySQL/MariaDB concurrency, all three cabinet themes and responsive browser checks, documentation review and release preparation. No production activation until the full acceptance gate succeeds.
+
+## I8 acceptance status
+
+The catalogue, checkout and history source code exists. However, full PHPUnit, browser quality, visual review and isolated real MySQL/MariaDB concurrency tests **must pass before a release**. The current packaging remains a development snapshot; it is not approval to activate sales. Admin-visible activation is not implemented. User documentation: `docs/ru/SHOP.md`, `docs/en/SHOP.md`.
