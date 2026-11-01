@@ -1,4 +1,4 @@
-# Shop 1.0.3 — iteration 6 (development)
+# Shop 1.0.3 — iteration 7 (development)
 
 Shop now has a player-facing, authenticated storefront and POST checkout route. **Sales remain disabled** in the shipped configuration (`config/wallet.php`: `shop = false`), and database settings also default to off. The page is a browse-only catalogue until an explicitly reviewed later activation. The account sidebar link is hidden while sales are not enabled; direct GET is available for local visual verification.
 
@@ -20,13 +20,21 @@ Shop now has a player-facing, authenticated storefront and POST checkout route. 
 
 Enable/update Shop through **Modules** and apply its pending migrations using the standard admin workflow. Existing settings are preserved. New tables are additive; do not rewrite the I1 migration.
 
-## Next
-
-Iteration 6: purchase history and management. I4 financial tests and concurrency tests still require real execution before activation; current storefront cannot enable purchases by itself.
-
 ## I6: completed purchase history (read-only)
 
 - `/modules/shop/history` lists the signed-in player's own purchases. `/modules/shop/history/{id}` displays immutable receipt snapshots. Both remain accessible with sales switched off and never expose other users' data.
 - `/admin/extensions/shop/purchases` lists settled purchases with server/player/date filters; purchase details include wallet entry and inventory grant references. Owner, Administrator and Auditor may view; Editor cannot.
 - No refund, replay, mutation, manual adjustment, migration or new CSS is included. This is **not** a full order lifecycle; only successful completed purchases exist in the I4 ledger.
 - The sidebar Shop link may appear for an existing buyer even if sales are later disabled, so they can reach purchase history.
+
+## I7: checkout reliability (no schema or style changes)
+
+- Recheck `users.is_active` from the locked database record inside the purchase transaction; never trust a stale in-memory authenticated User when an administrator has just disabled the account.
+- If an overlapping request wins the same UUID after the initial lookup, roll back the losing transaction and consult the committed purchase record. A matching owner/product is an idempotent replay; a different owner/product is rejected. Unrelated SQL or grant validation errors still fail without changing the wallet.
+- `ShopReliabilityTest` covers stale sessions, retrying an insufficient-balance UUID after topping up, malformed bundle validation/retry, disabled module and UUID isolation.
+- The opt-in `tests/Integration/Shop/mysql-purchase-concurrency.php` also covers two different players racing for the same UUID; it MUST run against an isolated real MySQL/MariaDB test database with explicit opt-in environment flags. It runs `migrate:fresh` and is destructive to the selected test database.
+- Existing source protection remains `config/wallet.php` (`shop => false`), and the global/per-server switches remain disabled by default. This iteration does not authorize opening sales.
+
+## Next
+
+Iteration 8: full QA with Composer dependencies, MySQL/MariaDB concurrency, all three cabinet themes and responsive browser checks, documentation review and release preparation. No production activation until the full acceptance gate succeeds.

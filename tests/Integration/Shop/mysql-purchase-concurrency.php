@@ -63,6 +63,12 @@ if (($argv[1] ?? '') === '--worker') {
             exit(0);
         }
         throw $error;
+    } catch (InvalidArgumentException $error) {
+        if ($error->getMessage() === 'Purchase UUID already belongs to another operation.') {
+            echo "uuid_conflict\n";
+            exit(0);
+        }
+        throw $error;
     }
 }
 
@@ -73,16 +79,16 @@ function requireShop(bool $assertion, string $message): void
     }
 }
 
-/** @param list<string> $uuids
+/** @param list<array{user_id:int,product_id:int,uuid:string}> $jobs
  *  @return list<string>
  */
-function raceShop(int $userId, int $productId, array $uuids): array
+function raceShopJobs(array $jobs): array
 {
     $start = microtime(true) + 1.5;
     $workers = [];
-    foreach ($uuids as $uuid) {
+    foreach ($jobs as $job) {
         $pipes = [];
-        $command = [PHP_BINARY, __FILE__, '--worker', (string) $userId, (string) $productId, $uuid, (string) $start];
+        $command = [PHP_BINARY, __FILE__, '--worker', (string) $job['user_id'], (string) $job['product_id'], $job['uuid'], (string) $start];
         $process = proc_open($command, [
             0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w'],
         ], $pipes, dirname(__DIR__, 3));
@@ -97,11 +103,21 @@ function raceShop(int $userId, int $productId, array $uuids): array
         fclose($pipes[1]);
         fclose($pipes[2]);
         requireShop(proc_close($process) === 0, 'Shop purchase worker failed: '.$err);
-        requireShop(in_array($out, ['purchased', 'insufficient_funds'], true), 'Invalid result: '.$out);
+        requireShop(in_array($out, ['purchased', 'insufficient_funds', 'uuid_conflict'], true), 'Invalid result: '.$out);
         $outcomes[] = $out;
     }
 
     return $outcomes;
+}
+
+/** @param list<string> $uuids
+ *  @return list<string>
+ */
+function raceShop(int $userId, int $productId, array $uuids): array
+{
+    return raceShopJobs(array_map(static fn (string $uuid): array => [
+        'user_id' => $userId, 'product_id' => $productId, 'uuid' => $uuid,
+    ], $uuids));
 }
 
 Artisan::call('migrate:fresh', ['--force' => true]);
@@ -143,3 +159,27 @@ requireShop(DB::table('reward_inventory_grants')->where('source_type', 'shop')->
 requireShop((int) DB::table('reward_inventory_items')->where('user_id', $user->id)->sum('amount') === 12, 'Unexpected issued item quantity.');
 requireShop((int) DB::table('wallets')->where('user_id', $user->id)->value('balance') === 0, 'Wallet overspent.');
 echo "PASS 6 distinct concurrent UUIDs, only 3 remaining affordable; no overspending\n";
+
+// Two different players race the same UUID: the unique purchase identity cannot
+// be claimed twice, and the losing player must not lose coins or receive items.
+$firstBuyer = User::factory()->create();
+$secondBuyer = User::factory()->create();
+app(WalletTransactionService::class)->credit($firstBuyer, 25, 'manual', 'shop-race-a-'.Str::uuid());
+app(WalletTransactionService::class)->credit($secondBuyer, 25, 'manual', 'shop-race-b-'.Str::uuid());
+$sharedUuid = (string) Str::uuid();
+$outcomes = raceShopJobs([
+    ['user_id' => $firstBuyer->id, 'product_id' => $product->id, 'uuid' => $sharedUuid],
+    ['user_id' => $secondBuyer->id, 'product_id' => $product->id, 'uuid' => $sharedUuid],
+]);
+requireShop(count(array_filter($outcomes, fn ($outcome) => $outcome === 'purchased')) === 1, 'Same UUID across users must have one winner.');
+requireShop(count(array_filter($outcomes, fn ($outcome) => $outcome === 'uuid_conflict')) === 1, 'Same UUID across users must reject the loser.');
+requireShop(DB::table('module_shop_purchases')->where('request_uuid', $sharedUuid)->count() === 1, 'Shared UUID has multiple purchases.');
+requireShop(DB::table('wallet_entries')->where('source', 'shop')->count() === 5, 'Cross-user UUID race debited twice.');
+requireShop(DB::table('reward_inventory_grants')->where('source_type', 'shop')->count() === 5, 'Cross-user UUID race granted twice.');
+$balances = [
+    (int) DB::table('wallets')->where('user_id', $firstBuyer->id)->value('balance'),
+    (int) DB::table('wallets')->where('user_id', $secondBuyer->id)->value('balance'),
+];
+sort($balances);
+requireShop($balances === [0, 25], 'Losing buyer wallet was modified.');
+echo "PASS cross-user identical UUID race -> one debit, one grant, one rejected request\n";

@@ -2,6 +2,8 @@
 
 ## Unreleased (development)
 
+- Shop I7 (module 1.0.3, DEV): recheck player activity under the purchase lock, safely resolve cross-player UUID races after a rolled-back transaction, and extend retry and concurrency regression scenarios. Keep sales off; no schema, wallet core or CSS changes.
+
 - Shop I6 (module 1.0.3, DEV): read-only purchase journal and receipts in the player cabinet, read-only admin purchase filters and details. Completed purchase snapshots survive catalog changes and remain accessible with sales off; no migrations or CSS changes.
 
 - Shop iteration 5 (module 1.0.3; no schema change): add authenticated player storefront with GameServer selection, section/category tabs, localized products, inventory delivery notice, balance and fail-closed checkout. Reuse existing account components in all themes; trusted wallet source and sales remain disabled.

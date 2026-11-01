@@ -804,6 +804,7 @@
         "tests/Feature/Modules/ShopModuleTest.php",
         "tests/Feature/Modules/ShopProductsTest.php",
         "tests/Feature/Modules/ShopPurchaseHistoryTest.php",
+        "tests/Feature/Modules/ShopReliabilityTest.php",
         "tests/Feature/Modules/ShopStorefrontTest.php",
         "tests/Feature/Modules/SupportTicketsHardeningTest.php",
         "tests/Feature/Modules/SupportTicketsModuleTest.php",
