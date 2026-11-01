@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (development)
+
+- Add Shop 1.0.0 iteration 1 foundation: standalone module registration, RU/EN administration overview using the existing admin UI, default-disabled global and GameServer settings, and role-based read-only access for auditors. No storefront, coin charges or rewards are available yet.
+
 ## 0.57.0 - 2026-11-01
 
 - Add Referrals 1.0.0: invitation links, protected seven-day cookies, password/social registration tracking and per-GameServer character-level rewards delivered to Web Inventory.

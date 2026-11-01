@@ -1,0 +1,29 @@
+{
+    "schema": 1,
+    "id": "shop",
+    "name": "Shop",
+    "version": "1.0.0",
+    "author": "KaevCMS",
+    "description": "Server-specific catalog of game items and bundles purchased with CMS wallet coins and delivered to Web Inventory.",
+    "cms_min": "0.57.0",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\Shop\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Магазин",
+            "description": "Покупка игровых предметов и комплектов за монеты CMS с выдачей в веб-инвентарь. Продажи пока недоступны."
+        },
+        "en": {
+            "name": "Shop",
+            "description": "Game items and bundles purchased with CMS coins and delivered to Web Inventory. Sales are not available yet."
+        }
+    }
+}
