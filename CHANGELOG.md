@@ -2,6 +2,8 @@
 
 ## Unreleased (development)
 
+- Shop 1.0.3 iteration 4: add an internal, disabled-by-default purchase service with transactional wallet debit, Web Inventory grant, immutable purchase history, UUID replay protection, validation, fail-closed audit, and a dedicated additive migration. No player checkout routes, CSS changes or live sales yet.
+
 - Shop 1.0.2 iteration 3: administrator-managed single items and bundles with server-isolated categories, fixed coin prices, bundle composition, validation, audit and dedicated migration. Existing admin styles reused; no checkout, wallet debit or grants.
 - Shop 1.0.1 iteration 2: per-GameServer catalog tabs and nested categories with RU/EN names, ordering and visibility; admin creation/editing/deletion with audit and server isolation. Uses existing admin components without new CSS. The player storefront and all payments remain disabled.
 

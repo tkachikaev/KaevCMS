@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "shop",
     "name": "Shop",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "KaevCMS",
     "description": "Server-specific catalog of game items and bundles purchased with CMS wallet coins and delivered to Web Inventory.",
     "cms_min": "0.57.0",

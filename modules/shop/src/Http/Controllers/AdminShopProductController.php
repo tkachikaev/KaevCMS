@@ -88,7 +88,7 @@ final class AdminShopProductController extends Controller
             $locked = ShopProduct::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             $this->assertProduct($server, $locked);
             $id = $locked->id;
-            $locked->delete(); // Only catalog configuration exists; checkout/history is not implemented.
+            $locked->delete(); // Purchase history retains its own immutable product ID and snapshot.
             $this->auditRequired('shop.product_deleted', $admin, 'shop_product:'.$id, [
                 'game_server_id' => $server->id,
             ]);

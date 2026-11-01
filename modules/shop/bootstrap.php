@@ -7,13 +7,15 @@ use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use KaevCMS\Modules\Shop\Models\ShopPurchase;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 
 return static function (Application $app, ModuleContext $module): void {
     // Catalog management is admin-only. There is still no storefront or checkout.
     $app->make(ModuleGameServerDependencyRegistry::class)->register(
         $module->id,
-        static fn (GameServer $server): bool => ShopTab::query()->where('game_server_id', $server->id)->exists(),
+        static fn (GameServer $server): bool => ShopTab::query()->where('game_server_id', $server->id)->exists()
+            || ShopPurchase::query()->where('game_server_id', $server->id)->exists(),
     );
 
     $app->make(ModuleNavigationRegistry::class)->registerAdminLink(

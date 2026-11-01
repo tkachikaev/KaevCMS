@@ -1,6 +1,6 @@
-# Shop 1.0.2 — iteration 3 (development)
+# Shop 1.0.3 — iteration 4 (development)
 
-Shop is an **admin-only catalog editor**. It is not a storefront and does not debit coins or award items. All sales remain disabled even if old settings contain `true`.
+Shop remains **admin-only in the UI**. I4 adds an internal purchase engine but **no public checkout route**. All sales remain disabled in shipped configuration (`config/wallet.php`: `shop = false`), and the database switches default to off.
 
 - I1 (`2026_11_01_010000`): global and per-GameServer settings. This migration remains unchanged.
 - I2 (`2026_11_01_020000`): `module_shop_tabs` and `module_shop_categories`, titles in RU/EN, ordering and visibility flags. Categories belong to a tab; tabs belong to exactly one GameServer.
@@ -11,10 +11,12 @@ Shop is an **admin-only catalog editor**. It is not a storefront and does not de
 - Views use the standard `x-admin.*`, `admin-card-row`, `content-list`, `admin-overview`, `notice` and `button` styles; no new stylesheet or JavaScript.
 - There are **no account, checkout, wallet, inventory or game-database routes**.
 
+- I4 (`2026_11_01_040000`): `module_shop_purchases` stores immutable completed purchases (UUID, server, price, item snapshot, wallet entry and inventory grant). `ShopPurchaseService` uses the existing WalletGateway, RewardInventoryService and audit in one transaction; replay is idempotent. No direct game database writes.
+
 ## Installation and upgrade
 
 Enable/update Shop through **Modules** and apply its pending migrations using the standard admin workflow. Existing settings are preserved. New tables are additive; do not rewrite the I1 migration.
 
 ## Next
 
-Iteration 4: atomic wallet debit and inventory grant with idempotency and real MySQL concurrency tests. No checkout or player routes exist in I3.
+Iteration 5: integrate safe player storefront and checkout after tests, with existing account styles. Keep trusted wallet source and sales settings disabled until explicit acceptance.
