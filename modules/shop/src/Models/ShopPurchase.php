@@ -2,6 +2,8 @@
 
 namespace KaevCMS\Modules\Shop\Models;
 
+use App\Models\GameServer;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -22,6 +24,23 @@ final class ShopPurchase extends Model
             'price_coins' => 'integer', 'items_snapshot' => 'array',
             'wallet_entry_id' => 'integer', 'reward_inventory_grant_id' => 'integer',
         ];
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /** @return BelongsTo<GameServer, $this> */
+    public function gameServer(): BelongsTo
+    {
+        return $this->belongsTo(GameServer::class);
+    }
+
+    public function nameFor(?string $locale = null): string
+    {
+        return ($locale ?? app()->getLocale()) === 'en' ? $this->product_name_en : $this->product_name_ru;
     }
 
     /** @return BelongsTo<ShopProduct, $this> */

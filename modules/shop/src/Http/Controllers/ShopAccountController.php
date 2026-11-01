@@ -17,6 +17,7 @@ use Illuminate\View\View;
 use InvalidArgumentException;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
+use KaevCMS\Modules\Shop\Models\ShopPurchase;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 use KaevCMS\Modules\Shop\Services\ShopPurchaseService;
 
@@ -85,6 +86,30 @@ final class ShopAccountController extends Controller
             'productIcons' => $productIcons, 'requestUuids' => $requestUuids, 'canBuy' => $canBuy,
             'walletView' => $wallets->forUser($user),
         ]);
+    }
+
+    public function history(Request $request): View
+    {
+        $user = $request->user('web');
+        abort_unless($user instanceof User && $user->is_active, 403);
+
+        // History is independent of catalog visibility and sales switches. Only the
+        // authenticated owner's completed, immutable purchase snapshots are shown.
+        $purchases = ShopPurchase::query()->where('user_id', $user->id)
+            ->with('gameServer.translations')->orderByDesc('id')->paginate(15);
+
+        return view('module-shop::account.history', ['purchases' => $purchases]);
+    }
+
+    public function showPurchase(Request $request, int $purchase): View
+    {
+        $user = $request->user('web');
+        abort_unless($user instanceof User && $user->is_active, 403);
+
+        $record = ShopPurchase::query()->whereKey($purchase)
+            ->where('user_id', $user->id)->with('gameServer.translations')->firstOrFail();
+
+        return view('module-shop::account.receipt', ['purchase' => $record]);
     }
 
     public function store(Request $request, ShopPurchaseService $purchases): RedirectResponse

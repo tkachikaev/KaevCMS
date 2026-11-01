@@ -6,7 +6,10 @@
     <x-account-panel class="account-section reward-inventory-shell">
         <div class="account-section-heading reward-inventory-heading">
             <span class="account-chip">{{ __('module-shop::messages.account_title') }}</span>
-            <a wire:navigate class="account-button secondary" href="{{ public_route('web-inventory.index') }}">{{ __('module-shop::messages.open_inventory') }}</a>
+            <div class="account-panel-actions">
+                <a wire:navigate class="account-button secondary" href="{{ route('modules.shop.history') }}">{{ __('module-shop::messages.history_title') }}</a>
+                <a wire:navigate class="account-button secondary" href="{{ public_route('web-inventory.index') }}">{{ __('module-shop::messages.open_inventory') }}</a>
+            </div>
         </div>
         @if(session('shop_purchased'))
             <div class="account-notice success" role="status">

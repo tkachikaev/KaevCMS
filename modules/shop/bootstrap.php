@@ -7,6 +7,7 @@ use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopPurchase;
 use KaevCMS\Modules\Shop\Models\ShopServerSetting;
@@ -26,14 +27,16 @@ return static function (Application $app, ModuleContext $module): void {
         labelKey: 'module-shop::messages.account_navigation_label',
         descriptionKey: 'module-shop::messages.account_navigation_description',
         sortOrder: 65,
-        visibleWhen: static fn (): bool => config('wallet.enabled_sources.shop') === true
+        visibleWhen: static fn (): bool => (Auth::guard('web')->id() !== null
+                && ShopPurchase::query()->where('user_id', Auth::guard('web')->id())->exists())
+            || (config('wallet.enabled_sources.shop') === true
             && ShopSetting::query()->where('setting_key', 'global')->where('sales_enabled', true)->exists()
             && ShopProduct::query()->published()
                 ->whereHas('category', static fn ($query) => $query->where('is_active', true)
                     ->whereHas('tab', static fn ($tab) => $tab->where('is_active', true)
                         ->whereIn('game_server_id', ShopServerSetting::query()
                             ->where('enabled', true)->select('game_server_id'))))
-                ->exists(),
+                ->exists()),
     );
 
     $app->make(ModuleNavigationRegistry::class)->registerAdminLink(

@@ -3,8 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Shop\Http\Controllers\AdminShopController;
 use KaevCMS\Modules\Shop\Http\Controllers\AdminShopProductController;
+use KaevCMS\Modules\Shop\Http\Controllers\AdminShopPurchaseController;
 
 Route::get('/', [AdminShopController::class, 'index'])->name('index');
+Route::get('/purchases', [AdminShopPurchaseController::class, 'index'])->name('purchases.index');
+Route::get('/purchases/{purchase}', [AdminShopPurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
 Route::get('/servers/{server}', [AdminShopController::class, 'server'])->whereNumber('server')->name('servers.show');
 Route::post('/servers/{server}/tabs', [AdminShopController::class, 'storeTab'])->whereNumber('server')->name('tabs.store');
 Route::get('/servers/{server}/tabs/{tab}/edit', [AdminShopController::class, 'editTab'])->whereNumber(['server', 'tab'])->name('tabs.edit');

@@ -42,6 +42,10 @@
     @endif
 </x-admin.card>
 <x-admin.card>
+    <x-admin.card-heading :title="__('module-shop::messages.purchase_admin_title')" :description="__('module-shop::messages.purchase_admin_description')" />
+    <x-admin.button wire:navigate :href="route('admin.module-pages.shop.purchases.index', ['adminPath' => $adminPath])">{{ __('module-shop::messages.purchase_open_history') }}</x-admin.button>
+</x-admin.card>
+<x-admin.card>
     <x-admin.card-heading :title="__('module-shop::messages.unavailable_title')" :description="__('module-shop::messages.unavailable_description')" />
 </x-admin.card>
 @endsection

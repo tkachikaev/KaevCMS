@@ -1,4 +1,4 @@
-# Shop 1.0.3 — iteration 5 (development)
+# Shop 1.0.3 — iteration 6 (development)
 
 Shop now has a player-facing, authenticated storefront and POST checkout route. **Sales remain disabled** in the shipped configuration (`config/wallet.php`: `shop = false`), and database settings also default to off. The page is a browse-only catalogue until an explicitly reviewed later activation. The account sidebar link is hidden while sales are not enabled; direct GET is available for local visual verification.
 
@@ -23,3 +23,10 @@ Enable/update Shop through **Modules** and apply its pending migrations using th
 ## Next
 
 Iteration 6: purchase history and management. I4 financial tests and concurrency tests still require real execution before activation; current storefront cannot enable purchases by itself.
+
+## I6: completed purchase history (read-only)
+
+- `/modules/shop/history` lists the signed-in player's own purchases. `/modules/shop/history/{id}` displays immutable receipt snapshots. Both remain accessible with sales switched off and never expose other users' data.
+- `/admin/extensions/shop/purchases` lists settled purchases with server/player/date filters; purchase details include wallet entry and inventory grant references. Owner, Administrator and Auditor may view; Editor cannot.
+- No refund, replay, mutation, manual adjustment, migration or new CSS is included. This is **not** a full order lifecycle; only successful completed purchases exist in the I4 ledger.
+- The sidebar Shop link may appear for an existing buyer even if sales are later disabled, so they can reach purchase history.
