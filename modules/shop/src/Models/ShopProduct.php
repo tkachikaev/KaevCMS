@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
- * @property int $category_id
+ * @property int|null $category_id
  * @property int|null $section_id
  * @property string|null $description_ru
  * @property string|null $description_en
@@ -32,6 +32,17 @@ final class ShopProduct extends Model
         'sort_order', 'is_active', 'updated_by_admin_id',
     ];
 
+    protected static function booted(): void
+    {
+        // Older API callers still create products via a category. Preserve
+        // their section link while the legacy routes remain available.
+        static::creating(static function (self $product): void {
+            if ($product->section_id === null && $product->category_id !== null) {
+                $product->section_id = ShopCategory::query()->whereKey($product->category_id)->value('tab_id');
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -46,8 +57,7 @@ final class ShopProduct extends Model
         return $this->belongsTo(ShopCategory::class, 'category_id');
     }
 
-    // The new canonical relationship. Existing category references are kept for
-    // a staged admin/storefront migration in I2; checkout remains unchanged in I1.
+    // Canonical section relation. The nullable category is legacy metadata only.
     /** @return BelongsTo<ShopTab, $this> */
     public function section(): BelongsTo
     {

@@ -2,6 +2,8 @@
 
 ## Unreleased (development)
 
+- Shop 1.0.5 / catalogue redesign I2: replace nested tabs/categories with direct sections and one modal product editor for 1–100 distinct item IDs at one price. Preserve and hide legacy category state, accept section-only products via an additive migration, and retain legacy routes for compatibility. New owner/admin controls are server-scoped, transactional and audited; the player card redesign remains for I3. Sales remain default-off.
+
 - Shop 1.0.4 / catalogue redesign I1: prepare the direct server → section → product data model, reusing existing tab IDs and preserving legacy categories and purchases. Add an additive migration to populate product section IDs and store localized descriptions. Existing category-based UI and checkout remain compatible until I2; no CSS or wallet changes.
 
 - Shop activation through audited administration settings, with new installations keeping sales disabled.

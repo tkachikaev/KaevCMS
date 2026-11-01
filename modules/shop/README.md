@@ -1,26 +1,16 @@
-# Shop 1.0.4
+# Shop 1.0.5
 
 Shop provides a separate item and bundle catalogue for each GameServer. Players spend CMS wallet coins and receive purchases in Web Inventory. Transferring items into the game remains a separate player action handled by the existing inventory delivery system.
 
-## Catalogue simplification (development, I1/4)
+## Catalog redesign (development, I2/4)
 
-The simplified model is **GameServer → Section → Product**. Each product will
-contain one or several game item IDs, and will have a localized name, description
-and one total coin price. An existing tab is reused as the section, with its
-original ID and physical table preserved.
+The administration catalog now uses **GameServer → Section → Product**. The former tabs are sections; products can contain **one or multiple items** at one total price. Open **Shop → GameServer**, select a section, then use **New product** to add localized names/descriptions, price, item IDs and quantities in one dialog. Adding an item row automatically makes a bundle. The administration displays a compact list; player cards will be redesigned in I3.
 
-Migration `2026_11_01_050000_prepare_shop_sections.php` adds direct `section_id`
-and optional descriptions to products, and copies section IDs from existing
-categories. Legacy categories, bundle components, purchases, Wallet state and
-visibility are deliberately left untouched. **I1 is a compatibility stage**:
-current admin and storefront still show categories. Do not delete them or enable
-new section-only editing until I2 replaces the old UI and validation safely.
+Migration `2026_11_01_050000_prepare_shop_sections.php` backfills existing `section_id` values without altering their original category or purchase records. Migration `2026_11_02_010000_shop_products_optional_legacy_category.php` allows new products to use a direct section instead of a nested category. **Apply both pending migrations manually in Modules** on a backed-up copy before using the new editor. Existing legacy categories remain in the database so old hidden categories stay hidden, and old purchases remain intact. New products have `category_id = null`. Old admin endpoints remain for compatibility but are no longer part of the new UI.
 
-## Configuration
+Server-side rules: only Owner/Administrator can write; the selected section must belong to the current GameServer; rows must contain 1–100 distinct valid IDs with positive quantities. One item is stored as `item`, multiple items as `bundle` for compatibility with checkout. Updates of price, contents and mandatory audit commit together, or all roll back.
 
-Enable Shop and apply pending migrations in **Modules**. In **Shop**, choose a GameServer, add tabs and categories, then configure products. A product contains one item or a bundle of up to 100 distinct item IDs. Prices are positive integer wallet coins.
-
-Sales start disabled. To accept purchases, enable **Accept shop purchases** in general settings and **Allow purchases on this server** for the selected GameServer. These settings require Owner or Administrator permissions and are audited. No code edits or environment switches are needed. Hiding products or sections prevents purchases independently of the sales switches.
+Sales are disabled by default. Enable globally and for the appropriate GameServer only after acceptance on a test installation. The financial gate does not change with this redesign. Legacy hidden category visibility is enforced for both catalog browsing and checkout.
 
 ## Purchases and history
 

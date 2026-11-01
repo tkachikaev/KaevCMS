@@ -46,13 +46,17 @@ final class AdminShopController extends Controller
     {
         $server->load('translations');
         $tabs = ShopTab::query()->where('game_server_id', $server->id)
-            ->with('categories')->orderBy('sort_order')->orderBy('id')->get();
+            ->orderBy('sort_order')->orderBy('id')->get();
+
+        $requestedSection = filter_var($request->query('section'), FILTER_VALIDATE_INT);
+        $selectedSection = $tabs->firstWhere('id', $requestedSection) ?? $tabs->first();
 
         return view('module-shop::admin.server', [
             'server' => $server,
+            'selectedSection' => $selectedSection,
             'tabs' => $tabs,
-            'products' => ShopProduct::query()->whereHas('category.tab', fn ($query) => $query->where('game_server_id', $server->id))
-                ->with(['category.tab', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get(),
+            'products' => ShopProduct::query()->whereHas('section', fn ($query) => $query->where('game_server_id', $server->id))
+                ->with(['section', 'category', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get(),
             'canManage' => $this->canManage($request),
             'settings' => ShopServerSetting::query()->where('game_server_id', $server->id)->first(),
         ]);
@@ -134,9 +138,12 @@ final class AdminShopController extends Controller
         $request->validate(['confirm' => ['required', 'accepted']]);
         DB::transaction(function () use ($admin, $tab): void {
             $tab = ShopTab::query()->lockForUpdate()->findOrFail($tab->id);
-            if ($tab->categories()->exists()) {
-                throw ValidationException::withMessages(['confirm' => __('module-shop::messages.tab_has_categories')]);
+            if ($tab->products()->exists()) {
+                throw ValidationException::withMessages(['confirm' => __('module-shop::messages.section_has_products')]);
             }
+            // Empty legacy categories may remain from earlier releases. They
+            // are not user-facing and contain no products at this point.
+            $tab->categories()->delete();
             $id = $tab->id;
             $serverId = $tab->game_server_id;
             $tab->delete();

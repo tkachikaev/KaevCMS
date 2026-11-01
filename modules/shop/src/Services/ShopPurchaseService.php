@@ -72,12 +72,20 @@ final class ShopPurchaseService
                 }
 
                 $product = ShopProduct::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
-                $category = ShopCategory::query()->whereKey($product->category_id)->lockForUpdate()->firstOrFail();
-                $tab = ShopTab::query()->whereKey($category->tab_id)->lockForUpdate()->firstOrFail();
+                $category = null;
+                if ($product->category_id !== null) {
+                    $category = ShopCategory::query()->whereKey($product->category_id)->lockForUpdate()->firstOrFail();
+                }
+                $tab = ShopTab::query()->whereKey($product->section_id ?? $category?->tab_id)->lockForUpdate()->firstOrFail();
+                if ($category !== null) {
+                    if ($category->tab_id !== $tab->id || ! $category->is_active) {
+                        throw new AuthorizationException('Legacy Shop category is unavailable.');
+                    }
+                }
                 $server = GameServer::query()->findOrFail($tab->game_server_id);
                 if (! DB::table('module_shop_server_settings')->where('game_server_id', $server->id)
                     ->where('enabled', true)->exists()
-                    || ! $product->is_active || ! $category->is_active || ! $tab->is_active) {
+                    || ! $product->is_active || ! $tab->is_active) {
                     throw new AuthorizationException('Shop product is unavailable.');
                 }
 

@@ -48,16 +48,9 @@
                     @endforeach
                 </nav>
             @endif
-            @if($categories->count() > 1)
-                <nav class="account-tabs" aria-label="{{ __('module-shop::messages.account_categories') }}">
-                    @foreach($categories as $choice)
-                        <a wire:navigate @class(['active' => $choice->id === $category->id]) @if($choice->id === $category->id) aria-current="page" @endif href="{{ route('modules.shop.index', ['server' => $server->id, 'tab' => $tab->id, 'category' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
-                    @endforeach
-                </nav>
-            @endif
-            @if($category)
+            @if($tab)
                 <section>
-                    <x-account-panel-header :title="$category->nameFor()" :description="__('module-shop::messages.account_delivery_hint')" />
+                    <x-account-panel-header :title="$tab->nameFor()" :description="__('module-shop::messages.account_delivery_hint')" />
                     <div class="reward-history-list">
                         @foreach($products as $product)
                             <article class="reward-history-card">
