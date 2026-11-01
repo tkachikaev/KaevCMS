@@ -24,41 +24,20 @@ test('shop activates through administration, buys once and renders all account t
     const serverId = serverUrl.split('/').at(-1);
     await save(serverUrl + '/tabs', { name_ru: 'Снаряжение', name_en: 'Equipment', sort_order: 0, is_active: 1 });
     await page.goto(serverUrl);
-    const sectionLink = page.locator('a.admin-tab[href*="section="]').first();
-    await expect(sectionLink).toBeVisible();
-    const sectionId = new URL(await sectionLink.getAttribute('href'), page.url()).searchParams.get('section');
-    await page.locator('[data-shop-open="shop-product-new"]').click();
-    const itemDialog = page.locator('#shop-product-new');
-    await expect(itemDialog).toBeVisible();
-    await itemDialog.locator('[name=name_ru]').fill('Адена для нового путешествия');
-    await itemDialog.locator('[name=name_en]').fill('Adena for a new adventure');
-    await itemDialog.locator('[name=description_ru]').fill('Монеты для начала путешествия');
-    await itemDialog.locator('[name=price_coins]').fill('25');
-    await itemDialog.locator('[name="items[0][item_id]"]').fill('57');
-    await itemDialog.locator('[name="items[0][quantity]"]').fill('1000');
-    await itemDialog.locator('button[type=submit]').first().click();
-    await expect(page.locator('[data-shop-view-panel="cards"] [data-shop-open^="shop-product-"]')).toHaveCount(1);
-
-    await page.locator('[data-shop-open="shop-product-new"]').click();
-    const bundleDialog = page.locator('#shop-product-new');
-    await bundleDialog.locator('[name=name_ru]').fill('Комплект путешественника');
-    await bundleDialog.locator('[name=name_en]').fill('Traveller bundle');
-    await bundleDialog.locator('[name=price_coins]').fill('25');
-    await bundleDialog.locator('[name="items[0][item_id]"]').fill('57');
-    await bundleDialog.locator('[name="items[0][quantity]"]').fill('200');
-    await bundleDialog.locator('[data-shop-add-item]').click();
-    await bundleDialog.locator('[name="items[1][item_id]"]').fill('4037');
-    await bundleDialog.locator('[name="items[1][quantity]"]').fill('3');
-    await bundleDialog.locator('button[type=submit]').first().click();
-    await expect(page.locator('[data-shop-view-panel="cards"] [data-shop-open^="shop-product-"]')).toHaveCount(2);
-    await page.locator('[data-shop-view-toggle="table"]').click();
-    await expect(page.locator('[data-shop-view-panel="table"]')).toBeVisible();
-    await expect(page.locator('[data-shop-view-panel="cards"]')).toBeHidden();
-    await expect(page.locator('[data-shop-view-panel="table"] tbody tr')).toHaveCount(2);
-    await page.locator('[data-shop-view-toggle="cards"]').click();
-    await expect(page.locator('[data-shop-view-panel="cards"] .shop-product-card')).toHaveCount(2);
-    await expect(page.locator('[data-shop-view-panel="cards"] [data-shop-art-count="2"]')).toHaveCount(1);
-    expect(sectionId).toBeTruthy();
+    const tabUrl = await page.locator('a[href*="/tabs/"]').first().getAttribute('href');
+    const tabId = tabUrl.split('/').at(-2);
+    await save(serverUrl + '/categories', { tab_id: tabId, name_ru: 'Припасы', name_en: 'Supplies', sort_order: 0, is_active: 1 });
+    await page.goto(serverUrl);
+    const categoryUrl = await page.locator('a[href*="/categories/"]').first().getAttribute('href');
+    const categoryId = categoryUrl.split('/').at(-2);
+    const product = { category_id: categoryId, name_ru: 'Адена для нового путешествия', name_en: 'Adena for a new adventure', sort_order: 0, is_active: 1, price_coins: 25 };
+    const itemResponse = await save(serverUrl + '/products', { ...product, type: 'item', item_id: 57, quantity: 1000 });
+    const itemEditUrl = itemResponse.url();
+    const bundleResponse = await save(serverUrl + '/products', { ...product, type: 'bundle', name_ru: 'Комплект путешественника', name_en: 'Traveller bundle' });
+    const bundleEditUrl = bundleResponse.url();
+    const bundleBase = bundleEditUrl.replace(/\/edit$/, '');
+    await save(bundleBase + '/bundle-items', { item_id: 57, quantity: 200 });
+    await save(bundleBase + '/bundle-items', { item_id: 4037, quantity: 3 });
     const player = await context.newPage();
     await player.emulateMedia({ reducedMotion: 'reduce' });
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -78,11 +57,6 @@ test('shop activates through administration, buys once and renders all account t
     await save('/admin/extensions/shop/settings', { _method: 'PUT', sales_enabled: 1 });
     await save(serverUrl + '/settings', { _method: 'PUT', enabled: 1 });
     await player.goto('/modules/shop?server=' + serverId);
-    await expect(player.locator('.shop-product-card')).toHaveCount(2);
-    await expect(player.locator('.shop-product-artwork[data-shop-art-count="1"]')).toHaveCount(1);
-    await expect(player.locator('.shop-product-artwork[data-shop-art-count="2"]')).toHaveCount(1);
-    await player.locator('.shop-product-card .shop-product-details summary').last().click();
-    await expect(player.locator('.shop-product-card .shop-product-details').last()).toHaveAttribute('open', '');
     const checkout = player.locator('form[action$="/shop/checkout"]').first();
     const uuid = await checkout.locator('[name=request_uuid]').inputValue();
     const productId = await checkout.locator('[name=product_id]').inputValue();
@@ -125,7 +99,7 @@ test('shop activates through administration, buys once and renders all account t
             }
         }
     }
-    for (const url of ['/admin/extensions/shop', serverUrl, '/admin/extensions/shop/purchases', receipt.replace('/modules/shop/history/', '/admin/extensions/shop/purchases/')]) {
+    for (const url of ['/admin/extensions/shop', serverUrl, itemEditUrl, bundleEditUrl, '/admin/extensions/shop/purchases', receipt.replace('/modules/shop/history/', '/admin/extensions/shop/purchases/')]) {
         await page.goto(url);
         await expect(page.locator('h1')).toBeVisible();
         for (const scheme of ['light', 'dark']) {

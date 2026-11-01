@@ -6,7 +6,6 @@ use App\Auth\AdminRole;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\GameServer;
-use KaevCMS\Modules\Shop\Services\ShopProductArtwork;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,24 +42,17 @@ final class AdminShopController extends Controller
         ]);
     }
 
-    public function server(Request $request, GameServer $server, ShopProductArtwork $artwork): View
+    public function server(Request $request, GameServer $server): View
     {
         $server->load('translations');
         $tabs = ShopTab::query()->where('game_server_id', $server->id)
-            ->orderBy('sort_order')->orderBy('id')->get();
-
-        $requestedSection = filter_var($request->query('section'), FILTER_VALIDATE_INT);
-        $selectedSection = $tabs->firstWhere('id', $requestedSection) ?? $tabs->first();
-
-        $products = ShopProduct::query()->whereHas('section', fn ($query) => $query->where('game_server_id', $server->id))
-            ->with(['section', 'category', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get();
+            ->with('categories')->orderBy('sort_order')->orderBy('id')->get();
 
         return view('module-shop::admin.server', [
             'server' => $server,
-            'selectedSection' => $selectedSection,
             'tabs' => $tabs,
-            'products' => $products,
-            'productVisuals' => $artwork->forProducts($server, $products),
+            'products' => ShopProduct::query()->whereHas('category.tab', fn ($query) => $query->where('game_server_id', $server->id))
+                ->with(['category.tab', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get(),
             'canManage' => $this->canManage($request),
             'settings' => ShopServerSetting::query()->where('game_server_id', $server->id)->first(),
         ]);
@@ -142,12 +134,9 @@ final class AdminShopController extends Controller
         $request->validate(['confirm' => ['required', 'accepted']]);
         DB::transaction(function () use ($admin, $tab): void {
             $tab = ShopTab::query()->lockForUpdate()->findOrFail($tab->id);
-            if ($tab->products()->exists()) {
-                throw ValidationException::withMessages(['confirm' => __('module-shop::messages.section_has_products')]);
+            if ($tab->categories()->exists()) {
+                throw ValidationException::withMessages(['confirm' => __('module-shop::messages.tab_has_categories')]);
             }
-            // Empty legacy categories may remain from earlier releases. They
-            // are not user-facing and contain no products at this point.
-            $tab->categories()->delete();
             $id = $tab->id;
             $serverId = $tab->game_server_id;
             $tab->delete();
@@ -194,12 +183,6 @@ final class AdminShopController extends Controller
                 ->lockForUpdate()->firstOrFail();
             $before = $category->only(['tab_id', 'name_ru', 'name_en', 'sort_order', 'is_active']);
             $category->update($values + ['updated_by_admin_id' => $admin->id]);
-            if ((int) $before['tab_id'] !== (int) $category->tab_id) {
-                // Keep the direct section link in sync during the legacy UI
-                // transition. Commit category, products and audit together.
-                DB::table('module_shop_products')->where('category_id', $category->id)
-                    ->update(['section_id' => $category->tab_id]);
-            }
             $this->auditRequired('shop.category_updated', $admin, $category, ['before' => $before, 'after' => $category->only(array_keys($before))]);
         }, 3);
 

@@ -10,7 +10,7 @@ The bundled `daily-rewards` module adds separate monthly calendars for game serv
 
 The bundled `referrals` module tracks invitations and grants character-level rewards into Web Inventory. See [Referrals](REFERRALS.md).
 
-The bundled `shop` module (1.0.4, DEV) provides a GameServer-specific catalogue, single items and bundles, CMS coin checkout with Web Inventory delivery, player receipts, and a read-only administration purchase journal. **New installations default to sales off; the I1 catalogue migration has not yet passed renewed acceptance tests.** See [Shop](SHOP.md).
+The bundled `shop` module (1.0.3, DEV) provides a GameServer-specific catalogue, single items and bundles, CMS coin checkout with Web Inventory delivery, player receipts, and a read-only administration purchase journal. **Sales remain off by default; full acceptance has not been completed.** See [Shop](SHOP.md).
 
 The bundled `donations` module sells CMS wallet coins through YooMoney at the RUB price set by the owner and credits them to the core wallet only after a verified, signed payment notification. Payments are off by default and are enabled from the module's YooMoney page without `.env` changes. An optional exchange turns coins into a game item in the Web Inventory for each game server. See [Donations](DONATIONS.md).
 

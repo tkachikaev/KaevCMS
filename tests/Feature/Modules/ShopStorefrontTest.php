@@ -62,7 +62,7 @@ final class ShopStorefrontTest extends TestCase
         $this->get('/modules/shop')->assertRedirect();
         $player = User::factory()->create();
         $this->actingAs($player, 'web')->get('/modules/shop')
-            ->assertOk()->assertSee('Sword')->assertSee('shop-product-card', false)
+            ->assertOk()->assertSee('Sword')->assertSee('reward-history-card', false)
             ->assertSee(__('module-shop::messages.account_sales_paused'))
             ->assertDontSee('name="request_uuid"', false);
         $this->assertNotContains('modules.shop.index', array_column(app(ModuleNavigationRegistry::class)->accountLinks(), 'route'));
@@ -114,38 +114,6 @@ final class ShopStorefrontTest extends TestCase
         preg_match_all('/name="request_uuid" value="([^"]+)"/', $response->getContent(), $matches);
         $this->assertCount(2, $matches[1]);
         $this->assertCount(2, array_unique($matches[1]));
-    }
-
-    public function test_card_artwork_shows_three_icons_and_more_count_without_hiding_full_bundle_contents(): void
-    {
-        [$server, $tab, $category, $bundle] = $this->published('Four-item set', 'bundle');
-        $bundle->update(['description_ru' => 'Тестовый набор', 'description_en' => 'Test bundle']);
-        foreach ([58, 59, 60] as $itemId) {
-            ShopBundleItem::query()->create([
-                'product_id' => $bundle->id, 'item_id' => $itemId, 'quantity' => 2,
-            ]);
-        }
-
-        app()->setLocale('ru');
-        $response = $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop');
-        $response->assertOk()
-            ->assertSee('shop-product-grid', false)
-            ->assertSee('data-shop-art-count="3"', false)
-            ->assertSee('shop-product-artwork-more', false)
-            ->assertSee('+1')
-            ->assertSee(__('module-shop::messages.card_contents', ['count' => format_number(4)]))
-            ->assertSee('Предмет #60')
-            ->assertSee('Тестовый набор');
-    }
-
-    public function test_single_product_card_has_one_artwork_and_escapes_description(): void
-    {
-        [$server, $tab, $category, $product] = $this->published('One-item product');
-        $product->update(['description_ru' => '<script>unsafe</script>']);
-        $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop')
-            ->assertOk()->assertSee('data-shop-art-count="1"', false)
-            ->assertSee('&lt;script&gt;unsafe&lt;/script&gt;', false)
-            ->assertDontSee('<script>unsafe</script>', false);
     }
 
     public function test_unconfigured_bundle_is_not_published(): void

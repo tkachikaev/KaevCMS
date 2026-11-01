@@ -48,20 +48,45 @@
                     @endforeach
                 </nav>
             @endif
-            @if($tab)
+            @if($categories->count() > 1)
+                <nav class="account-tabs" aria-label="{{ __('module-shop::messages.account_categories') }}">
+                    @foreach($categories as $choice)
+                        <a wire:navigate @class(['active' => $choice->id === $category->id]) @if($choice->id === $category->id) aria-current="page" @endif href="{{ route('modules.shop.index', ['server' => $server->id, 'tab' => $tab->id, 'category' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
+                    @endforeach
+                </nav>
+            @endif
+            @if($category)
                 <section>
-                    <x-account-panel-header :title="$tab->nameFor()" :description="__('module-shop::messages.account_delivery_hint')" />
-                    <div class="shop-product-grid" data-shop-catalog>
+                    <x-account-panel-header :title="$category->nameFor()" :description="__('module-shop::messages.account_delivery_hint')" />
+                    <div class="reward-history-list">
                         @foreach($products as $product)
-                            <article class="shop-product-card" data-shop-product="{{ $product->id }}">
-                                @include('module-shop::partials.product-artwork', ['visual' => $productVisuals[$product->id] ?? []])
-                                <div class="shop-product-card-body">
-                                    <h3>{{ $product->nameFor() }}</h3>
-                                    @include('module-shop::partials.product-description')
-                                    @include('module-shop::partials.product-contents')
+                            <article class="reward-history-card">
+                                <div class="reward-history-main">
+                                    <span class="reward-item-icon" aria-hidden="true">
+                                        @if($productIcons[$product->id] ?? null)
+                                            <img src="{{ $productIcons[$product->id] }}" alt="" width="38" height="38">
+                                        @else
+                                            ◇
+                                        @endif
+                                    </span>
+                                    <div>
+                                        <small>{{ __('module-shop::messages.account_'.$product->type) }}</small>
+                                        <h3>{{ $product->nameFor() }}</h3>
+                                        @if($product->type === 'item')
+                                            <p>{{ __('module-shop::messages.account_item_quantity', ['count' => format_number($product->quantity)]) }}</p>
+                                        @else
+                                            <p>{{ __('module-shop::messages.account_bundle_contents', ['count' => format_number($product->bundleItems->count())]) }}</p>
+                                            @foreach($product->bundleItems->take(3) as $item)
+                                                <small>{{ __('module-shop::messages.account_bundle_entry', ['id' => format_number($item->item_id), 'count' => format_number($item->quantity)]) }}</small>
+                                            @endforeach
+                                            @if($product->bundleItems->count() > 3)
+                                                <small>{{ __('module-shop::messages.account_bundle_more', ['count' => format_number($product->bundleItems->count() - 3)]) }}</small>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="shop-product-card-footer">
-                                    <strong class="shop-product-price">{{ __('module-shop::messages.account_price', ['count' => format_number($product->price_coins)]) }}</strong>
+                                <div class="reward-history-status">
+                                    <strong>{{ __('module-shop::messages.account_price', ['count' => format_number($product->price_coins)]) }}</strong>
                                     @if($canBuy && ! $walletView['blocked'])
                                         <form method="POST" action="{{ route('modules.shop.checkout') }}">
                                             @csrf

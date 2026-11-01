@@ -2,23 +2,15 @@
 
 Shop sells items and bundles for CMS wallet coins. Each game server has its own catalogue.
 
-## Shop redesign (stage 2/4)
-
-The catalog now uses **GameServer → Section → Product**. In administration, create and open a section and click **New product**. One modal editor accepts RU/EN names and descriptions, one total coin price and one or more item ID + quantity rows. One row is an ordinary product; multiple rows form a set. Limit: 100 distinct IDs. Administration shows compact rows; the redesigned player cards are planned for stage 3.
-
-Old tabs retain their IDs and become sections. New products no longer need an internal category. Existing legacy products, hidden-category visibility, bundle contents and completed purchases remain intact.
-
-After **backing up the database**, apply the pending Shop migrations under **Modules**: `2026_11_01_050000` (section backfill) and `2026_11_02_010000` (optional legacy category). Do not delete the old category table manually; legacy visibility still depends on it.
-
 ## Setup
 
 1. Enable Shop and apply pending migrations under **Modules**.
 2. Open **Shop** and select a game server.
-3. Create a **section**, then choose **New product**. Set RU/EN name and description, integer coin price and one or more game item IDs with quantities. A product can include up to 100 distinct IDs.
+3. Create a tab, category and products. Provide RU/EN names, an integer coin price, item IDs and quantities. Bundles contain at most 100 distinct item IDs. Empty or invalid bundles are not published.
 4. Enable **Allow purchases on this server** in the selected server settings.
 5. Enable **Accept shop purchases** in general settings.
 
-Both switches start disabled. Activation requires no PHP, environment or database edits. Product visibility is separate: hidden products and sections cannot be purchased. Legacy items in hidden categories also remain unavailable.
+Both switches start disabled. Activation requires no PHP, environment or database edits. Visibility is separate: hidden products, categories and tabs cannot be purchased.
 
 Owner and Administrator may configure Shop. Auditor has read-only access to settings and history; Editor has no access.
 

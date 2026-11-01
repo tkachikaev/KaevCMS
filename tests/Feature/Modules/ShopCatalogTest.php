@@ -60,10 +60,8 @@ final class ShopCatalogTest extends TestCase
         ]))->assertRedirect();
         $this->assertDatabaseHas('module_shop_categories', ['id' => $category->id, 'name_en' => 'Axes', 'is_active' => false]);
 
-        // The legacy category remains editable through its secured old route,
-        // but it is intentionally absent from the section-only administration UI.
         $this->get('/admin/extensions/shop/servers/'.$server->id)->assertOk()
-            ->assertDontSee('Топоры')->assertSee('Оружие')->assertSee('admin-tabs', false);
+            ->assertSee('Топоры')->assertSee('Оружие')->assertSee('admin-card-row', false);
 
         $this->delete('/admin/extensions/shop/servers/'.$server->id.'/categories/'.$category->id, ['confirm' => '1'])
             ->assertRedirect();

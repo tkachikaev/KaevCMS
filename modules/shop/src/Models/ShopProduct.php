@@ -9,10 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
- * @property int|null $category_id
- * @property int|null $section_id
- * @property string|null $description_ru
- * @property string|null $description_en
+ * @property int $category_id
  * @property string $type
  * @property string $name_ru
  * @property string $name_en
@@ -28,25 +25,14 @@ final class ShopProduct extends Model
     protected $table = 'module_shop_products';
 
     protected $fillable = [
-        'category_id', 'section_id', 'type', 'name_ru', 'name_en', 'description_ru', 'description_en', 'price_coins', 'item_id', 'quantity',
+        'category_id', 'type', 'name_ru', 'name_en', 'price_coins', 'item_id', 'quantity',
         'sort_order', 'is_active', 'updated_by_admin_id',
     ];
-
-    protected static function booted(): void
-    {
-        // Older API callers still create products via a category. Preserve
-        // their section link while the legacy routes remain available.
-        static::creating(static function (self $product): void {
-            if ($product->section_id === null && $product->category_id !== null) {
-                $product->section_id = ShopCategory::query()->whereKey($product->category_id)->value('tab_id');
-            }
-        });
-    }
 
     protected function casts(): array
     {
         return [
-            'category_id' => 'integer', 'section_id' => 'integer', 'price_coins' => 'integer', 'item_id' => 'integer',
+            'category_id' => 'integer', 'price_coins' => 'integer', 'item_id' => 'integer',
             'quantity' => 'integer', 'sort_order' => 'integer', 'is_active' => 'boolean',
         ];
     }
@@ -55,19 +41,6 @@ final class ShopProduct extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ShopCategory::class, 'category_id');
-    }
-
-    // Canonical section relation. The nullable category is legacy metadata only.
-    /** @return BelongsTo<ShopTab, $this> */
-    public function section(): BelongsTo
-    {
-        return $this->belongsTo(ShopTab::class, 'section_id');
-    }
-
-    public function descriptionFor(?string $locale = null): string
-    {
-        return str_starts_with(strtolower($locale ?? app()->getLocale()), 'ru')
-            ? (string) $this->description_ru : (string) $this->description_en;
     }
 
     /** @return HasMany<ShopBundleItem, $this> */
