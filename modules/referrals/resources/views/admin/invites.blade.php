@@ -3,7 +3,7 @@
 @section('description', __('module-referrals::messages.invites_help'))
 @section('content')
 @php($adminPath = request()->route('adminPath'))
-<p><a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.referrals.index', ['adminPath' => $adminPath]) }}">{{ __('module-referrals::messages.back') }}</a></p>
+@include('module-referrals::admin.navigation')
 @if(session('status'))<div class="notice notice-success" role="status">{{ session('status') }}</div>@endif
 @if($errors->any())<div class="notice notice-error" role="alert"><strong>{{ __('module-referrals::messages.validation_error') }}</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <p>{{ __('module-referrals::messages.frozen_count', ['count' => format_number($frozenCount)]) }}</p>

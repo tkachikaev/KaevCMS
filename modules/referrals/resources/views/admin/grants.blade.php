@@ -3,7 +3,7 @@
 @section('description', __('module-referrals::messages.reward_journal_description'))
 @section('content')
 @php($adminPath = request()->route('adminPath'))
-<p><a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.referrals.index', ['adminPath' => $adminPath]) }}">{{ __('module-referrals::messages.back') }}</a></p>
+@include('module-referrals::admin.navigation')
 <x-admin.filter-bar :action="route('admin.module-pages.referrals.grants.index', ['adminPath' => $adminPath])" class="users-filters">
     <div class="form-group"><label for="ref-reward-server">{{ __('module-referrals::messages.servers') }}</label><select id="ref-reward-server" name="server"><option value="">{{ __('module-referrals::messages.filter_all') }}</option>@foreach($servers as $server)<option value="{{ $server->id }}" @selected((int) ($filters['server'] ?? 0) === $server->id)>{{ $server->nameFor() }}</option>@endforeach</select></div>
     <div class="form-group"><label for="ref-reward-user">{{ __('module-referrals::messages.filter_recipient') }}</label><input id="ref-reward-user" type="number" min="1" name="user" value="{{ $filters['user'] ?? '' }}"></div>

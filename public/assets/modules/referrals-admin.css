@@ -1,0 +1,19 @@
+.referrals-overview { flex-wrap: wrap; }
+.referrals-overview .admin-overview-stat:last-child { border-right: 0; }
+.referrals-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 20px; align-items: start; }
+.referrals-layout > .form-card { min-width: 0; margin: 0; }
+.referrals-settings-form { display: grid; gap: 20px; }
+.referrals-settings-form > .admin-toggle-row { margin: 0; padding-top: 0; border-top: 0; }
+.referrals-ttl input { max-width: 160px; }
+.referrals-actions { display: flex; justify-content: flex-end; }
+.referrals-server-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-card); }
+.referrals-server-main { min-width: 0; overflow-wrap: anywhere; }
+.referrals-server-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; color: var(--admin-text-muted); font-size: 12px; }
+.referrals-server-row > .referrals-actions { flex-shrink: 0; }
+@media (max-width: 1000px) {
+    .referrals-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 540px) {
+    .referrals-server-row { align-items: flex-start; flex-direction: column; gap: 14px; }
+    .referrals-server-row > .referrals-actions { align-self: flex-end; }
+}
