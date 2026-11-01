@@ -77,10 +77,10 @@ final class ShopPurchaseTest extends TestCase
         ShopServerSetting::query()->create(['game_server_id' => $server->id, 'enabled' => true]);
     }
 
-    public function test_internal_checkout_has_no_player_route_and_trusted_source_is_disabled(): void
+    public function test_checkout_route_exists_but_trusted_source_remains_disabled(): void
     {
         [$user, $server, $product] = $this->catalog();
-        $this->assertFalse(Route::has('modules.shop.checkout'));
+        $this->assertTrue(Route::has('modules.shop.checkout'));
         $this->assertFalse(config('wallet.enabled_sources.shop'));
         ShopSetting::query()->where('setting_key', 'global')->update(['sales_enabled' => true]);
         ShopServerSetting::query()->create(['game_server_id' => $server->id, 'enabled' => true]);

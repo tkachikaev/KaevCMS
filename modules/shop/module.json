@@ -14,16 +14,17 @@
     "lang": "lang",
     "migrations": "database/migrations",
     "routes": {
+        "web": "routes/web.php",
         "admin": "routes/admin.php"
     },
     "locales": {
         "ru": {
             "name": "Магазин",
-            "description": "Покупка игровых предметов и комплектов за монеты CMS с выдачей в веб-инвентарь. Продажи пока недоступны."
+            "description": "Покупка игровых предметов и комплектов за монеты CMS с выдачей в веб-инвентарь. Продажи включаются после проверки и настройки."
         },
         "en": {
             "name": "Shop",
-            "description": "Game items and bundles purchased with CMS coins and delivered to Web Inventory. Sales are not available yet."
+            "description": "Game items and bundles purchased with CMS coins and delivered to Web Inventory. Purchases require explicit authorization after testing."
         }
     }
 }

@@ -144,10 +144,10 @@ final class ShopCatalogTest extends TestCase
         $this->assertSame(0, ShopTab::query()->count());
     }
 
-    public function test_player_routes_remain_absent_and_wallet_is_untouched(): void
+    public function test_public_catalog_routes_are_registered_but_wallet_source_stays_disabled(): void
     {
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('modules.shop.index'));
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('modules.shop.checkout'));
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('modules.shop.index'));
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('modules.shop.checkout'));
         $this->assertSame(false, config('wallet.enabled_sources.shop'));
     }
 }

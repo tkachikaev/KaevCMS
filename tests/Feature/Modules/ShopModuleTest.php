@@ -36,7 +36,7 @@ final class ShopModuleTest extends TestCase
         $this->assertSame([], $module['pending_migrations']);
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'shop',
-            'version' => '1.0.2',
+            'version' => '1.0.3',
             'enabled' => true,
         ]);
         $this->assertTrue(Schema::hasTable('module_shop_settings'));
@@ -50,7 +50,7 @@ final class ShopModuleTest extends TestCase
             'sales_enabled' => false,
         ]);
         $this->assertTrue(Route::has('admin.module-pages.shop.index'));
-        $this->assertFalse(Route::has('modules.shop.index'));
+        $this->assertTrue(Route::has('modules.shop.index'));
         $this->assertContains('admin.module-pages.shop.index', array_column(app(ModuleNavigationRegistry::class)->adminLinks(), 'route'));
         $this->assertNotContains('modules.shop.index', array_column(app(ModuleNavigationRegistry::class)->accountLinks(), 'route'));
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.shop.index'));
@@ -96,14 +96,15 @@ final class ShopModuleTest extends TestCase
         $this->assertSame(0, DB::table('module_shop_server_settings')->count());
     }
 
-    public function test_global_setting_cannot_expose_an_unimplemented_storefront(): void
+    public function test_global_setting_cannot_enable_sales_without_trusted_wallet_source(): void
     {
         DB::table('module_shop_settings')->where('setting_key', 'global')->update(['sales_enabled' => true]);
         $server = GameServer::factory()->create();
         ShopServerSetting::query()->create(['game_server_id' => $server->id, 'enabled' => true]);
 
-        $this->assertFalse(Route::has('modules.shop.index'));
-        $this->assertFalse(Route::has('modules.shop.checkout'));
+        $this->assertTrue(Route::has('modules.shop.index'));
+        $this->assertTrue(Route::has('modules.shop.checkout'));
+        $this->assertFalse(config('wallet.enabled_sources.shop'));
         $this->actingAs(Admin::factory()->create(), 'admin')
             ->get('/admin/extensions/shop')
             ->assertOk()

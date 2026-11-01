@@ -2,6 +2,8 @@
 
 ## Unreleased (development)
 
+- Shop iteration 5 (module 1.0.3; no schema change): add authenticated player storefront with GameServer selection, section/category tabs, localized products, inventory delivery notice, balance and fail-closed checkout. Reuse existing account components in all themes; trusted wallet source and sales remain disabled.
+
 - Shop 1.0.3 iteration 4: add an internal, disabled-by-default purchase service with transactional wallet debit, Web Inventory grant, immutable purchase history, UUID replay protection, validation, fail-closed audit, and a dedicated additive migration. No player checkout routes, CSS changes or live sales yet.
 
 - Shop 1.0.2 iteration 3: administrator-managed single items and bundles with server-isolated categories, fixed coin prices, bundle composition, validation, audit and dedicated migration. Existing admin styles reused; no checkout, wallet debit or grants.

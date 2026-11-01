@@ -7,15 +7,33 @@ use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopPurchase;
+use KaevCMS\Modules\Shop\Models\ShopServerSetting;
+use KaevCMS\Modules\Shop\Models\ShopSetting;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 
 return static function (Application $app, ModuleContext $module): void {
-    // Catalog management is admin-only. There is still no storefront or checkout.
     $app->make(ModuleGameServerDependencyRegistry::class)->register(
         $module->id,
         static fn (GameServer $server): bool => ShopTab::query()->where('game_server_id', $server->id)->exists()
             || ShopPurchase::query()->where('game_server_id', $server->id)->exists(),
+    );
+
+    $app->make(ModuleNavigationRegistry::class)->registerAccountLink(
+        moduleId: $module->id,
+        routeName: 'modules.shop.index',
+        labelKey: 'module-shop::messages.account_navigation_label',
+        descriptionKey: 'module-shop::messages.account_navigation_description',
+        sortOrder: 65,
+        visibleWhen: static fn (): bool => config('wallet.enabled_sources.shop') === true
+            && ShopSetting::query()->where('setting_key', 'global')->where('sales_enabled', true)->exists()
+            && ShopProduct::query()->published()
+                ->whereHas('category', static fn ($query) => $query->where('is_active', true)
+                    ->whereHas('tab', static fn ($tab) => $tab->where('is_active', true)
+                        ->whereIn('game_server_id', ShopServerSetting::query()
+                            ->where('enabled', true)->select('game_server_id'))))
+                ->exists(),
     );
 
     $app->make(ModuleNavigationRegistry::class)->registerAdminLink(

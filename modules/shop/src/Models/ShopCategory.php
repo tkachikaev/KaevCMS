@@ -4,6 +4,7 @@ namespace KaevCMS\Modules\Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class ShopCategory extends Model
 {
@@ -20,6 +21,12 @@ final class ShopCategory extends Model
     public function tab(): BelongsTo
     {
         return $this->belongsTo(ShopTab::class, 'tab_id');
+    }
+
+    /** @return HasMany<ShopProduct, $this> */
+    public function products(): HasMany
+    {
+        return $this->hasMany(ShopProduct::class, 'category_id');
     }
 
     public function nameFor(?string $locale = null): string

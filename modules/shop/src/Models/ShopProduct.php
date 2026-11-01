@@ -2,6 +2,7 @@
 
 namespace KaevCMS\Modules\Shop\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,6 +34,17 @@ final class ShopProduct extends Model
     public function bundleItems(): HasMany
     {
         return $this->hasMany(ShopBundleItem::class, 'product_id')->orderBy('id');
+    }
+
+    /** @param Builder<self> $query */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('is_active', true)->whereBetween('price_coins', [1, 1000000])
+            ->where(static fn (Builder $query) => $query
+                ->where(static fn (Builder $items) => $items->where('type', 'item')
+                    ->whereBetween('item_id', [1, 2147483647])->whereBetween('quantity', [1, 2000000000]))
+                ->orWhere(static fn (Builder $bundles) => $bundles->where('type', 'bundle')
+                    ->whereHas('bundleItems')));
     }
 
     public function nameFor(?string $locale = null): string
