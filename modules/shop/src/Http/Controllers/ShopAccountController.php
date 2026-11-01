@@ -6,7 +6,6 @@ use App\Exceptions\WalletOperationException;
 use App\Http\Controllers\Controller;
 use App\Models\GameServer;
 use App\Models\User;
-use App\Services\GameAssets\GameItemCatalog;
 use App\Services\Wallet\WalletAccountReadService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -19,10 +18,11 @@ use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopPurchase;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 use KaevCMS\Modules\Shop\Services\ShopPurchaseService;
+use KaevCMS\Modules\Shop\Services\ShopProductArtwork;
 
 final class ShopAccountController extends Controller
 {
-    public function index(Request $request, WalletAccountReadService $wallets, GameItemCatalog $items): View
+    public function index(Request $request, WalletAccountReadService $wallets, ShopProductArtwork $artwork): View
     {
         $user = $request->user('web');
         abort_unless($user instanceof User && $user->is_active, 403);
@@ -42,7 +42,7 @@ final class ShopAccountController extends Controller
         $tabs = collect();
         $products = null;
         $tab = null;
-        $productIcons = [];
+        $productVisuals = [];
         $requestUuids = [];
         $canBuy = false;
 
@@ -57,12 +57,9 @@ final class ShopAccountController extends Controller
                         ->orWhereHas('category', static fn ($legacy) => $legacy->where('is_active', true)))
                     ->published()->with('bundleItems')->orderBy('sort_order')->orderBy('id')
                     ->paginate(12)->appends(['server' => $server->id, 'tab' => $tab->id]);
+                $productVisuals = $artwork->forProducts($server, $products);
                 foreach ($products as $product) {
                     $requestUuids[$product->id] = (string) Str::uuid();
-                    $firstItemId = $product->type === 'item' ? $product->item_id : $product->bundleItems->first()?->item_id;
-                    if ($firstItemId !== null) {
-                        $productIcons[$product->id] = $items->findForServer($server, (int) $firstItemId)['icon'];
-                    }
                 }
             }
             // The trusted adapter alone never enables sales.
@@ -75,7 +72,7 @@ final class ShopAccountController extends Controller
             'user' => $user,
             'servers' => $servers, 'server' => $server, 'tabs' => $tabs, 'tab' => $tab,
             'products' => $products,
-            'productIcons' => $productIcons, 'requestUuids' => $requestUuids, 'canBuy' => $canBuy,
+            'productVisuals' => $productVisuals, 'requestUuids' => $requestUuids, 'canBuy' => $canBuy,
             'walletView' => $wallets->forUser($user),
         ]);
     }

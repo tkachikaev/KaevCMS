@@ -6,6 +6,7 @@ use App\Auth\AdminRole;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\GameServer;
+use KaevCMS\Modules\Shop\Services\ShopProductArtwork;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ final class AdminShopController extends Controller
         ]);
     }
 
-    public function server(Request $request, GameServer $server): View
+    public function server(Request $request, GameServer $server, ShopProductArtwork $artwork): View
     {
         $server->load('translations');
         $tabs = ShopTab::query()->where('game_server_id', $server->id)
@@ -51,12 +52,15 @@ final class AdminShopController extends Controller
         $requestedSection = filter_var($request->query('section'), FILTER_VALIDATE_INT);
         $selectedSection = $tabs->firstWhere('id', $requestedSection) ?? $tabs->first();
 
+        $products = ShopProduct::query()->whereHas('section', fn ($query) => $query->where('game_server_id', $server->id))
+            ->with(['section', 'category', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get();
+
         return view('module-shop::admin.server', [
             'server' => $server,
             'selectedSection' => $selectedSection,
             'tabs' => $tabs,
-            'products' => ShopProduct::query()->whereHas('section', fn ($query) => $query->where('game_server_id', $server->id))
-                ->with(['section', 'category', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get(),
+            'products' => $products,
+            'productVisuals' => $artwork->forProducts($server, $products),
             'canManage' => $this->canManage($request),
             'settings' => ShopServerSetting::query()->where('game_server_id', $server->id)->first(),
         ]);

@@ -683,3 +683,44 @@ body.account-body .account-copy-field > input { flex: 1; min-width: 0; width: 0;
 body.account-body .account-copy-field > .account-copy-icon { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; padding: 0; }
 .account-copy-toast { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 50; max-width: 100%; padding: 9px 13px; border: 1px solid var(--account-line); border-radius: 8px; background: var(--account-panel); color: var(--account-text); box-shadow: 0 4px 18px rgba(0,0,0,.14); font-size: 13px; line-height: 1.4; pointer-events: none; }
 .account-copy-toast[hidden] { display: none; }
+
+
+/* Shop card structure; palette stays with the existing account/admin theme. */
+.shop-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 16px; min-width: 0; }
+.shop-product-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border-radius: 18px; }
+.shop-product-artwork { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 150px; padding: 20px 16px; }
+.shop-product-artwork-item { display: grid; place-items: center; width: 60px; height: 60px; flex: 0 0 60px; border-radius: 14px; overflow: hidden; }
+.shop-product-artwork-item img { display: block; max-width: 100%; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+.shop-product-artwork[data-shop-art-count="1"] .shop-product-artwork-item { width: 80px; height: 80px; flex-basis: 80px; }
+.shop-product-artwork-fallback { font-size: 36px; line-height: 1; }
+.shop-product-artwork-more { position: absolute; inset-inline-end: 12px; inset-block-end: 10px; padding: 4px 8px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+.shop-product-card-body { display: flex; flex: 1; flex-direction: column; gap: 10px; min-width: 0; padding: 18px 18px 12px; }
+.shop-product-card-body h3 { margin: 0; font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.shop-product-description { margin: 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-line; }
+.shop-product-details { min-width: 0; font-size: 12px; }
+.shop-product-details summary { width: fit-content; cursor: pointer; font-weight: 600; }
+.shop-product-details summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.shop-product-details ul { display: grid; gap: 7px; max-height: 180px; overflow: auto; padding: 8px 4px 0 0; margin: 0; list-style: none; }
+.shop-product-details li { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.shop-product-details li strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.shop-product-card-footer { display: grid; gap: 12px; padding: 0 18px 18px; }
+.shop-product-price { display: block; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.shop-product-card-footer :is(form, button.account-button) { width: 100%; }
+@media (max-width: 560px) {
+    .shop-product-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 225px), 1fr)); gap: 12px; }
+    .shop-product-artwork { min-height: 130px; }
+}
+
+body.account-body .shop-product-card { border: 1px solid var(--account-line); background: var(--account-panel); }
+body.account-body .shop-product-artwork { border-bottom: 1px solid var(--account-line); background: var(--account-panel-soft); }
+body.account-body .shop-product-artwork-item { border: 1px solid var(--account-line); background: var(--account-panel); color: var(--account-gold); }
+body.account-body .shop-product-artwork-more { background: var(--account-panel-raised); border: 1px solid var(--account-line); color: var(--account-text); }
+body.account-body .shop-product-card-body h3 { color: var(--account-text); }
+body.account-body .shop-product-description { color: var(--account-muted); }
+body.account-body .shop-product-details { color: var(--account-muted); }
+body.account-body .shop-product-details li { border-bottom: 1px solid var(--account-line); padding: 0 0 5px; }
+body.account-body .shop-product-details li strong { color: var(--account-text); }
+body.account-body .shop-product-card-footer { border-top: 1px solid var(--account-line); padding-top: 14px; }
+body.account-body .shop-product-price { color: var(--account-gold-bright); }
+
+.shop-product-description-details p { margin: 8px 0 0; overflow-wrap: anywhere; white-space: pre-line; line-height: 1.6; }

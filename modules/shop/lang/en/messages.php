@@ -120,6 +120,17 @@ return [
     'close_dialog' => 'Close dialog',
     'cancel' => 'Cancel',
 
+    // Shared Shop catalog cards and administration view switch (redesign I3).
+    'card_view' => 'Cards',
+    'table_view' => 'Table',
+    'card_display_mode' => 'Product display mode',
+    'card_contents' => 'Contents: :count',
+    'card_full_description' => 'Full description',
+    'card_contents_title' => 'Items',
+    'card_visibility' => 'Visibility',
+    'card_actions' => 'Actions',
+    'product_name' => 'Product name',
+
     // Player storefront (I5)
     'account_navigation_label' => 'Shop',
     'account_navigation_description' => 'Items and bundles for coins.',

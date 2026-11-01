@@ -120,6 +120,17 @@ return [
     'close_dialog' => 'Закрыть окно',
     'cancel' => 'Отмена',
 
+    // Shared Shop catalog cards and administration view switch (redesign I3).
+    'card_view' => 'Карточки',
+    'table_view' => 'Таблица',
+    'card_display_mode' => 'Отображение товаров',
+    'card_contents' => 'Состав: :count',
+    'card_full_description' => 'Полное описание',
+    'card_contents_title' => 'Предметов',
+    'card_visibility' => 'Видимость',
+    'card_actions' => 'Действия',
+    'product_name' => 'Название товара',
+
     // Player storefront (I5)
     'account_navigation_label' => 'Магазин',
     'account_navigation_description' => 'Предметы и комплекты за монеты.',

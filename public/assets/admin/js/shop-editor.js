@@ -35,6 +35,19 @@
     };
     document.addEventListener('click', (event) => {
         if (!(event.target instanceof Element)) return;
+        const viewTrigger = event.target.closest('[data-shop-view-toggle]');
+        if (viewTrigger) {
+            const container = viewTrigger.closest('[data-shop-server-page]');
+            const selected = viewTrigger.getAttribute('data-shop-view-toggle');
+            if (!container || !['cards', 'table'].includes(selected)) return;
+            container.querySelectorAll('[data-shop-view-panel]').forEach((panel) => {
+                panel.hidden = panel.getAttribute('data-shop-view-panel') !== selected;
+            });
+            container.querySelectorAll('[data-shop-view-toggle]').forEach((button) => {
+                button.setAttribute('aria-pressed', String(button.getAttribute('data-shop-view-toggle') === selected));
+            });
+            return;
+        }
         const trigger = event.target.closest('[data-shop-open]');
         if (trigger) {
             show(document.getElementById(trigger.getAttribute('data-shop-open')));

@@ -37,7 +37,7 @@ test('shop activates through administration, buys once and renders all account t
     await itemDialog.locator('[name="items[0][item_id]"]').fill('57');
     await itemDialog.locator('[name="items[0][quantity]"]').fill('1000');
     await itemDialog.locator('button[type=submit]').first().click();
-    await expect(page.locator('[data-shop-open^="shop-product-"]')).toHaveCount(2);
+    await expect(page.locator('[data-shop-view-panel="cards"] [data-shop-open^="shop-product-"]')).toHaveCount(1);
 
     await page.locator('[data-shop-open="shop-product-new"]').click();
     const bundleDialog = page.locator('#shop-product-new');
@@ -50,7 +50,14 @@ test('shop activates through administration, buys once and renders all account t
     await bundleDialog.locator('[name="items[1][item_id]"]').fill('4037');
     await bundleDialog.locator('[name="items[1][quantity]"]').fill('3');
     await bundleDialog.locator('button[type=submit]').first().click();
-    await expect(page.locator('[data-shop-open^="shop-product-"]')).toHaveCount(3);
+    await expect(page.locator('[data-shop-view-panel="cards"] [data-shop-open^="shop-product-"]')).toHaveCount(2);
+    await page.locator('[data-shop-view-toggle="table"]').click();
+    await expect(page.locator('[data-shop-view-panel="table"]')).toBeVisible();
+    await expect(page.locator('[data-shop-view-panel="cards"]')).toBeHidden();
+    await expect(page.locator('[data-shop-view-panel="table"] tbody tr')).toHaveCount(2);
+    await page.locator('[data-shop-view-toggle="cards"]').click();
+    await expect(page.locator('[data-shop-view-panel="cards"] .shop-product-card')).toHaveCount(2);
+    await expect(page.locator('[data-shop-view-panel="cards"] [data-shop-art-count="2"]')).toHaveCount(1);
     expect(sectionId).toBeTruthy();
     const player = await context.newPage();
     await player.emulateMedia({ reducedMotion: 'reduce' });
@@ -71,6 +78,11 @@ test('shop activates through administration, buys once and renders all account t
     await save('/admin/extensions/shop/settings', { _method: 'PUT', sales_enabled: 1 });
     await save(serverUrl + '/settings', { _method: 'PUT', enabled: 1 });
     await player.goto('/modules/shop?server=' + serverId);
+    await expect(player.locator('.shop-product-card')).toHaveCount(2);
+    await expect(player.locator('.shop-product-artwork[data-shop-art-count="1"]')).toHaveCount(1);
+    await expect(player.locator('.shop-product-artwork[data-shop-art-count="2"]')).toHaveCount(1);
+    await player.locator('.shop-product-card .shop-product-details summary').last().click();
+    await expect(player.locator('.shop-product-card .shop-product-details').last()).toHaveAttribute('open', '');
     const checkout = player.locator('form[action$="/shop/checkout"]').first();
     const uuid = await checkout.locator('[name=request_uuid]').inputValue();
     const productId = await checkout.locator('[name=product_id]').inputValue();

@@ -38,34 +38,56 @@
             @if($sectionProducts->isEmpty())
                 <div class="admin-empty-state empty-state"><h3>{{ __('module-shop::messages.no_products_title') }}</h3><p>{{ __('module-shop::messages.no_products_description') }}</p></div>
             @else
-                <div class="admin-card-list content-list">
+                <div class="shop-admin-toolbar" data-shop-display>
+                    <div class="shop-admin-view-controls" role="group" aria-label="{{ __('module-shop::messages.card_display_mode') }}">
+                        <button type="button" class="button button-secondary" data-shop-view-toggle="cards" aria-pressed="true">{{ __('module-shop::messages.card_view') }}</button>
+                        <button type="button" class="button button-secondary" data-shop-view-toggle="table" aria-pressed="false">{{ __('module-shop::messages.table_view') }}</button>
+                    </div>
+                </div>
+                <div class="shop-product-grid shop-admin-cards" data-shop-view-panel="cards">
                     @foreach($sectionProducts as $product)
-                        <article class="admin-card-row admin-card-row-simple">
-                            <div>
-                                <strong class="content-row-title">{{ $product->nameFor() }}</strong>
-                                <p>{{ __('module-shop::messages.price_value', ['count' => format_number($product->price_coins)]) }} · {{ $product->type === 'item' ? __('module-shop::messages.item_type') : __('module-shop::messages.bundle_item_count', ['count' => format_number($product->bundleItems->count())]) }}</p>
-                                @php($effectiveActive = $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
-                                <span @class(['status-badge', 'status-badge-success' => $effectiveActive])>{{ $effectiveActive ? __('module-shop::messages.active') : __('module-shop::messages.hidden') }}</span>
+                        @php($effectiveActive = $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
+                        <article class="shop-product-card" data-shop-product="{{ $product->id }}">
+                            @include('module-shop::partials.product-artwork', ['visual' => $productVisuals[$product->id] ?? []])
+                            <div class="shop-product-card-body">
+                                <h3>{{ $product->nameFor() }}</h3>
+                                @include('module-shop::partials.product-description')
+                                @include('module-shop::partials.product-contents')
                             </div>
-                            <div class="content-row-actions admin-row-actions">
+                            <div class="shop-product-card-footer">
+                                <strong class="shop-product-price">{{ __('module-shop::messages.price_value', ['count' => format_number($product->price_coins)]) }}</strong>
+                                <span @class(['status-badge', 'status-badge-success' => $effectiveActive])>{{ $effectiveActive ? __('module-shop::messages.active') : __('module-shop::messages.hidden') }}</span>
                                 @if($canManage)
                                     <button type="button" class="button button-secondary" data-shop-open="shop-product-{{ $product->id }}">{{ __('module-shop::messages.edit') }}</button>
-                                @else
-                                    <details>
-                                        <summary>{{ __('module-shop::messages.view') }}</summary>
-                                        <p>{{ $product->descriptionFor() }}</p>
-                                        @if($product->type === 'item')
-                                            <p>{{ __('module-shop::messages.item_label', ['id' => format_number($product->item_id)]) }} · {{ __('module-shop::messages.quantity_value', ['count' => format_number($product->quantity)]) }}</p>
-                                        @else
-                                            @foreach($product->bundleItems as $item)
-                                                <p>{{ __('module-shop::messages.item_label', ['id' => format_number($item->item_id)]) }} · {{ __('module-shop::messages.quantity_value', ['count' => format_number($item->quantity)]) }}</p>
-                                            @endforeach
-                                        @endif
-                                    </details>
                                 @endif
                             </div>
                         </article>
                     @endforeach
+                </div>
+                <div class="shop-admin-table" data-shop-view-panel="table" hidden>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead><tr>
+                                <th>{{ __('module-shop::messages.product_name') }}</th>
+                                <th>{{ __('module-shop::messages.card_contents_title') }}</th>
+                                <th>{{ __('module-shop::messages.price_coins') }}</th>
+                                <th>{{ __('module-shop::messages.card_visibility') }}</th>
+                                @if($canManage)<th>{{ __('module-shop::messages.card_actions') }}</th>@endif
+                            </tr></thead>
+                            <tbody>
+                                @foreach($sectionProducts as $product)
+                                    @php($effectiveActive = $product->is_active && ($product->category_id === null || ($product->category?->is_active ?? false)))
+                                    <tr>
+                                        <td>{{ $product->nameFor() }}</td>
+                                        <td>{{ format_number($product->type === 'item' ? 1 : $product->bundleItems->count()) }}</td>
+                                        <td class="admin-num">{{ format_number($product->price_coins) }}</td>
+                                        <td><span @class(['status-badge', 'status-badge-success' => $effectiveActive])>{{ $effectiveActive ? __('module-shop::messages.active') : __('module-shop::messages.hidden') }}</span></td>
+                                        @if($canManage)<td><button type="button" class="button button-secondary" data-shop-open="shop-product-{{ $product->id }}">{{ __('module-shop::messages.edit') }}</button></td>@endif
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             @endif
             @if($canManage)<div class="admin-row-actions"><button type="button" class="button button-primary" data-shop-open="shop-product-new">{{ __('module-shop::messages.create_product') }}</button></div>@endif

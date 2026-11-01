@@ -83,6 +83,24 @@ final class ShopUnifiedEditorTest extends TestCase
         $this->assertSame(3, DB::table('audit_logs')->where('action', 'like', 'shop.product_%')->count());
     }
 
+    public function test_admin_cards_and_table_share_a_product_and_read_only_preview(): void
+    {
+        [$server, $section] = $this->section();
+        $this->actingAs(Admin::factory()->create(), 'admin');
+        $base = '/admin/extensions/shop/servers/'.$server->id;
+        $this->post($base.'/products', $this->payload($section->id, [
+            ['item_id' => 57, 'quantity' => 1], ['item_id' => 4037, 'quantity' => 2],
+        ]))->assertRedirect();
+        $this->get($base)->assertOk()
+            ->assertSee('data-shop-view-toggle="cards"', false)
+            ->assertSee('data-shop-view-toggle="table"', false)
+            ->assertSee('data-shop-view-panel="table" hidden', false)
+            ->assertSee('data-shop-art-count="2"', false)
+            ->assertSee('shop-product-details', false)
+            ->assertSee('shop-product-artwork', false)
+            ->assertSee(__('module-shop::messages.card_contents', ['count' => format_number(2)]));
+    }
+
     public function test_validates_duplicate_ids_count_price_and_foreign_server(): void
     {
         [$server, $section] = $this->section();
