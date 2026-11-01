@@ -44,7 +44,7 @@ final class ShopProduct extends Model
                 ->where(static fn (Builder $items) => $items->where('type', 'item')
                     ->whereBetween('item_id', [1, 2147483647])->whereBetween('quantity', [1, 2000000000]))
                 ->orWhere(static fn (Builder $bundles) => $bundles->where('type', 'bundle')
-                    ->whereHas('bundleItems')));
+                    ->whereHas('bundleItems')->has('bundleItems', '<=', 100)));
     }
 
     public function nameFor(?string $locale = null): string

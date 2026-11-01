@@ -54,6 +54,9 @@
     @if($canManage)
         <x-admin.card>
             <x-admin.card-heading :title="__('module-shop::messages.add_bundle_item')" />
+            @if($product->bundleItems->count() >= 100)
+                <div class="notice notice-info" role="status">{{ __('module-shop::messages.bundle_item_limit_reached') }}</div>
+            @else
             <form method="POST" action="{{ route('admin.module-pages.shop.bundle-items.store', $productRoute) }}">
                 @csrf
                 <x-admin.field for="bundle-item-id" :label="__('module-shop::messages.item_id')">
@@ -64,6 +67,7 @@
                 </x-admin.field>
                 <x-admin.button type="submit" variant="primary">{{ __('module-shop::messages.add_bundle_item') }}</x-admin.button>
             </form>
+            @endif
         </x-admin.card>
     @endif
 @endif

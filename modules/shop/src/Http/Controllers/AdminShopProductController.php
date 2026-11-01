@@ -112,6 +112,11 @@ final class AdminShopProductController extends Controller
             if ($locked->bundleItems()->where('item_id', $values['item_id'])->exists()) {
                 throw ValidationException::withMessages(['item_id' => __('module-shop::messages.duplicate_bundle_item')]);
             }
+            // Checkout grants at most 100 items. Enforce the same limit at
+            // configuration time while holding the product lock.
+            if ($locked->bundleItems()->count() >= 100) {
+                throw ValidationException::withMessages(['item_id' => __('module-shop::messages.bundle_item_limit_reached')]);
+            }
             $item = $locked->bundleItems()->create($values);
             $this->auditRequired('shop.bundle_item_added', $admin, $item, [
                 'game_server_id' => $server->id, 'product_id' => $locked->id,

@@ -123,6 +123,25 @@ final class ShopStorefrontTest extends TestCase
         $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop')->assertOk()->assertDontSee('Bundle');
     }
 
+    public function test_oversized_bundle_is_not_listed_for_purchase(): void
+    {
+        [$server, $tab, $category, $bundle] = $this->published('Oversized bundle', 'bundle');
+        $now = now();
+        $rows = [];
+        // The fixture already contains item 57; these 100 entries make 101.
+        for ($itemId = 58; $itemId <= 157; $itemId++) {
+            $rows[] = [
+                'product_id' => $bundle->id, 'item_id' => $itemId,
+                'quantity' => 1, 'created_at' => $now, 'updated_at' => $now,
+            ];
+        }
+        ShopBundleItem::query()->insert($rows);
+        $this->assertSame(101, $bundle->bundleItems()->count());
+
+        $this->actingAs(User::factory()->create(), 'web')
+            ->get('/modules/shop')->assertOk()->assertDontSee('Oversized bundle');
+    }
+
     public function test_manually_submitted_checkout_is_rejected_while_source_disabled(): void
     {
         [$server, $tab, $category, $product] = $this->published();

@@ -100,6 +100,37 @@ final class ShopProductsTest extends TestCase
         $this->assertSame(0, ShopBundleItem::query()->count());
     }
 
+    public function test_bundle_cannot_be_configured_with_more_than_one_hundred_items(): void
+    {
+        [$server, $category] = $this->catalog();
+        $this->actingAs(Admin::factory()->administrator()->create(), 'admin');
+        $base = '/admin/extensions/shop/servers/'.$server->id;
+        $this->post($base.'/products', $this->payload($category->id, 'bundle'))->assertRedirect();
+        $bundle = ShopProduct::query()->sole();
+
+        $now = now();
+        $rows = [];
+        for ($itemId = 1; $itemId <= 100; $itemId++) {
+            $rows[] = [
+                'product_id' => $bundle->id, 'item_id' => $itemId,
+                'quantity' => 1, 'created_at' => $now, 'updated_at' => $now,
+            ];
+        }
+        ShopBundleItem::query()->insert($rows);
+        $route = $base.'/products/'.$bundle->id.'/bundle-items';
+
+        $this->post($route, ['item_id' => 101, 'quantity' => 1])
+            ->assertSessionHasErrors('item_id');
+        $this->assertSame(100, $bundle->bundleItems()->count());
+        $this->assertTrue(ShopProduct::query()->published()->whereKey($bundle->id)->exists());
+        $this->get($base.'/products/'.$bundle->id.'/edit')
+            ->assertOk()->assertSee(__('module-shop::messages.bundle_item_limit_reached'));
+
+        // An already-corrupt legacy configuration must not show a buy button.
+        ShopBundleItem::query()->create(['product_id' => $bundle->id, 'item_id' => 101, 'quantity' => 1]);
+        $this->assertFalse(ShopProduct::query()->published()->whereKey($bundle->id)->exists());
+    }
+
     public function test_server_isolation_bad_data_and_deletion_guard(): void
     {
         [$server, $category] = $this->catalog();

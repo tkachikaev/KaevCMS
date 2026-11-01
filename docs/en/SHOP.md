@@ -4,7 +4,7 @@
 
 ## Catalogue and purchases
 
-An Owner or Administrator can create GameServer-specific tabs, categories and products. Products may be one item (game item ID and quantity) or a bundle containing several items. RU/EN names, integer CMS coin prices, order and visibility are configurable. Empty bundles are not published.
+An Owner or Administrator can create GameServer-specific tabs, categories and products. Products may be one item (game item ID and quantity) or a bundle containing several items. RU/EN names, integer CMS coin prices, order and visibility are configurable. Empty bundles are not published. A bundle can contain up to 100 distinct item IDs; the administration editor enforces this limit.
 
 Checkout is designed to debit coins through the existing WalletGateway, grant items to **Web Inventory**, store an immutable price/item snapshot and write an audit record in one transaction. A replay of the same UUID must return the previous purchase without another debit. **Web Inventory is not direct character delivery**: the player initiates transfer later, and the game-server administrator configures the reward-queue consumer.
 

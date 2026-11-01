@@ -4,6 +4,7 @@ Shop now has a player-facing, authenticated storefront and POST checkout route. 
 
 - I1 (`2026_11_01_010000`): global and per-GameServer settings. This migration remains unchanged.
 - I2 (`2026_11_01_020000`): `module_shop_tabs` and `module_shop_categories`, titles in RU/EN, ordering and visibility flags. Categories belong to a tab; tabs belong to exactly one GameServer.
+- I8 reliability follow-up: bundles are capped at 100 distinct item IDs in the admin editor; oversized pre-existing configurations are hidden from the player catalogue and checkout also rejects them. Tests still require the full QA environment.
 - I3 (`2026_11_01_030000`): `module_shop_products` (single items or bundles, RU/EN labels, positive integer coin prices, sort/visibility, server-bound category), `module_shop_bundle_items` (multiple IDs and positive quantities; duplicate IDs rejected). A bundle may be saved empty while being configured; no checkout endpoint exposes it.
 - Owner and Administrator can add/edit/delete tabs, categories, products and bundle entries. Auditor can only view; Editor has no access.
 - A category cannot be deleted while it has products, and a tab cannot be deleted while it contains categories. Deleting a GameServer with catalog tabs is blocked by the module dependency guard and the database foreign key; empty per-server settings may be removed.

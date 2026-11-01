@@ -11,7 +11,7 @@ return [
     'not_ready' => 'Unavailable',
     'disabled' => 'Disabled',
     'setup_title' => 'Shop setup',
-    'setup_description' => 'Sections, products and bundles for game servers will be added next.',
+    'setup_description' => 'Configure game servers, sections, products and bundles. Sales are still disabled.',
     'unavailable_title' => 'Purchases are disabled by default',
     'unavailable_description' => 'Sales require transaction verification and separate authorization. Completed purchase history is available even while sales are off.',
 
@@ -29,7 +29,7 @@ return [
     'tabs_description' => 'Create a tab, then add categories inside it. Each tab can have multiple categories.',
     'no_tabs_title' => 'No tabs yet',
     'no_tabs_description' => 'Create the first tab to start adding categories.',
-    'sales_disabled_notice' => 'Catalog setup only. The player shop is closed; purchases and wallet debits are disabled.',
+    'sales_disabled_notice' => 'Players can browse the catalogue via its direct URL. Purchases and wallet debits stay disabled until QA is complete.',
     'add_tab' => 'Add tab',
     'add_category' => 'Add category',
     'name_ru' => 'Name in Russian',
@@ -160,4 +160,5 @@ return [
     'purchase_no_contents' => 'No saved items.',
     'purchase_pages' => 'Purchase pages',
     'purchase_read_only' => 'Read-only. Refunds and repeat grants are not performed here.',
+    'bundle_item_limit_reached' => 'A bundle may contain no more than 100 items.',
 ];
