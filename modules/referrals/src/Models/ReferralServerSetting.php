@@ -6,7 +6,19 @@ use App\Models\GameServer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $game_server_id
+ * @property bool $enabled
+ * @property bool $checks_paused
+ * @property bool $inviter_rewards_enabled
+ * @property bool $invitee_rewards_enabled
+ * @property int|null $max_rewarded_invitees
+ */
 final class ReferralServerSetting extends Model
 {
     protected $table = 'module_referral_server_settings';

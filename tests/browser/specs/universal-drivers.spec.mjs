@@ -211,8 +211,14 @@ for (const variant of [
         await page.locator('tr[wire\\:key="game-field-title"] .ud-menu summary').click();
         await page.locator('tr[wire\\:key="game-field-title"] button[wire\\:click="changeFieldKind(\'title\', \'eav\')"]').click();
         const keyValueTitle = page.locator('tr[wire\\:key="game-field-source-title"]');
+        // The kind change is a server round trip; edit only the rendered EAV controls.
+        await expect(keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.key_column"]')).toBeVisible();
+        const tableCommit = page.waitForResponse(response => response.request().method() === 'POST'
+            && new URL(response.url()).pathname.includes('/livewire-')
+            && response.request().postData()?.includes('character_stats'));
         await page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]').fill('character_stats');
         await page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]').press('Tab');
+        expect((await tableCommit).ok()).toBe(true);
         await keyValueTitle.locator('input').nth(0).fill('player_id');
         await keyValueTitle.locator('input').nth(1).fill('char_id');
         await keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.key_column"]').fill('param');

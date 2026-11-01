@@ -183,12 +183,14 @@ final class ReferralLevelScanner
                 $rows = $this->characters->characterRows($server, $account);
                 if ($rows === null) {
                     $incomplete = true;
+
                     continue;
                 }
                 foreach ($rows as $row) {
                     $level = $row['level'] ?? null;
                     if (! is_int($level) || $level < 1) {
                         $incomplete = true;
+
                         continue;
                     }
                     $found = true;

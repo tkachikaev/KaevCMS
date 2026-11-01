@@ -5,7 +5,19 @@ namespace KaevCMS\Modules\Referrals\Models;
 use App\Models\GameServer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $game_server_id
+ * @property string $audience
+ * @property int $level
+ * @property int $item_id
+ * @property int $amount
+ * @property bool $enabled
+ */
 final class ReferralRule extends Model
 {
     protected $table = 'module_referral_rules';

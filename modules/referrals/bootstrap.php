@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schedule;
 use KaevCMS\Modules\Referrals\Console\Commands\GrantReferralRewardsCommand;
 use KaevCMS\Modules\Referrals\Console\Commands\ScanReferralsCommand;
-use KaevCMS\Modules\Referrals\Services\ReferralInvitationService;
 use KaevCMS\Modules\Referrals\Models\ReferralServerSetting;
 use KaevCMS\Modules\Referrals\Models\ReferralSetting;
+use KaevCMS\Modules\Referrals\Services\ReferralInvitationService;
 
 return static function (Application $app, ModuleContext $module): void {
     // Archive rows must never disappear when an administrator deletes a GameServer.

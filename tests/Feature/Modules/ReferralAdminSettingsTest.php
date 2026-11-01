@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\GameServer;
 use App\Models\User;
@@ -9,8 +10,8 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use KaevCMS\Modules\Referrals\Models\ReferralCode;
-use KaevCMS\Modules\Referrals\Models\ReferralInvite;
 use KaevCMS\Modules\Referrals\Models\ReferralEntitlement;
+use KaevCMS\Modules\Referrals\Models\ReferralInvite;
 use KaevCMS\Modules\Referrals\Models\ReferralRule;
 use KaevCMS\Modules\Referrals\Models\ReferralSnapshot;
 use Tests\TestCase;
@@ -164,7 +165,7 @@ class ReferralAdminSettingsTest extends TestCase
     {
         $server = GameServer::factory()->create();
         $auditor = Admin::factory()->auditor()->create();
-        $editor = Admin::factory()->create(['role' => \App\Auth\AdminRole::Editor]);
+        $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
         $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals')->assertOk();
         $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals/servers/'.$server->id)->assertOk();
         $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals/invites')->assertOk();

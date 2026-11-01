@@ -255,11 +255,26 @@ final class ReferralRewardGrantService
             // Otherwise a frozen older invite can permanently starve an active
             // invite when the administrator sets an optional inviter limit.
             ->where('ri.status', 'active')
+            ->whereExists(function ($query): void {
+                $query->selectRaw('1')->from('users as eligible_invitee')
+                    ->whereColumn('eligible_invitee.id', 'ri.invitee_user_id')
+                    ->where('eligible_invitee.is_active', true);
+                if ($this->registration->emailVerificationRequired()) {
+                    $query->whereNotNull('eligible_invitee.email_verified_at');
+                }
+            })
             ->where('module_referral_snapshots.game_server_id', $server->id)
-            ->whereExists(static function ($query): void {
+            ->whereExists(static function ($query) use ($setting): void {
+                $audiences = [];
+                if ($setting->inviter_rewards_enabled) {
+                    $audiences[] = 'inviter';
+                }
+                if ($setting->invitee_rewards_enabled) {
+                    $audiences[] = 'invitee';
+                }
                 $query->selectRaw('1')->from('module_referral_entitlements as e')
                     ->whereColumn('e.snapshot_id', 'module_referral_snapshots.id')
-                    ->where('e.status', 'earned');
+                    ->where('e.status', 'earned')->whereIn('e.audience', $audiences);
             })
             ->whereNotExists(static function ($query): void {
                 $query->selectRaw('1')->from('module_referral_entitlements as rewarded')

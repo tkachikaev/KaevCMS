@@ -799,6 +799,7 @@
     "tests/Integration/Donations/paypal-admin-sandbox-standalone.php",
     "tests/Integration/Donations/paypal-iteration1-standalone.php",
     "tests/Integration/Donations/yoomoney-driver-standalone.php",
+    "tests/Integration/Referrals/mysql-concurrency.php",
     "tests/Integration/UniversalDrivers/mysql-application-parity.php",
     "tests/Integration/UniversalDrivers/mysql-fixtures.php",
     "tests/Integration/UniversalDrivers/mysql-game-character-parity.php",

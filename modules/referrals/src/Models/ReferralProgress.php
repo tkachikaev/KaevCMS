@@ -5,7 +5,22 @@ namespace KaevCMS\Modules\Referrals\Models;
 use App\Models\GameServer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $invite_id
+ * @property int $game_server_id
+ * @property int $max_seen_level
+ * @property string $status
+ * @property Carbon|null $next_check_at
+ * @property int $consecutive_failures
+ * @property Carbon|null $last_checked_at
+ * @property Carbon|null $last_success_at
+ * @property string|null $last_error_code
+ */
 final class ReferralProgress extends Model
 {
     protected $table = 'module_referral_progress';

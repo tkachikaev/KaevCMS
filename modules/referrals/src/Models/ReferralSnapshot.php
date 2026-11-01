@@ -5,7 +5,16 @@ namespace KaevCMS\Modules\Referrals\Models;
 use App\Models\GameServer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $invite_id
+ * @property int $game_server_id
+ * @property Carbon|null $snapshotted_at
+ */
 final class ReferralSnapshot extends Model
 {
     protected $table = 'module_referral_snapshots';

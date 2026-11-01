@@ -38,6 +38,41 @@ class ReferralRewardGrantTest extends TestCase
         ReferralSetting::query()->where('setting_key', 'global')->update(['enabled' => true]);
     }
 
+    public function test_inactive_invitee_does_not_reserve_the_optional_reward_slot(): void
+    {
+        [$older, $server] = $this->scenario();
+        [$active] = $this->scenario($older->inviter, $server);
+        $this->earned($older, $server, 'inviter', 20, 57, 2);
+        $reward = $this->earned($active, $server, 'inviter', 20, 57, 2);
+        $older->invitee->forceFill(['is_active' => false])->save();
+        ReferralServerSetting::query()->where('game_server_id', $server->id)->update(['max_rewarded_invitees' => 1]);
+        $this->assertSame('granted', app(ReferralRewardGrantService::class)->grantEntitlement($reward->id));
+        $this->assertDatabaseCount('reward_inventory_grants', 1);
+    }
+
+    public function test_unverified_invitee_does_not_reserve_a_slot_when_verification_is_required(): void
+    {
+        [$older, $server] = $this->scenario();
+        [$active] = $this->scenario($older->inviter, $server);
+        $this->earned($older, $server, 'inviter', 20, 57, 2);
+        $reward = $this->earned($active, $server, 'inviter', 20, 57, 2);
+        $older->invitee->forceFill(['email_verified_at' => null])->save();
+        app(RegistrationSettings::class)->update(true, true);
+        ReferralServerSetting::query()->where('game_server_id', $server->id)->update(['max_rewarded_invitees' => 1]);
+        $this->assertSame('granted', app(ReferralRewardGrantService::class)->grantEntitlement($reward->id));
+    }
+
+    public function test_disabled_reward_audience_does_not_reserve_optional_reward_slot(): void
+    {
+        [$older, $server] = $this->scenario();
+        [$active] = $this->scenario($older->inviter, $server);
+        $this->earned($older, $server, 'invitee', 20, 57, 2);
+        $reward = $this->earned($active, $server, 'inviter', 20, 57, 2);
+        ReferralServerSetting::query()->where('game_server_id', $server->id)
+            ->update(['max_rewarded_invitees' => 1, 'invitee_rewards_enabled' => false]);
+        $this->assertSame('granted', app(ReferralRewardGrantService::class)->grantEntitlement($reward->id));
+    }
+
     public function test_both_sides_receive_distinct_inventory_grants_exactly_once(): void
     {
         [$invite, $server] = $this->scenario();

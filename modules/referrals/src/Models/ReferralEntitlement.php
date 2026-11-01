@@ -7,7 +7,25 @@ use App\Models\RewardInventoryGrant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $snapshot_id
+ * @property int $invite_id
+ * @property int $game_server_id
+ * @property int $recipient_user_id
+ * @property string $audience
+ * @property int $level
+ * @property int $item_id
+ * @property int $amount
+ * @property string $status
+ * @property int|null $reward_inventory_grant_id
+ * @property Carbon|null $earned_at
+ * @property Carbon|null $granted_at
+ */
 final class ReferralEntitlement extends Model
 {
     protected $table = 'module_referral_entitlements';

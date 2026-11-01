@@ -5,10 +5,26 @@ namespace KaevCMS\Modules\Referrals\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $referral_code_id
+ * @property int $inviter_user_id
+ * @property int $invitee_user_id
+ * @property Carbon|null $accepted_at
+ * @property string $status
+ * @property Carbon|null $frozen_at
+ * @property string|null $frozen_reason
+ * @property int|null $frozen_by_admin_id
+ */
 final class ReferralInvite extends Model
 {
     protected $table = 'module_referral_invites';
+
+    protected $attributes = ['status' => 'active'];
 
     protected $fillable = [
         'referral_code_id',

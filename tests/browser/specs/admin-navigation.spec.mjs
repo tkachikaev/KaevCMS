@@ -577,7 +577,8 @@ test('module foundation is available from the administrator sidebar', async ({ p
 
     const moduleCatalog = page.getByTestId('module-catalog');
     await expect(moduleCatalog).toHaveAttribute('data-layout', 'grid');
-    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(4);
+    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(5);
+    await expect(page.locator('[data-module-id="referrals"]').getByRole('heading', { name: 'Реферальная система', exact: true })).toBeVisible();
 
     const promoModule = page.locator('[data-module-id="promo-codes"]');
     const dailyModule = page.locator('[data-module-id="daily-rewards"]');

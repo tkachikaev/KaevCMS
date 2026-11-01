@@ -17,7 +17,7 @@
             @endif
         </div>
         @if($link !== null)
-            <div class="account-form-grid">
+            <div class="account-form-card">
                 <label for="referral-link">
                     <span>{{ __('module-referrals::messages.your_invitation_link') }}</span>
                     <div class="account-field-control"><input id="referral-link" type="text" readonly value="{{ $link }}" autocomplete="off" spellcheck="false"></div>

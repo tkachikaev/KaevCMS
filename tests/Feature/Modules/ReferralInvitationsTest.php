@@ -8,13 +8,13 @@ use App\Services\RegistrationSettings;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use KaevCMS\Modules\Referrals\Models\ReferralCode;
 use KaevCMS\Modules\Referrals\Models\ReferralInvite;
 use KaevCMS\Modules\Referrals\Models\ReferralSetting;
 use KaevCMS\Modules\Referrals\Services\ReferralInvitationService;
+use Symfony\Component\HttpFoundation\Cookie;
 use Tests\TestCase;
 
 class ReferralInvitationsTest extends TestCase
@@ -34,7 +34,7 @@ class ReferralInvitationsTest extends TestCase
     {
         $inviter = User::factory()->create();
         $cookie = $this->invitationCookie($inviter);
-        $response = $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/register', [
+        $response = $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/register', [
             'name' => 'invitedperson',
             'email' => 'invitedperson@example.test',
             'password' => 'Password123',
@@ -55,7 +55,7 @@ class ReferralInvitationsTest extends TestCase
     {
         $inviter = User::factory()->create();
         $code = app(ReferralInvitationService::class)->codeFor($inviter);
-        $response = $this->withServerVariables(['HTTPS' => 'on'])->get('/r/'.$code);
+        $response = $this->get('https://localhost/r/'.$code);
         $response->assertOk()->assertSee(__('module-referrals::messages.invitation_title'));
         $cookies = $response->headers->getCookies();
         $cookie = $this->findCookie($cookies);
@@ -72,7 +72,7 @@ class ReferralInvitationsTest extends TestCase
         $inviter = User::factory()->create();
         $cookie = $this->invitationCookie($inviter);
         $this->travel(8)->days();
-        $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/register', [
+        $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/register', [
             'name' => 'laterperson',
             'email' => 'laterperson@example.test',
             'password' => 'Password123',
@@ -87,11 +87,11 @@ class ReferralInvitationsTest extends TestCase
         $second = User::factory()->create();
         $firstCookie = $this->invitationCookie($first);
         $secondCode = app(ReferralInvitationService::class)->codeFor($second);
-        $secondResponse = $this->withCookie(ReferralInvitationService::COOKIE_NAME, $firstCookie)
+        $secondResponse = $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $firstCookie)
             ->get('/r/'.$secondCode)->assertOk();
         $secondCookie = $this->findCookie($secondResponse->headers->getCookies())->getValue();
         $this->get('/r/'.Str::random(40))->assertNotFound();
-        $this->withCookie(ReferralInvitationService::COOKIE_NAME, $secondCookie)->post('/register', [
+        $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $secondCookie)->post('/register', [
             'name' => 'switchperson',
             'email' => 'switchperson@example.test',
             'password' => 'Password123',
@@ -121,9 +121,9 @@ class ReferralInvitationsTest extends TestCase
         $inviter = User::factory()->create();
         $existing = User::factory()->create(['name' => 'existinguser']);
         $cookie = $this->invitationCookie($inviter);
-        $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)
+        $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)
             ->post('/modules/referrals/cancel')->assertRedirect();
-        $response = $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/login', [
+        $response = $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/login', [
             'login' => $existing->email,
             'password' => 'Password123',
         ]);
@@ -147,7 +147,7 @@ class ReferralInvitationsTest extends TestCase
             'email_verification_hash' => null,
         ]]);
         $this->get('/auth/social/google/register')->assertOk();
-        $response = $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)
+        $response = $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)
             ->post('/auth/social/google/register', ['name' => 'socialinvited']);
         $response->assertRedirect(route('account'));
         $user = User::query()->where('name', 'socialinvited')->firstOrFail();
@@ -171,7 +171,7 @@ class ReferralInvitationsTest extends TestCase
             'issued' => now()->timestamp,
             'email_verification_hash' => null,
         ]]);
-        $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)
+        $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)
             ->post('/auth/social/google/register', ['name' => 'differentname'])
             ->assertRedirect(public_route('login'));
         $this->assertDatabaseCount('module_referral_invites', 0);
@@ -187,7 +187,7 @@ class ReferralInvitationsTest extends TestCase
         $code = ReferralCode::query()->where('user_id', $inviter->id)->value('code');
         app(ModuleManager::class)->disable('referrals');
         $this->get('/r/'.$code)->assertNotFound();
-        $this->withCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/register', [
+        $this->withUnencryptedCookie(ReferralInvitationService::COOKIE_NAME, $cookie)->post('/register', [
             'name' => 'afterdisable',
             'email' => 'afterdisable@example.test',
             'password' => 'Password123',
@@ -204,8 +204,8 @@ class ReferralInvitationsTest extends TestCase
         return $this->findCookie($response->headers->getCookies())->getValue();
     }
 
-    /** @param list<\Symfony\Component\HttpFoundation\Cookie> $cookies */
-    private function findCookie(array $cookies): \Symfony\Component\HttpFoundation\Cookie
+    /** @param list<Cookie> $cookies */
+    private function findCookie(array $cookies): Cookie
     {
         foreach ($cookies as $cookie) {
             if ($cookie->getName() === ReferralInvitationService::COOKIE_NAME) {
