@@ -29,6 +29,9 @@ final class ReferralAccountController extends Controller
         abort_unless($user instanceof User && $user->is_active, 403);
         abort_unless($this->invitations->enabled(), 404);
 
+        $activeTab = $request->query('tab', 'invite');
+        $activeTab = in_array($activeTab, ['invite', 'progress', 'history'], true) ? $activeTab : 'invite';
+
         $activeSettings = ReferralServerSetting::query()->availableForInvitations()->get()->keyBy('game_server_id');
 
         // Keep earned history accessible on a paused/removed program server. Never
@@ -45,6 +48,7 @@ final class ReferralAccountController extends Controller
             ->orderBy('sort_order')->orderBy('id')->get();
         abort_if($servers->isEmpty(), 404);
 
+        $allServers = $activeTab === 'history' && $request->query('server', 'all') === 'all';
         $requestedServerId = filter_var($request->query('server'), FILTER_VALIDATE_INT);
         $server = $servers->firstWhere('id', $requestedServerId) ?? $servers->first();
         $settings = $activeSettings->get($server->id);
@@ -67,10 +71,11 @@ final class ReferralAccountController extends Controller
                 && ($rule->audience === 'inviter' ? $settings->inviter_rewards_enabled : $settings->invitee_rewards_enabled))
             ->values();
         $rewards = ReferralEntitlement::query()
+            ->with('gameServer.translations')
             ->where('recipient_user_id', $user->id)
-            ->where('game_server_id', $server->id)
+            ->when($allServers, fn ($query) => $query->whereIn('game_server_id', $servers->modelKeys()), fn ($query) => $query->where('game_server_id', $server->id))
             ->orderByDesc('id')
-            ->paginate(12, ['*'], 'rewards_page')->withQueryString();
+            ->paginate(12, ['*'], 'rewards_page')->appends(['server' => $allServers ? 'all' : $server->id, 'tab' => 'history']);
 
         $progress = ReferralProgress::query()
             ->where('game_server_id', $server->id)
@@ -82,13 +87,21 @@ final class ReferralAccountController extends Controller
 
         // Use the game's existing item catalogue rather than duplicating icon or name logic.
         $items = [];
-        foreach ($rules->concat($rewards->getCollection()) as $entry) {
+        foreach ($rules as $entry) {
             if (! isset($items[$entry->item_id])) {
                 $items[$entry->item_id] = $this->catalog->findForServer($server, (int) $entry->item_id);
             }
         }
 
+        $rewardItems = [];
+        foreach ($rewards as $reward) {
+            $rewardItems[$reward->id] = $this->catalog->findForServer($reward->gameServer, $reward->item_id);
+        }
+
         return view('module-referrals::account.index', [
+            'activeTab' => $activeTab,
+            'allServers' => $allServers,
+            'rewardItems' => $rewardItems,
             'user' => $user,
             'link' => $link,
             'invitedCount' => $invitedCount,

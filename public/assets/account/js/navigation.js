@@ -386,6 +386,8 @@
         }
     });
 
+    const copyStatusTimers = new WeakMap();
+
     // Shared clipboard action for read-only account fields; no inline JS, no theme CSS.
     document.addEventListener('click', async (event) => {
         if (!(event.target instanceof Element)) return;
@@ -406,7 +408,17 @@
                 input.setSelectionRange(0, 0);
             }
         } catch { copied = false; }
-        if (status) status.textContent = copied ? button.dataset.copiedLabel : button.dataset.copyFailedLabel;
+        if (status) {
+            status.textContent = copied ? button.dataset.copiedLabel : button.dataset.copyFailedLabel;
+            if (status.hasAttribute('data-account-copy-toast')) {
+                clearTimeout(copyStatusTimers.get(status));
+                status.hidden = false;
+                copyStatusTimers.set(status, setTimeout(() => {
+                    status.hidden = true;
+                    status.textContent = '';
+                }, 2000));
+            }
+        }
     });
 
     // CSP forbids inline handlers such as onchange; filters opt in with this attribute.

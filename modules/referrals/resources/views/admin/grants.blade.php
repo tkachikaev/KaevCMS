@@ -16,10 +16,17 @@
 @else
     <div class="admin-card-list content-list">
         @foreach($rewards as $reward)
-            <article class="admin-card-row content-row">
+            <article class="admin-card-row content-row referrals-reward-row">
+                <div class="content-row-preview" aria-hidden="true">
+                    @if($itemDetails[$reward->id]['icon'] ?? null)
+                        <img src="{{ $itemDetails[$reward->id]['icon'] }}" alt="" width="40" height="40">
+                    @else
+                        ◇
+                    @endif
+                </div>
                 <div class="content-row-main">
                     <strong class="content-row-title">{{ $reward->gameServer?->nameFor() ?? '—' }} · {{ __('module-referrals::messages.level_required', ['level' => format_number($reward->level)]) }}</strong>
-                    <p>{{ __('module-referrals::messages.filter_recipient') }}: #{{ format_number($reward->recipient_user_id) }} · {{ __('module-referrals::messages.item_id') }}: {{ format_number($reward->item_id) }} · × {{ format_number($reward->amount) }}</p>
+                    <p>{{ $itemDetails[$reward->id]['name'] }} · {{ __('module-referrals::messages.filter_recipient') }}: #{{ format_number($reward->recipient_user_id) }} · {{ __('module-referrals::messages.item_id') }}: {{ format_number($reward->item_id) }} · × {{ format_number($reward->amount) }}</p>
                     <div class="content-row-meta">
                         <span>{{ __('module-referrals::messages.invitation_number', ['number' => format_number($reward->invite_id)]) }}</span>
                         <span>{{ __('module-referrals::messages.audience_'.$reward->audience) }}</span>

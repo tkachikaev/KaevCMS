@@ -224,8 +224,14 @@ final class AdminReferralController extends Controller
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->orderByDesc('id')->paginate(25)->withQueryString();
 
+        $itemDetails = [];
+        foreach ($rewards as $reward) {
+            $itemDetails[$reward->id] = $this->catalog->findForServer($reward->gameServer, $reward->item_id);
+        }
+
         return view('module-referrals::admin.grants', [
             'rewards' => $rewards,
+            'itemDetails' => $itemDetails,
             'servers' => GameServer::query()->with('translations')->orderBy('sort_order')->orderBy('id')->get(),
             'filters' => $filters,
         ]);

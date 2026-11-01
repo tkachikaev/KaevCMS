@@ -44,6 +44,15 @@ class PublicLocalizationTest extends TestCase
             ->assertSessionHas('locale', 'en');
     }
 
+    public function test_language_switch_keeps_referral_short_link_without_a_locale_prefix(): void
+    {
+        $path = '/r/'.str_repeat('A', 40);
+        foreach (['en', 'ru'] as $locale) {
+            $this->get(route('language.switch', ['locale' => $locale, 'return' => $path]))
+                ->assertRedirect(url($path))->assertSessionHas('locale', $locale);
+        }
+    }
+
     public function test_unknown_or_disabled_locales_are_not_exposed(): void
     {
         $this->get('/de')->assertNotFound();

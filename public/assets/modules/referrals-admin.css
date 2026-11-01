@@ -17,3 +17,5 @@
     .referrals-server-row { align-items: flex-start; flex-direction: column; gap: 14px; }
     .referrals-server-row > .referrals-actions { align-self: flex-end; }
 }
+
+.referrals-reward-row { grid-template-columns: 40px minmax(0, 1fr); }

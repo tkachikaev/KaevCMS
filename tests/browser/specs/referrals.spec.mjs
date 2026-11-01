@@ -22,6 +22,11 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
     await save('/admin/settings/registration', { _method: 'PUT', registration_enabled: '1', email_verification_required: '0' });
     await save(serverUrl, { _method: 'PUT', enabled: '1', checks_paused: '0', inviter_rewards_enabled: '1', invitee_rewards_enabled: '1', max_rewarded_invitees: '' });
     await save(serverUrl + '/rules', { audience: 'inviter', level: '20', item_id: '57', amount: '3' });
+    await save(serverUrl + '/rules', { audience: 'invitee', level: '10', item_id: '57', amount: '1' });
+    await page.goto('/admin/extensions/referrals');
+    const otherServerUrl = await page.locator('a[href*="/referrals/servers/"]').nth(1).getAttribute('href');
+    await save(otherServerUrl, { _method: 'PUT', enabled: '1', checks_paused: '0', inviter_rewards_enabled: '1', invitee_rewards_enabled: '1', max_rewarded_invitees: '' });
+    await save(otherServerUrl + '/rules', { audience: 'inviter', level: '20', item_id: '57', amount: '5' });
     await save('/admin/extensions/referrals/settings', { _method: 'PUT', enabled: '1', invite_ttl_days: '7' });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const locale of ['ru', 'en']) {
@@ -55,14 +60,42 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
             await player.goto('/language/' + locale);
             await player.goto('/modules/referrals');
             await expect(player.locator('#referral-link')).toBeVisible();
-            await expect(player.locator('#referral-link')).toHaveCSS('border-top-style', 'solid');
+            await expect(player.locator('#referral-link')).toHaveCSS('border-bottom-style', 'solid');
             expect(await player.locator('#referral-link').evaluate(el => el.clientHeight)).toBeGreaterThan(30);
             invitation = await player.locator('#referral-link').inputValue();
+            await expect(player.locator('[data-account-copy-toast]')).toBeHidden();
+            if (theme === 'luxury' && locale === 'ru') {
+                await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+                await player.locator('[data-account-copy-target="referral-link"]').click();
+                await expect(player.locator('[data-account-copy-toast]')).toBeVisible();
+                expect(await player.evaluate(() => navigator.clipboard.readText())).toBe(invitation);
+                await expect(player.locator('[data-account-copy-toast]')).toBeHidden({timeout: 4000});
+                await expect(player.locator('[data-account-copy-toast]')).toHaveText('');
+            }
             for (const width of [1440, 768, 390, 320]) {
                 await player.setViewportSize({ width, height: 1000 });
                 expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
                 if (locale === 'ru' && [1440, 390].includes(width)) await player.screenshot({ path: testInfo.outputPath(`referrals-${theme}-${width}.png`) });
             }
+            for (const tab of ['progress', 'history']) {
+                await player.locator(`[data-referral-tabs] a[href*="tab=${tab}"]`).click();
+                await expect(player.locator(`[data-referral-tabs] a[href*="tab=${tab}"]`)).toHaveAttribute('aria-current', 'page');
+                await expect(player.locator('#referral-link')).toHaveCount(0);
+                if (tab === 'history') {
+                    await player.locator('[data-referral-servers] a[href*="server=all"]').click();
+                    await expect(player).toHaveURL(/server=all/);
+                    await expect(player.locator('[data-referral-servers] a[href*="server=all"]')).toHaveAttribute('aria-current', 'page');
+                }
+                await player.reload();
+                await expect(player.locator(`[data-referral-tabs] a[href*="tab=${tab}"]`)).toHaveAttribute('aria-current', 'page');
+                for (const width of [1440, 390, 320]) {
+                    await player.setViewportSize({ width, height: 1000 });
+                    expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+                    if (locale === 'ru' && width !== 320) await player.screenshot({path: testInfo.outputPath(`referrals-${theme}-${tab}-${width}.png`)});
+                }
+            }
+            await player.locator('[data-referral-tabs] a[href*="tab=invite"]').click();
+            await expect(player.locator('#referral-link')).toBeVisible();
             if (theme === 'kaev-classic') {
                 await player.locator('[data-account-scheme-toggle]').click();
                 await expect(player.locator('html')).toHaveAttribute('data-account-scheme', 'dark');
@@ -78,15 +111,32 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
         const cookie = (await guest.cookies()).find(c => c.name === 'kaev_referral_invitation');
         expect(cookie.httpOnly).toBe(true);
         expect(cookie.value).not.toContain(new URL(invitation).pathname.split('/').at(-1));
-        const registrationPage = await visitor.goto('/register');
-        expect(registrationPage.status()).toBe(200);
+        const changeGuestLanguage = async (locale) => {
+            const menu = visitor.locator('[data-language-menu]:visible').first();
+            await menu.locator('summary').click();
+            await menu.locator(`a[hreflang="${locale}"]`).click();
+            await expect(visitor.locator('html')).toHaveAttribute('lang', locale);
+            const retained = (await guest.cookies()).find(c => c.name === 'kaev_referral_invitation');
+            expect(retained).toBeTruthy();
+            expect(retained.httpOnly).toBe(true);
+            expect(retained.expires).toBeGreaterThan(Date.now() / 1000 + 6 * 86400);
+        };
+        await changeGuestLanguage('en');
+        await changeGuestLanguage('ru');
+        await visitor.locator('.auth-card a.button').click();
+        await expect(visitor.locator('#name')).toBeVisible();
+        await changeGuestLanguage('en');
+        await visitor.reload();
+        await expect(visitor.locator('html')).toHaveAttribute('lang', 'en');
         await visitor.screenshot({path:testInfo.outputPath('registration-before.png')});
         await visitor.locator('[name=name]').fill('referralbrowser');
         await visitor.locator('[name=email]').fill('referralbrowser@example.test');
         await visitor.locator('[name=password]').fill('BrowserReferral123!');
         await visitor.locator('[name=password_confirmation]').fill('BrowserReferral123!');
         expect(await visitor.locator('form').filter({has: visitor.locator('#name')}).evaluate(f=>f.checkValidity())).toBe(true);
-        await submitLogin({ page: visitor, postPath: '/register', label: 'Referral registration', submit: () => visitor.locator('form').filter({has: visitor.locator('#name')}).locator('button[type=submit]').click() });
+        const registrationPath = new URL(await visitor.locator('form').filter({has: visitor.locator('#name')}).getAttribute('action'), visitor.url()).pathname;
+        await submitLogin({ page: visitor, postPath: registrationPath, label: 'Referral registration after language changes', submit: () => visitor.locator('form').filter({has: visitor.locator('#name')}).locator('button[type=submit]').click() });
+        expect((await guest.cookies()).find(c => c.name === 'kaev_referral_invitation')).toBeUndefined();
         await page.goto('/admin/extensions/referrals/invites');
         await expect(page.locator('form[action$="/freeze"]')).toHaveCount(1);
     } finally { await guest.close(); }

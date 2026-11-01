@@ -676,3 +676,10 @@ body.account-body .account-social-confirm .account-form-card { display:grid; gap
 #account-social-heading { scroll-margin-top:120px; }
 
 @media(max-width:520px) { .account-profile-social-icons { justify-content:flex-start; } }
+
+/* Compact clipboard field shared by account themes. */
+.account-copy-field { display: flex; align-items: center; gap: 10px; position: relative; min-width: 0; margin: 16px 0 24px; }
+body.account-body .account-copy-field > input { flex: 1; min-width: 0; width: 0; height: 42px; padding: 8px 0; border: 0; border-bottom: 1px solid var(--account-line); border-radius: 0; background: transparent; color: var(--account-text); font: inherit; font-size: 14px; }
+body.account-body .account-copy-field > .account-copy-icon { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; padding: 0; }
+.account-copy-toast { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 50; max-width: 100%; padding: 9px 13px; border: 1px solid var(--account-line); border-radius: 8px; background: var(--account-panel); color: var(--account-text); box-shadow: 0 4px 18px rgba(0,0,0,.14); font-size: 13px; line-height: 1.4; pointer-events: none; }
+.account-copy-toast[hidden] { display: none; }

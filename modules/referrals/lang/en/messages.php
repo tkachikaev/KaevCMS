@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'you_receive' => 'You will receive',
+    'friend_receives' => 'Your friend will receive',
+    'friend_level' => 'When your friend’s character reaches level :level',
+    'rewards_to_inventory' => 'Rewards will appear in the web inventory.',
+    'your_friend' => 'Your friend',
+    'you_were_invited' => 'You were invited',
+
+    'server_filter' => 'Server',
+    'all_servers' => 'All servers',
+    'account_sections' => 'Referral sections',
+    'tab_invite' => 'Invite a friend',
+    'tab_progress' => 'My invitations',
     'invitation_title' => 'You were invited',
     'invitation_text' => 'Create a new account to join your friend. The invitation remains available for :days day(s) unless you cancel it.',
     'invitation_register' => 'Register',
@@ -88,7 +100,7 @@ return [
     'account_title' => 'Invite a friend',
     'account_description' => 'Invite friends and earn rewards as their characters reach level milestones.',
     'your_invitation_link' => 'My invitation link',
-    'link_help' => 'Send this link to a friend. Their character milestones will be tracked after they register.',
+    'link_help' => 'Copy the link and send it to a friend.',
     'friends_registered' => 'Friends registered',
     'rewards_received' => 'Rewards received',
     'your_invitation' => 'My invitation',
@@ -98,7 +110,7 @@ return [
     'copy_failed' => 'Could not copy the link. Select and copy it manually.',
     'link_unavailable' => 'Your invitation link is currently unavailable. Contact the administrator.',
     'open_inventory' => 'Open web inventory',
-    'game_server_rewards' => 'Rewards by game server',
+    'game_server_rewards' => 'Rewards',
     'rewards_explanation' => 'Inviters and invitees can earn different rewards on each server.',
     'server_paused_notice' => 'New checks and rewards are paused on this server. Previously earned rewards are preserved.',
     'no_rewards_title' => 'No reward rules yet',

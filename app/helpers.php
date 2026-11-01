@@ -214,6 +214,11 @@ if (! function_exists('localized_current_url')) {
         }
 
         $firstSegment = strtolower((string) ($segments[0] ?? ''));
+        // Invitation links have a single, locale-independent core route. The
+        // public middleware uses the locale already saved in the session.
+        if (preg_match('/\Ar\/[A-Za-z0-9]{32,64}\z/D', implode('/', $segments)) === 1) {
+            return url('/'.implode('/', $segments)).($query !== '' ? '?'.$query : '');
+        }
         if ($firstSegment === 'modules') {
             // Donations routes have no /{locale} prefix; their middleware reads
             // the language saved by LocaleController. Keep the selected order.

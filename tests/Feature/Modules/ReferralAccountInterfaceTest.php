@@ -9,6 +9,8 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use KaevCMS\Modules\Referrals\Models\ReferralCode;
 use KaevCMS\Modules\Referrals\Models\ReferralEntitlement;
 use KaevCMS\Modules\Referrals\Models\ReferralInvite;
@@ -59,8 +61,8 @@ class ReferralAccountInterfaceTest extends TestCase
             ->assertSee('data-account-copy-target="referral-link"', false)
             ->assertSee('/r/'.ReferralCode::query()->where('user_id', $user->id)->firstOrFail()->code)
             ->assertSee($server->nameFor())
-            ->assertSee(__('module-referrals::messages.level_required', ['level' => 20]))
-            ->assertSee(__('module-referrals::messages.open_inventory'));
+            ->assertSee(__('module-referrals::messages.friend_level', ['level' => 20]))
+            ->assertDontSee(__('module-referrals::messages.open_inventory'));
     }
 
     public function test_disabled_program_hides_link_even_after_it_was_configured(): void
@@ -92,7 +94,7 @@ class ReferralAccountInterfaceTest extends TestCase
             'max_seen_level' => 30, 'status' => 'pending',
         ]);
 
-        $response = $this->actingAs($first)->get(route('modules.referrals.index'));
+        $response = $this->actingAs($first)->get(route('modules.referrals.index', ['tab' => 'progress']));
         $response->assertOk()
             ->assertSee(__('module-referrals::messages.invitation_number', ['number' => $invite->id]))
             ->assertDontSee(__('module-referrals::messages.invitation_number', ['number' => $unrelated->id]))
@@ -122,6 +124,90 @@ class ReferralAccountInterfaceTest extends TestCase
         $this->actingAs($owner, 'admin')->get('/admin/extensions/referrals/grants?level=40')
             ->assertOk()->assertDontSee(__('module-referrals::messages.invitation_number', ['number' => $invite->id]));
         $this->assertSame('pending', $row->fresh()->status);
+    }
+
+    public function test_item_icons_are_shared_by_account_rules_history_admin_rules_and_journal(): void
+    {
+        $root = storage_path('framework/testing/referral-icons-'.Str::uuid());
+        File::ensureDirectoryExists($root.'/items/common');
+        File::copy(base_path('modules/referrals/assets/module.webp'), $root.'/items/common/57.webp');
+        config()->set('cms.game_assets.uploads_path', $root);
+
+        try {
+            $server = $this->configureServer();
+            $user = User::factory()->create();
+            $invite = $this->invite($user, User::factory()->create());
+            $this->entitlement($invite, $server, $user, 20, 57);
+            $icon = '/uploads/game-assets/items/common/57.webp';
+            $account = $this->actingAs($user)->get(route('modules.referrals.index'))->assertOk();
+            $account->assertSee($icon, false);
+            $this->get(route('modules.referrals.index', ['tab' => 'history']))->assertOk()->assertSee($icon, false);
+            $owner = Admin::factory()->create();
+            $this->actingAs($owner, 'admin')->get('/admin/extensions/referrals/servers/'.$server->id)
+                ->assertOk()->assertSee($icon, false);
+            $this->get('/admin/extensions/referrals/grants')
+                ->assertOk()->assertSee($icon, false);
+        } finally {
+            File::deleteDirectory($root);
+        }
+    }
+
+    public function test_account_tabs_show_only_the_selected_section_and_preserve_server(): void
+    {
+        $server = $this->configureServer();
+        $user = User::factory()->create();
+        foreach (['invite', 'progress', 'history'] as $tab) {
+            $response = $this->actingAs($user)->get(route('modules.referrals.index', ['server' => $server->id, 'tab' => $tab]));
+            $response->assertOk()->assertViewHas('activeTab', $tab)->assertSee('data-referral-tabs', false);
+            if ($tab === 'invite') {
+                $response->assertSee('id="referral-link"', false);
+            } else {
+                $response->assertDontSee('id="referral-link"', false);
+            }
+            foreach (['invite', 'progress', 'history'] as $destination) {
+                $response->assertSee(route('modules.referrals.index', ['server' => $server->id, 'tab' => $destination]));
+            }
+        }
+        $this->get(route('modules.referrals.index', ['tab' => 'unexpected']))->assertOk()->assertViewHas('activeTab', 'invite');
+    }
+
+    public function test_history_filters_all_or_one_server_without_exposing_other_players_rewards(): void
+    {
+        $first = $this->configureServer();
+        $second = $this->configureServer();
+        $user = User::factory()->create();
+        $invite = $this->invite($user, User::factory()->create());
+        $one = $this->entitlement($invite, $first, $user, 20, 57);
+        $two = $this->entitlement($invite, $second, $user, 30, 4037);
+        $other = User::factory()->create();
+        $foreign = $this->entitlement($this->invite($other, User::factory()->create()), $second, $other, 40, 57);
+        $response = $this->actingAs($user)->get(route('modules.referrals.index', ['tab' => 'history', 'server' => 'all']))->assertOk();
+        $this->assertSame(2, $response->viewData('rewards')->total());
+        $this->assertEqualsCanonicalizing([$one->id, $two->id], $response->viewData('rewards')->getCollection()->modelKeys());
+        $this->assertArrayNotHasKey($foreign->id, $response->viewData('rewardItems'));
+        $response->assertSee($first->nameFor())->assertSee($second->nameFor());
+        $this->assertStringContainsString('server=all', $response->viewData('rewards')->url(2));
+        $this->assertStringContainsString('tab=history', $response->viewData('rewards')->url(2));
+        foreach ([$first, $second] as $server) {
+            $filtered = $this->get(route('modules.referrals.index', ['tab' => 'history', 'server' => $server->id]))->assertOk();
+            $this->assertSame(1, $filtered->viewData('rewards')->total());
+            $this->assertSame($server->id, $filtered->viewData('rewards')->first()->game_server_id);
+        }
+    }
+
+    public function test_invitation_explains_both_recipients_and_uses_inventory_server_heading(): void
+    {
+        $server = $this->configureServer();
+        ReferralRule::query()->create([
+            'game_server_id' => $server->id, 'audience' => 'invitee', 'level' => 10,
+            'item_id' => 57, 'amount' => 1, 'enabled' => true,
+        ]);
+        $this->actingAs(User::factory()->create())->get(route('modules.referrals.index'))->assertOk()
+            ->assertSee('account-section-heading reward-inventory-heading', false)
+            ->assertSee(__('module-referrals::messages.you_receive'))
+            ->assertSee(__('module-referrals::messages.friend_receives'))
+            ->assertSee(__('module-referrals::messages.friend_level', ['level' => 10]))
+            ->assertDontSee(__('module-referrals::messages.rules_current_notice'));
     }
 
     private function configureServer(): GameServer
