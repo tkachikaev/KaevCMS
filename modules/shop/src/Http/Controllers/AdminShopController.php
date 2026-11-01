@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
+use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopSetting;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 use RuntimeException;
@@ -46,6 +47,8 @@ final class AdminShopController extends Controller
         return view('module-shop::admin.server', [
             'server' => $server,
             'tabs' => $tabs,
+            'products' => ShopProduct::query()->whereHas('category.tab', fn ($query) => $query->where('game_server_id', $server->id))
+                ->with(['category.tab', 'bundleItems'])->orderBy('sort_order')->orderBy('id')->get(),
             'canManage' => $this->canManage($request),
         ]);
     }
@@ -164,6 +167,9 @@ final class AdminShopController extends Controller
             $category = ShopCategory::query()->whereKey($category->id)
                 ->whereHas('tab', fn ($query) => $query->where('game_server_id', $server->id))
                 ->lockForUpdate()->firstOrFail();
+            if (ShopProduct::query()->where('category_id', $category->id)->exists()) {
+                throw ValidationException::withMessages(['confirm' => __('module-shop::messages.category_has_products')]);
+            }
             $id = $category->id;
             $category->delete();
             $this->auditRequired('shop.category_deleted', $admin, 'shop_category:'.$id, ['game_server_id' => $server->id]);

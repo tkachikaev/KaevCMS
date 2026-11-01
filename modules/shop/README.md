@@ -1,11 +1,12 @@
-# Shop 1.0.1 — iteration 2 (development)
+# Shop 1.0.2 — iteration 3 (development)
 
 Shop is an **admin-only catalog editor**. It is not a storefront and does not debit coins or award items. All sales remain disabled even if old settings contain `true`.
 
 - I1 (`2026_11_01_010000`): global and per-GameServer settings. This migration remains unchanged.
 - I2 (`2026_11_01_020000`): `module_shop_tabs` and `module_shop_categories`, titles in RU/EN, ordering and visibility flags. Categories belong to a tab; tabs belong to exactly one GameServer.
-- Owner and Administrator can add/edit/delete tabs and categories. Auditor can only view; Editor has no access.
-- A tab cannot be deleted while it contains categories. Deleting a GameServer with catalog tabs is blocked by the module dependency guard and the database foreign key; empty per-server settings may be removed.
+- I3 (`2026_11_01_030000`): `module_shop_products` (single items or bundles, RU/EN labels, positive integer coin prices, sort/visibility, server-bound category), `module_shop_bundle_items` (multiple IDs and positive quantities; duplicate IDs rejected). A bundle may be saved empty while being configured; no checkout endpoint exposes it.
+- Owner and Administrator can add/edit/delete tabs, categories, products and bundle entries. Auditor can only view; Editor has no access.
+- A category cannot be deleted while it has products, and a tab cannot be deleted while it contains categories. Deleting a GameServer with catalog tabs is blocked by the module dependency guard and the database foreign key; empty per-server settings may be removed.
 - Administrative changes are transactional and written to the common audit log; audit write failure rolls back the operation.
 - Views use the standard `x-admin.*`, `admin-card-row`, `content-list`, `admin-overview`, `notice` and `button` styles; no new stylesheet or JavaScript.
 - There are **no account, checkout, wallet, inventory or game-database routes**.
@@ -16,4 +17,4 @@ Enable/update Shop through **Modules** and apply its pending migrations using th
 
 ## Next
 
-Iteration 3: products/bundles and prices attached to categories. Checkout comes later as a separate audited operation.
+Iteration 4: atomic wallet debit and inventory grant with idempotency and real MySQL concurrency tests. No checkout or player routes exist in I3.

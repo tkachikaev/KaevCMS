@@ -36,13 +36,15 @@ final class ShopModuleTest extends TestCase
         $this->assertSame([], $module['pending_migrations']);
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'shop',
-            'version' => '1.0.1',
+            'version' => '1.0.2',
             'enabled' => true,
         ]);
         $this->assertTrue(Schema::hasTable('module_shop_settings'));
         $this->assertTrue(Schema::hasTable('module_shop_server_settings'));
         $this->assertTrue(Schema::hasTable('module_shop_tabs'));
         $this->assertTrue(Schema::hasTable('module_shop_categories'));
+        $this->assertTrue(Schema::hasTable('module_shop_products'));
+        $this->assertTrue(Schema::hasTable('module_shop_bundle_items'));
         $this->assertDatabaseHas('module_shop_settings', [
             'setting_key' => 'global',
             'sales_enabled' => false,

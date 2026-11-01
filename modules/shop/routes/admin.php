@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Shop\Http\Controllers\AdminShopController;
+use KaevCMS\Modules\Shop\Http\Controllers\AdminShopProductController;
 
 Route::get('/', [AdminShopController::class, 'index'])->name('index');
 Route::get('/servers/{server}', [AdminShopController::class, 'server'])->whereNumber('server')->name('servers.show');
@@ -13,3 +14,11 @@ Route::post('/servers/{server}/categories', [AdminShopController::class, 'storeC
 Route::get('/servers/{server}/categories/{category}/edit', [AdminShopController::class, 'editCategory'])->whereNumber(['server', 'category'])->name('categories.edit');
 Route::put('/servers/{server}/categories/{category}', [AdminShopController::class, 'updateCategory'])->whereNumber(['server', 'category'])->name('categories.update');
 Route::delete('/servers/{server}/categories/{category}', [AdminShopController::class, 'destroyCategory'])->whereNumber(['server', 'category'])->name('categories.destroy');
+
+Route::get('/servers/{server}/products/create', [AdminShopProductController::class, 'create'])->whereNumber('server')->name('products.create');
+Route::post('/servers/{server}/products', [AdminShopProductController::class, 'store'])->whereNumber('server')->name('products.store');
+Route::get('/servers/{server}/products/{product}/edit', [AdminShopProductController::class, 'edit'])->whereNumber(['server', 'product'])->name('products.edit');
+Route::put('/servers/{server}/products/{product}', [AdminShopProductController::class, 'update'])->whereNumber(['server', 'product'])->name('products.update');
+Route::delete('/servers/{server}/products/{product}', [AdminShopProductController::class, 'destroy'])->whereNumber(['server', 'product'])->name('products.destroy');
+Route::post('/servers/{server}/products/{product}/bundle-items', [AdminShopProductController::class, 'addBundleItem'])->whereNumber(['server', 'product'])->name('bundle-items.store');
+Route::delete('/servers/{server}/products/{product}/bundle-items/{bundleItem}', [AdminShopProductController::class, 'removeBundleItem'])->whereNumber(['server', 'product', 'bundleItem'])->name('bundle-items.destroy');

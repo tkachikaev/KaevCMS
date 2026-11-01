@@ -58,6 +58,36 @@
         </div>
     @endif
 </x-admin.card>
+<x-admin.card>
+    <x-admin.card-heading :title="__('module-shop::messages.products_title')" :description="__('module-shop::messages.products_description')" />
+    @if($products->isEmpty())
+        <div class="admin-empty-state empty-state"><h3>{{ __('module-shop::messages.no_products_title') }}</h3><p>{{ __('module-shop::messages.no_products_description') }}</p></div>
+    @else
+        <div class="admin-card-list content-list">
+            @foreach($products as $product)
+                <article class="content-row admin-card-row">
+                    <div>
+                        <strong class="content-row-title">{{ $product->nameFor() }}</strong>
+                        <p>{{ $product->category->tab->nameFor() }} / {{ $product->category->nameFor() }} · {{ $product->type === 'item' ? __('module-shop::messages.item_type') : __('module-shop::messages.bundle_type') }} · {{ __('module-shop::messages.price_value', ['count' => format_number($product->price_coins)]) }}</p>
+                        <span @class(['status-badge', 'status-badge-success' => $product->is_active])>{{ $product->is_active ? __('module-shop::messages.active') : __('module-shop::messages.hidden') }}</span>
+                        @if($product->type === 'bundle')
+                            <p>{{ __('module-shop::messages.bundle_item_count', ['count' => format_number($product->bundleItems->count())]) }}</p>
+                        @else
+                            <p>{{ __('module-shop::messages.item_label', ['id' => format_number($product->item_id)]) }} · {{ __('module-shop::messages.quantity_value', ['count' => format_number($product->quantity)]) }}</p>
+                        @endif
+                    </div>
+                    <div class="content-row-actions admin-row-actions"><x-admin.button wire:navigate :href="route('admin.module-pages.shop.products.edit', ['adminPath' => $adminPath, 'server' => $server->id, 'product' => $product->id])">{{ $canManage ? __('module-shop::messages.edit') : __('module-shop::messages.view') }}</x-admin.button></div>
+                </article>
+            @endforeach
+        </div>
+    @endif
+    @if($canManage && $tabs->sum(fn ($tab) => $tab->categories->count()) > 0)
+        <div class="content-row-actions admin-row-actions">
+            <x-admin.button wire:navigate :href="route('admin.module-pages.shop.products.create', ['adminPath' => $adminPath, 'server' => $server->id, 'type' => 'item'])" variant="primary">{{ __('module-shop::messages.add_item_product') }}</x-admin.button>
+            <x-admin.button wire:navigate :href="route('admin.module-pages.shop.products.create', ['adminPath' => $adminPath, 'server' => $server->id, 'type' => 'bundle'])">{{ __('module-shop::messages.add_bundle_product') }}</x-admin.button>
+        </div>
+    @endif
+</x-admin.card>
 @if($canManage)
     <x-admin.card>
         <x-admin.card-heading :title="__('module-shop::messages.add_tab')" />
