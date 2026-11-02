@@ -133,24 +133,56 @@
                     throw new Error(payload.message);
                 }
                 if (!response.ok) throw new Error(Object.values(payload.errors ?? {}).flat()[0] || payload.message || order.dataset.failed);
-                // Only reviewed provider adapters may define an external form target.
-                if (payload.action !== 'https://yoomoney.ru/quickpay/confirm' || payload.method !== 'POST'
-                    || payload.fields?.sum !== format(BigInt(quotedTotal), Number(currency.selectedOptions[0].dataset.exponent))) {
+                // Accept only the reviewed adapter selected in this form. The server
+                // creates and validates immutable checkout terms before returning them.
+                const provider = order.elements.namedItem('provider').value;
+                const fields = payload.fields;
+                const amount = format(BigInt(quotedTotal), Number(currency.selectedOptions[0].dataset.exponent));
+                if (!fields || typeof fields !== 'object') throw new Error(order.dataset.failed);
+                if (provider === 'yoomoney') {
+                    if (payload.action !== 'https://yoomoney.ru/quickpay/confirm' || payload.method !== 'POST'
+                        || fields.sum !== amount) throw new Error(order.dataset.failed);
+                    const external = document.createElement('form');
+                    external.method = 'POST';
+                    external.action = payload.action;
+                    external.hidden = true;
+                    for (const name of ['receiver', 'quickpay-form', 'label', 'sum', 'successURL', 'paymentType']) {
+                        if (typeof fields[name] !== 'string') throw new Error(order.dataset.failed);
+                        const input = document.createElement('input');
+                        input.type = 'hidden'; input.name = name; input.value = fields[name];
+                        external.append(input);
+                    }
+                    document.body.append(external);
+                    HTMLFormElement.prototype.submit.call(external);
+                    redirecting = true;
+                } else if (provider === 'freekassa') {
+                    const names = ['m', 'oa', 'currency', 'o', 's'];
+                    if (payload.action !== 'https://pay.fk.money/' || payload.method !== 'GET'
+                        || Object.keys(fields).length !== names.length
+                        || names.some(name => typeof fields[name] !== 'string')
+                        || fields.oa !== amount || fields.currency !== currency.value
+                        || !/^[1-9][0-9]{0,17}$/.test(fields.m)
+                        || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(fields.o)
+                        || !/^[0-9a-f]{32}$/i.test(fields.s)) throw new Error(order.dataset.failed);
+                    const url = new URL(payload.action);
+                    for (const name of names) url.searchParams.set(name, fields[name]);
+                    window.location.assign(url.toString());
+                    redirecting = true;
+                } else if (provider === 'paypal') {
+                    const url = new URL(payload.action);
+                    if (payload.method !== 'GET' || Object.keys(fields).length !== 0
+                        || url.protocol !== 'https:' || url.hostname !== 'www.paypal.com'
+                        || (url.port && url.port !== '443') || url.username || url.password || url.hash
+                        || !['/checkoutnow', '/checkoutnow/'].includes(url.pathname)
+                        || url.searchParams.getAll('token').length !== 1
+                        || !/^[A-Za-z0-9_-]{1,190}$/.test(url.searchParams.get('token'))) {
+                        throw new Error(order.dataset.failed);
+                    }
+                    window.location.assign(url.toString());
+                    redirecting = true;
+                } else {
                     throw new Error(order.dataset.failed);
                 }
-                const external = document.createElement('form');
-                external.method = 'POST';
-                external.action = payload.action;
-                external.hidden = true;
-                for (const name of ['receiver', 'quickpay-form', 'label', 'sum', 'successURL', 'paymentType']) {
-                    if (typeof payload.fields[name] !== 'string') throw new Error(order.dataset.failed);
-                    const input = document.createElement('input');
-                    input.type = 'hidden'; input.name = name; input.value = payload.fields[name];
-                    external.append(input);
-                }
-                document.body.append(external);
-                redirecting = true;
-                HTMLFormElement.prototype.submit.call(external);
             } catch (exception) {
                 if (currentSubmission === submission) {
                     submitError.textContent = exception instanceof Error && !(exception instanceof TypeError) && exception.name !== 'AbortError' ? exception.message : order.dataset.failed;
