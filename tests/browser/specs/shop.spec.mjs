@@ -11,7 +11,15 @@ test('shop activates through administration, buys once and renders all account t
     await submitLogin({ page, postPath: '/admin/login', label: 'Shop administrator', submit: () => page.locator('form[action$="/admin/login"] button[type=submit]').click() });
     await page.goto('/admin/modules');
     const enable = page.locator('[data-module-id="shop"] form[action$="/enable"]');
-    if (await enable.count()) { await enable.locator('button').click(); await expect(enable).toHaveCount(0); }
+    if (await enable.count()) {
+        // Wait for the enable request itself: under load the next page can be requested before it finishes.
+        await Promise.all([
+            page.waitForResponse((response) => response.request().method() === 'POST' && /\/enable$/.test(new URL(response.url()).pathname)),
+            enable.locator('button').click(),
+        ]);
+        await page.goto('/admin/modules');
+        await expect(enable).toHaveCount(0);
+    }
     await page.goto('/admin/extensions/shop');
     const save = async (url, data) => {
         const token = await page.locator('meta[name=csrf-token]').getAttribute('content');

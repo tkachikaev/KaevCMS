@@ -1,41 +1,13 @@
 # Changelog
 
-## Unreleased (development)
+## 0.58.0 - 2026-11-03
 
-- Referrals 1.0.1: one administration screen per game server with a server picker, the invitation switch in the header, compact server and general settings cards, and inviter and invitee rewards side by side. Reward rows show the item icon and name; new rules resolve the item ID like promo-code rewards and are added or removed without a reload. The overview opens the first server.
-
-- Account area and administration: tab switches within one section keep the scroll position and no longer replay page entrance animations, so tab rows and content stop flickering.
-
-- Shop: purchases need a press-and-hold on the confirm button with the button and item icons filling up, section and server switches replace only the catalogue, the duplicated balance and success banner are gone, bundle contents open in a dialog and wallet coins stay square.
-
-- Shop 1.0.6: one administration screen per game server with inline sections (drag-and-drop and keyboard ordering, quick visibility), product cards and a side-panel editor. Item rows match promo-code rewards with icon and name lookup, items can be searched by name or ID, a single item names the product automatically, and names and descriptions have a tab per enabled site language (new translations migration copies existing RU/EN texts). Forms and section switches update in place without losing the scroll position. The storefront gets section pills, equal-height cards with item names, a purchase confirmation dialog and a result dialog with delivered items; receipts show item names. The account menu shows the shop whenever a catalogue is visible. Sales remain off by default.
-
-- Shop 1.0.5 / catalogue redesign I4 QA follow-up: ensure the administration card and table label products inside disabled sections as hidden. Add a regression test and update Shop guidance. Independent UI-component checks were completed; full Laravel, browser integration and SQL concurrency acceptance remains pending. No schema, wallet, dependencies or module version changes.
-
-- Shop 1.0.5 / catalogue redesign I3: switch player catalog from horizontal reward rows to localized vertical cards with shared GameServer item-artwork preview (up to three icons and `+N`), full item contents disclosure and original wallet checkout form. Use matching cards in administration with Cards/Table toggle; retain all existing sections, dialogs, migrations, purchase history and financial restrictions. Add RU/EN messages and browser/feature regressions; no new schema or module version increase. DEV / full QA pending.
-
-- Shop 1.0.5 / catalogue redesign I2: replace nested tabs/categories with direct sections and one modal product editor for 1–100 distinct item IDs at one price. Preserve and hide legacy category state, accept section-only products via an additive migration, and retain legacy routes for compatibility. New owner/admin controls are server-scoped, transactional and audited; the player card redesign remains for I3. Sales remain default-off.
-
-- Shop 1.0.4 / catalogue redesign I1: prepare the direct server → section → product data model, reusing existing tab IDs and preserving legacy categories and purchases. Add an additive migration to populate product section IDs and store localized descriptions. Existing category-based UI and checkout remain compatible until I2; no CSS or wallet changes.
-
-- Shop activation through audited administration settings, with new installations keeping sales disabled.
-- Shop catalogue and receipt rendering, invalid bundle visibility and responsive administration layouts.
-- Shop static analysis declarations and real-database migration/concurrency coverage.
-
-- Shop I8 QA follow-up: prevent configuring a 101st bundle item, hide invalid oversized bundles from the player catalog, and add the 100/101 boundary regression test. No CSS, dependencies, wallet core or migrations changed; full QA remains pending.
-- Shop I8 (module 1.0.3, DEV): synchronize RU/EN public documentation with the existing storefront, checkout and history; document default-off trusted wallet source, Web Inventory delivery, and the outstanding test/activation gate. No sale activation or dependency changes.
-- Shop I7 (module 1.0.3, DEV): recheck player activity under the purchase lock, safely resolve cross-player UUID races after a rolled-back transaction, and extend retry and concurrency regression scenarios. Keep sales off; no schema, wallet core or CSS changes.
-
-- Shop I6 (module 1.0.3, DEV): read-only purchase journal and receipts in the player cabinet, read-only admin purchase filters and details. Completed purchase snapshots survive catalog changes and remain accessible with sales off; no migrations or CSS changes.
-
-- Shop iteration 5 (module 1.0.3; no schema change): add authenticated player storefront with GameServer selection, section/category tabs, localized products, inventory delivery notice, balance and fail-closed checkout. Reuse existing account components in all themes; trusted wallet source and sales remain disabled.
-
-- Shop 1.0.3 iteration 4: add an internal, disabled-by-default purchase service with transactional wallet debit, Web Inventory grant, immutable purchase history, UUID replay protection, validation, fail-closed audit, and a dedicated additive migration. No player checkout routes, CSS changes or live sales yet.
-
-- Shop 1.0.2 iteration 3: administrator-managed single items and bundles with server-isolated categories, fixed coin prices, bundle composition, validation, audit and dedicated migration. Existing admin styles reused; no checkout, wallet debit or grants.
-- Shop 1.0.1 iteration 2: per-GameServer catalog tabs and nested categories with RU/EN names, ordering and visibility; admin creation/editing/deletion with audit and server isolation. Uses existing admin components without new CSS. The player storefront and all payments remain disabled.
-
-- Add Shop 1.0.0 iteration 1 foundation: standalone module registration, RU/EN administration overview using the existing admin UI, default-disabled global and GameServer settings, and role-based read-only access for auditors. No storefront, coin charges or rewards are available yet.
+- Add Shop 1.0.6: a per-GameServer catalogue of sections and products bought with CMS wallet coins and delivered to Web Inventory, with player purchase history and a read-only administration journal. Sales stay off on new installations until enabled globally and per server.
+- Shop administration: one screen per game server with inline sections, drag-and-drop and keyboard ordering, quick visibility switches, product cards and a side-panel editor. Items are entered like promo-code rewards or found by name or ID, a single item names the product automatically, and names and descriptions have a tab per enabled site language.
+- Shop storefront: section pills that switch in place, equal-height cards with item names, a bundle contents dialog, a press-and-hold purchase confirmation with filling button and icons, and a result dialog with the delivered items. Receipts show item names.
+- Referrals 1.0.1: one administration screen per game server with a server picker, the invitation switch in the header, compact settings cards and inviter and invitee rewards side by side; rules resolve item names and icons and are added or removed without a reload.
+- Account area and administration: tab switches keep the scroll position and no longer replay entrance animations or show the loading bar; the administration header keeps tab rows at a fixed height on every page.
+- Search the game item catalogue by localized name for item pickers.
 
 ## 0.57.0 - 2026-11-01
 
