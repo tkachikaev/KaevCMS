@@ -701,15 +701,28 @@ body.account-body .shop-section-title { margin: 0 0 14px; color: var(--account-t
 .shop-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 20px; min-width: 0; }
 .shop-product-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border-radius: var(--account-radius, 12px); }
 body.account-body .shop-product-card { border: 1px solid var(--account-line); background: var(--account-panel); }
-.shop-product-artwork { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 132px; padding: 18px 16px; }
+.shop-product-artwork { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 132px; padding: 18px 16px; }
+.shop-product-artwork-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 body.account-body .shop-product-artwork { border-bottom: 1px solid var(--account-line-soft); background: var(--account-panel-soft); }
 .shop-product-artwork-item { display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 56px; overflow: hidden; border-radius: 8px; background: #1b1a17; }
 body.account-body .shop-product-artwork-item { border: 1px solid var(--account-line); color: var(--account-gold); }
 .shop-product-artwork-item img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .shop-product-artwork[data-shop-art-count="1"] .shop-product-artwork-item { width: 68px; height: 68px; flex-basis: 68px; }
 .shop-product-artwork-fallback { font-size: 28px; line-height: 1; }
-.shop-product-artwork-more { display: inline-grid; place-items: center; min-width: 48px; height: 56px; border-radius: 8px; font-weight: 700; font-size: 15px; }
-body.account-body .shop-product-artwork-more { border: 1px dashed var(--account-line); color: var(--account-muted); }
+.shop-product-artwork-more { font-size: 14px; font-weight: 600; line-height: 1.2; }
+body.account-body .shop-product-artwork-more { color: var(--account-muted); }
+.shop-product-bundle { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+body.account-body .shop-contents-button { padding: 0; border: 0; background: none; color: var(--account-gold-bright); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+body.account-body .shop-contents-button:hover { color: var(--account-gold-dark); }
+body.account-body .shop-contents-button:focus-visible { outline: 3px solid var(--account-gold); outline-offset: 2px; border-radius: 4px; }
+/* Bundle contents read as a list so long item names are never cut. */
+body.account-body .shop-contents-list { grid-template-columns: minmax(0, 1fr); gap: 8px; max-height: min(56vh, 520px); overflow: auto; }
+body.account-body .shop-contents-list .account-operation-reward { grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; justify-items: start; gap: 14px; padding: 10px 14px; text-align: left; }
+body.account-body .shop-contents-list .account-operation-reward-icon { width: 48px; height: 48px; border-radius: 10px; }
+body.account-body .shop-contents-list .account-operation-reward-icon img { width: 46px; height: 46px; border-radius: 9px; }
+body.account-body .shop-contents-list .account-operation-reward strong { font-size: 15px; white-space: normal; overflow-wrap: anywhere; }
+body.account-body .shop-contents-list .account-operation-reward small { justify-self: end; white-space: nowrap; }
+body.account-body .shop-contents-dialog .account-operation-modal-mark img { width: 40px; height: 40px; border-radius: 8px; }
 .shop-product-card-body { display: flex; flex: 1; flex-direction: column; gap: 6px; min-width: 0; padding: 16px 18px 8px; }
 body.account-body .shop-product-card-body h3 { margin: 0; color: var(--account-text); font-size: 19px; line-height: 1.35; overflow-wrap: anywhere; }
 body.account-body .shop-product-description { margin: 0; color: var(--account-muted); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }

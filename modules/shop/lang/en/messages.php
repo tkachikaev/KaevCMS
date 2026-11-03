@@ -243,4 +243,6 @@ return [
     'buy_for' => 'Buy for :count',
     'purchase_failed_title' => 'Purchase not completed',
     'purchase_success_title' => '“:product” purchased',
+    'artwork_more' => '+:count more',
+    'contents_open' => 'Details',
 ];

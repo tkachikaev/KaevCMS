@@ -243,4 +243,6 @@ return [
     'buy_for' => 'Купить за :count',
     'purchase_failed_title' => 'Покупка не выполнена',
     'purchase_success_title' => '«:product» куплен',
+    'artwork_more' => '+:count ещё',
+    'contents_open' => 'Подробнее',
 ];

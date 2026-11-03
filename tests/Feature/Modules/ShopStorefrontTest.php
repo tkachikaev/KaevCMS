@@ -136,6 +136,8 @@ final class ShopStorefrontTest extends TestCase
             ->assertSee('shop-product-grid', false)
             ->assertSee('data-shop-art-count="3"', false)
             ->assertSee('shop-product-artwork-more', false)
+            ->assertSee('data-account-social-open="shop-contents-'.$bundle->id.'"', false)
+            ->assertSee('id="shop-contents-'.$bundle->id.'"', false)
             ->assertSee('+1')
             ->assertSee(trans_choice('module-shop::messages.bundle_meta', 4, ['count' => format_number(4)]))
             // Every item, including those beyond the three icons, is listed by name.

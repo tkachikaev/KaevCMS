@@ -70,7 +70,11 @@
                                     <p class="shop-product-shortfall">{{ __('module-shop::messages.account_not_enough', ['count' => format_number($product->price_coins - $walletView['balance'])]) }}</p>
                                 @endif
                             </article>
-                            @if($canBuy && ! $walletView['blocked'] && $affordable)
+                            @php($buyable = $canBuy && ! $walletView['blocked'] && $affordable)
+                            @if(count($contents) > 1)
+                                @include('module-shop::account._contents-dialog')
+                            @endif
+                            @if($buyable)
                                 @include('module-shop::account._buy-dialog')
                             @endif
                         @endforeach

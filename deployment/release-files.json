@@ -515,6 +515,7 @@
         "modules/shop/lang/ru/messages.php",
         "modules/shop/module.json",
         "modules/shop/resources/views/account/_buy-dialog.blade.php",
+        "modules/shop/resources/views/account/_contents-dialog.blade.php",
         "modules/shop/resources/views/account/history.blade.php",
         "modules/shop/resources/views/account/index.blade.php",
         "modules/shop/resources/views/account/receipt.blade.php",

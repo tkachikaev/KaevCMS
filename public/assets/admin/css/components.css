@@ -1554,12 +1554,13 @@ div.setup-result { position: relative; margin: 14px 0; padding: 16px 18px 16px 6
 
 
 /* Shop: shared item artwork (admin cards reuse the storefront proportions). */
-.shop-product-artwork { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--admin-space-2); min-height: 112px; padding: var(--admin-space-4); background: var(--admin-surface-subtle); border-bottom: 1px solid var(--admin-border); }
+.shop-product-artwork { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--admin-space-2); min-height: 112px; padding: var(--admin-space-4); background: var(--admin-surface-subtle); border-bottom: 1px solid var(--admin-border); }
+.shop-product-artwork-row { display: flex; align-items: center; justify-content: center; gap: var(--admin-space-2); }
 .shop-product-artwork-item { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px; overflow: hidden; border: 1px solid var(--admin-border-strong); border-radius: var(--admin-radius-control); background: #1b1a17; color: var(--admin-text-muted); }
 .shop-product-artwork-item img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .shop-product-artwork[data-shop-art-count="1"] .shop-product-artwork-item { width: 56px; height: 56px; flex-basis: 56px; }
 .shop-product-artwork-fallback { font-size: 24px; line-height: 1; }
-.shop-product-artwork-more { padding: 2px 8px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-pill); background: var(--admin-surface); color: var(--admin-text-muted); font-size: var(--admin-text-caption); font-weight: var(--admin-weight-semibold); }
+.shop-product-artwork-more { color: var(--admin-text-muted); font-size: var(--admin-text-caption); font-weight: var(--admin-weight-semibold); }
 
 /* Shop catalog editor: one screen per game server. */
 .shop-editor { display: grid; gap: var(--admin-space-4); min-width: 0; }
@@ -1641,7 +1642,6 @@ div.setup-result { position: relative; margin: 14px 0; padding: 16px 18px 16px 6
 .shop-admin-card-body strong { font-size: var(--admin-text-body); line-height: 22px; font-weight: var(--admin-weight-semibold); overflow-wrap: anywhere; }
 .shop-admin-card-meta { color: var(--admin-text-muted); font-size: var(--admin-text-small); }
 .shop-admin-card-price { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--admin-space-2); font-weight: var(--admin-weight-bold); }
-.shop-admin-card-price img { border-radius: 50%; }
 .shop-admin-card-badge { position: absolute; top: var(--admin-space-2); left: var(--admin-space-2); }
 .shop-card-handle { position: absolute; z-index: 1; top: var(--admin-space-2); right: var(--admin-space-2); background: var(--admin-surface); border: 1px solid var(--admin-border); }
 
@@ -1676,7 +1676,7 @@ div.setup-result { position: relative; margin: 14px 0; padding: 16px 18px 16px 6
 .shop-item-rows .promo-reward-row.is-duplicate { border-color: var(--admin-danger-border); background: var(--admin-danger-soft); }
 .shop-add-row { justify-self: start; }
 .shop-price-field { display: flex; align-items: center; gap: var(--admin-space-2); }
-.shop-price-field img { flex: 0 0 auto; border-radius: 50%; }
+.shop-price-field img { flex: 0 0 auto; }
 .shop-price-field input { flex: 1; min-width: 0; }
 
 .shop-item-search { position: relative; display: grid; gap: 6px; }

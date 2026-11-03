@@ -103,8 +103,14 @@ test('shop activates through administration, buys once and renders all account t
     await expect(player.locator('.shop-product-card')).toHaveCount(2);
     await expect(player.locator('.shop-product-artwork[data-shop-art-count="1"]')).toHaveCount(1);
     await expect(player.locator('.shop-product-artwork[data-shop-art-count="2"]')).toHaveCount(1);
-    await player.locator('.shop-product-card .shop-product-details summary').last().click();
-    await expect(player.locator('.shop-product-card .shop-product-details').last()).toHaveAttribute('open', '');
+    // The full bundle opens in a dialog; the card grid keeps its height.
+    const cardHeight = await player.locator('.shop-product-card').last().evaluate((card) => card.getBoundingClientRect().height);
+    await player.locator('.shop-contents-button').first().click();
+    const contents = player.locator('dialog.shop-contents-dialog[open]');
+    await expect(contents.locator('.account-operation-reward')).toHaveCount(2);
+    await contents.locator('.account-operation-modal-close').click();
+    await expect(contents).toHaveCount(0);
+    expect(await player.locator('.shop-product-card').last().evaluate((card) => card.getBoundingClientRect().height)).toBe(cardHeight);
     // Buying asks for confirmation in a dialog that holds the checkout form.
     await player.locator('[data-account-social-open^="shop-buy-"]').first().click();
     const checkout = player.locator('dialog[open] form[action$="/shop/checkout"]');

@@ -14,7 +14,7 @@
             </div>
             <button type="button" class="account-operation-modal-close" data-account-social-close aria-label="{{ __('Close') }}">×</button>
         </header>
-        <div class="account-operation-rewards" aria-label="{{ __('module-shop::messages.purchase_contents') }}">
+        <div class="account-operation-rewards shop-contents-list" aria-label="{{ __('module-shop::messages.purchase_contents') }}">
             @foreach($contents as $item)
                 <article class="account-operation-reward">
                     <span class="account-operation-reward-icon" aria-hidden="true">
