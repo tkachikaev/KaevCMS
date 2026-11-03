@@ -17,3 +17,5 @@ Route::patch('/invites/{invite}/unfreeze', [AdminReferralController::class, 'unf
     ->whereNumber('invite')->name('invites.unfreeze');
 
 Route::get('/grants', [AdminReferralController::class, 'grants'])->name('grants.index');
+Route::get('/servers/{server}/items/{item}', [AdminReferralController::class, 'itemPreview'])
+    ->whereNumber(['server', 'item'])->middleware('throttle:120,1')->name('items.preview');

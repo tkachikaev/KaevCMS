@@ -29,7 +29,7 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Referrals: per-server character milestones, invitation tracking and rewards in Web Inventory.'
+Write-Host 'Shop 1.0.6 and Referrals 1.0.1: one-screen catalogue and reward editors, steady tab navigation.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests

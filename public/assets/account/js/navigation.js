@@ -281,9 +281,53 @@
         initializeHistoryTimes();
     };
 
+    // Tabs switch views of the same page: keep the scroll position and skip the
+    // theme entrance animations, so the tab row itself never flickers.
+    let tabSwitch = false;
+    const isNavigateLink = link => Array.from(link.attributes).some(attribute => attribute.name.startsWith('wire:navigate'));
+    document.addEventListener('click', event => {
+        const link = event.target instanceof Element ? event.target.closest('.account-tabs a[href], [data-account-tabs] a[href], a[wire\\:navigate\\.preserve-scroll]') : null;
+        if (!link || !isNavigateLink(link) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+            || typeof window.Livewire?.navigate !== 'function') {
+            return;
+        }
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (destination.href === window.location.href) return;
+        tabSwitch = true;
+        hideProgressBarDuringTabSwitch();
+        window.Livewire.navigate(destination.href, { preserveScroll: true });
+    }, true);
+
+    // The Livewire progress bar is meant for page loads; a tab switch must stay
+    // visually quiet. CSP allows CSSOM styles, so the bar element is hidden directly.
+    let progressBarObserver = null;
+    const hideProgressBar = () => {
+        const bar = document.getElementById('nprogress');
+        if (bar) bar.style.display = 'none';
+    };
+    const hideProgressBarDuringTabSwitch = () => {
+        progressBarObserver?.disconnect();
+        progressBarObserver = new MutationObserver(hideProgressBar);
+        progressBarObserver.observe(document.documentElement, { childList: true, subtree: true });
+        hideProgressBar();
+    };
+    document.addEventListener('livewire:navigated', () => {
+        const observer = progressBarObserver;
+        if (!observer) return;
+        window.setTimeout(() => {
+            hideProgressBar();
+            observer.disconnect();
+            if (progressBarObserver === observer) progressBarObserver = null;
+        }, 600);
+    });
+
     const beginNavigation = () => {
         clearInterval(historyTimer);
-        document.documentElement.classList.add('account-is-navigating');
+        // Theme loading bars are for page loads, not for switching tabs.
+        if (!tabSwitch) document.documentElement.classList.add('account-is-navigating');
         closeAvatarModal();
         closeOperationModal();
         closeCharacterRescueModal();
@@ -307,6 +351,15 @@
         window.requestAnimationFrame(() => {
             document.documentElement.classList.remove('account-is-navigating');
         });
+        // The swapped page is identical around the tabs, so its entrance
+        // animations are completed at once instead of replaying.
+        if (tabSwitch) {
+            tabSwitch = false;
+            document.getAnimations().forEach(animation => {
+                const target = animation.effect?.target;
+                if (target instanceof Element && target.closest('.account-content')) animation.finish();
+            });
+        }
     };
 
     document.addEventListener('mousedown', event => {

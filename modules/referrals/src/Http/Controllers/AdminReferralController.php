@@ -35,9 +35,13 @@ final class AdminReferralController extends Controller
         private readonly GameAccountGateway $gateway,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $servers = GameServer::query()->with(['translations', 'loginServer'])->orderBy('sort_order')->orderBy('id')->get();
+        // Everything is configured on one screen per game server.
+        if ($servers->isNotEmpty()) {
+            return $this->back('servers.show', ['server' => $servers->first()->id]);
+        }
         $gatewaySupport = [];
         foreach ($servers as $server) {
             $gatewaySupport[$server->id] = $this->gatewaySupported($server);
@@ -83,6 +87,11 @@ final class AdminReferralController extends Controller
             ]);
         }, 3);
 
+        $returnServer = filter_var($request->input('_return_server'), FILTER_VALIDATE_INT);
+        if ($returnServer && GameServer::query()->whereKey($returnServer)->exists()) {
+            return $this->back('servers.show', ['server' => $returnServer])->with('status', __('module-referrals::messages.saved'));
+        }
+
         return $this->back('index')->with('status', __('module-referrals::messages.saved'));
     }
 
@@ -109,6 +118,24 @@ final class AdminReferralController extends Controller
             'snapshotCount' => DB::table('module_referral_snapshots')->where('game_server_id', $server->id)->count(),
             'gatewaySupported' => $this->gatewaySupported($server),
             'canManage' => $this->canManage($request),
+            'servers' => GameServer::query()->with('translations')->orderBy('sort_order')->orderBy('id')->get(),
+            'serverSettings' => ReferralServerSetting::query()->get()->keyBy('game_server_id'),
+            'global' => ReferralSetting::query()->where('setting_key', 'global')->firstOrFail(),
+        ]);
+    }
+
+    public function itemPreview(Request $request, GameServer $server, int $item): JsonResponse
+    {
+        abort_unless($request->user('admin') instanceof Admin, 403);
+        abort_unless($item > 0, 404);
+        $server->loadMissing('translations');
+        $name = $this->catalog->knownName($server, $item);
+
+        return response()->json([
+            'item_id' => $item,
+            'known' => $name !== null,
+            'name' => $name ?? __('module-referrals::messages.unknown_item'),
+            'icon_url' => $this->assets->itemIcon($server, $item),
         ]);
     }
 
@@ -198,7 +225,7 @@ final class AdminReferralController extends Controller
         return redirect()->route('admin.module-pages.referrals.servers.show', ['adminPath' => request()->route('adminPath'), 'server' => $server->id, 'audience' => $data['audience']])->with('status', __('module-referrals::messages.rule_added'));
     }
 
-    public function destroyRule(Request $request, GameServer $server, ReferralRule $rule): RedirectResponse
+    public function destroyRule(Request $request, GameServer $server, ReferralRule $rule): RedirectResponse|JsonResponse
     {
         $admin = $this->admin($request);
         abort_unless((int) $rule->game_server_id === (int) $server->id, 404);
@@ -209,6 +236,10 @@ final class AdminReferralController extends Controller
             $locked->delete();
             $this->auditRequired('referrals.rule_deleted', $admin, 'referral-rule:'.$rule->id, $before);
         }, 3);
+
+        if ($request->expectsJson()) {
+            return response()->json(['deleted' => $rule->id, 'message' => __('module-referrals::messages.rule_deleted')]);
+        }
 
         return redirect()->route('admin.module-pages.referrals.servers.show', ['adminPath' => request()->route('adminPath'), 'server' => $server->id, 'audience' => $rule->audience])->with('status', __('module-referrals::messages.rule_deleted'));
     }

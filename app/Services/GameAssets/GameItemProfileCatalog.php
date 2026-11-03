@@ -25,6 +25,45 @@ final class GameItemProfileCatalog
         return $this->catalog($profile)[$itemId] ?? null;
     }
 
+    /**
+     * Item IDs whose localized name contains the query; names starting with it come first.
+     *
+     * @return list<int>
+     */
+    public function search(string $profile, string $query, int $limit = 20): array
+    {
+        $profile = $this->normalizeProfile($profile);
+        $needle = mb_strtolower(trim($query));
+        if ($profile === null || $needle === '' || $limit < 1) {
+            return [];
+        }
+
+        $prefix = [];
+        $contains = [];
+        foreach ($this->catalog($profile) as $itemId => $entry) {
+            $best = null;
+            foreach ($entry as $field => $name) {
+                if (! str_starts_with($field, 'name_')) {
+                    continue;
+                }
+                $position = mb_strpos(mb_strtolower($name), $needle);
+                if ($position !== false && ($best === null || $position < $best)) {
+                    $best = $position;
+                }
+            }
+            if ($best === 0) {
+                $prefix[] = $itemId;
+                if (count($prefix) >= $limit) {
+                    break;
+                }
+            } elseif ($best !== null && count($contains) < $limit) {
+                $contains[] = $itemId;
+            }
+        }
+
+        return array_slice(array_merge($prefix, $contains), 0, $limit);
+    }
+
     public function profileForServer(GameServer|int|null $server): string
     {
         if (is_int($server) && $server > 0) {

@@ -37,14 +37,13 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
             await expect(page.locator('html')).toHaveAttribute('lang', locale);
             if (url === serverUrl) {
                 await page.evaluate(() => window.referralDocumentMarker = 'same-document');
-                await page.locator('#ref_inviter_level').fill('23');
-                await page.locator('[data-referral-audience="invitee"]').click();
+                // Both reward sides are shown side by side; the item ID resolves to its name and icon.
+                await expect(page.locator('#referral-panel-inviter')).toBeVisible();
                 await expect(page.locator('#referral-panel-invitee')).toBeVisible();
-                await expect(page.locator('#referral-panel-inviter')).toBeHidden();
+                await page.locator('#ref_inviter_item_id').fill('57');
+                await expect(page.locator('#referral-panel-inviter [data-referrals-item-name]')).toHaveText(locale === 'ru' ? 'Адена' : 'Adena');
+                await page.locator('#ref_inviter_item_id').fill('');
                 expect(await page.evaluate(() => window.referralDocumentMarker)).toBe('same-document');
-                await page.locator('[data-referral-audience="inviter"]').click();
-                await expect(page.locator('#ref_inviter_level')).toHaveValue('23');
-                await page.locator('#ref_inviter_level').fill('');
                 if (locale === 'ru') {
                     const form = page.locator('#referral-panel-inviter [data-referrals-add-rule]');
                     await form.locator('[name=level]').fill('55');

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.58.0 - 2026-11-03
+
+- Add Shop 1.0.6: a per-GameServer catalogue of sections and products bought with CMS wallet coins and delivered to Web Inventory, with player purchase history and a read-only administration journal. Sales stay off on new installations until enabled globally and per server.
+- Shop administration: one screen per game server with inline sections, drag-and-drop and keyboard ordering, quick visibility switches, product cards and a side-panel editor. Items are entered like promo-code rewards or found by name or ID, a single item names the product automatically, and names and descriptions have a tab per enabled site language.
+- Shop storefront: section pills that switch in place, equal-height cards with item names, a bundle contents dialog, a press-and-hold purchase confirmation with filling button and icons, and a result dialog with the delivered items. Receipts show item names.
+- Referrals 1.0.1: one administration screen per game server with a server picker, the invitation switch in the header, compact settings cards and inviter and invitee rewards side by side; rules resolve item names and icons and are added or removed without a reload.
+- Account area and administration: tab switches keep the scroll position and no longer replay entrance animations or show the loading bar; the administration header keeps tab rows at a fixed height on every page.
+- Search the game item catalogue by localized name for item pickers.
+
 ## 0.57.0 - 2026-11-01
 
 - Add Referrals 1.0.0: invitation links, protected seven-day cookies, password/social registration tracking and per-GameServer character-level rewards delivered to Web Inventory.

@@ -43,7 +43,7 @@ class ReferralsModuleTest extends TestCase
         $this->assertTrue($module['enabled']);
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'referrals',
-            'version' => '1.0.0',
+            'version' => '1.0.1',
             'enabled' => true,
         ]);
 
@@ -75,10 +75,11 @@ class ReferralsModuleTest extends TestCase
         $auditor = Admin::factory()->auditor()->create();
         $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
 
+        // With game servers the overview opens the first server editor; without them it explains the setup.
         $this->actingAs($auditor, 'admin')
-            ->get('/admin/extensions/referrals')
+            ->followingRedirects()->get('/admin/extensions/referrals')
             ->assertOk()
-            ->assertSee(__('module-referrals::messages.not_configured_title'));
+            ->assertSee(__('module-referrals::messages.admin_title'));
 
         $this->actingAs($editor, 'admin')
             ->get('/admin/extensions/referrals')

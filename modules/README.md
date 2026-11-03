@@ -19,3 +19,5 @@ See `docs/en/MODULES.md`.
 ## Module artwork
 
 A module may provide an administrator catalog image at `assets/module.webp` inside its own directory. KaevCMS discovers it automatically; no manifest field is required. The file must be a square 320×320 / 512×512 WebP image and no larger than 2 MB. If the file is missing or invalid, the module catalog uses the standard letter placeholder.
+
+The bundled `shop` module (iteration 1) contains disabled sales settings and a read-only administration overview. It has no checkout or player interface yet. / Встроенный `shop` (итерация 1) содержит отключённые настройки продаж и административную страницу; покупок пока нет.

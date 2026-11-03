@@ -9,7 +9,7 @@ return [
         'donation_exchange' => true, // Bundled Donations: user-authorized exchange into Web Inventory only. // Bundled trusted Donations adapter; only verified signed receipts may settle.
         'promo_codes' => false,
         'daily_rewards' => false,
-        'shop' => false,
+        'shop' => true, // Trusted bundled adapter; module, global and server switches still default off.
         'shop_refund' => false,
     ],
 ];
