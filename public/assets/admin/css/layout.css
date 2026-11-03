@@ -85,7 +85,10 @@ a.admin-menu-item.active:hover, a.admin-menu-item[data-current]:hover { backgrou
 .admin-main { min-width: 0; min-height: 100vh; padding: 0 34px 48px; opacity: 1; transition: opacity .12s ease; }
 .admin-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px; min-height: 96px; border-bottom: 1px solid var(--border); }
 .admin-header h1 { margin: 0; font-size: var(--admin-text-page); line-height: var(--admin-leading-page); font-weight: var(--admin-weight-semibold); letter-spacing: var(--admin-tracking-tight); }
-.admin-header p { margin: 6px 0 0; color: var(--muted); }
+/* Two description lines are reserved so tab rows below the header keep their place between pages. */
+.admin-header p { margin: 6px 0 0; min-height: 3em; color: var(--muted); }
+.admin-header > div:first-child { flex: 1 1 320px; min-width: 0; }
+.admin-header > .admin-user { flex: 0 0 auto; }
 .admin-user { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; max-width: 100%; margin-left: auto; gap: 16px; }
 .admin-user > div { text-align: right; }
 .admin-user strong, .admin-user span { display: block; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
