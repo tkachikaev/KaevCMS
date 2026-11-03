@@ -114,7 +114,7 @@
                                         <label for="ref_{{ $panelAudience }}_level">{{ __('module-referrals::messages.level') }}</label>
                                         <input type="number" name="level" id="ref_{{ $panelAudience }}_level" min="1" max="65535" inputmode="numeric" value="{{ old('audience') === $panelAudience ? old('level') : '' }}" required>
                                     </div>
-                                    <span class="promo-reward-preview" data-referrals-item-preview aria-hidden="true"><i>◇</i></span>
+                                    <span class="promo-reward-preview" data-referrals-item-preview aria-hidden="true"></span>
                                     <div class="form-group referrals-item-field">
                                         <label for="ref_{{ $panelAudience }}_item_id">{{ __('module-referrals::messages.item_id') }}</label>
                                         <input type="number" name="item_id" id="ref_{{ $panelAudience }}_item_id" min="1" max="9223372036854775807" inputmode="numeric" value="{{ old('audience') === $panelAudience ? old('item_id') : '' }}" required data-referrals-item-id>

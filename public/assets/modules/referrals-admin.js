@@ -52,10 +52,6 @@
                 image.src = payload.icon_url;
                 image.alt = '';
                 preview.append(image);
-            } else {
-                const fallback = document.createElement('i');
-                fallback.textContent = '◇';
-                preview.append(fallback);
             }
         }
         if (name) name.textContent = payload ? payload.name : text('referralsTextEnterItem');
