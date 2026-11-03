@@ -2,6 +2,12 @@
 
 ## Unreleased (development)
 
+- Referrals 1.0.1: one administration screen per game server with a server picker, the invitation switch in the header, compact server and general settings cards, and inviter and invitee rewards side by side. Reward rows show the item icon and name; new rules resolve the item ID like promo-code rewards and are added or removed without a reload. The overview opens the first server.
+
+- Account area and administration: tab switches within one section keep the scroll position and no longer replay page entrance animations, so tab rows and content stop flickering.
+
+- Shop: purchases need a press-and-hold on the confirm button with the button and item icons filling up, section and server switches replace only the catalogue, the duplicated balance and success banner are gone, bundle contents open in a dialog and wallet coins stay square.
+
 - Shop 1.0.6: one administration screen per game server with inline sections (drag-and-drop and keyboard ordering, quick visibility), product cards and a side-panel editor. Item rows match promo-code rewards with icon and name lookup, items can be searched by name or ID, a single item names the product automatically, and names and descriptions have a tab per enabled site language (new translations migration copies existing RU/EN texts). Forms and section switches update in place without losing the scroll position. The storefront gets section pills, equal-height cards with item names, a purchase confirmation dialog and a result dialog with delivered items; receipts show item names. The account menu shows the shop whenever a catalogue is visible. Sales remain off by default.
 
 - Shop 1.0.5 / catalogue redesign I4 QA follow-up: ensure the administration card and table label products inside disabled sections as hidden. Add a regression test and update Shop guidance. Independent UI-component checks were completed; full Laravel, browser integration and SQL concurrency acceptance remains pending. No schema, wallet, dependencies or module version changes.

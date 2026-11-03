@@ -203,8 +203,11 @@ class ReferralAdminSettingsTest extends TestCase
         $server = GameServer::factory()->create();
         $auditor = Admin::factory()->auditor()->create();
         $editor = Admin::factory()->create(['role' => AdminRole::Editor]);
-        $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals')->assertOk();
-        $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals/servers/'.$server->id)->assertOk();
+        // The overview opens the editor of the first game server.
+        $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals')
+            ->assertRedirectContains('/admin/extensions/referrals/servers/');
+        $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals/servers/'.$server->id)->assertOk()
+            ->assertDontSee('data-referrals-add-rule', false);
         $this->actingAs($auditor, 'admin')->get('/admin/extensions/referrals/invites')->assertOk();
         $this->actingAs($auditor, 'admin')->put('/admin/extensions/referrals/settings', [
             'enabled' => 1, 'invite_ttl_days' => 7,

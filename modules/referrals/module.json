@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "referrals",
     "name": "Referrals",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "KaevCMS",
     "description": "Server-specific referral invitations and level milestone rewards delivered to the web inventory.",
     "cms_min": "0.57.0",

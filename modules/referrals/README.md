@@ -1,4 +1,4 @@
-# Referrals 1.0.0
+# Referrals 1.0.1
 
 Invitations and character-level rewards for KaevCMS 0.57.0 or later. Rewards go to Web Inventory; players request any subsequent game delivery from there.
 

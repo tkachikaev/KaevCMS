@@ -6,6 +6,29 @@
     let lastMenuTrigger = null;
     let initializedContent = null;
     let pageEntryAnimation = null;
+    let tabSwitch = false;
+
+    // Tabs switch views of the same section: keep the scroll position and do not
+    // replay the page entry animation, so the tab row itself never flickers.
+    const isNavigateLink = (link) => Array.from(link.attributes).some((attribute) => attribute.name.startsWith('wire:navigate'));
+    document.addEventListener('click', (event) => {
+        const link = event.target instanceof Element ? event.target.closest('.admin-tabs a[href], .settings-section-tabs a[href]') : null;
+        if (!link || !isNavigateLink(link) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+            || typeof window.Livewire?.navigate !== 'function') {
+            return;
+        }
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) {
+            return;
+        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (destination.href === window.location.href) {
+            return;
+        }
+        tabSwitch = true;
+        window.Livewire.navigate(destination.href, { preserveScroll: true });
+    }, true);
 
     const loadSavedState = () => {
         try {
@@ -227,7 +250,9 @@
         content?.removeAttribute('aria-busy');
         if (content && content !== initializedContent) {
             pageEntryAnimation?.cancel();
-            if (!reducedMotion.matches && typeof content.animate === 'function') {
+            const switchedTab = tabSwitch;
+            tabSwitch = false;
+            if (!switchedTab && !reducedMotion.matches && typeof content.animate === 'function') {
                 pageEntryAnimation = content.animate([
                     { opacity: initializedContent ? 0 : .92, transform: 'translateY(5px)' },
                     { opacity: 1, transform: 'translateY(0)' },

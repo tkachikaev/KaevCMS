@@ -2,15 +2,15 @@
 
 The `referrals` module lets players invite friends and receive items when the invited player's characters reach configured levels. Rewards go to the **KaevCMS Web Inventory**, not directly to a character. Players can deliver items to a character later using the existing inventory workflow.
 
-> This guide describes Referrals 1.0.0. Complete installation, registration, game-level and reward tests against an isolated MySQL/MariaDB database before enabling it on a live site. The presence of the module in a source archive does not prove production readiness.
+> This guide describes Referrals 1.0.1. Complete installation, registration, game-level and reward tests against an isolated MySQL/MariaDB database before enabling it on a live site. The presence of the module in a source archive does not prove production readiness.
 
 ## Enable the program
 
 1. Open **Administration → Modules → Referrals**. Install and enable the module. Apply its migrations through the normal Modules interface; visiting a player page never applies migrations.
-2. Open the **Referrals** administration page and enable invitations. The invitation lifetime defaults to **7 days**, configurable from 1 to 30 days.
-3. Select a GameServer and enable participation. Enable reward rules for the **Inviter**, the **Invitee**, or both independently.
-4. Add rules to each enabled side: **character level → item ID → quantity**. A level can occur only once per side and GameServer, with up to 30 levels per side. Each GameServer has independent settings.
-5. Save the rules. **Invite a friend** appears in the player account when the program is enabled and at least one server has active rules.
+2. Open **Referrals**: the editor of the first game server opens right away; choose another server with the button showing its name. Turn invitations on with the **Invitations** switch in the header. The invitation lifetime (default **7 days**, 1–30 days) is in the **General settings** card.
+3. In the **Server** card enable participation and, independently, rewards for the **Inviter**, the **Invitee**, or both.
+4. Both sides are shown side by side on the right. Add rules with the **item ID** (icon and name fill in automatically), **character level** and **quantity**, then press "+". Rules are added and removed without reloading the page. A level can occur only once per side and GameServer, with up to 30 levels per side. Each GameServer has independent settings.
+5. **Invite a friend** appears in the player account when the program is enabled and at least one server has active rules.
 
 An item ID not found in the built-in catalogue can still be used; verify it against your game build. A missing catalogue icon or name does not by itself make the item ID invalid.
 
