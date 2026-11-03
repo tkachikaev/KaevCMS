@@ -10,8 +10,6 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopPurchase;
-use KaevCMS\Modules\Shop\Models\ShopServerSetting;
-use KaevCMS\Modules\Shop\Models\ShopSetting;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 
 return static function (Application $app, ModuleContext $module): void {
@@ -27,16 +25,11 @@ return static function (Application $app, ModuleContext $module): void {
         labelKey: 'module-shop::messages.account_navigation_label',
         descriptionKey: 'module-shop::messages.account_navigation_description',
         sortOrder: 65,
-        visibleWhen: static fn (): bool => (Auth::guard('web')->id() !== null
-                && ShopPurchase::query()->where('user_id', Auth::guard('web')->id())->exists())
-            || (config('wallet.enabled_sources.shop') === true
-            && ShopSetting::query()->where('setting_key', 'global')->where('sales_enabled', true)->exists()
-            && ShopProduct::query()->published()
-                ->whereHas('category', static fn ($query) => $query->where('is_active', true)
-                    ->whereHas('tab', static fn ($tab) => $tab->where('is_active', true)
-                        ->whereIn('game_server_id', ShopServerSetting::query()
-                            ->where('enabled', true)->select('game_server_id'))))
-                ->exists()),
+        // Players see the shop whenever a catalog is shown (it is browsable even
+        // while sales are off) or they have purchase history to read.
+        visibleWhen: static fn (): bool => ShopProduct::query()->visibleInCatalog()->exists()
+            || (Auth::guard('web')->id() !== null
+                && ShopPurchase::query()->where('user_id', Auth::guard('web')->id())->exists()),
     );
 
     $app->make(ModuleNavigationRegistry::class)->registerAdminLink(

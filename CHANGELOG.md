@@ -2,6 +2,16 @@
 
 ## Unreleased (development)
 
+- Shop 1.0.6: one administration screen per game server with inline sections (drag-and-drop and keyboard ordering, quick visibility), product cards and a side-panel editor. Item rows match promo-code rewards with icon and name lookup, items can be searched by name or ID, a single item names the product automatically, and names and descriptions have a tab per enabled site language (new translations migration copies existing RU/EN texts). Forms and section switches update in place without losing the scroll position. The storefront gets section pills, equal-height cards with item names, a purchase confirmation dialog and a result dialog with delivered items; receipts show item names. The account menu shows the shop whenever a catalogue is visible. Sales remain off by default.
+
+- Shop 1.0.5 / catalogue redesign I4 QA follow-up: ensure the administration card and table label products inside disabled sections as hidden. Add a regression test and update Shop guidance. Independent UI-component checks were completed; full Laravel, browser integration and SQL concurrency acceptance remains pending. No schema, wallet, dependencies or module version changes.
+
+- Shop 1.0.5 / catalogue redesign I3: switch player catalog from horizontal reward rows to localized vertical cards with shared GameServer item-artwork preview (up to three icons and `+N`), full item contents disclosure and original wallet checkout form. Use matching cards in administration with Cards/Table toggle; retain all existing sections, dialogs, migrations, purchase history and financial restrictions. Add RU/EN messages and browser/feature regressions; no new schema or module version increase. DEV / full QA pending.
+
+- Shop 1.0.5 / catalogue redesign I2: replace nested tabs/categories with direct sections and one modal product editor for 1–100 distinct item IDs at one price. Preserve and hide legacy category state, accept section-only products via an additive migration, and retain legacy routes for compatibility. New owner/admin controls are server-scoped, transactional and audited; the player card redesign remains for I3. Sales remain default-off.
+
+- Shop 1.0.4 / catalogue redesign I1: prepare the direct server → section → product data model, reusing existing tab IDs and preserving legacy categories and purchases. Add an additive migration to populate product section IDs and store localized descriptions. Existing category-based UI and checkout remain compatible until I2; no CSS or wallet changes.
+
 - Shop activation through audited administration settings, with new installations keeping sales disabled.
 - Shop catalogue and receipt rendering, invalid bundle visibility and responsive administration layouts.
 - Shop static analysis declarations and real-database migration/concurrency coverage.

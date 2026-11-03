@@ -1,31 +1,41 @@
 # Shop
 
-Shop sells items and bundles for CMS wallet coins. Each game server has its own catalogue.
+Shop sells items and bundles for CMS wallet coins. Each game server has its own catalogue: **game server → section → product**.
 
 ## Setup
 
-1. Enable Shop and apply pending migrations under **Modules**.
-2. Open **Shop** and select a game server.
-3. Create a tab, category and products. Provide RU/EN names, an integer coin price, item IDs and quantities. Bundles contain at most 100 distinct item IDs. Empty or invalid bundles are not published.
-4. Enable **Allow purchases on this server** in the selected server settings.
-5. Enable **Accept shop purchases** in general settings.
+1. Enable Shop in **Modules** and apply the pending migrations (back up the database before updating).
+2. Open **Shop** and choose a game server. You can switch servers later with the button showing its name in the page header.
+3. Type a name into **New section** on the left and press "+". Reorder sections by dragging the handle or with the arrow keys.
+4. Click **Add product**. The product panel opens on the right:
+   - under **What the player receives**, enter an item ID or find the item by name; the icon and name fill in automatically;
+   - one item is a regular product, several items make a bundle for one price (up to 100 distinct items);
+   - the product name in each language comes from the item name; you can overwrite it, after which it no longer changes by itself. A bundle needs a typed name;
+   - the description is written by hand; languages are tabs, one for each enabled site language.
+5. Turn on **Sales on this server** in the server page header and **Accept shop purchases** in the general shop settings.
 
-Both switches start disabled. Activation requires no PHP, environment or database edits. Visibility is separate: hidden products, categories and tabs cannot be purchased.
+Both switches start off. Players can still browse the catalogue, but nothing can be bought. Hidden products and sections are not shown to players; older products in hidden categories stay unavailable too.
 
-Owner and Administrator may configure Shop. Auditor has read-only access to settings and history; Editor has no access.
+Sections, visibility and products are saved without reloading the page, and the scroll position stays where it was. Without JavaScript everything still works through ordinary forms and links.
+
+Owners and administrators can configure the shop. Auditors can view settings and history without changing them; editors have no access.
+
+## Languages
+
+Section names, product names and descriptions are stored for every enabled site language. When a language has no text, the fallback language is shown. Updating to 1.0.6 moves the existing Russian and English names and descriptions automatically with migration `2026_11_03_010000`.
 
 ## Purchases
 
-Purchases debit wallet coins and deliver items to **Web Inventory**. Players initiate in-game transfer from there separately; the game-server administrator configures the queue consumer.
+In the account area the player picks a server and section, clicks **Buy** and confirms in a dialog that shows the contents, price and remaining balance. The coins are then debited and the items go to **Web Inventory**; the result dialog links straight to it. Players send items into the game from Web Inventory.
 
-The server determines prices and contents. Debit, inventory grant, completed purchase and mandatory audit commit together. Retrying the same operation does not charge twice. Insufficient funds, blocked wallets and inactive users cannot buy.
+The server determines price and contents. Debit, delivery, the purchase record and the mandatory audit are committed together. Repeating the same operation never charges twice. Insufficient balance, a blocked wallet or a disabled user cannot buy.
 
 ## History
 
-**My purchases** is available at `/modules/shop/history`. Players can read only their own purchases. Names, prices and contents are retained as purchased even after catalogue changes or product deletion.
+**My purchases** is available at `/modules/shop/history`. Players see only their own purchases. Names, price and contents stay as they were at payment, even after the product changes or is deleted; the receipt shows items with icons and names.
 
-Stopping sales keeps history accessible. Disabling the module preserves records but removes its pages until re-enabled. Refunds, manual re-grants and editing completed purchases are not implemented.
+Stopping sales keeps the history available. Disabling the module keeps the records but turns its pages off until it is enabled again. Refunds, manual re-delivery and editing completed purchases are not provided.
 
 ## Before opening sales
 
-Verify a test purchase and Web Inventory delivery on an isolated installation. Never use an existing user database for integration tests: `tests/Integration/Shop/mysql-purchase-concurrency.php` runs `migrate:fresh` and requires a dedicated MySQL/MariaDB `shop_test` database with explicit testing permissions.
+Test a purchase and Web Inventory delivery on a separate installation. Do not run integration tests against a production database: `tests/Integration/Shop/mysql-purchase-concurrency.php` runs `migrate:fresh` and requires a dedicated MySQL/MariaDB database named `shop_test` with explicit test permissions.

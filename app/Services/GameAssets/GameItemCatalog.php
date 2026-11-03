@@ -84,6 +84,50 @@ final class GameItemCatalog
             );
     }
 
+    /**
+     * Item IDs whose name in the current languages contains the query: names
+     * that start with it come first, then the server's item profile matches.
+     *
+     * @return list<int>
+     */
+    public function search(GameServer|int|null $server, string $query, int $limit = 20, ?string $locale = null): array
+    {
+        $needle = mb_strtolower(trim($query));
+        if ($needle === '' || $limit < 1) {
+            return [];
+        }
+
+        $serverId = $server instanceof GameServer ? (int) $server->getKey() : $server;
+        $prefix = [];
+        $contains = [];
+        foreach ($this->localeCandidates($locale) as $catalogLocale) {
+            $catalog = $this->catalog($catalogLocale);
+            $servers = is_array($catalog['servers'] ?? null) ? $catalog['servers'] : [];
+            $common = is_array($catalog['common'] ?? null) ? $catalog['common'] : $catalog;
+            $sources = [($serverId !== null && is_array($servers[$serverId] ?? null)) ? $servers[$serverId] : [], $common];
+            foreach ($sources as $items) {
+                foreach ($items as $itemId => $name) {
+                    if (! is_numeric($itemId) || (int) $itemId <= 0 || ! is_string($name)) {
+                        continue;
+                    }
+                    $position = mb_strpos(mb_strtolower($name), $needle);
+                    if ($position === 0) {
+                        $prefix[(int) $itemId] = true;
+                    } elseif ($position !== false) {
+                        $contains[(int) $itemId] = true;
+                    }
+                }
+            }
+        }
+
+        $ids = array_keys($prefix + $contains);
+        foreach ($this->profiles->search($this->profiles->profileForServer($server), $query, $limit) as $itemId) {
+            $ids[] = $itemId;
+        }
+
+        return array_slice(array_values(array_unique($ids)), 0, $limit);
+    }
+
     /** @return list<string> */
     private function localeCandidates(?string $locale): array
     {

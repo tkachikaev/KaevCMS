@@ -683,3 +683,67 @@ body.account-body .account-copy-field > input { flex: 1; min-width: 0; width: 0;
 body.account-body .account-copy-field > .account-copy-icon { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; padding: 0; }
 .account-copy-toast { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 50; max-width: 100%; padding: 9px 13px; border: 1px solid var(--account-line); border-radius: 8px; background: var(--account-panel); color: var(--account-text); box-shadow: 0 4px 18px rgba(0,0,0,.14); font-size: 13px; line-height: 1.4; pointer-events: none; }
 .account-copy-toast[hidden] { display: none; }
+
+
+/* Shop storefront: shared by every account theme through the --account-* palette. */
+.shop-storefront-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.shop-storefront-spacer { flex: 1 1 auto; }
+body.account-body .shop-server-tabs { flex: 0 1 auto; }
+body.account-body .shop-balance { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--account-line); border-radius: 999px; background: var(--account-panel-raised); color: var(--account-text); font-weight: 700; font-variant-numeric: tabular-nums; }
+body.account-body .shop-balance .account-wallet-coin-image { width: 24px; height: 24px; }
+.shop-section-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+body.account-body .shop-section-pills a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border: 1px solid var(--account-line); border-radius: 999px; background: var(--account-panel-raised); color: var(--account-text); font-size: 16px; font-weight: 600; text-decoration: none; transition: border-color .16s ease, background .16s ease; }
+body.account-body .shop-section-pills a:hover { border-color: var(--account-gold); }
+body.account-body .shop-section-pills a.active { border-color: var(--account-gold); background: var(--account-gold); color: var(--account-accent-text); }
+body.account-body .shop-section-pills a:focus-visible, body.account-body .shop-buy-button:focus-visible { outline: 3px solid var(--account-gold); outline-offset: 2px; }
+body.account-body .shop-section-title { margin: 0 0 14px; color: var(--account-text); font-size: 22px; line-height: 1.3; }
+
+.shop-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 20px; min-width: 0; }
+.shop-product-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border-radius: var(--account-radius, 12px); }
+body.account-body .shop-product-card { border: 1px solid var(--account-line); background: var(--account-panel); }
+.shop-product-artwork { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 132px; padding: 18px 16px; }
+body.account-body .shop-product-artwork { border-bottom: 1px solid var(--account-line-soft); background: var(--account-panel-soft); }
+.shop-product-artwork-item { display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 56px; overflow: hidden; border-radius: 8px; background: #1b1a17; }
+body.account-body .shop-product-artwork-item { border: 1px solid var(--account-line); color: var(--account-gold); }
+.shop-product-artwork-item img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.shop-product-artwork[data-shop-art-count="1"] .shop-product-artwork-item { width: 68px; height: 68px; flex-basis: 68px; }
+.shop-product-artwork-fallback { font-size: 28px; line-height: 1; }
+.shop-product-artwork-more { display: inline-grid; place-items: center; min-width: 48px; height: 56px; border-radius: 8px; font-weight: 700; font-size: 15px; }
+body.account-body .shop-product-artwork-more { border: 1px dashed var(--account-line); color: var(--account-muted); }
+.shop-product-card-body { display: flex; flex: 1; flex-direction: column; gap: 6px; min-width: 0; padding: 16px 18px 8px; }
+body.account-body .shop-product-card-body h3 { margin: 0; color: var(--account-text); font-size: 19px; line-height: 1.35; overflow-wrap: anywhere; }
+body.account-body .shop-product-description { margin: 0; color: var(--account-muted); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
+body.account-body .shop-product-contents { margin: 0; color: var(--account-text); font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.shop-product-details { min-width: 0; font-size: 15px; }
+body.account-body .shop-product-details { color: var(--account-text); }
+.shop-product-details summary { width: fit-content; cursor: pointer; font-weight: 600; }
+.shop-product-details summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.shop-product-details ul { display: grid; gap: 6px; max-height: 200px; overflow: auto; margin: 0; padding: 8px 4px 0 0; list-style: none; }
+.shop-product-details li { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+body.account-body .shop-product-details li { padding: 0 0 5px; border-bottom: 1px solid var(--account-line-soft); color: var(--account-muted); }
+body.account-body .shop-product-details li strong { color: var(--account-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.shop-product-description-details p { margin: 8px 0 0; overflow-wrap: anywhere; white-space: pre-line; line-height: 1.6; }
+.shop-product-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px 18px; }
+.shop-product-price { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+body.account-body .shop-product-price { color: var(--account-text); }
+body.account-body .shop-product-price .account-wallet-coin-image { width: 26px; height: 26px; }
+body.account-body .shop-buy-button { min-height: 46px; padding-inline: 24px; font-size: 16px; }
+body.account-body .shop-product-shortfall { margin: -8px 18px 16px; color: var(--account-muted); font-size: 14px; text-align: right; }
+body.account-body .shop-delivery-hint { margin: 18px 0 0; color: var(--account-muted); font-size: 15px; }
+
+body.account-body .shop-buy-dialog .account-operation-modal-mark .account-wallet-coin-image { width: 30px; height: 30px; }
+.shop-buy-summary { display: grid; gap: 6px; margin: 0 26px; padding: 14px 16px; border-radius: 12px; font-variant-numeric: tabular-nums; }
+body.account-body .shop-buy-summary { background: var(--account-panel-soft); color: var(--account-text); }
+.shop-buy-summary div { display: flex; justify-content: space-between; gap: 12px; }
+.shop-buy-summary dt { margin: 0; }
+body.account-body .shop-buy-summary dt { color: var(--account-muted); }
+.shop-buy-summary dd { margin: 0; font-weight: 700; }
+.shop-receipt-item .reward-history-main { display: flex; align-items: center; gap: 12px; }
+.shop-receipt-icon { flex: 0 0 auto; border-radius: 8px; background: #1b1a17; }
+
+@media (max-width: 560px) {
+    .shop-product-grid { gap: 14px; }
+    .shop-storefront-spacer { display: none; }
+    .shop-buy-summary { margin: 0 18px; }
+}
+@media (prefers-reduced-motion: reduce) { body.account-body .shop-section-pills a { transition: none; } }

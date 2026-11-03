@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\GameServer;
 use App\Services\AuditLogger;
+use App\Services\GameAssets\GameItemCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ use KaevCMS\Modules\Shop\Models\ShopBundleItem;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
 use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopTab;
+use KaevCMS\Modules\Shop\Services\ShopTranslationWriter;
 use RuntimeException;
 
 final class AdminShopProductController extends Controller
@@ -41,6 +43,10 @@ final class AdminShopProductController extends Controller
 
     public function store(Request $request, GameServer $server): RedirectResponse
     {
+        if ($request->boolean('_shop_unified')) {
+            return $this->saveUnified($request, $server);
+        }
+
         $admin = $this->admin($request);
         $type = $request->validate(['type' => ['required', Rule::in(['item', 'bundle'])]])['type'];
         $values = $this->validateProduct($request, $server, $type);
@@ -48,6 +54,10 @@ final class AdminShopProductController extends Controller
             $product = ShopProduct::query()->create($values + [
                 'type' => $type,
                 'updated_by_admin_id' => $admin->id,
+            ]);
+            app(ShopTranslationWriter::class)->saveProduct($product, [
+                'ru' => ['name' => $product->name_ru, 'description' => $product->description_ru],
+                'en' => ['name' => $product->name_en, 'description' => $product->description_en],
             ]);
             $this->auditRequired('shop.product_created', $admin, $product, [
                 'game_server_id' => $server->id, 'type' => $type, 'price_coins' => $product->price_coins,
@@ -63,6 +73,9 @@ final class AdminShopProductController extends Controller
     public function update(Request $request, GameServer $server, ShopProduct $product): RedirectResponse
     {
         $this->assertProduct($server, $product);
+        if ($request->boolean('_shop_unified')) {
+            return $this->saveUnified($request, $server, $product);
+        }
         $admin = $this->admin($request);
         $values = $this->validateProduct($request, $server, $product->type);
         DB::transaction(function () use ($admin, $product, $values, $server): void {
@@ -70,6 +83,10 @@ final class AdminShopProductController extends Controller
             $this->assertProduct($server, $locked);
             $before = $locked->only(array_keys($values));
             $locked->update($values + ['updated_by_admin_id' => $admin->id]);
+            app(ShopTranslationWriter::class)->saveProduct($locked, [
+                'ru' => ['name' => $locked->name_ru, 'description' => $locked->description_ru],
+                'en' => ['name' => $locked->name_en, 'description' => $locked->description_en],
+            ]);
             $this->auditRequired('shop.product_updated', $admin, $locked, [
                 'game_server_id' => $server->id, 'before' => $before,
                 'after' => $locked->only(array_keys($values)),
@@ -150,6 +167,100 @@ final class AdminShopProductController extends Controller
             ->with('status', __('module-shop::messages.bundle_item_removed'));
     }
 
+    /**
+     * New single-dialog editor. Rows are saved in one transaction; a failed
+     * audit or invalid composition never partially replaces a bundle.
+     */
+    private function saveUnified(Request $request, GameServer $server, ?ShopProduct $product = null): RedirectResponse
+    {
+        $admin = $this->admin($request);
+        $texts = app(ShopTranslationWriter::class);
+        $values = $request->validate([
+            'section_id' => ['required', 'integer', Rule::exists('module_shop_tabs', 'id')->where('game_server_id', $server->id)],
+            'translations' => ['nullable', 'array'],
+            'translations.*.name' => ['nullable', 'string', 'max:120'],
+            'translations.*.description' => ['nullable', 'string', 'max:2000'],
+            'translations.*.name_manual' => ['nullable', 'boolean'],
+            'price_coins' => ['required', 'integer', 'between:1,1000000'],
+            'is_active' => ['required', 'boolean'],
+            'items' => ['required', 'array', 'between:1,100'],
+            'items.*.item_id' => ['required', 'integer', 'between:1,2147483647'],
+            'items.*.quantity' => ['required', 'integer', 'between:1,2000000000'],
+        ]);
+        $items = array_values(array_map(static fn (array $row): array => [
+            'item_id' => (int) $row['item_id'], 'quantity' => (int) $row['quantity'],
+        ], $values['items']));
+        if (count(array_unique(array_column($items, 'item_id'))) !== count($items)) {
+            throw ValidationException::withMessages(['items' => __('module-shop::messages.duplicate_bundle_item')]);
+        }
+        $single = count($items) === 1;
+
+        // A single item names itself in every language unless the admin typed a name.
+        $translations = [];
+        foreach ($texts->locales() as $locale) {
+            $row = $values['translations'][$locale] ?? [];
+            $name = trim((string) ($row['name'] ?? ''));
+            $manual = $name !== '' && (bool) ($row['name_manual'] ?? true);
+            if (! $manual && $single) {
+                $name = (string) app(GameItemCatalog::class)->knownName($server, $items[0]['item_id'], $locale);
+            }
+            $translations[$locale] = [
+                'name' => $name, 'description' => trim((string) ($row['description'] ?? '')), 'name_manual' => $manual,
+            ];
+        }
+        $legacy = $texts->legacyNames(array_map(static fn (array $row): string => $row['name'], $translations),
+            'translations.'.$texts->defaultLocale().'.name');
+        $descriptions = array_map(static fn (array $row): string => $row['description'], $translations);
+        $values = [
+            'section_id' => (int) $values['section_id'],
+            'price_coins' => (int) $values['price_coins'],
+            'is_active' => (bool) $values['is_active'],
+            'name_ru' => $legacy['name_ru'], 'name_en' => $legacy['name_en'],
+            'description_ru' => $descriptions['ru'] ?? '', 'description_en' => $descriptions['en'] ?? '',
+            'category_id' => null, // Section is now the only catalog parent.
+            'type' => $single ? 'item' : 'bundle',
+            'item_id' => $single ? $items[0]['item_id'] : null,
+            'quantity' => $single ? $items[0]['quantity'] : null,
+        ];
+
+        DB::transaction(function () use ($admin, $server, $product, $values, $items, $single, $translations, $texts): void {
+            $nextOrder = static fn (int $sectionId): int => min(10000,
+                (int) ShopProduct::query()->where('section_id', $sectionId)->max('sort_order') + 1);
+            if ($product !== null) {
+                $locked = ShopProduct::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+                $this->assertProduct($server, $locked);
+                $before = ['price_coins' => $locked->price_coins, 'type' => $locked->type, 'section_id' => $locked->section_id];
+                if ($locked->section_id !== $values['section_id']) {
+                    $values['sort_order'] = $nextOrder($values['section_id']);
+                }
+                // Drop legacy membership only after the new section has been
+                // validated. Old hidden categories must never be promoted by accident.
+                $locked->update($values + ['updated_by_admin_id' => $admin->id]);
+                $locked->bundleItems()->delete();
+                $action = 'shop.product_updated';
+            } else {
+                $locked = ShopProduct::query()->create($values + [
+                    'sort_order' => $nextOrder($values['section_id']), 'updated_by_admin_id' => $admin->id,
+                ]);
+                $before = null;
+                $action = 'shop.product_created';
+            }
+            if (! $single) {
+                $locked->bundleItems()->createMany($items);
+            }
+            $texts->saveProduct($locked, $translations);
+            $this->auditRequired($action, $admin, $locked, [
+                'game_server_id' => $server->id, 'section_id' => $locked->section_id,
+                'price_coins' => $locked->price_coins, 'items' => $items, 'before' => $before,
+            ]);
+        }, 3);
+
+        return redirect()->route('admin.module-pages.shop.servers.show', [
+            'adminPath' => $request->route('adminPath'), 'server' => $server->id,
+            'section' => $values['section_id'],
+        ])->with('status', __('module-shop::messages.product_saved'));
+    }
+
     /** @return array<string, mixed> */
     private function viewData(Request $request, GameServer $server, ?ShopProduct $product, string $type): array
     {
@@ -191,6 +302,10 @@ final class AdminShopProductController extends Controller
             ->whereHas('tab', fn ($query) => $query->where('game_server_id', $server->id))->exists()) {
             throw ValidationException::withMessages(['category_id' => __('module-shop::messages.category_wrong_server')]);
         }
+        // Persist the canonical section together with the legacy category while
+        // I1 retains the existing forms. I2 will remove the category field.
+        $values['section_id'] = (int) ShopCategory::query()
+            ->whereKey($values['category_id'])->value('tab_id');
         $values['name_ru'] = trim($values['name_ru']);
         $values['name_en'] = trim($values['name_en']);
         if ($values['name_ru'] === '' || $values['name_en'] === '') {
@@ -206,7 +321,12 @@ final class AdminShopProductController extends Controller
 
     private function assertProduct(GameServer $server, ShopProduct $product): void
     {
-        abort_unless($product->category()->whereHas('tab', fn ($query) => $query->where('game_server_id', $server->id))->exists(), 404);
+        // Both links must agree when a migrated legacy product still has a
+        // category. Never trust only one side of a corrupted server mapping.
+        abort_unless(($product->section_id !== null || $product->category_id !== null)
+            && ($product->section_id === null || $product->section()->where('game_server_id', $server->id)->exists())
+            && ($product->category_id === null || $product->category()->whereHas('tab',
+                fn ($query) => $query->where('game_server_id', $server->id))->exists()), 404);
     }
 
     private function assertBundle(GameServer $server, ShopProduct $product): void

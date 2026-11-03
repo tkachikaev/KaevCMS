@@ -91,7 +91,8 @@ final class ShopPurchaseHistoryTest extends TestCase
         $this->pauseSales();
         $this->get('/modules/shop/history/'.$purchase->id)
             ->assertOk()->assertSee('Old item name')->assertDontSee('New item name')
-            ->assertSee(__('module-shop::messages.account_bundle_entry', ['id' => format_number(57), 'count' => format_number(3)]));
+            // The receipt names the snapshot items instead of showing bare IDs.
+            ->assertSee('Адена')->assertSee('ID 57')->assertSee('× '.format_number(3));
         $this->assertSame(25, $purchase->fresh()->price_coins);
         $this->assertDatabaseHas('wallets', ['user_id' => $buyer->id, 'balance' => 75]);
         $this->assertDatabaseCount('module_shop_purchases', 1);

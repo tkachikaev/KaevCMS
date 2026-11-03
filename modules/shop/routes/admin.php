@@ -27,3 +27,12 @@ Route::put('/servers/{server}/products/{product}', [AdminShopProductController::
 Route::delete('/servers/{server}/products/{product}', [AdminShopProductController::class, 'destroy'])->whereNumber(['server', 'product'])->name('products.destroy');
 Route::post('/servers/{server}/products/{product}/bundle-items', [AdminShopProductController::class, 'addBundleItem'])->whereNumber(['server', 'product'])->name('bundle-items.store');
 Route::delete('/servers/{server}/products/{product}/bundle-items/{bundleItem}', [AdminShopProductController::class, 'removeBundleItem'])->whereNumber(['server', 'product', 'bundleItem'])->name('bundle-items.destroy');
+
+// Catalog editor (1.0.6): direct sections, ordering, quick visibility and item lookup.
+Route::post('/servers/{server}/sections', [AdminShopController::class, 'storeSection'])->whereNumber('server')->name('sections.store');
+Route::put('/servers/{server}/sections/order', [AdminShopController::class, 'orderSections'])->whereNumber('server')->name('sections.order');
+Route::put('/servers/{server}/sections/{tab}', [AdminShopController::class, 'updateSection'])->whereNumber(['server', 'tab'])->name('sections.update');
+Route::patch('/servers/{server}/sections/{tab}/visibility', [AdminShopController::class, 'sectionVisibility'])->whereNumber(['server', 'tab'])->name('sections.visibility');
+Route::put('/servers/{server}/sections/{tab}/products/order', [AdminShopController::class, 'orderProducts'])->whereNumber(['server', 'tab'])->name('sections.products.order');
+Route::get('/servers/{server}/items', [AdminShopController::class, 'itemSearch'])->whereNumber('server')->middleware('throttle:120,1')->name('items.search');
+Route::get('/servers/{server}/items/{item}', [AdminShopController::class, 'itemPreview'])->whereNumber(['server', 'item'])->middleware('throttle:120,1')->name('items.preview');

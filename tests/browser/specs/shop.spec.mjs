@@ -22,22 +22,64 @@ test('shop activates through administration, buys once and renders all account t
     };
     const serverUrl = await page.locator('a[href*="/shop/servers/"]').first().getAttribute('href');
     const serverId = serverUrl.split('/').at(-1);
-    await save(serverUrl + '/tabs', { name_ru: 'Снаряжение', name_en: 'Equipment', sort_order: 0, is_active: 1 });
     await page.goto(serverUrl);
-    const tabUrl = await page.locator('a[href*="/tabs/"]').first().getAttribute('href');
-    const tabId = tabUrl.split('/').at(-2);
-    await save(serverUrl + '/categories', { tab_id: tabId, name_ru: 'Припасы', name_en: 'Supplies', sort_order: 0, is_active: 1 });
+    // Sections are created in place; the page is updated without a reload.
+    await page.evaluate(() => { window.__shopNoReload = true; });
+    await page.locator('#shop-new-section').fill('Снаряжение');
+    await page.locator('form.shop-section-create button[type=submit]').click();
+    const sectionLink = page.locator('a.shop-section-link[href*="section="]').first();
+    await expect(sectionLink).toBeVisible();
+    await page.locator('#shop-new-section').fill('Расходники');
+    await page.locator('form.shop-section-create button[type=submit]').click();
+    await expect(page.locator('a.shop-section-link')).toHaveCount(2);
+    expect(await page.evaluate(() => window.__shopNoReload)).toBe(true);
+    const sectionId = new URL(await sectionLink.getAttribute('href'), page.url()).searchParams.get('section');
+    // Switching sections keeps the scroll position (measured without a flash notice above).
     await page.goto(serverUrl);
-    const categoryUrl = await page.locator('a[href*="/categories/"]').first().getAttribute('href');
-    const categoryId = categoryUrl.split('/').at(-2);
-    const product = { category_id: categoryId, name_ru: 'Адена для нового путешествия', name_en: 'Adena for a new adventure', sort_order: 0, is_active: 1, price_coins: 25 };
-    const itemResponse = await save(serverUrl + '/products', { ...product, type: 'item', item_id: 57, quantity: 1000 });
-    const itemEditUrl = itemResponse.url();
-    const bundleResponse = await save(serverUrl + '/products', { ...product, type: 'bundle', name_ru: 'Комплект путешественника', name_en: 'Traveller bundle' });
-    const bundleEditUrl = bundleResponse.url();
-    const bundleBase = bundleEditUrl.replace(/\/edit$/, '');
-    await save(bundleBase + '/bundle-items', { item_id: 57, quantity: 200 });
-    await save(bundleBase + '/bundle-items', { item_id: 4037, quantity: 3 });
+    await page.setViewportSize({ width: 1280, height: 520 });
+    await page.evaluate(() => window.scrollTo(0, 120));
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    const otherLink = page.locator('a.shop-section-link').nth(1);
+    const otherId = new URL(await otherLink.getAttribute('href'), page.url()).searchParams.get('section');
+    await otherLink.click();
+    await expect(page).toHaveURL(new RegExp(`section=${otherId}`));
+    await expect(page.locator('.shop-section-item.is-current a.shop-section-link')).toHaveAttribute('href', new RegExp(`section=${otherId}`));
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+    await sectionLink.click();
+    await expect(page).toHaveURL(new RegExp(`section=${sectionId}`));
+    await page.setViewportSize({ width: 1280, height: 1000 });
+
+    await page.locator('[data-shop-open="shop-product-new"]').click();
+    const itemDialog = page.locator('#shop-product-new');
+    await expect(itemDialog).toBeVisible();
+    // The item name loads from the catalog and names the product automatically.
+    await itemDialog.locator('[name="items[0][item_id]"]').fill('57');
+    await expect(itemDialog.locator('[data-shop-item-name]').first()).toHaveText('Адена');
+    await expect(itemDialog.locator('[data-shop-name="ru"]')).toHaveValue('Адена');
+    await itemDialog.locator('[name="items[0][quantity]"]').fill('1000');
+    await itemDialog.locator('[name="translations[ru][description]"]').fill('Монеты для начала путешествия');
+    await itemDialog.locator('[name=price_coins]').fill('25');
+    await itemDialog.locator('.shop-drawer-foot button[type=submit].button-primary').click();
+    await expect(page.locator('.shop-admin-card')).toHaveCount(1);
+
+    await page.locator('[data-shop-open="shop-product-new"]').click();
+    const bundleDialog = page.locator('#shop-product-new');
+    await bundleDialog.locator('[name="items[0][item_id]"]').fill('57');
+    await bundleDialog.locator('[name="items[0][quantity]"]').fill('200');
+    await bundleDialog.locator('[data-shop-item-search-input]').fill('4037');
+    await bundleDialog.locator('[data-shop-item-option="4037"]').click();
+    await bundleDialog.locator('[name="items[1][quantity]"]').fill('3');
+    await bundleDialog.locator('[data-shop-name="ru"]').fill('Комплект путешественника');
+    await bundleDialog.locator('[data-shop-locale-tab="en"]').click();
+    await bundleDialog.locator('[data-shop-name="en"]').fill('Traveller bundle');
+    await bundleDialog.locator('[name=price_coins]').fill('25');
+    await bundleDialog.locator('.shop-drawer-foot button[type=submit].button-primary').click();
+    await expect(page.locator('.shop-admin-card')).toHaveCount(2);
+    await expect(page.locator('.shop-admin-card [data-shop-art-count="2"]')).toHaveCount(1);
+    await page.locator('[data-shop-filter]').fill('комплект');
+    await expect(page.locator('.shop-admin-card:visible')).toHaveCount(1);
+    await page.locator('[data-shop-filter]').fill('');
+    expect(sectionId).toBeTruthy();
     const player = await context.newPage();
     await player.emulateMedia({ reducedMotion: 'reduce' });
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -47,6 +89,7 @@ test('shop activates through administration, buys once and renders all account t
     await submitLogin({ page: player, postPath: '/login', label: 'Shop player', submit: () => player.locator('form button[type=submit]').first().click() });
     await player.goto('/modules/shop');
     await expect(player.locator('form[action$="/shop/checkout"]')).toHaveCount(0);
+    await expect(player.locator('a[href$="/modules/shop"]').first()).toBeVisible();
     await page.goto(`/admin/wallets?q=${encodeURIComponent(shopPlayerEmail)}`);
     await page.getByTestId('admin-wallet-row').getByRole('link', { name: 'Подробнее' }).click();
     const adjustment = page.getByTestId('admin-wallet-adjustment-form');
@@ -57,19 +100,31 @@ test('shop activates through administration, buys once and renders all account t
     await save('/admin/extensions/shop/settings', { _method: 'PUT', sales_enabled: 1 });
     await save(serverUrl + '/settings', { _method: 'PUT', enabled: 1 });
     await player.goto('/modules/shop?server=' + serverId);
-    const checkout = player.locator('form[action$="/shop/checkout"]').first();
+    await expect(player.locator('.shop-product-card')).toHaveCount(2);
+    await expect(player.locator('.shop-product-artwork[data-shop-art-count="1"]')).toHaveCount(1);
+    await expect(player.locator('.shop-product-artwork[data-shop-art-count="2"]')).toHaveCount(1);
+    await player.locator('.shop-product-card .shop-product-details summary').last().click();
+    await expect(player.locator('.shop-product-card .shop-product-details').last()).toHaveAttribute('open', '');
+    // Buying asks for confirmation in a dialog that holds the checkout form.
+    await player.locator('[data-account-social-open^="shop-buy-"]').first().click();
+    const checkout = player.locator('dialog[open] form[action$="/shop/checkout"]');
+    await expect(checkout).toBeVisible();
+    await expect(checkout.locator('.shop-buy-summary')).toContainText('75');
     const uuid = await checkout.locator('[name=request_uuid]').inputValue();
     const productId = await checkout.locator('[name=product_id]').inputValue();
     const playerToken = await player.locator('meta[name=csrf-token]').getAttribute('content');
-    await checkout.locator('button').click();
+    await checkout.locator('button[type=submit]').click();
     await expect(player.locator('[role=status]')).toContainText('Покупка завершена');
+    await expect(player.locator('[data-account-operation-modal]')).toContainText('Адена');
+    await player.locator('[data-account-operation-modal] [data-account-operation-modal-close]').first().click();
     const replay = await player.request.post('/modules/shop/checkout', { form: { _token: playerToken, product_id: productId, request_uuid: uuid, price_coins: 1, quantity: 999 } });
     expect(replay.ok()).toBe(true);
     await player.goto('/modules/shop/history');
     await expect(player.locator('.reward-history-card')).toHaveCount(1);
     const receipt = await player.locator('a[href*="/shop/history/"]').first().getAttribute('href');
     await player.goto('/modules/shop');
-    await player.locator('form[action$="/shop/checkout"]').nth(1).locator('button').click();
+    await player.locator('[data-account-social-open^="shop-buy-"]').nth(1).click();
+    await player.locator('dialog[open] form[action$="/shop/checkout"] button[type=submit]').click();
     await expect(player.locator('[role=status]')).toContainText('Покупка завершена');
     await player.goto('/modules/shop/history');
     await expect(player.locator('.reward-history-card')).toHaveCount(2);
@@ -99,7 +154,7 @@ test('shop activates through administration, buys once and renders all account t
             }
         }
     }
-    for (const url of ['/admin/extensions/shop', serverUrl, itemEditUrl, bundleEditUrl, '/admin/extensions/shop/purchases', receipt.replace('/modules/shop/history/', '/admin/extensions/shop/purchases/')]) {
+    for (const url of ['/admin/extensions/shop', serverUrl, '/admin/extensions/shop/purchases', receipt.replace('/modules/shop/history/', '/admin/extensions/shop/purchases/')]) {
         await page.goto(url);
         await expect(page.locator('h1')).toBeVisible();
         for (const scheme of ['light', 'dark']) {

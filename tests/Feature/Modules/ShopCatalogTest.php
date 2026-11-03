@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Shop\Models\ShopCategory;
+use KaevCMS\Modules\Shop\Models\ShopProduct;
 use KaevCMS\Modules\Shop\Models\ShopTab;
 use RuntimeException;
 use Tests\TestCase;
@@ -60,8 +61,10 @@ final class ShopCatalogTest extends TestCase
         ]))->assertRedirect();
         $this->assertDatabaseHas('module_shop_categories', ['id' => $category->id, 'name_en' => 'Axes', 'is_active' => false]);
 
+        // The legacy category remains editable through its secured old route,
+        // but it is intentionally absent from the section-only administration UI.
         $this->get('/admin/extensions/shop/servers/'.$server->id)->assertOk()
-            ->assertSee('Топоры')->assertSee('Оружие')->assertSee('admin-card-row', false);
+            ->assertDontSee('Топоры')->assertSee('Оружие')->assertSee('shop-section-list', false);
 
         $this->delete('/admin/extensions/shop/servers/'.$server->id.'/categories/'.$category->id, ['confirm' => '1'])
             ->assertRedirect();
@@ -121,7 +124,10 @@ final class ShopCatalogTest extends TestCase
         $this->assertSame(0, ShopTab::query()->count());
 
         $tab = ShopTab::query()->create($this->values() + ['game_server_id' => $server->id]);
+        // Empty legacy categories go with their section; products block the deletion.
         ShopCategory::query()->create($this->values(['tab_id' => $tab->id]));
+        ShopProduct::query()->create(['section_id' => $tab->id, 'name_ru' => 'Меч', 'name_en' => 'Sword',
+            'type' => 'item', 'price_coins' => 5, 'item_id' => 57, 'quantity' => 1, 'sort_order' => 0, 'is_active' => true]);
         $this->delete($url.'/tabs/'.$tab->id, ['confirm' => 1])
             ->assertSessionHasErrors('confirm');
         $this->delete($url.'/tabs/'.$tab->id)->assertSessionHasErrors('confirm');
