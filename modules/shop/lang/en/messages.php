@@ -245,4 +245,5 @@ return [
     'purchase_success_title' => '“:product” purchased',
     'artwork_more' => '+:count more',
     'contents_open' => 'Details',
+    'hold_to_buy' => 'Press and hold the button until it fills',
 ];

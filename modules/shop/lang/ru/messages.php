@@ -245,4 +245,5 @@ return [
     'purchase_success_title' => '«:product» куплен',
     'artwork_more' => '+:count ещё',
     'contents_open' => 'Подробнее',
+    'hold_to_buy' => 'Удерживайте кнопку, пока она не заполнится',
 ];

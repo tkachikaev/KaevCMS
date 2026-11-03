@@ -1616,8 +1616,8 @@ div.setup-result { position: relative; margin: 14px 0; padding: 16px 18px 16px 6
 
 .shop-section-create { display: grid; gap: 6px; margin: var(--admin-space-2) 0 0; padding: var(--admin-space-3) var(--admin-space-4) var(--admin-space-4); border-top: 1px solid var(--admin-border); }
 .shop-section-create label { color: var(--admin-text-muted); font-size: var(--admin-text-small); }
-.shop-section-create-row { display: flex; gap: var(--admin-space-2); }
-.shop-section-create-row input { flex: 1; min-width: 0; }
+.shop-section-create-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--admin-space-2); }
+.shop-section-create-row input { width: 100%; min-width: 0; box-sizing: border-box; }
 .shop-icon-button { display: inline-grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; }
 
 .shop-products-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--admin-space-3); padding: var(--admin-space-4) var(--admin-space-5); border-bottom: 1px solid var(--admin-border); }

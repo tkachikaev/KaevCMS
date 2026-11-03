@@ -2,51 +2,45 @@
 @section('title', __('module-shop::messages.account_title'))
 @section('content')
 <x-account-page>
-    <x-account-panel class="account-section shop-storefront">
-        <div class="shop-storefront-head">
-            @if($servers->count() > 1)
-                <nav class="account-tabs shop-server-tabs" aria-label="{{ __('Game servers') }}">
-                    @foreach($servers as $choice)
-                        <a wire:navigate.preserve-scroll @class(['active' => $choice->id === $server->id]) @if($choice->id === $server->id) aria-current="page" @endif href="{{ route('modules.shop.index', ['server' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
-                    @endforeach
-                </nav>
-            @endif
-            <span class="shop-storefront-spacer"></span>
-            <span class="shop-balance">
-                <x-account-wallet-icon :url="$walletView['icon_url']" />
-                {{ $walletView['label'] }}
-            </span>
-            <a wire:navigate class="account-button secondary" href="{{ route('modules.shop.history') }}">{{ __('module-shop::messages.history_title') }}</a>
-        </div>
-
-        @if(session('shop_purchased'))
-            <div class="account-notice success" role="status">
-                <span>{{ __('module-shop::messages.purchase_success') }}</span>
-                <a wire:navigate class="account-button secondary" href="{{ public_route('web-inventory.index', ['server' => $server?->id]) }}">{{ __('module-shop::messages.open_inventory') }}</a>
-            </div>
-        @endif
+    {{-- The catalog block is swapped in place when the server or section changes. --}}
+    <x-account-panel class="account-section shop-storefront" data-shop-storefront>
         @error('purchase')<div class="account-notice warning" role="alert">{{ $message }}</div>@enderror
 
         @if($servers->isEmpty())
+            <div class="shop-storefront-head">
+                <span class="shop-storefront-spacer"></span>
+                <a wire:navigate class="account-button secondary" href="{{ route('modules.shop.history') }}">{{ __('module-shop::messages.history_title') }}</a>
+            </div>
             <x-account-empty class="account-empty shop-empty">
                 <h2>{{ __('module-shop::messages.account_empty_title') }}</h2>
                 <p>{{ __('module-shop::messages.account_empty_description') }}</p>
             </x-account-empty>
         @else
+            @if($servers->count() > 1)
+                <nav class="account-tabs shop-server-tabs" aria-label="{{ __('Game servers') }}">
+                    @foreach($servers as $choice)
+                        <a data-shop-switch @class(['active' => $choice->id === $server->id]) @if($choice->id === $server->id) aria-current="page" @endif href="{{ route('modules.shop.index', ['server' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
+                    @endforeach
+                </nav>
+            @endif
+            <div class="shop-storefront-head">
+                @if($tabs->count() > 1)
+                    <nav class="shop-section-pills" aria-label="{{ __('module-shop::messages.account_tabs') }}">
+                        @foreach($tabs as $choice)
+                            <a data-shop-switch @class(['active' => $choice->id === $tab->id]) @if($choice->id === $tab->id) aria-current="page" @endif href="{{ route('modules.shop.index', ['server' => $server->id, 'tab' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
+                        @endforeach
+                    </nav>
+                @endif
+                <span class="shop-storefront-spacer"></span>
+                <a wire:navigate class="account-button secondary" href="{{ route('modules.shop.history') }}">{{ __('module-shop::messages.history_title') }}</a>
+            </div>
             @if(! $canBuy)
                 <div class="account-inline-warning" role="status">{{ __('module-shop::messages.account_sales_paused') }}</div>
             @elseif($walletView['blocked'])
                 <div class="account-inline-warning" role="status">{{ __('module-shop::messages.account_wallet_blocked') }}</div>
             @endif
-            @if($tabs->count() > 1)
-                <nav class="shop-section-pills" aria-label="{{ __('module-shop::messages.account_tabs') }}">
-                    @foreach($tabs as $choice)
-                        <a wire:navigate.preserve-scroll @class(['active' => $choice->id === $tab->id]) @if($choice->id === $tab->id) aria-current="page" @endif href="{{ route('modules.shop.index', ['server' => $server->id, 'tab' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
-                    @endforeach
-                </nav>
-            @endif
             @if($tab)
-                <section aria-labelledby="shop-section-title">
+                <section aria-labelledby="shop-section-title" aria-live="polite">
                     <h2 id="shop-section-title" class="shop-section-title">{{ $tab->nameFor() }}</h2>
                     <div class="shop-product-grid" data-shop-catalog>
                         @foreach($products as $product)
@@ -84,10 +78,10 @@
                             @if($products->onFirstPage())
                                 <span class="account-button ghost disabled">← {{ __('Back') }}</span>
                             @else
-                                <a wire:navigate.preserve-scroll class="account-button ghost" href="{{ $products->previousPageUrl() }}">← {{ __('Back') }}</a>
+                                <a data-shop-switch class="account-button ghost" href="{{ $products->previousPageUrl() }}">← {{ __('Back') }}</a>
                             @endif
                             @if($products->hasMorePages())
-                                <a wire:navigate.preserve-scroll class="account-button ghost" href="{{ $products->nextPageUrl() }}">{{ __('Next') }} →</a>
+                                <a data-shop-switch class="account-button ghost" href="{{ $products->nextPageUrl() }}">{{ __('Next') }} →</a>
                             @else
                                 <span class="account-button ghost disabled">{{ __('Next') }} →</span>
                             @endif
@@ -100,3 +94,6 @@
     </x-account-panel>
 </x-account-page>
 @endsection
+@push('scripts')
+<script src="{{ asset('assets/account/js/shop-storefront.js') }}?v={{ cms_version() }}" defer data-navigate-track data-navigate-once></script>
+@endpush

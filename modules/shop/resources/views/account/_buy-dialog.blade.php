@@ -29,8 +29,13 @@
             <div><dt>{{ __('module-shop::messages.purchase_price') }}</dt><dd>{{ __('module-shop::messages.account_price', ['count' => format_number($product->price_coins)]) }}</dd></div>
             <div><dt>{{ __('module-shop::messages.balance_after') }}</dt><dd>{{ __('module-shop::messages.account_price', ['count' => format_number($walletView['balance'] - $product->price_coins)]) }}</dd></div>
         </dl>
+        <p id="shop-buy-{{ $product->id }}-hint" class="shop-hold-hint">{{ __('module-shop::messages.hold_to_buy') }}</p>
         <footer class="account-operation-modal-actions">
-            <button type="submit" class="account-button primary">{{ __('module-shop::messages.buy_for', ['count' => format_number($product->price_coins)]) }}</button>
+            {{-- With JavaScript the purchase needs a press-and-hold; without it the button submits as usual. --}}
+            <button type="submit" class="account-button primary shop-hold-button" data-shop-hold aria-describedby="shop-buy-{{ $product->id }}-hint">
+                <span class="shop-hold-fill" aria-hidden="true"></span>
+                <span class="shop-hold-label">{{ __('module-shop::messages.buy_for', ['count' => format_number($product->price_coins)]) }}</span>
+            </button>
             <button type="button" class="account-button secondary" data-account-social-close>{{ __('module-shop::messages.cancel') }}</button>
         </footer>
     </form>

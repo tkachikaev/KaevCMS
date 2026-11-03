@@ -615,6 +615,7 @@
         "public/account-themes/luxury/assets/css/app.css",
         "public/assets/account/css/components.css",
         "public/assets/account/js/navigation.js",
+        "public/assets/account/js/shop-storefront.js",
         "public/assets/admin/css/appearance.css",
         "public/assets/admin/css/base.css",
         "public/assets/admin/css/catalogs.css",

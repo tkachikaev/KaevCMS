@@ -689,8 +689,6 @@ body.account-body .account-copy-field > .account-copy-icon { flex: 0 0 42px; wid
 .shop-storefront-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .shop-storefront-spacer { flex: 1 1 auto; }
 body.account-body .shop-server-tabs { flex: 0 1 auto; }
-body.account-body .shop-balance { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--account-line); border-radius: 999px; background: var(--account-panel-raised); color: var(--account-text); font-weight: 700; font-variant-numeric: tabular-nums; }
-body.account-body .shop-balance .account-wallet-coin-image { width: 24px; height: 24px; }
 .shop-section-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 body.account-body .shop-section-pills a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border: 1px solid var(--account-line); border-radius: 999px; background: var(--account-panel-raised); color: var(--account-text); font-size: 16px; font-weight: 600; text-decoration: none; transition: border-color .16s ease, background .16s ease; }
 body.account-body .shop-section-pills a:hover { border-color: var(--account-gold); }
@@ -760,3 +758,15 @@ body.account-body .shop-buy-summary dt { color: var(--account-muted); }
     .shop-buy-summary { margin: 0 18px; }
 }
 @media (prefers-reduced-motion: reduce) { body.account-body .shop-section-pills a { transition: none; } }
+
+/* Press-and-hold purchase: the button and the bundle icons fill from left to right. */
+.shop-hold-button { position: relative; overflow: hidden; isolation: isolate; touch-action: none; user-select: none; -webkit-user-select: none; }
+.shop-hold-fill { position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .3); transform: scaleX(0); transform-origin: left center; transition: transform .2s ease; }
+.shop-hold-label { position: relative; }
+[data-shop-holding] .shop-hold-fill { transform: scaleX(1); transition: transform var(--shop-hold-ms, 1200ms) linear; }
+body.account-body .shop-buy-dialog .account-operation-reward-icon { position: relative; overflow: hidden; }
+body.account-body .shop-buy-dialog .account-operation-reward-icon::after { content: ""; position: absolute; inset: 0; background: var(--account-gold); opacity: .38; transform: scaleX(0); transform-origin: left center; transition: transform .2s ease; pointer-events: none; }
+body.account-body .shop-buy-dialog[data-shop-holding] .account-operation-reward-icon::after { transform: scaleX(1); transition: transform var(--shop-hold-ms, 1200ms) linear; }
+.shop-hold-hint { display: none; }
+html[data-shop-hold-ready] body.account-body .shop-hold-hint { display: block; margin: 12px 26px 0; color: var(--account-muted); font-size: 14px; text-align: right; }
+@media (max-width: 560px) { html[data-shop-hold-ready] body.account-body .shop-hold-hint { margin-inline: 18px; text-align: left; } }

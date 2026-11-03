@@ -119,8 +119,17 @@ test('shop activates through administration, buys once and renders all account t
     const uuid = await checkout.locator('[name=request_uuid]').inputValue();
     const productId = await checkout.locator('[name=product_id]').inputValue();
     const playerToken = await player.locator('meta[name=csrf-token]').getAttribute('content');
-    await checkout.locator('button[type=submit]').click();
-    await expect(player.locator('[role=status]')).toContainText('Покупка завершена');
+    // A plain click never buys: the button has to be held until it fills.
+    const holdButton = checkout.locator('[data-shop-hold]');
+    await holdButton.click();
+    await player.waitForTimeout(300);
+    await expect(checkout).toBeVisible();
+    await holdButton.hover();
+    await player.mouse.down();
+    await expect(player.locator('dialog[open][data-shop-holding]')).toHaveCount(1);
+    await player.waitForTimeout(1500);
+    await player.mouse.up();
+    await expect(player.locator('[data-account-operation-modal]')).toContainText('Покупка завершена');
     await expect(player.locator('[data-account-operation-modal]')).toContainText('Адена');
     await player.locator('[data-account-operation-modal] [data-account-operation-modal-close]').first().click();
     const replay = await player.request.post('/modules/shop/checkout', { form: { _token: playerToken, product_id: productId, request_uuid: uuid, price_coins: 1, quantity: 999 } });
@@ -130,8 +139,11 @@ test('shop activates through administration, buys once and renders all account t
     const receipt = await player.locator('a[href*="/shop/history/"]').first().getAttribute('href');
     await player.goto('/modules/shop');
     await player.locator('[data-account-social-open^="shop-buy-"]').nth(1).click();
-    await player.locator('dialog[open] form[action$="/shop/checkout"] button[type=submit]').click();
-    await expect(player.locator('[role=status]')).toContainText('Покупка завершена');
+    await player.locator('dialog[open] [data-shop-hold]').hover();
+    await player.mouse.down();
+    await player.waitForTimeout(1500);
+    await player.mouse.up();
+    await expect(player.locator('[data-account-operation-modal]')).toContainText('Покупка завершена');
     await player.goto('/modules/shop/history');
     await expect(player.locator('.reward-history-card')).toHaveCount(2);
     const guest = await context.browser().newContext();
