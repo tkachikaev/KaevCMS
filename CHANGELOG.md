@@ -9,6 +9,7 @@
 - Referrals 1.0.1: one administration screen per game server with a server picker, the invitation switch in the header, compact settings cards and inviter and invitee rewards side by side; rules resolve item names and icons and are added or removed without a reload.
 - Account area and administration: tab switches keep the scroll position and no longer replay entrance animations or show the loading bar; the administration header keeps tab rows at a fixed height on every page.
 - Search the game item catalogue by localized name for item pickers; item search and preview requests have their own rate limits.
+- Security: update symfony/http-foundation, symfony/http-kernel and symfony/routing to 7.4.23 for the Symfony advisories published on 2026-11-04 (forwarded-header host spoofing, path and method access-rule bypasses).
 
 ## 0.57.0 - 2026-11-01
 

@@ -11,7 +11,7 @@
   "previous_apply_sha256": "4e346bd408a27b6e443141bb1ac3dd262780ace4954d0e0608af4646172cc68d",
   "composer_lock": {
     "previous_sha256": "b571f9e2829f5096ab21982abe7913ebbc8c43b8ea6b7b9759bbd86d1c0d03cd",
-    "current_sha256": "b571f9e2829f5096ab21982abe7913ebbc8c43b8ea6b7b9759bbd86d1c0d03cd"
+    "current_sha256": "c02752f429551bcf19cd2c112c042cc4984dcf849182d9bad90f6040af3bc0ff"
   },
   "repair_files": []
 }
