@@ -30,9 +30,13 @@ final class AdminShopController extends Controller
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $servers = GameServer::query()->with('translations')->orderBy('sort_order')->orderBy('id')->get();
+        // Everything is configured on one screen per game server.
+        if ($servers->isNotEmpty()) {
+            return $this->back('servers.show', ['server' => $servers->first()->id]);
+        }
         $tabCounts = ShopTab::query()->selectRaw('game_server_id, COUNT(*) as total')
             ->groupBy('game_server_id')->pluck('total', 'game_server_id');
 
@@ -77,6 +81,7 @@ final class AdminShopController extends Controller
             'canManage' => $this->canManage($request),
             'settings' => ShopServerSetting::query()->where('game_server_id', $server->id)->first(),
             'salesEnabled' => (bool) ShopSetting::query()->where('setting_key', 'global')->value('sales_enabled'),
+            'sourceEnabled' => config('wallet.enabled_sources.shop') === true,
             'languages' => array_intersect_key($languages->enabled(), array_flip($texts->locales())),
             'defaultLocale' => $texts->defaultLocale(),
             'coinIcon' => $wallet->values()['icon_url'],
@@ -231,6 +236,11 @@ final class AdminShopController extends Controller
             $settings->update($values + ['updated_by_admin_id' => $admin->id]);
             $this->auditRequired('shop.settings_updated', $admin, 'shop_settings', $values);
         }, 3);
+
+        $returnServer = filter_var($request->input('_return_server'), FILTER_VALIDATE_INT);
+        if ($returnServer && GameServer::query()->whereKey($returnServer)->exists()) {
+            return $this->back('servers.show', ['server' => $returnServer])->with('status', __('module-shop::messages.saved'));
+        }
 
         return $this->back('index')->with('status', __('module-shop::messages.saved'));
     }

@@ -67,11 +67,11 @@ final class ShopModuleTest extends TestCase
         $editor = Admin::factory()->editor()->create();
 
         foreach ([$owner, $administrator, $auditor] as $admin) {
+            // The overview opens the first server screen, which carries both sales switches.
             $this->actingAs($admin, 'admin')
-                ->get('/admin/extensions/shop')
+                ->followingRedirects()->get('/admin/extensions/shop')
                 ->assertOk()
-                ->assertSee(__('module-shop::messages.unavailable_title'))
-                ->assertSee('admin-overview', false)
+                ->assertSee(__('module-shop::messages.global_sales_off_short'))
                 ->assertViewHas('servers');
         }
 
@@ -110,9 +110,9 @@ final class ShopModuleTest extends TestCase
         $this->assertTrue(Route::has('modules.shop.checkout'));
         $this->assertFalse(config('wallet.enabled_sources.shop'));
         $this->actingAs(Admin::factory()->create(), 'admin')
-            ->get('/admin/extensions/shop')
+            ->get('/admin/extensions/shop/servers/'.$server->id)
             ->assertOk()
-            ->assertSee(__('module-shop::messages.sales_disabled'));
+            ->assertSee(__('module-shop::messages.wallet_source_disabled'));
     }
 
     public function test_disabling_module_preserves_settings(): void

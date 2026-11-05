@@ -12,7 +12,7 @@ Shop sells items and bundles for CMS wallet coins. Each game server has its own 
    - one item is a regular product, several items make a bundle for one price (up to 100 distinct items);
    - the product name in each language comes from the item name; you can overwrite it, after which it no longer changes by itself. A bundle needs a typed name;
    - the description is written by hand; languages are tabs, one for each enabled site language.
-5. Turn on **Sales on this server** in the server page header and **Accept shop purchases** in the general shop settings.
+5. Turn on both switches in the header: **The shop accepts purchases** (shared by all servers) and **Sales on this server**. The Shop menu item opens the first server screen directly.
 
 Both switches start off. Players can still browse the catalogue, but nothing can be bought. Hidden products and sections are not shown to players; older products in hidden categories stay unavailable too.
 

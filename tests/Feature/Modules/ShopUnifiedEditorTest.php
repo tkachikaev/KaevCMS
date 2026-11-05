@@ -293,4 +293,17 @@ final class ShopUnifiedEditorTest extends TestCase
         $this->putJson($base.'/sections/order', ['ids' => [$section->id]])->assertForbidden();
         $this->assertSame(1, ShopTab::query()->count());
     }
+
+    public function test_overview_opens_a_server_and_the_shop_switch_returns_to_it(): void
+    {
+        [$server] = $this->section();
+        $this->actingAs(Admin::factory()->create(), 'admin');
+        $this->get('/admin/extensions/shop')->assertRedirectContains('/admin/extensions/shop/servers/');
+        $this->put('/admin/extensions/shop/settings', ['sales_enabled' => 1, '_return_server' => $server->id])
+            ->assertRedirect('/admin/extensions/shop/servers/'.$server->id);
+        $this->assertDatabaseHas('module_shop_settings', ['setting_key' => 'global', 'sales_enabled' => true]);
+        $this->get('/admin/extensions/shop/servers/'.$server->id)->assertOk()
+            ->assertSee(__('module-shop::messages.global_sales_on'))
+            ->assertSee(__('module-shop::messages.sales_need_both'));
+    }
 }

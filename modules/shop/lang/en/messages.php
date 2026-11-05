@@ -196,10 +196,8 @@ return [
     'bundle_item_limit_reached' => 'A bundle may contain no more than 100 items.',
 
     // Catalog editor and storefront (1.0.6)
-    'all_shop_settings' => 'General shop settings',
     'server_sales_on' => 'Sales on this server are on',
     'server_sales_off' => 'Sales on this server are off',
-    'global_sales_off' => 'Shop sales are switched off globally: players can browse but cannot buy.',
     'sections_drag_hint' => 'Drag to change the order',
     'move_item' => 'Move “:name” with the arrow keys',
     'products_count' => 'Products: :count',
@@ -246,4 +244,8 @@ return [
     'artwork_more' => '+:count more',
     'contents_open' => 'Details',
     'hold_to_buy' => 'Press and hold the button until it fills',
+    'global_sales_on' => 'The shop accepts purchases',
+    'global_sales_off_short' => 'The shop does not accept purchases',
+    'sales_need_both' => 'Players can buy once both switches are on: the shop and this server.',
+    'wallet_source_disabled' => 'Coin debits for the shop are disabled in the wallet configuration, so purchases are unavailable.',
 ];

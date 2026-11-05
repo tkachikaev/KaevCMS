@@ -23,11 +23,18 @@
                 @foreach($servers as $choice)
                     <a role="listitem" wire:navigate @class(['active' => $choice->id === $server->id]) @if($choice->id === $server->id) aria-current="page" @endif href="{{ route('admin.module-pages.shop.servers.show', ['adminPath' => $adminPath, 'server' => $choice->id]) }}">{{ $choice->nameFor() }}</a>
                 @endforeach
-                <a role="listitem" wire:navigate class="shop-server-picker-all" href="{{ route('admin.module-pages.shop.index', ['adminPath' => $adminPath]) }}">{{ __('module-shop::messages.all_shop_settings') }}</a>
             </div>
         </details>
         <span class="shop-editor-toolbar-spacer"></span>
         <a wire:navigate class="button button-secondary" href="{{ route('admin.module-pages.shop.purchases.index', ['adminPath' => $adminPath, 'server_id' => $server->id]) }}">{{ __('module-shop::messages.purchase_admin_title') }}</a>
+        {{-- The shop-wide switch: purchases need it and the server switch together. --}}
+        <form method="POST" action="{{ route('admin.module-pages.shop.settings.update', ['adminPath' => $adminPath]) }}" data-shop-async @class(['shop-sales-switch', 'is-on' => $salesEnabled])>
+            @csrf @method('PUT')
+            <input type="hidden" name="sales_enabled" value="{{ $salesEnabled ? '0' : '1' }}">
+            <input type="hidden" name="_return_server" value="{{ $server->id }}">
+            <span id="shop-global-sales-label">{{ $salesEnabled ? __('module-shop::messages.global_sales_on') : __('module-shop::messages.global_sales_off_short') }}</span>
+            <button type="submit" class="shop-switch" role="switch" aria-checked="{{ $salesEnabled ? 'true' : 'false' }}" aria-labelledby="shop-global-sales-label" @disabled(! $canManage)><span></span></button>
+        </form>
         <form method="POST" action="{{ route('admin.module-pages.shop.servers.settings.update', ['adminPath' => $adminPath, 'server' => $server->id]) }}" data-shop-async @class(['shop-sales-switch', 'is-on' => $serverEnabled])>
             @csrf @method('PUT')
             <input type="hidden" name="enabled" value="{{ $serverEnabled ? '0' : '1' }}">
@@ -35,8 +42,10 @@
             <button type="submit" class="shop-switch" role="switch" aria-checked="{{ $serverEnabled ? 'true' : 'false' }}" aria-labelledby="shop-sales-label" @disabled(! $canManage)><span></span></button>
         </form>
     </div>
-    @if(! $salesEnabled)
-        <p class="notice notice-warning shop-editor-notice">{{ __('module-shop::messages.global_sales_off') }} <a wire:navigate href="{{ route('admin.module-pages.shop.index', ['adminPath' => $adminPath]) }}">{{ __('module-shop::messages.all_shop_settings') }}</a></p>
+    @if(! $sourceEnabled)
+        <p class="notice notice-warning shop-editor-notice">{{ __('module-shop::messages.wallet_source_disabled') }}</p>
+    @elseif(! $salesEnabled || ! $serverEnabled)
+        <p class="notice notice-warning shop-editor-notice">{{ __('module-shop::messages.sales_need_both') }}</p>
     @endif
     @if(session('status'))<div class="notice notice-success shop-editor-notice" role="status" data-shop-flash>{{ session('status') }}</div>@endif
     @if($errors->any() && ! old('_shop_dialog'))<div class="notice notice-error shop-editor-notice" role="alert"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif

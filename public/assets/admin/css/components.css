@@ -1393,6 +1393,13 @@ p.field-error,
     cursor: pointer;
 }
 
+/* The card heading already draws the divider; a toggle right below it needs no second line. */
+.admin-card-heading + .admin-toggle-row,
+.admin-card-heading + form > .admin-toggle-row:first-of-type {
+    padding-top: 0;
+    border-top: 0;
+}
+
 .admin-toggle-row-compact {
     gap: 16px;
     padding: 12px 0 0;
