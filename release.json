@@ -2,7 +2,7 @@
   "schema": 1,
   "version": "0.58.0",
   "previous_version": "0.57.0",
-  "released_at": "2026-11-03",
+  "released_at": "2026-11-05",
   "recovery_floor_version": "0.42.4",
   "cumulative_base_version": "0.42.4",
   "apply_script": "deployment/windows/apply-0.58.0.ps1",
