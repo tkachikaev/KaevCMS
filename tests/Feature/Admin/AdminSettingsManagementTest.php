@@ -159,6 +159,20 @@ class AdminSettingsManagementTest extends TestCase
             ->assertOk()
             ->assertSee('/uploads/'.$logo, false)
             ->assertSee('/uploads/'.$favicon, false);
+
+        // The administration panel uses the same favicon.
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.settings.general'))
+            ->assertOk()
+            ->assertSee('<link rel="icon" href="'.asset('uploads/'.$favicon).'">', false);
+    }
+
+    public function test_administration_falls_back_to_the_bundled_favicon(): void
+    {
+        $this->actingAs($this->createAdmin(), 'admin')
+            ->get(route('admin.settings.general'))
+            ->assertOk()
+            ->assertSee('<link rel="icon" type="image/webp" href="'.asset('assets/images/kaev-logo.webp').'">', false);
     }
 
     public function test_wide_logo_flag_is_saved_and_replaces_the_name_beside_the_logo(): void

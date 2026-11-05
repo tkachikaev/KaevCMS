@@ -8,6 +8,11 @@
     <meta name="theme-color" content="#f3f6fa">
     <script src="{{ asset('assets/admin/js/appearance.js') }}?v={{ cms_version() }}" data-navigate-track data-navigate-once></script>
     <title>@yield('title', __('Control panel')) — {{ site_name() }}</title>
+    @if (site_favicon_url())
+        <link rel="icon" href="{{ site_favicon_url() }}">
+    @else
+        <link rel="icon" type="image/webp" href="{{ asset('assets/images/kaev-logo.webp') }}">
+    @endif
     @foreach ([
         'base',
         'layout',
