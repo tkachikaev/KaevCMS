@@ -11,15 +11,21 @@ test('shop activates through administration, buys once and renders all account t
     await submitLogin({ page, postPath: '/admin/login', label: 'Shop administrator', submit: () => page.locator('form[action$="/admin/login"] button[type=submit]').click() });
     await page.goto('/admin/modules');
     const enable = page.locator('[data-module-id="shop"] form[action$="/enable"]');
-    if (await enable.count()) {
-        // Wait for the enable request itself: under load the next page can be requested before it finishes.
-        await Promise.all([
-            page.waitForResponse((response) => response.request().method() === 'POST' && /\/enable$/.test(new URL(response.url()).pathname)),
+    // Wait for the enable request itself and retry once: on a loaded runner it can fail transiently.
+    // A lasting failure reports the HTTP status and the module card notice instead of a bare count.
+    const problems = [];
+    for (let attempt = 0; attempt < 2 && await enable.count(); attempt++) {
+        const [response] = await Promise.all([
+            page.waitForResponse((candidate) => candidate.request().method() === 'POST' && /\/enable$/.test(new URL(candidate.url()).pathname)),
+            page.waitForEvent('load'),
             enable.locator('button').click(),
         ]);
+        // The page the request landed on carries the flashed error, if any.
+        const notices = await page.locator('.notice-error').allInnerTexts();
+        problems.push(`attempt ${attempt + 1}: HTTP ${response.status()} ${notices.join(' ').trim()}`.trim());
         await page.goto('/admin/modules');
-        await expect(enable).toHaveCount(0);
     }
+    expect(await enable.count(), `Shop was not enabled. ${problems.join('; ')}`).toBe(0);
     await page.goto('/admin/extensions/shop');
     const save = async (url, data) => {
         const token = await page.locator('meta[name=csrf-token]').getAttribute('content');

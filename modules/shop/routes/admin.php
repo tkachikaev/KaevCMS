@@ -34,5 +34,5 @@ Route::put('/servers/{server}/sections/order', [AdminShopController::class, 'ord
 Route::put('/servers/{server}/sections/{tab}', [AdminShopController::class, 'updateSection'])->whereNumber(['server', 'tab'])->name('sections.update');
 Route::patch('/servers/{server}/sections/{tab}/visibility', [AdminShopController::class, 'sectionVisibility'])->whereNumber(['server', 'tab'])->name('sections.visibility');
 Route::put('/servers/{server}/sections/{tab}/products/order', [AdminShopController::class, 'orderProducts'])->whereNumber(['server', 'tab'])->name('sections.products.order');
-Route::get('/servers/{server}/items', [AdminShopController::class, 'itemSearch'])->whereNumber('server')->middleware('throttle:120,1')->name('items.search');
-Route::get('/servers/{server}/items/{item}', [AdminShopController::class, 'itemPreview'])->whereNumber(['server', 'item'])->middleware('throttle:120,1')->name('items.preview');
+Route::get('/servers/{server}/items', [AdminShopController::class, 'itemSearch'])->whereNumber('server')->middleware('throttle:120,1,shop-item-search')->name('items.search');
+Route::get('/servers/{server}/items/{item}', [AdminShopController::class, 'itemPreview'])->whereNumber(['server', 'item'])->middleware('throttle:120,1,shop-item-preview')->name('items.preview');
