@@ -496,7 +496,7 @@ html[data-admin-color-scheme="dark"] .field-help-tooltip-content::after { border
     position: fixed;
     inset: auto;
     top: var(--admin-dropdown-top);
-    right: var(--admin-dropdown-right, 12px);
+    left: var(--admin-dropdown-left, 12px);
     z-index: 90;
     min-width: 0;
     max-width: calc(100vw - 24px);

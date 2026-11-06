@@ -138,6 +138,9 @@ for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: '
             })))).toBeGreaterThanOrEqual(11);
             expect(box.width).toBeLessThanOrEqual(variant.width - 24);
             expect(box.x + box.width).toBeLessThanOrEqual(variant.width - 11);
+            // Scrollbar-gutter can make the usable viewport narrower than innerWidth.
+            const viewportRight = await page.evaluate(() => document.documentElement.getBoundingClientRect().right);
+            expect(box.x + box.width).toBeLessThanOrEqual(viewportRight - 11);
             await page.screenshot({ path: testInfo.outputPath(selector.slice(1) + '.png') });
         }
         expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);

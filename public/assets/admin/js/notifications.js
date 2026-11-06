@@ -27,9 +27,12 @@
         };
         const align = () => {
             const top = toolbar.getBoundingClientRect().bottom + 8;
-            // scrollbar-gutter reserves layout space even when clientWidth includes it.
+            // A reserved scrollbar gutter can shift a fixed panel's CSS right
+            // anchor independently of the document viewport. Place it using a
+            // clamped left coordinate and the viewport's actual content width.
             const viewport = document.documentElement.getBoundingClientRect();
-            const viewportWidth = viewport.width;
+            const minLeft = viewport.left + 12;
+            const maxRight = viewport.right - 12;
             menus.forEach(menu => {
                 const panel = panelOf(menu);
                 if (!panel) return;
@@ -37,10 +40,11 @@
                 // Keep the anchor on that stable container so an update cannot reset it.
                 menu.style.setProperty('--admin-dropdown-top', top + 'px');
                 if (menu.open) {
+                    panel.style.maxWidth = Math.max(0, viewport.width - 24) + 'px';
                     const width = panel.getBoundingClientRect().width;
-                    const desired = viewport.right - menu.getBoundingClientRect().right;
-                    const right = Math.max(12, Math.min(desired, viewportWidth - width - 12));
-                    menu.style.setProperty('--admin-dropdown-right', right + 'px');
+                    const desired = menu.getBoundingClientRect().right - width;
+                    const left = Math.max(minLeft, Math.min(desired, maxRight - width));
+                    menu.style.setProperty('--admin-dropdown-left', left + 'px');
                 }
             });
         };
