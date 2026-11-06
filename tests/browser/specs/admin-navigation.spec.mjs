@@ -97,7 +97,7 @@ test('administration loads the split stylesheet stack once and in order', async 
     expect(await stylesheetNames()).toEqual(expected);
 });
 
-for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }]) {
+for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }, { width: 320, scheme: 'dark' }]) {
     test(`header menus align and animate exclusively on ${variant.width}px (${variant.scheme})`, async ({ page }, testInfo) => {
         await page.setViewportSize({ width: variant.width, height: 900 });
         await page.evaluate(scheme => window.KaevCMSAdminAppearance.apply(scheme), variant.scheme);
@@ -136,6 +136,7 @@ for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: '
                 rect: element.getBoundingClientRect().toJSON(), right: getComputedStyle(element).right,
                 max: getComputedStyle(element).maxWidth, parent: getComputedStyle(element.parentElement).transform,
             })))).toBeGreaterThanOrEqual(11);
+            expect(box.width).toBeLessThanOrEqual(variant.width - 24);
             expect(box.x + box.width).toBeLessThanOrEqual(variant.width - 11);
             await page.screenshot({ path: testInfo.outputPath(selector.slice(1) + '.png') });
         }

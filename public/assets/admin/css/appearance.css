@@ -499,7 +499,7 @@ html[data-admin-color-scheme="dark"] .field-help-tooltip-content::after { border
     right: var(--admin-dropdown-right, 12px);
     z-index: 90;
     min-width: 0;
-    max-width: calc(100% - 24px);
+    max-width: calc(100vw - 24px);
     max-height: calc(100dvh - var(--admin-dropdown-top) - 12px);
     overflow: auto;
     border: 1px solid var(--admin-border);
