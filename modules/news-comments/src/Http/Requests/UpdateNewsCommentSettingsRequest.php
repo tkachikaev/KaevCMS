@@ -4,6 +4,7 @@ namespace KaevCMS\Modules\NewsComments\Http\Requests;
 
 use App\Http\Requests\Admin\AdminFormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\In;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentSettings;
 
 final class UpdateNewsCommentSettingsRequest extends AdminFormRequest
@@ -17,7 +18,7 @@ final class UpdateNewsCommentSettingsRequest extends AdminFormRequest
         ]);
     }
 
-    /** @return array<string, list<string|\Illuminate\Validation\Rules\In>> */
+    /** @return array<string, list<string|In>> */
     public function rules(): array
     {
         $rules = [

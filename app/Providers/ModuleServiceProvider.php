@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Support\Modules\ModuleAdminAccessRegistry;
-use App\Support\News\NewsExtensionRegistry;
 use App\Support\Modules\ModuleAdminAuthorizer;
 use App\Support\Modules\ModuleAutoloader;
 use App\Support\Modules\ModuleGameServerDependencyRegistry;
@@ -13,6 +12,7 @@ use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
 use App\Support\Modules\ModuleUserRegistrationRegistry;
 use App\Support\Modules\ModuleValidator;
+use App\Support\News\NewsExtensionRegistry;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
