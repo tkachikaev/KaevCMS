@@ -20,6 +20,8 @@ Promo Codes and Daily Rewards use the shared account operation dialog for succes
 
 Browser ZIP installation, automatic remote updates, and sandbox isolation are intentionally not provided yet.
 
+The `news-comments` module provides news discussion settings (publishing mode, user editing, limits, and per-article policies). This branch currently contains the foundation; player submission and staff moderation are not complete. See `modules/news-comments/docs/README.en.md`.
+
 The bundled `support-tickets` module adds private player tickets. Owners and administrators can reply, auditors are read-only, and Editor access is enabled separately in the module settings. New tickets and player replies also create personal administrator notification-center events without copying private message text. Documentation is stored at `modules/support-tickets/docs/README.en.md`.
 
 ## Administration Livewire authorization

@@ -15,5 +15,6 @@
     @endif
 
     <article class="panel prose news-prose">{!! $news->safeBodyHtml() !!}</article>
+    @include('news.extensions', ['news' => $news])
 </section>
 @endsection
