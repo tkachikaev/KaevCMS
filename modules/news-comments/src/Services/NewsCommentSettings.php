@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\NewsComments\Services;
 use App\Models\Admin;
 use App\Models\News;
 use App\Support\Database\TableExistence;
+use KaevCMS\Modules\NewsComments\Models\NewsCommentNewsSetting;
 use KaevCMS\Modules\NewsComments\Models\NewsCommentSetting;
 use RuntimeException;
 use Throwable;
