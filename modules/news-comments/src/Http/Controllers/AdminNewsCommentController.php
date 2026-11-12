@@ -25,6 +25,7 @@ final class AdminNewsCommentController extends Controller
 
     public function index(Request $request): View
     {
+        $admin = $request->user('admin');
         $values = $this->settings->values();
         $news = News::query()->with('translations')->latest('created_at')->paginate(10);
         $policies = $values === null ? collect() : DB::table('module_news_comment_news_settings')
@@ -35,7 +36,7 @@ final class AdminNewsCommentController extends Controller
             'settings' => $values,
             'news' => $news,
             'policies' => $policies,
-            'canManage' => $request->user('admin')?->role === AdminRole::Owner,
+            'canManage' => $admin instanceof Admin && $admin->role === AdminRole::Owner,
             'adminPath' => (string) $request->route('adminPath'),
         ]);
     }
