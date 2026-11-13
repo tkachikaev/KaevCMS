@@ -21,6 +21,9 @@ use KaevCMS\Modules\NewsComments\Services\NewsCommentSettings;
 
 final class AdminNewsCommentController extends Controller
 {
+    /** Sections of the module page, chosen with the tab query parameter. */
+    private const TABS = ['moderation', 'settings', 'news'];
+
     public function __construct(
         private readonly NewsCommentSettings $settings,
         private readonly NewsCommentModerationService $moderation,
@@ -37,8 +40,10 @@ final class AdminNewsCommentController extends Controller
             ])],
             'news_id' => ['nullable', 'integer', 'min:1'],
             'author_id' => ['nullable', 'integer', 'min:1'],
+            'tab' => ['nullable', Rule::in(self::TABS)],
         ]);
 
+        $tab = (string) ($filters['tab'] ?? 'moderation');
         $state = (string) ($filters['review'] ?? 'pending');
         $newsId = isset($filters['news_id']) ? (int) $filters['news_id'] : null;
         $authorId = isset($filters['author_id']) ? (int) $filters['author_id'] : null;
@@ -102,6 +107,7 @@ final class AdminNewsCommentController extends Controller
             'activeReview' => $state,
             'reviewNewsId' => $newsId,
             'reviewAuthorId' => $authorId,
+            'activeTab' => $tab,
             'adminPath' => (string) $request->route('adminPath'),
         ]);
     }
@@ -123,7 +129,7 @@ final class AdminNewsCommentController extends Controller
             details: $data,
         );
 
-        return $this->back($request)->with('status', __('module-news-comments::messages.saved'));
+        return $this->back($request, 'settings')->with('status', __('module-news-comments::messages.saved'));
     }
 
     public function updateNews(Request $request, News $news): RedirectResponse
@@ -160,7 +166,7 @@ final class AdminNewsCommentController extends Controller
             details: ['policy' => $policy],
         );
 
-        return $this->back($request)->with('status', __('module-news-comments::messages.saved'));
+        return $this->back($request, 'news')->with('status', __('module-news-comments::messages.saved'));
     }
 
     public function approve(Request $request, int $comment): RedirectResponse
@@ -223,10 +229,11 @@ final class AdminNewsCommentController extends Controller
         return $admin;
     }
 
-    private function back(Request $request): RedirectResponse
+    private function back(Request $request, string $tab): RedirectResponse
     {
         return redirect()->route('admin.module-pages.news-comments.index', [
             'adminPath' => $request->route('adminPath'),
+            'tab' => $tab,
             'page' => max(1, $request->integer('page', 1)),
         ]);
     }

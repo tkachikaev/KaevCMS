@@ -52,7 +52,7 @@ class NewsCommentsModerationTest extends TestCase
             ->get('/admin/extensions/news-comments')
             ->assertOk()
             ->assertSee('Please approve me.')
-            ->assertSee(__('module-news-comments::messages.new_pending'));
+            ->assertSee(__('module-news-comments::messages.badge_new'));
 
         $this->post('/admin/extensions/news-comments/comments/'.$comment->id.'/approve')
             ->assertRedirect();
