@@ -420,7 +420,7 @@ class NewsCommentsPlayerTest extends TestCase
             'parent_id' => $original->id,
         ]);
 
-        $this->actingAs($author);
+        $this->actingAs($author, 'web');
         try {
             app(NewsCommentService::class)->edit($news, $author, $original->id, 'Trying to restore');
             $this->fail('A deleted comment was edited after moderation.');
@@ -428,7 +428,7 @@ class NewsCommentsPlayerTest extends TestCase
             $this->assertNull($original->fresh()->body);
         }
 
-        $this->actingAs($other);
+        $this->actingAs($other, 'web');
         try {
             app(NewsCommentService::class)->submit($news, $other, 'Another reply', $original->id);
             $this->fail('A deleted comment accepted a new reply.');

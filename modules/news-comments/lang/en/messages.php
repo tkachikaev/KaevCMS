@@ -76,7 +76,7 @@ return [
     'error_edit_wait' => 'You can edit this comment again in five minutes.',
     'error_invalid_body' => 'Enter a comment within the allowed length.',
     'error_already_deleted' => 'This comment is already deleted.',
-    'error_duplicate' => 'This comment has already been submitted.'
+    'error_duplicate' => 'This comment has already been submitted.',
 
     'moderation_title' => 'Comment moderation',
     'moderation_description' => 'New comments and revisions to published comments are reviewed separately. Existing published text remains visible until a proposed edit is approved.',
