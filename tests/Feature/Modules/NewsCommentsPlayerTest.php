@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Models\Admin;
 use App\Models\News;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -11,8 +12,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\NewsComments\Livewire\NewsThread;
 use KaevCMS\Modules\NewsComments\Models\NewsComment;
+use KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentService;
 use Livewire\Livewire;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class NewsCommentsPlayerTest extends TestCase
@@ -235,14 +238,14 @@ class NewsCommentsPlayerTest extends TestCase
         try {
             app(NewsCommentService::class)->submit($news, $author, 'Not allowed');
             $this->fail('An unpublished news article accepted a comment.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(404, $exception->getStatusCode());
         }
 
         $news->update(['is_published' => true]);
         app(ModuleManager::class)->disable('news-comments');
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         app(NewsCommentService::class)->submit($news, $author, 'Module disabled');
     }
 
@@ -280,7 +283,7 @@ class NewsCommentsPlayerTest extends TestCase
         Livewire::test(NewsThread::class, ['newsId' => $news->id])
             ->assertDontSee(__('module-news-comments::messages.edit_pending_label'));
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         app(NewsCommentService::class)->deleteOwn($news, $attacker, $comment->id);
     }
 
@@ -402,7 +405,7 @@ class NewsCommentsPlayerTest extends TestCase
         $news = $this->article();
         $author = User::factory()->create();
         $other = User::factory()->create();
-        $admin = \App\Models\Admin::factory()->administrator()->create();
+        $admin = Admin::factory()->administrator()->create();
 
         $this->actingAs($author);
         $original = app(NewsCommentService::class)->submit($news, $author, 'This will be removed');
@@ -411,7 +414,7 @@ class NewsCommentsPlayerTest extends TestCase
         $reply = app(NewsCommentService::class)->submit($news, $other, 'Keep my answer', $original->id);
 
         $this->actingAs($admin, 'admin');
-        app(\KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService::class)
+        app(NewsCommentModerationService::class)
             ->act($admin, $original->id, 'destroy');
 
         $this->assertNotNull($original->fresh()->deleted_by_admin_at);
@@ -447,7 +450,7 @@ class NewsCommentsPlayerTest extends TestCase
         $news = $this->article();
         $author = User::factory()->create(['name' => 'HiddenName']);
         $replier = User::factory()->create();
-        $admin = \App\Models\Admin::factory()->administrator()->create();
+        $admin = Admin::factory()->administrator()->create();
 
         $this->actingAs($author);
         $original = app(NewsCommentService::class)->submit($news, $author, 'Hidden comment text');
@@ -456,7 +459,7 @@ class NewsCommentsPlayerTest extends TestCase
         app(NewsCommentService::class)->submit($news, $replier, 'Visible reply', $original->id);
 
         $this->actingAs($admin, 'admin');
-        app(\KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService::class)
+        app(NewsCommentModerationService::class)
             ->act($admin, $original->id, 'hide');
 
         $this->actingAs($replier);
