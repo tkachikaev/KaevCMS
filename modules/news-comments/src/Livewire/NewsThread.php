@@ -175,6 +175,7 @@ final class NewsThread extends Component
         $this->cancelReply();
         $this->cancelEdit();
         $this->notice = __('module-news-comments::messages.deleted_notice');
+        $this->resetPage('commentsPage');
     }
 
     public function moreReplies(): void
@@ -221,11 +222,17 @@ final class NewsThread extends Component
             'replies as visible_replies_count' => $visible,
         ]);
 
+        $visibleTotal = NewsComment::query()
+            ->where('news_id', $news->id)
+            ->where($visible)
+            ->count();
+
         $view = 'module-news-comments::livewire.news-thread';
 
         return view($view, [
             'news' => $news,
             'comments' => $roots,
+            'visibleTotal' => $visibleTotal,
             'viewerId' => $viewerId,
             'canWrite' => $this->canWrite($viewer),
             'canEdit' => $settings['allow_user_editing'] === true,

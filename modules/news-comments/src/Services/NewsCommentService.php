@@ -41,6 +41,19 @@ final class NewsCommentService
                 }
             }
 
+            // Suppress rapid identical double-submits inside the user/news lock,
+            // even when the owner configured a zero-second posting interval.
+            $duplicate = NewsComment::query()
+                ->where('news_id', $news->id)
+                ->where('user_id', $user->id)
+                ->where('parent_id', $parentId)
+                ->where('created_at', '>=', now()->subSeconds(10))
+                ->get(['body'])
+                ->contains(static fn (NewsComment $existing): bool => $existing->body === $text);
+            if ($duplicate) {
+                $this->reject('duplicate');
+            }
+
             $recent = DB::table('module_news_comment_submission_events')
                 ->where('user_id', $user->id)
                 ->where('created_at', '>=', now()->subHours(24));

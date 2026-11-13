@@ -315,6 +315,24 @@ class NewsCommentsPlayerTest extends TestCase
         app(NewsCommentService::class)->edit($news, $user, $comment->id, 'Changed while pending');
     }
 
+    public function test_duplicate_submission_is_blocked_even_with_zero_minimum_interval(): void
+    {
+        $news = $this->article();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $service = app(NewsCommentService::class);
+        $service->submit($news, $user, 'Repeated payload');
+
+        try {
+            $service->submit($news, $user, 'Repeated payload');
+            $this->fail('Expected the duplicate submission to be blocked.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('module_news_comments', 1);
+            $this->assertDatabaseCount('module_news_comment_submission_events', 1);
+        }
+    }
+
     private function article(): News
     {
         return News::query()->forceCreate([

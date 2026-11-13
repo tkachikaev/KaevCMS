@@ -1,7 +1,7 @@
 <section class="news-comments panel" aria-labelledby="news-comments-title">
     <header class="news-comments-heading">
         <h2 id="news-comments-title">{{ __('module-news-comments::messages.public_title') }}</h2>
-        <span class="news-comments-total">{{ $comments->total() }}</span>
+        <span class="news-comments-total">{{ $visibleTotal }}</span>
     </header>
 
     @if($notice)
