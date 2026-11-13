@@ -1,10 +1,11 @@
 <article class="news-comments-item" aria-label="{{ __('module-news-comments::messages.comment_label') }}">
     <header class="news-comments-meta">
         <strong>{{ $entry->author?->name ?? __('module-news-comments::messages.deleted_user') }}</strong>
-        <time datetime="{{ $entry->created_at->toIso8601String() }}" title="{{ $entry->created_at->format('d.m.Y H:i') }}">
+        <time datetime="{{ $entry->created_at->toIso8601String() }}"
+            title="{{ $entry->created_at->format('d.m.Y H:i') }}">
             {{ $entry->created_at->format('d.m.Y H:i') }}
         </time>
-        @if($entry->edited_at !== null && $entry->deleted_by_author_at === null)
+        @if($entry->edited_at !== null && $entry->deleted_by_author_at === null && $entry->deleted_by_admin_at === null)
             <span class="news-comments-edited">{{ __('module-news-comments::messages.edited_label') }}</span>
         @endif
         @if($entry->status === 'pending')
@@ -12,42 +13,55 @@
         @endif
     </header>
 
-    @if($entry->deleted_by_author_at !== null)
+    @if($entry->parent_id !== null)
+        <div class="news-comments-reference">
+            {{ __('module-news-comments::messages.replying_to') }}
+            @if($entry->replyTo !== null && $entry->replyTo->status === 'approved')
+                <button type="button" class="news-comments-action news-comments-reference-link"
+                    wire:click="jumpTo({{ $entry->replyTo->id }})">
+                    @if($entry->replyTo->deleted_by_author_at !== null || $entry->replyTo->deleted_by_admin_at !== null)
+                        {{ __('module-news-comments::messages.deleted_label') }}
+                    @else
+                        &#64;{{ $entry->replyTo->author?->name ?? __('module-news-comments::messages.deleted_user') }}
+                    @endif
+                </button>
+            @else
+                <span class="news-comments-unavailable">{{ __('module-news-comments::messages.reply_target_unavailable') }}</span>
+            @endif
+        </div>
+    @endif
+
+    @if($entry->deleted_by_author_at !== null || $entry->deleted_by_admin_at !== null)
         <p class="news-comments-deleted">{{ __('module-news-comments::messages.deleted_label') }}</p>
     @elseif($editingId === $entry->id)
         <form class="news-comments-form news-comments-edit-form" wire:submit="saveEdit">
             <label for="news_comment_edit_{{ $entry->id }}">{{ __('module-news-comments::messages.edit') }}</label>
-            <textarea
-                id="news_comment_edit_{{ $entry->id }}"
-                wire:model="editingBody"
-                maxlength="{{ $maximumLength }}"
-                rows="4"
-                required
-            ></textarea>
+            <textarea id="news_comment_edit_{{ $entry->id }}" wire:model="editingBody"
+                maxlength="{{ $maximumLength }}" rows="4" required></textarea>
             @error('editingBody')<p class="news-comments-error" role="alert">{{ $message }}</p>@enderror
             <div class="news-comments-form-actions">
                 <button class="button button-ghost" type="button" wire:click="cancelEdit">
                     {{ __('module-news-comments::messages.cancel') }}
                 </button>
-                <button class="button button-gold" type="submit" wire:loading.attr="disabled" wire:target="saveEdit">
-                    {{ __('module-news-comments::messages.save_edit') }}
-                </button>
+                <button class="button button-gold" type="submit" wire:loading.attr="disabled"
+                    wire:target="saveEdit">{{ __('module-news-comments::messages.save_edit') }}</button>
             </div>
         </form>
     @else
         <p class="news-comments-body">{!! nl2br(e($entry->body ?? '')) !!}</p>
     @endif
 
-    @if($entry->pending_body !== null && $entry->user_id === $viewerId && $entry->deleted_by_author_at === null)
+    @if($entry->pending_body !== null && $entry->user_id === $viewerId
+        && $entry->deleted_by_author_at === null && $entry->deleted_by_admin_at === null)
         <div class="news-comments-review" role="status">
             <small>{{ __('module-news-comments::messages.edit_pending_label') }}</small>
             <p>{!! nl2br(e($entry->pending_body)) !!}</p>
         </div>
     @endif
 
-    @if($canWrite && $entry->deleted_by_author_at === null)
+    @if($canWrite && $entry->deleted_by_author_at === null && $entry->deleted_by_admin_at === null)
         <footer class="news-comments-actions">
-            @if(! $isReply && $entry->status === 'approved')
+            @if($entry->status === 'approved')
                 <button type="button" class="news-comments-action" wire:click="openReply({{ $entry->id }})">
                     {{ __('module-news-comments::messages.reply') }}
                 </button>

@@ -459,6 +459,7 @@
         "modules/news-comments/bootstrap.php",
         "modules/news-comments/database/migrations/2026_11_13_000000_create_module_news_comment_tables.php",
         "modules/news-comments/database/migrations/2026_11_13_000100_seed_module_news_comment_settings.php",
+        "modules/news-comments/database/migrations/2026_11_13_000200_flat_news_comment_replies.php",
         "modules/news-comments/docs/README.en.md",
         "modules/news-comments/docs/README.ru.md",
         "modules/news-comments/lang/en/messages.php",

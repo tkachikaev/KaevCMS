@@ -23,7 +23,7 @@ Only the **Owner** can modify settings and per-article policies. Administrators 
 
 ## Player comments
 
-Signed-in players may post beneath a published article, reply to a top-level comment (one level of replies), edit or delete their own text. Guests can read approved posts but must sign in to write. When email verification is required, unverified accounts cannot comment.
+Signed-in players may post beneath a published article, reply to any published comment (including another reply), edit or delete their own text. **All messages appear in one chronological feed**, without nested threads. Replies display “Replying to @name”; selecting the reference locates the original message even when it is on another page. Guests can read approved posts but must sign in to write. When email verification is required, unverified accounts cannot comment.
 
 Automatic publication displays new posts immediately. Under manual review, only the author sees their pending comment. Editing an approved comment keeps its previous text and replies publicly visible until staff approves the replacement; the proposed revision is visible only to its author and staff. Further edits are blocked while a revision waits. Published edits receive an **Edited** label; there is no public revision history.
 
@@ -33,17 +33,18 @@ The **News Comments** admin page contains a single queue for new pending comment
 
 - **New comment:** **Approve** or **Reject**. Pending comments are not visible to other players.
 - **Revision of an approved comment:** staff see the old published text alongside the proposed new text. **Approve edit** atomically replaces the public text and sets the Edited marker; **Reject edit** discards only the proposal and preserves the old text and replies.
-- **Hide** removes an approved comment from public view. Hiding also cancels any proposed edit awaiting review. **Restore** works for hidden or rejected comments.
-- **Delete permanently** erases the chosen reply or, for a top-level comment, the entire reply thread. A confirmation dialog is shown before deletion.
+- **Hide** removes an approved comment from public view. Other people's replies remain in the feed; the hidden target is shown as unavailable. Hiding also cancels any proposed edit awaiting review. **Restore** works for hidden or rejected comments.
+- **Delete permanently** removes only the selected message's text, never other players' replies. With no references, the row is physically deleted. When replies refer to it, its text is erased and a **Comment deleted** placeholder remains. A confirmation dialog is shown.
 
-**Owner** and **Administrator** can moderate and physically delete threads. **Editor** can approve, reject, hide and restore only when the owner enables optional Editor moderation. **Auditor** is read-only. Only Owner can change global settings or per-article policies.
+**Owner** and **Administrator** can moderate and delete selected comments. **Editor** can approve, reject, hide and restore only when the owner enables optional Editor moderation. **Auditor** is read-only. Only Owner can change global settings or per-article policies.
 
 Stale moderation actions are rejected when another moderator has already acted or the author deleted their comment. Operations are audited using metadata, without storing the comment's full body.
 
 ## Deleting comments
 
-- An author can delete their own comment. With no replies, it is removed completely. When replies exist, its text is erased and a **Comment deleted** placeholder preserves other people's replies.
-- An administrator may permanently remove a root comment and its complete reply thread.
+- Authors may delete their own messages. If no other messages refer to one, the database row is removed. Otherwise, its text is irreversibly erased and a **Comment deleted** placeholder preserves replies.
+- Administrators delete only the selected message, **never unrelated replies**, whether it is an original comment or a reply to another reply. A placeholder can be physically removed after all references to it are deleted.
+- Deleted messages cannot be restored or replied to. When the reference points to a hidden comment, the original is shown as unavailable.
 - Permanently deleting an article deletes all associated comments, proposed edits, submission events and per-article settings. There is no trash or restoration.
 
 ## Maintenance

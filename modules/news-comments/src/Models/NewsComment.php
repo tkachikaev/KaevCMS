@@ -19,9 +19,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Illuminate\Support\Carbon|null $pending_edited_at
  * @property \Illuminate\Support\Carbon|null $last_edit_submitted_at
  * @property \Illuminate\Support\Carbon|null $edited_at
+ * @property \Illuminate\Support\Carbon|null $deleted_by_admin_at
  * @property \Illuminate\Support\Carbon|null $deleted_by_author_at
  * @property \Illuminate\Support\Carbon|null $moderated_at
  * @property-read User|null $author
+ * @property-read NewsComment|null $replyTo
  * @property-read \Illuminate\Database\Eloquent\Collection<int, NewsComment> $replies
  */
 final class NewsComment extends Model
@@ -39,6 +41,7 @@ final class NewsComment extends Model
         'last_edit_submitted_at',
         'edited_at',
         'deleted_by_author_at',
+        'deleted_by_admin_at',
         'moderated_by_admin_id',
         'moderated_at',
     ];
@@ -50,6 +53,7 @@ final class NewsComment extends Model
             'last_edit_submitted_at' => 'datetime',
             'edited_at' => 'datetime',
             'deleted_by_author_at' => 'datetime',
+            'deleted_by_admin_at' => 'datetime',
             'moderated_at' => 'datetime',
         ];
     }
@@ -64,6 +68,12 @@ final class NewsComment extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** @return BelongsTo<NewsComment, $this> */
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     /** @return HasMany<NewsComment, $this> */

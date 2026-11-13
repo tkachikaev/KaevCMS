@@ -68,8 +68,7 @@
 }
 .news-comments-notice { color: var(--green, #54885d); }
 .news-comments-error { color: var(--danger, #c95454); margin: 0; }
-.news-comments-list,
-.news-comments-replies {
+.news-comments-list {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -98,12 +97,34 @@
     overflow-wrap: anywhere;
     white-space: normal;
 }
-.news-comments-replies {
-    margin: 12px 0 0 clamp(12px, 3vw, 40px);
-    padding-left: clamp(12px, 2vw, 24px);
-    border-left: 2px solid var(--line, rgba(128, 128, 128, .26));
+.news-comments-reference {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 9px;
+    font-size: 12px;
+    color: var(--muted, var(--ink-soft, #858585));
 }
-.news-comments-replies .news-comments-entry { padding-block: 13px; }
+.news-comments-reference .news-comments-action {
+    display: inline;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.news-comments-replying-to {
+    font-size: 13px;
+    color: var(--muted, var(--ink-soft, #858585));
+}
+.news-comments-replying-to strong {
+    color: var(--text, var(--ink, inherit));
+}
+.news-comments-highlighted {
+    background: var(--panel2, rgba(166, 138, 79, .09));
+    border-left: 2px solid var(--gold2, var(--gold-dark, #b58c4c));
+    padding-left: 12px;
+    transition: background .3s ease;
+    scroll-margin-top: 96px;
+}
 .news-comments-review,
 .news-comments-deleted {
     color: var(--muted, var(--ink-soft, #858585));
@@ -132,5 +153,5 @@
     .news-comments { padding: 18px 15px; }
     .news-comments-form-actions { justify-content: stretch; }
     .news-comments-form-actions .button { flex: 1; }
-    .news-comments-replies { margin-left: 9px; padding-left: 12px; }
+    .news-comments-highlighted { padding-left: 8px; }
 }

@@ -214,7 +214,7 @@ class NewsCommentsModerationTest extends TestCase
         $this->assertDatabaseMissing('module_news_comments', ['id' => $comment->id]);
     }
 
-    public function test_physical_root_deletion_cascades_replies_without_refunding_quota(): void
+    public function test_deleting_a_referenced_comment_preserves_replies_and_submission_history(): void
     {
         $news = $this->article();
         $first = User::factory()->create();
@@ -225,17 +225,33 @@ class NewsCommentsModerationTest extends TestCase
             ->update(['publication_mode' => 'automatic']);
 
         $this->actingAs($first);
-        $root = app(NewsCommentService::class)->submit($news, $first, 'Root');
+        $original = app(NewsCommentService::class)->submit($news, $first, 'Original text');
         $this->actingAs($second);
-        $reply = app(NewsCommentService::class)->submit($news, $second, 'Reply', $root->id);
-        $this->assertDatabaseCount('module_news_comment_submission_events', 2);
+        $reply = app(NewsCommentService::class)->submit($news, $second, 'Someone else answered', $original->id);
 
         $this->actingAs($owner, 'admin');
-        app(NewsCommentModerationService::class)->act($owner, $root->id, 'destroy');
-        $this->assertDatabaseMissing('module_news_comments', ['id' => $root->id]);
-        $this->assertDatabaseMissing('module_news_comments', ['id' => $reply->id]);
+        app(NewsCommentModerationService::class)->act($owner, $original->id, 'destroy');
+
+        $this->assertDatabaseHas('module_news_comments', [
+            'id' => $original->id,
+            'body' => null,
+            'pending_body' => null,
+            'status' => 'approved',
+        ]);
+        $this->assertNotNull($original->fresh()->deleted_by_admin_at);
+        $this->assertDatabaseHas('module_news_comments', [
+            'id' => $reply->id,
+            'parent_id' => $original->id,
+            'body' => 'Someone else answered',
+        ]);
         $this->assertDatabaseCount('module_news_comment_submission_events', 2);
         $this->assertTrue(AuditLog::query()->where('action', 'news_comments.destroy')->exists());
+
+        $this->actingAs($second);
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->assertSee(__('module-news-comments::messages.deleted_label'))
+            ->assertSee('Someone else answered')
+            ->assertDontSee('Original text');
     }
 
     public function test_delete_reply_removes_only_reply_not_parent(): void
@@ -260,7 +276,7 @@ class NewsCommentsModerationTest extends TestCase
         $this->assertDatabaseMissing('module_news_comments', ['id' => $reply->id]);
     }
 
-    public function test_administrator_may_physically_remove_a_user_deleted_placeholder_and_replies(): void
+    public function test_admin_cannot_remove_a_referenced_placeholder_until_replies_are_individually_deleted(): void
     {
         $news = $this->article();
         $first = User::factory()->create();
@@ -271,17 +287,27 @@ class NewsCommentsModerationTest extends TestCase
             ->update(['publication_mode' => 'automatic']);
 
         $this->actingAs($first);
-        $root = app(NewsCommentService::class)->submit($news, $first, 'Author deletes own content');
+        $original = app(NewsCommentService::class)->submit($news, $first, 'Author deletes own content');
         $this->actingAs($second);
-        app(NewsCommentService::class)->submit($news, $second, 'Other user reply', $root->id);
+        $reply = app(NewsCommentService::class)->submit($news, $second, 'Other user reply', $original->id);
 
         $this->actingAs($first);
-        app(NewsCommentService::class)->deleteOwn($news, $first, $root->id);
-        $this->assertNotNull($root->fresh()->deleted_by_author_at);
+        app(NewsCommentService::class)->deleteOwn($news, $first, $original->id);
+        $this->assertNotNull($original->fresh()->deleted_by_author_at);
 
         $this->actingAs($admin, 'admin');
-        app(NewsCommentModerationService::class)->act($admin, $root->id, 'destroy');
+        try {
+            app(NewsCommentModerationService::class)->act($admin, $original->id, 'destroy');
+            $this->fail('Referenced tombstones must not be physically deleted.');
+        } catch (ValidationException) {
+            $this->assertDatabaseHas('module_news_comments', [
+                'id' => $reply->id,
+                'parent_id' => $original->id,
+            ]);
+        }
 
+        app(NewsCommentModerationService::class)->act($admin, $reply->id, 'destroy');
+        app(NewsCommentModerationService::class)->act($admin, $original->id, 'destroy');
         $this->assertDatabaseCount('module_news_comments', 0);
     }
 

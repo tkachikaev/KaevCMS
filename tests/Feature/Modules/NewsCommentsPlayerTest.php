@@ -33,7 +33,7 @@ class NewsCommentsPlayerTest extends TestCase
         ]);
     }
 
-    public function test_authenticated_player_can_publish_comment_and_reply_one_level(): void
+    public function test_player_can_reply_to_any_approved_message_in_one_flat_list(): void
     {
         $news = $this->article();
         $user = User::factory()->create();
@@ -45,23 +45,31 @@ class NewsCommentsPlayerTest extends TestCase
             ->assertHasNoErrors()
             ->assertSee('Great server!');
 
-        $root = NewsComment::query()->firstOrFail();
-        $this->assertSame('approved', $root->status);
-        $this->assertNull($root->parent_id);
+        $original = NewsComment::query()->firstOrFail();
+        $this->assertSame('approved', $original->status);
+        $this->assertNull($original->parent_id);
 
         Livewire::test(NewsThread::class, ['newsId' => $news->id])
-            ->call('openReply', $root->id)
+            ->call('openReply', $original->id)
             ->set('replyBody', 'I agree')
             ->call('sendReply')
             ->assertHasNoErrors()
             ->assertSee('I agree');
 
         $reply = NewsComment::query()->whereNotNull('parent_id')->firstOrFail();
-        $this->assertSame($root->id, $reply->parent_id);
-        $this->assertDatabaseCount('module_news_comment_submission_events', 2);
+        $this->assertSame($original->id, $reply->parent_id);
 
-        $this->expectException(ValidationException::class);
-        app(NewsCommentService::class)->submit($news, $user, 'A nested reply', $reply->id);
+        $third = app(NewsCommentService::class)->submit($news, $user, 'A reply to the reply', $reply->id);
+        $this->assertSame($reply->id, $third->parent_id);
+
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->assertSee('Great server!')
+            ->assertSee('I agree')
+            ->assertSee('A reply to the reply')
+            ->assertSee(__('module-news-comments::messages.replying_to'));
+
+        $this->assertDatabaseCount('module_news_comments', 3);
+        $this->assertDatabaseCount('module_news_comment_submission_events', 3);
     }
 
     public function test_manual_review_hides_new_comments_from_others_but_not_the_author(): void
@@ -331,6 +339,132 @@ class NewsCommentsPlayerTest extends TestCase
             $this->assertDatabaseCount('module_news_comments', 1);
             $this->assertDatabaseCount('module_news_comment_submission_events', 1);
         }
+    }
+
+    public function test_reference_navigation_finds_original_comment_across_flat_pages(): void
+    {
+        $news = $this->article();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        DB::table('module_news_comment_settings')->where('id', 1)->update([
+            'max_comments_per_day' => 30,
+            'max_comments_per_news_per_day' => 30,
+            'min_submission_interval_seconds' => 0,
+        ]);
+
+        $service = app(NewsCommentService::class);
+        $original = $service->submit($news, $user, 'Original on second page');
+        for ($i = 1; $i <= 16; $i++) {
+            $service->submit($news, $user, 'Later message '.$i, $original->id);
+        }
+
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->assertDontSee('Original on second page')
+            ->call('jumpTo', $original->id)
+            ->assertSet('highlightedCommentId', $original->id)
+            ->assertSee('Original on second page')
+            ->assertSee('news-comments-highlighted');
+    }
+
+    public function test_deleting_a_reply_with_replies_keeps_its_replies_and_a_placeholder(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create();
+        $second = User::factory()->create();
+
+        $this->actingAs($author);
+        $first = app(NewsCommentService::class)->submit($news, $author, 'First');
+        $middle = app(NewsCommentService::class)->submit($news, $author, 'Middle', $first->id);
+
+        $this->actingAs($second);
+        $last = app(NewsCommentService::class)->submit($news, $second, 'Last', $middle->id);
+
+        $this->actingAs($author);
+        app(NewsCommentService::class)->deleteOwn($news, $author, $middle->id);
+
+        $this->assertDatabaseHas('module_news_comments', [
+            'id' => $middle->id,
+            'body' => null,
+        ]);
+        $this->assertDatabaseHas('module_news_comments', [
+            'id' => $last->id,
+            'parent_id' => $middle->id,
+        ]);
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->assertSee('First')
+            ->assertSee('Last')
+            ->assertSee(__('module-news-comments::messages.deleted_label'))
+            ->assertDontSee('Middle');
+    }
+
+    public function test_admin_deleted_comment_cannot_be_edited_or_replied_to_by_stale_forms(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create();
+        $other = User::factory()->create();
+        $admin = \App\Models\Admin::factory()->administrator()->create();
+
+        $this->actingAs($author);
+        $original = app(NewsCommentService::class)->submit($news, $author, 'This will be removed');
+
+        $this->actingAs($other);
+        $reply = app(NewsCommentService::class)->submit($news, $other, 'Keep my answer', $original->id);
+
+        $this->actingAs($admin, 'admin');
+        app(\KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService::class)
+            ->act($admin, $original->id, 'destroy');
+
+        $this->assertNotNull($original->fresh()->deleted_by_admin_at);
+        $this->assertDatabaseHas('module_news_comments', [
+            'id' => $reply->id,
+            'parent_id' => $original->id,
+        ]);
+
+        $this->actingAs($author);
+        try {
+            app(NewsCommentService::class)->edit($news, $author, $original->id, 'Trying to restore');
+            $this->fail('A deleted comment was edited after moderation.');
+        } catch (ValidationException) {
+            $this->assertNull($original->fresh()->body);
+        }
+
+        $this->actingAs($other);
+        try {
+            app(NewsCommentService::class)->submit($news, $other, 'Another reply', $original->id);
+            $this->fail('A deleted comment accepted a new reply.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('module_news_comments', 2);
+        }
+
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->assertSee('Keep my answer')
+            ->assertSee(__('module-news-comments::messages.deleted_label'))
+            ->assertDontSee('This will be removed');
+    }
+
+    public function test_hidden_reference_does_not_expose_original_author_or_comment(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create(['name' => 'HiddenName']);
+        $replier = User::factory()->create();
+        $admin = \App\Models\Admin::factory()->administrator()->create();
+
+        $this->actingAs($author);
+        $original = app(NewsCommentService::class)->submit($news, $author, 'Hidden comment text');
+
+        $this->actingAs($replier);
+        app(NewsCommentService::class)->submit($news, $replier, 'Visible reply', $original->id);
+
+        $this->actingAs($admin, 'admin');
+        app(\KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService::class)
+            ->act($admin, $original->id, 'hide');
+
+        $this->actingAs($replier);
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->assertSee('Visible reply')
+            ->assertSee(__('module-news-comments::messages.reply_target_unavailable'))
+            ->assertDontSee('HiddenName')
+            ->assertDontSee('Hidden comment text');
     }
 
     private function article(): News

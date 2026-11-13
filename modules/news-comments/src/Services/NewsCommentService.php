@@ -32,11 +32,11 @@ final class NewsCommentService
             if ($parentId !== null) {
                 $parent = NewsComment::query()->whereKey($parentId)
                     ->where('news_id', $news->id)
-                    ->whereNull('parent_id')
                     ->lockForUpdate()
                     ->first();
                 if ($parent === null || $parent->status !== 'approved'
-                    || $parent->deleted_by_author_at !== null) {
+                    || $parent->deleted_by_author_at !== null
+                    || $parent->deleted_by_admin_at !== null) {
                     $this->reject('invalid_parent');
                 }
             }
@@ -112,7 +112,8 @@ final class NewsCommentService
             $this->assertOwner($comment, $news, $user);
 
             if ($comment->status !== 'approved' || $comment->pending_body !== null
-                || $comment->deleted_by_author_at !== null) {
+                || $comment->deleted_by_author_at !== null
+                || $comment->deleted_by_admin_at !== null) {
                 $this->reject('cannot_edit');
             }
 
@@ -155,7 +156,7 @@ final class NewsCommentService
             $comment = NewsComment::query()->whereKey($commentId)->lockForUpdate()->firstOrFail();
             $this->assertOwner($comment, $news, $user);
 
-            if ($comment->deleted_by_author_at !== null) {
+            if ($comment->deleted_by_author_at !== null || $comment->deleted_by_admin_at !== null) {
                 $this->reject('already_deleted');
             }
 

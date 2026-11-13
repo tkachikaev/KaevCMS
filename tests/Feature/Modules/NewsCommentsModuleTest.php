@@ -228,16 +228,22 @@ class NewsCommentsModuleTest extends TestCase
         $this->assertDatabaseCount('module_news_comment_submission_events', 0);
     }
 
-    public function test_deleting_a_parent_comment_cascades_its_replies(): void
+    public function test_direct_database_deletion_of_a_referenced_comment_keeps_its_reply(): void
     {
         $news = $this->news();
         $user = User::factory()->create();
-        $root = $this->comment($news, $user);
-        $this->comment($news, $user, $root);
+        $original = $this->comment($news, $user);
+        $reply = $this->comment($news, $user, $original);
 
-        DB::table('module_news_comments')->where('id', $root)->delete();
+        // Direct SQL deletion is a defensive FK case. Product deletion keeps a
+        // tombstone when messages reference the original.
+        DB::table('module_news_comments')->where('id', $original)->delete();
 
-        $this->assertDatabaseCount('module_news_comments', 0);
+        $this->assertDatabaseMissing('module_news_comments', ['id' => $original]);
+        $this->assertDatabaseHas('module_news_comments', [
+            'id' => $reply,
+            'parent_id' => null,
+        ]);
     }
 
     public function test_deleting_news_cascades_all_comment_data_even_with_module_disabled(): void

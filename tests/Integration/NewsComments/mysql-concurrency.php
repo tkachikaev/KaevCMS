@@ -207,6 +207,24 @@ assertNewsComments($reply->fresh() !== null && $reply->fresh()->parent_id === $p
     'Author deletion unexpectedly removed someone else’s reply.');
 echo "PASS: concurrent edit approval and author deletion, no deleted text restored\n";
 
+// Deleting a referenced message as staff must not cascade into its replies.
+DB::table('module_news_comment_settings')->where('id', 1)->update([
+    'publication_mode' => 'automatic',
+]);
+Auth::guard('web')->setUser($author);
+$staffTarget = app(NewsCommentService::class)->submit($article, $author, 'Admin deletion target');
+Auth::guard('web')->setUser($replier);
+$staffReply = app(NewsCommentService::class)->submit($article, $replier, 'Staff must preserve me', $staffTarget->id);
+
+Auth::guard('admin')->setUser($admin);
+app(NewsCommentModerationService::class)->act($admin, $staffTarget->id, 'destroy');
+assertNewsComments($staffTarget->fresh()?->body === null
+    && $staffTarget->fresh()?->deleted_by_admin_at !== null,
+    'Staff deletion of a referenced message did not create a tombstone.');
+assertNewsComments($staffReply->fresh()?->parent_id === $staffTarget->id,
+    'Staff deletion removed or unlinked a surviving reply.');
+echo "PASS: staff deletion erases only referenced text and preserves replies\n";
+
 DB::table('module_news_comment_news_settings')->insert([
     'news_id' => $article->id,
     'policy' => 'disabled',

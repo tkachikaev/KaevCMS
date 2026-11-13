@@ -7,6 +7,7 @@ use App\Models\News;
 use App\Models\User;
 use App\Services\RegistrationSettings;
 use App\Support\Modules\ModuleManager;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -24,8 +25,10 @@ final class NewsThread extends Component
     #[Locked]
     public int $newsId;
 
+    private const PER_PAGE = 15;
+
     #[Locked]
-    public int $visibleReplies = 20;
+    public ?int $highlightedCommentId = null;
 
     public string $body = '';
 
@@ -76,14 +79,15 @@ final class NewsThread extends Component
 
         $parent = NewsComment::query()->whereKey($commentId)
             ->where('news_id', $this->newsId)
-            ->whereNull('parent_id')
             ->where('status', 'approved')
             ->whereNull('deleted_by_author_at')
+            ->whereNull('deleted_by_admin_at')
             ->firstOrFail();
 
         $this->resetValidation();
         $this->replyBody = '';
         $this->replyToId = (int) $parent->id;
+        $this->dispatch('news-comments:reply');
     }
 
     public function cancelReply(): void
@@ -113,6 +117,7 @@ final class NewsThread extends Component
 
         $this->cancelReply();
         $this->notice = $this->sendNotice($created?->status);
+        $this->resetPage('commentsPage');
     }
 
     public function openEdit(int $commentId): void
@@ -125,7 +130,8 @@ final class NewsThread extends Component
         $comment = NewsComment::query()->findOrFail($commentId);
         abort_unless($comment->news_id === $news->id && $comment->user_id === $user->id, 404);
         abort_unless($comment->status === 'approved' && $comment->pending_body === null
-            && $comment->deleted_by_author_at === null, 403);
+            && $comment->deleted_by_author_at === null
+            && $comment->deleted_by_admin_at === null, 403);
 
         $this->cancelReply();
         $this->resetValidation();
@@ -178,10 +184,28 @@ final class NewsThread extends Component
         $this->resetPage('commentsPage');
     }
 
-    public function moreReplies(): void
+    public function jumpTo(int $commentId): void
     {
-        $this->article();
-        $this->visibleReplies = min(1000, $this->visibleReplies + 20);
+        $news = $this->article();
+        $viewer = auth('web')->user();
+        $viewerId = $viewer instanceof User && $viewer->is_active ? (int) $viewer->id : null;
+        $visible = $this->visibility($viewerId);
+
+        NewsComment::query()
+            ->where('news_id', $news->id)
+            ->whereKey($commentId)
+            ->where($visible)
+            ->firstOrFail();
+
+        $newer = NewsComment::query()
+            ->where('news_id', $news->id)
+            ->where($visible)
+            ->where('id', '>', $commentId)
+            ->count();
+
+        $this->highlightedCommentId = $commentId;
+        $this->setPage(intdiv($newer, self::PER_PAGE) + 1, 'commentsPage');
+        $this->dispatch('news-comments:jump', commentId: $commentId);
     }
 
     public function render(): View
@@ -192,8 +216,45 @@ final class NewsThread extends Component
         $settings = app(NewsCommentSettings::class)->values();
         abort_unless($settings !== null, 404);
 
-        $visible = static function (Builder $query) use ($viewerId): void {
-            $query->where(function (Builder $states) use ($viewerId): void {
+        $visible = $this->visibility($viewerId);
+
+        $comments = NewsComment::query()
+            ->where('news_id', $news->id)
+            ->where($visible)
+            ->with(['author', 'replyTo.author'])
+            ->orderByDesc('id')
+            ->paginate(self::PER_PAGE, ['*'], 'commentsPage');
+
+        $replyTarget = $this->replyToId === null ? null : NewsComment::query()
+            ->with('author')
+            ->whereKey($this->replyToId)
+            ->where('news_id', $news->id)
+            ->where('status', 'approved')
+            ->whereNull('deleted_by_author_at')
+            ->whereNull('deleted_by_admin_at')
+            ->first();
+
+        $visibleTotal = $comments->total();
+
+        $view = 'module-news-comments::livewire.news-thread';
+
+        return view($view, [
+            'news' => $news,
+            'comments' => $comments,
+            'replyTarget' => $replyTarget,
+            'visibleTotal' => $visibleTotal,
+            'viewerId' => $viewerId,
+            'canWrite' => $this->canWrite($viewer),
+            'canEdit' => $settings['allow_user_editing'] === true,
+            'maximumLength' => (int) $settings['max_comment_length'],
+        ]);
+    }
+
+    /** @return Closure(Builder<NewsComment>): void */
+    private function visibility(?int $viewerId): Closure
+    {
+        return static function (Builder $query) use ($viewerId): void {
+            $query->where(static function (Builder $states) use ($viewerId): void {
                 $states->where('status', 'approved');
                 if ($viewerId !== null) {
                     $states->orWhere(static fn (Builder $own): Builder => $own
@@ -202,43 +263,6 @@ final class NewsThread extends Component
                 }
             });
         };
-
-        $roots = NewsComment::query()
-            ->where('news_id', $news->id)
-            ->whereNull('parent_id')
-            ->where($visible)
-            ->with('author')
-            ->orderByDesc('id')
-            ->paginate(15, ['*'], 'commentsPage');
-
-        $replyLimit = $this->visibleReplies;
-        $roots->getCollection()->load([
-            'replies' => static fn (Builder $query) => $query
-                ->where($visible)
-                ->with('author')
-                ->orderBy('id')
-                ->limit($replyLimit),
-        ]);
-        $roots->getCollection()->loadCount([
-            'replies as visible_replies_count' => $visible,
-        ]);
-
-        $visibleTotal = NewsComment::query()
-            ->where('news_id', $news->id)
-            ->where($visible)
-            ->count();
-
-        $view = 'module-news-comments::livewire.news-thread';
-
-        return view($view, [
-            'news' => $news,
-            'comments' => $roots,
-            'visibleTotal' => $visibleTotal,
-            'viewerId' => $viewerId,
-            'canWrite' => $this->canWrite($viewer),
-            'canEdit' => $settings['allow_user_editing'] === true,
-            'maximumLength' => (int) $settings['max_comment_length'],
-        ]);
     }
 
     private function article(): News

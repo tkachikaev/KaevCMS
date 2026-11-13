@@ -48,7 +48,7 @@ final class AdminNewsCommentController extends Controller
 
         $review = null;
         if ($values !== null) {
-            $query = NewsComment::query()->with(['author', 'news']);
+            $query = NewsComment::query()->with(['author', 'news', 'replyTo.author'])->withCount('replies');
 
             if ($newsId !== null) {
                 $query->where('news_id', $newsId);
@@ -60,6 +60,7 @@ final class AdminNewsCommentController extends Controller
             switch ($state) {
                 case 'pending':
                     $query->whereNull('deleted_by_author_at')
+                        ->whereNull('deleted_by_admin_at')
                         ->where(static function (Builder $pending): void {
                             $pending->where('status', 'pending')
                                 ->orWhere(static function (Builder $edits): void {
@@ -68,10 +69,10 @@ final class AdminNewsCommentController extends Controller
                         });
                     break;
                 case 'new':
-                    $query->whereNull('deleted_by_author_at')->where('status', 'pending');
+                    $query->whereNull('deleted_by_author_at')->whereNull('deleted_by_admin_at')->where('status', 'pending');
                     break;
                 case 'edits':
-                    $query->whereNull('deleted_by_author_at')->where('status', 'approved')
+                    $query->whereNull('deleted_by_author_at')->whereNull('deleted_by_admin_at')->where('status', 'approved')
                         ->whereNotNull('pending_body');
                     break;
                 case 'approved':

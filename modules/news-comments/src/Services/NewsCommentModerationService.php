@@ -61,6 +61,7 @@ final class NewsCommentModerationService
 
         return NewsComment::query()
             ->whereNull('deleted_by_author_at')
+            ->whereNull('deleted_by_admin_at')
             ->where(static function (Builder $query): void {
                 $query->where('status', 'pending')
                     ->orWhere(static function (Builder $edits): void {
@@ -106,12 +107,13 @@ final class NewsCommentModerationService
             );
 
             $comment = NewsComment::query()->whereKey($commentId)->lockForUpdate()->firstOrFail();
-            if ($comment->deleted_by_author_at !== null && $action !== self::ACTION_DESTROY) {
+            if (($comment->deleted_by_author_at !== null || $comment->deleted_by_admin_at !== null)
+                && $action !== self::ACTION_DESTROY) {
                 $this->conflict();
             }
 
             $before = $comment->status;
-            $type = $comment->parent_id === null ? 'root' : 'reply';
+            $type = $comment->parent_id === null ? 'comment' : 'reply';
             $details = [
                 'comment_id' => $comment->id,
                 'news_id' => $comment->news_id,
@@ -180,8 +182,28 @@ final class NewsCommentModerationService
                     break;
 
                 case self::ACTION_DESTROY:
-                    $details['direct_replies_deleted'] = $comment->replies()->count();
-                    $comment->delete();
+                    // Remove only the selected text. Never delete other users'
+                    // messages, even when those messages reference this comment.
+                    $linkedReplies = $comment->replies()->count();
+                    $details['linked_replies_preserved'] = $linkedReplies;
+
+                    if ($linkedReplies === 0) {
+                        $comment->delete();
+                    } elseif ($comment->deleted_by_admin_at === null
+                        && $comment->deleted_by_author_at === null) {
+                        $comment->forceFill([
+                            'status' => 'approved',
+                            'body' => null,
+                            'pending_body' => null,
+                            'pending_edited_at' => null,
+                            'last_edit_submitted_at' => null,
+                            'deleted_by_admin_at' => now(),
+                            'moderated_by_admin_id' => $admin->id,
+                            'moderated_at' => now(),
+                        ])->save();
+                    } else {
+                        $this->conflict();
+                    }
                     break;
             }
 

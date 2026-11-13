@@ -45,7 +45,8 @@
             @foreach($reviewItems as $entry)
                 @php
                     $hasEdit = $entry->status === 'approved' && $entry->pending_body !== null;
-                    $isRoot = $entry->parent_id === null;
+                    $linkedReplies = (int) $entry->replies_count;
+                    $isTombstone = $entry->deleted_by_author_at !== null || $entry->deleted_by_admin_at !== null;
                     $returnParams = [
                         'adminPath' => $adminPath,
                         'comment' => $entry->id,
@@ -62,7 +63,12 @@
                         <div class="content-row-meta">
                             <span>{{ $entry->news?->titleFor() ?? __('module-news-comments::messages.news_unavailable') }} (ID {{ $entry->news_id }})</span>
                             <span>{{ $entry->created_at->format('d.m.Y H:i') }}</span>
-                            <span>{{ $isRoot ? __('module-news-comments::messages.root_comment') : __('module-news-comments::messages.reply_comment') }}</span>
+                            <span>{{ $entry->parent_id === null ? __('module-news-comments::messages.root_comment') : __('module-news-comments::messages.reply_comment') }}</span>
+                            @if($entry->replyTo !== null)
+                                <span>{{ __('module-news-comments::messages.replying_to') }}:
+                                    {{ $entry->replyTo->author?->name ?? __('module-news-comments::messages.deleted_user') }}
+                                    (#{{ $entry->replyTo->id }})</span>
+                            @endif
                             <span>{{ __('module-news-comments::messages.filter_author_id') }}: {{ $entry->user_id ?? '—' }}</span>
                         </div>
                         <div class="news-comments-moderation-state">
@@ -72,7 +78,7 @@
                                     ? __('module-news-comments::messages.review_pending_edit')
                                     : __('module-news-comments::messages.status_'.$entry->status)) }}
                         </div>
-                        @if($entry->deleted_by_author_at !== null)
+                        @if($isTombstone)
                             <p>{{ __('module-news-comments::messages.deleted_label') }}</p>
                         @else
                             <div class="news-comments-moderation-body">
@@ -88,9 +94,9 @@
                                 </div>
                             @endif
                         @endif
-                        @if($canModerate || $canDelete)
+                        @if(($canModerate && ! $isTombstone) || $canDelete)
                             <div class="admin-row-actions content-row-actions news-comments-moderation-actions">
-                                @if($canModerate)
+                                @if($canModerate && ! $isTombstone)
                                     @if($entry->status === 'pending' && $entry->deleted_by_author_at === null)
                                         @foreach(['approve' => 'approve_comment', 'reject' => 'reject_comment'] as $action => $label)
                                             <form method="POST" action="{{ route('admin.module-pages.news-comments.comments.'.$action, $returnParams) }}">
@@ -128,11 +134,11 @@
                                         </form>
                                     @endif
                                 @endif
-                                @if($canDelete)
+                                @if($canDelete && (! $isTombstone || $linkedReplies === 0))
                                     <button type="button" class="button button-danger"
                                         data-news-comment-delete-open
                                         data-news-comment-delete-url="{{ route('admin.module-pages.news-comments.comments.destroy', $returnParams) }}"
-                                        data-news-comment-delete-root="{{ $isRoot ? '1' : '0' }}">
+                                        data-news-comment-delete-root="{{ $linkedReplies > 0 ? '1' : '0' }}">
                                         {{ __('module-news-comments::messages.delete_comment') }}
                                     </button>
                                 @endif
