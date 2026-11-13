@@ -46,6 +46,12 @@ Stale moderation actions are rejected when another moderator has already acted o
 - An administrator may permanently remove a root comment and its complete reply thread.
 - Permanently deleting an article deletes all associated comments, proposed edits, submission events and per-article settings. There is no trash or restoration.
 
+## Maintenance
+
+This module uses the standard KaevCMS / Laravel scheduler. Ensure the host runs `php artisan schedule:run` every minute. The module periodically deletes submission records older than 48 hours in bounded batches. Cleanup is disabled when the module is disabled and resumes when it is re-enabled.
+
+**Important:** a delayed or unavailable scheduler does not affect posting quotas: rolling 24-hour limits are always calculated using actual submission timestamps. Do not manually clear quota tables to bypass limits. The initial release does not include player reports, notifications or public edit history.
+
 ## Custom themes
 
 Both bundled themes, **default** and **kaev-aurelia**, contain the extension slot. In a third-party theme, insert the same line directly after the article body, as used in `themes/default/views/news/show.blade.php`:

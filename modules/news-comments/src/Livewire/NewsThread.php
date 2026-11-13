@@ -211,12 +211,13 @@ final class NewsThread extends Component
             ->orderByDesc('id')
             ->paginate(15, ['*'], 'commentsPage');
 
+        $replyLimit = $this->visibleReplies;
         $roots->getCollection()->load([
             'replies' => static fn (Builder $query) => $query
                 ->where($visible)
                 ->with('author')
                 ->orderBy('id')
-                ->limit($this->visibleReplies),
+                ->limit($replyLimit),
         ]);
         $roots->getCollection()->loadCount([
             'replies as visible_replies_count' => $visible,
