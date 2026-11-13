@@ -27,6 +27,7 @@
     @endif
     <title>@yield('title', site_name())</title>
     <link rel="stylesheet" href="{{ theme_asset('css/app.css') }}&feedback=inline">
+    @livewireStyles
     @stack('head')
 </head>
 <body>
@@ -60,5 +61,7 @@
     <main>@yield('content')</main>
     @include('theme::partials.footer')
     <script src="{{ theme_asset('js/app.js') }}" defer></script>
+    @livewireScripts
+    @stack('scripts')
 </body>
 </html>

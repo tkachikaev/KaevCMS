@@ -13,9 +13,13 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schedule;
 use KaevCMS\Modules\NewsComments\Console\Commands\CleanupNewsCommentEventsCommand;
+use KaevCMS\Modules\NewsComments\Livewire\NewsThread;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentSettings;
+use Livewire\Livewire;
 
 return static function (Application $app, ModuleContext $module): void {
+    Livewire::component('news-comments.thread', NewsThread::class);
+
     $app->make(NewsExtensionRegistry::class)->register(
         $module->id,
         static function (News $news) use ($app): ?View {
@@ -23,7 +27,6 @@ return static function (Application $app, ModuleContext $module): void {
                 return null;
             }
 
-            // The read/write discussion component is installed in the next iteration.
             return view('module-news-comments::public.index', ['news' => $news]);
         },
     );

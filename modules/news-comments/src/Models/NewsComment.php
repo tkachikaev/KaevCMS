@@ -8,6 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $news_id
+ * @property int|null $user_id
+ * @property int|null $parent_id
+ * @property string|null $body
+ * @property string|null $pending_body
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $pending_edited_at
+ * @property \Illuminate\Support\Carbon|null $last_edit_submitted_at
+ * @property \Illuminate\Support\Carbon|null $edited_at
+ * @property \Illuminate\Support\Carbon|null $deleted_by_author_at
+ * @property \Illuminate\Support\Carbon|null $moderated_at
+ * @property-read User|null $author
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, NewsComment> $replies
+ */
 final class NewsComment extends Model
 {
     protected $table = 'module_news_comments';

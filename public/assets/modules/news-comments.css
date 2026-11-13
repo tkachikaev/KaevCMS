@@ -1,0 +1,136 @@
+.news-comments {
+    padding: clamp(20px, 4vw, 34px);
+    color: var(--text, var(--ink, inherit));
+    min-width: 0;
+}
+.news-comments-heading,
+.news-comments-meta,
+.news-comments-form-actions,
+.news-comments-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.news-comments-heading {
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line, rgba(128, 128, 128, .23));
+}
+.news-comments-heading h2 {
+    margin: 0;
+    font-size: clamp(20px, 2.6vw, 26px);
+    font-family: Georgia, serif;
+}
+.news-comments-total {
+    font-size: 12px;
+    color: var(--muted, var(--ink-soft, #858585));
+}
+.news-comments-form {
+    padding: 22px 0;
+    display: grid;
+    gap: 9px;
+}
+.news-comments-form label { font-weight: 600; font-size: 13px; }
+.news-comments-form textarea {
+    display: block;
+    width: 100%;
+    min-height: 95px;
+    resize: vertical;
+    padding: 13px 15px;
+    color: inherit;
+    background: var(--panel2, rgba(127, 127, 127, .06));
+    border: 1px solid var(--line, rgba(128, 128, 128, .35));
+    border-radius: var(--radius, 4px);
+    font: inherit;
+    line-height: 1.6;
+    box-sizing: border-box;
+}
+.news-comments-form textarea:focus-visible,
+.news-comments-action:focus-visible {
+    outline: 2px solid var(--gold2, var(--gold-dark, #b58c4c));
+    outline-offset: 2px;
+}
+.news-comments-form-actions {
+    justify-content: flex-end;
+}
+.news-comments-form-actions small {
+    color: var(--muted, var(--ink-soft, #858585));
+    margin-right: auto;
+}
+.news-comments-notice,
+.news-comments-info,
+.news-comments-guest,
+.news-comments-empty,
+.news-comments-error {
+    padding: 12px 0;
+    font-size: 13px;
+}
+.news-comments-notice { color: var(--green, #54885d); }
+.news-comments-error { color: var(--danger, #c95454); margin: 0; }
+.news-comments-list,
+.news-comments-replies {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.news-comments-entry {
+    padding: 18px 0;
+    border-top: 1px solid var(--line, rgba(128, 128, 128, .18));
+    min-width: 0;
+}
+.news-comments-meta {
+    font-size: 12px;
+    color: var(--muted, var(--ink-soft, #858585));
+}
+.news-comments-meta strong { font-size: 14px; color: var(--text, var(--ink, inherit)); }
+.news-comments-meta time { font-variant-numeric: tabular-nums; }
+.news-comments-state,
+.news-comments-edited {
+    font-size: 11px;
+    border: 1px solid var(--line, rgba(128, 128, 128, .23));
+    padding: 2px 7px;
+}
+.news-comments-body,
+.news-comments-review p {
+    margin: 12px 0;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+.news-comments-replies {
+    margin: 12px 0 0 clamp(12px, 3vw, 40px);
+    padding-left: clamp(12px, 2vw, 24px);
+    border-left: 2px solid var(--line, rgba(128, 128, 128, .26));
+}
+.news-comments-replies .news-comments-entry { padding-block: 13px; }
+.news-comments-review,
+.news-comments-deleted {
+    color: var(--muted, var(--ink-soft, #858585));
+    font-size: 13px;
+}
+.news-comments-review { padding: 10px 14px; border-left: 2px solid var(--gold2, var(--gold-dark, #b58c4c)); }
+.news-comments-review p { margin-bottom: 0; }
+.news-comments-actions { margin-top: 8px; gap: 16px; }
+.news-comments-action {
+    background: transparent;
+    color: var(--gold2, var(--gold-dark, #b58c4c));
+    padding: 4px 0;
+    border: 0;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.news-comments-delete { color: var(--danger, #bb5555); }
+.news-comments-reply-form,
+.news-comments-edit-form { padding-block: 12px; }
+.news-comments button:disabled { opacity: .55; cursor: default; }
+.news-comments-pages { margin-top: 20px; }
+@media (max-width: 520px) {
+    .news-comments { padding: 18px 15px; }
+    .news-comments-form-actions { justify-content: stretch; }
+    .news-comments-form-actions .button { flex: 1; }
+    .news-comments-replies { margin-left: 9px; padding-left: 12px; }
+}

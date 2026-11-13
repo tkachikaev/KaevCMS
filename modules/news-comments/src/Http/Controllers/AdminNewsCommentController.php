@@ -72,6 +72,9 @@ final class AdminNewsCommentController extends Controller
         $policy = $data['policy'];
 
         DB::transaction(static function () use ($news, $policy, $admin): void {
+            // Same article lock order as player submissions and edits.
+            News::query()->whereKey($news->getKey())->lockForUpdate()->firstOrFail();
+
             if ($policy === 'inherit') {
                 DB::table('module_news_comment_news_settings')->where('news_id', $news->getKey())->delete();
 
