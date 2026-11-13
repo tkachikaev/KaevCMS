@@ -45,6 +45,9 @@ class NewsCommentsModuleTest extends TestCase
             $this->assertTrue(Schema::hasTable($table), $table);
         }
 
+        $this->assertTrue(Schema::hasColumn('module_news_comments', 'deleted_by_admin_at'));
+        $this->assertTrue(Schema::hasColumn('module_news_comments', 'pending_revision_token'));
+
         $this->assertDatabaseHas('module_news_comment_settings', [
             'id' => 1,
             'enabled' => false,
@@ -142,6 +145,20 @@ class NewsCommentsModuleTest extends TestCase
             'news_id' => $news->id,
         ]);
         $this->assertTrue($settings->enabledForNews($news));
+    }
+
+    public function test_public_comment_navigation_uses_a_same_origin_script_instead_of_inline_script(): void
+    {
+        $publicSlot = file_get_contents(base_path('modules/news-comments/resources/views/public/index.blade.php'));
+        $discussion = file_get_contents(base_path('modules/news-comments/resources/views/livewire/news-thread.blade.php'));
+        $asset = file_get_contents(public_path('assets/modules/news-comments.js'));
+
+        $this->assertIsString($publicSlot);
+        $this->assertIsString($discussion);
+        $this->assertIsString($asset);
+        $this->assertStringContainsString("assets/modules/news-comments.js", $publicSlot);
+        $this->assertStringNotContainsString('@script', $discussion);
+        $this->assertStringContainsString("document.addEventListener('news-comments:jump'", $asset);
     }
 
     public function test_public_themes_expose_optional_module_extension_slot(): void

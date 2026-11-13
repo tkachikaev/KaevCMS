@@ -81,7 +81,7 @@ if (($argv[1] ?? '') === '--worker') {
                 (string) ($argv[5] ?? ''),
             );
             echo "accepted\n";
-        } elseif ($action === 'delete-root') {
+        } elseif ($action === 'delete-comment') {
             $user = User::query()->findOrFail((int) ($argv[3] ?? 0));
             Auth::guard('web')->setUser($user);
             $comment = NewsComment::query()->findOrFail((int) ($argv[4] ?? 0));
@@ -195,8 +195,8 @@ Auth::guard('web')->setUser($author);
 app(NewsCommentService::class)->edit($article, $author, $parent->id, 'Pending replacement');
 
 $outcomes = raceNewsComments([
-    ['approve-edit', (string) $admin->id, (string) $parent->id, hash('sha256', 'Pending replacement')],
-    ['delete-root', (string) $author->id, (string) $parent->id],
+    ['approve-edit', (string) $admin->id, (string) $parent->id, (string) $parent->fresh()->pending_revision_token],
+    ['delete-comment', (string) $author->id, (string) $parent->id],
 ]);
 assertNewsComments(in_array('accepted', $outcomes, true), 'Neither concurrent actor completed.');
 assertNewsComments($parent->fresh()->body === null && $parent->fresh()->pending_body === null,

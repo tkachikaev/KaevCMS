@@ -2,7 +2,7 @@
 
 The `news-comments` module adds discussions beneath published news articles. Data is stored in the primary KaevCMS database, independent of game servers.
 
-**Current development branch:** player posting/editing, the staff moderation queue, role controls and thread deletion are implemented. Full automated and browser QA is not complete; wait for the release acceptance before production deployment.
+**Current development branch:** player posting/editing, the staff moderation queue, role controls and single-comment deletion are implemented. Full automated and browser QA is not complete; wait for the release acceptance before production deployment.
 
 ## Enable and configure
 
@@ -14,7 +14,7 @@ The `news-comments` module adds discussions beneath published news articles. Dat
 
 - **Publication:** automatically or after moderation (default). Pending messages have no automatic expiration.
 - **Allow users to edit their comments:** on by default. Automatic edits appear immediately; each comment can only be edited every five minutes. With manual moderation, the previously approved text and replies stay visible until the new version is approved; rejection preserves the old text.
-- **Allow Editors to moderate:** off by default. Editors cannot delete full threads or change settings.
+- **Allow Editors to moderate:** off by default. Editors cannot delete comments or change settings.
 - **Limits:** new submissions per user during a rolling 24-hour period, across all articles and per article, minimum submission interval, and text length. Deleting comments does not restore submission quotas. Editing does not use the daily quota.
 
 Each news article may **Inherit**, **Allow**, or **Deny** comments. The global disabled setting always takes precedence.

@@ -121,7 +121,7 @@ class NewsCommentsModerationTest extends TestCase
 
         $this->actingAs($owner, 'admin');
         $this->post('/admin/extensions/news-comments/comments/'.$root->id.'/approve-edit', [
-            'expected_revision_hash' => hash('sha256', 'Not great anymore.'),
+            'expected_revision_token' => $root->fresh()->pending_revision_token,
         ])->assertRedirect();
 
         $this->assertDatabaseHas('module_news_comments', [
@@ -153,7 +153,7 @@ class NewsCommentsModerationTest extends TestCase
         app(NewsCommentService::class)->edit($news, $user, $comment->id, 'Rejected proposed text.');
 
         $this->actingAs($owner, 'admin');
-        app(NewsCommentModerationService::class)->act($owner, $comment->id, 'reject_edit', hash('sha256', 'Rejected proposed text.'));
+        app(NewsCommentModerationService::class)->act($owner, $comment->id, 'reject_edit', $comment->fresh()->pending_revision_token);
 
         $this->assertSame('Approved edit.', $comment->fresh()->body);
         $this->assertNull($comment->fresh()->pending_body);
@@ -371,7 +371,7 @@ class NewsCommentsModerationTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_stale_edit_form_cannot_approve_a_different_proposed_text(): void
+    public function test_stale_edit_form_cannot_approve_new_revision_even_with_identical_text(): void
     {
         $news = $this->article();
         $user = User::factory()->create();
@@ -385,25 +385,29 @@ class NewsCommentsModerationTest extends TestCase
         DB::table('module_news_comment_settings')->where('id', 1)
             ->update(['publication_mode' => 'manual_review']);
         app(NewsCommentService::class)->edit($news, $user, $comment->id, 'First proposed edit');
+        $firstToken = $comment->fresh()->pending_revision_token;
 
         $this->actingAs($admin, 'admin');
         app(NewsCommentModerationService::class)->act(
-            $admin, $comment->id, 'reject_edit', hash('sha256', 'First proposed edit'),
+            $admin, $comment->id, 'reject_edit', $firstToken,
         );
 
         $this->actingAs($user);
-        app(NewsCommentService::class)->edit($news, $user, $comment->id, 'Second proposed edit');
+        app(NewsCommentService::class)->edit($news, $user, $comment->id, 'First proposed edit');
+        $secondToken = $comment->fresh()->pending_revision_token;
+        $this->assertNotSame($firstToken, $secondToken);
 
         $this->actingAs($admin, 'admin');
         $this->post('/admin/extensions/news-comments/comments/'.$comment->id.'/approve-edit', [
-            'expected_revision_hash' => hash('sha256', 'First proposed edit'),
+            'expected_revision_token' => $firstToken,
         ])->assertSessionHasErrors('moderation');
 
         $this->assertDatabaseHas('module_news_comments', [
             'id' => $comment->id,
             'status' => 'approved',
             'body' => 'Original body',
-            'pending_body' => 'Second proposed edit',
+            'pending_body' => 'First proposed edit',
+            'pending_revision_token' => $secondToken,
         ]);
     }
 
@@ -432,7 +436,7 @@ class NewsCommentsModerationTest extends TestCase
 
         $this->actingAs($admin, 'admin');
         $this->expectException(ValidationException::class);
-        app(NewsCommentModerationService::class)->act($admin, $root->id, 'approve_edit', hash('sha256', 'Proposed text'));
+        app(NewsCommentModerationService::class)->act($admin, $root->id, 'approve_edit', 'rejected-deleted-revision');
     }
 
     public function test_untrusted_html_is_escaped_in_admin_queue(): void

@@ -87,24 +87,3 @@
     @endif
 </section>
 
-@script
-<script>
-    $wire.on('news-comments:reply', () => {
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            document.getElementById('news_comment_reply')?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-            document.getElementById('news_comment_reply')?.focus({ preventScroll: true });
-        }));
-    });
-    $wire.on('news-comments:jump', ({ commentId }) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            document.getElementById('news-comment-' + commentId)?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        }));
-    });
-</script>
-@endscript

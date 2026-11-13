@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $parent_id
  * @property string|null $body
  * @property string|null $pending_body
+ * @property string|null $pending_revision_token
  * @property string $status
  * @property \Illuminate\Support\Carbon|null $pending_edited_at
  * @property \Illuminate\Support\Carbon|null $last_edit_submitted_at
@@ -36,6 +37,7 @@ final class NewsComment extends Model
         'parent_id',
         'body',
         'pending_body',
+        'pending_revision_token',
         'status',
         'pending_edited_at',
         'last_edit_submitted_at',

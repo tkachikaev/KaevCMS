@@ -14,9 +14,9 @@
             if (!form || !copy || !url) return;
 
             form.action = url;
-            copy.textContent = open.getAttribute('data-news-comment-delete-root') === '1'
-                ? copy.getAttribute('data-root-text')
-                : copy.getAttribute('data-reply-text');
+            copy.textContent = open.getAttribute('data-news-comment-delete-referenced') === '1'
+                ? copy.getAttribute('data-referenced-text')
+                : copy.getAttribute('data-unreferenced-text');
             dialog.showModal();
             return;
         }

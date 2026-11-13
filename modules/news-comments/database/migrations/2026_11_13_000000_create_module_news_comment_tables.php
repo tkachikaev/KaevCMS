@@ -33,19 +33,22 @@ return new class extends Migration
             $table->id();
             $table->foreignId('news_id')->constrained('news')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('parent_id')->nullable()->constrained('module_news_comments')->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('module_news_comments')->nullOnDelete();
             $table->text('body')->nullable();
             $table->text('pending_body')->nullable();
+            $table->uuid('pending_revision_token')->nullable();
             $table->string('status', 24)->default('pending');
             $table->timestamp('pending_edited_at')->nullable();
             $table->timestamp('last_edit_submitted_at')->nullable();
             $table->timestamp('edited_at')->nullable();
             $table->timestamp('deleted_by_author_at')->nullable();
+            $table->timestamp('deleted_by_admin_at')->nullable();
             $table->foreignId('moderated_by_admin_id')->nullable()->constrained('admins')->nullOnDelete();
             $table->timestamp('moderated_at')->nullable();
             $table->timestamps();
 
-            $table->index(['news_id', 'parent_id', 'status', 'id'], 'news_comments_thread_index');
+            $table->index(['news_id', 'status', 'id'], 'news_comments_feed_index');
+            $table->index('parent_id', 'news_comments_reference_index');
             $table->index(['user_id', 'created_at'], 'news_comments_author_created_index');
             $table->index(['status', 'created_at'], 'news_comments_queue_index');
             $table->index(['pending_edited_at', 'id'], 'news_comments_pending_edit_index');

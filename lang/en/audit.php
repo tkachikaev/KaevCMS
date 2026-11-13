@@ -52,6 +52,17 @@ return [
             'cleanup_completed' => 'Old support tickets cleaned up',
             'deleted' => 'Support ticket deleted',
         ],
+        'news_comments' => [
+            'settings_updated' => 'Comment settings updated',
+            'news_policy_updated' => 'Per-article comment policy changed',
+            'approve' => 'Comment approved',
+            'reject' => 'Comment rejected',
+            'approve_edit' => 'Comment revision approved',
+            'reject_edit' => 'Comment revision rejected',
+            'hide' => 'Comment hidden',
+            'restore' => 'Comment restored',
+            'destroy' => 'Comment deleted',
+        ],
         'module' => [
             'installed' => 'Module installed',
             'database_updated' => 'Module database updated',

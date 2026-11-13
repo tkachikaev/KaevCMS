@@ -203,8 +203,8 @@ final class AdminNewsCommentController extends Controller
         $admin = $request->user('admin');
         abort_unless($admin instanceof Admin, 403);
 
-        $revisionHash = $request->input('expected_revision_hash');
-        $this->moderation->act($admin, $comment, $action, is_string($revisionHash) ? $revisionHash : null);
+        $revisionToken = $request->input('expected_revision_token');
+        $this->moderation->act($admin, $comment, $action, is_string($revisionToken) ? $revisionToken : null);
 
         return redirect()->route('admin.module-pages.news-comments.index', [
             'adminPath' => $request->route('adminPath'),

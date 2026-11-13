@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\RegistrationSettings;
 use App\Support\Modules\ModuleManager;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\NewsComments\Models\NewsComment;
@@ -139,6 +140,7 @@ final class NewsCommentService
 
             $comment->forceFill([
                 'pending_body' => $text,
+                'pending_revision_token' => (string) Str::uuid(),
                 'pending_edited_at' => now(),
                 'last_edit_submitted_at' => now(),
             ])->save();
@@ -169,6 +171,7 @@ final class NewsCommentService
             $comment->forceFill([
                 'body' => null,
                 'pending_body' => null,
+                'pending_revision_token' => null,
                 'pending_edited_at' => null,
                 'deleted_by_author_at' => now(),
             ])->save();

@@ -63,7 +63,6 @@
                         <div class="content-row-meta">
                             <span>{{ $entry->news?->titleFor() ?? __('module-news-comments::messages.news_unavailable') }} (ID {{ $entry->news_id }})</span>
                             <span>{{ $entry->created_at->format('d.m.Y H:i') }}</span>
-                            <span>{{ $entry->parent_id === null ? __('module-news-comments::messages.root_comment') : __('module-news-comments::messages.reply_comment') }}</span>
                             @if($entry->replyTo !== null)
                                 <span>{{ __('module-news-comments::messages.replying_to') }}:
                                     {{ $entry->replyTo->author?->name ?? __('module-news-comments::messages.deleted_user') }}
@@ -110,7 +109,7 @@
                                         @foreach(['approve-edit' => 'approve_revision', 'reject-edit' => 'reject_revision'] as $action => $label)
                                             <form method="POST" action="{{ route('admin.module-pages.news-comments.comments.'.$action, $returnParams) }}">
                                                 @csrf
-                                                <input type="hidden" name="expected_revision_hash" value="{{ hash('sha256', $entry->pending_body) }}">
+                                                <input type="hidden" name="expected_revision_token" value="{{ $entry->pending_revision_token }}">
                                                 <button type="submit" class="button {{ $action === 'approve-edit' ? 'button-primary' : 'button-secondary' }}">
                                                     {{ __('module-news-comments::messages.'.$label) }}
                                                 </button>
@@ -138,7 +137,7 @@
                                     <button type="button" class="button button-danger"
                                         data-news-comment-delete-open
                                         data-news-comment-delete-url="{{ route('admin.module-pages.news-comments.comments.destroy', $returnParams) }}"
-                                        data-news-comment-delete-root="{{ $linkedReplies > 0 ? '1' : '0' }}">
+                                        data-news-comment-delete-referenced="{{ $linkedReplies > 0 ? '1' : '0' }}">
                                         {{ __('module-news-comments::messages.delete_comment') }}
                                     </button>
                                 @endif
@@ -167,9 +166,9 @@
                 <div>
                     <h2 id="news-comment-delete-title">{{ __('module-news-comments::messages.delete_confirm_title') }}</h2>
                     <p data-news-comment-delete-text
-                       data-root-text="{{ __('module-news-comments::messages.delete_confirm_root') }}"
-                       data-reply-text="{{ __('module-news-comments::messages.delete_confirm_reply') }}">
-                        {{ __('module-news-comments::messages.delete_confirm_root') }}
+                       data-referenced-text="{{ __('module-news-comments::messages.delete_confirm_referenced') }}"
+                       data-unreferenced-text="{{ __('module-news-comments::messages.delete_confirm_unreferenced') }}">
+                        {{ __('module-news-comments::messages.delete_confirm_unreferenced') }}
                     </p>
                 </div>
             </div>

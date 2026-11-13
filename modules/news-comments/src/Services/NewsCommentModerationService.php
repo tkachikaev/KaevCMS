@@ -76,7 +76,7 @@ final class NewsCommentModerationService
      * Reject stale review actions rather than silently approving a different
      * revision or restoring a comment that its author already deleted.
      */
-    public function act(Admin $actor, int $commentId, string $action, ?string $expectedRevisionHash = null): void
+    public function act(Admin $actor, int $commentId, string $action, ?string $expectedRevisionToken = null): void
     {
         abort_unless(auth('admin')->id() === $actor->getAuthIdentifier(), 403);
         abort_unless(in_array($action, [
@@ -89,7 +89,7 @@ final class NewsCommentModerationService
             self::ACTION_DESTROY,
         ], true), 404);
 
-        $result = DB::transaction(function () use ($actor, $commentId, $action, $expectedRevisionHash): array {
+        $result = DB::transaction(function () use ($actor, $commentId, $action, $expectedRevisionToken): array {
             $module = ModuleState::query()->whereKey('news-comments')->lockForUpdate()->first();
             abort_unless($module !== null && $module->enabled, 404);
 
@@ -139,8 +139,9 @@ final class NewsCommentModerationService
                 case self::ACTION_REJECT_EDIT:
                     if ($before !== 'approved' || $comment->pending_body === null
                         || $comment->pending_edited_at === null || $comment->body === null
-                        || $expectedRevisionHash === null
-                        || ! hash_equals(hash('sha256', $comment->pending_body), $expectedRevisionHash)) {
+                        || $expectedRevisionToken === null
+                        || $comment->pending_revision_token === null
+                        || ! hash_equals($comment->pending_revision_token, $expectedRevisionToken)) {
                         $this->conflict();
                     }
 
@@ -148,6 +149,7 @@ final class NewsCommentModerationService
                     $comment->forceFill([
                         'body' => $accepted ? $comment->pending_body : $comment->body,
                         'pending_body' => null,
+                        'pending_revision_token' => null,
                         'pending_edited_at' => null,
                         'edited_at' => $accepted ? now() : $comment->edited_at,
                         'moderated_by_admin_id' => $admin->id,
@@ -163,6 +165,7 @@ final class NewsCommentModerationService
                     $comment->forceFill([
                         'status' => 'hidden',
                         'pending_body' => null,
+                        'pending_revision_token' => null,
                         'pending_edited_at' => null,
                         'moderated_by_admin_id' => $admin->id,
                         'moderated_at' => now(),
@@ -195,6 +198,7 @@ final class NewsCommentModerationService
                             'status' => 'approved',
                             'body' => null,
                             'pending_body' => null,
+                            'pending_revision_token' => null,
                             'pending_edited_at' => null,
                             'last_edit_submitted_at' => null,
                             'deleted_by_admin_at' => now(),
