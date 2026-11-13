@@ -87,7 +87,7 @@ final class AdminNewsCommentController extends Controller
             $review = $query->orderByDesc('id')->paginate(12, ['*'], 'reviewPage')->withQueryString();
         }
         $policies = $values === null ? collect() : DB::table('module_news_comment_news_settings')
-            ->whereIn('news_id', $news->getCollection()->modelKeys())
+            ->whereIn('news_id', $news->getCollection()->map(static fn (News $item): mixed => $item->getKey())->all())
             ->pluck('policy', 'news_id');
 
         return view('module-news-comments::admin.index', [

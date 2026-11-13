@@ -156,7 +156,7 @@ class NewsCommentsModuleTest extends TestCase
         $this->assertIsString($publicSlot);
         $this->assertIsString($discussion);
         $this->assertIsString($asset);
-        $this->assertStringContainsString("assets/modules/news-comments.js", $publicSlot);
+        $this->assertStringContainsString('assets/modules/news-comments.js', $publicSlot);
         $this->assertStringNotContainsString('@script', $discussion);
         $this->assertStringContainsString("document.addEventListener('news-comments:jump'", $asset);
     }

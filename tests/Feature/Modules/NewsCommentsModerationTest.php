@@ -13,7 +13,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\NewsComments\Livewire\NewsThread;
-use KaevCMS\Modules\NewsComments\Models\NewsComment;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentService;
 use Livewire\Livewire;

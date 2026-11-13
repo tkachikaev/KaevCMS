@@ -4,9 +4,11 @@ namespace KaevCMS\Modules\NewsComments\Models;
 
 use App\Models\News;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -17,15 +19,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $pending_body
  * @property string|null $pending_revision_token
  * @property string $status
- * @property \Illuminate\Support\Carbon|null $pending_edited_at
- * @property \Illuminate\Support\Carbon|null $last_edit_submitted_at
- * @property \Illuminate\Support\Carbon|null $edited_at
- * @property \Illuminate\Support\Carbon|null $deleted_by_admin_at
- * @property \Illuminate\Support\Carbon|null $deleted_by_author_at
- * @property \Illuminate\Support\Carbon|null $moderated_at
+ * @property Carbon|null $pending_edited_at
+ * @property Carbon|null $last_edit_submitted_at
+ * @property Carbon|null $edited_at
+ * @property Carbon|null $deleted_by_admin_at
+ * @property Carbon|null $deleted_by_author_at
+ * @property Carbon|null $moderated_at
  * @property-read User|null $author
  * @property-read NewsComment|null $replyTo
- * @property-read \Illuminate\Database\Eloquent\Collection<int, NewsComment> $replies
+ * @property-read Collection<int, NewsComment> $replies
  */
 final class NewsComment extends Model
 {

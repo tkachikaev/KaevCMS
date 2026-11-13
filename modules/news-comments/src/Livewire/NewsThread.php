@@ -310,8 +310,8 @@ final class NewsThread extends Component
             : __('module-news-comments::messages.pending_notice');
     }
 
-    /** @param \Closure(): mixed $action */
-    private function tryAction(\Closure $action, string $field): bool
+    /** @param Closure(): mixed $action */
+    private function tryAction(Closure $action, string $field): bool
     {
         $this->resetValidation();
 

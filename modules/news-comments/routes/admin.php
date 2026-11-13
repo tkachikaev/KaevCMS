@@ -9,7 +9,6 @@ Route::put('/news/{news}', [AdminNewsCommentController::class, 'updateNews'])
     ->whereNumber('news')
     ->name('news.update');
 
-
 Route::post('/comments/{comment}/approve', [AdminNewsCommentController::class, 'approve'])
     ->whereNumber('comment')->name('comments.approve');
 Route::post('/comments/{comment}/reject', [AdminNewsCommentController::class, 'reject'])

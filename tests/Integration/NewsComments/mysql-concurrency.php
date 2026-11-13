@@ -102,7 +102,7 @@ if (($argv[1] ?? '') === '--worker') {
 }
 
 /**
- * @param list<list<string>> $jobs
+ * @param  list<list<string>>  $jobs
  * @return list<string>
  */
 function raceNewsComments(array $jobs): array
