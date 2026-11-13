@@ -118,4 +118,5 @@ return [
     'confirm_delete' => 'Yes, delete',
     'moderation_saved' => 'Moderation action completed.',
     'moderation_conflict' => 'This action is out of date: the comment was deleted, edited, or already reviewed. Refresh the page.',
+    'player_delete_confirm' => 'Delete your comment? If others replied, your text will be erased while their replies remain. This cannot be undone.',
 ];

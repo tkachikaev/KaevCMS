@@ -2,15 +2,6 @@
 @section('title', __('module-news-comments::messages.admin_title'))
 @section('description', __('module-news-comments::messages.admin_description'))
 @section('content')
-@if(session('status'))
-    <div class="notice notice-success" role="status">{{ session('status') }}</div>
-@endif
-@if($errors->any())
-    <div class="notice notice-error" role="alert">
-        <ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-    </div>
-@endif
-
 @if($settings === null)
     <div class="notice notice-error" role="alert">{{ __('module-news-comments::messages.unavailable') }}</div>
 @else

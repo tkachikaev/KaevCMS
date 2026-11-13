@@ -25,6 +25,14 @@ class BundledModuleTranslationParityTest extends TestCase
         }
     }
 
+    public function test_news_comments_russian_and_english_keys_match(): void
+    {
+        $this->assertTranslationParity(
+            base_path('modules/news-comments/lang/en/messages.php'),
+            base_path('modules/news-comments/lang/ru/messages.php'),
+        );
+    }
+
     public function test_support_tickets_russian_and_english_keys_match(): void
     {
         $this->assertTranslationParity(

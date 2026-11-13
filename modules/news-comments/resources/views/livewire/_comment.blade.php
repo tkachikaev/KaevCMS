@@ -58,7 +58,9 @@
                         {{ __('module-news-comments::messages.edit') }}
                     </button>
                 @endif
-                <button type="button" class="news-comments-action news-comments-delete" wire:click="deleteOwn({{ $entry->id }})">
+                <button type="button" class="news-comments-action news-comments-delete"
+                    wire:click="deleteOwn({{ $entry->id }})"
+                    wire:confirm="{{ __('module-news-comments::messages.player_delete_confirm') }}">
                     {{ __('module-news-comments::messages.delete') }}
                 </button>
             @endif

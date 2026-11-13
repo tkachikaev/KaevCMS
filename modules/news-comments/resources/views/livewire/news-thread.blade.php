@@ -7,6 +7,9 @@
     @if($notice)
         <div class="news-comments-notice" role="status">{{ $notice }}</div>
     @endif
+    @error('action')
+        <p class="news-comments-error" role="alert">{{ $message }}</p>
+    @enderror
 
     @if($canWrite)
         <form class="news-comments-form" wire:submit="send">
