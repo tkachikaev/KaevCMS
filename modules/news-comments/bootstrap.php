@@ -14,6 +14,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schedule;
 use KaevCMS\Modules\NewsComments\Console\Commands\CleanupNewsCommentEventsCommand;
 use KaevCMS\Modules\NewsComments\Livewire\NewsThread;
+use KaevCMS\Modules\NewsComments\Services\NewsCommentModerationService;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentSettings;
 use Livewire\Livewire;
 
@@ -37,6 +38,7 @@ return static function (Application $app, ModuleContext $module): void {
         labelKey: 'module-news-comments::messages.navigation_label',
         descriptionKey: 'module-news-comments::messages.navigation_description',
         sortOrder: 75,
+        badgeResolver: static fn (Admin $admin): int => $app->make(NewsCommentModerationService::class)->pendingCount(),
     );
 
     $access = $app->make(ModuleAdminAccessRegistry::class);
@@ -47,8 +49,37 @@ return static function (Application $app, ModuleContext $module): void {
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
         additionalAccess: static fn (Admin $admin): ModuleAdminAccessLevel => $admin->role === AdminRole::Editor
             && $app->make(NewsCommentSettings::class)->editorCanModerate()
-                ? ModuleAdminAccessLevel::Read
+                ? ModuleAdminAccessLevel::Manage
                 : ModuleAdminAccessLevel::Denied,
+    );
+
+    $editorModeration = static fn (Admin $admin): ModuleAdminAccessLevel => $admin->role === AdminRole::Editor
+        && $app->make(NewsCommentSettings::class)->editorCanModerate()
+            ? ModuleAdminAccessLevel::Manage
+            : ModuleAdminAccessLevel::Denied;
+
+    foreach ([
+        'comments.approve',
+        'comments.reject',
+        'comments.approve-edit',
+        'comments.reject-edit',
+        'comments.hide',
+        'comments.restore',
+    ] as $action) {
+        $access->registerExact(
+            moduleId: $module->id,
+            routeName: 'admin.module-pages.news-comments.'.$action,
+            viewRoles: [],
+            manageRoles: [AdminRole::Owner, AdminRole::Administrator],
+            additionalAccess: $editorModeration,
+        );
+    }
+
+    $access->registerExact(
+        moduleId: $module->id,
+        routeName: 'admin.module-pages.news-comments.comments.destroy',
+        viewRoles: [],
+        manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
 
     foreach (['settings.update', 'news.update'] as $action) {

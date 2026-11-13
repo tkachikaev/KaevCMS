@@ -2,13 +2,13 @@
 
 The `news-comments` module adds discussions beneath published news articles. Data is stored in the primary KaevCMS database, independent of game servers.
 
-**Current development branch:** installation, settings and player submission, reply, edit and delete interfaces are implemented. **The administrator moderation queue is not available yet.** In manual-review mode, new submissions will remain pending without any staff action screen. Do not deploy this branch as a complete production comments feature.
+**Current development branch:** player posting/editing, the staff moderation queue, role controls and thread deletion are implemented. Full automated and browser QA is not complete; wait for the release acceptance before production deployment.
 
 ## Enable and configure
 
 1. Open **Modules** in the administration area and enable **News Comments**. KaevCMS applies module migrations automatically.
 2. Open **News Comments** in the administration navigation.
-3. **Enable news comments** is off by default. Do not enable manual-review mode on a production site before the administration queue is implemented.
+3. **Enable news comments** is off by default. Configure the publication policy and staff permissions before enabling it.
 
 ## Settings
 
@@ -26,6 +26,19 @@ Only the **Owner** can modify settings and per-article policies. Administrators 
 Signed-in players may post beneath a published article, reply to a top-level comment (one level of replies), edit or delete their own text. Guests can read approved posts but must sign in to write. When email verification is required, unverified accounts cannot comment.
 
 Automatic publication displays new posts immediately. Under manual review, only the author sees their pending comment. Editing an approved comment keeps its previous text and replies publicly visible until staff approves the replacement; the proposed revision is visible only to its author and staff. Further edits are blocked while a revision waits. Published edits receive an **Edited** label; there is no public revision history.
+
+## Administration moderation
+
+The **News Comments** admin page contains a single queue for new pending comments and proposed revisions. A pending-count badge appears in the admin navigation. Filter by status, article ID or author ID; published, rejected and hidden comments are available in separate filters.
+
+- **New comment:** **Approve** or **Reject**. Pending comments are not visible to other players.
+- **Revision of an approved comment:** staff see the old published text alongside the proposed new text. **Approve edit** atomically replaces the public text and sets the Edited marker; **Reject edit** discards only the proposal and preserves the old text and replies.
+- **Hide** removes an approved comment from public view. Hiding also cancels any proposed edit awaiting review. **Restore** works for hidden or rejected comments.
+- **Delete permanently** erases the chosen reply or, for a top-level comment, the entire reply thread. A confirmation dialog is shown before deletion.
+
+**Owner** and **Administrator** can moderate and physically delete threads. **Editor** can approve, reject, hide and restore only when the owner enables optional Editor moderation. **Auditor** is read-only. Only Owner can change global settings or per-article policies.
+
+Stale moderation actions are rejected when another moderator has already acted or the author deleted their comment. Operations are audited using metadata, without storing the comment's full body.
 
 ## Deleting comments
 

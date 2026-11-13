@@ -14,6 +14,8 @@
 @if($settings === null)
     <div class="notice notice-error" role="alert">{{ __('module-news-comments::messages.unavailable') }}</div>
 @else
+    @include('module-news-comments::admin.moderation')
+
     <x-admin.card narrow>
         <x-admin.card-heading
             :title="__('module-news-comments::messages.settings_title')"
@@ -136,3 +138,12 @@
     </x-admin.card>
 @endif
 @endsection
+
+
+@push('head')
+<link rel="stylesheet" href="{{ asset('assets/modules/news-comments-admin.css') }}?v={{ cms_version() }}" data-navigate-track>
+@endpush
+
+@push('scripts')
+<script src="{{ asset('assets/modules/news-comments-admin.js') }}?v={{ cms_version() }}" defer data-navigate-once></script>
+@endpush

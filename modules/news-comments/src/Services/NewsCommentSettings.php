@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\NewsComments\Services;
 use App\Models\Admin;
 use App\Models\News;
 use App\Support\Database\TableExistence;
+use Illuminate\Support\Facades\DB;
 use KaevCMS\Modules\NewsComments\Models\NewsCommentNewsSetting;
 use KaevCMS\Modules\NewsComments\Models\NewsCommentSetting;
 use RuntimeException;
@@ -120,17 +121,20 @@ final class NewsCommentSettings
     /** @param array<string, mixed> $values */
     public function update(array $values, Admin $admin): void
     {
-        if ($this->values() === null) {
-            throw new RuntimeException('News comment settings are unavailable.');
-        }
+        DB::transaction(function () use ($values, $admin): void {
+            $setting = NewsCommentSetting::query()->whereKey(1)->lockForUpdate()->first();
+            if ($setting === null || $this->values() === null) {
+                throw new RuntimeException('News comment settings are unavailable.');
+            }
 
-        $updated = NewsCommentSetting::query()->whereKey(1)->update([
-            ...$values,
-            'updated_by_admin_id' => $admin->getKey(),
-        ]);
+            $updated = NewsCommentSetting::query()->whereKey(1)->update([
+                ...$values,
+                'updated_by_admin_id' => $admin->getKey(),
+            ]);
 
-        if ($updated !== 1) {
-            throw new RuntimeException('News comment settings could not be saved.');
-        }
+            if ($updated !== 1) {
+                throw new RuntimeException('News comment settings could not be saved.');
+            }
+        }, 3);
     }
 }
