@@ -32,8 +32,6 @@ final class NewsThread extends Component
 
     public string $body = '';
 
-    public string $replyBody = '';
-
     public ?int $replyToId = null;
 
     public ?int $editingId = null;
@@ -53,21 +51,23 @@ final class NewsThread extends Component
         $this->article();
     }
 
+    /** One composer at the end of the thread posts comments and, with a target chosen, replies. */
     public function send(NewsCommentService $comments): void
     {
         $news = $this->article();
         $user = $this->author();
-        $text = trim($this->body);
+        $this->body = trim($this->body);
         $this->validate(['body' => ['required', 'string', 'max:'.$this->maximumLength()]]);
 
         $created = null;
-        if (! $this->tryAction(function () use ($comments, $news, $user, $text, &$created): void {
-            $created = $comments->submit($news, $user, $text);
+        if (! $this->tryAction(function () use ($comments, $news, $user, &$created): void {
+            $created = $comments->submit($news, $user, $this->body, $this->replyToId);
         }, 'body')) {
             return;
         }
 
         $this->body = '';
+        $this->replyToId = null;
         $this->notice = $this->sendNotice($created?->status);
         $this->resetPage('commentsPage');
     }
@@ -85,39 +85,15 @@ final class NewsThread extends Component
             ->firstOrFail();
 
         $this->resetValidation();
-        $this->replyBody = '';
         $this->replyToId = (int) $parent->id;
         $this->dispatch('news-comments:reply');
     }
 
+    /** Drops the reply target; the text typed so far stays in the composer. */
     public function cancelReply(): void
     {
         $this->replyToId = null;
-        $this->replyBody = '';
         $this->resetValidation();
-    }
-
-    public function sendReply(NewsCommentService $comments): void
-    {
-        $news = $this->article();
-        $user = $this->author();
-        $this->replyBody = trim($this->replyBody);
-        $this->validate(['replyBody' => ['required', 'string', 'max:'.$this->maximumLength()]]);
-        abort_unless($this->replyToId !== null, 422);
-
-        $created = null;
-        if (! $this->tryAction(
-            function () use ($comments, $news, $user, &$created): void {
-                $created = $comments->submit($news, $user, $this->replyBody, $this->replyToId);
-            },
-            'replyBody',
-        )) {
-            return;
-        }
-
-        $this->cancelReply();
-        $this->notice = $this->sendNotice($created?->status);
-        $this->resetPage('commentsPage');
     }
 
     public function openEdit(int $commentId): void

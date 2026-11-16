@@ -130,4 +130,5 @@ return [
     'news_pages_label' => 'News pages',
     'badge_new' => 'New',
     'badge_edit' => 'Edit',
+    'cancel_reply' => 'Cancel reply',
 ];

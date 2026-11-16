@@ -53,10 +53,14 @@ class NewsCommentsPlayerTest extends TestCase
         $this->assertNull($original->parent_id);
 
         Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->set('body', 'I agree')
             ->call('openReply', $original->id)
-            ->set('replyBody', 'I agree')
-            ->call('sendReply')
+            ->assertSet('body', 'I agree')
+            ->assertSee('&#64;'.$user->name, false)
+            ->call('send')
             ->assertHasNoErrors()
+            ->assertSet('replyToId', null)
+            ->assertSet('body', '')
             ->assertSee('I agree');
 
         $reply = NewsComment::query()->whereNotNull('parent_id')->firstOrFail();
@@ -73,6 +77,28 @@ class NewsCommentsPlayerTest extends TestCase
 
         $this->assertDatabaseCount('module_news_comments', 3);
         $this->assertDatabaseCount('module_news_comment_submission_events', 3);
+    }
+
+    public function test_cancelling_a_reply_keeps_the_text_and_posts_a_plain_comment(): void
+    {
+        $news = $this->article();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $original = app(NewsCommentService::class)->submit($news, $user, 'First message');
+
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->call('openReply', $original->id)
+            ->set('body', 'Not a reply after all')
+            ->call('cancelReply')
+            ->assertSet('replyToId', null)
+            ->assertSet('body', 'Not a reply after all')
+            ->call('send')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('module_news_comments', [
+            'body' => 'Not a reply after all',
+            'parent_id' => null,
+        ]);
     }
 
     public function test_manual_review_hides_new_comments_from_others_but_not_the_author(): void

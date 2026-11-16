@@ -130,4 +130,5 @@ return [
     'news_pages_label' => 'Страницы новостей',
     'badge_new' => 'Новый',
     'badge_edit' => 'Правка',
+    'cancel_reply' => 'Не отвечать',
 ];

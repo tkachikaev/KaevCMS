@@ -22,7 +22,7 @@
 
     document.addEventListener('news-comments:reply', () => {
         requestAnimationFrame(() => requestAnimationFrame(() => {
-            const field = document.getElementById('news_comment_reply');
+            const field = document.getElementById('news_comment_new');
             field?.scrollIntoView({behavior: 'smooth', block: 'center'});
             field?.focus({preventScroll: true});
         }));
