@@ -2,10 +2,12 @@
 
 ## Unreleased
 
+- Display-name audit follow-up: reject phonetic/modifier and decorative Unicode letters used to impersonate staff (including adᴍin), show the actual empty profile value with a localized safe placeholder, and translate the display-name audit action in RU/EN journal views.
+
 - Iteration 2: public News Comments authors, reply mentions and composer targets use the core public nickname API with localized safe fallback. Public author queries load only ID and display name; moderation retains private owner identification. Added privacy, rename, escaping, deleted-author and eager-loading tests and RU/EN module documentation.
 
 - Iteration 1: optional player display names with a shared publicName() API and localized Player #ID fallback; private login names remain unchanged. Case-folded names use a database unique key and conflicting saves return validation errors.
-- Shared nickname editing on all three account profile themes, random unsaved suggestions, reserved-name checks and privacy-safe profile audit. Removed redundant profile descriptions and aligned the save action left.
+- Shared nickname editing on all three account profile themes, actual stored values and safe placeholders, reserved-name checks and privacy-safe profile audit. Removed redundant profile descriptions and aligned the save action left.
 - Added profile validation, permissions, localization, backwards-compatible login, database collision and concurrent-process regression coverage. News Comments integration is deferred to iteration 2.
 
 ## 0.59.0 - 2026-11-16

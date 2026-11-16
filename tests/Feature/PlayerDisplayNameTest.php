@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Rules\PlayerDisplayName;
 use App\Support\Themes\AccountThemeManager;
@@ -84,9 +86,12 @@ class PlayerDisplayNameTest extends TestCase
         foreach (['kaev-classic', 'kaev-aurelia', 'luxury'] as $theme) {
             app(AccountThemeManager::class)->activate($theme);
             foreach (['/account/profile', '/ru/account/profile', '/en/account/profile'] as $path) {
-                $this->get($path)->assertOk()->assertSee('id="account-display-name"', false)
-                    ->assertDontSee('display-name-help', false)
-                    ->assertViewHas('displayNameSuggestion', fn ($name) => preg_match('/^Player_[a-f0-9]{8}$/', $name) === 1);
+                $response = $this->get($path)->assertOk()->assertSee('id="account-display-name"', false)
+                    ->assertDontSee('display-name-help', false);
+                preg_match('/<input[^>]+id="account-display-name"[^>]+>/', $response->getContent(), $input);
+                $this->assertStringContainsString('value=""', $input[0]);
+                $this->assertStringContainsString('placeholder="'.$user->publicName().'"', $input[0]);
+                $this->assertStringNotContainsString('Player_', $input[0]);
             }
         }
         $this->put('/en/account/profile/display-name', ['display_name' => 'Player-123'])->assertRedirect();
@@ -107,6 +112,45 @@ class PlayerDisplayNameTest extends TestCase
         $user->forceFill(['display_name' => 'PublicHero'])->save();
         $this->post('/login', ['login' => 'private_login', 'password' => 'Password123!'])->assertSessionHasNoErrors();
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_phonetic_decorative_and_mixed_service_name_impersonation_is_rejected(): void
+    {
+        $this->actingAs(User::factory()->create());
+        foreach (['adᴍin', 'ᴀdmin', 'ADMIN', 'аdmin', 'adмin', 'Ａｄｍｉｎ', '𝒂𝒅𝒎𝒊𝒏', 'ｍoderator', 'ᴍoderator', 'ѕupport', 'ɡm'] as $name) {
+            $this->put('/account/profile/display-name', ['display_name' => $name])->assertSessionHasErrors('display_name');
+            $this->assertNull(auth()->user()->fresh()->display_name);
+        }
+        $this->put('/account/profile/display-name', ['display_name' => 'Рыцарь_42'])->assertSessionHasNoErrors();
+        $this->put('/account/profile/display-name', ['display_name' => 'Éclair-7'])->assertSessionHasNoErrors();
+    }
+
+    public function test_profile_shows_actual_saved_empty_and_invalid_old_input_without_generating_a_name(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->put('/account/profile/display-name', ['display_name' => 'SavedHero'])->assertRedirect();
+        $this->actingAs($user->refresh());
+        $this->get('/account/profile')->assertSee('value="SavedHero"', false);
+        $this->from('/account/profile')->put('/account/profile/display-name', ['display_name' => 'Invalid Name'])->assertSessionHasErrors('display_name');
+        $this->get('/account/profile')->assertSee('value="Invalid Name"', false);
+        $this->put('/account/profile/display-name', ['display_name' => ''])->assertRedirect();
+        $this->actingAs($user->refresh());
+        $this->get('/account/profile')->assertSee('value=""', false)->assertSee('placeholder="'.$user->fresh()->publicName().'"', false);
+        $this->assertNull($user->fresh()->display_name);
+    }
+
+    public function test_display_name_action_has_ru_en_labels_in_the_admin_journal(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->put('/account/profile/display-name', ['display_name' => 'PublicHero'])->assertRedirect();
+        $event = AuditLog::query()->where('action', 'user.display_name_updated')->sole();
+        foreach (['ru' => 'Отображаемое имя изменено', 'en' => 'Display name changed'] as $locale => $label) {
+            app()->setLocale($locale);
+            $this->assertSame($label, $event->actionLabel());
+            $admin = Admin::factory()->create(['locale' => $locale]);
+            $this->actingAs($admin, 'admin')->get('/admin/logs?category=user')->assertOk()->assertSee($label);
+        }
+        $this->assertSame(['display_name_set' => true], $event->details);
     }
 
     public function test_database_unique_index_serializes_competing_processes(): void

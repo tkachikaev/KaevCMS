@@ -31,7 +31,6 @@ class ProfileController extends Controller
 
         return view('account-theme::profile.edit', [
             'user' => $user,
-            'displayNameSuggestion' => $user->getAttribute('display_name') ?? 'Player_'.bin2hex(random_bytes(4)),
             'linkedSocialProviders' => array_intersect_key([
                 'google' => 'Google', 'yandex' => 'Яндекс ID', 'vk' => 'VK ID',
                 'telegram' => 'Telegram', 'discord' => 'Discord', 'facebook' => 'Facebook',

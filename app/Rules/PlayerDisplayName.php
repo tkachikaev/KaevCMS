@@ -20,6 +20,16 @@ final class PlayerDisplayName implements ValidationRule
             return;
         }
 
+        // Nicknames use ordinary letters, not phonetic small capitals, modifier
+        // letters or decorative mathematical/letterlike glyphs (e.g. adᴍin).
+        // Block these well-defined Unicode ranges instead of maintaining a
+        // growing confusables dictionary. Existing stored names are untouched.
+        if (preg_match('/[\p{Lm}\x{0250}-\x{02FF}\x{1D00}-\x{1DBF}\x{2100}-\x{214F}\x{1D400}-\x{1D7FF}]/u', $value) === 1) {
+            $fail(__('Use ordinary letters instead of phonetic or decorative symbols.'));
+
+            return;
+        }
+
         $identity = strtr(mb_strtolower(mb_convert_kana($value, 'a', 'UTF-8'), 'UTF-8'), [
             'а' => 'a', 'е' => 'e', 'о' => 'o', 'р' => 'p', 'с' => 'c', 'х' => 'x',
             'у' => 'y', 'к' => 'k', 'м' => 'm', 'т' => 't', 'в' => 'b', 'н' => 'h',

@@ -3074,5 +3074,7 @@
     "Your public nickname. Leave empty to use Player #:id.": "Your public nickname. Leave empty to use Player #:id.",
     "Use only letters, numbers, underscores and hyphens.": "Use only letters, numbers, underscores and hyphens.",
     "This display name is reserved.": "This display name is reserved.",
-    "This display name is already taken.": "This display name is already taken."
+    "This display name is already taken.": "This display name is already taken.",
+    "Display name changed": "Display name changed",
+    "Use ordinary letters instead of phonetic or decorative symbols.": "Use ordinary letters instead of phonetic or decorative symbols."
 }

@@ -3074,5 +3074,7 @@
     "Your public nickname. Leave empty to use Player #:id.": "Ваш публичный ник. Оставьте поле пустым, чтобы отображалось «Игрок #:id».",
     "Use only letters, numbers, underscores and hyphens.": "Используйте только буквы, цифры, подчёркивание и дефис.",
     "This display name is reserved.": "Это имя зарезервировано.",
-    "This display name is already taken.": "Этот ник уже занят."
+    "This display name is already taken.": "Этот ник уже занят.",
+    "Display name changed": "Отображаемое имя изменено",
+    "Use ordinary letters instead of phonetic or decorative symbols.": "Используйте обычные буквы вместо фонетических или декоративных символов."
 }

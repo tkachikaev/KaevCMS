@@ -19,7 +19,7 @@
         </button>
     </div>
 
-    <x-account-display-name-form :user="$user" :suggested-name="$displayNameSuggestion" />
+    <x-account-display-name-form :user="$user" />
 
     <dl class="account-settings-details">
         <div><dt>{{ __('Username') }}</dt><dd>{{ $user->name }}</dd></div>
