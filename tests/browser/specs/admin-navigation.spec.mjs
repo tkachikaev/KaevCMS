@@ -331,7 +331,8 @@ test('news editor initializes again after SPA navigation', async ({ page }) => {
     await page.locator('.settings-section-tabs').getByRole('link', { name: 'Системная информация' }).click();
     await expect(page).toHaveURL(/\/admin\/settings\/system$/);
     await openMenuGroup(page, 'content');
-    await page.getByRole('link', { name: 'Новости' }).click();
+    // Settings also has a News tab, so take the sidebar link.
+    await page.locator('[data-admin-menu-group="content"]').getByRole('link', { name: 'Новости', exact: true }).click();
     await page.getByRole('link', { name: /Создать/ }).first().click();
 
     await expect(editorRoot).toHaveAttribute('data-editor-ready', '1');
@@ -380,7 +381,8 @@ test('two-factor QR is rendered after leaving and returning', async ({ page }) =
     await expect(qr).toHaveCount(1);
 
     await openMenuGroup(page, 'content');
-    await page.getByRole('link', { name: 'Новости' }).click();
+    // Settings also has a News tab, so take the sidebar link.
+    await page.locator('[data-admin-menu-group="content"]').getByRole('link', { name: 'Новости', exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/news$/);
     await page.goBack();
 
@@ -581,7 +583,10 @@ test('module foundation is available from the administrator sidebar', async ({ p
 
     const moduleCatalog = page.getByTestId('module-catalog');
     await expect(moduleCatalog).toHaveAttribute('data-layout', 'grid');
-    await expect(moduleCatalog.getByTestId('module-card')).toHaveCount(6);
+    // Every bundled module has a card; the catalogue may hold more, so there is no fixed count.
+    for (const moduleId of ['daily-rewards', 'donations', 'news-comments', 'promo-codes', 'referrals', 'shop', 'support-tickets']) {
+        await expect(moduleCatalog.locator(`[data-module-id="${moduleId}"]`)).toHaveCount(1);
+    }
     await expect(page.locator('[data-module-id="referrals"]').getByRole('heading', { name: 'Реферальная система', exact: true })).toBeVisible();
     await expect(page.locator('[data-module-id="shop"]').getByRole('heading', { name: 'Магазин', exact: true })).toBeVisible();
 

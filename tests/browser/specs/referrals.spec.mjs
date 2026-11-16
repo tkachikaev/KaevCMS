@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 test('referrals configure, retain encrypted invitation and render bundled account themes', async ({ page, context }, testInfo) => {
     test.setTimeout(60000);
@@ -119,7 +119,7 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
                     await expect(player).toHaveURL(/server=all/);
                     await expect(player.locator('[data-referral-servers] a[href*="server=all"]')).toHaveAttribute('aria-current', 'page');
                 }
-                await player.reload();
+                await reloadWithLocalNetworkRetry(player);
                 await expect(player.locator(`[data-referral-tabs] a[href*="tab=${tab}"]`)).toHaveAttribute('aria-current', 'page');
                 for (const width of [1440, 390, 320]) {
                     await player.setViewportSize({ width, height: 1000 });
@@ -159,7 +159,7 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
         await visitor.locator('.auth-card a.button').click();
         await expect(visitor.locator('#name')).toBeVisible();
         await changeGuestLanguage('en');
-        await visitor.reload();
+        await reloadWithLocalNetworkRetry(visitor);
         await expect(visitor.locator('html')).toHaveAttribute('lang', 'en');
         await visitor.screenshot({path:testInfo.outputPath('registration-before.png')});
         await visitor.locator('[name=name]').fill('referralbrowser');

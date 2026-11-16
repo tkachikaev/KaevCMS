@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 test('custom currency names and PNG/WebP icons persist, render in both themes and can be removed', async ({ page, context }) => {
     test.setTimeout(90_000);
@@ -59,7 +59,7 @@ test('custom currency names and PNG/WebP icons persist, render in both themes an
         await form.locator('#wallet_icon').setInputFiles({ name: 'doubloon.png', mimeType: 'image/png', buffer: png });
         await save();
         changed = true;
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         await expect(form.locator('#wallet_symbol')).toHaveValue('DBL');
         await expect(form.locator('#wallet_ru_many')).toHaveValue('дублонов');
         await expect(form.locator('#wallet_en_many')).toHaveValue('doubloons');
@@ -179,7 +179,7 @@ test('wallet starts at zero, rejects overdrafts, permits frozen corrections and 
     await adjustment.locator('[name="confirm_adjustment"]').check();
     await adjustment.getByRole('button').click();
     await expect(page.getByTestId('admin-wallet-entry')).toHaveCount(1);
-    await player.reload();
+    await reloadWithLocalNetworkRetry(player);
     await expect(player.locator('.account-wallet-summary')).toContainText('100 монет');
 
     await adjustment.locator('[name="operation"]').selectOption('debit');
@@ -188,7 +188,7 @@ test('wallet starts at zero, rejects overdrafts, permits frozen corrections and 
     await adjustment.locator('[name="confirm_adjustment"]').check();
     await adjustment.getByRole('button').click();
     await expect(page.getByTestId('admin-wallet-entry')).toHaveCount(2);
-    await player.reload();
+    await reloadWithLocalNetworkRetry(player);
     await expect(player.locator('.account-wallet-summary')).toContainText('70 монет');
     await expect(player.locator('.account-wallet-entry')).toHaveCount(2);
     await expect(player.locator('.account-wallet-entry').first()).toContainText('−30');
@@ -200,7 +200,7 @@ test('wallet starts at zero, rejects overdrafts, permits frozen corrections and 
     await adjustment.getByRole('button').click();
     await expect(page.locator('.notice-danger[role="alert"]')).toContainText('На кошельке недостаточно монет.');
     await expect(page.getByTestId('admin-wallet-entry')).toHaveCount(2);
-    await player.reload();
+    await reloadWithLocalNetworkRetry(player);
     await expect(player.locator('.account-wallet-summary')).toContainText('70 монет');
 
     const restriction = page.getByTestId('admin-wallet-status-form');
@@ -295,7 +295,7 @@ test('wallet starts at zero, rejects overdrafts, permits frozen corrections and 
         await correction.locator('[name="confirm_adjustment"]').check();
         await correction.getByRole('button').click();
         await expect(administrator.getByTestId('admin-wallet-entry')).toHaveCount(5);
-        await player.reload();
+        await reloadWithLocalNetworkRetry(player);
         await expect(player.locator('.account-wallet-summary')).toContainText('69 монет');
         await expect(player.locator('.account-wallet-blocked')).toHaveCount(0);
     } finally {

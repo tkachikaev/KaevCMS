@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const settingsPath = '/admin/extensions/donations/providers/paypal';
 
@@ -61,7 +61,7 @@ for (const width of [1440, 390]) {
             await expect(form.locator('input[type="checkbox"][name="enable_live"]')).not.toBeChecked();
             await expect(page.locator('#paypal-webhook-url')).toHaveValue(/\/payments\/paypal\/notify$/);
             expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-            await page.reload();
+            await reloadWithLocalNetworkRetry(page);
         }
         // A blank secret must preserve the saved credential across another save.
         if (await credentials.getAttribute('open') === null) await credentials.locator('summary').click();

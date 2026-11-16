@@ -1,7 +1,26 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { gotoWithLocalNetworkRetry } from './navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from './navigation.mjs';
+
+test('retries a reload after transient Windows local socket exhaustion', async () => {
+    let attempts = 0;
+    const page = {
+        reload: async () => {
+            attempts += 1;
+            if (attempts < 2) {
+                throw new Error('page.reload: net::ERR_NO_BUFFER_SPACE');
+            }
+
+            return null;
+        },
+        waitForTimeout: async () => {},
+    };
+
+    await reloadWithLocalNetworkRetry(page);
+
+    assert.equal(attempts, 2);
+});
 
 test('retries only transient Windows local socket exhaustion', async () => {
     let attempts = 0;

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 test.use({ launchOptions: {
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}),
@@ -40,7 +40,7 @@ test('FreeKassa settings persist, admin checkout redirects correctly and CSP per
     await form.locator('[name="callback_sender_ips"]').fill('127.0.0.1');
     await form.locator('button[type="submit"]').click();
     await expect(form.locator('[name="credentials[secret_1]"]')).toHaveValue('');
-    await page.reload();
+    await reloadWithLocalNetworkRetry(page);
     await expect(form.locator('[name="credentials[merchant_id]"]')).toHaveValue('7012');
     await expect(form.locator('input[type="checkbox"][name="enabled"]')).toBeChecked();
     for (const width of [1440, 390]) {
@@ -94,7 +94,7 @@ test('FreeKassa settings persist, admin checkout redirects correctly and CSP per
     await expect(page.locator('[data-freekassa-state="verified"]')).toContainText('Тестовая оплата подтверждена');
     await page.locator('[data-freekassa-result]').screenshot({ path: 'storage/framework/testing/freekassa-test-success-panel.png' });
     await page.screenshot({ path: 'storage/framework/testing/freekassa-test-success.png', fullPage: true });
-    await page.reload();
+    await reloadWithLocalNetworkRetry(page);
     await expect(page.getByTestId('freekassa-admin-test')).toContainText('1.00 RUB');
     await page.getByTestId('freekassa-admin-test').getByText('Последние тестовые запросы', { exact: true }).click();
     await page.getByTestId('freekassa-clear-tests').getByRole('button').click();

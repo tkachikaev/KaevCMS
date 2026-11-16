@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const email = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'BrowserPassword123!';
@@ -111,7 +111,7 @@ test('dashboard charts switch periods and lines', async ({ page }) => {
     await expect(tooltip).toBeHidden();
 
     // The choice is remembered per widget.
-    await page.reload();
+    await reloadWithLocalNetworkRetry(page);
     await expect(page.getByTestId('dashboard-chart-registrations').getByRole('combobox', { name: 'Период' })).toHaveValue('7');
 
     // Lines can be hidden, but the last visible line stays.
@@ -142,7 +142,7 @@ test('online chart shows the total and each game server, chosen with checkboxes'
     // An outside click closes the menu; the choice is remembered.
     await online.locator('h2').click();
     await expect(online.locator('.dash-lines-list')).toBeHidden();
-    await page.reload();
+    await reloadWithLocalNetworkRetry(page);
     await expect(page.getByTestId('dashboard-chart-online').locator('.dash-metric')).toHaveCount(servers - 1);
     await page.getByTestId('dashboard-chart-online').locator('.dash-lines summary').click();
     await page.getByTestId('dashboard-chart-online').locator('.dash-lines-item input').nth(1).check();

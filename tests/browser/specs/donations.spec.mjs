@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 for (const width of [1440, 390]) {
     test(`donations settings save together with removable currencies at ${width}px`, async ({ page }) => {
@@ -44,7 +44,7 @@ for (const width of [1440, 390]) {
         await expect(page.getByText('Настройки и валюты сохранены.', { exact: true })).toBeVisible();
         await expect(form.locator('[data-donations-save-status]')).toBeHidden();
         expect(saves).toBe(1);
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         await expect(first.locator('[data-donations-price]')).toHaveValue('1.25');
         await expect(first.locator('input[type="checkbox"]')).toBeChecked();
         await expect(second.locator('input[type="checkbox"]')).not.toBeChecked();
@@ -69,7 +69,7 @@ for (const width of [1440, 390]) {
         await second.locator('[data-donations-price]').fill('2.50');
         await save.click();
         await expect(first).toHaveCount(0);
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         await expect(first).toHaveCount(0);
         await expect(second.locator('[data-donations-price]')).toHaveValue('2.50');
         await expect(second.locator('input[type="checkbox"]')).toBeChecked();
@@ -297,7 +297,7 @@ test('players can preview accurate coin prices but cannot create fake payment dr
     await accepting.uncheck();
     await providerSettings.locator('button[type="submit"]').click();
     await expect(page.getByText('Настройки платёжной системы сохранены.', { exact: true })).toBeVisible();
-    await player.reload();
+    await reloadWithLocalNetworkRetry(player);
     await expect(order).toHaveCount(0);
     await expect(player.locator('#donations-player-range')).toBeVisible();
     expect(calculatorErrors).toEqual([]);
@@ -540,7 +540,7 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
             await player.screenshot({ path: `storage/framework/testing/wallet-history-${theme}-${width}.png`, fullPage: true });
             if (theme === 'luxury' && width === 390) {
                 await player.clock.install();
-                await player.reload();
+                await reloadWithLocalNetworkRetry(player);
                 const seconds = Number(await pendingRow.getAttribute('data-wallet-expires')) - Number(await pendingRow.getAttribute('data-wallet-now'));
                 await player.clock.fastForward((seconds + 2) * 1000);
                 await expect(pendingRow.locator('[data-wallet-time]')).toHaveText('Время оплаты истекло');
@@ -549,7 +549,7 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
                 await pendingRow.getByRole('link', { name: 'Оплатить', exact: true }).click({ force: true });
                 await expect(player).toHaveURL(/\/account\/wallet$/);
                 // Server time and order state never changed; reload restores the still-valid actions.
-                await player.reload();
+                await reloadWithLocalNetworkRetry(player);
             }
             await pendingRow.getByRole('button', { name: 'Отменить', exact: true }).click();
             await expect(player).toHaveURL(/\/account\/wallet$/);

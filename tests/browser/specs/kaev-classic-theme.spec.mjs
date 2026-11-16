@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const adminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL || 'browser-admin@example.test';
 const adminPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'BrowserPassword123!';
@@ -229,7 +229,7 @@ test('Kaev Classic keeps the chosen scheme across navigation and reloads on desk
         await expect(page).toHaveURL(/\/account\/wallet$/);
         await expect(root).toHaveAttribute('data-account-scheme', 'dark');
         await expect(root).not.toHaveClass(/kc-theme-reveal/);
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         await expect(root).toHaveAttribute('data-account-scheme', 'dark');
         await expect(page.locator('[data-account-scheme-toggle]')).toHaveAttribute('aria-label', 'Включить светлую тему');
         await page.locator('.account-nav a[href$="/account"]').first().click();
@@ -347,7 +347,7 @@ test('Classic banner particles stay within the art, remember the switch and stop
         await page.locator('[data-account-scheme-toggle]').click();
         await expect.poll(async () => (await particleColours()).cool).toBeGreaterThan(0);
         await expect.poll(async () => (await particleColours()).warm).toBe(0);
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         await expect(page.locator('html')).toHaveAttribute('data-account-scheme', 'dark');
         await expect.poll(async () => (await particleColours()).cool).toBeGreaterThan(0);
         await page.locator('[data-account-scheme-toggle]').click();
@@ -365,7 +365,7 @@ test('Classic banner particles stay within the art, remember the switch and stop
         await toggle.click();
         await expect(toggle).toHaveAttribute('aria-pressed', 'false');
         await expect.poll(hasPixels).toBe(false);
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         await expect(toggle).toHaveAttribute('aria-pressed', 'false');
         await page.locator('.account-nav a[href$="/account/wallet"]').click();
         await expect(page).toHaveURL(/\/account\/wallet$/);

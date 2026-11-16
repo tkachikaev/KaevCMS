@@ -7,6 +7,8 @@ for (const variant of [
     { locale: 'en', scheme: 'dark', width: 390, login: 'Login server', game: 'Game server', gameMapping: '2. Website fields' },
 ]) {
     test(`login driver can be configured, renamed and saved on ${variant.width}px (${variant.locale}, ${variant.scheme})`, async ({ page }, testInfo) => {
+        // Login and game profiles are built step by step and saving checks the external database, like other long admin flows.
+        test.setTimeout(90_000);
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
         await page.setViewportSize({ width: variant.width, height: 1000 });

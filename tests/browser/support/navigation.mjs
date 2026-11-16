@@ -1,11 +1,12 @@
 const localSocketExhaustion = 'net::ERR_NO_BUFFER_SPACE';
 
-export const gotoWithLocalNetworkRetry = async (page, url, options = {}) => {
+// Windows briefly runs out of local sockets during the long browser suite; the page itself is fine.
+const withLocalNetworkRetry = async (page, navigate) => {
     let lastError = null;
 
     for (let attempt = 1; attempt <= 3; attempt += 1) {
         try {
-            return await page.goto(url, options);
+            return await navigate();
         } catch (error) {
             lastError = error;
             const message = error instanceof Error ? error.message : String(error);
@@ -21,3 +22,7 @@ export const gotoWithLocalNetworkRetry = async (page, url, options = {}) => {
 
     throw lastError;
 };
+
+export const gotoWithLocalNetworkRetry = (page, url, options = {}) => withLocalNetworkRetry(page, () => page.goto(url, options));
+
+export const reloadWithLocalNetworkRetry = (page, options = {}) => withLocalNetworkRetry(page, () => page.reload(options));

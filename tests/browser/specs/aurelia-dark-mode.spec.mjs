@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const heroImage = (page) => page.locator('.aurelia-scene .hero-art').evaluate(element => getComputedStyle(element).backgroundImage);
 const scheme = (page) => page.evaluate(() => document.documentElement.dataset.siteScheme);
@@ -70,7 +70,7 @@ test('Aurelia switches to the night scheme, shows the dark portrait and remember
         expect(await page.evaluate(() => window.__aureliaNoReload === true)).toBe(true);
         expect(await scheme(page)).toBe('dark');
         expect(await bodyBrightness(page)).toBeLessThan(lightBrightness / 4);
-        await page.reload();
+        await reloadWithLocalNetworkRetry(page);
         expect(await scheme(page)).toBe('dark');
         expect(await heroImage(page)).toContain('hero-dark.webp');
 

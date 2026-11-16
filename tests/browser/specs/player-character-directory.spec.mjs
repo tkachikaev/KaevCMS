@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
-import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
+import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
 const email = process.env.PLAYWRIGHT_PLAYER_EMAIL || 'browser-player@example.test';
 const password = process.env.PLAYWRIGHT_PLAYER_PASSWORD || 'BrowserPlayerPassword123!';
@@ -60,7 +60,7 @@ test('player character display mode persists after reload', async ({ page }) => 
     await all.click();
     await expect(all).toHaveAttribute('aria-selected', 'true');
 
-    await page.reload();
+    await reloadWithLocalNetworkRetry(page);
     await expect(all).toHaveAttribute('aria-selected', 'true');
 });
 
