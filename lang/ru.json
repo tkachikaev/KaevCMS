@@ -3076,5 +3076,11 @@
     "This display name is reserved.": "Это имя зарезервировано.",
     "This display name is already taken.": "Этот ник уже занят.",
     "Display name changed": "Отображаемое имя изменено",
-    "Use ordinary letters instead of phonetic or decorative symbols.": "Используйте обычные буквы вместо фонетических или декоративных символов."
+    "Use ordinary letters instead of phonetic or decorative symbols.": "Используйте обычные буквы вместо фонетических или декоративных символов.",
+    "Player public names": "Публичные имена игроков",
+    "Allow players to change their display name": "Разрешить игрокам изменять публичный ник",
+    "Days between display name changes": "Интервал между сменами ника (дней)",
+    "Use 0 to allow changes without waiting.": "0 — изменение без ожидания.",
+    "Display name changes are disabled by the administrator.": "Изменение публичного ника отключено администратором.",
+    "You can change your display name after :date.": "Изменить публичный ник можно после :date."
 }

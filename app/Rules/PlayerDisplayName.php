@@ -30,15 +30,18 @@ final class PlayerDisplayName implements ValidationRule
             return;
         }
 
+        // A small set of lookalikes used in reserved staff names, not a general
+        // Unicode confusables dictionary. Case folding turns Greek Μ into μ.
         $identity = strtr(mb_strtolower(mb_convert_kana($value, 'a', 'UTF-8'), 'UTF-8'), [
             'а' => 'a', 'е' => 'e', 'о' => 'o', 'р' => 'p', 'с' => 'c', 'х' => 'x',
             'у' => 'y', 'к' => 'k', 'м' => 'm', 'т' => 't', 'в' => 'b', 'н' => 'h',
-            'і' => 'i', 'ј' => 'j', 'ѕ' => 's', 'α' => 'a', 'ο' => 'o', 'ι' => 'i',
+            'μ' => 'm', 'ı' => 'i', 'і' => 'i', 'ј' => 'j', 'ѕ' => 's', 'α' => 'a', 'ο' => 'o', 'ι' => 'i',
             '1' => 'i', '0' => 'o', '3' => 'e', '4' => 'a', '5' => 's', '7' => 't',
         ]);
         $identity = preg_replace('/[_\-\p{Nd}]/u', '', $identity);
         $reserved = ['admin', 'moderator', 'owner', 'support', 'staff', 'system', 'gamemaster', 'gm',
-            'админ', 'администратор', 'администрация', 'модератор', 'поддержка', 'система', 'kaevcms'];
+            'админ', 'администратор', 'администрация', 'модератор', 'поддержка', 'система',
+            'владелец', 'персонал', 'гейммастер', 'гм', 'kaevcms'];
         foreach ($reserved as $name) {
             $name = strtr(mb_strtolower($name, 'UTF-8'), [
                 'а' => 'a', 'е' => 'e', 'о' => 'o', 'р' => 'p', 'с' => 'c', 'х' => 'x',

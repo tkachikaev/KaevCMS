@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Registration settings now control public-name editing (enabled by default) and its global 0–365 day interval (7 days by default). Profile changes use a locked transaction and a new UTC timestamp; clearing a name preserves the cooldown, and identical saves leave timestamps and audits untouched. All account themes share localized availability states. Reserved-name checks also reject Greek Μ and dotless ı impersonations.
+
 - Display-name audit follow-up: reject phonetic/modifier and decorative Unicode letters used to impersonate staff (including adᴍin), show the actual empty profile value with a localized safe placeholder, and translate the display-name audit action in RU/EN journal views.
 
 - Iteration 2: public News Comments authors, reply mentions and composer targets use the core public nickname API with localized safe fallback. Public author queries load only ID and display name; moderation retains private owner identification. Added privacy, rename, escaping, deleted-author and eager-loading tests and RU/EN module documentation.

@@ -95,6 +95,13 @@
         @endforeach
     </section>
 
+    <section class="form-card settings-narrow-card">
+        <x-admin.card-heading :title="__('Player public names')" />
+        <x-admin.toggle id="display_name_changes_enabled" name="display_name_changes_enabled" :label="__('Allow players to change their display name')" :checked="(bool) old('display_name_changes_enabled', $settings['display_name_changes_enabled'])" />
+        <x-admin.field for="display_name_change_days" name="display_name_change_days" :label="__('Days between display name changes')" :hint="__('Use 0 to allow changes without waiting.')">
+            <input id="display_name_change_days" name="display_name_change_days" type="number" min="0" max="365" required value="{{ old('display_name_change_days', $settings['display_name_change_days']) }}" @if($errors->has('display_name_change_days')) aria-invalid="true" @endif>
+        </x-admin.field>
+    </section>
 </form>
 
 <section class="form-card settings-narrow-card social-auth-settings" aria-labelledby="social-auth-title">

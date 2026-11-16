@@ -53,6 +53,8 @@ class RegistrationSettingsController extends Controller
                     enabled: $request->boolean('registration_enabled'),
                     emailVerificationRequired: $request->boolean('email_verification_required'),
                     policy: [
+                        'display_name_changes_enabled' => $request->has('display_name_changes_enabled') ? $request->boolean('display_name_changes_enabled') : $before['display_name_changes_enabled'],
+                        'display_name_change_days' => $request->has('display_name_change_days') ? $request->integer('display_name_change_days') : $before['display_name_change_days'],
                         'username_min' => $request->has('username_min') ? $request->integer('username_min') : $before['username_min'],
                         'username_max' => $request->has('username_max') ? $request->integer('username_max') : $before['username_max'],
                         'username_allow_hyphen' => $request->has('username_allow_hyphen')

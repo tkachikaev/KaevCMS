@@ -2,10 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rules\Password;
 
 final class RegistrationSettings
 {
+    public const KEY_DISPLAY_NAME_CHANGES_ENABLED = 'registration.display_name_changes_enabled';
+
+    public const KEY_DISPLAY_NAME_CHANGE_DAYS = 'registration.display_name_change_days';
+
     public const KEY_ENABLED = 'registration.enabled';
 
     public const KEY_REQUIRE_EMAIL_VERIFICATION = 'registration.email_verification_required';
@@ -32,6 +38,8 @@ final class RegistrationSettings
 
     /**
      * @return array{
+     *     display_name_changes_enabled:bool,
+     *     display_name_change_days:int,
      *     enabled:bool,
      *     email_verification_required:bool,
      *     username_min:int,
@@ -50,6 +58,8 @@ final class RegistrationSettings
         $defaultEnabled = (bool) config('cms.registration.enabled', false);
         $defaultVerification = (bool) config('cms.registration.email_verification_required', true);
         $values = $this->settings->getMany([
+            self::KEY_DISPLAY_NAME_CHANGES_ENABLED => '1',
+            self::KEY_DISPLAY_NAME_CHANGE_DAYS => '7',
             self::KEY_ENABLED => $defaultEnabled ? '1' : '0',
             self::KEY_REQUIRE_EMAIL_VERIFICATION => $defaultVerification ? '1' : '0',
             self::KEY_USERNAME_MIN => '3',
@@ -70,6 +80,8 @@ final class RegistrationSettings
         );
 
         return [
+            'display_name_changes_enabled' => $this->toBool($values[self::KEY_DISPLAY_NAME_CHANGES_ENABLED] ?? '1'),
+            'display_name_change_days' => $this->boundedInt($values[self::KEY_DISPLAY_NAME_CHANGE_DAYS] ?? '7', 0, 365, 7),
             'enabled' => $this->toBool($values[self::KEY_ENABLED] ?? '0'),
             'email_verification_required' => $this->toBool($values[self::KEY_REQUIRE_EMAIL_VERIFICATION] ?? '1'),
             'username_min' => $usernameMinimum,
@@ -84,6 +96,14 @@ final class RegistrationSettings
         ];
     }
 
+    public function nextDisplayNameChange(User $user): ?CarbonImmutable
+    {
+        $days = $this->values()['display_name_change_days'];
+        $last = $user->getRawOriginal('display_name_changed_at');
+
+        return $days === 0 || ! is_string($last) || $last === '' ? null : CarbonImmutable::parse($last, 'UTC')->addDays($days);
+    }
+
     public function enabled(): bool
     {
         return $this->values()['enabled'];
@@ -96,6 +116,8 @@ final class RegistrationSettings
 
     /**
      * @param  array{
+     *     display_name_changes_enabled?:bool,
+     *     display_name_change_days?:int,
      *     username_min?:int,
      *     username_max?:int,
      *     username_allow_hyphen?:bool,
@@ -113,6 +135,8 @@ final class RegistrationSettings
         $policy ??= [];
 
         $this->settings->setMany([
+            self::KEY_DISPLAY_NAME_CHANGES_ENABLED => ($policy['display_name_changes_enabled'] ?? $current['display_name_changes_enabled']) ? '1' : '0',
+            self::KEY_DISPLAY_NAME_CHANGE_DAYS => (string) ($policy['display_name_change_days'] ?? $current['display_name_change_days']),
             self::KEY_ENABLED => $enabled ? '1' : '0',
             self::KEY_REQUIRE_EMAIL_VERIFICATION => $emailVerificationRequired ? '1' : '0',
             self::KEY_USERNAME_MIN => (string) ($policy['username_min'] ?? $current['username_min']),

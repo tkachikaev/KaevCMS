@@ -13,6 +13,8 @@ class SaveRegistrationSettingsRequest extends AdminFormRequest
         return [
             'social_providers' => ['sometimes', 'array:google,yandex,vk,telegram,discord,facebook'],
             'social_providers.*' => ['required', 'boolean'],
+            'display_name_changes_enabled' => ['sometimes', 'boolean'],
+            'display_name_change_days' => ['sometimes', 'required', 'integer', 'min:0', 'max:365'],
             'registration_enabled' => ['nullable', 'boolean'],
             'email_verification_required' => ['nullable', 'boolean'],
             'username_min' => ['sometimes', 'required', 'integer', 'min:3', 'max:32'],

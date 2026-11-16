@@ -8,6 +8,8 @@ use App\Http\Requests\Account\UpdateDisplayNameRequest;
 use App\Models\User;
 use App\Services\Account\AccountAvatarCatalog;
 use App\Services\AuditLogger;
+use App\Services\CmsSettings;
+use App\Services\RegistrationSettings;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,18 +47,31 @@ class ProfileController extends Controller
 
         try {
             DB::transaction(function () use ($user, $request): void {
+                // SQLite ignores FOR UPDATE. Acquire its write lock before reading
+                // the cooldown so competing requests cannot both read stale state.
+                if (DB::connection()->getDriverName() === 'sqlite') {
+                    DB::table('users')->where('id', $user->getKey())
+                        ->update(['display_name_changed_at' => DB::raw('display_name_changed_at')]);
+                }
                 $locked = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+                $settings = app(RegistrationSettings::class);
+                app(CmsSettings::class)->forget();
+                abort_unless($settings->values()['display_name_changes_enabled'], 403, __('Display name changes are disabled by the administrator.'));
                 $name = $request->validated('display_name');
                 $name = is_string($name) && $name !== '' ? $name : null;
                 if ($locked->getAttribute('display_name') === $name) {
                     return;
                 }
-                $locked->forceFill(['display_name' => $name])->save();
+                $next = $settings->nextDisplayNameChange($locked);
+                if ($next !== null && $next->isFuture()) {
+                    throw ValidationException::withMessages(['display_name' => __('You can change your display name after :date.', ['date' => $next->setTimezone(config('app.timezone'))->locale(app()->getLocale())->isoFormat('LLL')])]);
+                }
+                $locked->forceFill(['display_name' => $name, 'display_name_changed_at' => now('UTC')->format('Y-m-d H:i:s')])->save();
                 if ($this->auditLogger->success(category: 'user', action: 'user.display_name_updated',
                     actor: $locked, target: $locked, details: ['display_name_set' => $name !== null]) === null) {
                     throw new \RuntimeException('Unable to audit profile update.');
                 }
-            });
+            }, 3);
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['display_name' => __('This display name is already taken.')]);
         }

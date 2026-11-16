@@ -257,6 +257,7 @@
         "database/migrations/2026_10_25_020000_bind_universal_snapshots_to_connections.php",
         "database/migrations/2026_10_29_000000_create_social_accounts_and_session_version.php",
         "database/migrations/2026_11_16_000000_add_display_name_to_users.php",
+        "database/migrations/2026_11_16_000100_add_display_name_changed_at_to_users.php",
         "database/seeders/BrowserTestSeeder.php",
         "deployment/hosting/archive-shared-hosting-package.php",
         "deployment/hosting/build-shared-hosting-package.php",

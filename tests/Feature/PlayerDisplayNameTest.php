@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Rules\PlayerDisplayName;
+use App\Services\CmsSettings;
 use App\Support\Themes\AccountThemeManager;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,12 @@ use Tests\TestCase;
 class PlayerDisplayNameTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        app(CmsSettings::class)->setMany(['registration.display_name_change_days' => '0']);
+    }
 
     public function test_public_name_never_falls_back_to_private_login(): void
     {

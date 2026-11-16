@@ -3076,5 +3076,11 @@
     "This display name is reserved.": "This display name is reserved.",
     "This display name is already taken.": "This display name is already taken.",
     "Display name changed": "Display name changed",
-    "Use ordinary letters instead of phonetic or decorative symbols.": "Use ordinary letters instead of phonetic or decorative symbols."
+    "Use ordinary letters instead of phonetic or decorative symbols.": "Use ordinary letters instead of phonetic or decorative symbols.",
+    "Player public names": "Player public names",
+    "Allow players to change their display name": "Allow players to change their display name",
+    "Days between display name changes": "Days between display name changes",
+    "Use 0 to allow changes without waiting.": "Use 0 to allow changes without waiting.",
+    "Display name changes are disabled by the administrator.": "Display name changes are disabled by the administrator.",
+    "You can change your display name after :date.": "You can change your display name after :date."
 }

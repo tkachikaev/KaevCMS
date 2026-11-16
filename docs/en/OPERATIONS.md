@@ -1,5 +1,11 @@
 # Operations runbook
 
+## Player public names
+
+Settings → Registration → Player public names controls nickname editing and the global interval of 0–365 days (default: 7). Use 0 to disable waiting. Disabling editing also blocks the initial choice; saved names continue to appear.
+
+The first choice is immediately available. Changing or clearing a nickname starts the interval; clearing does not restore the initial allowance. A new interval setting applies immediately based on the last successful change. Existing names without a change timestamp receive one change without waiting after upgrading. Profiles show availability and the localized next-change date. Empty names use the safe Player #ID placeholder; private login credentials remain unchanged.
+
 This runbook covers recoverable production incidents. Keep `.env`, the CMS database, public uploads, owner-maintained game assets, and update logs before changing files manually.
 
 ## Interrupted Windows update
