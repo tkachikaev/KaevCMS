@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.59.1 - 2026-11-16
 
 - Registration settings now control public-name editing (enabled by default) and its global 0–365 day interval (7 days by default). Profile changes use a locked transaction and a new UTC timestamp; clearing a name preserves the cooldown, and identical saves leave timestamps and audits untouched. All account themes share localized availability states. Reserved-name checks also reject Greek Μ and dotless ı impersonations.
 
