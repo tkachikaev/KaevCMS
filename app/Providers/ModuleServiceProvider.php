@@ -12,6 +12,7 @@ use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
 use App\Support\Modules\ModuleUserRegistrationRegistry;
 use App\Support\Modules\ModuleValidator;
+use App\Support\News\NewsExtensionRegistry;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
@@ -37,6 +38,7 @@ class ModuleServiceProvider extends ServiceProvider
             migrations: $app->make(ModuleMigrationManager::class),
         ));
         $this->app->singleton(ModuleRuntime::class);
+        $this->app->singleton(NewsExtensionRegistry::class);
         $this->app->singleton(ModuleAdminAccessRegistry::class);
         $this->app->singleton(ModuleAdminAuthorizer::class);
         $this->app->singleton(ModuleNavigationRegistry::class);

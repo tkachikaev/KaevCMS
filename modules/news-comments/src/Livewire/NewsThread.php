@@ -1,0 +1,305 @@
+<?php
+
+namespace KaevCMS\Modules\NewsComments\Livewire;
+
+use App\Models\ModuleState;
+use App\Models\News;
+use App\Models\User;
+use App\Services\RegistrationSettings;
+use App\Support\Modules\ModuleManager;
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
+use KaevCMS\Modules\NewsComments\Models\NewsComment;
+use KaevCMS\Modules\NewsComments\Services\NewsCommentService;
+use KaevCMS\Modules\NewsComments\Services\NewsCommentSettings;
+use Livewire\Attributes\Locked;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+final class NewsThread extends Component
+{
+    use WithPagination;
+
+    #[Locked]
+    public int $newsId;
+
+    private const PER_PAGE = 15;
+
+    #[Locked]
+    public ?int $highlightedCommentId = null;
+
+    public string $body = '';
+
+    public ?int $replyToId = null;
+
+    public ?int $editingId = null;
+
+    public string $editingBody = '';
+
+    public ?string $notice = null;
+
+    public function mount(int $newsId): void
+    {
+        $this->newsId = $newsId;
+        $this->article();
+    }
+
+    public function hydrate(): void
+    {
+        $this->article();
+    }
+
+    /** One composer at the end of the thread posts comments and, with a target chosen, replies. */
+    public function send(NewsCommentService $comments): void
+    {
+        $news = $this->article();
+        $user = $this->author();
+        $this->body = trim($this->body);
+        $this->validate(['body' => ['required', 'string', 'max:'.$this->maximumLength()]]);
+
+        $created = null;
+        if (! $this->tryAction(function () use ($comments, $news, $user, &$created): void {
+            $created = $comments->submit($news, $user, $this->body, $this->replyToId);
+        }, 'body')) {
+            return;
+        }
+
+        $this->body = '';
+        $this->replyToId = null;
+        $this->notice = $this->sendNotice($created?->status);
+        $this->resetPage('commentsPage');
+    }
+
+    public function openReply(int $commentId): void
+    {
+        $this->article();
+        $this->author();
+
+        $parent = NewsComment::query()->whereKey($commentId)
+            ->where('news_id', $this->newsId)
+            ->where('status', 'approved')
+            ->whereNull('deleted_by_author_at')
+            ->whereNull('deleted_by_admin_at')
+            ->firstOrFail();
+
+        $this->resetValidation();
+        $this->replyToId = (int) $parent->id;
+        $this->dispatch('news-comments:reply');
+    }
+
+    /** Drops the reply target; the text typed so far stays in the composer. */
+    public function cancelReply(): void
+    {
+        $this->replyToId = null;
+        $this->resetValidation();
+    }
+
+    public function openEdit(int $commentId): void
+    {
+        $news = $this->article();
+        $user = $this->author();
+        $settings = app(NewsCommentSettings::class)->values();
+        abort_unless($settings !== null && $settings['allow_user_editing'] === true, 403);
+
+        $comment = NewsComment::query()->findOrFail($commentId);
+        abort_unless($comment->news_id === $news->id && $comment->user_id === $user->id, 404);
+        abort_unless($comment->status === 'approved' && $comment->pending_body === null
+            && $comment->deleted_by_author_at === null
+            && $comment->deleted_by_admin_at === null, 403);
+
+        $this->cancelReply();
+        $this->resetValidation();
+        $this->editingId = (int) $comment->id;
+        $this->editingBody = (string) $comment->body;
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->editingId = null;
+        $this->editingBody = '';
+        $this->resetValidation();
+    }
+
+    public function saveEdit(NewsCommentService $comments): void
+    {
+        $news = $this->article();
+        $user = $this->author();
+        $this->editingBody = trim($this->editingBody);
+        $this->validate(['editingBody' => ['required', 'string', 'max:'.$this->maximumLength()]]);
+
+        $result = null;
+        if (! $this->tryAction(
+            function () use ($comments, $news, $user, &$result): void {
+                $result = $comments->edit($news, $user, (int) $this->editingId, $this->editingBody);
+            },
+            'editingBody',
+        )) {
+            return;
+        }
+
+        $this->cancelEdit();
+        $this->notice = $result === 'approved'
+            ? __('module-news-comments::messages.edit_published')
+            : __('module-news-comments::messages.edit_pending');
+    }
+
+    public function deleteOwn(int $commentId, NewsCommentService $comments): void
+    {
+        $news = $this->article();
+        $user = $this->author();
+
+        if (! $this->tryAction(fn () => $comments->deleteOwn($news, $user, $commentId), 'action')) {
+            return;
+        }
+
+        $this->cancelReply();
+        $this->cancelEdit();
+        $this->notice = __('module-news-comments::messages.deleted_notice');
+        $this->resetPage('commentsPage');
+    }
+
+    public function jumpTo(int $commentId): void
+    {
+        $news = $this->article();
+        $viewer = auth('web')->user();
+        $viewerId = $viewer instanceof User && $viewer->is_active ? (int) $viewer->id : null;
+        $visible = $this->visibility($viewerId);
+
+        NewsComment::query()
+            ->where('news_id', $news->id)
+            ->whereKey($commentId)
+            ->where($visible)
+            ->firstOrFail();
+
+        $newer = NewsComment::query()
+            ->where('news_id', $news->id)
+            ->where($visible)
+            ->where('id', '>', $commentId)
+            ->count();
+
+        $this->highlightedCommentId = $commentId;
+        $this->setPage(intdiv($newer, self::PER_PAGE) + 1, 'commentsPage');
+        $this->dispatch('news-comments:jump', commentId: $commentId);
+    }
+
+    public function render(): View
+    {
+        $news = $this->article();
+        $viewer = auth('web')->user();
+        $viewerId = $viewer instanceof User && $viewer->is_active ? (int) $viewer->id : null;
+        $settings = app(NewsCommentSettings::class)->values();
+        abort_unless($settings !== null, 404);
+
+        $visible = $this->visibility($viewerId);
+
+        $comments = NewsComment::query()
+            ->where('news_id', $news->id)
+            ->where($visible)
+            ->with(['author', 'replyTo.author'])
+            ->orderByDesc('id')
+            ->paginate(self::PER_PAGE, ['*'], 'commentsPage');
+
+        $replyTarget = $this->replyToId === null ? null : NewsComment::query()
+            ->with('author')
+            ->whereKey($this->replyToId)
+            ->where('news_id', $news->id)
+            ->where('status', 'approved')
+            ->whereNull('deleted_by_author_at')
+            ->whereNull('deleted_by_admin_at')
+            ->first();
+
+        $visibleTotal = $comments->total();
+
+        $view = 'module-news-comments::livewire.news-thread';
+
+        return view($view, [
+            'news' => $news,
+            'comments' => $comments,
+            'replyTarget' => $replyTarget,
+            'visibleTotal' => $visibleTotal,
+            'viewerId' => $viewerId,
+            'canWrite' => $this->canWrite($viewer),
+            'canEdit' => $settings['allow_user_editing'] === true,
+            'maximumLength' => (int) $settings['max_comment_length'],
+        ]);
+    }
+
+    /** @return Closure(Builder<NewsComment>): void */
+    private function visibility(?int $viewerId): Closure
+    {
+        return static function (Builder $query) use ($viewerId): void {
+            $query->where(static function (Builder $states) use ($viewerId): void {
+                $states->where('status', 'approved');
+                if ($viewerId !== null) {
+                    $states->orWhere(static fn (Builder $own): Builder => $own
+                        ->where('status', 'pending')
+                        ->where('user_id', $viewerId));
+                }
+            });
+        };
+    }
+
+    private function article(): News
+    {
+        $module = ModuleState::query()->find('news-comments');
+        abort_unless($module !== null && $module->enabled
+            && app(ModuleManager::class)->inspect('news-comments')['status'] === 'enabled', 404);
+
+        $news = News::query()->findOrFail($this->newsId);
+        abort_unless(app(NewsCommentSettings::class)->enabledForNews($news), 404);
+
+        return $news;
+    }
+
+    private function canWrite(mixed $viewer): bool
+    {
+        return $viewer instanceof User
+            && $viewer->is_active
+            && (! app(RegistrationSettings::class)->emailVerificationRequired()
+                || $viewer->hasVerifiedEmail());
+    }
+
+    private function author(): User
+    {
+        $viewer = auth('web')->user();
+        abort_unless($viewer instanceof User, 401);
+        $viewer->refresh();
+        abort_unless($this->canWrite($viewer), 403);
+
+        return $viewer;
+    }
+
+    private function maximumLength(): int
+    {
+        $settings = app(NewsCommentSettings::class)->values();
+        abort_unless($settings !== null, 404);
+
+        return (int) $settings['max_comment_length'];
+    }
+
+    private function sendNotice(?string $status): string
+    {
+        return $status === 'approved'
+            ? __('module-news-comments::messages.published_notice')
+            : __('module-news-comments::messages.pending_notice');
+    }
+
+    /** @param Closure(): mixed $action */
+    private function tryAction(Closure $action, string $field): bool
+    {
+        $this->resetValidation();
+
+        try {
+            $action();
+
+            return true;
+        } catch (ValidationException $exception) {
+            $errors = $exception->errors();
+            $this->addError($field, (string) ($errors['comment'][0] ?? __('module-news-comments::messages.error_invalid_body')));
+
+            return false;
+        }
+    }
+}

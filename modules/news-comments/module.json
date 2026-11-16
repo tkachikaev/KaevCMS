@@ -1,0 +1,29 @@
+{
+    "schema": 1,
+    "id": "news-comments",
+    "name": "News Comments",
+    "version": "1.0.0",
+    "author": "KaevCMS",
+    "description": "Comments for published news with configurable approval, editing and moderation.",
+    "cms_min": "0.58.0",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\NewsComments\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Комментарии к новостям",
+            "description": "Комментарии к опубликованным новостям с настройками публикации и модерации."
+        },
+        "en": {
+            "name": "News Comments",
+            "description": "News discussions with configurable publishing and moderation."
+        }
+    }
+}
