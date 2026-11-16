@@ -3051,5 +3051,20 @@
     "Account connected": "Подключён",
     "Account not connected": "Не подключён",
     "Enter your website password to confirm this change.": "Для подтверждения введите пароль от аккаунта сайта.",
-    "Manage :provider account": "Управление аккаунтом :provider"
+    "Manage :provider account": "Управление аккаунтом :provider",
+    "News on the website": "Новости на сайте",
+    "News on the home page": "Новостей на главной",
+    "News per page": "Новостей на странице",
+    "Latest published news shown on the home page, from :min to :max.": "Сколько последних опубликованных новостей показывать на главной: от :min до :max.",
+    "News items on one page of the news section, from :min to :max.": "Сколько новостей выводить на одной странице раздела «Новости»: от :min до :max.",
+    "News settings saved.": "Настройки новостей сохранены.",
+    "How news appears on the public website.": "Как новости выводятся на публичном сайте.",
+    "Only published news is counted. Scheduled news appears when its time comes.": "Учитываются только опубликованные новости. Запланированные появятся в своё время.",
+    "Default cover": "Обложка по умолчанию",
+    "Current default cover": "Текущая обложка по умолчанию",
+    "No cover uploaded": "Обложка не загружена",
+    "Choose cover": "Выбрать обложку",
+    "Shown for news without its own image. JPG, PNG or WebP, up to 5 MB. Without it the theme shows its logo.": "Показывается у новостей без своей картинки. JPG, PNG или WebP, до 5 МБ. Если не загружена, тема показывает свой логотип.",
+    "The cover must be a JPG, PNG or WebP image.": "Обложка должна быть изображением JPG, PNG или WebP.",
+    "Go to settings": "Перейти к настройкам"
 }

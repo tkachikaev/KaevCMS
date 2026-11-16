@@ -9,7 +9,12 @@
     <div class="admin-overview-stat content-stat"><span>{{ __('Published') }}</span><strong>{{ $publishedCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('Scheduled') }}</span><strong>{{ $scheduledCount }}</strong></div>
     <div class="admin-overview-stat content-stat"><span>{{ __('Drafts') }}</span><strong>{{ $draftCount }}</strong></div>
-    <a wire:navigate class="button button-primary" href="{{ route('admin.news.create') }}">{{ __('Create news') }}</a>
+    <div class="content-toolbar-actions">
+        @if (auth('admin')->user()?->hasPermission(\App\Auth\AdminPermission::SettingsView))
+            <a wire:navigate class="content-toolbar-link" href="{{ route('admin.settings.news') }}">{{ __('Go to settings') }}</a>
+        @endif
+        <a wire:navigate class="button button-primary" href="{{ route('admin.news.create') }}">{{ __('Create news') }}</a>
+    </div>
 </div>
 
 @if ($news->isEmpty())

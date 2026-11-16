@@ -109,8 +109,8 @@
                 @forelse($news as $item)
                     <article class="news-item">
                         <a class="news-thumb" href="{{ news_url($item) }}" aria-label="{{ $item->titleFor() }}">
-                            @if ($item->coverUrl())
-                                <img src="{{ $item->coverUrl() }}" alt="">
+                            @if ($item->displayCoverUrl())
+                                <img src="{{ $item->displayCoverUrl() }}" alt="">
                             @endif
                         </a>
                         <div><time>{{ $item->published_at?->format('d.m.Y') }}</time><h3><a href="{{ news_url($item) }}">{{ $item->titleFor() }}</a></h3><p>{{ $item->excerptFor() }}</p></div>

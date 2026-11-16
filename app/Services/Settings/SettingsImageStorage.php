@@ -17,13 +17,13 @@ final class SettingsImageStorage
         'application/octet-stream',
     ];
 
-    private const PATH_PATTERN = '~^settings/(logo|favicon|wallet-coin)/[a-f0-9-]+\.(?:jpg|png|webp|ico)$~i';
+    private const PATH_PATTERN = '~^settings/(logo|favicon|wallet-coin|news-cover)/[a-f0-9-]+\.(?:jpg|png|webp|ico)$~i';
 
     public function __construct(private readonly PublicImageStorage $storage) {}
 
     public function validateUpload(UploadedFile $file, string $kind): ?string
     {
-        if (! in_array($kind, ['logo', 'favicon', 'wallet-coin'], true)) {
+        if (! in_array($kind, ['logo', 'favicon', 'wallet-coin', 'news-cover'], true)) {
             return __('Unknown image type.');
         }
 
@@ -46,6 +46,7 @@ final class SettingsImageStorage
         if ($this->storage->extensionForMime($mime) === null) {
             return match ($kind) {
                 'logo' => __('The logo must be a JPG, PNG or WebP image.'),
+                'news-cover' => __('The cover must be a JPG, PNG or WebP image.'),
                 'wallet-coin' => __('The wallet icon must be a PNG or WebP image.'),
                 default => __('The favicon must be a PNG, WebP or ICO image.'),
             };
@@ -71,7 +72,7 @@ final class SettingsImageStorage
         }
 
         $maxDimension = match ($kind) {
-            'logo' => 6000,
+            'logo', 'news-cover' => 6000,
             'wallet-coin' => 1024,
             default => 2048,
         };

@@ -131,11 +131,11 @@
         </div>
 
         <div class="news-showcase">
-            @forelse($news->take(3) as $item)
+            @forelse($news as $item)
                 <article class="news-card panel">
                     <a wire:navigate.hover class="news-thumb" href="{{ news_url($item) }}" aria-label="{{ $item->titleFor() }}">
-                        @if ($item->coverUrl())
-                            <img src="{{ $item->coverUrl() }}" alt="">
+                        @if ($item->displayCoverUrl())
+                            <img src="{{ $item->displayCoverUrl() }}" alt="">
                         @else
                             <span class="news-thumb-fallback" aria-hidden="true"><img src="{{ theme_asset('images/kaev-logo.webp') }}" alt=""></span>
                         @endif

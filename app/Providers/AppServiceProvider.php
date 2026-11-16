@@ -30,6 +30,7 @@ use App\Services\MailSettings;
 use App\Services\MailTemplateSettings;
 use App\Services\News\NewsHtmlSanitizer;
 use App\Services\News\NewsImageStorage;
+use App\Services\NewsDisplaySettings;
 use App\Services\Notifications\AdminNotificationCenter;
 use App\Services\Notifications\AdminNotificationSettings;
 use App\Services\Notifications\AdminNotificationSourceScanner;
@@ -113,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ServerMonitorSettings::class);
         $this->app->singleton(SettingsImageStorage::class);
         $this->app->singleton(SiteSettings::class);
+        $this->app->singleton(NewsDisplaySettings::class);
         $this->app->singleton(VdsUpdateAgent::class);
     }
 

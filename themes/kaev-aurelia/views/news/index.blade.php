@@ -13,8 +13,8 @@
         @forelse ($news as $item)
             <article class="panel public-news-card">
                 <a wire:navigate.hover class="public-news-cover" href="{{ news_url($item) }}" aria-label="{{ $item->titleFor() }}">
-                    @if ($item->coverUrl())
-                        <img src="{{ $item->coverUrl() }}" alt="">
+                    @if ($item->displayCoverUrl())
+                        <img src="{{ $item->displayCoverUrl() }}" alt="">
                     @else
                         <span>LINEAGE II</span>
                     @endif

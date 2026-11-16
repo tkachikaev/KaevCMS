@@ -6,6 +6,7 @@ use App\Models\GameServer;
 use App\Models\News;
 use App\Services\GameServerSettings;
 use App\Services\GameWorld\GameStatistics;
+use App\Services\NewsDisplaySettings;
 use App\Services\Servers\ServerMonitorCoordinator;
 use App\Services\Servers\ServerStatusOverview;
 use Illuminate\View\View;
@@ -17,8 +18,10 @@ final class HomeController
         GameStatistics $statistics,
         ServerStatusOverview $statuses,
         ServerMonitorCoordinator $monitorCoordinator,
+        NewsDisplaySettings $newsDisplay,
     ): View {
-        $news = News::query()->with('translations')->published()->latest('published_at')->limit(3)->get();
+        $news = News::query()->with('translations')->published()->latest('published_at')
+            ->limit($newsDisplay->homeLimit())->get();
         $monitor = $statuses->get();
         /** @var list<array<string, mixed>> $gameServerStatuses */
         $gameServerStatuses = is_array($monitor['game_servers'] ?? null) ? $monitor['game_servers'] : [];

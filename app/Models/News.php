@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\Localization\LanguageManager;
 use App\Services\News\NewsHtmlSanitizer;
 use App\Services\News\NewsImageStorage;
+use App\Services\NewsDisplaySettings;
 use App\Support\Database\TableExistence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -169,6 +170,12 @@ class News extends Model
         }
 
         return app(NewsImageStorage::class)->publicUrl($this->image);
+    }
+
+    /** The cover shown on the public website: the article's own image, otherwise the default news cover. */
+    public function displayCoverUrl(): ?string
+    {
+        return $this->coverUrl() ?? app(NewsDisplaySettings::class)->defaultCoverUrl();
     }
 
     /** @return array<int, string> */

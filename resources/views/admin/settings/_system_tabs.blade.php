@@ -4,6 +4,9 @@
         <x-admin.tab wire:navigate :href="route('admin.settings.general')" :active="request()->routeIs('admin.settings.general*')" class="settings-section-tab">
             {{ __('Site') }}
         </x-admin.tab>
+        <x-admin.tab wire:navigate :href="route('admin.settings.news')" :active="request()->routeIs('admin.settings.news*')" class="settings-section-tab">
+            {{ __('News') }}
+        </x-admin.tab>
     @endif
     @if($settingsAdmin->hasPermission(\App\Auth\AdminPermission::AdminPanelView))
         <x-admin.tab wire:navigate :href="route('admin.settings.admin-panel')" :active="request()->routeIs('admin.settings.admin-panel*')" class="settings-section-tab">

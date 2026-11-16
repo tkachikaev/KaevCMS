@@ -3051,5 +3051,20 @@
     "Account connected": "Account connected",
     "Account not connected": "Account not connected",
     "Enter your website password to confirm this change.": "Enter your website password to confirm this change.",
-    "Manage :provider account": "Manage :provider account"
+    "Manage :provider account": "Manage :provider account",
+    "News on the website": "News on the website",
+    "News on the home page": "News on the home page",
+    "News per page": "News per page",
+    "Latest published news shown on the home page, from :min to :max.": "Latest published news shown on the home page, from :min to :max.",
+    "News items on one page of the news section, from :min to :max.": "News items on one page of the news section, from :min to :max.",
+    "News settings saved.": "News settings saved.",
+    "How news appears on the public website.": "How news appears on the public website.",
+    "Only published news is counted. Scheduled news appears when its time comes.": "Only published news is counted. Scheduled news appears when its time comes.",
+    "Default cover": "Default cover",
+    "Current default cover": "Current default cover",
+    "No cover uploaded": "No cover uploaded",
+    "Choose cover": "Choose cover",
+    "Shown for news without its own image. JPG, PNG or WebP, up to 5 MB. Without it the theme shows its logo.": "Shown for news without its own image. JPG, PNG or WebP, up to 5 MB. Without it the theme shows its logo.",
+    "The cover must be a JPG, PNG or WebP image.": "The cover must be a JPG, PNG or WebP image.",
+    "Go to settings": "Go to settings"
 }

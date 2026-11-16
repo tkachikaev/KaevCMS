@@ -9,9 +9,9 @@
     </div>
 </section>
 <section class="container page-content news-page">
-    @if ($news->coverUrl())
+    @if ($news->displayCoverUrl())
         <figure class="news-page-cover panel">
-            <img src="{{ $news->coverUrl() }}" alt="{{ $news->titleFor() }}">
+            <img src="{{ $news->displayCoverUrl() }}" alt="{{ $news->titleFor() }}">
         </figure>
     @endif
 

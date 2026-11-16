@@ -5,19 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\News;
 use App\Services\Localization\LanguageManager;
 use App\Services\Localization\LocalizedContentResolver;
+use App\Services\NewsDisplaySettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 final class NewsController
 {
-    public function index(): View
+    public function index(NewsDisplaySettings $newsDisplay): View
     {
         return view('theme::news.index', [
             'news' => News::query()
                 ->with('translations')
                 ->published()
                 ->latest('published_at')
-                ->paginate(10),
+                ->paginate($newsDisplay->perPage()),
         ]);
     }
 

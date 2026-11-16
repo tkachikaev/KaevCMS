@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\ModuleController as AdminModuleController;
 use App\Http\Controllers\Admin\NavigationLinkController as AdminNavigationLinkController;
 use App\Http\Controllers\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Admin\NewsImageController as AdminNewsImageController;
+use App\Http\Controllers\Admin\NewsSettingsController as AdminNewsSettingsController;
 use App\Http\Controllers\Admin\NotificationSettingsController as AdminNotificationSettingsController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\PageImageController as AdminPageImageController;
@@ -210,6 +211,8 @@ Route::prefix('{adminPath}')->name('admin.')->middleware(['admin.path', 'admin.h
             ->name('settings.notifications');
         Route::put('/settings/notifications', [AdminNotificationSettingsController::class, 'update'])
             ->name('settings.notifications.update');
+        Route::get('/settings/news', [AdminNewsSettingsController::class, 'show'])->name('settings.news');
+        Route::put('/settings/news', [AdminNewsSettingsController::class, 'update'])->name('settings.news.update');
         Route::get('/settings/registration', [AdminRegistrationSettingsController::class, 'registration'])->name('settings.registration');
         Route::put('/settings/registration', [AdminRegistrationSettingsController::class, 'updateRegistration'])->name('settings.registration.update');
         Route::put('/settings/registration/social/{provider}', [AdminSocialProviderSettingsController::class, 'update'])
