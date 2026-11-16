@@ -1,6 +1,6 @@
 <article class="news-comments-item" aria-label="{{ __('module-news-comments::messages.comment_label') }}">
     <header class="news-comments-meta">
-        <strong>{{ $entry->author?->name ?? __('module-news-comments::messages.deleted_user') }}</strong>
+        <strong>{{ $entry->author?->publicName() ?? __('module-news-comments::messages.deleted_user') }}</strong>
         <time datetime="{{ $entry->created_at->toIso8601String() }}"
             title="{{ $entry->created_at->format('d.m.Y H:i') }}">
             {{ $entry->created_at->format('d.m.Y H:i') }}
@@ -22,7 +22,7 @@
                     @if($entry->replyTo->deleted_by_author_at !== null || $entry->replyTo->deleted_by_admin_at !== null)
                         {{ __('module-news-comments::messages.deleted_label') }}
                     @else
-                        &#64;{{ $entry->replyTo->author?->name ?? __('module-news-comments::messages.deleted_user') }}
+                        &#64;{{ $entry->replyTo->author?->publicName() ?? __('module-news-comments::messages.deleted_user') }}
                     @endif
                 </button>
             @else

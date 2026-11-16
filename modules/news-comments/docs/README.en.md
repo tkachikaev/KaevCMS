@@ -62,3 +62,7 @@ Both bundled themes, **default** and **kaev-aurelia**, contain the extension slo
 ```
 
 Without this line, the news page works but does not display comments. When the module is disabled, the slot produces no output.
+
+## Public author names
+
+Comments, reply mentions and the selected reply target use the profile display name via `User::publicName()`. An unset nickname displays localized “Player #ID” / “Игрок #ID”, never the private login. Renaming a player updates old comments automatically without rewriting comment records. Deleted accounts keep the deleted-user label. Staff moderation retains the owner login and ID for identification.

@@ -197,12 +197,12 @@ final class NewsThread extends Component
         $comments = NewsComment::query()
             ->where('news_id', $news->id)
             ->where($visible)
-            ->with(['author', 'replyTo.author'])
+            ->with(['author:id,display_name', 'replyTo.author:id,display_name'])
             ->orderByDesc('id')
             ->paginate(self::PER_PAGE, ['*'], 'commentsPage');
 
         $replyTarget = $this->replyToId === null ? null : NewsComment::query()
-            ->with('author')
+            ->with('author:id,display_name')
             ->whereKey($this->replyToId)
             ->where('news_id', $news->id)
             ->where('status', 'approved')

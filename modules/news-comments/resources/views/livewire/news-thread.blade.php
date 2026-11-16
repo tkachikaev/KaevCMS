@@ -43,7 +43,7 @@
                         @if($replyTarget !== null)
                             {{ __('module-news-comments::messages.replying_to') }}
                             <button type="button" class="news-comments-action news-comments-reference-link"
-                                wire:click="jumpTo({{ $replyTarget->id }})">&#64;{{ $replyTarget->author?->name ?? __('module-news-comments::messages.deleted_user') }}</button>
+                                wire:click="jumpTo({{ $replyTarget->id }})">&#64;{{ $replyTarget->author?->publicName() ?? __('module-news-comments::messages.deleted_user') }}</button>
                         @else
                             {{ __('module-news-comments::messages.reply_target_unavailable') }}
                         @endif

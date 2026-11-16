@@ -7,6 +7,7 @@ use App\Models\News;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\Themes\ThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -56,7 +57,7 @@ class NewsCommentsPlayerTest extends TestCase
             ->set('body', 'I agree')
             ->call('openReply', $original->id)
             ->assertSet('body', 'I agree')
-            ->assertSee('&#64;'.$user->name, false)
+            ->assertSee('&#64;'.$user->publicName(), false)
             ->call('send')
             ->assertHasNoErrors()
             ->assertSet('replyToId', null)
@@ -494,6 +495,133 @@ class NewsCommentsPlayerTest extends TestCase
             ->assertSee(__('module-news-comments::messages.reply_target_unavailable'))
             ->assertDontSee('HiddenName')
             ->assertDontSee('Hidden comment text');
+    }
+
+    public function test_public_names_in_comments_mentions_and_composer_follow_profile_changes(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create(['name' => 'private_author_login']);
+        $author->forceFill(['display_name' => 'Публичный_Ник'])->save();
+        $viewer = User::factory()->create(['name' => 'private_reply_login']);
+        $viewer->forceFill(['display_name' => 'ReplyHero'])->save();
+        $service = app(NewsCommentService::class);
+        $this->actingAs($author);
+        $root = $service->submit($news, $author, 'Original public text');
+        $this->actingAs($viewer);
+        $service->submit($news, $viewer, 'Reply public text', $root->id);
+        $before = $root->fresh()->getAttributes();
+        $thread = Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->call('openReply', $root->id)
+            ->assertSee('Публичный_Ник')->assertSee('ReplyHero')
+            ->assertDontSee('private_author_login')->assertDontSee('private_reply_login');
+        $author->forceFill(['display_name' => 'Новое_Имя'])->save();
+        $thread->call('$refresh')->assertSee('Новое_Имя')->assertDontSee('Публичный_Ник')
+            ->assertDontSee('private_author_login');
+        $this->assertSame($before, $root->fresh()->getAttributes());
+    }
+
+    public function test_unnamed_and_deleted_authors_keep_safe_labels_in_replies(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create(['name' => 'secret_login_fallback']);
+        $viewer = User::factory()->create();
+        $this->actingAs($author);
+        $root = app(NewsCommentService::class)->submit($news, $author, 'A surviving comment');
+        $this->actingAs($viewer);
+        app(NewsCommentService::class)->submit($news, $viewer, 'A surviving reply', $root->id);
+        foreach (['ru' => 'Игрок #', 'en' => 'Player #'] as $locale => $prefix) {
+            app()->setLocale($locale);
+            Livewire::test(NewsThread::class, ['newsId' => $news->id])->call('openReply', $root->id)
+                ->assertSee($prefix.$author->id)->assertDontSee('secret_login_fallback');
+        }
+        $author->delete();
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])->call('openReply', $root->id)
+            ->assertSee(__('module-news-comments::messages.deleted_user'))
+            ->assertDontSee('secret_login_fallback')->assertSee('A surviving reply');
+    }
+
+    public function test_even_corrupt_legacy_public_names_are_html_escaped(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create(['name' => 'private_xss_login']);
+        // Legacy corruption is outside the profile validator; rendering must still escape it.
+        DB::table('users')->where('id', $author->id)->update(['display_name' => '<svg onload=alert(1)>']);
+        $viewer = User::factory()->create();
+        $this->actingAs($author);
+        $root = app(NewsCommentService::class)->submit($news, $author, 'An escaped name');
+        $this->actingAs($viewer);
+        app(NewsCommentService::class)->submit($news, $viewer, 'Reply to escaped name', $root->id);
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])->call('openReply', $root->id)
+            ->assertSee('&lt;svg onload=alert(1)&gt;', false)
+            ->assertDontSee('<svg onload=alert(1)>', false)->assertDontSee('private_xss_login');
+    }
+
+    public function test_public_themes_do_not_expose_comment_login_in_guest_html(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create(['name' => 'must_not_appear_in_public_html']);
+        $author->forceFill(['display_name' => 'PublicKnight'])->save();
+        $this->actingAs($author);
+        app(NewsCommentService::class)->submit($news, $author, 'Guest visible comment');
+        auth('web')->logout();
+        foreach (['default', 'kaev-aurelia'] as $theme) {
+            app(ThemeManager::class)->activate($theme);
+            $this->get('/news/'.$news->slug)->assertOk()->assertSee('PublicKnight')
+                ->assertSee('Guest visible comment')->assertDontSee('must_not_appear_in_public_html');
+        }
+    }
+
+    public function test_reply_authors_are_eager_loaded_with_a_bounded_query_count(): void
+    {
+        $news = $this->article();
+        $author = User::factory()->create();
+        $root = NewsComment::query()->create(['news_id' => $news->id, 'user_id' => $author->id, 'body' => 'Root', 'status' => 'approved']);
+        $this->actingAs($author);
+        $measure = function () use ($news, $root): int {
+            DB::enableQueryLog();
+            DB::flushQueryLog();
+            try {
+                Livewire::test(NewsThread::class, ['newsId' => $news->id])->call('openReply', $root->id)
+                    ->assertDontSee('private_batch_');
+
+                return count(array_filter(DB::getQueryLog(), fn (array $query): bool => str_contains($query['query'], 'from "users"')));
+            } finally {
+                DB::disableQueryLog();
+                DB::flushQueryLog();
+            }
+        };
+        $smallCount = null;
+        foreach (range(1, 14) as $index) {
+            $user = User::factory()->create(['name' => 'private_batch_'.$index]);
+            NewsComment::query()->create(['news_id' => $news->id, 'user_id' => $user->id, 'parent_id' => $root->id, 'body' => 'Reply '.$index, 'status' => 'approved']);
+            if ($index === 1) {
+                $smallCount = $measure();
+            }
+        }
+        $largeCount = $measure();
+        $this->assertGreaterThan(0, $smallCount);
+        $this->assertSame($smallCount, $largeCount, 'Adding thirteen distinct authors must not add user queries.');
+        // Includes auth rehydration, two renders and the selected reply target.
+        $this->assertLessThanOrEqual(6, $largeCount);
+    }
+
+    public function test_livewire_actions_cannot_impersonate_or_edit_another_author(): void
+    {
+        $news = $this->article();
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $this->actingAs($owner);
+        $comment = app(NewsCommentService::class)->submit($news, $owner, 'Protected original');
+        $this->actingAs($attacker);
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->set('body', 'Reply from authenticated player')->set('replyToId', $comment->id)->call('send')->assertHasNoErrors();
+        $this->assertDatabaseHas('module_news_comments', ['body' => 'Reply from authenticated player', 'user_id' => $attacker->id]);
+        Livewire::test(NewsThread::class, ['newsId' => $news->id])
+            ->set('editingId', $comment->id)->set('editingBody', 'Forged body')->call('saveEdit')->assertStatus(404);
+        $this->assertSame('Protected original', $comment->fresh()->body);
+        $this->assertSame($owner->id, $comment->fresh()->user_id);
+        $this->expectException(HttpException::class);
+        app(NewsCommentService::class)->submit($news, $owner, 'An impersonated comment');
     }
 
     private function article(): News

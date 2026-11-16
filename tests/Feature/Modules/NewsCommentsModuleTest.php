@@ -13,6 +13,7 @@ use App\Support\News\NewsExtensionRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use KaevCMS\Modules\NewsComments\Services\NewsCommentService;
 use KaevCMS\Modules\NewsComments\Services\NewsCommentSettings;
 use Tests\TestCase;
 
@@ -26,6 +27,19 @@ class NewsCommentsModuleTest extends TestCase
 
         $module = app(ModuleManager::class)->enable('news-comments');
         app(ModuleRuntime::class)->bootModule($module);
+    }
+
+    public function test_staff_can_still_identify_the_private_owner_after_public_name_change(): void
+    {
+        $owner = User::factory()->create(['name' => 'private_moderation_owner']);
+        $owner->forceFill(['display_name' => 'PublicAuthor'])->save();
+        $news = News::query()->create(['title' => 'Review article', 'slug' => 'review-article', 'body' => '<p>Article</p>', 'is_published' => true, 'published_at' => now()->subMinute()]);
+        DB::table('module_news_comment_settings')->where('id', 1)->update(['enabled' => true]);
+        $this->actingAs($owner);
+        $comment = app(NewsCommentService::class)->submit($news, $owner, 'Pending staff review');
+        $this->actingAs(Admin::factory()->create(), 'admin')->get('/admin/extensions/news-comments')
+            ->assertOk()->assertSee('private_moderation_owner')->assertSee('Pending staff review');
+        $this->assertDatabaseHas('module_news_comments', ['id' => $comment->id, 'user_id' => $owner->id]);
     }
 
     public function test_installation_registers_schema_navigation_and_owner_only_mutations(): void

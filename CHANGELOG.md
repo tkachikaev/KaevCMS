@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Iteration 2: public News Comments authors, reply mentions and composer targets use the core public nickname API with localized safe fallback. Public author queries load only ID and display name; moderation retains private owner identification. Added privacy, rename, escaping, deleted-author and eager-loading tests and RU/EN module documentation.
+
 - Iteration 1: optional player display names with a shared publicName() API and localized Player #ID fallback; private login names remain unchanged. Case-folded names use a database unique key and conflicting saves return validation errors.
 - Shared nickname editing on all three account profile themes, random unsaved suggestions, reserved-name checks and privacy-safe profile audit. Removed redundant profile descriptions and aligned the save action left.
 - Added profile validation, permissions, localization, backwards-compatible login, database collision and concurrent-process regression coverage. News Comments integration is deferred to iteration 2.
