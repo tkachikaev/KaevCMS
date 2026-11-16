@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Account\UpdateAccountAvatarRequest;
+use App\Http\Requests\Account\UpdateDisplayNameRequest;
 use App\Models\User;
 use App\Services\Account\AccountAvatarCatalog;
 use App\Services\AuditLogger;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -27,11 +31,38 @@ class ProfileController extends Controller
 
         return view('account-theme::profile.edit', [
             'user' => $user,
+            'displayNameSuggestion' => $user->getAttribute('display_name') ?? 'Player_'.bin2hex(random_bytes(4)),
             'linkedSocialProviders' => array_intersect_key([
                 'google' => 'Google', 'yandex' => 'Яндекс ID', 'vk' => 'VK ID',
                 'telegram' => 'Telegram', 'discord' => 'Discord', 'facebook' => 'Facebook',
             ], array_fill_keys($user->socialAccounts()->pluck('provider')->all(), true)),
         ]);
+    }
+
+    public function updateDisplayName(UpdateDisplayNameRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        try {
+            DB::transaction(function () use ($user, $request): void {
+                $locked = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+                $name = $request->validated('display_name');
+                $name = is_string($name) && $name !== '' ? $name : null;
+                if ($locked->getAttribute('display_name') === $name) {
+                    return;
+                }
+                $locked->forceFill(['display_name' => $name])->save();
+                if ($this->auditLogger->success(category: 'user', action: 'user.display_name_updated',
+                    actor: $locked, target: $locked, details: ['display_name_set' => $name !== null]) === null) {
+                    throw new \RuntimeException('Unable to audit profile update.');
+                }
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages(['display_name' => __('This display name is already taken.')]);
+        }
+
+        return redirect()->to(public_route('profile.edit'))->with('status', __('Display name saved.'));
     }
 
     public function updateAvatar(UpdateAccountAvatarRequest $request): RedirectResponse

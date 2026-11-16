@@ -3066,5 +3066,13 @@
     "Choose cover": "Выбрать обложку",
     "Shown for news without its own image. JPG, PNG or WebP, up to 5 MB. Without it the theme shows its logo.": "Показывается у новостей без своей картинки. JPG, PNG или WebP, до 5 МБ. Если не загружена, тема показывает свой логотип.",
     "The cover must be a JPG, PNG or WebP image.": "Обложка должна быть изображением JPG, PNG или WebP.",
-    "Go to settings": "Перейти к настройкам"
+    "Go to settings": "Перейти к настройкам",
+    "Display name": "Отображаемое имя",
+    "Save display name": "Сохранить ник",
+    "Display name saved.": "Ник сохранён.",
+    "Player #:id": "Игрок #:id",
+    "Your public nickname. Leave empty to use Player #:id.": "Ваш публичный ник. Оставьте поле пустым, чтобы отображалось «Игрок #:id».",
+    "Use only letters, numbers, underscores and hyphens.": "Используйте только буквы, цифры, подчёркивание и дефис.",
+    "This display name is reserved.": "Это имя зарезервировано.",
+    "This display name is already taken.": "Этот ник уже занят."
 }

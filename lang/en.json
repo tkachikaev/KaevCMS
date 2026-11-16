@@ -3066,5 +3066,13 @@
     "Choose cover": "Choose cover",
     "Shown for news without its own image. JPG, PNG or WebP, up to 5 MB. Without it the theme shows its logo.": "Shown for news without its own image. JPG, PNG or WebP, up to 5 MB. Without it the theme shows its logo.",
     "The cover must be a JPG, PNG or WebP image.": "The cover must be a JPG, PNG or WebP image.",
-    "Go to settings": "Go to settings"
+    "Go to settings": "Go to settings",
+    "Display name": "Display name",
+    "Save display name": "Save display name",
+    "Display name saved.": "Display name saved.",
+    "Player #:id": "Player #:id",
+    "Your public nickname. Leave empty to use Player #:id.": "Your public nickname. Leave empty to use Player #:id.",
+    "Use only letters, numbers, underscores and hyphens.": "Use only letters, numbers, underscores and hyphens.",
+    "This display name is reserved.": "This display name is reserved.",
+    "This display name is already taken.": "This display name is already taken."
 }

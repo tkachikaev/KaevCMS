@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
+use App\Rules\PlayerDisplayName;
 use App\Services\Mail\MailDeliveryDispatcher;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -22,7 +23,26 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = ['name', 'email', 'password', 'game_account', 'locale', 'avatar_filename'];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'display_name_key'];
+
+    public function publicName(): string
+    {
+        $name = $this->getAttribute('display_name');
+
+        return is_string($name) && trim($name) !== '' ? $name : __('Player #:id', ['id' => $this->getKey()]);
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(static function (self $user): void {
+            if ($user->isDirty('display_name')) {
+                $name = $user->getAttribute('display_name');
+                $name = is_string($name) && $name !== '' ? $name : null;
+                $user->setAttribute('display_name', $name);
+                $user->setAttribute('display_name_key', $name === null ? null : PlayerDisplayName::key($name));
+            }
+        });
+    }
 
     protected $attributes = [
         'is_active' => true,

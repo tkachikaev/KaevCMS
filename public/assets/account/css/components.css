@@ -771,3 +771,6 @@ body.account-body .shop-buy-dialog[data-shop-holding] .account-operation-reward-
 html[data-shop-hold-ready] body.account-body .shop-hold-hint { display: block; margin: 12px 26px 0; color: var(--account-muted); font-size: 14px; text-align: right; }
 @media (max-width: 560px) { html[data-shop-hold-ready] body.account-body .shop-hold-hint { margin-inline: 18px; text-align: left; } }
 
+
+/* Public nickname profile form. */
+.account-display-name-form .account-form-actions { justify-content: flex-start; }

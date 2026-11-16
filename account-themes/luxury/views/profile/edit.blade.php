@@ -12,13 +12,14 @@
         <div>
             <span class="account-eyebrow">{{ __('Profile') }}</span>
             <h2>{{ __('Account information') }}</h2>
-            <p>{{ __('This avatar and information identify your KaevCMS account only.') }}</p>
         </div>
         <button type="button" class="account-profile-preview-button" data-avatar-modal-open aria-label="{{ __('Change avatar') }}">
             <x-account-avatar :user="$user" class="account-profile-preview" aria-hidden="true" />
             <span aria-hidden="true">✎</span>
         </button>
     </div>
+
+    <x-account-display-name-form :user="$user" :suggested-name="$displayNameSuggestion" />
 
     <dl class="account-settings-details">
         <div><dt>{{ __('Username') }}</dt><dd>{{ $user->name }}</dd></div>

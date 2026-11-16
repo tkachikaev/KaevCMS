@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Iteration 1: optional player display names with a shared publicName() API and localized Player #ID fallback; private login names remain unchanged. Case-folded names use a database unique key and conflicting saves return validation errors.
+- Shared nickname editing on all three account profile themes, random unsaved suggestions, reserved-name checks and privacy-safe profile audit. Removed redundant profile descriptions and aligned the save action left.
+- Added profile validation, permissions, localization, backwards-compatible login, database collision and concurrent-process regression coverage. News Comments integration is deferred to iteration 2.
+
 ## 0.59.0 - 2026-11-16
 
 - Add News Comments 1.0.0: comments under published news with publishing after moderation or immediately, optional editing by authors, replies that mention the comment they answer and per-player limits. Comments are off until the owner enables them; a per-news policy can allow or forbid them for a single article.
