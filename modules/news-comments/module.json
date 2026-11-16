@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "author": "KaevCMS",
     "description": "Comments for published news with configurable approval, editing and moderation.",
-    "cms_min": "0.58.0",
+    "cms_min": "0.59.0",
     "cms_max": null,
     "namespace": "KaevCMS\\Modules\\NewsComments\\",
     "autoload": "src",

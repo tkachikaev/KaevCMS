@@ -841,5 +841,8 @@
   ],
   "0.58.0": [
     "core/deployment/windows/apply-0.57.0.ps1"
+  ],
+  "0.59.0": [
+    "core/deployment/windows/apply-0.58.0.ps1"
   ]
 }

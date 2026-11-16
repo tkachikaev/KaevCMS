@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.58.0 - 2026-11-05
+## 0.59.0 - 2026-11-16
+
+- Add News Comments 1.0.0: comments under published news with publishing after moderation or immediately, optional editing by authors, replies that mention the comment they answer and per-player limits. Comments are off until the owner enables them; a per-news policy can allow or forbid them for a single article.
+- News Comments player view: one form below the thread for comments and replies; "Reply" adds an "In reply to @name" strip that can be cleared, and the pending notice appears next to the form.
+- News Comments administration: Moderation, Settings and News tabs with a filter bar, short status badges, the published text and a proposed edit shown side by side, and confirmation before a comment is deleted for good. Editors can be allowed to moderate.
+- Add Settings → News: how many news items the home page and one page of the news section show, and a default cover for news without an image. "Go to settings" on the News page leads there. The Aurelia home page no longer caps news at three and wraps them in rows of three.
+- The administration panel shows the site favicon, or the KaevCMS logo when none is uploaded.
+- Administration header menus and mobile drop-downs stay within the visible viewport.
+- New Referrals module card image.
+- Browser tests retry page reloads when Windows briefly runs out of local sockets and no longer depend on the number of installed modules.
 
 - Add Shop 1.0.6: a per-GameServer catalogue of sections and products bought with CMS wallet coins and delivered to Web Inventory, with player purchase history and a read-only administration journal. Sales stay off on new installations until enabled globally and per server.
 - Shop administration: one screen per game server with inline sections, drag-and-drop and keyboard ordering, quick visibility switches, product cards and a side-panel editor. Items are entered like promo-code rewards or found by name or ID, a single item names the product automatically, and names and descriptions have a tab per enabled site language.
