@@ -53,6 +53,16 @@ Re-submitting a form with the same submission key does not create duplicate post
 
 If the CMS requires verified email addresses, unverified players cannot post. The forum already enforces the optional account-age restriction for URLs in topic titles and messages. The default value is **0 days**, so links are allowed immediately.
 
+## Global settings and moderators
+
+The Owner manages the forum under **Administration → Modules → Forum → Settings**:
+
+- **Forum visibility:** everyone (including guests) or registered users only. This restricts section lists and direct topic links; per-section permissions still apply.
+- **Days before links are allowed:** an integer from 0 to 3650. A value of 0 permits links immediately. The restriction applies to ordinary players, not the Owner or forum moderators.
+- **Moderators:** search for an existing user by public name, email address or exact user ID, then choose **Assign**. Search results are limited to 20 active users; the user database is not listed without a query. Use the current moderators list to remove a moderator. Inactive accounts cannot be assigned; previously assigned inactive accounts can still be removed.
+
+Only the **Owner** can change these settings or assignments. Moderators gain forum permissions, not CMS administration access. Permission changes take effect on subsequent requests. Changes are recorded in the action journal. Enabling or disabling the module remains in **Modules**, with no second switch.
+
 ## Current limitations
 
-Version 0.4.0 includes compact Tiptap editing for new topics and replies. Editing/deleting posts, moving/locking/pinning topics and the 30-day revision history will arrive in later iterations. Global visibility, link age limits and moderator assignment are not yet editable through the settings UI.
+Version **0.5.0 (F6)** includes global settings and moderator assignment. Post editing/deletion, moving/closing/pinning topics and the private 30-day revision history are planned for later iterations.

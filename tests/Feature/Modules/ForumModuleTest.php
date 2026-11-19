@@ -50,6 +50,9 @@ final class ForumModuleTest extends TestCase
         $this->assertTrue(Route::has('modules.forum.index'));
         $this->assertSame('/forum', route('modules.forum.index', absolute: false));
         $this->assertTrue(Route::has('admin.module-pages.forum.settings'));
+        $this->assertTrue(Route::has('admin.module-pages.forum.settings.update'));
+        $this->assertTrue(Route::has('admin.module-pages.forum.moderators.store'));
+        $this->assertTrue(Route::has('admin.module-pages.forum.moderators.destroy'));
         $this->assertContains('modules.forum.index', array_column(app(ModuleNavigationRegistry::class)->accountLinks(), 'route'));
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.forum.settings'));
         $this->get('/modules/forum')->assertNotFound();
@@ -76,7 +79,8 @@ final class ForumModuleTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->get('/admin/extensions/forum/settings')
             ->assertOk()
-            ->assertSee(__('module-forum::messages.settings_pending'));
+            ->assertSee(__('module-forum::messages.global_access_title'))
+            ->assertSee(__('module-forum::messages.moderators_title'));
     }
 
     public function test_administrator_and_editor_cannot_manage_forum(): void

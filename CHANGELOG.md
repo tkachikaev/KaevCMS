@@ -2,6 +2,9 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.5.0 (F6): Owner-only settings for forum-wide reading access and the account-age requirement for posting links. Search existing active website users to assign or remove forum moderators; changes are audited and use existing CMS account and role checks.
+- Forum administration reuses the existing UI components and routes, without a second enable switch or new database migrations. Added settings, access and moderator-assignment regression tests.
+
 - Forum 0.4.0 (F5): compact shared Tiptap editor for new topics and replies, offering bold/italic/underline, lists, quotation, code and safe links. Reuses the existing News/Pages editor bundle with a forum-specific toolbar and progressive plain-text fallback (no additional frontend dependency).
 - Forum rich text is sanitized by the shared DOM sanitizer using a restricted forum profile, including link URL validation; legacy F4 posts remain plain text, and a new nullable body_html column avoids rewriting historical data. Added XSS, compatibility, link-age, no-JS and formatting tests.
 
