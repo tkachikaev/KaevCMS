@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Modules;
 
-use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
 use App\Support\Modules\ModuleAdminAccessRegistry;
@@ -12,6 +11,18 @@ use App\Support\Modules\ModuleRuntime;
 use App\Support\Modules\ModuleValidator;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Container\Container;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Bootstrap\LoadConfiguration;
+use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
+use Illuminate\Foundation\Bootstrap\RegisterFacades;
+use Illuminate\Foundation\Bootstrap\RegisterProviders;
+use Illuminate\Http\Request;
+use Illuminate\Routing\RedirectController;
+use Illuminate\Routing\Route as LaravelRoute;
+use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -158,6 +169,43 @@ final class ForumModuleTest extends TestCase
         $this->post('/forum/author', ['mode' => 'admin'])->assertForbidden();
         $this->post('/forum/author', ['mode' => 'user'])->assertRedirect();
         $this->get('/forum')->assertSee($player->publicName());
+    }
+
+
+    public function test_forum_path_survives_compiled_core_route_cache(): void
+    {
+        $files = new Filesystem;
+        $core = new RouteCollection;
+        $core->add((new LaravelRoute(['GET', 'HEAD'], 'core-cached', ['uses' => RedirectController::class]))->name('core.cached'));
+        $relativeCachePath = 'storage/framework/testing/forum-routes-'.bin2hex(random_bytes(4)).'.php';
+        $cachePath = base_path($relativeCachePath);
+        $files->ensureDirectoryExists(dirname($cachePath));
+        $files->put($cachePath, "<?php\n\napp('router')->setCompiledRoutes(".var_export($core->compile(), true).");\n");
+
+        $pdo = DB::connection()->getPdo();
+        $original = $this->app;
+        $_ENV['APP_ROUTES_CACHE'] = $_SERVER['APP_ROUTES_CACHE'] = $relativeCachePath;
+
+        try {
+            /** @var Application $fresh */
+            $fresh = require base_path('bootstrap/app.php');
+            $fresh->instance('request', Request::create('/'));
+            $fresh->bootstrapWith([LoadEnvironmentVariables::class, LoadConfiguration::class, RegisterFacades::class, RegisterProviders::class]);
+            $fresh['db']->connection()->setPdo($pdo);
+            $fresh->boot();
+
+            $this->assertTrue($fresh->routesAreCached());
+            $routes = $fresh['router']->getRoutes();
+            $this->assertTrue($routes->hasNamedRoute('core.cached'));
+            $this->assertTrue($routes->hasNamedRoute('modules.forum.index'));
+            $this->assertSame('modules.forum.index', $routes->match(Request::create('/forum'))->getName());
+        } finally {
+            unset($_ENV['APP_ROUTES_CACHE'], $_SERVER['APP_ROUTES_CACHE']);
+            Container::setInstance($original);
+            Facade::clearResolvedInstances();
+            Facade::setFacadeApplication($original);
+            $files->delete($cachePath);
+        }
     }
 
     public function test_disabling_forum_closes_public_and_admin_routes(): void

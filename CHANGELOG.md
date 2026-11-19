@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — forum development branch
+
+- Added the optional Forum 0.1.0 module foundation: a separate, light `/forum` shell, shared CMS identities and public nicknames, an Owner-only settings entry, and explicit author selection when both CMS administrator and player sessions are active.
+- Reserved the forum's top-level route prefix through validated module metadata without changing other module URLs; added module lifecycle, access and route-cache regression tests. No separate forum accounts, passwords or dependencies.
+
 ## 0.59.1 - 2026-11-16
 
 - Registration settings now control public-name editing (enabled by default) and its global 0–365 day interval (7 days by default). Profile changes use a locked transaction and a new UTC timestamp; clearing a name preserves the cooldown, and identical saves leave timestamps and audits untouched. All account themes share localized availability states. Reserved-name checks also reject Greek Μ and dotless ı impersonations.
