@@ -2,6 +2,7 @@
 
 ## Unreleased — forum development branch
 
+- Added a transparent WebP icon for the Forum module catalog card (320 × 320).
 - Added the optional Forum 0.1.0 module foundation: a separate, light `/forum` shell, shared CMS identities and public nicknames, an Owner-only settings entry, and explicit author selection when both CMS administrator and player sessions are active.
 - Reserved the forum's top-level route prefix through validated module metadata without changing other module URLs; added module lifecycle, access and route-cache regression tests. No separate forum accounts, passwords or dependencies.
 
