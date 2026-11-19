@@ -82,7 +82,7 @@ final class ForumStructureTest extends TestCase
         $this->actingAs($player, 'web');
         $this->withSession(['forum.author_mode' => 'user']);
         $this->post('/forum/categories', $data)->assertForbidden();
-        $this->post('/forum/structure/seed')->assertForbidden();
+        $this->post('/forum/structure/seed')->assertNotFound();
         $this->assertDatabaseCount('module_forum_categories', 3);
 
         // Stale administrative sessions cannot recover Owner privileges.
@@ -226,7 +226,7 @@ final class ForumStructureTest extends TestCase
         $this->actingAs(Admin::factory()->create(), 'admin');
         $category = $this->makeCategory('Container');
         $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Archived'))->assertRedirect();
-        $section = ForumSection::query()->firstOrFail();
+        $section = ForumSection::query()->where('name_ru', 'Archived')->firstOrFail();
 
         $this->delete('/forum/categories/'.$category->id, ['confirm' => '1'])->assertSessionHasErrors('category');
         $this->delete('/forum/sections/'.$section->id, ['confirm' => '1'])->assertRedirect();
