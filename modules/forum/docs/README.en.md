@@ -45,10 +45,14 @@ CMS Owner and Administrator accounts post under their existing administrative na
 
 Publishing checks current section permissions and topic state on the server. By default only Owner can start topics in News and announcements and replies are disabled; Archive is read-only. Removing a section hides its topics without erasing messages.
 
-For now, messages use **plain text only**, safely rendered without executing user-supplied HTML. Re-submitting a form with the same submission key does not create duplicate posts.
+Version **0.4.0 (F5)** uses the same **Tiptap** engine as News and Pages, with a compact forum-specific toolbar: bold, italic, underline, lists, quotations, code and links. Images, uploads, tables and decorative formatting are not offered on the forum.
+
+Submitted HTML is sanitized on the server using a separate restricted forum profile; scripts, iframes, unsafe links, and unsupported attributes are removed. Legacy F4 posts remain escaped plain text: no automatic content conversion or data loss. A plain textarea remains available when JavaScript is unavailable.
+
+Re-submitting a form with the same submission key does not create duplicate posts.
 
 If the CMS requires verified email addresses, unverified players cannot post. The forum already enforces the optional account-age restriction for URLs in topic titles and messages. The default value is **0 days**, so links are allowed immediately.
 
 ## Current limitations
 
-Version 0.3.0 adds topics and replies. Editing, deleting, moving/locking/pinning topics, the 30-day revision history, and the rich-text editor will arrive later. Global visibility, link age limits and moderator assignment are not yet editable through the settings UI.
+Version 0.4.0 includes compact Tiptap editing for new topics and replies. Editing/deleting posts, moving/locking/pinning topics and the 30-day revision history will arrive in later iterations. Global visibility, link age limits and moderator assignment are not yet editable through the settings UI.

@@ -2,6 +2,9 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.4.0 (F5): compact shared Tiptap editor for new topics and replies, offering bold/italic/underline, lists, quotation, code and safe links. Reuses the existing News/Pages editor bundle with a forum-specific toolbar and progressive plain-text fallback (no additional frontend dependency).
+- Forum rich text is sanitized by the shared DOM sanitizer using a restricted forum profile, including link URL validation; legacy F4 posts remain plain text, and a new nullable body_html column avoids rewriting historical data. Added XSS, compatibility, link-age, no-JS and formatting tests.
+
 - Forum 0.3.0 (F4): topic creation and chronological replies with shared CMS identities, 20-topic and 15-post pagination, last-activity ordering and counts, privacy-safe topic URLs, posting limits and duplicate form protection. Plain-text rendering escapes HTML; the configured account-age restriction also applies to URLs in titles and replies.
 - Forum topic and reply writes run in database transactions and re-check section permissions and topic state, including read-only Archive and announcements. Added posting, privacy, guest/staff, double-submit, link-delay and pagination regression tests.
 
