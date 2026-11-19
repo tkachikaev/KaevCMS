@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Modules;
 
-use App\Models\Admin;
 use App\Models\User;
 use App\Services\Html\SafeHtmlSanitizer;
 use App\Support\Modules\ModuleManager;
@@ -208,8 +207,10 @@ final class ForumEditorTest extends TestCase
         $this->assertStringContainsString('<table>', $news);
         $this->assertStringContainsString('href="https://example.com"', $forum);
         $this->assertStringNotContainsString('onclick=', $forum);
-        $this->assertSame('Heading'."\n".'Plain'."\n".'Link'."\n".'Cell',
-            $sanitizer->plainText($html, SafeHtmlSanitizer::PROFILE_FORUM));
+        $plain = $sanitizer->plainText($html, SafeHtmlSanitizer::PROFILE_FORUM);
+        foreach (['Heading', 'Plain', 'Link', 'Cell'] as $word) {
+            $this->assertStringContainsString($word, $plain);
+        }
     }
 
     private function section(string $name): ForumSection

@@ -15,9 +15,9 @@
      data-too-large-message="{{ __('module-forum::messages.content_too_large') }}"
      data-unsafe-link-message="{{ __('module-forum::messages.unsafe_link') }}">
     <div class="rich-editor-toolbar forum-editor-toolbar" role="toolbar" aria-label="{{ __('module-forum::messages.formatting') }}">
-        <button type="button" data-editor-action="bold" title="{{ __('module-forum::messages.bold') }}" aria-label="{{ __('module-forum::messages.bold') }}"><strong>Ж</strong></button>
-        <button type="button" data-editor-action="italic" title="{{ __('module-forum::messages.italic') }}" aria-label="{{ __('module-forum::messages.italic') }}"><em>К</em></button>
-        <button type="button" data-editor-action="underline" title="{{ __('module-forum::messages.underline') }}" aria-label="{{ __('module-forum::messages.underline') }}"><u>Ч</u></button>
+        <button type="button" data-editor-action="bold" title="{{ __('module-forum::messages.bold') }}" aria-label="{{ __('module-forum::messages.bold') }}"><strong>B</strong></button>
+        <button type="button" data-editor-action="italic" title="{{ __('module-forum::messages.italic') }}" aria-label="{{ __('module-forum::messages.italic') }}"><em>I</em></button>
+        <button type="button" data-editor-action="underline" title="{{ __('module-forum::messages.underline') }}" aria-label="{{ __('module-forum::messages.underline') }}"><u>U</u></button>
         <span class="forum-editor-divider" aria-hidden="true"></span>
         <button type="button" data-editor-action="bulletList" title="{{ __('module-forum::messages.bullet_list') }}" aria-label="{{ __('module-forum::messages.bullet_list') }}">• ≡</button>
         <button type="button" data-editor-action="orderedList" title="{{ __('module-forum::messages.ordered_list') }}" aria-label="{{ __('module-forum::messages.ordered_list') }}">1. ≡</button>
@@ -27,7 +27,7 @@
             <option value="blockquote">{{ __('module-forum::messages.quote') }}</option>
             <option value="pre">{{ __('module-forum::messages.code_block') }}</option>
         </select>
-        <button type="button" data-editor-link title="{{ __('module-forum::messages.insert_link') }}" aria-label="{{ __('module-forum::messages.insert_link') }}">🔗</button>
+        <button type="button" data-editor-link title="{{ __('module-forum::messages.insert_link') }}" aria-label="{{ __('module-forum::messages.insert_link') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
     </div>
 
     <div id="{{ $editorId }}" class="rich-editor-canvas forum-editor-canvas"
