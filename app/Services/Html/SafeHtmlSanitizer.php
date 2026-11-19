@@ -21,6 +21,8 @@ final class SafeHtmlSanitizer
 
     public const PROFILE_EMAIL = 'email';
 
+    public const PROFILE_FORUM = 'forum';
+
     private const CONTENT_ALLOWED_ELEMENTS = [
         'p', 'br', 'strong', 'em', 'u', 's',
         'h2', 'h3', 'h4',
@@ -29,6 +31,12 @@ final class SafeHtmlSanitizer
         'figure', 'img', 'figcaption', 'span',
         'pre', 'code',
         'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+    ];
+
+    // Forum uses the same DOM-based sanitation engine with a deliberately small vocabulary.
+    private const FORUM_ALLOWED_ELEMENTS = [
+        'p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li',
+        'blockquote', 'a', 'pre', 'code',
     ];
 
     private const CONTENT_DROP_WITH_CONTENT = [
@@ -67,7 +75,7 @@ final class SafeHtmlSanitizer
     public function sanitize(string $html, string $profile): string
     {
         return match ($profile) {
-            self::PROFILE_NEWS, self::PROFILE_PAGE => $this->sanitizeContent($html, $profile),
+            self::PROFILE_NEWS, self::PROFILE_PAGE, self::PROFILE_FORUM => $this->sanitizeContent($html, $profile),
             self::PROFILE_EMAIL => $this->sanitizeEmail($html),
             default => throw new InvalidArgumentException("Unknown HTML sanitizer profile [{$profile}]."),
         };
@@ -76,7 +84,7 @@ final class SafeHtmlSanitizer
     public function plainText(string $html, string $profile): string
     {
         return match ($profile) {
-            self::PROFILE_NEWS, self::PROFILE_PAGE => $this->contentPlainText($html, $profile),
+            self::PROFILE_NEWS, self::PROFILE_PAGE, self::PROFILE_FORUM => $this->contentPlainText($html, $profile),
             self::PROFILE_EMAIL => $this->emailPlainText($html),
             default => throw new InvalidArgumentException("Unknown HTML sanitizer profile [{$profile}]."),
         };
@@ -121,7 +129,11 @@ final class SafeHtmlSanitizer
             return '';
         }
 
-        $rootId = $profile === self::PROFILE_NEWS ? 'kaevcms-news-root' : 'kaevcms-page-root';
+        $rootId = match ($profile) {
+            self::PROFILE_NEWS => 'kaevcms-news-root',
+            self::PROFILE_PAGE => 'kaevcms-page-root',
+            self::PROFILE_FORUM => 'kaevcms-forum-root',
+        };
         $previous = libxml_use_internal_errors(true);
 
         try {
@@ -195,7 +207,9 @@ final class SafeHtmlSanitizer
 
             $pageBlock = $profile === self::PROFILE_PAGE && $tag === 'div'
                 && in_array($child->getAttribute('data-content-block'), ['cards', 'card'], true);
-            if (! $pageBlock && ! in_array($tag, self::CONTENT_ALLOWED_ELEMENTS, true)) {
+            $allowedElements = $profile === self::PROFILE_FORUM
+                ? self::FORUM_ALLOWED_ELEMENTS : self::CONTENT_ALLOWED_ELEMENTS;
+            if (! $pageBlock && ! in_array($tag, $allowedElements, true)) {
                 $this->unwrap($child);
 
                 continue;
@@ -531,6 +545,7 @@ final class SafeHtmlSanitizer
         $label = match ($profile) {
             self::PROFILE_NEWS => 'news',
             self::PROFILE_PAGE => 'page',
+            self::PROFILE_FORUM => 'forum',
             self::PROFILE_EMAIL => 'custom email',
             default => 'HTML',
         };
