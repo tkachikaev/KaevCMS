@@ -7,8 +7,8 @@
         :title="__('module-forum::messages.settings')"
         :description="__('module-forum::messages.settings_pending')"
     />
-    <a href="{{ route('modules.forum.index') }}" class="admin-button">
+    <x-admin.button :href="route('modules.forum.index')">
         {{ __('module-forum::messages.back_to_forum') }}
-    </a>
+    </x-admin.button>
 </x-admin.card>
 @endsection
