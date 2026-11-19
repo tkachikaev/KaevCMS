@@ -3,6 +3,7 @@
 namespace KaevCMS\Modules\Forum\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,6 +40,9 @@ final class ForumStructureController extends Controller
     {
         $this->owner($request);
         $created = $this->structure->initialStructure();
+        if ($created) {
+            $this->audit($request, 'forum.structure_seeded', 'forum');
+        }
 
         return $this->back($created ? 'structure_created' : 'structure_already_exists');
     }
@@ -46,7 +50,8 @@ final class ForumStructureController extends Controller
     public function createCategory(Request $request): RedirectResponse
     {
         $this->owner($request);
-        $this->structure->createCategory($this->names($request));
+        $category = $this->structure->createCategory($this->names($request));
+        $this->audit($request, 'forum.category_created', 'category #'.$category->id);
 
         return $this->back('category_created');
     }
@@ -55,6 +60,7 @@ final class ForumStructureController extends Controller
     {
         $this->owner($request);
         $this->structure->updateCategory($category, $this->names($request));
+        $this->audit($request, 'forum.category_updated', 'category #'.$category->id);
 
         return $this->back('category_updated');
     }
@@ -64,6 +70,7 @@ final class ForumStructureController extends Controller
         $this->owner($request);
         $request->validate(['confirm' => ['accepted']]);
         $this->structure->deleteCategory($category);
+        $this->audit($request, 'forum.category_deleted', 'category #'.$category->id);
 
         return $this->back('category_deleted');
     }
@@ -73,6 +80,7 @@ final class ForumStructureController extends Controller
         $this->owner($request);
         $direction = $request->validate(['direction' => ['required', Rule::in(['up', 'down'])]])['direction'];
         $this->structure->moveCategory($category, $direction);
+        $this->audit($request, 'forum.category_moved', 'category #'.$category->id);
 
         return $this->back('order_saved');
     }
@@ -82,7 +90,8 @@ final class ForumStructureController extends Controller
         $this->owner($request);
         $data = $this->sectionValues($request);
         $data['category_id'] = $category->id;
-        $this->structure->createSection($category, $data);
+        $section = $this->structure->createSection($category, $data);
+        $this->audit($request, 'forum.section_created', 'section #'.$section->id);
 
         return $this->back('section_created');
     }
@@ -93,6 +102,7 @@ final class ForumStructureController extends Controller
         $data = $this->sectionValues($request, true);
         ForumCategory::query()->findOrFail($data['category_id']);
         $this->structure->updateSection($section, $data);
+        $this->audit($request, 'forum.section_updated', 'section #'.$section->id);
 
         return $this->back('section_updated');
     }
@@ -102,6 +112,7 @@ final class ForumStructureController extends Controller
         $this->owner($request);
         $request->validate(['confirm' => ['accepted']]);
         $this->structure->deleteSection($section);
+        $this->audit($request, 'forum.section_deleted', 'section #'.$section->id);
 
         return $this->back('section_deleted');
     }
@@ -111,6 +122,7 @@ final class ForumStructureController extends Controller
         $this->owner($request);
         $direction = $request->validate(['direction' => ['required', Rule::in(['up', 'down'])]])['direction'];
         $this->structure->moveSection($section, $direction);
+        $this->audit($request, 'forum.section_moved', 'section #'.$section->id);
 
         return $this->back('order_saved');
     }
@@ -131,6 +143,7 @@ final class ForumStructureController extends Controller
     {
         $this->owner($request);
         ForumCategory::onlyTrashed()->findOrFail($category)->restore();
+        $this->audit($request, 'forum.category_restored', 'category #'.$category);
 
         return $this->back('category_restored');
     }
@@ -143,6 +156,7 @@ final class ForumStructureController extends Controller
             throw new ConflictHttpException(__('module-forum::messages.restore_category_first'));
         }
         $row->restore();
+        $this->audit($request, 'forum.section_restored', 'section #'.$section);
 
         return $this->back('section_restored');
     }
@@ -181,6 +195,16 @@ final class ForumStructureController extends Controller
         }
 
         return $request->validate($rules);
+    }
+
+    private function audit(Request $request, string $action, string $target): void
+    {
+        app(AuditLogger::class)->success(
+            category: 'forum',
+            action: $action,
+            actor: $this->actors->resolve($request)->admin,
+            target: $target,
+        );
     }
 
     private function back(string $message): RedirectResponse

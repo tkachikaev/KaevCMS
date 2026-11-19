@@ -189,6 +189,7 @@ final class ForumStructureTest extends TestCase
 
         $this->get('/forum')->assertSee('Secret Category')->assertSee('Secret Section');
         $this->actingAs(User::factory()->create(), 'web');
+        $this->withSession(['forum.author_mode' => 'user']);
         $this->get('/forum')->assertDontSee('Secret Category')->assertDontSee('Secret Section');
         $this->get('/forum/sections/'.$section->id)->assertNotFound();
 
