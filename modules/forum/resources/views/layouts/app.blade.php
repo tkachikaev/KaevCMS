@@ -28,7 +28,6 @@
         .forum-panel-body{padding:26px 20px;color:#667b92}
         .forum-button{display:inline-block;background:#f5f8fc;border:1px solid #d9e1eb;border-radius:8px;color:#304f71;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}
         .forum-button:hover{background:#edf3fa;text-decoration:none}
-        .forum-actor{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:#566a7d;font-size:13px}
         .forum-tag{padding:2px 8px;background:#e8eef5;color:#405b79;border-radius:999px;font-size:11px}
         .forum-footer{margin:38px auto;color:#95a2b4;font-size:12px;text-align:center}
         @media(max-width:650px){.forum-top-inner{padding:14px 16px}.forum-body{padding:0 16px;margin:23px auto}.forum-heading h1{font-size:22px}}
@@ -73,7 +72,6 @@
         .forum-help{color:#7e8c9e;font-size:12px;margin:9px 0 0}
         .forum-confirm{display:flex;gap:9px;align-items:center;font-size:13px;color:#587089}
         .forum-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
-        .forum-seed{margin-bottom:20px}
         @media(max-width:650px){.forum-section-row{align-items:flex-start;flex-direction:column}.forum-form-grid,.forum-permissions{grid-template-columns:1fr}.forum-dialog{padding:18px}.forum-tools{gap:4px}}
     </style>
     <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>

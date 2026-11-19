@@ -24,7 +24,6 @@ final class ForumController extends Controller
             'actor' => $actor,
             'identities' => $actors->identities($request),
             'categories' => $structure->visibleCategories($actor, $permissions),
-            'globalVisibility' => $structure->globalVisibility(),
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
 

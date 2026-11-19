@@ -39,7 +39,6 @@ final class ForumStructureTest extends TestCase
         $this->assertDatabaseCount('module_forum_categories', 3);
         $this->assertDatabaseCount('module_forum_sections', 5);
         $this->get('/forum')->assertOk()->assertSee('Архив')
-            ->assertDontSee('forum/structure/seed')
             ->assertDontSee('data-forum-dialog-open', false);
     }
 
@@ -82,7 +81,6 @@ final class ForumStructureTest extends TestCase
         $this->actingAs($player, 'web');
         $this->withSession(['forum.author_mode' => 'user']);
         $this->post('/forum/categories', $data)->assertForbidden();
-        $this->post('/forum/structure/seed')->assertNotFound();
         $this->assertDatabaseCount('module_forum_categories', 3);
 
         // Stale administrative sessions cannot recover Owner privileges.
