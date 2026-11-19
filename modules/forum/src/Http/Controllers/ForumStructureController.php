@@ -36,17 +36,6 @@ final class ForumStructureController extends Controller
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
 
-    public function seed(Request $request): RedirectResponse
-    {
-        $this->owner($request);
-        $created = $this->structure->initialStructure();
-        if ($created) {
-            $this->audit($request, 'forum.structure_seeded', 'forum');
-        }
-
-        return $this->back($created ? 'structure_created' : 'structure_already_exists');
-    }
-
     public function createCategory(Request $request): RedirectResponse
     {
         $this->owner($request);

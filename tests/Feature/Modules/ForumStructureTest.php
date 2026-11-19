@@ -26,28 +26,28 @@ final class ForumStructureTest extends TestCase
         app(ModuleRuntime::class)->bootModule($module);
     }
 
-    public function test_f3_installs_structure_schema_without_default_data(): void
+    public function test_f3_installs_structure_schema_with_default_data(): void
     {
         foreach (['module_forum_settings', 'module_forum_categories', 'module_forum_sections', 'module_forum_moderators'] as $table) {
             $this->assertTrue(Schema::hasTable($table), $table);
         }
 
-        $this->assertSame('0.2.0', app(ModuleManager::class)->inspect('forum')['version']);
+        $this->assertSame('0.2.1', app(ModuleManager::class)->inspect('forum')['version']);
         $this->assertDatabaseHas('module_forum_settings', [
             'id' => 1, 'visibility' => 'all', 'links_after_days' => 0,
         ]);
-        $this->assertDatabaseCount('module_forum_categories', 0);
-        $this->assertDatabaseCount('module_forum_sections', 0);
-        $this->get('/forum')->assertOk()->assertDontSee('data-forum-dialog-open', false);
+        $this->assertDatabaseCount('module_forum_categories', 3);
+        $this->assertDatabaseCount('module_forum_sections', 5);
+        $this->get('/forum')->assertOk()->assertSee('Архив')
+            ->assertDontSee('forum/structure/seed')
+            ->assertDontSee('data-forum-dialog-open', false);
     }
 
-    public function test_owner_creates_exact_agreed_structure_once(): void
+    public function test_initial_install_creates_exact_agreed_structure_without_user_action(): void
     {
         $owner = Admin::factory()->create();
         $this->actingAs($owner, 'admin')
             ->get('/forum')->assertOk()->assertSee('data-forum-dialog-open="forum-category-create"', false);
-
-        $this->post('/forum/structure/seed')->assertRedirect('/forum');
 
         $this->assertSame(['Информация', 'Сообщество', 'Разное'],
             ForumCategory::query()->orderBy('position')->pluck('name_ru')->all());
@@ -61,7 +61,8 @@ final class ForumStructureTest extends TestCase
             'name_ru' => 'Архив', 'view_rule' => 'all',
             'topic_rule' => 'nobody', 'reply_rule' => 'nobody',
         ]);
-        $this->post('/forum/structure/seed')->assertRedirect('/forum');
+        app(ModuleManager::class)->disable('forum');
+        app(ModuleManager::class)->enable('forum');
         $this->assertDatabaseCount('module_forum_categories', 3);
         $this->assertDatabaseCount('module_forum_sections', 5);
 
@@ -75,7 +76,6 @@ final class ForumStructureTest extends TestCase
         $data = $this->names('Forbidden');
 
         $this->actingAs($admin, 'admin');
-        $this->post('/forum/structure/seed')->assertForbidden();
         $this->post('/forum/categories', $data)->assertForbidden();
         $this->get('/forum/trash')->assertForbidden();
 
@@ -83,7 +83,7 @@ final class ForumStructureTest extends TestCase
         $this->withSession(['forum.author_mode' => 'user']);
         $this->post('/forum/categories', $data)->assertForbidden();
         $this->post('/forum/structure/seed')->assertForbidden();
-        $this->assertDatabaseCount('module_forum_categories', 0);
+        $this->assertDatabaseCount('module_forum_categories', 3);
 
         // Stale administrative sessions cannot recover Owner privileges.
         $owner = Admin::factory()->create();
@@ -101,7 +101,7 @@ final class ForumStructureTest extends TestCase
         $second = ForumCategory::query()->where('name_ru', 'Beta')->firstOrFail();
 
         $this->post('/forum/categories/'.$second->id.'/move', ['direction' => 'up'])->assertRedirect('/forum');
-        $this->assertSame(['Beta', 'Alpha'], ForumCategory::query()->orderBy('position')->pluck('name_ru')->all());
+        $this->assertSame(['Beta', 'Alpha'], ForumCategory::query()->whereIn('name_ru', ['Alpha', 'Beta'])->orderBy('position')->pluck('name_ru')->all());
 
         $this->put('/forum/categories/'.$first->id, $this->names('Alpha Updated'))->assertRedirect('/forum');
 
@@ -134,11 +134,11 @@ final class ForumStructureTest extends TestCase
         $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Wrong', 'invalid', 'owner', 'nobody'))
             ->assertSessionHasErrors('view_rule');
 
-        $this->assertDatabaseCount('module_forum_sections', 0);
+        $this->assertDatabaseCount('module_forum_sections', 5);
 
         $this->post('/forum/categories/'.$category->id.'/sections',
             $this->sectionData('Allowed', 'moderators', 'owner', 'nobody'))->assertRedirect();
-        $section = ForumSection::query()->firstOrFail();
+        $section = ForumSection::query()->where('name_ru', 'Allowed')->firstOrFail();
 
         $this->put('/forum/sections/'.$section->id,
             $this->sectionData('Broken', 'moderators', 'registered', 'nobody') + ['category_id' => $category->id])
@@ -186,7 +186,7 @@ final class ForumStructureTest extends TestCase
         $category = $this->makeCategory('Secret Category');
         $this->post('/forum/categories/'.$category->id.'/sections',
             $this->sectionData('Secret Section', 'moderators', 'owner', 'owner'))->assertRedirect();
-        $section = ForumSection::query()->firstOrFail();
+        $section = ForumSection::query()->where('name_ru', 'Secret Section')->firstOrFail();
 
         $this->get('/forum')->assertSee('Secret Category')->assertSee('Secret Section');
         $this->actingAs(User::factory()->create(), 'web');
@@ -207,7 +207,7 @@ final class ForumStructureTest extends TestCase
         $this->actingAs($owner, 'admin');
         $category = $this->makeCategory('Members');
         $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Visible To Members'))->assertRedirect();
-        $section = ForumSection::query()->firstOrFail();
+        $section = ForumSection::query()->where('name_ru', 'Visible To Members')->firstOrFail();
 
         DB::table('module_forum_settings')->where('id', 1)->update(['visibility' => 'registered']);
         $this->get('/forum')->assertSee('Visible To Members');
@@ -245,7 +245,6 @@ final class ForumStructureTest extends TestCase
     {
         $owner = Admin::factory()->create();
         $this->actingAs($owner, 'admin');
-        $this->post('/forum/structure/seed')->assertRedirect();
         $archive = ForumSection::query()->where('name_ru', 'Архив')->firstOrFail();
         $policy = app(ForumPermissions::class);
         $ownerActor = new ForumActor('admin', admin: $owner);
@@ -278,7 +277,7 @@ final class ForumStructureTest extends TestCase
         $this->actingAs(Admin::factory()->create(), 'admin');
         $category = $this->makeCategory('Protected');
         $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Protected Section'))->assertRedirect();
-        $section = ForumSection::query()->firstOrFail();
+        $section = ForumSection::query()->where('name_ru', 'Protected Section')->firstOrFail();
 
         $this->actingAs(Admin::factory()->administrator()->create(), 'admin');
         $this->withSession(['forum.author_mode' => 'admin']);
@@ -294,6 +293,31 @@ final class ForumStructureTest extends TestCase
 
         $this->assertDatabaseHas('module_forum_categories', ['id' => $category->id, 'name_ru' => 'Protected', 'deleted_at' => null]);
         $this->assertDatabaseHas('module_forum_sections', ['id' => $section->id, 'name_ru' => 'Protected Section', 'deleted_at' => null]);
+    }
+
+    public function test_default_seeder_preserves_existing_and_soft_deleted_categories(): void
+    {
+        $migration = require base_path('modules/forum/database/migrations/2026_11_19_000100_seed_module_forum_default_structure.php');
+
+        $existing = ForumCategory::query()->where('name_ru', 'Информация')->firstOrFail();
+        $existing->update(['name_ru' => 'Изменённая категория']);
+        $migration->up();
+        $this->assertDatabaseHas('module_forum_categories', [
+            'id' => $existing->id, 'name_ru' => 'Изменённая категория',
+        ]);
+        $this->assertDatabaseCount('module_forum_categories', 3);
+
+        // Even if everything was removed by an administrator, never recreate defaults.
+        ForumSection::query()->each(fn (ForumSection $section) => $section->delete());
+        ForumCategory::query()->each(fn (ForumCategory $category) => $category->delete());
+        $migration->up();
+        $this->assertDatabaseCount('module_forum_categories', 3);
+        $this->assertSame(0, ForumCategory::query()->count());
+        $this->assertSame(0, ForumSection::query()->count());
+
+        app(ModuleManager::class)->disable('forum');
+        app(ModuleManager::class)->enable('forum');
+        $this->assertSame(0, ForumCategory::query()->count());
     }
 
     /** @return array<string, string> */

@@ -23,21 +23,6 @@
     </div>
 @endif
 
-@if($actor->isOwner() && $canSeed)
-    <div class="forum-panel forum-seed">
-        <div class="forum-panel-heading">{{ __('module-forum::messages.empty_title') }}</div>
-        <div class="forum-panel-body">
-            <p>{{ __('module-forum::messages.seed_help') }}</p>
-            <form method="POST" action="{{ route('modules.forum.structure.seed') }}">
-                @csrf
-                <button class="forum-button forum-button-primary" type="submit">
-                    {{ __('module-forum::messages.seed_action') }}
-                </button>
-            </form>
-        </div>
-    </div>
-@endif
-
 @if($categories->isEmpty())
     <div class="forum-panel">
         <div class="forum-panel-heading">{{ __('module-forum::messages.empty_title') }}</div>

@@ -462,6 +462,7 @@
         "modules/forum/assets/module.webp",
         "modules/forum/bootstrap.php",
         "modules/forum/database/migrations/2026_11_19_000000_create_module_forum_structure.php",
+        "modules/forum/database/migrations/2026_11_19_000100_seed_module_forum_default_structure.php",
         "modules/forum/docs/README.en.md",
         "modules/forum/docs/README.ru.md",
         "modules/forum/lang/en/messages.php",

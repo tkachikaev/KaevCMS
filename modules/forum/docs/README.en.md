@@ -10,13 +10,13 @@ The CMS Owner manages the forum using their existing administrator session. Play
 
 ## First setup
 
-The forum is empty on installation. The Owner can click **Create basic structure**:
+The basic structure is created automatically when the module is enabled for the first time:
 
 - **Information** → News and announcements (Owner creates topics; replies disabled).
 - **Community** → General discussion, Questions and help, Suggestions and ideas (registered users may post).
 - **Other** → Archive (read-only for everyone).
 
-This is a one-time action and never replaces existing categories. The Owner may build everything manually instead.
+Existing categories, including those in Trash, are never overwritten or recreated during an upgrade. The Owner may edit, remove, or add categories and sections afterward. Disabling and enabling the forum does not recreate deleted categories.
 
 ## Managing categories and sections
 
@@ -37,4 +37,4 @@ Archive is an ordinary read-only section. Once the topic-moving functionality is
 
 ## Current limitations
 
-Version 0.2.0 provides categories, sections and their reading permissions. Posting, moderation and topic moves will arrive in later versions. Global visibility, link age limits and moderator assignments are not yet editable in the UI.
+Version 0.2.1 provides categories, sections and their reading permissions. Posting, moderation and topic moves will arrive in later versions. Global visibility, link age limits and moderator assignments are not yet editable in the UI.

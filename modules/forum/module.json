@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "forum",
     "name": "Forum",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "author": "KaevCMS",
     "description": "Classic discussion forum for KaevCMS with shared site identity.",
     "cms_min": "0.59.0",

@@ -9,8 +9,6 @@ Route::post('/author', [ForumController::class, 'chooseAuthor'])
     ->middleware('throttle:10,1')->name('author.choose');
 
 // All structure mutations independently check the valid Owner actor in the controller.
-Route::post('/structure/seed', [ForumStructureController::class, 'seed'])
-    ->middleware('throttle:5,1')->name('structure.seed');
 Route::post('/categories', [ForumStructureController::class, 'createCategory'])
     ->middleware('throttle:20,1')->name('categories.create');
 Route::put('/categories/{category}', [ForumStructureController::class, 'updateCategory'])->name('categories.update');

@@ -2,7 +2,8 @@
 
 ## Unreleased — forum development branch
 
-- Forum 0.2.0 (F3): Owner creates categories and sections directly in /forum, controls visibility and future topic/reply permissions, orders entries, and restores deleted items from Trash. Optional one-click basic structure includes a read-only Archive section. RU/EN titles and descriptions are supported.
+- Forum 0.2.1: create the three agreed categories and five sections automatically during the first module migration/upgrade if the forum has no existing or soft-deleted categories. Remove the redundant setup button and endpoint; never recreate deleted or replace customized structure on subsequent enables.
+- Forum 0.2.0 (F3): Owner creates categories and sections directly in /forum, controls visibility and future topic/reply permissions, orders entries, and restores deleted items from Trash. The default structure includes a read-only Archive section. RU/EN titles and descriptions are supported.
 - Section visibility is filtered in database queries and checked on direct URLs. All structure mutations verify Owner permissions on the server; invalid access combinations are rejected. Added feature tests and changelog/admin documentation.
 
 - Added a transparent WebP icon for the Forum module catalog card (320 × 320).
