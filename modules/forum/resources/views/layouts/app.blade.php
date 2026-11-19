@@ -142,8 +142,7 @@
         .forum-post-rich pre code{background:none}
     </style>
     <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>
-    {{-- Reuse the existing Tiptap bundle used by News and Pages. --}}
-    <script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ cms_version() }}" defer></script>
+    @stack('forum-editor-scripts')
 </head>
 <body>
 <header class="forum-top">

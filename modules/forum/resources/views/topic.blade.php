@@ -1,6 +1,11 @@
 @extends('module-forum::layouts.app')
 @section('title', $topic->title)
 @section('content')
+@if($canReply)
+@push('forum-editor-scripts')
+    <script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ cms_version() }}" defer></script>
+@endpush
+@endif
 <nav class="forum-breadcrumb">
     <a href="{{ route('modules.forum.index') }}">{{ __('module-forum::messages.title') }}</a>
     <span>›</span><a href="{{ route('modules.forum.sections.show', $section) }}">{{ $section->label() }}</a>
