@@ -35,6 +35,20 @@ Categories with active sections cannot be removed. Removed categories and sectio
 
 Archive is an ordinary read-only section. Once the topic-moving functionality is available, moderators can move old topics there instead of deleting them.
 
+## Topics and replies
+
+In a section that allows posting, click **New topic**, enter a title and a message, and publish it. Signed-in players may reply according to the section's permissions. Guests can read public discussions, but cannot post.
+
+Sections list topics with authors, reply counts, and last activity. Topics are sorted by latest activity, 20 per page. Each topic shows up to 15 chronological messages per page.
+
+CMS Owner and Administrator accounts post under their existing administrative names with an Administrator label. Appointed forum moderators post under their public player nicknames with a Moderator label. When two login identities exist in the same browser, the author can be selected explicitly.
+
+Publishing checks current section permissions and topic state on the server. By default only Owner can start topics in News and announcements and replies are disabled; Archive is read-only. Removing a section hides its topics without erasing messages.
+
+For now, messages use **plain text only**, safely rendered without executing user-supplied HTML. Re-submitting a form with the same submission key does not create duplicate posts.
+
+If the CMS requires verified email addresses, unverified players cannot post. The forum already enforces the optional account-age restriction for URLs in topic titles and messages. The default value is **0 days**, so links are allowed immediately.
+
 ## Current limitations
 
-Version 0.2.1 provides categories, sections and their reading permissions. Posting, moderation and topic moves will arrive in later versions. Global visibility, link age limits and moderator assignments are not yet editable in the UI.
+Version 0.3.0 adds topics and replies. Editing, deleting, moving/locking/pinning topics, the 30-day revision history, and the rich-text editor will arrive later. Global visibility, link age limits and moderator assignment are not yet editable through the settings UI.

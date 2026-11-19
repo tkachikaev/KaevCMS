@@ -34,6 +34,7 @@ final class ForumPosting
     public function createTopic(ForumActor $actor, int $sectionId, string $title, string $body, string $key): ForumTopic
     {
         $this->assertAuthor($actor);
+        $this->assertContent($actor, $title, 'title');
         $this->assertContent($actor, $body);
         $title = trim($title);
         $body = trim($body);
@@ -133,10 +134,10 @@ final class ForumPosting
         }
     }
 
-    private function assertContent(ForumActor $actor, string $body): void
+    private function assertContent(ForumActor $actor, string $body, string $field = 'body'): void
     {
         if (trim($body) === '') {
-            throw ValidationException::withMessages(['body' => __('module-forum::messages.body_required')]);
+            throw ValidationException::withMessages([$field => __('module-forum::messages.body_required')]);
         }
 
         if ($actor->mode !== 'user' || $actor->user === null || $this->permissions->isModerator($actor)) {
@@ -147,7 +148,7 @@ final class ForumPosting
         if ($days > 0 && $actor->user->created_at->copy()->addDays($days)->isFuture()
             && preg_match('~(?:https?://|www\.|[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)~iu', $body) === 1) {
             throw ValidationException::withMessages([
-                'body' => __('module-forum::messages.links_not_allowed', ['days' => $days]),
+                $field => __('module-forum::messages.links_not_allowed', ['days' => $days]),
             ]);
         }
     }

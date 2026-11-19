@@ -2,6 +2,9 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.3.0 (F4): topic creation and chronological replies with shared CMS identities, 20-topic and 15-post pagination, last-activity ordering and counts, privacy-safe topic URLs, posting limits and duplicate form protection. Plain-text rendering escapes HTML; the configured account-age restriction also applies to URLs in titles and replies.
+- Forum topic and reply writes run in database transactions and re-check section permissions and topic state, including read-only Archive and announcements. Added posting, privacy, guest/staff, double-submit, link-delay and pagination regression tests.
+
 - Forum 0.2.1: create the three agreed categories and five sections automatically during the first module migration/upgrade if the forum has no existing or soft-deleted categories. Remove the redundant setup button and endpoint; never recreate deleted or replace customized structure on subsequent enables.
 - Forum 0.2.0 (F3): Owner creates categories and sections directly in /forum, controls visibility and future topic/reply permissions, orders entries, and restores deleted items from Trash. The default structure includes a read-only Archive section. RU/EN titles and descriptions are supported.
 - Section visibility is filtered in database queries and checked on direct URLs. All structure mutations verify Owner permissions on the server; invalid access combinations are rejected. Added feature tests and changelog/admin documentation.

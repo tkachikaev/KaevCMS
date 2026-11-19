@@ -230,6 +230,9 @@ final class ForumPostingTest extends TestCase
         $this->post('/forum/sections/'.$section->id.'/topics', $this->topicData(body: 'See https://example.com'))
             ->assertSessionHasErrors('body');
 
+        $this->post('/forum/sections/'.$section->id.'/topics', $this->topicData(title: 'See example.com'))
+            ->assertSessionHasErrors('title');
+
         $this->post('/forum/sections/'.$section->id.'/topics', $this->topicData(body: 'See www.example.com'))
             ->assertSessionHasErrors('body');
 
