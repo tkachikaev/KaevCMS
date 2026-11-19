@@ -76,6 +76,36 @@ final class ForumEditorTest extends TestCase
         $this->get('/forum/topics/'.$topic->id)->assertSee('data-rich-editor', false);
     }
 
+
+    public function test_plain_fallback_ignores_stale_rich_html_after_validation_failure(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'web')->withSession(['forum.author_mode' => 'user']);
+        $section = $this->section('Общее общение');
+        $key = (string) Str::uuid();
+
+        $this->withSession(['_old_input' => [
+            'title' => 'A topic to correct',
+            'body' => '',
+            'body_html' => '<p>Previous <strong>formatted</strong> message</p>',
+            'submission_key' => $key,
+        ]])->get('/forum/sections/'.$section->id.'/topics/new')
+            ->assertOk()
+            ->assertSee('name="body_html" maxlength="20000" disabled hidden', false)
+            ->assertSee('Previous formatted message</textarea>', false);
+
+        // With no rich editor initialized the disabled HTML field is not sent.
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'A corrected topic',
+            'body' => 'Corrected without JavaScript',
+            'submission_key' => $key,
+        ])->assertRedirect();
+
+        $post = ForumPost::query()->firstOrFail();
+        $this->assertSame('Corrected without JavaScript', $post->body_text);
+        $this->assertNull($post->body_html);
+    }
+
     public function test_formatted_text_is_sanitized_and_rendered_without_executable_markup(): void
     {
         $user = User::factory()->create(['display_name' => 'SafePoster']);

@@ -7,6 +7,13 @@
         ? $oldRich
         : (is_string($oldPlain) && $oldPlain !== ''
             ? '<p>'.str_replace("\n", '<br>', e($oldPlain)).'</p>' : '');
+    // A JavaScript-free retry must edit and submit the visible plain text, never
+    // the stale HTML flashed from an earlier rich-editor submission.
+    $fallbackPlain = is_string($oldPlain) ? $oldPlain : '';
+    if (is_string($oldRich) && $oldRich !== '') {
+        $fallbackPlain = app(\App\Services\Html\SafeHtmlSanitizer::class)
+            ->plainText($oldRich, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM);
+    }
     $editorId = $editorId ?? 'forum-editor';
 @endphp
 <div class="forum-editor" data-rich-editor data-required="1"
@@ -32,11 +39,11 @@
 
     <div id="{{ $editorId }}" class="rich-editor-canvas forum-editor-canvas"
          data-placeholder="{{ __('module-forum::messages.message_placeholder') }}"></div>
-    <textarea class="rich-editor-source" name="body_html" maxlength="20000" hidden>{{ $initialRich }}</textarea>
+    <textarea class="rich-editor-source" name="body_html" maxlength="20000" disabled hidden>{{ $initialRich }}</textarea>
 
     <label class="forum-compose-field forum-editor-fallback">
         <span>{{ __('module-forum::messages.message_text') }}</span>
-        <textarea name="body" rows="{{ $rows ?? 6 }}" maxlength="10000" minlength="2">{{ old('body') }}</textarea>
+        <textarea name="body" rows="{{ $rows ?? 6 }}" maxlength="10000" minlength="2">{{ $fallbackPlain }}</textarea>
     </label>
 
     <span class="forum-editor-status" data-editor-status role="status" aria-live="polite"></span>

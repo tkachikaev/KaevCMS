@@ -3,6 +3,7 @@
 @section('content')
 @if($canReply)
 @push('forum-editor-scripts')
+    <script src="{{ asset('assets/modules/forum/editor.js') }}?v={{ cms_version() }}" defer></script>
     <script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ cms_version() }}" defer></script>
 @endpush
 @endif

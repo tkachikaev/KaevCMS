@@ -731,6 +731,7 @@
         "public/assets/modules/donations-exchange.js",
         "public/assets/modules/donations-player.css",
         "public/assets/modules/donations-player.js",
+        "public/assets/modules/forum/editor.js",
         "public/assets/modules/forum/structure.js",
         "public/assets/modules/freekassa.png",
         "public/assets/modules/news-comments-admin.css",
