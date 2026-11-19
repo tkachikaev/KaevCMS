@@ -2350,6 +2350,7 @@
     "The module namespace must be a valid PSR-4 namespace ending with a backslash.": "The module namespace must be a valid PSR-4 namespace ending with a backslash.",
     "The module state table is unavailable. Run database migrations first.": "The module state table is unavailable. Run database migrations first.",
     "The module version must use semantic versioning.": "The module version must use semantic versioning.",
+    "The module web route prefix is not permitted.": "The module web route prefix is not permitted.",
     "The module.json file contains invalid JSON.": "The module.json file contains invalid JSON.",
     "The module.json file must contain a JSON object.": "The module.json file must contain a JSON object.",
     "The module.json file was not found.": "The module.json file was not found.",

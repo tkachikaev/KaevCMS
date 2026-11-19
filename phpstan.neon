@@ -17,6 +17,7 @@ parameters:
         - modules/news-comments/src
         - modules/shop/src
         - modules/support-tickets/src
+        - modules/forum/src
 
     level: 6
     tmpDir: storage/framework/cache/phpstan

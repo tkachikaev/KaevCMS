@@ -56,7 +56,8 @@ final class ForumModuleTest extends TestCase
 
         $this->get('/forum')
             ->assertOk()
-            ->assertSee(__('module-forum::messages.empty_title'))
+            ->assertSee('Новости и объявления')
+            ->assertSee('Архив')
             ->assertDontSee('data-forum-owner-settings', false)
             ->assertHeader('Cache-Control', 'private, no-store, max-age=0')
             ->assertHeader('Content-Security-Policy');

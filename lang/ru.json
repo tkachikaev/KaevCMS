@@ -2350,6 +2350,7 @@
     "The module namespace must be a valid PSR-4 namespace ending with a backslash.": "Пространство имён модуля должно соответствовать PSR-4 и заканчиваться обратной косой чертой.",
     "The module state table is unavailable. Run database migrations first.": "Таблица состояния модулей недоступна. Сначала выполните миграции базы данных.",
     "The module version must use semantic versioning.": "Версия модуля должна использовать семантическое версионирование.",
+    "The module web route prefix is not permitted.": "Указанный префикс маршрута модуля не разрешён.",
     "The module.json file contains invalid JSON.": "Файл module.json содержит некорректный JSON.",
     "The module.json file must contain a JSON object.": "Файл module.json должен содержать JSON-объект.",
     "The module.json file was not found.": "Файл module.json не найден.",
