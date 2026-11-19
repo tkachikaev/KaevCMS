@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'navigation' => 'Forum',
+    'navigation_description' => 'Player discussions',
+    'settings' => 'Forum settings',
+    'settings_description' => 'Forum settings and moderators',
+    'title' => 'Forum',
+    'empty_title' => 'Forum installed',
+    'empty_description' => 'Categories and sections will be added in the next development stage.',
+    'administrator' => 'Administrator',
+    'guest' => 'Guest',
+    'player' => 'Player',
+    'your_name' => 'Signed in as',
+    'your_role' => 'Your role',
+    'owner_hint' => 'You can manage this forum. Section creation arrives in the next stage.',
+    'settings_link' => 'Forum settings',
+    'login' => 'Sign in',
+    'account' => 'Player account',
+    'website' => 'Website',
+    'author' => 'Post as',
+    'switch' => 'Select',
+    'no_author' => 'Sign in to participate.',
+    'settings_pending' => 'Access rules, moderators, and link settings will arrive in stage F6.',
+    'back_to_forum' => 'Open forum',
+];

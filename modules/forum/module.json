@@ -1,0 +1,30 @@
+{
+    "schema": 1,
+    "id": "forum",
+    "name": "Forum",
+    "version": "0.1.0",
+    "author": "KaevCMS",
+    "description": "Classic discussion forum for KaevCMS with shared site identity.",
+    "cms_min": "0.59.0",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\Forum\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "routes": {
+        "web": "routes/web.php",
+        "admin": "routes/admin.php",
+        "web_prefix": "forum"
+    },
+    "locales": {
+        "ru": {
+            "name": "Форум",
+            "description": "Обсуждения игроков, разделы и модерация."
+        },
+        "en": {
+            "name": "Forum",
+            "description": "Player discussions, sections and moderation."
+        }
+    }
+}
