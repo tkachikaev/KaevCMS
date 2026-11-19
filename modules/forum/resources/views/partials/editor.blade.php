@@ -36,7 +36,7 @@
 
     <label class="forum-compose-field forum-editor-fallback">
         <span>{{ __('module-forum::messages.message_text') }}</span>
-        <textarea name="body" rows="{{ $rows ?? 6 }}" maxlength="10000" minlength="2" required>{{ old('body') }}</textarea>
+        <textarea name="body" rows="{{ $rows ?? 6 }}" maxlength="10000" minlength="2">{{ old('body') }}</textarea>
     </label>
 
     <span class="forum-editor-status" data-editor-status role="status" aria-live="polite"></span>
