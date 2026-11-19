@@ -2,6 +2,7 @@
 
 namespace KaevCMS\Modules\Forum\Services;
 
+use App\Services\Html\SafeHtmlSanitizer;
 use App\Services\RegistrationSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,7 @@ final class ForumPosting
         private readonly ForumPermissions $permissions,
         private readonly ForumStructure $structure,
         private readonly RegistrationSettings $registration,
+        private readonly SafeHtmlSanitizer $htmlSanitizer,
     ) {}
 
     public function canStart(ForumActor $actor, ForumSection $section): bool
@@ -31,15 +33,14 @@ final class ForumPosting
             && $this->permissions->canReply($actor, $section, $this->structure->globalVisibility());
     }
 
-    public function createTopic(ForumActor $actor, int $sectionId, string $title, string $body, string $key): ForumTopic
+    public function createTopic(ForumActor $actor, int $sectionId, string $title, string $body, string $key, ?string $bodyHtml = null): ForumTopic
     {
         $this->assertAuthor($actor);
         $this->assertContent($actor, $title, 'title');
-        $this->assertContent($actor, $body);
+        [$body, $bodyHtml] = $this->prepareBody($actor, $body, $bodyHtml);
         $title = trim($title);
-        $body = trim($body);
 
-        return DB::transaction(function () use ($actor, $sectionId, $title, $body, $key): ForumTopic {
+        return DB::transaction(function () use ($actor, $sectionId, $title, $body, $bodyHtml, $key): ForumTopic {
             $section = ForumSection::query()->lockForUpdate()->findOrFail($sectionId);
             ForumCategory::query()->findOrFail($section->category_id);
             abort_unless($this->canStart($actor, $section), 403);
@@ -70,6 +71,7 @@ final class ForumPosting
             ForumPost::query()->create($author + [
                 'topic_id' => $topic->id,
                 'body_text' => $body,
+                'body_html' => $bodyHtml,
                 'created_at' => $date,
                 'updated_at' => $date,
             ]);
@@ -78,13 +80,12 @@ final class ForumPosting
         });
     }
 
-    public function addReply(ForumActor $actor, int $topicId, string $body, string $key): ForumPost
+    public function addReply(ForumActor $actor, int $topicId, string $body, string $key, ?string $bodyHtml = null): ForumPost
     {
         $this->assertAuthor($actor);
-        $this->assertContent($actor, $body);
-        $body = trim($body);
+        [$body, $bodyHtml] = $this->prepareBody($actor, $body, $bodyHtml);
 
-        return DB::transaction(function () use ($actor, $topicId, $body, $key): ForumPost {
+        return DB::transaction(function () use ($actor, $topicId, $body, $bodyHtml, $key): ForumPost {
             // Lock the section before the topic: changing section permissions and replying
             // cannot silently race through two different authorization decisions.
             $initialTopic = ForumTopic::query()->findOrFail($topicId);
@@ -107,6 +108,7 @@ final class ForumPosting
             $post = ForumPost::query()->create($author + [
                 'topic_id' => $topic->id,
                 'body_text' => $body,
+                'body_html' => $bodyHtml,
                 'submission_key' => $key,
                 'created_at' => $date,
                 'updated_at' => $date,
@@ -120,6 +122,36 @@ final class ForumPosting
 
             return $post;
         });
+    }
+
+    /**
+     * @return array{0:string, 1:string|null}
+     */
+    private function prepareBody(ForumActor $actor, string $plain, ?string $html): array
+    {
+        if ($html === null || trim($html) === '') {
+            $plain = trim($plain);
+            $this->assertContent($actor, $plain);
+
+            return [$plain, null];
+        }
+
+        // The news/pages sanitizer provides the DOM parser and URL checks; the forum
+        // profile only admits simple text, lists, quotes, code, and safe links.
+        $safeHtml = $this->htmlSanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
+        $text = $this->htmlSanitizer->plainText($safeHtml, SafeHtmlSanitizer::PROFILE_FORUM);
+
+        if (mb_strlen($text) < 2 || mb_strlen($text) > 10000) {
+            throw ValidationException::withMessages([
+                'body' => __('module-forum::messages.body_required'),
+            ]);
+        }
+
+        $this->assertContent($actor, $text);
+        // A link can use innocuous label text with a prohibited destination.
+        $this->assertContent($actor, $safeHtml);
+
+        return [$text, $safeHtml];
     }
 
     private function assertAuthor(ForumActor $actor): void

@@ -68,10 +68,11 @@ final class ForumTopicController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'min:3', 'max:160'],
-            'body' => ['required', 'string', 'min:2', 'max:10000'],
+            'body' => ['nullable', 'string', 'max:10000'],
+            'body_html' => ['nullable', 'string', 'max:20000'],
             'submission_key' => ['required', 'uuid'],
         ]);
-        $topic = $this->posting->createTopic($actor, (int) $section->id, $data['title'], $data['body'], $data['submission_key']);
+        $topic = $this->posting->createTopic($actor, (int) $section->id, $data['title'], (string) ($data['body'] ?? ''), $data['submission_key'], $data['body_html'] ?? null);
         if ($topic->wasRecentlyCreated) {
             $this->audit('topic_created', $actor, 'topic #'.$topic->id);
         }
@@ -105,10 +106,11 @@ final class ForumTopicController extends Controller
         abort_unless($this->posting->canReply($actor, $topic, $section), 403);
 
         $data = $request->validate([
-            'body' => ['required', 'string', 'min:2', 'max:10000'],
+            'body' => ['nullable', 'string', 'max:10000'],
+            'body_html' => ['nullable', 'string', 'max:20000'],
             'submission_key' => ['required', 'uuid'],
         ]);
-        $post = $this->posting->addReply($actor, (int) $topic->id, $data['body'], $data['submission_key']);
+        $post = $this->posting->addReply($actor, (int) $topic->id, (string) ($data['body'] ?? ''), $data['submission_key'], $data['body_html'] ?? null);
         if ($post->wasRecentlyCreated) {
             $this->audit('reply_created', $actor, 'post #'.$post->id);
         }
