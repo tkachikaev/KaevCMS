@@ -276,8 +276,8 @@ final class ForumPostingTest extends TestCase
             $posting->createTopic($actor, $section->id, 'Topic '.$i, 'Opening post', (string) Str::uuid());
         }
 
-        $this->get('/forum/sections/'.$section->id)->assertOk()->assertSee('Topic 22')->assertDontSee('Topic 1');
-        $this->get('/forum/sections/'.$section->id.'?page=2')->assertOk()->assertSee('Topic 1')->assertDontSee('Topic 22');
+        $this->get('/forum/sections/'.$section->id)->assertOk()->assertSee('Topic 22</a>', false)->assertDontSee('Topic 1</a>', false);
+        $this->get('/forum/sections/'.$section->id.'?page=2')->assertOk()->assertSee('Topic 1</a>', false)->assertDontSee('Topic 22</a>', false);
 
         $topic = ForumTopic::query()->where('title', 'Topic 1')->firstOrFail();
         for ($i = 1; $i <= 17; $i++) {

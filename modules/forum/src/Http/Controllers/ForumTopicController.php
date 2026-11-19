@@ -72,7 +72,9 @@ final class ForumTopicController extends Controller
             'submission_key' => ['required', 'uuid'],
         ]);
         $topic = $this->posting->createTopic($actor, (int) $section->id, $data['title'], $data['body'], $data['submission_key']);
-        $this->audit('topic_created', $actor, 'topic #'.$topic->id);
+        if ($topic->wasRecentlyCreated) {
+            $this->audit('topic_created', $actor, 'topic #'.$topic->id);
+        }
 
         return redirect()->route('modules.forum.topics.show', $topic);
     }
@@ -99,13 +101,17 @@ final class ForumTopicController extends Controller
     public function reply(Request $request, ForumTopic $topic): RedirectResponse
     {
         $actor = $this->actors->resolve($request);
-        $this->readTopic($actor, $topic);
+        $section = $this->readTopic($actor, $topic);
+        abort_unless($this->posting->canReply($actor, $topic, $section), 403);
+
         $data = $request->validate([
             'body' => ['required', 'string', 'min:2', 'max:10000'],
             'submission_key' => ['required', 'uuid'],
         ]);
         $post = $this->posting->addReply($actor, (int) $topic->id, $data['body'], $data['submission_key']);
-        $this->audit('reply_created', $actor, 'post #'.$post->id);
+        if ($post->wasRecentlyCreated) {
+            $this->audit('reply_created', $actor, 'post #'.$post->id);
+        }
 
         // Calculate the page from the persisted post order, not from an untrusted form field.
         $position = ForumPost::query()->where('topic_id', $topic->id)->where('id', '<=', $post->id)->count();
