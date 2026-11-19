@@ -76,7 +76,12 @@
                                 <button class="forum-button forum-button-compact" type="button" data-forum-dialog-open="forum-section-delete-{{ $section->id }}">{{ __('module-forum::messages.delete') }}</button>
                             </div>
                         @else
-                            <span class="forum-section-empty">{{ __('module-forum::messages.no_topics') }}</span>
+                            <div class="forum-section-summary">
+                                <span>{{ __('module-forum::messages.topics_count', ['count' => $section->topics_count]) }}</span>
+                                @if($section->latest_activity)
+                                    <small>{{ __('module-forum::messages.last_activity') }}: {{ \Illuminate\Support\Carbon::parse($section->latest_activity)->format('d.m.Y H:i') }}</small>
+                                @endif
+                            </div>
                         @endif
                     </div>
                 @empty
