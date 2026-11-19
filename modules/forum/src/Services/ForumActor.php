@@ -42,8 +42,12 @@ final readonly class ForumActor
 
     public function label(): ?string
     {
-        return $this->mode === 'admin'
-            ? __('module-forum::messages.administrator')
+        if ($this->mode === 'admin') {
+            return __('module-forum::messages.administrator');
+        }
+
+        return $this->mode === 'user' && app(ForumPermissions::class)->isModerator($this)
+            ? __('module-forum::messages.moderator')
             : null;
     }
 }

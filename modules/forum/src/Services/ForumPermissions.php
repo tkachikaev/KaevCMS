@@ -83,7 +83,7 @@ final class ForumPermissions
         return $view !== 'moderators' || ($topics !== 'registered' && $replies !== 'registered');
     }
 
-    private function isModerator(ForumActor $actor): bool
+    public function isModerator(ForumActor $actor): bool
     {
         if ($actor->isOwner()) {
             return true;

@@ -11,6 +11,7 @@ return [
     'administrator' => 'Administrator',
     'guest' => 'Guest',
     'player' => 'Player',
+    'moderator' => 'Moderator',
     'your_name' => 'Signed in as',
     'your_role' => 'Your role',
     'owner_hint' => 'You can create and edit categories directly on this page.',

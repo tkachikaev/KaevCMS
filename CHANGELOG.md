@@ -2,6 +2,9 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.2.0 (F3): Owner creates categories and sections directly in /forum, controls visibility and future topic/reply permissions, orders entries, and restores deleted items from Trash. Optional one-click basic structure includes a read-only Archive section. RU/EN titles and descriptions are supported.
+- Section visibility is filtered in database queries and checked on direct URLs. All structure mutations verify Owner permissions on the server; invalid access combinations are rejected. Added feature tests and changelog/admin documentation.
+
 - Added a transparent WebP icon for the Forum module catalog card (320 × 320).
 - Added the optional Forum 0.1.0 module foundation: a separate, light `/forum` shell, shared CMS identities and public nicknames, an Owner-only settings entry, and explicit author selection when both CMS administrator and player sessions are active.
 - Reserved the forum's top-level route prefix through validated module metadata without changing other module URLs; added module lifecycle, access and route-cache regression tests. No separate forum accounts, passwords or dependencies.
