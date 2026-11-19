@@ -22,20 +22,6 @@ final class ForumStructureController extends Controller
         private readonly ForumStructure $structure,
     ) {}
 
-    public function section(Request $request, ForumSection $section, ForumPermissions $permissions): Response
-    {
-        $category = ForumCategory::query()->findOrFail($section->category_id);
-        $actor = $this->actors->resolve($request);
-        abort_unless($permissions->canView($actor, $section, $this->structure->globalVisibility()), 404);
-
-        return response()->view('module-forum::section', [
-            'actor' => $actor,
-            'identities' => $this->actors->identities($request),
-            'category' => $category,
-            'section' => $section,
-        ])->header('Cache-Control', 'private, no-store, max-age=0');
-    }
-
     public function createCategory(Request $request): RedirectResponse
     {
         $this->owner($request);

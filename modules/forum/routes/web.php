@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumStructureController;
+use KaevCMS\Modules\Forum\Http\Controllers\ForumTopicController;
 
 Route::get('/', [ForumController::class, 'index'])->name('index');
 Route::post('/author', [ForumController::class, 'chooseAuthor'])
@@ -20,7 +21,15 @@ Route::post('/categories/{category}/sections', [ForumStructureController::class,
 Route::put('/sections/{section}', [ForumStructureController::class, 'updateSection'])->name('sections.update');
 Route::delete('/sections/{section}', [ForumStructureController::class, 'deleteSection'])->name('sections.delete');
 Route::post('/sections/{section}/move', [ForumStructureController::class, 'moveSection'])->name('sections.move');
-Route::get('/sections/{section}', [ForumStructureController::class, 'section'])->name('sections.show');
+Route::get('/sections/{section}', [ForumTopicController::class, 'section'])->whereNumber('section')->name('sections.show');
+Route::get('/sections/{section}/topics/new', [ForumTopicController::class, 'create'])
+    ->whereNumber('section')->name('topics.create');
+Route::post('/sections/{section}/topics', [ForumTopicController::class, 'store'])
+    ->whereNumber('section')->middleware('throttle:5,1')->name('topics.store');
+Route::get('/topics/{topic}', [ForumTopicController::class, 'show'])
+    ->whereNumber('topic')->name('topics.show');
+Route::post('/topics/{topic}/replies', [ForumTopicController::class, 'reply'])
+    ->whereNumber('topic')->middleware('throttle:10,1')->name('topics.reply');
 
 Route::get('/trash', [ForumStructureController::class, 'trash'])->name('trash');
 Route::post('/trash/categories/{category}', [ForumStructureController::class, 'restoreCategory'])

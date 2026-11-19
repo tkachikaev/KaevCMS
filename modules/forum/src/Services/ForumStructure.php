@@ -27,6 +27,8 @@ final class ForumStructure
         $query = ForumCategory::query()
             ->with(['sections' => static fn ($q) => $q
                 ->whereIn('view_rule', $rules)
+                ->withCount(['topics' => static fn ($topics) => $topics->whereNull('hidden_at')])
+                ->withMax(['topics as latest_activity' => static fn ($topics) => $topics->whereNull('hidden_at')], 'last_post_at')
                 ->orderBy('position')->orderBy('id')])
             ->orderBy('position')->orderBy('id');
 

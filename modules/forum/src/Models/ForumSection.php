@@ -4,6 +4,7 @@ namespace KaevCMS\Modules\Forum\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class ForumSection extends Model
@@ -17,6 +18,11 @@ final class ForumSection extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ForumCategory::class, 'category_id');
+    }
+
+    public function topics(): HasMany
+    {
+        return $this->hasMany(ForumTopic::class, 'section_id');
     }
 
     public function label(): string
