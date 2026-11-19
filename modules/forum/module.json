@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "forum",
     "name": "Forum",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "author": "KaevCMS",
     "description": "Classic discussion forum for KaevCMS with shared site identity.",
     "cms_min": "0.59.0",
@@ -12,6 +12,7 @@
     "bootstrap": "bootstrap.php",
     "views": "resources/views",
     "lang": "lang",
+    "migrations": "database/migrations",
     "routes": {
         "web": "routes/web.php",
         "admin": "routes/admin.php",
