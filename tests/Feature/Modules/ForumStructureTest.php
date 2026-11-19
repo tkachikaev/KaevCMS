@@ -80,6 +80,7 @@ final class ForumStructureTest extends TestCase
         $this->get('/forum/trash')->assertForbidden();
 
         $this->actingAs($player, 'web');
+        $this->withSession(['forum.author_mode' => 'user']);
         $this->post('/forum/categories', $data)->assertForbidden();
         $this->post('/forum/structure/seed')->assertForbidden();
         $this->assertDatabaseCount('module_forum_categories', 0);
@@ -238,6 +239,61 @@ final class ForumStructureTest extends TestCase
         $this->post('/forum/trash/categories/'.$category->id)->assertRedirect();
         $this->post('/forum/trash/sections/'.$section->id)->assertRedirect();
         $this->get('/forum/sections/'.$section->id)->assertOk();
+    }
+
+    public function test_owner_cannot_post_in_archive_and_moderator_can_read_private_section(): void
+    {
+        $owner = Admin::factory()->create();
+        $this->actingAs($owner, 'admin');
+        $this->post('/forum/structure/seed')->assertRedirect();
+        $archive = ForumSection::query()->where('name_ru', 'Архив')->firstOrFail();
+        $policy = app(ForumPermissions::class);
+        $ownerActor = new ForumActor('admin', admin: $owner);
+
+        $this->assertTrue($policy->canView($ownerActor, $archive));
+        $this->assertFalse($policy->canCreateTopic($ownerActor, $archive));
+        $this->assertFalse($policy->canReply($ownerActor, $archive));
+
+        $category = $this->makeCategory('Private');
+        $this->post('/forum/categories/'.$category->id.'/sections',
+            $this->sectionData('Moderators only', 'moderators', 'moderators', 'moderators'))->assertRedirect();
+        $private = ForumSection::query()->where('name_ru', 'Moderators only')->firstOrFail();
+
+        $moderator = User::factory()->create();
+        DB::table('module_forum_moderators')->insert([
+            'user_id' => $moderator->id, 'assigned_by_admin_id' => $owner->id, 'created_at' => now(),
+        ]);
+        $this->actingAs($moderator, 'web');
+        $this->withSession(['forum.author_mode' => 'user']);
+        $this->get('/forum')->assertSee('Moderators only')->assertSee(__('module-forum::messages.moderator'));
+        $this->get('/forum/sections/'.$private->id)->assertOk();
+
+        $this->actingAs(User::factory()->create(), 'web');
+        $this->get('/forum')->assertDontSee('Moderators only');
+        $this->get('/forum/sections/'.$private->id)->assertNotFound();
+    }
+
+    public function test_non_owners_cannot_modify_existing_categories_or_sections(): void
+    {
+        $this->actingAs(Admin::factory()->create(), 'admin');
+        $category = $this->makeCategory('Protected');
+        $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Protected Section'))->assertRedirect();
+        $section = ForumSection::query()->firstOrFail();
+
+        $this->actingAs(Admin::factory()->administrator()->create(), 'admin');
+        $this->withSession(['forum.author_mode' => 'admin']);
+
+        $this->put('/forum/categories/'.$category->id, $this->names('Hijacked'))->assertForbidden();
+        $this->delete('/forum/categories/'.$category->id, ['confirm' => '1'])->assertForbidden();
+        $this->post('/forum/categories/'.$category->id.'/move', ['direction' => 'up'])->assertForbidden();
+        $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Hijacked'))->assertForbidden();
+        $this->put('/forum/sections/'.$section->id, $this->sectionData('Hijacked') + ['category_id' => $category->id])->assertForbidden();
+        $this->delete('/forum/sections/'.$section->id, ['confirm' => '1'])->assertForbidden();
+        $this->post('/forum/sections/'.$section->id.'/move', ['direction' => 'down'])->assertForbidden();
+        $this->post('/forum/trash/sections/'.$section->id)->assertForbidden();
+
+        $this->assertDatabaseHas('module_forum_categories', ['id' => $category->id, 'name_ru' => 'Protected', 'deleted_at' => null]);
+        $this->assertDatabaseHas('module_forum_sections', ['id' => $section->id, 'name_ru' => 'Protected Section', 'deleted_at' => null]);
     }
 
     /** @return array<string, string> */
