@@ -1,0 +1,219 @@
+<?php
+
+namespace Tests\Feature\Modules;
+
+use App\Models\Admin;
+use App\Models\User;
+use App\Services\Html\SafeHtmlSanitizer;
+use App\Support\Modules\ModuleManager;
+use App\Support\Modules\ModuleRuntime;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use KaevCMS\Modules\Forum\Models\ForumPost;
+use KaevCMS\Modules\Forum\Models\ForumSection;
+use KaevCMS\Modules\Forum\Models\ForumTopic;
+use Tests\TestCase;
+
+final class ForumEditorTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $module = app(ModuleManager::class)->enable('forum');
+        app(ModuleRuntime::class)->bootModule($module);
+    }
+
+    public function test_f5_adds_nullable_formatted_body_without_converting_old_posts(): void
+    {
+        $this->assertTrue(Schema::hasColumn('module_forum_posts', 'body_html'));
+        $this->assertSame('0.4.0', app(ModuleManager::class)->inspect('forum')['version']);
+
+        $user = User::factory()->create(['display_name' => 'LegacyPlayer']);
+        $this->actingAs($user, 'web')->withSession(['forum.author_mode' => 'user']);
+        $section = $this->section('Общее общение');
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Old plain text',
+            'body' => "<b>literal</b>\nSecond line",
+            'submission_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $post = ForumPost::query()->firstOrFail();
+        $this->assertNull($post->body_html);
+        $this->get('/forum/topics/'.$post->topic_id)
+            ->assertOk()
+            ->assertSee('&lt;b&gt;literal&lt;/b&gt;', false)
+            ->assertDontSee('<b>literal</b>', false);
+    }
+
+    public function test_tiptap_forms_reuse_admin_bundle_with_compact_tools(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'web')->withSession(['forum.author_mode' => 'user']);
+        $section = $this->section('Общее общение');
+
+        $this->get('/forum/sections/'.$section->id.'/topics/new')
+            ->assertOk()
+            ->assertSee('assets/admin/js/news-editor.js', false)
+            ->assertSee('data-rich-editor', false)
+            ->assertSee('data-editor-action="bold"', false)
+            ->assertSee('data-editor-action="blockquote"', false)
+            ->assertSee('data-editor-block', false)
+            ->assertSee('data-editor-link', false)
+            ->assertDontSee('data-editor-image', false)
+            ->assertDontSee('data-editor-table', false);
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Example',
+            'body_html' => '<p>Initial message</p>',
+            'submission_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $topic = ForumTopic::query()->firstOrFail();
+        $this->get('/forum/topics/'.$topic->id)->assertSee('data-rich-editor', false);
+    }
+
+    public function test_formatted_text_is_sanitized_and_rendered_without_executable_markup(): void
+    {
+        $user = User::factory()->create(['display_name' => 'SafePoster']);
+        $this->actingAs($user, 'web')->withSession(['forum.author_mode' => 'user']);
+        $section = $this->section('Общее общение');
+
+        $html = '<p onclick="alert(1)">This is <strong>important</strong> and <em>italic</em>.</p>'.
+            '<blockquote>Quoted <u>line</u></blockquote>'.
+            '<ul><li>one</li><li>two</li></ul>'.
+            '<pre><code>echo 1;</code></pre>'.
+            '<a href="javascript:alert(1)" onmouseover="boom()">Unsafe link</a>'.
+            '<script>alert("xss")</script><iframe src="https://malicious.example"></iframe>'.
+            '<img src="https://malicious.example/pixel.png" onerror="alert(1)">';
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Formatting test',
+            'body_html' => $html,
+            'submission_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $post = ForumPost::query()->firstOrFail();
+        $this->assertNotNull($post->body_html);
+        $this->assertStringContainsString('<strong>important</strong>', $post->body_html);
+        $this->assertStringContainsString('<blockquote>', $post->body_html);
+        $this->assertStringNotContainsString('<script', $post->body_html);
+        $this->assertStringNotContainsString('<iframe', $post->body_html);
+        $this->assertStringNotContainsString('<img', $post->body_html);
+        $this->assertStringNotContainsString('javascript:', $post->body_html);
+        $this->assertStringNotContainsString('onmouseover', $post->body_html);
+        $this->assertStringContainsString('important', $post->body_text);
+        $this->assertStringNotContainsString('alert("xss")', $post->body_text);
+
+        $this->get('/forum/topics/'.$post->topic_id)
+            ->assertSee('<strong>important</strong>', false)
+            ->assertDontSee('<script', false)
+            ->assertDontSee('<img', false);
+    }
+
+    public function test_link_delay_checks_href_when_visible_label_has_no_url(): void
+    {
+        $player = User::factory()->create();
+        $this->actingAs($player, 'web')->withSession(['forum.author_mode' => 'user']);
+        DB::table('module_forum_settings')->where('id', 1)->update(['links_after_days' => 7]);
+        $section = $this->section('Общее общение');
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Ordinary headline',
+            'body_html' => '<p>Read <a href="https://external.example/report">here</a>.</p>',
+            'submission_key' => (string) Str::uuid(),
+        ])->assertSessionHasErrors('body');
+
+        $this->assertDatabaseCount('module_forum_topics', 0);
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Ordinary headline',
+            'body_html' => '<p>Just <strong>bold</strong> text.</p>',
+            'submission_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $topic = ForumTopic::query()->firstOrFail();
+        $this->post('/forum/topics/'.$topic->id.'/replies', [
+            'body_html' => '<p><a href="https://another.example">Click</a></p>',
+            'submission_key' => (string) Str::uuid(),
+        ])->assertSessionHasErrors('body');
+
+        $this->assertSame(0, $topic->fresh()->reply_count);
+    }
+
+    public function test_rich_html_with_only_images_or_scripts_is_rejected_not_saved_as_empty_post(): void
+    {
+        $player = User::factory()->create();
+        $this->actingAs($player, 'web')->withSession(['forum.author_mode' => 'user']);
+        $section = $this->section('Общее общение');
+        $key = (string) Str::uuid();
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Invalid message',
+            'body' => 'Forged fallback',
+            'body_html' => '<script>alert(1)</script><img src="https://example.test/test.png">',
+            'submission_key' => $key,
+        ])->assertSessionHasErrors('body');
+
+        $this->assertDatabaseCount('module_forum_topics', 0);
+        $this->assertDatabaseCount('module_forum_posts', 0);
+    }
+
+    public function test_rich_reply_preserves_format_and_duplicate_submit_is_idempotent(): void
+    {
+        $player = User::factory()->create();
+        $this->actingAs($player, 'web')->withSession(['forum.author_mode' => 'user']);
+        $section = $this->section('Общее общение');
+
+        $this->post('/forum/sections/'.$section->id.'/topics', [
+            'title' => 'Topic',
+            'body' => 'Initial post',
+            'submission_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $topic = ForumTopic::query()->firstOrFail();
+        $key = (string) Str::uuid();
+        $data = [
+            'body_html' => '<p>A <strong>formatted</strong> reply</p>',
+            'submission_key' => $key,
+        ];
+        $this->post('/forum/topics/'.$topic->id.'/replies', $data)->assertRedirect();
+        $this->post('/forum/topics/'.$topic->id.'/replies', $data)->assertRedirect();
+
+        $this->assertDatabaseCount('module_forum_posts', 2);
+        $this->assertSame(1, $topic->fresh()->reply_count);
+        $post = ForumPost::query()->where('submission_key', $key)->firstOrFail();
+        $this->assertSame('A formatted reply', $post->body_text);
+        $this->get('/forum/topics/'.$topic->id)
+            ->assertSee('<strong>formatted</strong>', false);
+    }
+
+    public function test_forum_sanitizer_profile_keeps_news_profile_untouched(): void
+    {
+        $sanitizer = app(SafeHtmlSanitizer::class);
+        $html = '<h2>Heading</h2><p>Plain</p>'.
+            '<a href="https://example.com" target="_blank" onclick="alert(1)">Link</a>'.
+            '<table><tbody><tr><td>Cell</td></tr></tbody></table>';
+
+        $forum = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
+        $news = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_NEWS);
+
+        $this->assertStringNotContainsString('<h2>', $forum);
+        $this->assertStringNotContainsString('<table>', $forum);
+        $this->assertStringContainsString('<h2>', $news);
+        $this->assertStringContainsString('<table>', $news);
+        $this->assertStringContainsString('href="https://example.com"', $forum);
+        $this->assertStringNotContainsString('onclick=', $forum);
+        $this->assertSame('Heading'."\n".'Plain'."\n".'Link'."\n".'Cell',
+            $sanitizer->plainText($html, SafeHtmlSanitizer::PROFILE_FORUM));
+    }
+
+    private function section(string $name): ForumSection
+    {
+        return ForumSection::query()->where('name_ru', $name)->firstOrFail();
+    }
+}
