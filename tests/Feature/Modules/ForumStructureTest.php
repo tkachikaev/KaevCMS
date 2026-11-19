@@ -227,14 +227,14 @@ final class ForumStructureTest extends TestCase
         $this->post('/forum/categories/'.$category->id.'/sections', $this->sectionData('Archived'))->assertRedirect();
         $section = ForumSection::query()->firstOrFail();
 
-        $this->delete('/forum/categories/'.$category->id, ['confirm' => '1'])->assertStatus(409);
+        $this->delete('/forum/categories/'.$category->id, ['confirm' => '1'])->assertSessionHasErrors('category');
         $this->delete('/forum/sections/'.$section->id, ['confirm' => '1'])->assertRedirect();
         $this->assertSoftDeleted('module_forum_sections', ['id' => $section->id]);
         $this->get('/forum/sections/'.$section->id)->assertNotFound();
 
         $this->delete('/forum/categories/'.$category->id, ['confirm' => '1'])->assertRedirect();
         $this->assertSoftDeleted('module_forum_categories', ['id' => $category->id]);
-        $this->post('/forum/trash/sections/'.$section->id)->assertStatus(409);
+        $this->post('/forum/trash/sections/'.$section->id)->assertSessionHasErrors('category');
         $this->post('/forum/trash/categories/'.$category->id)->assertRedirect();
         $this->post('/forum/trash/sections/'.$section->id)->assertRedirect();
         $this->get('/forum/sections/'.$section->id)->assertOk();

@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\Forum\Models\ForumCategory;
 use KaevCMS\Modules\Forum\Models\ForumSection;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 final class ForumStructure
 {
@@ -115,7 +114,7 @@ final class ForumStructure
         DB::transaction(static function () use ($category): void {
             $category = ForumCategory::query()->lockForUpdate()->findOrFail($category->id);
             if ($category->sections()->exists()) {
-                throw new ConflictHttpException(__('module-forum::messages.category_not_empty'));
+                throw ValidationException::withMessages(['category' => __('module-forum::messages.category_not_empty')]);
             }
 
             $category->delete();

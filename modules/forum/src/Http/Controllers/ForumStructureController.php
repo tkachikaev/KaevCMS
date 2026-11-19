@@ -13,7 +13,7 @@ use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Illuminate\Validation\ValidationException;
 
 final class ForumStructureController extends Controller
 {
@@ -153,7 +153,7 @@ final class ForumStructureController extends Controller
         $this->owner($request);
         $row = ForumSection::onlyTrashed()->findOrFail($section);
         if (! ForumCategory::query()->whereKey($row->category_id)->exists()) {
-            throw new ConflictHttpException(__('module-forum::messages.restore_category_first'));
+            throw ValidationException::withMessages(['category' => __('module-forum::messages.restore_category_first')]);
         }
         $row->restore();
         $this->audit($request, 'forum.section_restored', 'section #'.$section);
