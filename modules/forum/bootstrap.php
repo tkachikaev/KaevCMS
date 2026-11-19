@@ -29,4 +29,13 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [],
         manageRoles: [AdminRole::Owner],
     );
+
+    foreach (['settings.update', 'moderators.store', 'moderators.destroy'] as $action) {
+        $app->make(ModuleAdminAccessRegistry::class)->registerExact(
+            moduleId: $module->id,
+            routeName: 'admin.module-pages.forum.'.$action,
+            viewRoles: [],
+            manageRoles: [AdminRole::Owner],
+        );
+    }
 };
