@@ -25,7 +25,11 @@
                 @endif
                 <span class="forum-post-date">{{ $post->created_at->format('d.m.Y H:i') }}</span>
             </header>
-            <div class="forum-post-body">{{ $post->body_text }}</div>
+            @if($post->body_html !== null)
+                <div class="forum-post-body forum-post-rich">{!! app(\App\Services\Html\SafeHtmlSanitizer::class)->sanitize($post->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM) !!}</div>
+            @else
+                <div class="forum-post-body">{{ $post->body_text }}</div>
+            @endif
         </article>
     @endforeach
 </div>
@@ -36,10 +40,8 @@
         <form class="forum-compose" method="POST" action="{{ route('modules.forum.topics.reply', $topic) }}">
             @csrf
             <input type="hidden" name="submission_key" value="{{ old('submission_key', $submissionKey) }}">
-            <label class="forum-compose-field">
-                <span>{{ __('module-forum::messages.posting_as', ['name' => $actor->name()]) }}</span>
-                <textarea name="body" minlength="2" maxlength="10000" rows="6" required>{{ old('body') }}</textarea>
-            </label>
+            <p class="forum-posting-as">{{ __('module-forum::messages.posting_as', ['name' => $actor->name()]) }}</p>
+            @include('module-forum::partials.editor', ['editorId' => 'forum-reply-editor', 'rows' => 6])
             <div class="forum-dialog-actions">
                 <button class="forum-button forum-button-primary" type="submit">{{ __('module-forum::messages.send_reply') }}</button>
             </div>

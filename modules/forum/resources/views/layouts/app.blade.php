@@ -101,8 +101,49 @@
         .forum-reply-panel{margin-top:25px}
         .forum-read-only{background:#edf0f4;color:#788a9e;padding:12px 16px;border-radius:9px;font-size:13px;margin-top:24px}
         @media(max-width:650px){.forum-topic-row{flex-direction:column;align-items:flex-start}.forum-topic-stats{text-align:left}.forum-section-summary{text-align:left}.forum-post{padding:16px}.forum-post-date{margin-left:0}}
+
+        /* Forum-only presentation for the shared Tiptap editor; no admin styles imported. */
+        .forum-editor{border:1px solid #d9e1eb;border-radius:10px;background:#fff;overflow:hidden}
+        .forum-editor-toolbar{display:none;align-items:center;flex-wrap:wrap;gap:3px;padding:6px 8px;border-bottom:1px solid #e5eaf0;background:#f9fbfd}
+        .forum-editor-toolbar button,.forum-editor-toolbar select{height:30px;min-width:32px;padding:3px 7px;background:transparent;border:1px solid transparent;border-radius:6px;color:#49617c;font:inherit;font-size:13px;cursor:pointer}
+        .forum-editor-toolbar button:hover,.forum-editor-toolbar button.is-active{background:#e8eef5;border-color:#d5e0ec}
+        .forum-editor-toolbar button:focus-visible,.forum-editor-toolbar select:focus-visible{outline:2px solid #739cc4;outline-offset:1px}
+        .forum-editor-toolbar select{border-color:#dce5ee;min-width:94px;max-width:145px}
+        .forum-editor-divider{height:19px;width:1px;background:#dbe3ec;margin:0 3px}
+        .forum-editor-canvas{display:none;min-height:135px}
+        .forum-editor-canvas .tiptap{min-height:135px;padding:12px 14px;outline:none;overflow-wrap:anywhere}
+        .forum-editor-canvas .tiptap:focus-visible{box-shadow:inset 0 0 0 2px #aec6df}
+        .forum-editor-canvas .tiptap p{margin:0 0 .65em}
+        .forum-editor-canvas .tiptap p:last-child{margin-bottom:0}
+        .forum-editor-canvas .tiptap ul,.forum-editor-canvas .tiptap ol{padding-left:22px}
+        .forum-editor-canvas .tiptap blockquote{border-left:3px solid #9eb6ce;padding-left:12px;margin:12px 0;color:#62778f}
+        .forum-editor-canvas .tiptap pre{background:#edf1f6;padding:10px;border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere}
+        .forum-editor-canvas .tiptap a,.forum-post-rich a{text-decoration:underline;text-underline-offset:2px}
+        .forum-editor[data-editor-ready="1"] .forum-editor-toolbar{display:flex}
+        .forum-editor[data-editor-ready="1"] .forum-editor-canvas{display:block}
+        .forum-editor[data-editor-ready="1"] .forum-editor-fallback{display:none}
+        .forum-editor-fallback{padding:10px}
+        .forum-editor-fallback textarea{min-height:135px}
+        .forum-editor-status{display:block;padding:0 10px;color:#ad423b;font-size:12px}
+        .forum-editor-status:empty{display:none}
+        .forum-editor-link-dialog{padding:18px;border:1px solid #dce4ee;border-radius:12px;width:min(400px,calc(100% - 24px));color:#27374b;background:#fff}
+        .forum-editor-link-dialog::backdrop{background:rgba(19,38,58,.52)}
+        .forum-editor-link-dialog h3{font-size:16px;margin:0 0 14px}
+        .forum-editor-link-dialog label{display:grid;gap:7px;font-size:13px;color:#536982}
+        .forum-editor-link-dialog input{font:inherit;padding:9px;border:1px solid #ced8e3;border-radius:7px;width:100%}
+        .forum-posting-as{color:#74869a;font-size:12px;margin:0}
+        .forum-post-rich{white-space:normal}
+        .forum-post-rich p{margin:0 0 .8em}
+        .forum-post-rich p:last-child{margin-bottom:0}
+        .forum-post-rich ul,.forum-post-rich ol{padding-left:24px;margin:.4em 0}
+        .forum-post-rich blockquote{margin:12px 0;border-left:3px solid #9eb6ce;padding:5px 0 5px 12px;color:#576b82;background:#f8fafc}
+        .forum-post-rich pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f6;border-radius:7px;padding:12px}
+        .forum-post-rich code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.93em}
+        .forum-post-rich pre code{background:none}
     </style>
     <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>
+    {{-- Reuse the existing Tiptap bundle used by News and Pages. --}}
+    <script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ cms_version() }}" defer></script>
 </head>
 <body>
 <header class="forum-top">

@@ -21,11 +21,8 @@
             <span>{{ __('module-forum::messages.topic_title') }}</span>
             <input type="text" name="title" maxlength="160" minlength="3" required value="{{ old('title') }}">
         </label>
-        <label class="forum-compose-field">
-            <span>{{ __('module-forum::messages.message_text') }}</span>
-            <textarea name="body" rows="10" minlength="2" maxlength="10000" required>{{ old('body') }}</textarea>
-        </label>
-        <p class="forum-help">{{ __('module-forum::messages.plain_text_hint') }}</p>
+        @include('module-forum::partials.editor', ['editorId' => 'forum-topic-editor', 'rows' => 10])
+        <p class="forum-help">{{ __('module-forum::messages.rich_text_hint') }}</p>
         <div class="forum-dialog-actions">
             <a class="forum-button" href="{{ route('modules.forum.sections.show', $section) }}">{{ __('module-forum::messages.cancel') }}</a>
             <button class="forum-button forum-button-primary" type="submit">{{ __('module-forum::messages.publish_topic') }}</button>
