@@ -9,14 +9,14 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
 use App\Support\Modules\ModuleValidator;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Container\Container;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Bootstrap\LoadConfiguration;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Foundation\Bootstrap\RegisterFacades;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Routing\RedirectController;
 use Illuminate\Routing\Route as LaravelRoute;
@@ -170,7 +170,6 @@ final class ForumModuleTest extends TestCase
         $this->post('/forum/author', ['mode' => 'user'])->assertRedirect();
         $this->get('/forum')->assertSee($player->publicName());
     }
-
 
     public function test_forum_path_survives_compiled_core_route_cache(): void
     {

@@ -28,7 +28,6 @@ final class ForumPermissions
         };
     }
 
-
     /** @return list<string> Only query sections the current actor may read. */
     public function allowedViewRules(ForumActor $actor, string $globalVisibility = 'all'): array
     {
@@ -88,6 +87,7 @@ final class ForumPermissions
         if ($actor->isOwner()) {
             return true;
         }
+
         if ($actor->mode !== 'user' || $actor->user === null) {
             return false;
         }

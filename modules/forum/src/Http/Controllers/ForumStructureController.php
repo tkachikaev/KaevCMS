@@ -8,12 +8,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\Forum\Models\ForumCategory;
 use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
-use Illuminate\Validation\ValidationException;
 
 final class ForumStructureController extends Controller
 {
