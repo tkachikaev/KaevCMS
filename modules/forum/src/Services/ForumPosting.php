@@ -44,9 +44,10 @@ final class ForumPosting
             ForumCategory::query()->findOrFail($section->category_id);
             abort_unless($this->canStart($actor, $section), 403);
 
-            $existing = ForumTopic::query()->where('submission_key', $key)->first();
+            $existing = ForumTopic::withTrashed()->where('submission_key', $key)->first();
             if ($existing !== null) {
-                abort_unless($existing->section_id === $sectionId && $this->sameAuthor($existing, $actor), 409);
+                abort_unless($existing->deleted_at === null && $existing->hidden_at === null
+                    && (int) $existing->section_id === $sectionId && $this->sameAuthor($existing, $actor), 409);
 
                 return $existing;
             }
@@ -93,9 +94,10 @@ final class ForumPosting
 
             abort_unless((int) $topic->section_id === (int) $section->id && $this->canReply($actor, $topic, $section), 403);
 
-            $existing = ForumPost::query()->where('submission_key', $key)->first();
+            $existing = ForumPost::withTrashed()->where('submission_key', $key)->first();
             if ($existing !== null) {
-                abort_unless((int) $existing->topic_id === $topicId && $this->sameAuthor($existing, $actor), 409);
+                abort_unless($existing->deleted_at === null && (int) $existing->topic_id === $topicId
+                    && $this->sameAuthor($existing, $actor), 409);
 
                 return $existing;
             }
