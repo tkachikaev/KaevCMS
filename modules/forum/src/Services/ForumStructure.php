@@ -18,23 +18,23 @@ final class ForumStructure
     /** @return Collection<int, ForumCategory> */
     public function visibleCategories(ForumActor $actor, ForumPermissions $permissions): Collection
     {
-        $global = $this->globalVisibility();
-        if ($global === 'registered' && $actor->isGuest()) {
+        $rules = $permissions->allowedViewRules($actor, $this->globalVisibility());
+        if ($rules === []) {
             return new Collection;
         }
 
-        $categories = ForumCategory::query()
-            ->with(['sections' => static fn ($query) => $query->orderBy('position')->orderBy('id')])
-            ->orderBy('position')->orderBy('id')->get();
+        // Filter section visibility in SQL, not after eager-loading private rows.
+        $query = ForumCategory::query()
+            ->with(['sections' => static fn ($q) => $q
+                ->whereIn('view_rule', $rules)
+                ->orderBy('position')->orderBy('id')])
+            ->orderBy('position')->orderBy('id');
 
-        return $categories->filter(function (ForumCategory $category) use ($actor, $permissions, $global): bool {
-            $visible = $category->sections->filter(
-                static fn (ForumSection $section): bool => $permissions->canView($actor, $section, $global),
-            );
-            $category->setRelation('sections', $visible->values());
+        if (! $actor->isOwner()) {
+            $query->whereHas('sections', static fn ($q) => $q->whereIn('view_rule', $rules));
+        }
 
-            return $actor->isOwner() || $visible->isNotEmpty();
-        })->values();
+        return $query->get();
     }
 
     public function initialStructure(): bool

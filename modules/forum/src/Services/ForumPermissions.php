@@ -28,6 +28,21 @@ final class ForumPermissions
         };
     }
 
+
+    /** @return list<string> Only query sections the current actor may read. */
+    public function allowedViewRules(ForumActor $actor, string $globalVisibility = 'all'): array
+    {
+        if ($globalVisibility === 'registered' && $actor->isGuest()) {
+            return [];
+        }
+
+        if ($this->isModerator($actor)) {
+            return self::VIEWS;
+        }
+
+        return $actor->isGuest() ? ['all'] : ['all', 'registered'];
+    }
+
     public function canView(ForumActor $actor, ForumSection $section, string $globalVisibility = 'all'): bool
     {
         return $this->visibleTo($actor, $section->view_rule, $globalVisibility);
