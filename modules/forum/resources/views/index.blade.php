@@ -40,6 +40,7 @@
 
 @if($categories->isEmpty())
     <div class="forum-panel">
+        <div class="forum-panel-heading">{{ __('module-forum::messages.empty_title') }}</div>
         <div class="forum-panel-body">{{ __('module-forum::messages.empty_description') }}</div>
     </div>
 @else

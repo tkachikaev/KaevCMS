@@ -32,7 +32,51 @@
         .forum-tag{padding:2px 8px;background:#e8eef5;color:#405b79;border-radius:999px;font-size:11px}
         .forum-footer{margin:38px auto;color:#95a2b4;font-size:12px;text-align:center}
         @media(max-width:650px){.forum-top-inner{padding:14px 16px}.forum-body{padding:0 16px;margin:23px auto}.forum-heading h1{font-size:22px}}
+
+        .forum-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+        .forum-button-compact{padding:5px 9px;font-size:12px}
+        .forum-button-primary{background:#355b85;color:#fff;border-color:#355b85}
+        .forum-button-primary:hover{background:#294a70;color:#fff}
+        .forum-button-danger{color:#9b3131;border-color:#edc4c4}
+        .forum-notice{padding:12px 16px;border-radius:8px;background:#e6f4ec;color:#276044;margin:0 0 18px}
+        .forum-notice-error{background:#fff0ed;color:#993b2f}
+        .forum-notice-error p{margin:4px 0}
+        .forum-category{margin-bottom:24px}
+        .forum-category-heading{background:#e6ebf1;padding:13px 18px;border:1px solid #d8e0e9;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+        .forum-category-heading h2{margin:0;font-size:17px}
+        .forum-category-heading p{margin:3px 0 0;color:#74869a;font-size:12px}
+        .forum-category-heading+.forum-panel{border-radius:0 0 10px 10px;border-top:0}
+        .forum-section-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid #edf0f3}
+        .forum-section-row:last-child{border-bottom:0}
+        .forum-section-main{display:flex;align-items:center;gap:14px;min-width:0}
+        .forum-section-icon{background:#eaf1f8;color:#42698f;border-radius:9px;min-width:41px;height:41px;text-align:center;line-height:41px;font-size:21px}
+        .forum-section-title{font-size:15px;font-weight:670}
+        .forum-section-main p{color:#74869a;margin:3px 0 0;font-size:12px}
+        .forum-section-empty{font-size:12px;color:#97a4b3}
+        .forum-actor-switch{margin-top:28px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#657a91;font-size:13px}
+        .forum-identity{display:flex;align-items:center;gap:7px}
+        .forum-avatar{width:29px;height:29px;border-radius:50%;background:#e7edf5;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+        .forum-avatar img{width:100%;height:100%;object-fit:cover}
+        .forum-breadcrumb{display:flex;gap:9px;align-items:center;margin:0 0 20px;font-size:13px;color:#8b9aad}
+        .forum-trash-panel{margin-top:20px}
+        .forum-dialog{background:#fff;color:#26394f;border:1px solid #dce4ec;border-radius:14px;box-shadow:0 18px 75px rgba(13,32,52,.23);padding:25px 26px;max-width:630px;width:calc(100% - 28px);max-height:calc(100vh - 30px);overflow:auto}
+        .forum-dialog::backdrop{background:rgba(16,28,44,.52)}
+        .forum-dialog-small{max-width:440px}
+        .forum-dialog h2{font-size:20px;margin:0 0 18px}
+        .forum-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .forum-form-grid label,.forum-field{display:flex;flex-direction:column;gap:6px;color:#50657e;font-size:13px}
+        .forum-form-grid input,.forum-form-grid textarea,.forum-form-grid select,.forum-field select{width:100%;padding:9px 10px;border:1px solid #ced8e3;border-radius:8px;font:inherit;color:#26394f;background:#fff}
+        .forum-form-grid input:focus,.forum-form-grid textarea:focus,.forum-form-grid select:focus{outline:2px solid #739cc4;outline-offset:1px}
+        .forum-form-grid textarea{resize:vertical}
+        .forum-permissions{margin-top:16px;grid-template-columns:repeat(3,minmax(0,1fr))}
+        .forum-field{margin-top:14px}
+        .forum-help{color:#7e8c9e;font-size:12px;margin:9px 0 0}
+        .forum-confirm{display:flex;gap:9px;align-items:center;font-size:13px;color:#587089}
+        .forum-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+        .forum-seed{margin-bottom:20px}
+        @media(max-width:650px){.forum-section-row{align-items:flex-start;flex-direction:column}.forum-form-grid,.forum-permissions{grid-template-columns:1fr}.forum-dialog{padding:18px}.forum-tools{gap:4px}}
     </style>
+    <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>
 </head>
 <body>
 <header class="forum-top">
@@ -53,7 +97,7 @@
                 @if($actor->user)
                     <a href="{{ public_route('account') }}">{{ __('module-forum::messages.account') }}</a>
                 @endif
-                <span>{{ $actor->name() }}</span>
+                <span class="forum-identity">@if($actor->user)<x-account-avatar :user="$actor->user" :fallback="$actor->user->publicName()" class="forum-avatar" />@endif {{ $actor->name() }}</span>
                 @if($actor->label()) <span class="forum-tag">{{ $actor->label() }}</span> @endif
             @endif
             @if($actor->isOwner())
@@ -68,6 +112,7 @@
 </header>
 <main class="forum-body">
     @yield('content')
+    @include('module-forum::partials.actor-switch')
 </main>
 <footer class="forum-footer">{{ site_name() }} · {{ __('module-forum::messages.title') }}</footer>
 </body>
