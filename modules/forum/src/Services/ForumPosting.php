@@ -145,7 +145,7 @@ final class ForumPosting
         }
 
         $days = (int) DB::table('module_forum_settings')->where('id', 1)->value('links_after_days');
-        if ($days > 0 && $actor->user->created_at->copy()->addDays($days)->isFuture()
+        if ($days > 0 && ($actor->user->created_at === null || $actor->user->created_at->copy()->addDays($days)->isFuture())
             && preg_match('~(?:https?://|www\.|[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)~iu', $body) === 1) {
             throw ValidationException::withMessages([
                 $field => __('module-forum::messages.links_not_allowed', ['days' => $days]),
@@ -158,8 +158,8 @@ final class ForumPosting
     {
         return [
             'author_type' => $actor->mode,
-            'author_user_id' => $actor->user?->id,
-            'author_admin_id' => $actor->admin?->id,
+            'author_user_id' => $actor->user === null ? null : (int) $actor->user->getKey(),
+            'author_admin_id' => $actor->admin === null ? null : (int) $actor->admin->getKey(),
             'author_name' => (string) $actor->name(),
             'author_role' => $actor->mode === 'admin' ? 'administrator'
                 : ($this->permissions->isModerator($actor) ? 'moderator' : null),
