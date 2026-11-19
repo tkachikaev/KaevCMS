@@ -21,6 +21,6 @@ return [
     'author' => 'Post as',
     'switch' => 'Select',
     'no_author' => 'Sign in to participate.',
-    'settings_pending' => 'Access rules, moderators, and link settings will arrive in stage F6.',
+    'settings_pending' => 'Access rules, moderators, and link settings will arrive in future updates.',
     'back_to_forum' => 'Open forum',
 ];
