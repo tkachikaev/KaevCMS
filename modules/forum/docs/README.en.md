@@ -93,6 +93,18 @@ Rights use the current authenticated identity. The **Owner** can manage all topi
 
 F8 adds no migrations or dependencies. Updating forum 0.6.0 to 0.7.0 only requires the usual module file update; any outstanding F7 migration still needs to be applied.
 
+## Appearance and usability
+
+Starting with version **0.8.0**, the forum follows the CMS public theme: the built-in Dark theme uses dark colors, while Kaev Aurelia uses the site's existing saved light/dark preference. There is no separate forum appearance setting. Navigation, search, forms and the editor adapt to narrower screens. Keyboard focus indicators and a **Skip to content** link improve navigation.
+
+Deleting a post or an entire topic now requires **two deliberate actions**: opening the confirmation and submitting **Confirm deletion**. These are ordinary HTML forms, so confirmation works without JavaScript. The server continues to enforce authorization regardless of UI controls.
+
+## Additional write safeguards
+
+When creating topics, replying or editing text, the current link-posting policy is rechecked under a database row lock before committing the content. Moderator assignments are likewise revalidated under a write lock, so a revoked assignment cannot be used for an in-flight change based on stale permissions. Existing storage and counters remain in use; no separate search database is introduced.
+
+Version 0.8.0 adds **no new database migrations**. If the F7 revision-history migration (\`2026_11_20_000400_create_module_forum_post_revisions.php\`) has not yet been applied, apply it under **Administration → Modules**. Keep the CMS scheduler running to purge expired revisions.
+
 ## Current limitations
 
-Version 0.7.0 includes topic moderation, moving, search and recovery. Concurrency testing, additional security regressions and counter consistency on MySQL/MariaDB remain for the next stage.
+Version 0.8.0 includes the planned forum functionality. Before public deployment, run local PHPUnit, Pint, PHPStan, Playwright and genuine concurrent checks on an isolated MySQL/MariaDB instance. For larger forums, inspect query plans and latency for the text search. Do not run destructive checks against live game databases.

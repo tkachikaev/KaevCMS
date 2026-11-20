@@ -2,6 +2,10 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.8.0 (F9/F10): revalidate link-age rules and moderator assignments under write transaction locks; add regression tests for permissions, topic visibility, counter consistency, archive moves and search pagination.
+- Forum presentation now follows the built-in Dark public theme or Kaev Aurelia's saved color scheme. Added responsive and keyboard-accessible navigation, a compact styled search form and two-step deletion confirmation without JavaScript.
+- Added focused Playwright scenarios for appearance, mobile layout and the player compose/edit/delete flow. Browser fixture enables the forum on an isolated test database. No new migrations or dependencies.
+
 - Forum 0.7.0 (F8): close/reopen, pin/unpin, hide/show, soft-delete/restore and move topics between sections, including the regular read-only Archive. Moderators cannot change CMS staff or other moderators' topics, nor indirectly hide protected replies. Moving to a more public section requires explicit Owner approval.
 - Added SQL-filtered searches over titles and current post text, excluding unreadable, hidden, deleted and historical content, plus a restricted moderation queue. Reuses the forum UI and existing schema without new dependencies or migrations; added role, access and recovery regression tests.
 
