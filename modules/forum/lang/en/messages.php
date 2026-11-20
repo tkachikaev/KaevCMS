@@ -195,4 +195,12 @@ return [
     'moderator_remove_title' => 'Remove moderator?',
     'moderator_remove_text' => 'This user will lose forum moderator rights:',
     'moderator_remove_confirm' => 'Yes, remove',
+    'topic_author' => 'Topic author',
+    'author_posts' => 'Posts:',
+    'author_joined' => 'Member since',
+    'post_link' => 'Link to post #:number',
+    'post_link_copied' => 'Link copied',
+    'quote_post' => 'Quote',
+    'reply_to_post' => 'Reply',
+    'quote_wrote' => 'wrote:',
 ];

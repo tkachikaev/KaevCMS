@@ -195,4 +195,12 @@ return [
     'moderator_remove_title' => 'Снять модератора?',
     'moderator_remove_text' => 'Пользователь потеряет права модератора на форуме:',
     'moderator_remove_confirm' => 'Да, снять',
+    'topic_author' => 'Автор темы',
+    'author_posts' => 'Сообщений:',
+    'author_joined' => 'На форуме с',
+    'post_link' => 'Ссылка на сообщение #:number',
+    'post_link_copied' => 'Ссылка скопирована',
+    'quote_post' => 'Цитировать',
+    'reply_to_post' => 'Ответить',
+    'quote_wrote' => 'пишет:',
 ];

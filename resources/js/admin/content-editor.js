@@ -352,6 +352,14 @@ const initializeRichEditor = (root, signal) => {
 
     root.dataset.editorReady = '1';
 
+    // Lets page scripts append content (for example a forum quote) through the editor schema.
+    root.addEventListener('rich-editor:insert', (event) => {
+        const html = event.detail?.html;
+        if (typeof html === 'string' && html !== '') {
+            editor.chain().focus('end').insertContent(html).run();
+        }
+    }, { signal });
+
     const syncSource = () => {
         const html = editor.getHTML();
         source.value = html === '<p></p>' ? '' : html;

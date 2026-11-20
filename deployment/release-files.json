@@ -748,6 +748,7 @@
         "public/assets/modules/forum/editor.js",
         "public/assets/modules/forum/scheme.js",
         "public/assets/modules/forum/structure.js",
+        "public/assets/modules/forum/topic.js",
         "public/assets/modules/freekassa.png",
         "public/assets/modules/news-comments-admin.css",
         "public/assets/modules/news-comments-admin.js",
