@@ -78,6 +78,7 @@ final class ForumPostChanges
                 return false;
             }
 
+            $this->posting->assertCurrentContentPolicy($actor, $text, $safeHtml);
             $this->snapshot($post, $actor, 'edited');
             $post->forceFill([
                 'body_text' => $text,

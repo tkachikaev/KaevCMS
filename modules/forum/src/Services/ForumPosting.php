@@ -53,6 +53,10 @@ final class ForumPosting
                 return $existing;
             }
 
+            // F9: enforce current link-age and account policy under the same
+            // transaction as the insert. The settings row is held until commit.
+            $this->assertCurrentContentPolicy($actor, $body, $bodyHtml, $title);
+
             $author = $this->author($actor);
             $date = now();
             $topic = ForumTopic::query()->create([
@@ -102,6 +106,8 @@ final class ForumPosting
 
                 return $existing;
             }
+
+            $this->assertCurrentContentPolicy($actor, $body, $bodyHtml);
 
             $author = $this->author($actor);
             $date = now();
@@ -156,6 +162,33 @@ final class ForumPosting
         return [$text, $safeHtml];
     }
 
+    /**
+     * Recheck content against the latest committed settings while holding the
+     * settings row lock through the write transaction. Call only inside a
+     * database transaction, after locking the section/topic as appropriate.
+     */
+    public function assertCurrentContentPolicy(
+        ForumActor $actor,
+        string $body,
+        ?string $bodyHtml = null,
+        ?string $title = null,
+    ): void {
+        $settings = DB::table('module_forum_settings')->where('id', 1)->lockForUpdate()->first();
+        abort_if($settings === null, 503);
+
+        $days = (int) $settings->links_after_days;
+        $this->assertAuthor($actor);
+
+        if ($title !== null) {
+            $this->assertContent($actor, $title, 'title', $days);
+        }
+
+        $this->assertContent($actor, $body, 'body', $days);
+        if ($bodyHtml !== null) {
+            $this->assertContent($actor, $bodyHtml, 'body', $days);
+        }
+    }
+
     private function assertAuthor(ForumActor $actor): void
     {
         abort_if($actor->isGuest(), 403);
@@ -170,7 +203,7 @@ final class ForumPosting
         }
     }
 
-    private function assertContent(ForumActor $actor, string $body, string $field = 'body'): void
+    private function assertContent(ForumActor $actor, string $body, string $field = 'body', ?int $days = null): void
     {
         if (trim($body) === '') {
             throw ValidationException::withMessages([$field => __('module-forum::messages.body_required')]);
@@ -180,7 +213,7 @@ final class ForumPosting
             return;
         }
 
-        $days = (int) DB::table('module_forum_settings')->where('id', 1)->value('links_after_days');
+        $days ??= (int) DB::table('module_forum_settings')->where('id', 1)->value('links_after_days');
         if ($days > 0 && ($actor->user->created_at === null || $actor->user->created_at->copy()->addDays($days)->isFuture())
             && preg_match('~(?:https?://|www\.|[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)~iu', $body) === 1) {
             throw ValidationException::withMessages([

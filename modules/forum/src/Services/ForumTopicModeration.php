@@ -112,7 +112,7 @@ final class ForumTopicModeration
 
             // Hiding or deleting the whole topic also hides every reply.
             // A forum moderator must not indirectly suppress CMS staff posts.
-            if (! $actor->isOwner() && in_array($action, ['hide', 'delete'], true)
+            if (! $actor->isOwner() && in_array($action, ['hide', 'unhide', 'delete', 'restore'], true)
                 && $this->containsProtectedReplies($topic, $actor)) {
                 abort(403);
             }
