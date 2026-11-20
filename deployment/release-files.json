@@ -743,6 +743,8 @@
         "public/assets/modules/donations-exchange.js",
         "public/assets/modules/donations-player.css",
         "public/assets/modules/donations-player.js",
+        "public/assets/modules/forum/admin.css",
+        "public/assets/modules/forum/admin.js",
         "public/assets/modules/forum/editor.js",
         "public/assets/modules/forum/scheme.js",
         "public/assets/modules/forum/structure.js",
