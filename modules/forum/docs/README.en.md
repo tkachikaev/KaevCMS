@@ -75,6 +75,24 @@ Version **0.6.0** lets authors edit their own posts without a time limit using *
 
 When upgrading from **0.5.0** to **0.6.0**, apply the new forum migration under **Administration → Modules**. Existing migrations and posts are preserved.
 
+## Topic moderation and search
+
+Version **0.7.0** lets the Owner and assigned forum moderators manage discussions directly from the topic page under **Manage topic**:
+
+- **Close/reopen:** closed topics remain readable, but ordinary replies are blocked.
+- **Pin/unpin:** pinned topics appear first in section listings.
+- **Move:** choose an existing section. The regular **Archive** section is read-only, not a special topic state. All posts retain their IDs.
+- **Hide/show:** a hidden topic is removed from ordinary section lists, search and counts. Authorized moderators can preview it via its direct URL and show it again.
+- **Delete:** soft-deletes a topic while preserving all its messages. Use **Hidden and deleted topics** in the section to restore deleted discussions or unhide topics. Restoring a topic that was also hidden does not automatically publish it.
+
+Rights use the current authenticated identity. The **Owner** can manage all topics. Forum moderators can manage ordinary player topics and their own topics, not topics authored by CMS administrators or other moderators. They cannot indirectly suppress protected staff replies by hiding or deleting a whole discussion. Every action is written to the standard audit log without storing post text.
+
+**Moving a private discussion into a public section** is not permitted for moderators. The Owner must explicitly acknowledge the change of readership. Moving to a more restrictive section may make a topic inaccessible to ordinary readers; moderators cannot hide protected staff replies by such a move.
+
+**Search** is available in the forum header. It searches current topic titles and post text using 2–80 characters. Results respect forum-wide and per-section visibility, exclude hidden/deleted topics, removed messages and historical revisions, and are paginated with request rate limits.
+
+F8 adds no migrations or dependencies. Updating forum 0.6.0 to 0.7.0 only requires the usual module file update; any outstanding F7 migration still needs to be applied.
+
 ## Current limitations
 
-Version 0.6.0 includes editing, deletion, private revision history and cleanup. Topic closing/moving/pinning and search are planned for later releases.
+Version 0.7.0 includes topic moderation, moving, search and recovery. Concurrency testing, additional security regressions and counter consistency on MySQL/MariaDB remain for the next stage.

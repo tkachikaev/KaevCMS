@@ -46,6 +46,7 @@ final class ForumModerationController extends Controller
     public function action(Request $request, int $topic, string $action): RedirectResponse
     {
         $actor = $this->actors->resolve($request);
+        abort_unless($this->moderation->isStaff($actor), 403);
         $result = $this->moderation->change($actor, $topic, $action);
         $targetRoute = $result['public']
             ? route('modules.forum.topics.show', $topic)
@@ -58,6 +59,7 @@ final class ForumModerationController extends Controller
     public function move(Request $request, int $topic): RedirectResponse
     {
         $actor = $this->actors->resolve($request);
+        abort_unless($this->moderation->isStaff($actor), 403);
         $data = $request->validate([
             'section_id' => ['required', 'integer', 'min:1'],
             'confirm_exposure' => ['sometimes', 'boolean'],

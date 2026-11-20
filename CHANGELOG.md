@@ -2,6 +2,9 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.7.0 (F8): close/reopen, pin/unpin, hide/show, soft-delete/restore and move topics between sections, including the regular read-only Archive. Moderators cannot change CMS staff or other moderators' topics, nor indirectly hide protected replies. Moving to a more public section requires explicit Owner approval.
+- Added SQL-filtered searches over titles and current post text, excluding unreadable, hidden, deleted and historical content, plus a restricted moderation queue. Reuses the forum UI and existing schema without new dependencies or migrations; added role, access and recovery regression tests.
+
 - Forum 0.6.0: users can edit or delete their messages while preserving replies and post anchors; edits show a discreet label and deletions use localized placeholders. Owner and moderators can moderate permitted posts, while CMS staff and moderators' posts are protected from other moderators.
 - Previous revisions remain private for 30 days; the CMS core scheduler purges expired records even when the forum is disabled. Stale-edit checks, sanitizer reuse, audit events and regression tests are included. Added a new module migration; no dependencies changed.
 
