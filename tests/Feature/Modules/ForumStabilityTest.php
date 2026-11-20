@@ -32,6 +32,36 @@ final class ForumStabilityTest extends TestCase
         app(ModuleRuntime::class)->bootModule($module);
     }
 
+    public function test_settings_row_is_locked_before_section_during_topic_creation(): void
+    {
+        $queries = [];
+        DB::listen(static function ($event) use (&$queries): void {
+            $queries[] = strtolower($event->sql);
+        });
+
+        $writer = User::factory()->create();
+        $this->createTopic($writer, 'Consistent lock ordering');
+
+        // Exclude the preflight value('links_after_days') query: only the
+        // transactional SELECT * locks the singleton row.
+        $settingsIndex = null;
+        $sectionIndex = null;
+        foreach ($queries as $index => $sql) {
+            if ($settingsIndex === null && str_contains($sql, 'select *')
+                && str_contains($sql, 'module_forum_settings')) {
+                $settingsIndex = $index;
+            }
+            if ($sectionIndex === null && str_contains($sql, 'select *')
+                && str_contains($sql, 'module_forum_sections')) {
+                $sectionIndex = $index;
+            }
+        }
+
+        $this->assertNotNull($settingsIndex, 'Missing write-locked forum settings query.');
+        $this->assertNotNull($sectionIndex, 'Missing write-locked forum section query.');
+        $this->assertLessThan($sectionIndex, $settingsIndex);
+    }
+
     public function test_link_age_policy_cannot_change_between_validation_and_insert(): void
     {
         $player = User::factory()->create();
