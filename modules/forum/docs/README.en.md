@@ -57,7 +57,7 @@ If the CMS requires verified email addresses, unverified players cannot post. Th
 
 The Owner manages the forum under **Administration → Modules → Forum → Settings**:
 
-- **Forum visibility:** everyone (including guests) or registered users only. This restricts section lists and direct topic links; per-section permissions still apply.
+- **Forum access:** open to everyone (guests read the sections that allow it) or registered users only. This restricts section lists and direct topic links; per-section permissions still apply.
 - **Days before links are allowed:** an integer from 0 to 3650. A value of 0 permits links immediately. The restriction applies to ordinary players, not the Owner or forum moderators.
 - **Moderators:** search for an existing user by public name, email address or exact user ID, then choose **Assign**. Search results are limited to 20 active users; the user database is not listed without a query. Use the current moderators list to remove a moderator. Inactive accounts cannot be assigned; previously assigned inactive accounts can still be removed.
 
