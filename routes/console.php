@@ -49,3 +49,8 @@ Schedule::command('kaevcms:news-media-clean --hours=24')
 Schedule::command('kaevcms:page-media-clean --hours=24')
     ->dailyAt('04:20')
     ->withoutOverlapping();
+
+// Scheduled by the CMS core, even when the forum module is disabled.
+Schedule::command('kaevcms:forum-revisions-clean --batch=1000')
+    ->hourlyAt(25)
+    ->withoutOverlapping();

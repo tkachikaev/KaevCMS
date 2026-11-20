@@ -16,7 +16,11 @@ final class ForumPost extends Model
 
     protected function casts(): array
     {
-        return ['edited_at' => 'datetime'];
+        return [
+            'edited_at' => 'datetime',
+            'removed_at' => 'datetime',
+            'edit_version' => 'integer',
+        ];
     }
 
     public function topic(): BelongsTo

@@ -127,7 +127,7 @@ final class ForumPosting
     /**
      * @return array{0:string, 1:string|null}
      */
-    private function prepareBody(ForumActor $actor, string $plain, ?string $html): array
+    public function prepareBody(ForumActor $actor, string $plain, ?string $html): array
     {
         if ($html === null || trim($html) === '') {
             $plain = trim($plain);
