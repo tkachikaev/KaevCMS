@@ -1,5 +1,7 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" dir="{{ locale_direction() }}">
+<html lang="{{ app()->getLocale() }}" dir="{{ locale_direction() }}"
+      data-forum-theme="{{ app(\App\Support\Themes\ThemeManager::class)->name() }}"
+      data-forum-scheme="{{ app(\App\Support\Themes\ThemeManager::class)->name() === 'default' ? 'dark' : 'light' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,6 +10,7 @@
     @if(site_favicon_url())
         <link rel="icon" href="{{ site_favicon_url() }}">
     @endif
+    <script src="{{ asset('assets/modules/forum/scheme.js') }}?v={{ cms_version() }}"></script>
     <style>
         @font-face{font-family:Inter;src:url("{{ asset('assets/admin/fonts/inter-variable.woff2') }}") format("woff2");font-display:swap}
         :root{font-family:Inter,system-ui,sans-serif;color:#27374b;background:#f3f5f8}
@@ -153,11 +156,110 @@
         .forum-post-rich pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f6;border-radius:7px;padding:12px}
         .forum-post-rich code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.93em}
         .forum-post-rich pre code{background:none}
+
+        /* F10: reusable forum controls follow the same spacing and typography. */
+        .forum-skip-link{position:absolute;left:12px;top:-80px;z-index:100;padding:9px 14px;background:#fff;color:#27374b;border:2px solid #739cc4;border-radius:8px}
+        .forum-skip-link:focus-visible{top:12px}
+        :where(.forum-body,.forum-top) :where(a,button,input,textarea,select,summary):focus-visible{outline:2px solid #6396cd;outline-offset:3px}
+        .forum-brand{min-width:0}
+        .forum-brand span{overflow-wrap:anywhere}
+        .forum-breadcrumb{flex-wrap:wrap;overflow-wrap:anywhere}
+        .forum-topic-main{min-width:0;flex:1}
+        .forum-search-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;padding:18px 20px;margin:0 0 18px}
+        .forum-search-form label{grid-column:1/-1;margin-bottom:-4px;color:#657a91;font-size:13px}
+        .forum-search-form input{width:100%;min-width:0;padding:10px 12px;border:1px solid #ced8e3;border-radius:8px;font:inherit;color:#27374b;background:#fff}
+        .forum-inline-confirm{position:relative;min-width:0}
+        .forum-inline-confirm summary{list-style:none;width:max-content;max-width:100%;user-select:none}
+        .forum-inline-confirm summary::-webkit-details-marker{display:none}
+        .forum-confirm-content{display:grid;justify-items:start;gap:10px;max-width:330px;margin-top:8px;padding:12px 14px;border:1px solid #edc4c4;border-radius:9px;background:#fffafa;color:#823b3b;font-size:13px}
+        .forum-confirm-content p{margin:0;line-height:1.5}
+        .forum-section-row:focus-within,.forum-topic-row:focus-within{background:rgba(53,91,133,.035)}
+        .forum-topic-row .forum-tag{display:inline-block;margin:0 0 0 7px;vertical-align:middle}
+        .forum-actions a[aria-current="page"]{font-weight:700;text-decoration:underline;text-underline-offset:4px}
+        .forum-footer{padding:0 16px 24px}
+        @media(max-width:650px){
+            .forum-top-inner{gap:12px;align-items:flex-start}
+            .forum-brand{font-size:19px}
+            .forum-brand img{max-width:132px;max-height:40px}
+            .forum-actions{width:100%;gap:9px 15px;justify-content:flex-start}
+            .forum-actions .forum-identity{max-width:100%;overflow-wrap:anywhere}
+            .forum-search-form{grid-template-columns:1fr;padding:15px}
+            .forum-search-form label{grid-column:auto}
+            .forum-search-form button{justify-self:start}
+            .forum-move-form{display:grid;grid-template-columns:minmax(0,1fr)}
+            .forum-move-form select{width:100%;min-width:0}
+            .forum-dialog-actions{flex-wrap:wrap}
+            .forum-confirm-content{max-width:100%}
+        }
+        @media(max-width:390px){.forum-body{padding:0 12px}.forum-brand{gap:7px}.forum-top-inner{padding:12px}.forum-topic-row{padding:14px}.forum-panel-heading{padding:12px 15px}}
+
+        /* The default CMS public theme is dark. Aurelia uses its own saved
+           kaevcms.site.scheme choice, loaded before paint by forum/scheme.js. */
+        :root[data-forum-scheme="dark"]{color-scheme:dark;color:#e0e8f1;background:#0e141c}
+        :root[data-forum-scheme="dark"] a{color:#a3c6ec}
+        :root[data-forum-scheme="dark"] .forum-brand{color:#eff3f8}
+        :root[data-forum-scheme="dark"] .forum-top{background:#151f2a;border-bottom-color:#2a3949}
+        :root[data-forum-scheme="dark"] .forum-panel,
+        :root[data-forum-scheme="dark"] .forum-dialog{background:#192430;border-color:#324252;color:#e2e8f0;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+        :root[data-forum-scheme="dark"] .forum-panel-heading,
+        :root[data-forum-scheme="dark"] .forum-category-heading{background:#202d3c;border-color:#34465a;color:#e4eaf3}
+        :root[data-forum-scheme="dark"] .forum-category-heading h2{color:#e5edf5}
+        :root[data-forum-scheme="dark"] .forum-section-row,
+        :root[data-forum-scheme="dark"] .forum-topic-row,
+        :root[data-forum-scheme="dark"] .forum-post{border-bottom-color:#304052}
+        :root[data-forum-scheme="dark"] .forum-button,
+        :root[data-forum-scheme="dark"] .forum-pagination a,
+        :root[data-forum-scheme="dark"] .forum-pagination strong{background:#25364a;border-color:#3b5066;color:#d5e6f9}
+        :root[data-forum-scheme="dark"] .forum-button:hover{background:#30455f}
+        :root[data-forum-scheme="dark"] .forum-button-primary{background:#416c9e;border-color:#537fab;color:#fff}
+        :root[data-forum-scheme="dark"] .forum-button-primary:hover{background:#5480b3}
+        :root[data-forum-scheme="dark"] .forum-button-danger{color:#f0aaa5;border-color:#86575b}
+        :root[data-forum-scheme="dark"] .forum-tag{background:#2e4057;color:#c9d9ee}
+        :root[data-forum-scheme="dark"] .forum-section-icon{background:#283b51;color:#b8d5f3}
+        :root[data-forum-scheme="dark"] .forum-panel-body,
+        :root[data-forum-scheme="dark"] .forum-post-body{color:#dbe4ee}
+        :root[data-forum-scheme="dark"] .forum-desc,
+        :root[data-forum-scheme="dark"] .forum-help,
+        :root[data-forum-scheme="dark"] .forum-post-date,
+        :root[data-forum-scheme="dark"] .forum-topic-meta,
+        :root[data-forum-scheme="dark"] .forum-topic-stats,
+        :root[data-forum-scheme="dark"] .forum-section-summary,
+        :root[data-forum-scheme="dark"] .forum-breadcrumb,
+        :root[data-forum-scheme="dark"] .forum-actor-switch,
+        :root[data-forum-scheme="dark"] .forum-post-edited,
+        :root[data-forum-scheme="dark"] .forum-posting-as,
+        :root[data-forum-scheme="dark"] .forum-footer{color:#9dabbc}
+        :root[data-forum-scheme="dark"] .forum-form-grid label,
+        :root[data-forum-scheme="dark"] .forum-compose-field,
+        :root[data-forum-scheme="dark"] .forum-search-form label,
+        :root[data-forum-scheme="dark"] .forum-move-form label{color:#b9c7d6}
+        :root[data-forum-scheme="dark"] :where(.forum-form-grid,.forum-compose-field,.forum-search-form,.forum-move-form) :where(input,textarea,select),
+        :root[data-forum-scheme="dark"] .forum-editor-link-dialog input{background:#121b26;border-color:#3a4e63;color:#e2eaf3}
+        :root[data-forum-scheme="dark"] .forum-editor,
+        :root[data-forum-scheme="dark"] .forum-editor-link-dialog{background:#172332;border-color:#37495d;color:#e2eaf3}
+        :root[data-forum-scheme="dark"] .forum-editor-toolbar{background:#202e3f;border-color:#3b4d63}
+        :root[data-forum-scheme="dark"] .forum-editor-toolbar button,
+        :root[data-forum-scheme="dark"] .forum-editor-toolbar select{color:#d7e4f2}
+        :root[data-forum-scheme="dark"] .forum-editor-toolbar button:hover,
+        :root[data-forum-scheme="dark"] .forum-editor-toolbar button.is-active{background:#31445c;border-color:#47627e}
+        :root[data-forum-scheme="dark"] .forum-editor-canvas .tiptap,
+        :root[data-forum-scheme="dark"] .forum-editor-link-dialog label{color:#dce6f0}
+        :root[data-forum-scheme="dark"] .forum-editor-canvas .tiptap pre,
+        :root[data-forum-scheme="dark"] .forum-post-rich pre,
+        :root[data-forum-scheme="dark"] .forum-post-rich blockquote{background:#222f40;color:#d5e3f2}
+        :root[data-forum-scheme="dark"] .forum-confirm-content{background:#30252a;border-color:#86575b;color:#f5bdba}
+        :root[data-forum-scheme="dark"] .forum-notice{background:#1c392e;color:#a9dfc0}
+        :root[data-forum-scheme="dark"] .forum-notice-error{background:#422b2d;color:#f3b8b4}
+        :root[data-forum-scheme="dark"] .forum-notice-warning{background:#4b3c24;color:#f4d89d}
+        :root[data-forum-scheme="dark"] .forum-read-only{background:#263448;color:#b2c4d9}
+        :root[data-forum-scheme="dark"] .forum-pagination strong{background:#355372}
+        :root[data-forum-scheme="dark"] .forum-skip-link{background:#25364a;color:#fff;border-color:#6a9ad0}
     </style>
     <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>
     @stack('forum-editor-scripts')
 </head>
 <body>
+<a class="forum-skip-link" href="#forum-main">{{ __('module-forum::messages.skip_to_content') }}</a>
 <header class="forum-top">
     <div class="forum-top-inner">
         <a class="forum-brand" href="{{ route('modules.forum.index') }}">
@@ -185,12 +287,12 @@
                     {{ __('module-forum::messages.settings_link') }}
                 </a>
             @endif
-            <a href="{{ route('language.switch', ['locale' => 'ru']) }}">RU</a>
-            <a href="{{ route('language.switch', ['locale' => 'en']) }}">EN</a>
+            <a lang="ru" href="{{ route('language.switch', ['locale' => 'ru']) }}" @if(app()->getLocale() === 'ru') aria-current="page" @endif>RU</a>
+            <a lang="en" href="{{ route('language.switch', ['locale' => 'en']) }}" @if(app()->getLocale() === 'en') aria-current="page" @endif>EN</a>
         </nav>
     </div>
 </header>
-<main class="forum-body">
+<main class="forum-body" id="forum-main" tabindex="-1">
     @yield('content')
     @include('module-forum::partials.actor-switch')
 </main>
