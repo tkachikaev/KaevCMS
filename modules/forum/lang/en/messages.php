@@ -6,6 +6,7 @@ return [
     'settings' => 'Forum settings',
     'settings_description' => 'Forum settings and moderators',
     'title' => 'Forum',
+    'brand_subtitle' => 'Community',
     'empty_title' => 'Forum installed',
     'empty_description' => 'No sections are currently available.',
     'administrator' => 'Administrator',

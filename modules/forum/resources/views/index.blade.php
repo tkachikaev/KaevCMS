@@ -57,7 +57,12 @@
                 @forelse($category->sections as $section)
                     <div class="forum-section-row">
                         <div class="forum-section-main">
-                            <span class="forum-section-icon" aria-hidden="true">▤</span>
+                            <span class="forum-section-icon" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round">
+                                    <path d="M20 13a3 3 0 0 1-3 3H9l-5 4v-4.8A3 3 0 0 1 3 13V6a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3z"/>
+                                    <path d="M7.5 7.5h8m-8 4h5"/>
+                                </svg>
+                            </span>
                             <div>
                                 <a class="forum-section-title" href="{{ route('modules.forum.sections.show', $section) }}">{{ $section->label() }}</a>
                                 @if($section->description())<p>{{ $section->description() }}</p>@endif

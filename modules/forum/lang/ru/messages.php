@@ -6,6 +6,7 @@ return [
     'settings' => 'Форум — настройки',
     'settings_description' => 'Настройки и модераторы форума',
     'title' => 'Форум',
+    'brand_subtitle' => 'Сообщество',
     'empty_title' => 'Форум установлен',
     'empty_description' => 'На форуме пока нет доступных разделов.',
     'administrator' => 'Администратор',
