@@ -71,6 +71,11 @@ class BrowserTestSeederTest extends TestCase
             'amount' => 1000000,
         ]);
         $this->assertDatabaseHas('cms_modules', [
+            'id' => 'forum',
+            'enabled' => true,
+        ]);
+        $this->assertDatabaseHas('module_forum_sections', ['name_ru' => 'Общее общение']);
+        $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
             'enabled' => true,
         ]);
