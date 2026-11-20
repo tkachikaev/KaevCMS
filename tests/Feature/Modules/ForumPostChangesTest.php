@@ -279,6 +279,29 @@ final class ForumPostChangesTest extends TestCase
         $this->assertSame('Current published version', $post->fresh()->body_text);
     }
 
+
+    public function test_cleanup_drains_every_expired_revision_even_when_batch_is_one(): void
+    {
+        $author = User::factory()->create();
+        $post = $this->createPost($author, 'First version');
+        $this->asPlayer($author);
+
+        foreach (['Second version', 'Third version', 'Fourth version'] as $index => $body) {
+            $this->patch('/forum/posts/'.$post->id, [
+                'body' => $body,
+                'version' => $index,
+            ])->assertRedirect();
+        }
+
+        $this->assertDatabaseCount('module_forum_post_revisions', 3);
+        $this->travel(31)->days();
+        app(ModuleManager::class)->disable('forum');
+
+        $this->artisan('kaevcms:forum-revisions-clean', ['--batch' => 1])->assertExitCode(0);
+        $this->assertDatabaseCount('module_forum_post_revisions', 0);
+        $this->assertSame('Fourth version', $post->fresh()->body_text);
+    }
+
     private function createPost(User|Admin $author, string $text, string $title = 'Editable topic'): ForumPost
     {
         $actor = $author instanceof Admin

@@ -26,15 +26,24 @@ final class CleanupForumRevisionsCommand extends Command
             return self::SUCCESS;
         }
 
-        $ids = DB::table('module_forum_post_revisions')
-            ->where('expires_at', '<=', now())
-            ->orderBy('expires_at')->orderBy('id')
-            ->limit($batch)
-            ->pluck('id');
+        $total = 0;
+        do {
+            $ids = DB::table('module_forum_post_revisions')
+                ->where('expires_at', '<=', now())
+                ->orderBy('expires_at')->orderBy('id')
+                ->limit($batch)
+                ->pluck('id');
 
-        if ($ids->isNotEmpty()) {
+            if ($ids->isEmpty()) {
+                break;
+            }
+
             $deleted = DB::table('module_forum_post_revisions')->whereIn('id', $ids)->delete();
-            $this->info('Expired forum revisions deleted: '.$deleted);
+            $total += $deleted;
+        } while ($deleted > 0 && $ids->count() === $batch);
+
+        if ($total > 0) {
+            $this->info('Expired forum revisions deleted: '.$total);
         }
 
         return self::SUCCESS;
