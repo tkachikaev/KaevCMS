@@ -36,12 +36,20 @@
                     $topic->hidden_at !== null ? 'unhide' : 'hide',
                     'delete',
                 ] as $action)
-                    <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => $action]) }}">
-                        @csrf
-                        <button type="submit" @class(['forum-button', 'forum-button-compact', 'forum-button-danger' => $action === 'delete'])>
-                            {{ __('module-forum::messages.action_'.$action) }}
-                        </button>
-                    </form>
+                    @if($action === 'delete')
+                        @include('module-forum::partials.confirm-action', [
+                            'action' => route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => 'delete']),
+                            'label' => __('module-forum::messages.action_delete'),
+                            'question' => __('module-forum::messages.confirm_delete_topic'),
+                        ])
+                    @else
+                        <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => $action]) }}">
+                            @csrf
+                            <button type="submit" class="forum-button forum-button-compact">
+                                {{ __('module-forum::messages.action_'.$action) }}
+                            </button>
+                        </form>
+                    @endif
                 @endforeach
             </div>
             @if($moveSections->isNotEmpty())
@@ -99,12 +107,13 @@
                 <div class="forum-post-tools">
                     @if($changes->canChange($actor, $post, $topic, $section))
                         <a class="forum-button forum-button-compact" href="{{ route('modules.forum.posts.edit', $post) }}">{{ __('module-forum::messages.edit') }}</a>
-                        <form method="POST" action="{{ route('modules.forum.posts.destroy', $post) }}">
-                            @csrf
-                            @method('DELETE')
-                            <input type="hidden" name="version" value="{{ $post->edit_version }}">
-                            <button class="forum-button forum-button-compact forum-button-danger" type="submit">{{ __('module-forum::messages.delete') }}</button>
-                        </form>
+                        @include('module-forum::partials.confirm-action', [
+                            'action' => route('modules.forum.posts.destroy', $post),
+                            'method' => 'DELETE',
+                            'hidden' => ['version' => $post->edit_version],
+                            'label' => __('module-forum::messages.delete'),
+                            'question' => __('module-forum::messages.confirm_delete_post'),
+                        ])
                     @endif
                     @if($canViewHistory)
                         <a class="forum-button forum-button-compact" href="{{ route('modules.forum.posts.history', $post) }}">{{ __('module-forum::messages.revision_history') }}</a>

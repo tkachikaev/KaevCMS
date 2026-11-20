@@ -45,10 +45,11 @@
                         @csrf
                         <button class="forum-button forum-button-compact" type="submit">{{ __('module-forum::messages.action_unhide') }}</button>
                     </form>
-                    <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => 'delete']) }}">
-                        @csrf
-                        <button class="forum-button forum-button-compact forum-button-danger" type="submit">{{ __('module-forum::messages.action_delete') }}</button>
-                    </form>
+                    @include('module-forum::partials.confirm-action', [
+                        'action' => route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => 'delete']),
+                        'label' => __('module-forum::messages.action_delete'),
+                        'question' => __('module-forum::messages.confirm_delete_topic'),
+                    ])
                 @endif
             </div>
         </div>
