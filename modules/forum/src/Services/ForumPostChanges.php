@@ -69,6 +69,9 @@ final class ForumPostChanges
     {
         $changed = DB::transaction(function () use ($actor, $postId, $plain, $html, $version): bool {
             [$post, $topic, $section] = $this->lockPost($postId);
+            if ($this->permissions->isModerator($actor)) {
+                $this->permissions->assertCurrentModeratorForWrite($actor);
+            }
             abort_unless($this->canChange($actor, $post, $topic, $section), 403);
             $this->assertVersion($post, $version);
 
@@ -102,6 +105,9 @@ final class ForumPostChanges
     {
         DB::transaction(function () use ($actor, $postId, $version): void {
             [$post, $topic, $section] = $this->lockPost($postId);
+            if ($this->permissions->isModerator($actor)) {
+                $this->permissions->assertCurrentModeratorForWrite($actor);
+            }
             abort_if($post->removed_at !== null, 409);
             abort_unless($this->canChange($actor, $post, $topic, $section), 403);
             $this->assertVersion($post, $version);

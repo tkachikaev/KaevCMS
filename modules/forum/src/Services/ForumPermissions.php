@@ -82,6 +82,27 @@ final class ForumPermissions
         return $view !== 'moderators' || ($topics !== 'registered' && $replies !== 'registered');
     }
 
+    /**
+     * Mutations must not trust a moderator role cached earlier in the HTTP
+     * request. Lock the live assignment until the write transaction commits.
+     * Call only from an active database transaction.
+     */
+    public function assertCurrentModeratorForWrite(ForumActor $actor): void
+    {
+        if ($actor->isOwner()) {
+            return;
+        }
+
+        abort_unless(
+            $actor->mode === 'user'
+            && $actor->user !== null
+            && DB::table('module_forum_moderators')
+                ->where('user_id', $actor->user->getKey())
+                ->lockForUpdate()->first() !== null,
+            403
+        );
+    }
+
     public function isModerator(ForumActor $actor): bool
     {
         if ($actor->isOwner()) {

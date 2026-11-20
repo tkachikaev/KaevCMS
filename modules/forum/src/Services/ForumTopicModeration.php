@@ -102,6 +102,7 @@ final class ForumTopicModeration
             $original = ForumTopic::withTrashed()->findOrFail($id);
             $section = ForumSection::query()->lockForUpdate()->findOrFail($original->section_id);
             ForumCategory::query()->findOrFail($section->category_id);
+            $this->permissions->assertCurrentModeratorForWrite($actor);
             $topic = ForumTopic::withTrashed()->lockForUpdate()->findOrFail($id);
             abort_unless((int) $topic->section_id === (int) $section->id, 409);
             abort_unless($this->canModerate($actor, $topic, $section), 403);
@@ -166,6 +167,7 @@ final class ForumTopicModeration
             ForumCategory::query()->findOrFail($source->category_id);
             ForumCategory::query()->findOrFail($target->category_id);
 
+            $this->permissions->assertCurrentModeratorForWrite($actor);
             $topic = ForumTopic::query()->lockForUpdate()->findOrFail($id);
             abort_unless((int) $topic->section_id === (int) $source->id, 409);
             abort_unless($this->canModerate($actor, $topic, $source), 403);
