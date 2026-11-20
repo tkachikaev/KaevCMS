@@ -110,6 +110,13 @@ final class ForumTopicModeration
                 abort(404);
             }
 
+            // Hiding or deleting the whole topic also hides every reply.
+            // A forum moderator must not indirectly suppress CMS staff posts.
+            if (! $actor->isOwner() && in_array($action, ['hide', 'delete'], true)
+                && $this->containsProtectedReplies($topic)) {
+                abort(403);
+            }
+
             $changed = match ($action) {
                 'close' => $this->setStatus($topic, 'closed'),
                 'reopen' => $this->setStatus($topic, 'open'),
@@ -170,6 +177,10 @@ final class ForumTopicModeration
 
             $sourceLevel = $this->visibilityLevel($source);
             $targetLevel = $this->visibilityLevel($target);
+            if (! $actor->isOwner() && $targetLevel > $sourceLevel
+                && $this->containsProtectedReplies($topic)) {
+                abort(403);
+            }
             if ($targetLevel < $sourceLevel && (! $actor->isOwner() || ! $confirmExposure)) {
                 throw ValidationException::withMessages([
                     'section_id' => __('module-forum::messages.move_private_warning'),
@@ -190,6 +201,16 @@ final class ForumTopicModeration
         }
 
         return $result[0];
+    }
+
+    private function containsProtectedReplies(ForumTopic $topic): bool
+    {
+        return ForumPost::query()->where('topic_id', $topic->id)
+            ->where(static fn ($q) => $q
+                ->where('author_type', 'admin')
+                ->orWhere('author_role', 'moderator')
+                ->orWhereIn('author_user_id', DB::table('module_forum_moderators')->select('user_id')))
+            ->exists();
     }
 
     private function visibilityLevel(ForumSection $section): int

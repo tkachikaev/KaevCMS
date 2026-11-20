@@ -107,7 +107,7 @@ final class ForumTopicController extends Controller
             'moveSections' => $this->moderation->canModerate($actor, $topic, $section)
                 ? ForumSection::query()->whereHas('category')
                     ->whereIn('view_rule', $this->permissions->allowedViewRules($actor, $this->structure->globalVisibility()))
-                    ->whereKeyNot($section->id)->orderBy('name_ru')->get()
+                    ->where('id', '!=', $section->id)->orderBy('name_ru')->get()
                 : collect(),
         ]);
     }
