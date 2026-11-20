@@ -312,6 +312,26 @@ final class ForumTopicModerationTest extends TestCase
         $this->assertNotNull($topic->fresh()->hidden_at);
     }
 
+
+    public function test_moderator_can_hide_own_topic_but_not_another_moderators_reply(): void
+    {
+        $moderator = User::factory()->create();
+        $other = User::factory()->create();
+        $this->assignModerator($moderator);
+        $this->assignModerator($other);
+
+        $topic = $this->topic($moderator, 'Moderator owned discussion');
+        $this->asUser($moderator);
+        $this->post($this->moderationUrl($topic, 'hide'))->assertRedirect();
+        $this->post($this->moderationUrl($topic, 'unhide'))->assertRedirect();
+
+        app(ForumPosting::class)->addReply(new ForumActor('user', user: $other),
+            $topic->id, 'Other moderator response', (string) Str::uuid());
+
+        $this->post($this->moderationUrl($topic, 'hide'))->assertForbidden();
+        $this->assertNull($topic->fresh()->hidden_at);
+    }
+
     private function topic(
         User|Admin $author,
         string $title,

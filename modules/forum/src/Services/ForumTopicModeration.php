@@ -113,7 +113,7 @@ final class ForumTopicModeration
             // Hiding or deleting the whole topic also hides every reply.
             // A forum moderator must not indirectly suppress CMS staff posts.
             if (! $actor->isOwner() && in_array($action, ['hide', 'delete'], true)
-                && $this->containsProtectedReplies($topic)) {
+                && $this->containsProtectedReplies($topic, $actor)) {
                 abort(403);
             }
 
@@ -178,7 +178,7 @@ final class ForumTopicModeration
             $sourceLevel = $this->visibilityLevel($source);
             $targetLevel = $this->visibilityLevel($target);
             if (! $actor->isOwner() && $targetLevel > $sourceLevel
-                && $this->containsProtectedReplies($topic)) {
+                && $this->containsProtectedReplies($topic, $actor)) {
                 abort(403);
             }
             if ($targetLevel < $sourceLevel && (! $actor->isOwner() || ! $confirmExposure)) {
@@ -203,13 +203,20 @@ final class ForumTopicModeration
         return $result[0];
     }
 
-    private function containsProtectedReplies(ForumTopic $topic): bool
+    private function containsProtectedReplies(ForumTopic $topic, ForumActor $actor): bool
     {
+        $ownId = (int) $actor->user?->id;
+
         return ForumPost::query()->where('topic_id', $topic->id)
             ->where(static fn ($q) => $q
                 ->where('author_type', 'admin')
-                ->orWhere('author_role', 'moderator')
-                ->orWhereIn('author_user_id', DB::table('module_forum_moderators')->select('user_id')))
+                ->orWhere(static fn ($other) => $other
+                    ->where(static fn ($notOwn) => $notOwn
+                        ->whereNull('author_user_id')->orWhere('author_user_id', '!=', $ownId))
+                    ->where(static fn ($privileged) => $privileged
+                        ->where('author_role', 'moderator')
+                        ->orWhereIn('author_user_id',
+                            DB::table('module_forum_moderators')->select('user_id')))))
             ->exists();
     }
 
