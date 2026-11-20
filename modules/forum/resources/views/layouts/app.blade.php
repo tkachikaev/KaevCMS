@@ -97,6 +97,15 @@
         .forum-post-header{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-bottom:13px}
         .forum-post-author{color:#304f71;font-weight:700}
         .forum-post-date{margin-left:auto;color:#95a3b4;font-size:12px}
+        .forum-topic-moderation{margin:0 0 18px}
+        .forum-topic-moderation summary{cursor:pointer}
+        .forum-topic-moderation-content{display:grid;gap:13px;padding:15px 18px}
+        .forum-topic-moderation .forum-tools form{margin:0}
+        .forum-move-form{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+        .forum-move-form label{font-size:13px;color:#566c83}
+        .forum-move-form select{font:inherit;min-width:180px;max-width:100%;padding:8px;border:1px solid #d9e1eb;border-radius:8px}
+        .forum-move-confirm{display:flex;align-items:center;gap:5px}
+        .forum-notice-warning{background:#fff5db;color:#76500e}
         .forum-post-edited{display:block;margin-top:6px;color:#8999ac;font-size:11px}
         .forum-post-removed{color:#8594a5;font-style:italic}
         .forum-post-tools{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:12px}
@@ -161,6 +170,7 @@
         </a>
         <nav class="forum-actions" aria-label="{{ __('module-forum::messages.title') }}">
             <a href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
+            <a href="{{ route('modules.forum.search') }}">{{ __('module-forum::messages.search') }}</a>
             @if($actor->isGuest())
                 <a href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
             @else

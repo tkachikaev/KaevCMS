@@ -7,11 +7,16 @@
 </nav>
 <div class="forum-heading">
     <h1>{{ $section->label() }}</h1>
-    @if($canStart)
-        <a class="forum-button forum-button-primary" href="{{ route('modules.forum.topics.create', $section) }}">
-            + {{ __('module-forum::messages.new_topic') }}
-        </a>
-    @endif
+    <div class="forum-tools">
+        @if($canModerate)
+            <a class="forum-button" href="{{ route('modules.forum.sections.moderation', $section) }}">{{ __('module-forum::messages.moderation_queue') }}</a>
+        @endif
+        @if($canStart)
+            <a class="forum-button forum-button-primary" href="{{ route('modules.forum.topics.create', $section) }}">
+                + {{ __('module-forum::messages.new_topic') }}
+            </a>
+        @endif
+    </div>
 </div>
 @if($section->description())<p class="forum-desc">{{ $section->description() }}</p>@endif
 <div class="forum-panel">
@@ -20,6 +25,8 @@
         <div class="forum-topic-row">
             <div class="forum-topic-main">
                 <a class="forum-topic-title" href="{{ route('modules.forum.topics.show', $topic) }}">{{ $topic->title }}</a>
+                @if($topic->is_pinned)<span class="forum-tag">{{ __('module-forum::messages.pinned') }}</span>@endif
+                @if($topic->status === 'closed')<span class="forum-tag">{{ __('module-forum::messages.closed') }}</span>@endif
                 <p class="forum-topic-meta">{{ __('module-forum::messages.by_author', ['name' => $topic->author_name]) }}
                     · {{ $topic->created_at->format('d.m.Y H:i') }}</p>
             </div>

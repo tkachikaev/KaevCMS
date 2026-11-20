@@ -18,6 +18,7 @@ use KaevCMS\Modules\Forum\Services\ForumPermissions;
 use KaevCMS\Modules\Forum\Services\ForumPostChanges;
 use KaevCMS\Modules\Forum\Services\ForumPosting;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
+use KaevCMS\Modules\Forum\Services\ForumTopicModeration;
 
 final class ForumTopicController extends Controller
 {
@@ -27,6 +28,7 @@ final class ForumTopicController extends Controller
         private readonly ForumStructure $structure,
         private readonly ForumPosting $posting,
         private readonly ForumPostChanges $changes,
+        private readonly ForumTopicModeration $moderation,
     ) {}
 
     public function section(Request $request, ForumSection $section): Response
@@ -46,6 +48,7 @@ final class ForumTopicController extends Controller
             'section' => $section,
             'topics' => $topics,
             'canStart' => $this->posting->canStart($actor, $section),
+            'canModerate' => $this->moderation->isStaff($actor),
         ]);
     }
 
@@ -100,6 +103,12 @@ final class ForumTopicController extends Controller
             'submissionKey' => (string) Str::uuid(),
             'changes' => $this->changes,
             'canViewHistory' => $this->changes->canViewHistory($actor, $topic, $section),
+            'canModerate' => $this->moderation->canModerate($actor, $topic, $section),
+            'moveSections' => $this->moderation->canModerate($actor, $topic, $section)
+                ? ForumSection::query()->whereHas('category')
+                    ->whereIn('view_rule', $this->permissions->allowedViewRules($actor, $this->structure->globalVisibility()))
+                    ->whereKeyNot($section->id)->orderBy('name_ru')->get()
+                : collect(),
         ]);
     }
 
@@ -136,9 +145,11 @@ final class ForumTopicController extends Controller
 
     private function readTopic(ForumActor $actor, ForumTopic $topic): ForumSection
     {
-        abort_if($topic->hidden_at !== null, 404);
         $section = ForumSection::query()->findOrFail($topic->section_id);
         $this->readSection($actor, $section);
+        if ($topic->hidden_at !== null) {
+            abort_unless($this->moderation->canModerate($actor, $topic, $section), 404);
+        }
 
         return $section;
     }
