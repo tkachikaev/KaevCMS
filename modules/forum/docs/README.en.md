@@ -63,6 +63,18 @@ The Owner manages the forum under **Administration → Modules → Forum → Set
 
 Only the **Owner** can change these settings or assignments. Moderators gain forum permissions, not CMS administration access. Permission changes take effect on subsequent requests. Changes are recorded in the action journal. Enabling or disabling the module remains in **Modules**, with no second switch.
 
+## Editing, deletion and revision retention
+
+Version **0.6.0** lets authors edit their own posts without a time limit using **Edit** next to each message. A small **Edited** label appears afterward. Ordinary users cannot modify posts in closed, hidden or deleted topics.
+
+**Delete** replaces the visible message with a tombstone. The post stays in place, preserving links, order and other users' replies, including when the opening message is removed. The author cannot restore removed text through the standard interface. The Owner can manage any post, while moderators may manage ordinary players' posts, not CMS staff or other moderators' posts. Outdated forms cannot overwrite newer content.
+
+**Private history.** Each edit or deletion stores the previous text for 30 days. Only the Owner and moderators can open **Revision history**. Regular players cannot access older content even by a direct URL. Audit logs contain the action, not the old text.
+
+**Cleanup.** The CMS core scheduler runs `kaevcms:forum-revisions-clean --batch=1000` hourly, including when the forum is disabled. Expired revisions stop appearing immediately and are deleted by the scheduled command. Laravel's scheduler must run regularly (normally `php artisan schedule:run` every minute) for timely retention cleanup. The command can also be run manually; it is safe without the forum tables and never removes current published text.
+
+When upgrading from **0.5.0** to **0.6.0**, apply the new forum migration under **Administration → Modules**. Existing migrations and posts are preserved.
+
 ## Current limitations
 
-Version **0.5.0 (F6)** includes global settings and moderator assignment. Post editing/deletion, moving/closing/pinning topics and the private 30-day revision history are planned for later iterations.
+Version 0.6.0 includes editing, deletion, private revision history and cleanup. Topic closing/moving/pinning and search are planned for later releases.

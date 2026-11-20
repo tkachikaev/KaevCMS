@@ -129,6 +129,8 @@ final class ForumPosting
      */
     public function prepareBody(ForumActor $actor, string $plain, ?string $html): array
     {
+        $this->assertAuthor($actor);
+
         if ($html === null || trim($html) === '') {
             $plain = trim($plain);
             $this->assertContent($actor, $plain);

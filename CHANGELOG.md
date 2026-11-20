@@ -2,6 +2,9 @@
 
 ## Unreleased — forum development branch
 
+- Forum 0.6.0: users can edit or delete their messages while preserving replies and post anchors; edits show a discreet label and deletions use localized placeholders. Owner and moderators can moderate permitted posts, while CMS staff and moderators' posts are protected from other moderators.
+- Previous revisions remain private for 30 days; the CMS core scheduler purges expired records even when the forum is disabled. Stale-edit checks, sanitizer reuse, audit events and regression tests are included. Added a new module migration; no dependencies changed.
+
 - Forum 0.5.0 (F6): Owner-only settings for forum-wide reading access and the account-age requirement for posting links. Search existing active website users to assign or remove forum moderators; changes are audited and use existing CMS account and role checks.
 - Forum administration reuses the existing UI components and routes, without a second enable switch or new database migrations. Added settings, access and moderator-assignment regression tests.
 
