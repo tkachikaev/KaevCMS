@@ -31,10 +31,31 @@
                 @endif
                 <span class="forum-post-date">{{ $post->created_at->format('d.m.Y H:i') }}</span>
             </header>
-            @if($post->body_html !== null)
+            @if($post->removed_at !== null)
+                <div class="forum-post-body forum-post-removed">{{ __('module-forum::messages.deleted_by_'.($post->removed_by ?? 'moderator')) }}</div>
+            @elseif($post->body_html !== null)
                 <div class="forum-post-body forum-post-rich">{!! app(\App\Services\Html\SafeHtmlSanitizer::class)->sanitize($post->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM) !!}</div>
             @else
                 <div class="forum-post-body">{{ $post->body_text }}</div>
+            @endif
+            @if($post->edited_at !== null && $post->removed_at === null)
+                <small class="forum-post-edited">{{ __('module-forum::messages.edited') }}</small>
+            @endif
+            @if($changes->canChange($actor, $post, $topic, $section) || $canViewHistory)
+                <div class="forum-post-tools">
+                    @if($changes->canChange($actor, $post, $topic, $section))
+                        <a class="forum-button forum-button-compact" href="{{ route('modules.forum.posts.edit', $post) }}">{{ __('module-forum::messages.edit') }}</a>
+                        <form method="POST" action="{{ route('modules.forum.posts.destroy', $post) }}">
+                            @csrf
+                            @method('DELETE')
+                            <input type="hidden" name="version" value="{{ $post->edit_version }}">
+                            <button class="forum-button forum-button-compact forum-button-danger" type="submit">{{ __('module-forum::messages.delete') }}</button>
+                        </form>
+                    @endif
+                    @if($canViewHistory)
+                        <a class="forum-button forum-button-compact" href="{{ route('modules.forum.posts.history', $post) }}">{{ __('module-forum::messages.revision_history') }}</a>
+                    @endif
+                </div>
             @endif
         </article>
     @endforeach

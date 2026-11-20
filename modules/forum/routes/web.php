@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumController;
+use KaevCMS\Modules\Forum\Http\Controllers\ForumPostController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumStructureController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumTopicController;
 
@@ -30,6 +31,15 @@ Route::get('/topics/{topic}', [ForumTopicController::class, 'show'])
     ->whereNumber('topic')->name('topics.show');
 Route::post('/topics/{topic}/replies', [ForumTopicController::class, 'reply'])
     ->whereNumber('topic')->middleware('throttle:10,1')->name('topics.reply');
+
+Route::get('/posts/{post}/edit', [ForumPostController::class, 'edit'])
+    ->whereNumber('post')->name('posts.edit');
+Route::patch('/posts/{post}', [ForumPostController::class, 'update'])
+    ->whereNumber('post')->middleware('throttle:20,1')->name('posts.update');
+Route::delete('/posts/{post}', [ForumPostController::class, 'destroy'])
+    ->whereNumber('post')->middleware('throttle:10,1')->name('posts.destroy');
+Route::get('/posts/{post}/history', [ForumPostController::class, 'history'])
+    ->whereNumber('post')->middleware('throttle:30,1')->name('posts.history');
 
 Route::get('/trash', [ForumStructureController::class, 'trash'])->name('trash');
 Route::post('/trash/categories/{category}', [ForumStructureController::class, 'restoreCategory'])

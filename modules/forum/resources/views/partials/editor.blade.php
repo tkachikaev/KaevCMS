@@ -1,8 +1,8 @@
 @php
     // Keep a plain textarea for clients without JavaScript. On successful Tiptap
     // initialization the compact canvas replaces it, using the shared editor bundle.
-    $oldPlain = old('body', '');
-    $oldRich = old('body_html', '');
+    $oldPlain = old('body', $initialBodyText ?? '');
+    $oldRich = old('body_html', $initialBodyHtml ?? '');
     $initialRich = is_string($oldRich) && $oldRich !== ''
         ? $oldRich
         : (is_string($oldPlain) && $oldPlain !== ''

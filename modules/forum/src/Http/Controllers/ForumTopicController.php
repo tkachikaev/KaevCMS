@@ -15,6 +15,7 @@ use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActor;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
+use KaevCMS\Modules\Forum\Services\ForumPostChanges;
 use KaevCMS\Modules\Forum\Services\ForumPosting;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
 
@@ -25,6 +26,7 @@ final class ForumTopicController extends Controller
         private readonly ForumPermissions $permissions,
         private readonly ForumStructure $structure,
         private readonly ForumPosting $posting,
+        private readonly ForumPostChanges $changes,
     ) {}
 
     public function section(Request $request, ForumSection $section): Response
@@ -96,6 +98,8 @@ final class ForumTopicController extends Controller
             'posts' => $posts,
             'canReply' => $this->posting->canReply($actor, $topic, $section),
             'submissionKey' => (string) Str::uuid(),
+            'changes' => $this->changes,
+            'canViewHistory' => $this->changes->canViewHistory($actor, $topic, $section),
         ]);
     }
 

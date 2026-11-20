@@ -97,6 +97,10 @@
         .forum-post-header{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-bottom:13px}
         .forum-post-author{color:#304f71;font-weight:700}
         .forum-post-date{margin-left:auto;color:#95a3b4;font-size:12px}
+        .forum-post-edited{display:block;margin-top:6px;color:#8999ac;font-size:11px}
+        .forum-post-removed{color:#8594a5;font-style:italic}
+        .forum-post-tools{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:12px}
+        .forum-post-tools form{margin:0}
         .forum-post-body{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;color:#2d3a4c;line-height:1.65}
         .forum-reply-panel{margin-top:25px}
         .forum-read-only{background:#edf0f4;color:#788a9e;padding:12px 16px;border-radius:9px;font-size:13px;margin-top:24px}
