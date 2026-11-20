@@ -18,14 +18,33 @@
         body{margin:0;font-size:15px;line-height:1.5}
         a{color:#365b83;text-decoration:none}a:hover{text-decoration:underline}
         .forum-top{background:#fff;border-bottom:1px solid #dfe5ed}
-        .forum-top-inner{max-width:1130px;margin:auto;min-height:76px;padding:12px 24px;display:flex;gap:22px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+        .forum-top-inner{max-width:1130px;margin:auto;min-height:68px;padding:10px 24px;display:flex;gap:28px;align-items:center}
         .forum-brand{display:flex;align-items:center;gap:12px;min-width:0;max-width:100%;color:#27374b}
         .forum-brand img{width:40px;height:40px;object-fit:contain}
         .forum-brand-wide img{width:auto;max-width:180px;height:auto;max-height:44px}
         .forum-brand-copy{display:flex;flex-direction:column;min-width:0}
         .forum-brand-copy strong{font:700 19px/1.25 Georgia,"PT Serif","Times New Roman",serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .forum-brand-copy small{font-size:14px;font-weight:400;opacity:.85}
-        .forum-actions{display:flex;align-items:center;flex-wrap:wrap;gap:17px;font-size:13px}
+        .forum-nav{display:flex;align-items:center;gap:4px;margin-right:auto}
+        .forum-nav a{padding:7px 12px;border-radius:8px;color:#4a6078;font-size:14px;font-weight:600}
+        .forum-nav a:hover{background:#f1f5f9;text-decoration:none}
+        .forum-nav a[aria-current="page"]{background:#e8eef5;color:#27374b}
+        .forum-nav .forum-nav-site{display:none}
+        .forum-actions{display:flex;align-items:center;gap:14px;font-size:13px}
+        .forum-site-link{color:#5b6d82}
+        .forum-lang{display:inline-flex;padding:2px;border:1px solid #d9e1eb;border-radius:999px}
+        .forum-lang a{padding:3px 9px;border-radius:999px;color:#6a7c90;font-size:12px;font-weight:600}
+        .forum-lang a:hover{color:#27374b;text-decoration:none}
+        .forum-lang a[aria-current="true"]{background:#355b85;color:#fff}
+        .forum-identity{display:inline-flex;align-items:center;gap:9px;min-width:0;max-width:240px;padding:4px 12px 4px 4px;border:1px solid #e1e7ef;border-radius:999px;color:#27374b}
+        a.forum-identity:hover{background:#f5f8fc;text-decoration:none}
+        .forum-identity .forum-avatar{flex:none;width:30px;height:30px;font-size:13px;font-weight:700;color:#405b79}
+        .forum-identity-copy{display:grid;min-width:0;line-height:1.2}
+        .forum-identity-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .forum-identity-role{color:#7b8ca0;font-size:11px}
+        .forum-icon-button{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #d9e1eb;border-radius:10px;background:#f5f8fc;color:#405b79}
+        .forum-icon-button:hover{background:#edf3fa;text-decoration:none}
+        @media(max-width:760px){.forum-top-inner{flex-wrap:wrap;gap:10px 12px;padding:10px 16px}.forum-brand{flex:1 1 0;min-width:0}.forum-brand img{width:34px;height:34px}.forum-brand-copy strong{font-size:17px}.forum-actions{gap:10px}.forum-site-link{display:none}.forum-identity{padding:3px}.forum-identity-copy{display:none}.forum-nav{order:3;width:100%;margin:0;padding-top:8px;border-top:1px solid #edf0f3}.forum-nav .forum-nav-site{display:inline-block;margin-left:auto}}
         .forum-body{max-width:1130px;margin:38px auto;padding:0 24px}
         .forum-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
         .forum-heading h1{font-size:26px;letter-spacing:-.025em;margin:0}
@@ -60,7 +79,6 @@
         .forum-section-main p{color:#586b80;margin:4px 0 0;font-size:14px;overflow-wrap:anywhere}
         .forum-section-empty{font-size:12px;color:#97a4b3}
         .forum-actor-switch{margin-top:28px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#657a91;font-size:13px}
-        .forum-identity{display:flex;align-items:center;gap:7px}
         .forum-avatar{width:29px;height:29px;border-radius:50%;background:#e7edf5;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
         .forum-avatar img{width:100%;height:100%;object-fit:cover}
         .forum-breadcrumb{display:flex;gap:9px;align-items:center;margin:0 0 20px;font-size:13px;color:#8b9aad}
@@ -195,13 +213,9 @@
         .forum-confirm-content p{margin:0;line-height:1.5}
         .forum-section-row:focus-within,.forum-topic-row:focus-within{background:rgba(53,91,133,.035)}
         .forum-topic-row .forum-tag{display:inline-block;margin:0 0 0 7px;vertical-align:middle}
-        .forum-actions a[aria-current="page"]{font-weight:700;text-decoration:underline;text-underline-offset:4px}
         .forum-footer{padding:0 16px 24px}
         @media(max-width:650px){
-            .forum-top-inner{gap:12px;align-items:flex-start}
             .forum-brand-wide img{max-width:132px;max-height:40px}
-            .forum-actions{width:100%;gap:9px 15px;justify-content:flex-start}
-            .forum-actions .forum-identity{max-width:100%;overflow-wrap:anywhere}
             .forum-search-form{grid-template-columns:1fr;padding:15px}
             .forum-search-form label{grid-column:auto}
             .forum-search-form button{justify-self:start}
@@ -218,6 +232,20 @@
         :root[data-forum-scheme="dark"] a{color:#a3c6ec}
         :root[data-forum-scheme="dark"] .forum-brand{color:#eff3f8}
         :root[data-forum-scheme="dark"] .forum-top{background:#151f2a;border-bottom-color:#2a3949}
+        :root[data-forum-scheme="dark"] .forum-nav a,
+        :root[data-forum-scheme="dark"] .forum-site-link{color:#a9bdd3}
+        :root[data-forum-scheme="dark"] .forum-nav a:hover{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-nav a[aria-current="page"]{background:#263548;color:#eef3f8}
+        :root[data-forum-scheme="dark"] .forum-nav{border-top-color:#2a3949}
+        :root[data-forum-scheme="dark"] .forum-lang{border-color:#324252}
+        :root[data-forum-scheme="dark"] .forum-lang a{color:#9fb2c7}
+        :root[data-forum-scheme="dark"] .forum-lang a[aria-current="true"]{background:#416c9e;color:#fff}
+        :root[data-forum-scheme="dark"] .forum-identity{border-color:#324252;color:#e2e8f0}
+        :root[data-forum-scheme="dark"] a.forum-identity:hover{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-identity-role{color:#8fa3b8}
+        :root[data-forum-scheme="dark"] .forum-avatar{background:#2e4057;color:#c9d9ee}
+        :root[data-forum-scheme="dark"] .forum-icon-button{background:#1d2a37;border-color:#324252;color:#c9d9ee}
+        :root[data-forum-scheme="dark"] .forum-icon-button:hover{background:#263548}
         :root[data-forum-scheme="dark"] .forum-panel,
         :root[data-forum-scheme="dark"] .forum-dialog{background:#192430;border-color:#324252;color:#e2e8f0;box-shadow:0 10px 30px rgba(0,0,0,.1)}
         :root[data-forum-scheme="dark"] .forum-panel-heading,
@@ -308,26 +336,41 @@
                 </span>
             @endunless
         </a>
-        <nav class="forum-actions" aria-label="{{ __('module-forum::messages.title') }}">
-            <a href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
-            <a href="{{ route('modules.forum.search') }}">{{ __('module-forum::messages.forum_search') }}</a>
+        <nav class="forum-nav" aria-label="{{ __('module-forum::messages.title') }}">
+            <a href="{{ route('modules.forum.index') }}" @if(! request()->routeIs('modules.forum.search')) aria-current="page" @endif>{{ __('module-forum::messages.title') }}</a>
+            <a href="{{ route('modules.forum.search') }}" @if(request()->routeIs('modules.forum.search')) aria-current="page" @endif>{{ __('module-forum::messages.forum_search') }}</a>
+            <a class="forum-nav-site" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
+        </nav>
+        <div class="forum-actions">
+            <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
+            <div class="forum-lang" role="group" aria-label="{{ __('module-forum::messages.language') }}">
+                <a lang="ru" href="{{ route('language.switch', ['locale' => 'ru']) }}" @if(app()->getLocale() === 'ru') aria-current="true" @endif>RU</a>
+                <a lang="en" href="{{ route('language.switch', ['locale' => 'en']) }}" @if(app()->getLocale() === 'en') aria-current="true" @endif>EN</a>
+            </div>
             @if($actor->isGuest())
-                <a href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
+                <a class="forum-button forum-button-primary" href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
             @else
-                @if($actor->user)
-                    <a href="{{ public_route('account') }}">{{ __('module-forum::messages.account') }}</a>
-                @endif
-                <span class="forum-identity">@if($actor->user)<x-account-avatar :user="$actor->user" :fallback="$actor->user->publicName()" class="forum-avatar" />@endif {{ $actor->name() }}</span>
-                @if($actor->label()) <span class="forum-tag">{{ $actor->label() }}</span> @endif
+                @php($identityTag = $actor->user ? 'a' : 'span')
+                <{{ $identityTag }} class="forum-identity" @if($actor->user) href="{{ public_route('account') }}" title="{{ __('module-forum::messages.account') }}" @endif>
+                    @if($actor->user)
+                        <x-account-avatar :user="$actor->user" :fallback="$actor->user->publicName()" class="forum-avatar" />
+                    @else
+                        <span class="account-avatar forum-avatar" aria-hidden="true"><span>{{ mb_strtoupper(mb_substr($actor->name(), 0, 1)) }}</span></span>
+                    @endif
+                    <span class="forum-identity-copy">
+                        <span class="forum-identity-name">{{ $actor->name() }}</span>
+                        @if($actor->label())<span class="forum-identity-role">{{ $actor->label() }}</span>@endif
+                    </span>
+                </{{ $identityTag }}>
             @endif
             @if($actor->isOwner())
-                <a class="forum-button" data-forum-owner-settings href="{{ route('admin.module-pages.forum.settings', ['adminPath' => app(\App\Services\Admin\AdminPathSettings::class)->path()]) }}">
-                    {{ __('module-forum::messages.settings_link') }}
+                <a class="forum-icon-button" data-forum-owner-settings
+                   href="{{ route('admin.module-pages.forum.settings', ['adminPath' => app(\App\Services\Admin\AdminPathSettings::class)->path()]) }}"
+                   title="{{ __('module-forum::messages.settings_link') }}" aria-label="{{ __('module-forum::messages.settings_link') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </a>
             @endif
-            <a lang="ru" href="{{ route('language.switch', ['locale' => 'ru']) }}" @if(app()->getLocale() === 'ru') aria-current="page" @endif>RU</a>
-            <a lang="en" href="{{ route('language.switch', ['locale' => 'en']) }}" @if(app()->getLocale() === 'en') aria-current="page" @endif>EN</a>
-        </nav>
+        </div>
     </div>
 </header>
 <main class="forum-body" id="forum-main" tabindex="-1">

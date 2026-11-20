@@ -203,4 +203,5 @@ return [
     'quote_post' => 'Quote',
     'reply_to_post' => 'Reply',
     'quote_wrote' => 'wrote:',
+    'language' => 'Language',
 ];

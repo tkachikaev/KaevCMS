@@ -203,4 +203,5 @@ return [
     'quote_post' => 'Цитировать',
     'reply_to_post' => 'Ответить',
     'quote_wrote' => 'пишет:',
+    'language' => 'Язык',
 ];
