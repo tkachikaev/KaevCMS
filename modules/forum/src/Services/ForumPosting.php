@@ -41,6 +41,9 @@ final class ForumPosting
         $title = trim($title);
 
         return DB::transaction(function () use ($actor, $sectionId, $title, $body, $bodyHtml, $key): ForumTopic {
+            // F9: lock the shared settings singleton before any section row.
+            // ForumStructure uses this same order for structural operations.
+            $this->lockCurrentSettings();
             $section = ForumSection::query()->lockForUpdate()->findOrFail($sectionId);
             ForumCategory::query()->findOrFail($section->category_id);
             abort_unless($this->canStart($actor, $section), 403);
@@ -81,7 +84,7 @@ final class ForumPosting
             ]);
 
             return $topic;
-        });
+        }, 3);
     }
 
     public function addReply(ForumActor $actor, int $topicId, string $body, string $key, ?string $bodyHtml = null): ForumPost
@@ -90,6 +93,8 @@ final class ForumPosting
         [$body, $bodyHtml] = $this->prepareBody($actor, $body, $bodyHtml);
 
         return DB::transaction(function () use ($actor, $topicId, $body, $bodyHtml, $key): ForumPost {
+            $this->lockCurrentSettings();
+
             // Lock the section before the topic: changing section permissions and replying
             // cannot silently race through two different authorization decisions.
             $initialTopic = ForumTopic::query()->findOrFail($topicId);
@@ -127,7 +132,7 @@ final class ForumPosting
             ])->save();
 
             return $post;
-        });
+        }, 3);
     }
 
     /**
@@ -160,6 +165,19 @@ final class ForumPosting
         $this->assertContent($actor, $safeHtml);
 
         return [$text, $safeHtml];
+    }
+
+    /**
+     * Take the settings row lock first in any forum write that subsequently
+     * acquires section/topic locks. This order is shared with ForumStructure.
+     * Must be invoked inside the surrounding database transaction.
+     */
+    public function lockCurrentSettings(): void
+    {
+        abort_if(
+            DB::table('module_forum_settings')->where('id', 1)->lockForUpdate()->first() === null,
+            503,
+        );
     }
 
     /**

@@ -68,6 +68,8 @@ final class ForumPostChanges
     public function update(ForumActor $actor, int $postId, string $plain, ?string $html, int $version): bool
     {
         $changed = DB::transaction(function () use ($actor, $postId, $plain, $html, $version): bool {
+            // Same lock order as new topic/reply writes and structure changes.
+            $this->posting->lockCurrentSettings();
             [$post, $topic, $section] = $this->lockPost($postId);
             if ($this->permissions->isModerator($actor)) {
                 $this->permissions->assertCurrentModeratorForWrite($actor);
