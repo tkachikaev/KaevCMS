@@ -156,6 +156,9 @@
         .forum-post-body{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;color:#2d3a4c;line-height:1.65}
         .forum-reply-panel{margin-top:25px}
         .forum-read-only{background:#edf0f4;color:#788a9e;padding:12px 16px;border-radius:9px;font-size:13px;margin-top:24px}
+        .forum-join{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 18px;padding:16px 18px;color:#405b79;font-size:14px}
+        .forum-join p{margin:0}
+        .forum-join-actions{display:flex;flex-wrap:wrap;gap:8px}
         @media(max-width:650px){.forum-topic-row{flex-direction:column;align-items:flex-start}.forum-topic-stats{text-align:left}.forum-section-summary{text-align:left}.forum-post{grid-template-columns:minmax(0,1fr)}.forum-post-author-card{flex-direction:row;align-items:center;gap:12px;padding:14px 16px;border-right:0;border-bottom:1px solid #edf0f3;text-align:left}.forum-post-avatar{width:42px;height:42px;font-size:17px}.forum-post-author-copy{justify-items:start}.forum-post-badges,.forum-post-stats div{justify-content:flex-start}.forum-post-stats{grid-auto-flow:column;gap:12px}.forum-post-main{padding:14px 16px}}
 
         /* Forum-only presentation for the shared Tiptap editor; no admin styles imported. */
@@ -310,6 +313,7 @@
         :root[data-forum-scheme="dark"] .forum-notice-error{background:#422b2d;color:#f3b8b4}
         :root[data-forum-scheme="dark"] .forum-notice-warning{background:#4b3c24;color:#f4d89d}
         :root[data-forum-scheme="dark"] .forum-read-only{background:#263448;color:#b2c4d9}
+        :root[data-forum-scheme="dark"] .forum-join{color:#d5e3f2}
         :root[data-forum-scheme="dark"] .forum-pagination strong{background:#355372}
         :root[data-forum-scheme="dark"] .forum-skip-link{background:#25364a;color:#fff;border-color:#6a9ad0}
     </style>

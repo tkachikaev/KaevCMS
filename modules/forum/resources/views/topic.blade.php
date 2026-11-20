@@ -139,7 +139,9 @@
                 @if($post->edited_at !== null && ! $isRemoved)
                     <small class="forum-post-edited">{{ __('module-forum::messages.edited') }}</small>
                 @endif
-                @php($canChangePost = $changes->canChange($actor, $post, $topic, $section))
+                @php
+                    $canChangePost = $changes->canChange($actor, $post, $topic, $section);
+                @endphp
                 @if(($canReply && ! $isRemoved) || $canChangePost || $canViewHistory)
                     <div class="forum-post-tools">
                         @if($canReply && ! $isRemoved)
@@ -182,6 +184,29 @@
         </form>
     </div>
 @else
-    <p class="forum-read-only">{{ __('module-forum::messages.read_only') }}</p>
+    @php
+        $topicOpen = $topic->status === 'open' && $topic->hidden_at === null;
+        $guestCanJoin = $actor->isGuest() && $topicOpen && $section->reply_rule === 'registered';
+        $readOnlyMessage = match (true) {
+            ! $topicOpen => 'reply_closed',
+            $section->reply_rule === 'moderators' => 'reply_moderators_only',
+            $section->reply_rule === 'owner' => 'reply_owner_only',
+            $section->reply_rule === 'nobody' => 'reply_disabled',
+            default => 'read_only',
+        };
+    @endphp
+    @if($guestCanJoin)
+        <div class="forum-read-only forum-join">
+            <p>{{ __('module-forum::messages.reply_guest') }}</p>
+            <div class="forum-join-actions">
+                <a class="forum-button forum-button-primary" href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
+                @if(app(\App\Services\RegistrationSettings::class)->enabled())
+                    <a class="forum-button" href="{{ public_route('register') }}">{{ __('module-forum::messages.register') }}</a>
+                @endif
+            </div>
+        </div>
+    @else
+        <p class="forum-read-only">{{ __('module-forum::messages.'.$readOnlyMessage) }}</p>
+    @endif
 @endif
 @endsection

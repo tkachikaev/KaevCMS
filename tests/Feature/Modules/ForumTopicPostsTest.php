@@ -62,4 +62,32 @@ final class ForumTopicPostsTest extends TestCase
             ->assertSee('data-text="Buying a set"', false)
             ->assertSee('data-forum-mention', false);
     }
+
+    public function test_reply_area_explains_why_a_visitor_cannot_reply(): void
+    {
+        $author = User::factory()->create();
+        $section = ForumSection::query()->where('name_ru', 'Общее общение')->firstOrFail();
+        $this->actingAs($author, 'web')->withSession(['forum.author_mode' => 'user'])
+            ->post('/forum/sections/'.$section->id.'/topics', [
+                'title' => 'Open topic',
+                'body' => 'Hello there',
+                'submission_key' => (string) Str::uuid(),
+            ])->assertRedirect();
+        $topic = ForumTopic::query()->firstOrFail();
+        auth('web')->logout();
+
+        $this->get('/forum/topics/'.$topic->id)->assertOk()
+            ->assertSee(__('module-forum::messages.reply_guest'))
+            ->assertSee(public_route('login'), false);
+
+        $section->update(['reply_rule' => 'moderators']);
+        $this->get('/forum/topics/'.$topic->id)->assertOk()
+            ->assertDontSee(__('module-forum::messages.reply_guest'))
+            ->assertSee(__('module-forum::messages.reply_moderators_only'));
+
+        $section->update(['reply_rule' => 'registered']);
+        $topic->forceFill(['status' => 'closed'])->save();
+        $this->get('/forum/topics/'.$topic->id)->assertOk()
+            ->assertSee(__('module-forum::messages.reply_closed'));
+    }
 }
