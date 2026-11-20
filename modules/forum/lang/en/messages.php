@@ -145,7 +145,7 @@ return [
     'revision_deleted' => 'Deleted',
     'no_revisions' => 'No revisions are available.',
     'back_to_topic' => 'Back to topic',
-    'search' => 'Search',
+    'forum_search' => 'Search',
     'search_query' => 'Search topics and messages',
     'search_placeholder' => 'Enter a word or phrase',
     'search_results' => 'Search results',

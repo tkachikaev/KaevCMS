@@ -145,7 +145,7 @@ return [
     'revision_deleted' => 'Удаление',
     'no_revisions' => 'Сохранённых редакций нет.',
     'back_to_topic' => 'Вернуться к теме',
-    'search' => 'Поиск',
+    'forum_search' => 'Поиск',
     'search_query' => 'Искать в темах и сообщениях',
     'search_placeholder' => 'Введите слово или фразу',
     'search_results' => 'Результаты поиска',

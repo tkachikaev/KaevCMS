@@ -170,7 +170,7 @@
         </a>
         <nav class="forum-actions" aria-label="{{ __('module-forum::messages.title') }}">
             <a href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
-            <a href="{{ route('modules.forum.search') }}">{{ __('module-forum::messages.search') }}</a>
+            <a href="{{ route('modules.forum.search') }}">{{ __('module-forum::messages.forum_search') }}</a>
             @if($actor->isGuest())
                 <a href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
             @else
