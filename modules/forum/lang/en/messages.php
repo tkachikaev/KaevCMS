@@ -183,5 +183,9 @@ return [
     'moderation_delete' => 'Topic moved to trash.',
     'moderation_restore' => 'Topic restored.',
     'moderation_move' => 'Topic moved.',
+    'skip_to_content' => 'Skip to content',
+    'confirm_delete_action' => 'Confirm deletion',
+    'confirm_delete_post' => 'Delete this message? A placeholder will replace its text, and replies will remain.',
+    'confirm_delete_topic' => 'Delete this topic? It will disappear from public lists and search, but a moderator can restore it.',
     'message_placeholder' => 'Write a message…',
 ];
