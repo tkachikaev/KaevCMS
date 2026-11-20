@@ -30,7 +30,7 @@ final class ForumPostChangesTest extends TestCase
 
     public function test_f7_schema_keeps_existing_posts_and_adds_private_history(): void
     {
-        $this->assertSame('0.8.0', app(ModuleManager::class)->inspect('forum')['version']);
+        $this->assertSame(json_decode((string) file_get_contents(base_path('modules/forum/module.json')), true)['version'], app(ModuleManager::class)->inspect('forum')['version']);
         $this->assertTrue(Schema::hasTable('module_forum_post_revisions'));
         foreach (['edit_version', 'removed_at', 'removed_by'] as $column) {
             $this->assertTrue(Schema::hasColumn('module_forum_posts', $column));

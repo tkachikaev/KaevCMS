@@ -32,7 +32,7 @@ final class ForumStructureTest extends TestCase
             $this->assertTrue(Schema::hasTable($table), $table);
         }
 
-        $this->assertSame('0.8.0', app(ModuleManager::class)->inspect('forum')['version']);
+        $this->assertSame(json_decode((string) file_get_contents(base_path('modules/forum/module.json')), true)['version'], app(ModuleManager::class)->inspect('forum')['version']);
         $this->assertDatabaseHas('module_forum_settings', [
             'id' => 1, 'visibility' => 'all', 'links_after_days' => 0,
         ]);

@@ -29,7 +29,7 @@ final class ForumEditorTest extends TestCase
     public function test_f5_adds_nullable_formatted_body_without_converting_old_posts(): void
     {
         $this->assertTrue(Schema::hasColumn('module_forum_posts', 'body_html'));
-        $this->assertSame('0.8.0', app(ModuleManager::class)->inspect('forum')['version']);
+        $this->assertSame(json_decode((string) file_get_contents(base_path('modules/forum/module.json')), true)['version'], app(ModuleManager::class)->inspect('forum')['version']);
 
         $user = User::factory()->create(['display_name' => 'LegacyPlayer']);
         $this->actingAs($user, 'web')->withSession(['forum.author_mode' => 'user']);

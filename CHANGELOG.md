@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — forum development branch
+## 0.60.0 - 2026-11-20
+
+- Forum 0.9.0: topic posts show an author card with the account avatar, current public name and role, a topic-author mark, post count and join date; posts are numbered with copyable links, the first post is marked, and Quote and Reply fill the reply form.
+- Forum header: Forum and Search navigation with the current page marked, a compact RU/EN switch, a user chip that opens the player account, Sign in for guests and a settings button for the owner; two tidy rows on phones.
+- The reply area explains why a visitor cannot reply: guests are invited to sign in or register, and closed or restricted topics say so.
+- Forum settings in the administration: the page is called Forum, with access and moderator cards side by side, plain access wording, a one-row moderator search and confirmation before removing a moderator.
+- The shared rich editor accepts content inserted by page scripts, used by forum quotes.
 
 - Forum 0.8.0 (F9/F10): revalidate link-age rules and moderator assignments under write transaction locks; add regression tests for permissions, topic visibility, counter consistency, archive moves and search pagination.
 - Forum publication rechecks moderator privileges inside the write transaction. Moderator lookups are cached only for the current request, so a revoked role cannot carry over to another request.
