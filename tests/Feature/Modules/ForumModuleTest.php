@@ -53,6 +53,14 @@ final class ForumModuleTest extends TestCase
         $this->assertTrue(Route::has('admin.module-pages.forum.settings.update'));
         $this->assertTrue(Route::has('admin.module-pages.forum.moderators.store'));
         $this->assertTrue(Route::has('admin.module-pages.forum.moderators.destroy'));
+        foreach ([
+            'modules.forum.search',
+            'modules.forum.sections.moderation',
+            'modules.forum.topics.moderate',
+            'modules.forum.topics.move',
+        ] as $route) {
+            $this->assertTrue(Route::has($route));
+        }
         $this->assertContains('modules.forum.index', array_column(app(ModuleNavigationRegistry::class)->accountLinks(), 'route'));
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.forum.settings'));
         $this->get('/modules/forum')->assertNotFound();
