@@ -47,6 +47,9 @@ final class ForumPosting
             $section = ForumSection::query()->lockForUpdate()->findOrFail($sectionId);
             ForumCategory::query()->findOrFail($section->category_id);
             abort_unless($this->canStart($actor, $section), 403);
+            if ($this->permissions->isModerator($actor)) {
+                $this->permissions->assertCurrentModeratorForWrite($actor);
+            }
 
             $existing = ForumTopic::withTrashed()->where('submission_key', $key)->first();
             if ($existing !== null) {
@@ -103,6 +106,9 @@ final class ForumPosting
             $topic = ForumTopic::query()->lockForUpdate()->findOrFail($topicId);
 
             abort_unless((int) $topic->section_id === (int) $section->id && $this->canReply($actor, $topic, $section), 403);
+            if ($this->permissions->isModerator($actor)) {
+                $this->permissions->assertCurrentModeratorForWrite($actor);
+            }
 
             $existing = ForumPost::withTrashed()->where('submission_key', $key)->first();
             if ($existing !== null) {

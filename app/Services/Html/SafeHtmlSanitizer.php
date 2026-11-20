@@ -133,6 +133,7 @@ final class SafeHtmlSanitizer
             self::PROFILE_NEWS => 'kaevcms-news-root',
             self::PROFILE_PAGE => 'kaevcms-page-root',
             self::PROFILE_FORUM => 'kaevcms-forum-root',
+            default => throw new InvalidArgumentException("Unknown content sanitizer profile [{$profile}]."),
         };
         $previous = libxml_use_internal_errors(true);
 

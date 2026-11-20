@@ -3,8 +3,8 @@
 namespace Tests\Feature\Modules;
 
 use App\Models\Admin;
-use App\Services\AuditLogger;
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -148,6 +148,40 @@ final class ForumStabilityTest extends TestCase
         }
 
         $this->assertNull($topic->fresh()->hidden_at);
+    }
+
+    public function test_revoked_moderator_cannot_publish_using_cached_permissions(): void
+    {
+        $writer = User::factory()->create();
+        $moderator = User::factory()->create();
+        $topic = $this->createTopic($writer, 'Publication revocation test');
+        $section = ForumSection::query()->findOrFail($topic->section_id);
+        $section->update(['view_rule' => 'moderators', 'topic_rule' => 'moderators', 'reply_rule' => 'moderators']);
+        DB::table('module_forum_moderators')->insert([
+            'user_id' => $moderator->id,
+            'assigned_by_admin_id' => null,
+            'created_at' => now(),
+        ]);
+        $actor = new ForumActor('user', user: $moderator);
+        $posting = app(ForumPosting::class);
+        $this->assertTrue($posting->canStart($actor, $section));
+        $this->assertTrue($posting->canReply($actor, $topic, $section));
+        DB::table('module_forum_moderators')->where('user_id', $moderator->id)->delete();
+
+        foreach ([
+            fn () => $posting->createTopic($actor, $section->id, 'New topic', 'New message', (string) Str::uuid()),
+            fn () => $posting->addReply($actor, $topic->id, 'New reply', (string) Str::uuid()),
+        ] as $publish) {
+            try {
+                $publish();
+                $this->fail('Revoked permissions must block publication.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertDatabaseCount('module_forum_topics', 1);
+        $this->assertDatabaseCount('module_forum_posts', 1);
     }
 
     public function test_moderator_cannot_restore_or_unhide_an_owner_suppressed_staff_reply(): void

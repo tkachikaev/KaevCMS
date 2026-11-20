@@ -76,7 +76,6 @@ final class ForumEditorTest extends TestCase
         $this->get('/forum/topics/'.$topic->id)->assertSee('data-rich-editor', false);
     }
 
-
     public function test_plain_fallback_ignores_stale_rich_html_after_validation_failure(): void
     {
         $user = User::factory()->create();
@@ -138,10 +137,14 @@ final class ForumEditorTest extends TestCase
         $this->assertStringContainsString('important', $post->body_text);
         $this->assertStringNotContainsString('alert("xss")', $post->body_text);
 
-        $this->get('/forum/topics/'.$post->topic_id)
-            ->assertSee('<strong>important</strong>', false)
-            ->assertDontSee('<script', false)
-            ->assertDontSee('<img', false);
+        $response = $this->get('/forum/topics/'.$post->topic_id)->assertOk();
+        $document = new \DOMDocument;
+        $this->assertTrue($document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING));
+        $xpath = new \DOMXPath($document);
+        $content = $xpath->query('//*[@id="post-'.$post->id.'"]//*[contains(concat(" ", normalize-space(@class), " "), " forum-post-body ")]')->item(0);
+        $this->assertNotNull($content);
+        $this->assertSame('important', $xpath->evaluate('string(.//strong)', $content));
+        $this->assertSame(0.0, $xpath->evaluate('count(.//*[self::script or self::img or self::iframe or @onclick or @onmouseover])', $content));
     }
 
     public function test_link_delay_checks_href_when_visible_label_has_no_url(): void

@@ -10,7 +10,6 @@ use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use KaevCMS\Modules\Forum\Models\ForumPost;
 use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActor;
@@ -311,7 +310,6 @@ final class ForumTopicModerationTest extends TestCase
         $this->get('/forum/sections/'.$topic->section_id.'/moderation')->assertForbidden();
         $this->assertNotNull($topic->fresh()->hidden_at);
     }
-
 
     public function test_moderator_can_hide_own_topic_but_not_another_moderators_reply(): void
     {

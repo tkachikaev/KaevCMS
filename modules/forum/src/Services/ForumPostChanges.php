@@ -185,7 +185,7 @@ final class ForumPostChanges
             'body_text' => $post->body_text,
             'body_html' => $post->body_html,
             'changed_by_type' => $actor->mode,
-            'changed_by_id' => $actor->admin?->id ?? $actor->user?->id,
+            'changed_by_id' => ($actor->admin ?? $actor->user)?->getKey(),
             'changed_by_name' => $actor->name() ?? '',
             'created_at' => now(),
             'expires_at' => now()->addDays(30),

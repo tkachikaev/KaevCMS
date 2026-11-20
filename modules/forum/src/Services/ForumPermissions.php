@@ -11,8 +11,7 @@ final class ForumPermissions
 
     public const WRITES = ['registered', 'moderators', 'owner', 'nobody'];
 
-    /** @var array<int, bool> */
-    private array $moderators = [];
+    private const MODERATOR_CACHE = 'kaevcms.forum.moderators';
 
     public function visibleTo(ForumActor $actor, string $viewRule, string $globalVisibility = 'all'): bool
     {
@@ -115,8 +114,14 @@ final class ForumPermissions
 
         $id = (int) $actor->user->getKey();
 
-        return $this->moderators[$id] ??= DB::table('module_forum_moderators')
-            ->where('user_id', $id)
-            ->exists();
+        $attributes = request()->attributes;
+        /** @var array<int, bool> $moderators */
+        $moderators = $attributes->get(self::MODERATOR_CACHE, []);
+        if (! array_key_exists($id, $moderators)) {
+            $moderators[$id] = DB::table('module_forum_moderators')->where('user_id', $id)->exists();
+            $attributes->set(self::MODERATOR_CACHE, $moderators);
+        }
+
+        return $moderators[$id];
     }
 }

@@ -3,6 +3,7 @@
 ## Unreleased — forum development branch
 
 - Forum 0.8.0 (F9/F10): revalidate link-age rules and moderator assignments under write transaction locks; add regression tests for permissions, topic visibility, counter consistency, archive moves and search pagination.
+- Forum publication rechecks moderator privileges inside the write transaction. Moderator lookups are cached only for the current request, so a revoked role cannot carry over to another request.
 - Forum presentation now follows the built-in Dark public theme or Kaev Aurelia's saved color scheme. Added responsive and keyboard-accessible navigation, a compact styled search form and two-step deletion confirmation without JavaScript.
 - Added focused Playwright scenarios for appearance, mobile layout and the player compose/edit/delete flow. Browser fixture enables the forum on an isolated test database. No new migrations or dependencies.
 

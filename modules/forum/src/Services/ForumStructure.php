@@ -96,6 +96,7 @@ final class ForumStructure
         });
     }
 
+    /** @param array<string, mixed> $data */
     public function createCategory(array $data): ForumCategory
     {
         return DB::transaction(static function () use ($data): ForumCategory {
@@ -106,6 +107,7 @@ final class ForumStructure
         });
     }
 
+    /** @param array<string, mixed> $data */
     public function updateCategory(ForumCategory $category, array $data): void
     {
         $category->update($data);
@@ -123,6 +125,7 @@ final class ForumStructure
         });
     }
 
+    /** @param array<string, mixed> $data */
     public function createSection(ForumCategory $category, array $data): ForumSection
     {
         $this->assertRules($data);
@@ -137,6 +140,7 @@ final class ForumStructure
         });
     }
 
+    /** @param array<string, mixed> $data */
     public function updateSection(ForumSection $section, array $data): void
     {
         $this->assertRules($data);
@@ -197,6 +201,7 @@ final class ForumStructure
         });
     }
 
+    /** @param array<string, mixed> $data */
     private function assertRules(array $data): void
     {
         if (! ForumPermissions::compatible($data['view_rule'], $data['topic_rule'], $data['reply_rule'])) {

@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumModerationController;
-use KaevCMS\Modules\Forum\Http\Controllers\ForumSearchController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumPostController;
+use KaevCMS\Modules\Forum\Http\Controllers\ForumSearchController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumStructureController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumTopicController;
 

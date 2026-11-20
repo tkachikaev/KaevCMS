@@ -65,13 +65,15 @@ final class ForumModuleTest extends TestCase
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.forum.settings'));
         $this->get('/modules/forum')->assertNotFound();
 
-        $this->get('/forum')
+        $response = $this->get('/forum')
             ->assertOk()
             ->assertSee('Новости и объявления')
             ->assertSee('Архив')
             ->assertDontSee('data-forum-owner-settings', false)
-            ->assertHeader('Cache-Control', 'private, no-store, max-age=0')
             ->assertHeader('Content-Security-Policy');
+        $this->assertTrue($response->headers->hasCacheControlDirective('private'));
+        $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
+        $this->assertSame('0', $response->headers->getCacheControlDirective('max-age'));
     }
 
     public function test_owner_is_recognized_from_valid_admin_session_only(): void

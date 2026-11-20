@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property string $name_ru
+ * @property string|null $name_en
+ * @property string|null $description_ru
+ * @property string|null $description_en
+ */
 final class ForumCategory extends Model
 {
     use SoftDeletes;
@@ -14,6 +21,7 @@ final class ForumCategory extends Model
 
     protected $guarded = ['id'];
 
+    /** @return HasMany<ForumSection, $this> */
     public function sections(): HasMany
     {
         return $this->hasMany(ForumSection::class, 'category_id');

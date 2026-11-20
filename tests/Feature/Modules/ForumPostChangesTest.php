@@ -74,10 +74,12 @@ final class ForumPostChangesTest extends TestCase
 
         $owner = Admin::factory()->create();
         $this->asOwner($owner);
-        $this->get('/forum/posts/'.$post->id.'/history')
+        $response = $this->get('/forum/posts/'.$post->id.'/history')
             ->assertOk()
-            ->assertSee('First private wording')
-            ->assertHeader('Cache-Control', 'private, no-store, max-age=0');
+            ->assertSee('First private wording');
+        $this->assertTrue($response->headers->hasCacheControlDirective('private'));
+        $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
+        $this->assertSame('0', $response->headers->getCacheControlDirective('max-age'));
 
         $this->assertSame(1, AuditLog::query()->where('action', 'forum.post_edited')->count());
         $this->assertStringNotContainsString('First private wording', AuditLog::query()->where('action', 'forum.post_edited')->firstOrFail()->target_name ?? '');
@@ -278,7 +280,6 @@ final class ForumPostChangesTest extends TestCase
         $this->assertDatabaseCount('module_forum_post_revisions', 0);
         $this->assertSame('Current published version', $post->fresh()->body_text);
     }
-
 
     public function test_cleanup_drains_every_expired_revision_even_when_batch_is_one(): void
     {
