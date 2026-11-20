@@ -3,6 +3,7 @@
 namespace Tests\Feature\Modules;
 
 use App\Models\Admin;
+use App\Services\AuditLogger;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
@@ -34,13 +35,20 @@ final class ForumStabilityTest extends TestCase
 
     public function test_settings_row_is_locked_before_section_during_topic_creation(): void
     {
+        $writer = User::factory()->create();
+        $section = $this->section('Общее общение');
         $queries = [];
         DB::listen(static function ($event) use (&$queries): void {
             $queries[] = strtolower($event->sql);
         });
 
-        $writer = User::factory()->create();
-        $this->createTopic($writer, 'Consistent lock ordering');
+        app(ForumPosting::class)->createTopic(
+            new ForumActor('user', user: $writer),
+            (int) $section->id,
+            'Consistent lock ordering',
+            'Opening message',
+            (string) Str::uuid()
+        );
 
         // Exclude the preflight value('links_after_days') query: only the
         // transactional SELECT * locks the singleton row.
@@ -122,12 +130,18 @@ final class ForumStabilityTest extends TestCase
         ]);
         $actor = new ForumActor('user', user: $moderator);
         $permissions = app(ForumPermissions::class);
+        $moderation = new ForumTopicModeration(
+            $permissions,
+            app(ForumStructure::class),
+            app(AuditLogger::class),
+        );
 
         $this->assertTrue($permissions->isModerator($actor));
         DB::table('module_forum_moderators')->where('user_id', $moderator->id)->delete();
-        // The old PHP permissions instance still caches true.
+        // Reuse the *same* cached permissions instance to reproduce a revoked
+        // moderator whose request began while their role was still active.
         try {
-            app(ForumTopicModeration::class)->change($actor, $topic->id, 'hide');
+            $moderation->change($actor, $topic->id, 'hide');
             $this->fail('Revoked permissions must be rejected under the write lock.');
         } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
