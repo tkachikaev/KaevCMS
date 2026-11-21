@@ -42,4 +42,4 @@ Modules must still enforce permissions, ownership, business constraints and use 
 
 Offline checks: `validate-profiles.php`, `validate-write-profiles.php`, `validate-editor-drafts.php`, `validate-schema-preflight.php` under `tests/Integration/UniversalDrivers`. Remaining acceptance gates are disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright, clean install/update (Windows/VDS/shared), and real game-client checks. **0.54.3 is a QA candidate, not production certified.**
 
-Prior iteration notes: [0.54.0 archive](history/UNIVERSAL_DRIVERS_0.54.0.md).
+Earlier development notes: [0.54.0 archive](history/UNIVERSAL_DRIVERS_0.54.0.md).
