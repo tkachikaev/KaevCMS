@@ -20,6 +20,7 @@
 
 .forum-settings-form { display: grid; gap: var(--admin-space-4); }
 .forum-settings-form > .admin-field { margin: 0; }
+.forum-settings-form textarea { min-height: 120px; resize: vertical; font-family: var(--admin-font-mono, ui-monospace, Consolas, monospace); }
 
 .forum-settings-unit { display: flex; align-items: center; gap: var(--admin-space-3); }
 .forum-settings-unit input {

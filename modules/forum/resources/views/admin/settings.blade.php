@@ -52,6 +52,30 @@
 
     <x-admin.card class="forum-settings-card">
         <x-admin.card-heading
+            :title="__('module-forum::messages.images_title')"
+            :description="__('module-forum::messages.images_help')"
+        />
+
+        <form class="forum-settings-form" method="POST" action="{{ route('admin.module-pages.forum.images.update', ['adminPath' => $adminPath]) }}">
+            @csrf
+            @method('PUT')
+            <div @class(['admin-field', 'has-error' => $errors->has('image_hosts')])>
+                <label class="admin-field-label" for="forum_image_hosts">{{ __('module-forum::messages.image_hosts_label') }}</label>
+                <textarea id="forum_image_hosts" name="image_hosts" rows="5" maxlength="4000" spellcheck="false" autocomplete="off"
+                          aria-describedby="forum_image_hosts_help"
+                          @if($errors->has('image_hosts')) aria-invalid="true" @endif>{{ old('image_hosts', implode("\n", $imageHosts)) }}</textarea>
+                @error('image_hosts')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
+                <small id="forum_image_hosts_help" class="admin-field-help">{{ __('module-forum::messages.image_hosts_help') }}</small>
+            </div>
+
+            <div class="forum-settings-actions">
+                <x-admin.button type="submit" variant="primary">{{ __('module-forum::messages.save') }}</x-admin.button>
+            </div>
+        </form>
+    </x-admin.card>
+
+    <x-admin.card class="forum-settings-card">
+        <x-admin.card-heading
             :title="__('module-forum::messages.moderators_title')"
             :description="__('module-forum::messages.moderators_help')"
         />

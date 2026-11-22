@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use KaevCMS\Modules\Forum\Services\ForumImageHosts;
 
 final class ForumSettingsController extends Controller
 {
@@ -49,7 +50,9 @@ final class ForumSettingsController extends Controller
             ->get(['users.id', 'users.display_name', 'users.email', 'users.is_active']);
         $moderatorIds = $moderators->pluck('id')->map(static fn ($id): int => (int) $id)->all();
 
-        return view('module-forum::admin.settings', compact('settings', 'search', 'candidates', 'moderators', 'moderatorIds'));
+        $imageHosts = app(ForumImageHosts::class)->all();
+
+        return view('module-forum::admin.settings', compact('settings', 'search', 'candidates', 'moderators', 'moderatorIds', 'imageHosts'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -88,6 +91,50 @@ final class ForumSettingsController extends Controller
                     'visibility' => $data['visibility'],
                     'links_after_days' => (int) $data['links_after_days'],
                 ],
+            );
+        }
+
+        return $this->redirect($request, 'settings_saved');
+    }
+
+    public function updateImages(Request $request, ForumImageHosts $imageHosts): RedirectResponse
+    {
+        $owner = $this->owner($request);
+        $data = $request->validate(['image_hosts' => ['nullable', 'string', 'max:4000']]);
+        $parsed = ForumImageHosts::parse((string) ($data['image_hosts'] ?? ''));
+
+        if ($parsed['invalid'] !== []) {
+            throw ValidationException::withMessages([
+                'image_hosts' => __('module-forum::messages.image_hosts_invalid', ['hosts' => implode(', ', array_slice($parsed['invalid'], 0, 5))]),
+            ]);
+        }
+        if (count($parsed['hosts']) > ForumImageHosts::MAX_HOSTS) {
+            throw ValidationException::withMessages([
+                'image_hosts' => __('module-forum::messages.image_hosts_too_many', ['count' => ForumImageHosts::MAX_HOSTS]),
+            ]);
+        }
+
+        $hosts = $parsed['hosts'];
+        $changed = DB::transaction(static function () use ($hosts): bool {
+            $current = DB::table('module_forum_settings')->where('id', 1)->lockForUpdate()->first();
+            abort_if($current === null, 503);
+            $encoded = json_encode($hosts);
+            if ($current->image_hosts === $encoded) {
+                return false;
+            }
+            DB::table('module_forum_settings')->where('id', 1)->update(['image_hosts' => $encoded, 'updated_at' => now()]);
+
+            return true;
+        });
+        $imageHosts->forget();
+
+        if ($changed) {
+            $this->audit->success(
+                category: 'forum',
+                action: 'forum.image_hosts_updated',
+                actor: $owner,
+                target: 'settings',
+                details: ['image_hosts' => $hosts],
             );
         }
 

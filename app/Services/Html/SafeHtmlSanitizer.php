@@ -46,7 +46,24 @@ final class SafeHtmlSanitizer
      * these files: readers' browsers load them directly, so nothing user-supplied is
      * parsed on the server. Exact host names only (no wildcard subdomains).
      */
-    public const FORUM_IMAGE_HOSTS = ['iili.io', 'i.imgur.com', 'i.postimg.cc', 'i.ibb.co'];
+    public const DEFAULT_FORUM_IMAGE_HOSTS = ['iili.io', 'i.imgur.com', 'i.postimg.cc', 'i.ibb.co'];
+
+    /** @var (\Closure(): list<string>)|null Supplied by the forum module from its settings. */
+    private static ?\Closure $forumImageHostResolver = null;
+
+    /** @param  (\Closure(): list<string>)|null  $resolver */
+    public static function resolveForumImageHostsUsing(?\Closure $resolver): void
+    {
+        self::$forumImageHostResolver = $resolver;
+    }
+
+    /** @return list<string> */
+    public static function forumImageHosts(): array
+    {
+        $hosts = self::$forumImageHostResolver !== null ? (self::$forumImageHostResolver)() : self::DEFAULT_FORUM_IMAGE_HOSTS;
+
+        return array_values(array_filter($hosts, 'is_string'));
+    }
 
     /** Forum link images: width in percent of the column, 10-100 in steps of 5. */
     private const FORUM_IMAGE_WIDTHS = [
@@ -476,7 +493,7 @@ final class SafeHtmlSanitizer
         }
 
         $host = strtolower($parts['host']);
-        if (! in_array($host, self::FORUM_IMAGE_HOSTS, true) || isset($parts['port'])) {
+        if (! in_array($host, self::forumImageHosts(), true) || isset($parts['port'])) {
             return null;
         }
 

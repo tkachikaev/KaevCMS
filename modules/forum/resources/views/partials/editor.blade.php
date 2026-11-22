@@ -15,6 +15,7 @@
             ->plainText($oldRich, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM);
     }
     $editorId = $editorId ?? 'forum-editor';
+    $forumImageHosts = app(\KaevCMS\Modules\Forum\Services\ForumImageHosts::class)->all();
 @endphp
 <div class="forum-editor" data-rich-editor data-required="1"
      data-editor-label="{{ __('module-forum::messages.message_text') }}"
@@ -22,7 +23,7 @@
      data-too-large-message="{{ __('module-forum::messages.content_too_large') }}"
      data-unsafe-link-message="{{ __('module-forum::messages.unsafe_link') }}"
      data-link-images="1"
-     data-image-hosts="{{ implode(',', \App\Services\Html\SafeHtmlSanitizer::FORUM_IMAGE_HOSTS) }}"
+     data-image-hosts="{{ implode(',', $forumImageHosts) }}"
      data-unsupported-media-message="{{ __('module-forum::messages.unsupported_media') }}">
     <div class="rich-editor-toolbar forum-editor-toolbar" role="toolbar" aria-label="{{ __('module-forum::messages.formatting') }}">
         <button type="button" data-editor-action="bold" title="{{ __('module-forum::messages.bold') }}" aria-label="{{ __('module-forum::messages.bold') }}"><strong>B</strong></button>
@@ -146,7 +147,9 @@
                 <button type="button" data-editor-emoji="⚠️">⚠️</button>
             </div>
         </details>
-        <button type="button" data-editor-link-image title="{{ __('module-forum::messages.insert_image') }}" aria-label="{{ __('module-forum::messages.insert_image') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg></button>
+        @if($forumImageHosts !== [])
+            <button type="button" data-editor-link-image title="{{ __('module-forum::messages.insert_image') }}" aria-label="{{ __('module-forum::messages.insert_image') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg></button>
+        @endif
         <button type="button" data-editor-media title="{{ __('module-forum::messages.insert_media') }}" aria-label="{{ __('module-forum::messages.insert_media') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="m10 9.5 5 2.5-5 2.5z" fill="currentColor"/></svg></button>
         <button type="button" data-editor-link title="{{ __('module-forum::messages.insert_link') }}" aria-label="{{ __('module-forum::messages.insert_link') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
     </div>
@@ -171,7 +174,7 @@
         </label>
         <p class="forum-media-sites">
             <span>{{ __('module-forum::messages.image_hosts') }}</span>
-            @foreach(\App\Services\Html\SafeHtmlSanitizer::FORUM_IMAGE_HOSTS as $imageHost)<strong>{{ $imageHost }}</strong>@if(! $loop->last), @endif @endforeach
+            @foreach($forumImageHosts as $imageHost)<strong>{{ $imageHost }}</strong>@if(! $loop->last), @endif @endforeach
         </p>
         <div class="forum-image-preview" data-editor-link-image-preview data-empty="{{ __('module-forum::messages.image_preview_empty') }}" data-error="{{ __('module-forum::messages.image_preview_error') }}" data-blocked="{{ __('module-forum::messages.unsafe_image') }}" data-loading="{{ __('module-forum::messages.image_preview_loading') }}"></div>
         <label>

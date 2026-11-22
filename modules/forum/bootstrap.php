@@ -1,12 +1,18 @@
 <?php
 
 use App\Auth\AdminRole;
+use App\Services\Html\SafeHtmlSanitizer;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
+use KaevCMS\Modules\Forum\Services\ForumImageHosts;
 
 return static function (Application $app, ModuleContext $module): void {
+    // Image hosts come from the forum settings; read once per request.
+    $app->scoped(ForumImageHosts::class);
+    SafeHtmlSanitizer::resolveForumImageHostsUsing(static fn (): array => app(ForumImageHosts::class)->all());
+
     $navigation = $app->make(ModuleNavigationRegistry::class);
     $navigation->registerAccountLink(
         moduleId: $module->id,
@@ -30,7 +36,7 @@ return static function (Application $app, ModuleContext $module): void {
         manageRoles: [AdminRole::Owner],
     );
 
-    foreach (['settings.update', 'moderators.store', 'moderators.destroy'] as $action) {
+    foreach (['settings.update', 'images.update', 'moderators.store', 'moderators.destroy'] as $action) {
         $app->make(ModuleAdminAccessRegistry::class)->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.forum.'.$action,

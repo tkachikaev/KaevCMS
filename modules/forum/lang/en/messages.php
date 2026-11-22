@@ -241,4 +241,10 @@ return [
     'media_dialog_title' => 'Insert media',
     'image_hosts' => 'Allowed sites:',
     'image_preview_loading' => 'Looking for the picture…',
+    'images_title' => 'Images in posts',
+    'images_help' => 'Players insert pictures by link; the forum never downloads or stores them, each reader sees them straight from the image site.',
+    'image_hosts_label' => 'Allowed image sites',
+    'image_hosts_help' => 'One address per line, for example iili.io. Only that exact name is allowed, not its subdomains. Leave the field empty to turn forum images off. Removing a site also hides its pictures in older posts.',
+    'image_hosts_invalid' => 'These do not look like site names: :hosts. Enter a name such as i.imgur.com, without IP addresses or localhost.',
+    'image_hosts_too_many' => 'You can list at most :count sites.',
 ];
