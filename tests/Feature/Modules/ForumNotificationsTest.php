@@ -108,6 +108,33 @@ class ForumNotificationsTest extends TestCase
         $this->assertSame(2, ForumPost::query()->where('topic_id', $topic->id)->count());
     }
 
+    public function test_notifications_stop_exposing_topic_titles_when_access_is_revoked(): void
+    {
+        $author = User::factory()->create();
+        $writer = User::factory()->create();
+        $topic = $this->topic($author, 'Confidential topic title');
+        $this->replyAs($writer, $topic, 'Normal reply before restriction');
+
+        $center = app(\App\Services\Notifications\PlayerNotificationCenter::class);
+        $notification = UserNotification::query()->where('user_id', $author->id)->sole();
+        $this->assertSame(1, $center->unreadCount($author));
+
+        $section = ForumSection::query()->findOrFail($topic->section_id);
+        $section->forceFill(['view_rule' => 'moderators', 'topic_rule' => 'moderators', 'reply_rule' => 'moderators'])->save();
+
+        $this->assertSame(0, $center->unreadCount($author));
+        $this->assertCount(0, $center->latest($author));
+        $this->assertNull($center->open($author, $notification->id));
+        $this->assertNull($notification->fresh()->read_at);
+
+        $section->forceFill(['view_rule' => 'all', 'topic_rule' => 'registered', 'reply_rule' => 'registered'])->save();
+        $topic->forceFill(['hidden_at' => now()])->save();
+
+        // Freshly resolved policy sees the new topic visibility.
+        $freshCenter = app(\App\Services\Notifications\PlayerNotificationCenter::class);
+        $this->assertCount(0, $freshCenter->latest($author));
+    }
+
     public function test_recipients_who_cannot_read_the_section_are_not_notified(): void
     {
         $author = User::factory()->create();

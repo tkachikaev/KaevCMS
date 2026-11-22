@@ -5,6 +5,7 @@ namespace App\Services\Notifications;
 use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Database\Eloquent\Collection;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\HtmlString;
@@ -22,6 +23,31 @@ final class PlayerNotificationCenter
     public const UNREAD_RETENTION_DAYS = 180;
 
     private const MAX_PARAMETER_LENGTH = 120;
+
+    /** @var array<string, Closure(User, UserNotification): bool> */
+    private array $visibilityPolicies = [];
+
+    /**
+     * Optional module-specific visibility check. An existing notification may stop
+     * being visible when its target topic or section becomes private or is deleted.
+     *
+     * @param  Closure(User, UserNotification): bool  $policy
+     */
+    public function registerVisibilityPolicy(string $typePrefix, Closure $policy): void
+    {
+        $this->visibilityPolicies[$typePrefix] = $policy;
+    }
+
+    private function canSee(User $user, UserNotification $notification): bool
+    {
+        foreach ($this->visibilityPolicies as $prefix => $policy) {
+            if (str_starts_with($notification->type, $prefix)) {
+                return (bool) $policy($user, $notification);
+            }
+        }
+
+        return true;
+    }
 
     /** @param  array<string, scalar|null>  $parameters */
     public function notify(
@@ -81,19 +107,45 @@ final class PlayerNotificationCenter
 
     public function unreadCount(User $user): int
     {
-        return UserNotification::query()->where('user_id', $user->getKey())->whereNull('read_at')->count();
+        $query = UserNotification::query()->where('user_id', $user->getKey())->whereNull('read_at');
+        if ($this->visibilityPolicies === []) {
+            return $query->count();
+        }
+
+        $count = 0;
+        foreach ($query->orderBy('id')->lazy(100) as $notification) {
+            if ($this->canSee($user, $notification)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /** @return Collection<int, UserNotification> */
     public function latest(User $user, int $limit = 15): Collection
     {
-        return UserNotification::query()
+        $query = UserNotification::query()
             ->where('user_id', $user->getKey())
             ->orderByRaw('CASE WHEN read_at IS NULL THEN 0 ELSE 1 END')
             ->orderByDesc('occurred_at')
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->get();
+            ->orderByDesc('id');
+
+        if ($this->visibilityPolicies === []) {
+            return $query->limit($limit)->get();
+        }
+
+        $visible = new Collection;
+        foreach ($query->lazy(100) as $notification) {
+            if ($this->canSee($user, $notification)) {
+                $visible->push($notification);
+                if ($visible->count() >= $limit) {
+                    break;
+                }
+            }
+        }
+
+        return $visible;
     }
 
     /** Marks one of the user's notifications read and returns its internal path. */
@@ -103,7 +155,7 @@ final class PlayerNotificationCenter
             ->where('user_id', $user->getKey())
             ->whereKey($notificationId)
             ->first();
-        if ($notification === null) {
+        if ($notification === null || ! $this->canSee($user, $notification)) {
             return null;
         }
         if ($notification->read_at === null) {

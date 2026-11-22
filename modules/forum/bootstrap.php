@@ -1,17 +1,28 @@
 <?php
 
 use App\Auth\AdminRole;
+use App\Models\User;
+use App\Models\UserNotification;
 use App\Services\Html\SafeHtmlSanitizer;
+use App\Services\Notifications\PlayerNotificationCenter;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleNavigationRegistry;
 use Illuminate\Contracts\Foundation\Application;
 use KaevCMS\Modules\Forum\Services\ForumImageHosts;
+use KaevCMS\Modules\Forum\Services\ForumNotifications;
 
 return static function (Application $app, ModuleContext $module): void {
     // Image hosts come from the forum settings; read once per request.
     $app->scoped(ForumImageHosts::class);
+    $app->scoped(ForumNotifications::class);
     SafeHtmlSanitizer::resolveForumImageHostsUsing(static fn (): array => app(ForumImageHosts::class)->all());
+    // Keep the notification center independent from the forum module. The active
+    // module installs its access policy for each resolved center.
+    $app->afterResolving(PlayerNotificationCenter::class, static function (PlayerNotificationCenter $center): void {
+        $center->registerVisibilityPolicy('forum.', static fn (User $user, UserNotification $notification): bool => app(ForumNotifications::class)
+            ->canReadNotification($user, $notification));
+    });
 
     $navigation = $app->make(ModuleNavigationRegistry::class);
     $navigation->registerAccountLink(

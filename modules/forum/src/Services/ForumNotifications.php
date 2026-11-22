@@ -3,6 +3,7 @@
 namespace KaevCMS\Modules\Forum\Services;
 
 use App\Models\User;
+use App\Models\UserNotification;
 use App\Services\Notifications\PlayerNotificationCenter;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Forum\Models\ForumPost;
@@ -19,6 +20,9 @@ final class ForumNotifications
     public const PER_PAGE = 15;
 
     private const MAX_ADDRESSED = 10;
+
+    /** @var array<string, bool> */
+    private array $visibilityCache = [];
 
     public function __construct(
         private readonly PlayerNotificationCenter $center,
@@ -110,6 +114,41 @@ final class ForumNotifications
                 $event['group'],
             );
         }
+    }
+
+    /**
+     * Notifications keep their original title, but may outlive the permission to
+     * see that title. Never show or open them after the discussion becomes private.
+     */
+    public function canReadNotification(User $user, UserNotification $notification): bool
+    {
+        if (! $user->is_active
+            || preg_match('~\A/forum/topics/([1-9][0-9]*)(?:[?#]|$)~', $notification->url, $match) !== 1) {
+            return false;
+        }
+
+        $topicId = (int) $match[1];
+        $key = $user->getKey().':'.$topicId;
+        if (array_key_exists($key, $this->visibilityCache)) {
+            return $this->visibilityCache[$key];
+        }
+
+        $topic = ForumTopic::query()->whereKey($topicId)->whereNull('hidden_at')->first();
+        if ($topic === null) {
+            return $this->visibilityCache[$key] = false;
+        }
+
+        $section = ForumSection::query()->whereKey($topic->section_id)
+            ->whereHas('category')->first();
+        if ($section === null) {
+            return $this->visibilityCache[$key] = false;
+        }
+
+        return $this->visibilityCache[$key] = $this->permissions->canView(
+            new ForumActor('user', user: $user),
+            $section,
+            $this->structure->globalVisibility(),
+        );
     }
 
     private function postPath(ForumTopic $topic, ForumPost $post): string
