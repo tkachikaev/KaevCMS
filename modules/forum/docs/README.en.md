@@ -53,6 +53,16 @@ Re-submitting a form with the same submission key does not create duplicate post
 
 If the CMS requires verified email addresses, unverified players cannot post. The forum already enforces the optional account-age restriction for URLs in topic titles and messages. The default value is **0 days**, so links are allowed immediately.
 
+## Notifications (the bell)
+
+Signed-in players see a bell in the forum header. A red number shows unread notifications, and the bell rings briefly when something new arrives. Players are notified when:
+
+- someone replies in their topic (several replies in a row merge into one: "3 new replies");
+- someone quotes their message (the Quote button);
+- someone answers their message with the Reply button.
+
+Nobody is notified about their own messages, and a notification about a topic in a restricted section only goes to players who can read that section. Clicking a notification opens the message and marks it read; "Mark all read" is available. The number refreshes by itself about every two minutes. Read notifications are removed after 60 days and any notification after 180 days (the CMS scheduler's daily cleanup). Notifications live in the shared CMS table `user_notifications` (core migration `2026_11_23_100000_create_user_notifications_table.php`), applied by the regular CMS update.
+
 ## Global settings and moderators
 
 The Owner manages the forum under **Administration → Modules → Forum → Settings**:

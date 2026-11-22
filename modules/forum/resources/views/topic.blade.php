@@ -165,9 +165,10 @@
                     <div class="forum-post-tools">
                         @if($canReply && ! $isRemoved)
                             <button type="button" class="forum-button forum-button-compact" data-forum-quote
+                                    data-post-id="{{ $post->id }}"
                                     data-author="{{ $author['name'] }}"
                                     data-text="{{ \Illuminate\Support\Str::limit($post->body_html !== null ? $sanitizer->plainText($post->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM) : (string) $post->body_text, 2000) }}">{{ __('module-forum::messages.quote_post') }}</button>
-                            <button type="button" class="forum-button forum-button-compact" data-forum-mention data-author="{{ $author['name'] }}">{{ __('module-forum::messages.reply_to_post') }}</button>
+                            <button type="button" class="forum-button forum-button-compact" data-forum-mention data-post-id="{{ $post->id }}" data-author="{{ $author['name'] }}">{{ __('module-forum::messages.reply_to_post') }}</button>
                         @endif
                         @if($canChangePost)
                             <a class="forum-button forum-button-compact" href="{{ route('modules.forum.posts.edit', $post) }}">{{ __('module-forum::messages.edit') }}</a>

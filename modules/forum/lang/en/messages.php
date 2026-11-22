@@ -255,4 +255,11 @@ return [
     'delete_topic_where_owner' => 'The topic disappears from the section. It can be restored from the forum Trash.',
     'deleted_topics' => 'Deleted topics',
     'deleted_at' => 'Deleted: :date',
+    'notifications' => 'Notifications',
+    'notifications_read_all' => 'Mark all read',
+    'notifications_empty' => 'Nothing new yet',
+    'notify_topic_reply' => ':name replied in your topic “:topic”',
+    'notify_topic_reply_many' => ':count new replies in your topic “:topic”. Latest from :name',
+    'notify_quote' => ':name quoted your message in “:topic”',
+    'notify_reply' => ':name replied to you in “:topic”',
 ];

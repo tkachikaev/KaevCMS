@@ -130,10 +130,21 @@ final class ForumTopicController extends Controller
             'body' => ['nullable', 'string', 'max:10000'],
             'body_html' => ['nullable', 'string', 'max:20000'],
             'submission_key' => ['required', 'uuid'],
+            'quoted_posts' => ['sometimes', 'array', 'max:10'],
+            'quoted_posts.*' => ['integer', 'min:1'],
+            'replied_posts' => ['sometimes', 'array', 'max:10'],
+            'replied_posts.*' => ['integer', 'min:1'],
         ]);
         $post = $this->posting->addReply($actor, (int) $topic->id, (string) ($data['body'] ?? ''), $data['submission_key'], $data['body_html'] ?? null);
         if ($post->wasRecentlyCreated) {
             $this->audit('reply_created', $actor, 'post #'.$post->id);
+            app(\KaevCMS\Modules\Forum\Services\ForumNotifications::class)->afterReply(
+                $actor,
+                $topic->fresh() ?? $topic,
+                $post,
+                array_map('intval', $data['quoted_posts'] ?? []),
+                array_map('intval', $data['replied_posts'] ?? []),
+            );
         }
 
         // Calculate the page from the persisted post order, not from an untrusted form field.

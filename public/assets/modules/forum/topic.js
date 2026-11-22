@@ -37,6 +37,23 @@
         replyPanel.scrollIntoView({ behavior: "smooth", block: "center" });
     };
 
+    // Remember which posts this reply quotes or answers, so their authors are notified.
+    const replyForm = replyPanel?.querySelector("form.forum-compose") ?? null;
+    const addressPost = (field, postId) => {
+        if (!(replyForm instanceof HTMLFormElement) || !/^\d+$/.test(postId ?? "")) {
+            return;
+        }
+        const exists = [...replyForm.querySelectorAll(`input[name="${field}[]"]`)].some((input) => input.value === postId);
+        if (exists || replyForm.querySelectorAll(`input[name="${field}[]"]`).length >= 10) {
+            return;
+        }
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = `${field}[]`;
+        input.value = postId;
+        replyForm.append(input);
+    };
+
     const quote = (author, text) => {
         const wrote = list.dataset.forumWrote ?? "";
         const box = document.createElement("div");
@@ -87,12 +104,14 @@
         const quoteButton = target?.closest("[data-forum-quote]");
         if (quoteButton instanceof HTMLElement) {
             quote(quoteButton.dataset.author ?? "", quoteButton.dataset.text ?? "");
+            addressPost("quoted_posts", quoteButton.dataset.postId);
             return;
         }
 
         const mentionButton = target?.closest("[data-forum-mention]");
         if (mentionButton instanceof HTMLElement) {
             mention(mentionButton.dataset.author ?? "");
+            addressPost("replied_posts", mentionButton.dataset.postId);
             return;
         }
 

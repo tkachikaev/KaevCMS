@@ -364,6 +364,38 @@
         :root[data-forum-scheme="dark"] .forum-site-link-out:hover{background:#1d2a37}
         :root[data-forum-scheme="dark"] .forum-site-link-out::after{background:#e2e8f0;color:#151f2a}
         .forum-topic-moderation-note{margin:10px 0 0;color:#7b8ca0;font-size:13px}
+        /* The bell: unread badge, a gentle ring when something new arrives, a dropdown list. */
+        .forum-bell{position:relative}
+        .forum-bell-button{position:relative;display:grid;place-items:center;width:38px;height:38px;border:1px solid #e1e7ef;border-radius:50%;color:#49617c;list-style:none;cursor:pointer}
+        .forum-bell-button::-webkit-details-marker{display:none}
+        .forum-bell-button:hover,.forum-bell[open]>.forum-bell-button{background:#f5f8fc}
+        .forum-bell.has-unread .forum-bell-button{color:#27374b}
+        .forum-bell-count{position:absolute;top:-4px;right:-5px;min-width:18px;height:18px;padding:0 5px;border:2px solid #fff;border-radius:999px;background:#d64545;color:#fff;font-size:10px;font-weight:700;line-height:14px;text-align:center}
+        @keyframes forum-bell-ring{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}45%{transform:rotate(9deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(3deg)}}
+        .forum-bell.is-ringing .forum-bell-icon{transform-origin:50% 8%;animation:forum-bell-ring 1s ease-in-out 2}
+        .forum-bell-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:340px;max-width:calc(100vw - 26px);max-height:420px;overflow:auto;padding:6px;border:1px solid #dfe5ed;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(23,37,56,.14)}
+        .forum-bell[open]>.forum-bell-panel{transform-origin:top right;animation:forum-mod-pop .28s cubic-bezier(.16,.84,.3,1) both}
+        .forum-bell-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px 10px;margin-bottom:4px;border-bottom:1px solid #edf0f3;color:#27374b;font-size:14px}
+        .forum-bell-head form{margin:0}
+        .forum-bell-head button{padding:0;border:0;background:none;color:#355b85;font:inherit;font-size:13px;cursor:pointer}
+        .forum-bell-panel>form{margin:0}
+        .forum-bell-item{display:grid;gap:3px;width:100%;padding:9px 10px 9px 22px;border:0;border-radius:8px;background:transparent;color:#536982;font:inherit;font-size:14px;line-height:1.4;text-align:left;cursor:pointer;position:relative}
+        .forum-bell-item:hover{background:#f3f6fa}
+        .forum-bell-item.is-unread{color:#27374b;font-weight:600}
+        .forum-bell-item.is-unread::before{content:"";position:absolute;left:9px;top:15px;width:7px;height:7px;border-radius:50%;background:#2f6fd6}
+        .forum-bell-item small{color:#8a9aac;font-size:12px;font-weight:400}
+        .forum-bell-empty{margin:0;padding:18px 10px;color:#8a9aac;font-size:14px;text-align:center}
+        @media(prefers-reduced-motion:reduce){.forum-bell.is-ringing .forum-bell-icon,.forum-bell[open]>.forum-bell-panel{animation:none}}
+        @media(max-width:760px){.forum-bell-panel{position:fixed;left:13px;right:13px;top:auto;width:auto;max-width:none;max-height:70vh}}
+        :root[data-forum-scheme="dark"] .forum-bell-button{border-color:#324252;color:#c9d9ee}
+        :root[data-forum-scheme="dark"] .forum-bell-button:hover,:root[data-forum-scheme="dark"] .forum-bell[open]>.forum-bell-button{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-bell-count{border-color:#151f2a}
+        :root[data-forum-scheme="dark"] .forum-bell-panel{border-color:#2a3949;background:#151f2a;box-shadow:0 18px 48px rgba(0,0,0,.5)}
+        :root[data-forum-scheme="dark"] .forum-bell-head{border-color:#263445;color:#eef3f8}
+        :root[data-forum-scheme="dark"] .forum-bell-head button{color:#a3c6ec}
+        :root[data-forum-scheme="dark"] .forum-bell-item{color:#a9bdd3}
+        :root[data-forum-scheme="dark"] .forum-bell-item:hover{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-bell-item.is-unread{color:#eef3f8}
         .forum-trash-topic{display:grid;gap:2px;min-width:0}
         .forum-trash-topic small{color:#7b8ca0;font-size:12px}
         .forum-editor-menu{position:relative}
@@ -559,6 +591,7 @@
         :root[data-forum-scheme="dark"] .forum-skip-link{background:#25364a;color:#fff;border-color:#6a9ad0}
     </style>
     <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>
+    <script src="{{ asset('assets/modules/forum/notifications.js') }}?v={{ cms_version() }}" defer></script>
     @stack('forum-editor-scripts')
 </head>
 <body>
@@ -584,6 +617,41 @@
         <div class="forum-actions">
             <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
             <x-language-menu />
+            @if($actor->user)
+                @php($bellCenter = app(\App\Services\Notifications\PlayerNotificationCenter::class))
+                @php($bellUnread = $bellCenter->unreadCount($actor->user))
+                @php($bellItems = $bellCenter->latest($actor->user, 12))
+                {{-- The player's bell: notifications from the forum (and later the account area). --}}
+                <details @class(['forum-bell', 'has-unread' => $bellUnread > 0]) data-language-menu data-forum-bell
+                         data-count-url="{{ route('notifications.count') }}" data-unread="{{ $bellUnread }}">
+                    <summary class="forum-bell-button" aria-label="{{ __('module-forum::messages.notifications') }}: {{ $bellUnread }}" title="{{ __('module-forum::messages.notifications') }}">
+                        <svg class="forum-bell-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                        <span class="forum-bell-count" data-forum-bell-count @if($bellUnread === 0) hidden @endif>{{ $bellUnread > 99 ? '99+' : $bellUnread }}</span>
+                    </summary>
+                    <div class="forum-bell-panel">
+                        <div class="forum-bell-head">
+                            <strong>{{ __('module-forum::messages.notifications') }}</strong>
+                            @if($bellUnread > 0)
+                                <form method="POST" action="{{ route('notifications.read-all') }}">
+                                    @csrf
+                                    <button type="submit">{{ __('module-forum::messages.notifications_read_all') }}</button>
+                                </form>
+                            @endif
+                        </div>
+                        @forelse($bellItems as $bellItem)
+                            <form method="POST" action="{{ route('notifications.open', $bellItem->id) }}">
+                                @csrf
+                                <button type="submit" @class(['forum-bell-item', 'is-unread' => $bellItem->read_at === null])>
+                                    <span class="forum-bell-item-text">{{ $bellCenter->text($bellItem) }}</span>
+                                    <small>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::when($bellItem->occurred_at) }}</small>
+                                </button>
+                            </form>
+                        @empty
+                            <p class="forum-bell-empty">{{ __('module-forum::messages.notifications_empty') }}</p>
+                        @endforelse
+                    </div>
+                </details>
+            @endif
             @if($actor->isGuest())
                 <a class="forum-button forum-button-primary" href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
             @else

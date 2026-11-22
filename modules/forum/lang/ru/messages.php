@@ -255,4 +255,11 @@ return [
     'delete_topic_where_owner' => 'Тема пропадёт из раздела. Её можно восстановить в «Корзине» форума.',
     'deleted_topics' => 'Удалённые темы',
     'deleted_at' => 'Удалена: :date',
+    'notifications' => 'Оповещения',
+    'notifications_read_all' => 'Прочитать всё',
+    'notifications_empty' => 'Пока ничего нового',
+    'notify_topic_reply' => ':name ответил(а) в вашей теме «:topic»',
+    'notify_topic_reply_many' => 'Новых ответов в вашей теме «:topic»: :count. Последний — от :name',
+    'notify_quote' => ':name процитировал(а) ваше сообщение в теме «:topic»',
+    'notify_reply' => ':name ответил(а) вам в теме «:topic»',
 ];
