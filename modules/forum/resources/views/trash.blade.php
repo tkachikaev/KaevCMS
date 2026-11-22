@@ -30,4 +30,21 @@
         <div class="forum-panel-body">{{ __('module-forum::messages.no_deleted') }}</div>
     @endforelse
 </div>
+<div class="forum-panel forum-trash-panel">
+    <div class="forum-panel-heading">{{ __('module-forum::messages.deleted_topics') }}</div>
+    @forelse($topics as $deletedTopic)
+        <div class="forum-section-row">
+            <div class="forum-trash-topic">
+                <strong>{{ $deletedTopic->title }}</strong>
+                <small>{{ $deletedTopic->section?->label() }} · {{ $deletedTopic->author_name }} · {{ __('module-forum::messages.deleted_at', ['date' => \KaevCMS\Modules\Forum\Support\ForumFormat::when($deletedTopic->deleted_at)]) }}</small>
+            </div>
+            <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $deletedTopic->id, 'action' => 'restore']) }}">
+                @csrf
+                <button class="forum-button" type="submit">{{ __('module-forum::messages.restore') }}</button>
+            </form>
+        </div>
+    @empty
+        <div class="forum-panel-body">{{ __('module-forum::messages.no_deleted') }}</div>
+    @endforelse
+</div>
 @endsection

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum: topic moderation moved from a small bar above the posts to a "Manage topic" menu beside the title (close, pin, hide, move…, delete topic…); moving and deleting confirm in dialogs that say where a deleted topic can be restored. Deleted topics now also appear in the forum Trash with a Restore button.
 - Forum: a moderator no longer gets a bare "403 Forbidden" page when a topic holds posts by the administration or other moderators. Hide and delete are not offered for such topics, the moderation panel explains that only the owner can hide, delete or move them to a more private section, and a forged request returns the same explanation without changing the topic.
 - Forum: ship the author-card service in release packages; without it, topic pages failed on sites updated from a release archive.
 - Forum: the language switch is now the website's own language menu, with the same look and opening animation in light and dark schemes, and changing the language keeps the visitor on the same forum page instead of opening the website home page.

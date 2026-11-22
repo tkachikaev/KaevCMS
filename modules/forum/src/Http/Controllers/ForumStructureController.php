@@ -111,6 +111,9 @@ final class ForumStructureController extends Controller
             'identities' => $this->actors->identities($request),
             'categories' => ForumCategory::onlyTrashed()->orderByDesc('deleted_at')->get(),
             'sections' => ForumSection::onlyTrashed()->orderByDesc('deleted_at')->get(),
+            'topics' => \KaevCMS\Modules\Forum\Models\ForumTopic::onlyTrashed()
+                ->with(['section' => static fn ($query) => $query->withTrashed()])
+                ->orderByDesc('deleted_at')->limit(100)->get(),
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
 

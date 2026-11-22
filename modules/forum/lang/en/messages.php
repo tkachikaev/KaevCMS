@@ -93,7 +93,7 @@ return [
     'move_up' => 'Move up',
     'move_down' => 'Move down',
     'trash' => 'Trash',
-    'trash_hint' => 'Removed categories and sections can be restored.',
+    'trash_hint' => 'Deleted categories, sections and topics can be restored.',
     'restore' => 'Restore',
     'no_deleted' => 'Nothing here yet.',
     'no_topics' => 'No topics yet.',
@@ -250,4 +250,9 @@ return [
     'open_site' => 'Open the site',
     'open_site_new_tab' => 'opens in a new tab',
     'moderation_protected_replies' => 'This topic contains posts by the administration or other moderators, so only the forum owner can hide it, delete it or move it to a more private section. You can still close, pin and move it to an open section.',
+    'delete_topic' => 'Delete topic',
+    'delete_topic_where' => 'The topic disappears from the section. It can be restored on the "Hidden and deleted topics" page of this section.',
+    'delete_topic_where_owner' => 'The topic disappears from the section. It can be restored from the forum Trash.',
+    'deleted_topics' => 'Deleted topics',
+    'deleted_at' => 'Deleted: :date',
 ];

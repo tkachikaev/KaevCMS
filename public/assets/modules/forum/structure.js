@@ -6,6 +6,8 @@
         if (trigger) {
             const dialog = document.getElementById(trigger.dataset.forumDialogOpen);
             if (dialog instanceof HTMLDialogElement) {
+                // A menu that opened the dialog should not stay open behind it.
+                trigger.closest("details")?.removeAttribute("open");
                 dialog.showModal();
             }
             return;

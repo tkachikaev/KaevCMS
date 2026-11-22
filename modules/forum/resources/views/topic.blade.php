@@ -15,70 +15,88 @@
     <span>›</span><a href="{{ route('modules.forum.sections.show', $section) }}">{{ $section->label() }}</a>
     <span>›</span><strong>{{ $topic->title }}</strong>
 </nav>
-<div class="forum-heading">
-    <h1>{{ $topic->title }}</h1>
-    <div class="forum-tools">
-        @if($topic->is_pinned)<span class="forum-tag">{{ __('module-forum::messages.pinned') }}</span>@endif
-        @if($topic->status === 'closed')<span class="forum-tag">{{ __('module-forum::messages.closed') }}</span>@endif
-        @if($topic->hidden_at !== null)<span class="forum-tag">{{ __('module-forum::messages.hidden') }}</span>@endif
+<div class="forum-heading forum-topic-heading">
+    <div class="forum-heading-copy">
+        <h1>{{ $topic->title }}</h1>
+        <div class="forum-tools">
+            @if($topic->is_pinned)<span class="forum-tag">{{ __('module-forum::messages.pinned') }}</span>@endif
+            @if($topic->status === 'closed')<span class="forum-tag">{{ __('module-forum::messages.closed') }}</span>@endif
+            @if($topic->hidden_at !== null)<span class="forum-tag">{{ __('module-forum::messages.hidden') }}</span>@endif
+        </div>
     </div>
+    @if($canModerate)
+        {{-- Moderation sits beside the title; destructive steps open a confirmation dialog. --}}
+        <details class="forum-mod-menu" data-language-menu>
+            <summary class="forum-button forum-mod-trigger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>
+                <span>{{ __('module-forum::messages.topic_actions') }}</span>
+                <svg class="forum-mod-chevron" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </summary>
+            <div class="forum-mod-panel">
+                @foreach(array_merge([
+                    $topic->status === 'closed' ? 'reopen' : 'close',
+                    $topic->is_pinned ? 'unpin' : 'pin',
+                ], $canRemoveTopic ? [$topic->hidden_at !== null ? 'unhide' : 'hide'] : []) as $action)
+                    <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => $action]) }}">
+                        @csrf
+                        <button type="submit">{{ __('module-forum::messages.action_'.$action) }}</button>
+                    </form>
+                @endforeach
+                @if($moveSections->isNotEmpty())
+                    <button type="button" data-forum-dialog-open="forum-topic-move">{{ __('module-forum::messages.action_move') }}…</button>
+                @endif
+                @if($canRemoveTopic)
+                    <button type="button" class="forum-mod-danger" data-forum-dialog-open="forum-topic-delete">{{ __('module-forum::messages.delete_topic') }}…</button>
+                @else
+                    <p class="forum-topic-moderation-note">{{ __('module-forum::messages.moderation_protected_replies') }}</p>
+                @endif
+            </div>
+        </details>
+    @endif
 </div>
+@if($canModerate && $moveSections->isNotEmpty())
+    <dialog class="forum-dialog forum-dialog-small" id="forum-topic-move">
+        <form method="POST" action="{{ route('modules.forum.topics.move', $topic->id) }}">
+            @csrf
+            <h2>{{ __('module-forum::messages.action_move') }}</h2>
+            <label class="forum-dialog-field">
+                <span>{{ __('module-forum::messages.move_to_section') }}</span>
+                <select name="section_id" required>
+                    <option value="">{{ __('module-forum::messages.choose_section') }}</option>
+                    @foreach($moveSections as $destination)
+                        <option value="{{ $destination->id }}" @selected((int) old('section_id') === (int) $destination->id)>{{ $destination->label() }}</option>
+                    @endforeach
+                </select>
+            </label>
+            @if($actor->isOwner())
+                <label class="forum-confirm"><input type="checkbox" name="confirm_exposure" value="1"> {{ __('module-forum::messages.confirm_visibility_expansion') }}</label>
+            @endif
+            <div class="forum-dialog-actions">
+                <button type="button" class="forum-button" data-dialog-close>{{ __('module-forum::messages.cancel') }}</button>
+                <button type="submit" class="forum-button forum-button-primary">{{ __('module-forum::messages.action_move') }}</button>
+            </div>
+        </form>
+    </dialog>
+@endif
+@if($canModerate && $canRemoveTopic)
+    <dialog class="forum-dialog forum-dialog-small" id="forum-topic-delete">
+        <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => 'delete']) }}">
+            @csrf
+            <h2>{{ __('module-forum::messages.delete_topic') }}</h2>
+            <p>{{ __('module-forum::messages.confirm_delete_topic') }}</p>
+            <p class="forum-dialog-note">{{ $actor->isOwner() ? __('module-forum::messages.delete_topic_where_owner') : __('module-forum::messages.delete_topic_where') }}</p>
+            <label class="forum-confirm"><input type="checkbox" required> {{ __('module-forum::messages.delete_confirm') }}</label>
+            <div class="forum-dialog-actions">
+                <button type="button" class="forum-button" data-dialog-close>{{ __('module-forum::messages.cancel') }}</button>
+                <button type="submit" class="forum-button forum-button-danger">{{ __('module-forum::messages.delete_topic') }}</button>
+            </div>
+        </form>
+    </dialog>
+@endif
 <p class="forum-desc">{{ __('module-forum::messages.replies_count', ['count' => $topic->reply_count]) }} · {{ __('module-forum::messages.views_count', ['count' => \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $topic->view_count)]) }}</p>
 @if(session('forum_status'))<p class="forum-notice" role="status">{{ session('forum_status') }}</p>@endif
 @if($topic->hidden_at !== null)
     <p class="forum-notice forum-notice-warning">{{ __('module-forum::messages.hidden_moderator_notice') }}</p>
-@endif
-@if($canModerate)
-    <details class="forum-topic-moderation forum-panel">
-        <summary class="forum-panel-heading">{{ __('module-forum::messages.topic_actions') }}</summary>
-        <div class="forum-topic-moderation-content">
-            <div class="forum-tools">
-                @foreach(array_merge([
-                    $topic->status === 'closed' ? 'reopen' : 'close',
-                    $topic->is_pinned ? 'unpin' : 'pin',
-                ], $canRemoveTopic ? [$topic->hidden_at !== null ? 'unhide' : 'hide', 'delete'] : []) as $action)
-                    @if($action === 'delete')
-                        @include('module-forum::partials.confirm-action', [
-                            'action' => route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => 'delete']),
-                            'label' => __('module-forum::messages.action_delete'),
-                            'question' => __('module-forum::messages.confirm_delete_topic'),
-                        ])
-                    @else
-                        <form method="POST" action="{{ route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => $action]) }}">
-                            @csrf
-                            <button type="submit" class="forum-button forum-button-compact">
-                                {{ __('module-forum::messages.action_'.$action) }}
-                            </button>
-                        </form>
-                    @endif
-                @endforeach
-            </div>
-            @unless($canRemoveTopic)
-                <p class="forum-topic-moderation-note">{{ __('module-forum::messages.moderation_protected_replies') }}</p>
-            @endunless
-            @if($moveSections->isNotEmpty())
-                <form class="forum-move-form" method="POST" action="{{ route('modules.forum.topics.move', $topic->id) }}">
-                    @csrf
-                    <label for="forum-move-target">{{ __('module-forum::messages.move_to_section') }}</label>
-                    <select id="forum-move-target" name="section_id" required>
-                        <option value="">{{ __('module-forum::messages.choose_section') }}</option>
-                        @foreach($moveSections as $destination)
-                            <option value="{{ $destination->id }}" @selected((int) old('section_id') === (int) $destination->id)>
-                                {{ $destination->label() }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @if($actor->isOwner())
-                        <label class="forum-move-confirm">
-                            <input type="checkbox" name="confirm_exposure" value="1">
-                            {{ __('module-forum::messages.confirm_visibility_expansion') }}
-                        </label>
-                    @endif
-                    <button class="forum-button forum-button-primary" type="submit">{{ __('module-forum::messages.action_move') }}</button>
-                </form>
-            @endif
-        </div>
-    </details>
 @endif
 @if($errors->any())
     <div class="forum-notice forum-notice-error" role="alert">

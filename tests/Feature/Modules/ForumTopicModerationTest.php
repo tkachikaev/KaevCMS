@@ -338,6 +338,29 @@ final class ForumTopicModerationTest extends TestCase
         $this->assertNull($topic->fresh()->hidden_at);
     }
 
+    public function test_owner_finds_deleted_topics_in_the_trash_and_restores_them(): void
+    {
+        $owner = Admin::factory()->create();
+        $topic = $this->topic(User::factory()->create(), 'Topic for the trash');
+        $this->asOwner($owner);
+
+        // The topic page offers a moderation menu with dialogs for move and delete.
+        $this->get('/forum/topics/'.$topic->id)->assertOk()
+            ->assertSee('forum-mod-menu', false)
+            ->assertSee('id="forum-topic-delete"', false)
+            ->assertSee('id="forum-topic-move"', false);
+
+        $this->post($this->moderationUrl($topic, 'delete'))->assertRedirect();
+        $this->get('/forum/trash')->assertOk()
+            ->assertSee(__('module-forum::messages.deleted_topics'))
+            ->assertSee('Topic for the trash')
+            ->assertSee('/forum/topics/'.$topic->id.'/moderate/restore', false);
+
+        $this->post($this->moderationUrl($topic, 'restore'))->assertRedirect('/forum/topics/'.$topic->id);
+        $this->assertFalse(ForumTopic::withTrashed()->findOrFail($topic->id)->trashed());
+        $this->get('/forum/trash')->assertDontSee('Topic for the trash');
+    }
+
     private function topic(
         User|Admin $author,
         string $title,
