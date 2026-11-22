@@ -280,4 +280,5 @@ return [
     'settings_sections' => 'Разделы настроек форума',
     'settings_general' => 'Общие',
     'settings_community' => 'Сообщество',
+    'restore_section_first' => 'Раздел этой темы тоже в корзине: сначала восстановите его (и его категорию).',
 ];

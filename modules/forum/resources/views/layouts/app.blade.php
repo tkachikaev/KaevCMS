@@ -451,6 +451,7 @@
         :root[data-forum-scheme="dark"] .forum-bell-dot{background:#5aa0f0;box-shadow:0 0 0 3px rgba(90,160,240,.2)}
         .forum-trash-topic{display:grid;gap:2px;min-width:0}
         .forum-trash-topic small{color:#7b8ca0;font-size:12px}
+        .forum-trash-blocked{max-width:260px;color:#9a6f2e;font-size:12px;text-align:right}
         .forum-editor-menu{position:relative}
         .forum-editor-menu>summary{display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:32px;padding:3px 7px;border:1px solid transparent;border-radius:6px;color:#49617c;list-style:none;cursor:pointer}
         .forum-editor-menu>summary::-webkit-details-marker{display:none}

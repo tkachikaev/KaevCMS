@@ -280,4 +280,5 @@ return [
     'settings_sections' => 'Forum settings sections',
     'settings_general' => 'General',
     'settings_community' => 'Community',
+    'restore_section_first' => 'The section of this topic is in the trash too: restore it (and its category) first.',
 ];

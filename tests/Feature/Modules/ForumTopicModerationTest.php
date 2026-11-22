@@ -361,6 +361,26 @@ final class ForumTopicModerationTest extends TestCase
         $this->get('/forum/trash')->assertDontSee('Topic for the trash');
     }
 
+    public function test_topic_of_a_deleted_section_waits_for_its_section(): void
+    {
+        $owner = Admin::factory()->create();
+        $topic = $this->topic(User::factory()->create(), 'Topic in a removed section');
+        $this->asOwner($owner);
+        $this->post($this->moderationUrl($topic, 'delete'))->assertRedirect();
+        ForumSection::query()->findOrFail($topic->section_id)->delete();
+
+        $this->get('/forum/trash')->assertOk()
+            ->assertSee('Topic in a removed section')
+            ->assertSee(__('module-forum::messages.restore_section_first'))
+            ->assertDontSee('/forum/topics/'.$topic->id.'/moderate/restore', false);
+        $this->from('/forum/trash')->post($this->moderationUrl($topic, 'restore'))
+            ->assertRedirect('/forum/trash')->assertSessionHasErrors('restore');
+        $this->assertTrue(ForumTopic::withTrashed()->findOrFail($topic->id)->trashed());
+
+        ForumSection::onlyTrashed()->findOrFail($topic->section_id)->restore();
+        $this->post($this->moderationUrl($topic, 'restore'))->assertRedirect('/forum/topics/'.$topic->id);
+    }
+
     private function topic(
         User|Admin $author,
         string $title,

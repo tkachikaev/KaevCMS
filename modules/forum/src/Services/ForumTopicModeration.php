@@ -100,6 +100,13 @@ final class ForumTopicModeration
 
         $result = DB::transaction(function () use ($actor, $id, $action): array {
             $original = ForumTopic::withTrashed()->findOrFail($id);
+            // A topic of a deleted section (or category) comes back only after its section.
+            if ($action === 'restore' && (! ForumSection::query()->whereKey($original->section_id)->exists()
+                || ! ForumSection::query()->whereKey($original->section_id)->whereHas('category')->exists())) {
+                throw ValidationException::withMessages([
+                    'restore' => __('module-forum::messages.restore_section_first'),
+                ]);
+            }
             $section = ForumSection::query()->lockForUpdate()->findOrFail($original->section_id);
             ForumCategory::query()->findOrFail($section->category_id);
             $this->permissions->assertCurrentModeratorForWrite($actor);

@@ -112,7 +112,7 @@ final class ForumStructureController extends Controller
             'categories' => ForumCategory::onlyTrashed()->orderByDesc('deleted_at')->get(),
             'sections' => ForumSection::onlyTrashed()->orderByDesc('deleted_at')->get(),
             'topics' => \KaevCMS\Modules\Forum\Models\ForumTopic::onlyTrashed()
-                ->with(['section' => static fn ($query) => $query->withTrashed()])
+                ->with(['section' => static fn ($query) => $query->withTrashed()->with(['category' => static fn ($category) => $category->withTrashed()])])
                 ->orderByDesc('deleted_at')->limit(100)->get(),
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
