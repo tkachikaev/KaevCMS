@@ -23,14 +23,26 @@ final class ForumActivity
 
     private const CACHE_SECONDS = 60;
 
+    /** @return array{enabled: bool, limit: int} */
+    public function settings(): array
+    {
+        $row = Schema::hasColumn('module_forum_settings', 'activity_limit')
+            ? DB::table('module_forum_settings')->where('id', 1)->first()
+            : null;
+        $limit = (int) ($row->activity_limit ?? self::DEFAULT_LIMIT);
+
+        return [
+            'enabled' => (bool) ($row->activity_enabled ?? true) && $limit > 0,
+            'limit' => max(1, min(self::MAX_LIMIT, $limit > 0 ? $limit : self::DEFAULT_LIMIT)),
+        ];
+    }
+
+    /** Topics per tab on the forum home; 0 when the table is switched off. */
     public function limit(): int
     {
-        if (! Schema::hasColumn('module_forum_settings', 'activity_limit')) {
-            return self::DEFAULT_LIMIT;
-        }
-        $value = DB::table('module_forum_settings')->where('id', 1)->value('activity_limit');
+        $settings = $this->settings();
 
-        return max(0, min(self::MAX_LIMIT, (int) ($value ?? self::DEFAULT_LIMIT)));
+        return $settings['enabled'] ? $settings['limit'] : 0;
     }
 
     /**

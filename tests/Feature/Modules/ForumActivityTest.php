@@ -52,7 +52,7 @@ class ForumActivityTest extends TestCase
             ->assertSee('aria-controls="forum-activity-mine" aria-selected="true"', false);
     }
 
-    public function test_owner_sets_the_number_of_topics_or_hides_the_table(): void
+    public function test_owner_switches_the_table_and_sets_the_number_of_topics(): void
     {
         $writer = User::factory()->create();
         foreach (range(1, 4) as $number) {
@@ -61,9 +61,11 @@ class ForumActivityTest extends TestCase
 
         $owner = Admin::factory()->create();
         $this->actingAs($owner, 'admin');
-        $this->put('/admin/extensions/forum/settings', [
-            'visibility' => 'all', 'links_after_days' => 0, 'activity_limit' => 2,
-        ])->assertRedirect();
+        $this->get('/admin/extensions/forum/settings')->assertOk()
+            ->assertSee('name="activity_enabled"', false)
+            ->assertSee('name="activity_limit"', false);
+        $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '1', 'activity_limit' => 2])
+            ->assertRedirect();
         $this->assertSame(2, (int) DB::table('module_forum_settings')->value('activity_limit'));
 
         auth('admin')->logout();
@@ -72,15 +74,25 @@ class ForumActivityTest extends TestCase
         $latest = explode('data-forum-activity-panel="new"', explode('data-forum-activity-panel="latest"', $html)[1])[0];
         $this->assertSame(2, substr_count($latest, 'forum-activity-row'));
 
+        // Switching off hides the table and keeps the chosen number.
         $this->actingAs($owner, 'admin');
-        $this->put('/admin/extensions/forum/settings', [
-            'visibility' => 'all', 'links_after_days' => 0, 'activity_limit' => 0,
-        ])->assertRedirect();
-        $this->put('/admin/extensions/forum/settings', [
-            'visibility' => 'all', 'links_after_days' => 0, 'activity_limit' => 31,
-        ])->assertSessionHasErrors('activity_limit');
+        $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '0', 'activity_limit' => 2])
+            ->assertRedirect();
+        foreach ([0, 31] as $invalid) {
+            $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '1', 'activity_limit' => $invalid])
+                ->assertSessionHasErrors('activity_limit');
+        }
+        $this->assertSame(2, (int) DB::table('module_forum_settings')->value('activity_limit'));
         auth('admin')->logout();
         $this->get('/forum')->assertOk()->assertDontSee('data-forum-activity', false);
+    }
+
+    public function test_only_the_owner_changes_the_activity_table(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => \App\Auth\AdminRole::Administrator]), 'admin');
+        $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '0', 'activity_limit' => 5])
+            ->assertForbidden();
+        $this->assertTrue((bool) DB::table('module_forum_settings')->value('activity_enabled'));
     }
 
     private function topic(User $author, string $section, string $title): ForumTopic

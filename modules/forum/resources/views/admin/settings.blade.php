@@ -45,11 +45,31 @@
                 <small id="forum_links_after_days_help" class="admin-field-help">{{ __('module-forum::messages.links_after_days_help') }}</small>
             </div>
 
+            <div class="forum-settings-actions">
+                <x-admin.button type="submit" variant="primary">{{ __('module-forum::messages.save') }}</x-admin.button>
+            </div>
+        </form>
+    </x-admin.card>
+
+    <x-admin.card class="forum-settings-card">
+        <x-admin.card-heading
+            :title="__('module-forum::messages.activity_card_title')"
+            :description="__('module-forum::messages.activity_card_help')"
+        />
+
+        <form class="forum-settings-form" method="POST" action="{{ route('admin.module-pages.forum.activity.update', ['adminPath' => $adminPath]) }}">
+            @csrf
+            @method('PUT')
+            <x-admin.toggle id="forum_activity_enabled" name="activity_enabled"
+                :label="__('module-forum::messages.activity_enabled')"
+                :hint="__('module-forum::messages.activity_enabled_help')"
+                :checked="(bool) old('activity_enabled', $activity['enabled'])" />
+
             <div @class(['admin-field', 'has-error' => $errors->has('activity_limit')])>
                 <label class="admin-field-label" for="forum_activity_limit">{{ __('module-forum::messages.activity_limit') }}</label>
                 <div class="forum-settings-unit">
-                    <input id="forum_activity_limit" name="activity_limit" type="number" min="0" max="{{ \KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT }}" step="1" inputmode="numeric"
-                           value="{{ old('activity_limit', $settings->activity_limit ?? \KaevCMS\Modules\Forum\Services\ForumActivity::DEFAULT_LIMIT) }}" required
+                    <input id="forum_activity_limit" name="activity_limit" type="number" min="1" max="{{ \KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT }}" step="1" inputmode="numeric"
+                           value="{{ old('activity_limit', $activity['limit']) }}" required
                            aria-describedby="forum_activity_limit_unit forum_activity_limit_help"
                            @if($errors->has('activity_limit')) aria-invalid="true" @endif>
                     <span id="forum_activity_limit_unit">{{ __('module-forum::messages.activity_limit_unit') }}</span>

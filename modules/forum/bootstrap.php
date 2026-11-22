@@ -47,7 +47,7 @@ return static function (Application $app, ModuleContext $module): void {
         manageRoles: [AdminRole::Owner],
     );
 
-    foreach (['settings.update', 'images.update', 'moderators.store', 'moderators.destroy'] as $action) {
+    foreach (['settings.update', 'images.update', 'activity.update', 'moderators.store', 'moderators.destroy'] as $action) {
         $app->make(ModuleAdminAccessRegistry::class)->registerExact(
             moduleId: $module->id,
             routeName: 'admin.module-pages.forum.'.$action,

@@ -55,7 +55,7 @@ If the CMS requires verified email addresses, unverified players cannot post. Th
 
 ## Activity table on the home page
 
-Above the sections a table offers **Latest messages**, **New topics**, **Popular topics** (most messages in the last 7 days) and, for signed-in players, **My topics**. It only lists topics from sections the visitor can already see; hidden and deleted topics never appear. Shared lists refresh once a minute. The Owner sets the number of topics per tab under **Admin → Modules → Forum → Access and links** ("Activity table on the forum home", 1 to 30, default 10); **0 hides the table**. It needs the module migration `2026_11_23_000700_add_activity_limit_to_module_forum_settings.php` (Admin → Modules → "Update database").
+Above the sections a table offers **Latest messages**, **New topics**, **Popular topics** (most messages in the last 7 days) and, for signed-in players, **My topics**. It only lists topics from sections the visitor can already see; hidden and deleted topics never appear. Shared lists refresh once a minute. Under **Admin → Modules → Forum → Activity table on the home page** the Owner switches the table on or off and sets topics per tab (1 to 30, default 10). It needs the module migrations `2026_11_23_000700_add_activity_limit_to_module_forum_settings.php` and `2026_11_23_000800_add_activity_enabled_to_module_forum_settings.php` (Admin → Modules → "Update database").
 
 ## Notifications (the bell)
 

@@ -270,7 +270,11 @@ return [
     'activity_mine' => 'My topics',
     'activity_empty' => 'Nothing here yet.',
     'activity_popular_empty' => 'No discussions in the last week yet.',
-    'activity_limit' => 'Activity table on the forum home',
+    'activity_limit' => 'Topics to show',
     'activity_limit_unit' => 'topics per tab',
-    'activity_limit_help' => 'How many topics the Latest messages, New topics, Popular topics and My topics tabs show, from 1 to 30. 0 hides the table.',
+    'activity_limit_help' => 'From 1 to 30 topics on each tab. Default 10.',
+    'activity_card_title' => 'Activity table on the home page',
+    'activity_card_help' => 'The Latest messages, New topics, Popular topics and My topics tabs above the forum sections.',
+    'activity_enabled' => 'Show the activity table',
+    'activity_enabled_help' => 'Switched off, the table disappears from the forum home. The number of topics is kept.',
 ];

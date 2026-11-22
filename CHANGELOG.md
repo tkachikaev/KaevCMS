@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Forum: an activity table above the sections with Latest messages, New topics, Popular topics (most messages this week) and My topics tabs, limited to sections the visitor can see. The owner sets topics per tab (default 10) or hides the table with 0 in the forum settings; new module migration — apply under Admin → Modules.
+- Forum: an activity table above the sections with Latest messages, New topics, Popular topics (most messages this week) and My topics tabs, limited to sections the visitor can see. A separate "Activity table on the home page" card in the forum settings switches it on or off and sets topics per tab (1-30, default 10); new module migrations — apply under Admin → Modules.
 - Forum: "Open forum" in the forum settings opened the forum without its styles until the page was reloaded; it now opens with a full page load.
 - Forum header: "Personal account" replaces "To website" for players and guests (staff without a player session still see "To website"); the website stays one click away in the profile menu and in the footer.
 - Forum: a light/dark switch in the header, the same sun-and-moon control and soft crossfade as the player account. The choice is shared with the public website and remembered in the browser; on narrow phones the header keeps only the logo.
