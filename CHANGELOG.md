@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum: a moderator no longer gets a bare "403 Forbidden" page when a topic holds posts by the administration or other moderators. Hide and delete are not offered for such topics, the moderation panel explains that only the owner can hide, delete or move them to a more private section, and a forged request returns the same explanation without changing the topic.
 - Forum: ship the author-card service in release packages; without it, topic pages failed on sites updated from a release archive.
 - Forum: the language switch is now the website's own language menu, with the same look and opening animation in light and dark schemes, and changing the language keeps the visitor on the same forum page instead of opening the website home page.
 - Forum: clicking your name in the header opens an account menu like the player account's — wallet balance, account, settings, security and sign out for players; forum settings, control panel and sign out for staff — instead of leaving the forum. The separate settings gear moved into this menu.

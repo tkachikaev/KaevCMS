@@ -207,14 +207,14 @@ final class ForumStabilityTest extends TestCase
         $this->post('/forum/topics/'.$topic->id.'/moderate/hide')->assertRedirect();
 
         $this->actingAs($moderator, 'web')->withSession(['forum.author_mode' => 'user']);
-        $this->post('/forum/topics/'.$topic->id.'/moderate/unhide')->assertForbidden();
+        $this->post('/forum/topics/'.$topic->id.'/moderate/unhide')->assertSessionHasErrors('moderation');
         $this->assertNotNull($topic->fresh()->hidden_at);
 
         $this->actingAs($owner, 'admin')->withSession(['forum.author_mode' => 'admin']);
         $this->post('/forum/topics/'.$topic->id.'/moderate/delete')->assertRedirect();
 
         $this->actingAs($moderator, 'web')->withSession(['forum.author_mode' => 'user']);
-        $this->post('/forum/topics/'.$topic->id.'/moderate/restore')->assertForbidden();
+        $this->post('/forum/topics/'.$topic->id.'/moderate/restore')->assertSessionHasErrors('moderation');
         $this->assertTrue(ForumTopic::withTrashed()->findOrFail($topic->id)->trashed());
     }
 

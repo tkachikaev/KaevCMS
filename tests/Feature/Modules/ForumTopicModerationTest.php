@@ -150,16 +150,24 @@ final class ForumTopicModerationTest extends TestCase
 
         $this->assignModerator($moderator, $owner);
         $this->asUser($moderator);
-        $this->post($this->moderationUrl($topic, 'hide'))->assertForbidden();
-        $this->post($this->moderationUrl($topic, 'delete'))->assertForbidden();
+        // The topic page offers no hide/delete and explains why.
+        $this->get('/forum/topics/'.$topic->id)->assertOk()
+            ->assertDontSee('/moderate/hide', false)
+            ->assertDontSee('/moderate/delete', false)
+            ->assertSee(__('module-forum::messages.moderation_protected_replies'));
+        // A forged request gets the same explanation, not an error page, and changes nothing.
+        $this->post($this->moderationUrl($topic, 'hide'))->assertRedirect()->assertSessionHasErrors('moderation');
+        $this->post($this->moderationUrl($topic, 'delete'))->assertRedirect()->assertSessionHasErrors('moderation');
+        $this->assertFalse(ForumTopic::withTrashed()->findOrFail($topic->id)->trashed());
 
         $target = $this->section('Вопросы и помощь');
         $target->update(['view_rule' => 'moderators', 'topic_rule' => 'moderators', 'reply_rule' => 'moderators']);
         $this->post('/forum/topics/'.$topic->id.'/move', [
             'section_id' => $target->id,
-        ])->assertForbidden();
+        ])->assertSessionHasErrors('section_id');
 
         $this->assertNull($topic->fresh()->hidden_at);
+        $this->assertNotSame($target->id, (int) $topic->fresh()->section_id);
         $this->assertFalse($topic->fresh()->trashed());
         $this->assertSame($this->section('Общее общение')->id, $topic->fresh()->section_id);
     }
@@ -326,7 +334,7 @@ final class ForumTopicModerationTest extends TestCase
         app(ForumPosting::class)->addReply(new ForumActor('user', user: $other),
             $topic->id, 'Other moderator response', (string) Str::uuid());
 
-        $this->post($this->moderationUrl($topic, 'hide'))->assertForbidden();
+        $this->post($this->moderationUrl($topic, 'hide'))->assertSessionHasErrors('moderation');
         $this->assertNull($topic->fresh()->hidden_at);
     }
 

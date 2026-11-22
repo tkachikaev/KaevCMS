@@ -33,12 +33,10 @@
         <summary class="forum-panel-heading">{{ __('module-forum::messages.topic_actions') }}</summary>
         <div class="forum-topic-moderation-content">
             <div class="forum-tools">
-                @foreach([
+                @foreach(array_merge([
                     $topic->status === 'closed' ? 'reopen' : 'close',
                     $topic->is_pinned ? 'unpin' : 'pin',
-                    $topic->hidden_at !== null ? 'unhide' : 'hide',
-                    'delete',
-                ] as $action)
+                ], $canRemoveTopic ? [$topic->hidden_at !== null ? 'unhide' : 'hide', 'delete'] : []) as $action)
                     @if($action === 'delete')
                         @include('module-forum::partials.confirm-action', [
                             'action' => route('modules.forum.topics.moderate', ['topic' => $topic->id, 'action' => 'delete']),
@@ -55,6 +53,9 @@
                     @endif
                 @endforeach
             </div>
+            @unless($canRemoveTopic)
+                <p class="forum-topic-moderation-note">{{ __('module-forum::messages.moderation_protected_replies') }}</p>
+            @endunless
             @if($moveSections->isNotEmpty())
                 <form class="forum-move-form" method="POST" action="{{ route('modules.forum.topics.move', $topic->id) }}">
                     @csrf

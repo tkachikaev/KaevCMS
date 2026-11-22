@@ -110,6 +110,8 @@ final class ForumTopicController extends Controller
             'changes' => $this->changes,
             'canViewHistory' => $this->changes->canViewHistory($actor, $topic, $section),
             'canModerate' => $this->moderation->canModerate($actor, $topic, $section),
+            'canRemoveTopic' => $this->moderation->canModerate($actor, $topic, $section)
+                && $this->moderation->canRemove($actor, $topic),
             'moveSections' => $this->moderation->canModerate($actor, $topic, $section)
                 ? ForumSection::query()->whereHas('category')
                     ->whereIn('view_rule', $this->permissions->allowedViewRules($actor, $this->structure->globalVisibility()))

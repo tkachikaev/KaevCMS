@@ -113,9 +113,11 @@ final class ForumTopicModeration
 
             // Hiding or deleting the whole topic also hides every reply.
             // A forum moderator must not indirectly suppress CMS staff posts.
-            if (! $actor->isOwner() && in_array($action, ['hide', 'unhide', 'delete', 'restore'], true)
-                && $this->containsProtectedReplies($topic, $actor)) {
-                abort(403);
+            if (in_array($action, ['hide', 'unhide', 'delete', 'restore'], true) && ! $this->canRemove($actor, $topic)) {
+                // A plain explanation instead of an error page; the topic stays as it is.
+                throw ValidationException::withMessages([
+                    'moderation' => __('module-forum::messages.moderation_protected_replies'),
+                ]);
             }
 
             $changed = match ($action) {
@@ -179,9 +181,11 @@ final class ForumTopicModeration
 
             $sourceLevel = $this->visibilityLevel($source);
             $targetLevel = $this->visibilityLevel($target);
-            if (! $actor->isOwner() && $targetLevel > $sourceLevel
-                && $this->containsProtectedReplies($topic, $actor)) {
-                abort(403);
+            if ($targetLevel > $sourceLevel && ! $this->canRemove($actor, $topic)) {
+                // Moving into a more private section would hide protected replies from readers.
+                throw ValidationException::withMessages([
+                    'section_id' => __('module-forum::messages.moderation_protected_replies'),
+                ]);
             }
             if ($targetLevel < $sourceLevel && (! $actor->isOwner() || ! $confirmExposure)) {
                 throw ValidationException::withMessages([
@@ -203,6 +207,15 @@ final class ForumTopicModeration
         }
 
         return $result[0];
+    }
+
+    /**
+     * Hiding or deleting a whole topic also hides every reply in it, so a forum
+     * moderator may not do it when the topic holds CMS staff or other moderators' posts.
+     */
+    public function canRemove(ForumActor $actor, ForumTopic $topic): bool
+    {
+        return $actor->isOwner() || ! $this->containsProtectedReplies($topic, $actor);
     }
 
     private function containsProtectedReplies(ForumTopic $topic, ForumActor $actor): bool

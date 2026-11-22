@@ -249,4 +249,5 @@ return [
     'image_hosts_too_many' => 'You can list at most :count sites.',
     'open_site' => 'Open the site',
     'open_site_new_tab' => 'opens in a new tab',
+    'moderation_protected_replies' => 'This topic contains posts by the administration or other moderators, so only the forum owner can hide it, delete it or move it to a more private section. You can still close, pin and move it to an open section.',
 ];

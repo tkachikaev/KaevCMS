@@ -339,6 +339,7 @@
         :root[data-forum-scheme="dark"] .forum-site-link-out{border-color:#37495d;background:#121b26;color:#a3c6ec}
         :root[data-forum-scheme="dark"] .forum-site-link-out:hover{background:#1d2a37}
         :root[data-forum-scheme="dark"] .forum-site-link-out::after{background:#e2e8f0;color:#151f2a}
+        .forum-topic-moderation-note{margin:10px 0 0;color:#7b8ca0;font-size:13px}
         .forum-editor-menu{position:relative}
         .forum-editor-menu>summary{display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:32px;padding:3px 7px;border:1px solid transparent;border-radius:6px;color:#49617c;list-style:none;cursor:pointer}
         .forum-editor-menu>summary::-webkit-details-marker{display:none}
