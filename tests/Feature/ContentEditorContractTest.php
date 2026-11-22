@@ -51,7 +51,7 @@ class ContentEditorContractTest extends TestCase
 
         $this->assertStringNotContainsString('document.execCommand', $source);
         $this->assertStringContainsString("import { Editor, Mark, Node, mergeAttributes } from '@tiptap/core';", $source);
-        $this->assertStringContainsString("node.type.name === 'table'", $source);
+        $this->assertStringContainsString("'horizontalRule', 'table'].includes(node.type.name)", $source);
         $this->assertStringContainsString('.type.name==="table"', $bundle);
         $this->assertStringContainsString("'amber'", $source);
         $this->assertStringContainsString("'fuchsia'", $source);

@@ -234,12 +234,20 @@ final class ForumStabilityTest extends TestCase
             ->flatMap(fn ($category) => $category->sections)
             ->firstWhere('id', $section->id);
 
+        // The latest message shown for the section comes from visible topics only.
+        $latestTopic = function () use ($actor, $section): ?int {
+            $structure = app(ForumStructure::class);
+            $categories = $structure->visibleCategories($actor, app(ForumPermissions::class));
+
+            return $structure->sectionActivity($categories)[$section->id]['topic']?->id;
+        };
+
         $this->assertSame(2, $visible()->topics_count);
-        $this->assertSame($second->last_post_at->timestamp, strtotime($visible()->latest_activity));
+        $this->assertSame($second->id, $latestTopic());
 
         $moderation->change($owner, $second->id, 'hide');
         $this->assertSame(1, $visible()->topics_count);
-        $this->assertSame($first->last_post_at->timestamp, strtotime($visible()->latest_activity));
+        $this->assertSame($first->id, $latestTopic());
 
         $moderation->change($owner, $second->id, 'delete');
         $this->assertSame(1, $visible()->topics_count);
