@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.61.0 - 2026-11-22
+
+Forum 0.10.0, Daily Rewards 1.3.4, Classic account theme 1.0.4. After updating, open **Admin → Modules** and press "Update database" for the Forum: it has four new migrations (views, image hosts, activity table). The core adds the `user_notifications` table, applied by the regular update.
 
 - Daily rewards: claim journal entries in the administration were squeezed into a narrow column (the shared list layout reserves it for a news cover); they now use the full width, stacking on phones.
 - Classic account theme: Forum (speech bubbles), Shop (shopping bag) and Referrals (person with a plus) menu items have their own icons instead of the fallback star.

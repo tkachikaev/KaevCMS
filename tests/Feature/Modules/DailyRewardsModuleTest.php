@@ -60,7 +60,7 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_daily_reward_claims'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'daily-rewards',
-            'version' => '1.3.3',
+            'version' => '1.3.4',
             'enabled' => true,
         ]);
 
