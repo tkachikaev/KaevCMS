@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Forum: the language switch is now the website's own language menu, with the same look and opening animation in light and dark schemes, and changing the language keeps the visitor on the same forum page instead of opening the website home page.
+- Forum: clicking your name in the header opens an account menu like the player account's — wallet balance, account, settings, security and sign out for players; forum settings, control panel and sign out for staff — instead of leaving the forum. The separate settings gear moved into this menu.
 
 ## 0.60.0 - 2026-11-20
 

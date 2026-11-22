@@ -61,13 +61,43 @@
         .language-menu[open]>.language-menu-list>a:nth-child(n+5){animation-delay:.21s}
         @media(prefers-reduced-motion:reduce){.language-menu-chevron{transition:none}.language-menu[open]>.language-menu-list,.language-menu[open]>.language-menu-list>a{animation:none!important}}
         .forum-identity{display:inline-flex;align-items:center;gap:9px;min-width:0;max-width:240px;padding:4px 12px 4px 4px;border:1px solid #e1e7ef;border-radius:999px;color:#27374b}
-        a.forum-identity:hover{background:#f5f8fc;text-decoration:none}
+        .forum-identity:hover,.forum-profile-menu[open]>.forum-identity{background:#f5f8fc;text-decoration:none}
         .forum-identity .forum-avatar{flex:none;width:30px;height:30px;font-size:13px;font-weight:700;color:#405b79}
         .forum-identity-copy{display:grid;min-width:0;line-height:1.2}
         .forum-identity-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .forum-identity-role{color:#7b8ca0;font-size:11px}
-        .forum-icon-button{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #d9e1eb;border-radius:10px;background:#f5f8fc;color:#405b79}
-        .forum-icon-button:hover{background:#edf3fa;text-decoration:none}
+        /* Profile menu: the same panel, links and opening motion as the player account menu. */
+        .forum-profile-menu{position:relative}
+        .forum-profile-menu>summary{list-style:none;cursor:pointer}
+        .forum-profile-menu>summary::-webkit-details-marker{display:none}
+        .forum-profile-menu>summary:focus-visible{outline:2px solid #355b85;outline-offset:2px}
+        .forum-profile-chevron{flex:none;color:#7b8ca0;transition:transform .2s ease}
+        .forum-profile-menu[open] .forum-profile-chevron{transform:rotate(180deg)}
+        .forum-profile-dropdown{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:260px;padding:8px;border:1px solid #dfe5ed;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(23,37,56,.14);font-size:15px}
+        .forum-profile-head{display:flex;flex-direction:column;padding:8px 10px 12px;margin-bottom:6px;border-bottom:1px solid #edf0f3;color:#27374b}
+        .forum-profile-head strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .forum-profile-head small{color:#7b8ca0;font-size:14px;overflow-wrap:anywhere}
+        .forum-profile-dropdown a,.forum-profile-dropdown button{width:100%;display:flex;align-items:center;min-height:44px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:#27374b;font:inherit;text-align:left;cursor:pointer}
+        .forum-profile-dropdown a:hover,.forum-profile-dropdown button:hover{background:#f3f6fa;text-decoration:none}
+        .forum-profile-dropdown .forum-profile-balance{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;min-height:0;margin:4px 0 8px;padding:10px;border:1px solid #edf0f3;background:#f8fafc}
+        .forum-profile-balance-icon{width:36px;height:36px;display:grid;place-items:center}
+        .forum-profile-balance-icon img{width:32px;height:32px;object-fit:contain}
+        .forum-profile-balance>span:last-child{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+        .forum-profile-balance small{color:#7b8ca0;font-size:14px}
+        .forum-profile-balance strong{overflow:hidden;color:#9a6f2e;font-size:16px;text-overflow:ellipsis;white-space:nowrap}
+        .forum-profile-dropdown form{margin:6px 0 0;padding-top:6px;border-top:1px solid #edf0f3}
+        [dir="rtl"] .forum-profile-dropdown{right:auto;left:0}
+        @keyframes forum-profile-pop{from{opacity:0;transform:translate3d(0,-10px,0) scale(.96)}to{opacity:1;transform:none}}
+        @keyframes forum-profile-row{from{opacity:0;transform:translate3d(0,-5px,0)}to{opacity:1;transform:none}}
+        .forum-profile-menu[open]>.forum-profile-dropdown{transform-origin:top right;animation:forum-profile-pop .34s cubic-bezier(.16,.84,.3,1) both}
+        .forum-profile-menu[open]>.forum-profile-dropdown>*{animation:forum-profile-row .3s cubic-bezier(.16,.84,.3,1) both}
+        .forum-profile-menu[open]>.forum-profile-dropdown>:nth-child(1){animation-delay:.05s}
+        .forum-profile-menu[open]>.forum-profile-dropdown>:nth-child(2){animation-delay:.09s}
+        .forum-profile-menu[open]>.forum-profile-dropdown>:nth-child(3){animation-delay:.13s}
+        .forum-profile-menu[open]>.forum-profile-dropdown>:nth-child(4){animation-delay:.17s}
+        .forum-profile-menu[open]>.forum-profile-dropdown>:nth-child(n+5){animation-delay:.21s}
+        @media(prefers-reduced-motion:reduce){.forum-profile-chevron{transition:none}.forum-profile-menu[open]>.forum-profile-dropdown,.forum-profile-menu[open]>.forum-profile-dropdown>*{animation:none!important}}
+        @media(max-width:760px){.forum-profile-chevron{display:none}.forum-profile-dropdown{position:fixed;left:13px;right:13px;top:auto;width:auto}}
         @media(max-width:760px){.forum-top-inner{flex-wrap:wrap;gap:10px 12px;padding:10px 16px}.forum-brand{flex:1 1 0;min-width:0}.forum-brand img{width:34px;height:34px}.forum-brand-copy strong{font-size:17px}.forum-actions{gap:10px}.forum-site-link{display:none}.forum-identity{padding:3px}.forum-identity-copy{display:none}.forum-nav{order:3;width:100%;margin:0;padding-top:8px;border-top:1px solid #edf0f3}.forum-nav .forum-nav-site{display:inline-block;margin-left:auto}}
         .forum-body{max-width:1130px;margin:38px auto;padding:0 24px}
         .forum-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
@@ -289,11 +319,22 @@
         :root[data-forum-theme="default"] .language-menu-list a.active{background:#b27a2d;color:#15110b}
         :root[data-forum-theme="default"] .language-menu-list a.active small{color:rgba(21,17,11,.7)}
         :root[data-forum-scheme="dark"] .forum-identity{border-color:#324252;color:#e2e8f0}
-        :root[data-forum-scheme="dark"] a.forum-identity:hover{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-identity:hover,
+        :root[data-forum-scheme="dark"] .forum-profile-menu[open]>.forum-identity{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-profile-chevron,
+        :root[data-forum-scheme="dark"] .forum-profile-head small,
+        :root[data-forum-scheme="dark"] .forum-profile-balance small{color:#8fa3b8}
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown{border-color:#2a3949;background:#151f2a;box-shadow:0 18px 48px rgba(0,0,0,.5)}
+        :root[data-forum-scheme="dark"] .forum-profile-head,
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown form{border-color:#263445;color:#eef3f8}
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown a,
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown button{color:#e2e8f0}
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown a:hover,
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown button:hover{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-profile-dropdown .forum-profile-balance{border-color:#263445;background:#111a24}
+        :root[data-forum-scheme="dark"] .forum-profile-balance strong{color:#e0b66d}
         :root[data-forum-scheme="dark"] .forum-identity-role{color:#8fa3b8}
         :root[data-forum-scheme="dark"] .forum-avatar{background:#2e4057;color:#c9d9ee}
-        :root[data-forum-scheme="dark"] .forum-icon-button{background:#1d2a37;border-color:#324252;color:#c9d9ee}
-        :root[data-forum-scheme="dark"] .forum-icon-button:hover{background:#263548}
         :root[data-forum-scheme="dark"] .forum-panel,
         :root[data-forum-scheme="dark"] .forum-dialog{background:#192430;border-color:#324252;color:#e2e8f0;box-shadow:0 10px 30px rgba(0,0,0,.1)}
         :root[data-forum-scheme="dark"] .forum-panel-heading,
@@ -396,25 +437,51 @@
             @if($actor->isGuest())
                 <a class="forum-button forum-button-primary" href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
             @else
-                @php($identityTag = $actor->user ? 'a' : 'span')
-                <{{ $identityTag }} class="forum-identity" @if($actor->user) href="{{ public_route('account') }}" title="{{ __('module-forum::messages.account') }}" @endif>
-                    @if($actor->user)
-                        <x-account-avatar :user="$actor->user" :fallback="$actor->user->publicName()" class="forum-avatar" />
-                    @else
-                        <span class="account-avatar forum-avatar" aria-hidden="true"><span>{{ mb_strtoupper(mb_substr($actor->name(), 0, 1)) }}</span></span>
-                    @endif
-                    <span class="forum-identity-copy">
-                        <span class="forum-identity-name">{{ $actor->name() }}</span>
-                        @if($actor->label())<span class="forum-identity-role">{{ $actor->label() }}</span>@endif
-                    </span>
-                </{{ $identityTag }}>
-            @endif
-            @if($actor->isOwner())
-                <a class="forum-icon-button" data-forum-owner-settings
-                   href="{{ route('admin.module-pages.forum.settings', ['adminPath' => app(\App\Services\Admin\AdminPathSettings::class)->path()]) }}"
-                   title="{{ __('module-forum::messages.settings_link') }}" aria-label="{{ __('module-forum::messages.settings_link') }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                </a>
+                @php($adminPath = $actor->admin ? app(\App\Services\Admin\AdminPathSettings::class)->path() : null)
+                @php($forumWallet = $actor->user ? app(\App\Services\Wallet\WalletAccountReadService::class)->forUser($actor->user) : null)
+                {{-- Same menu as the player account: the chip opens a panel with the account links. --}}
+                <details class="forum-profile-menu" data-language-menu data-forum-profile-menu>
+                    <summary class="forum-identity" aria-label="{{ __('Open account menu') }}">
+                        @if($actor->user)
+                            <x-account-avatar :user="$actor->user" :fallback="$actor->user->publicName()" class="forum-avatar" />
+                        @else
+                            <span class="account-avatar forum-avatar" aria-hidden="true"><span>{{ mb_strtoupper(mb_substr($actor->name(), 0, 1)) }}</span></span>
+                        @endif
+                        <span class="forum-identity-copy">
+                            <span class="forum-identity-name">{{ $actor->name() }}</span>
+                            @if($actor->label())<span class="forum-identity-role">{{ $actor->label() }}</span>@endif
+                        </span>
+                        <svg class="forum-profile-chevron" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </summary>
+                    <div class="forum-profile-dropdown">
+                        <div class="forum-profile-head">
+                            <strong>{{ $actor->name() }}</strong>
+                            <small>{{ $actor->user?->email ?? $actor->admin?->email }}</small>
+                        </div>
+                        @if($actor->user)
+                            <a class="forum-profile-balance" href="{{ public_route('wallet.index') }}" aria-label="{{ __('My wallet') }}: {{ $forumWallet['label'] }}">
+                                <span class="forum-profile-balance-icon" aria-hidden="true"><x-account-wallet-icon :url="$forumWallet['icon_url']" /></span>
+                                <span><small>{{ __('My wallet') }}</small><strong>{{ $forumWallet['label'] }}</strong></span>
+                            </a>
+                            <a href="{{ public_route('account') }}">{{ __('module-forum::messages.account') }}</a>
+                            <a href="{{ public_route('profile.edit') }}">{{ __('Account settings') }}</a>
+                            <a href="{{ public_route('security.edit') }}">{{ __('Security and password') }}</a>
+                            <form method="POST" action="{{ public_route('logout') }}">
+                                @csrf
+                                <button type="submit">{{ __('Sign out') }}</button>
+                            </form>
+                        @else
+                            @if($actor->isOwner())
+                                <a data-forum-owner-settings href="{{ route('admin.module-pages.forum.settings', ['adminPath' => $adminPath]) }}">{{ __('module-forum::messages.settings_link') }}</a>
+                            @endif
+                            <a href="{{ route('admin.dashboard', ['adminPath' => $adminPath]) }}">{{ __('Control panel') }}</a>
+                            <form method="POST" action="{{ route('admin.logout', ['adminPath' => $adminPath]) }}">
+                                @csrf
+                                <button type="submit">{{ __('Sign out') }}</button>
+                            </form>
+                        @endif
+                    </div>
+                </details>
             @endif
         </div>
     </div>

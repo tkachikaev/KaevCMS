@@ -86,6 +86,23 @@ final class ForumModuleTest extends TestCase
             ->assertDontSee('class="forum-lang"', false);
     }
 
+    public function test_signed_in_player_gets_an_account_menu_instead_of_a_direct_account_link(): void
+    {
+        $player = User::factory()->create(['email' => 'menu-player@example.test']);
+
+        $this->actingAs($player, 'web')
+            ->get('/forum')
+            ->assertOk()
+            ->assertSee('data-forum-profile-menu', false)
+            ->assertSee('menu-player@example.test')
+            ->assertSee(public_route('wallet.index'), false)
+            ->assertSee(public_route('account'), false)
+            ->assertSee(public_route('profile.edit'), false)
+            ->assertSee(public_route('security.edit'), false)
+            ->assertSee(public_route('logout'), false)
+            ->assertDontSee('data-forum-owner-settings', false);
+    }
+
     public function test_owner_is_recognized_from_valid_admin_session_only(): void
     {
         $owner = Admin::factory()->create(['name' => 'ForumChief']);
