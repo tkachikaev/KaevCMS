@@ -278,6 +278,23 @@ final class ForumTopicModerationTest extends TestCase
             ->assertOk()->assertSee($only->title)->assertDontSee($other->title);
     }
 
+    public function test_search_needs_three_letters_and_respects_a_forum_wide_budget(): void
+    {
+        $writer = User::factory()->create();
+        $topic = $this->topic($writer, 'Budgeted searchable topic');
+
+        $this->get('/forum/search?q=Bu')->assertSessionHasErrors('q');
+        $this->get('/forum/search?q=Budgeted')->assertOk()->assertSee($topic->title);
+
+        // A repeated query is answered from the cache even when the shared budget is spent.
+        foreach (range(1, 130) as $attempt) {
+            \Illuminate\Support\Facades\RateLimiter::hit('forum-search:global', 60);
+        }
+        $this->get('/forum/search?q=Budgeted')->assertOk()->assertSee($topic->title);
+        $this->get('/forum/search?q=Different')->assertOk()
+            ->assertSee(__('module-forum::messages.search_busy'));
+    }
+
     public function test_moderation_queue_does_not_reveal_hidden_staff_topics_to_forum_moderators(): void
     {
         $owner = Admin::factory()->create();

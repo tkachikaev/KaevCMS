@@ -18,7 +18,9 @@
 @endif
 <div class="forum-panel">
     <div class="forum-panel-heading">{{ __('module-forum::messages.search_results') }}</div>
-    @if($term === '')
+    @if($busy ?? false)
+        <div class="forum-panel-body">{{ __('module-forum::messages.search_busy') }}</div>
+    @elseif($term === '')
         <div class="forum-panel-body">{{ __('module-forum::messages.search_prompt') }}</div>
     @elseif($results === null || $results->isEmpty())
         <div class="forum-panel-body">{{ __('module-forum::messages.search_empty') }}</div>

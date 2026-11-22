@@ -156,9 +156,9 @@ return [
     'search_query' => 'Search topics and messages',
     'search_placeholder' => 'Search the forum',
     'search_results' => 'Search results',
-    'search_prompt' => 'Enter at least two characters. Results respect section access.',
+    'search_prompt' => 'Enter at least three characters. Results respect section access.',
     'search_empty' => 'No matching topics.',
-    'search_min_length' => 'Enter at least two characters to search.',
+    'search_min_length' => 'Enter at least three characters to search.',
     'moderation_queue' => 'Hidden and deleted topics',
     'moderation_queue_hint' => 'Restore hidden or deleted topics in this section. Only authorized moderators can access these records.',
     'moderation_queue_empty' => 'No hidden or deleted topics in this section.',
@@ -281,4 +281,5 @@ return [
     'settings_general' => 'General',
     'settings_community' => 'Community',
     'restore_section_first' => 'The section of this topic is in the trash too: restore it (and its category) first.',
+    'search_busy' => 'Search is busy right now. Please try again in a minute.',
 ];
