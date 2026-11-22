@@ -20,8 +20,8 @@ return static function (Application $app, ModuleContext $module): void {
     // Keep the notification center independent from the forum module. The active
     // module installs its access policy for each resolved center.
     $app->afterResolving(PlayerNotificationCenter::class, static function (PlayerNotificationCenter $center): void {
-        $center->registerVisibilityPolicy('forum.', static fn (User $user, UserNotification $notification): bool => app(ForumNotifications::class)
-            ->canReadNotification($user, $notification));
+        $center->registerVisibilityPolicy('forum.', static fn (User $user, UserNotification $notification, array &$memo): bool => app(ForumNotifications::class)
+            ->canReadNotification($user, $notification, $memo));
     });
 
     $navigation = $app->make(ModuleNavigationRegistry::class);

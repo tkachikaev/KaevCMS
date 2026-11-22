@@ -24,25 +24,26 @@ final class PlayerNotificationCenter
 
     private const MAX_PARAMETER_LENGTH = 120;
 
-    /** @var array<string, Closure(User, UserNotification): bool> */
+    /** @var array<string, Closure(User, UserNotification, array<string, bool>&): bool> */
     private array $visibilityPolicies = [];
 
     /**
      * Optional module-specific visibility check. An existing notification may stop
      * being visible when its target topic or section becomes private or is deleted.
      *
-     * @param  Closure(User, UserNotification): bool  $policy
+     * @param  Closure(User, UserNotification, array<string, bool>&): bool  $policy
      */
     public function registerVisibilityPolicy(string $typePrefix, Closure $policy): void
     {
         $this->visibilityPolicies[$typePrefix] = $policy;
     }
 
-    private function canSee(User $user, UserNotification $notification): bool
+    /** @param  array<string, bool>  $memo */
+    private function canSee(User $user, UserNotification $notification, array &$memo): bool
     {
         foreach ($this->visibilityPolicies as $prefix => $policy) {
             if (str_starts_with($notification->type, $prefix)) {
-                return (bool) $policy($user, $notification);
+                return (bool) $policy($user, $notification, $memo);
             }
         }
 
@@ -113,8 +114,9 @@ final class PlayerNotificationCenter
         }
 
         $count = 0;
+        $memo = [];
         foreach ($query->orderBy('id')->lazy(100) as $notification) {
-            if ($this->canSee($user, $notification)) {
+            if ($this->canSee($user, $notification, $memo)) {
                 $count++;
             }
         }
@@ -136,8 +138,9 @@ final class PlayerNotificationCenter
         }
 
         $visible = new Collection;
+        $memo = [];
         foreach ($query->lazy(100) as $notification) {
-            if ($this->canSee($user, $notification)) {
+            if ($this->canSee($user, $notification, $memo)) {
                 $visible->push($notification);
                 if ($visible->count() >= $limit) {
                     break;
@@ -155,7 +158,11 @@ final class PlayerNotificationCenter
             ->where('user_id', $user->getKey())
             ->whereKey($notificationId)
             ->first();
-        if ($notification === null || ! $this->canSee($user, $notification)) {
+        if ($notification === null) {
+            return null;
+        }
+        $memo = [];
+        if (! $this->canSee($user, $notification, $memo)) {
             return null;
         }
         if ($notification->read_at === null) {

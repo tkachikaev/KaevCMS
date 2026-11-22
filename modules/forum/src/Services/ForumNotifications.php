@@ -117,7 +117,8 @@ final class ForumNotifications
      * Notifications keep their original title, but may outlive the permission to
      * see that title. Never show or open them after the discussion becomes private.
      */
-    public function canReadNotification(User $user, UserNotification $notification): bool
+    /** @param  array<string, bool>  $memo */
+    public function canReadNotification(User $user, UserNotification $notification, array &$memo): bool
     {
         if (! $user->is_active
             || preg_match('~\A/forum/topics/([1-9][0-9]*)(?:[?#]|$)~', $notification->url, $match) !== 1) {
@@ -125,18 +126,23 @@ final class ForumNotifications
         }
 
         $topicId = (int) $match[1];
+        $key = 'forum.'.$user->getKey().':'.$topicId;
+        if (array_key_exists($key, $memo)) {
+            return $memo[$key];
+        }
+
         $topic = ForumTopic::query()->whereKey($topicId)->whereNull('hidden_at')->first();
         if ($topic === null) {
-            return false;
+            return $memo[$key] = false;
         }
 
         $section = ForumSection::query()->whereKey($topic->section_id)
             ->whereHas('category')->first();
         if ($section === null) {
-            return false;
+            return $memo[$key] = false;
         }
 
-        return $this->permissions->canView(
+        return $memo[$key] = $this->permissions->canView(
             new ForumActor('user', user: $user),
             $section,
             $this->structure->globalVisibility(),
