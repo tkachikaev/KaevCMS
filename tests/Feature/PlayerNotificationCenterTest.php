@@ -111,6 +111,20 @@ class PlayerNotificationCenterTest extends TestCase
         $this->assertSame(0, $center->unreadCount($owner));
     }
 
+    public function test_unread_number_stops_at_the_display_limit(): void
+    {
+        $center = app(PlayerNotificationCenter::class);
+        $player = User::factory()->create();
+        $now = now();
+        UserNotification::query()->insert(array_map(static fn (int $i): array => [
+            'user_id' => $player->id, 'type' => 'test', 'title_key' => 'Notifications', 'url' => '/forum',
+            'occurrences' => 1, 'occurred_at' => $now, 'created_at' => $now, 'updated_at' => $now,
+        ], range(1, 150)));
+
+        $this->assertSame(PlayerNotificationCenter::UNREAD_DISPLAY_LIMIT, $center->unreadCount($player));
+        $this->assertCount(15, $center->latest($player));
+    }
+
     public function test_cleanup_removes_old_read_and_very_old_unread_notifications(): void
     {
         $center = app(PlayerNotificationCenter::class);

@@ -24,6 +24,15 @@ final class PlayerNotificationCenter
 
     private const MAX_PARAMETER_LENGTH = 120;
 
+    /**
+     * The bell shows "99+" past this number, so counting stops there. Visibility checks
+     * also stop after a bounded number of rows: thousands of unread notifications
+     * (for example flooded by someone) must not slow every page down.
+     */
+    public const UNREAD_DISPLAY_LIMIT = 100;
+
+    private const SCAN_LIMIT = 300;
+
     /** @var array<string, Closure(User, UserNotification, array<string, bool>&): bool> */
     private array $visibilityPolicies = [];
 
@@ -110,14 +119,15 @@ final class PlayerNotificationCenter
     {
         $query = UserNotification::query()->where('user_id', $user->getKey())->whereNull('read_at');
         if ($this->visibilityPolicies === []) {
-            return $query->count();
+            return $query->limit(self::UNREAD_DISPLAY_LIMIT)->pluck('id')->count();
         }
 
         $count = 0;
         $memo = [];
-        foreach ($query->orderBy('id')->lazy(100) as $notification) {
-            if ($this->canSee($user, $notification, $memo)) {
-                $count++;
+        // Newest first: the most relevant ones decide the number, older ones stop the scan.
+        foreach ($query->orderByDesc('id')->limit(self::SCAN_LIMIT)->get() as $notification) {
+            if ($this->canSee($user, $notification, $memo) && ++$count >= self::UNREAD_DISPLAY_LIMIT) {
+                break;
             }
         }
 
@@ -139,7 +149,7 @@ final class PlayerNotificationCenter
 
         $visible = new Collection;
         $memo = [];
-        foreach ($query->lazy(100) as $notification) {
+        foreach ($query->limit(self::SCAN_LIMIT)->get() as $notification) {
             if ($this->canSee($user, $notification, $memo)) {
                 $visible->push($notification);
                 if ($visible->count() >= $limit) {

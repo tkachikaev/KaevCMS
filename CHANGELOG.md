@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Notifications: the bell stops counting at "99+" and checks a bounded number of recent entries, so a flood of unread notifications cannot slow down every page for that player.
 - Forum trash: a deleted topic whose section (or category) is also deleted shows "restore the section first" instead of a Restore button that ended in a 404 error page.
 - Forum settings are split into two tabs: General (access, links, moderators) and Community (activity table and allowed image sites, saved together with one Save button).
 - Forum: an activity table above the sections with Latest messages, New topics, Popular topics (most messages this week) and My topics tabs, limited to sections the visitor can see. A separate "Activity table on the home page" card in the forum settings switches it on or off and sets topics per tab (1-30, default 10); new module migrations — apply under Admin → Modules.
