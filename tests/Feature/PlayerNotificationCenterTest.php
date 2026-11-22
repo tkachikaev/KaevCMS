@@ -55,6 +55,22 @@ class PlayerNotificationCenterTest extends TestCase
         $this->assertSame('<b>Topic</b>', $stored->parameters['topic']);
     }
 
+    public function test_highlighted_text_escapes_names_and_topics(): void
+    {
+        app('translator')->addLines(['messages.bell_test' => ':name replied in :topic'], 'en', 'test');
+        $center = app(PlayerNotificationCenter::class);
+        $notification = $center->notify(User::factory()->create(), 'test', 'test::messages.bell_test', [
+            'name' => '<img src=x onerror=alert(1)>', 'topic' => 'A & "B"',
+        ], '/forum');
+        app()->setLocale('en');
+
+        $html = (string) $center->html($notification);
+
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringContainsString('<span class="notification-name">&lt;img src=x onerror=alert(1)&gt;</span>', $html);
+        $this->assertStringContainsString('<span class="notification-topic">A &amp; &quot;B&quot;</span>', $html);
+    }
+
     public function test_players_open_and_clear_only_their_own_notifications(): void
     {
         $center = app(PlayerNotificationCenter::class);

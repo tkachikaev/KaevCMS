@@ -262,4 +262,5 @@ return [
     'notify_topic_reply_many' => 'Новых ответов в вашей теме «:topic»: :count. Последний — от :name',
     'notify_quote' => ':name процитировал(а) ваше сообщение в теме «:topic»',
     'notify_reply' => ':name ответил(а) вам в теме «:topic»',
+    'notification_unread' => 'Не прочитано',
 ];

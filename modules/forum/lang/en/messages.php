@@ -262,4 +262,5 @@ return [
     'notify_topic_reply_many' => ':count new replies in your topic “:topic”. Latest from :name',
     'notify_quote' => ':name quoted your message in “:topic”',
     'notify_reply' => ':name replied to you in “:topic”',
+    'notification_unread' => 'Unread',
 ];

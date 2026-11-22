@@ -7,6 +7,7 @@ use App\Models\UserNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\HtmlString;
 use InvalidArgumentException;
 
 /**
@@ -124,6 +125,32 @@ final class PlayerNotificationCenter
         }
 
         return (string) __($key, $parameters);
+    }
+
+    /**
+     * The same text with chosen parameters wrapped for highlighting. Everything is
+     * escaped first; only our own <span> wrappers are added afterwards.
+     *
+     * @param  list<string>  $highlight
+     */
+    public function html(UserNotification $notification, array $highlight = ['name', 'topic']): HtmlString
+    {
+        $parameters = ($notification->parameters ?? []) + ['count' => $notification->occurrences];
+        $key = $notification->title_key;
+        if ($notification->occurrences > 1 && Lang::has($key.'_many')) {
+            $key .= '_many';
+        }
+
+        $markers = [];
+        foreach ($highlight as $index => $name) {
+            if (isset($parameters[$name]) && is_string($parameters[$name])) {
+                $marker = "\u{E000}{$index}\u{E001}";
+                $markers[$marker] = '<span class="notification-'.$name.'">'.e($parameters[$name]).'</span>';
+                $parameters[$name] = $marker;
+            }
+        }
+
+        return new HtmlString(strtr(e((string) __($key, $parameters)), $markers));
     }
 
     public function cleanup(): int

@@ -84,7 +84,7 @@ final class ForumNotifications
                 $recipient,
                 $event['type'],
                 'module-forum::messages.'.$event['key'],
-                ['name' => $name, 'topic' => $title],
+                ['name' => $name, 'topic' => $title, 'actor_id' => (int) ($actor->user?->id ?? 0)],
                 $url,
                 $event['group'],
             );
