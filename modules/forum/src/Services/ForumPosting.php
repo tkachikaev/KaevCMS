@@ -159,6 +159,10 @@ final class ForumPosting
         // profile only admits simple text, lists, quotes, code, and safe links.
         $safeHtml = $this->htmlSanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
         $text = $this->htmlSanitizer->plainText($safeHtml, SafeHtmlSanitizer::PROFILE_FORUM);
+        if (mb_strlen($text) < 2 && str_contains($safeHtml, '<img')) {
+            // An image-only message still needs searchable, quotable plain text.
+            $text = __('module-forum::messages.image_placeholder');
+        }
 
         if (mb_strlen($text) < 2 || mb_strlen($text) > 10000) {
             throw ValidationException::withMessages([

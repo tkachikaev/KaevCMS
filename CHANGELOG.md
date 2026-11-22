@@ -10,6 +10,7 @@
 - Forum: topic lists in a section show the author's avatar and name with the start date, quick links to the last pages of long topics, a Replies counter, and the latest reply time linking to that message with the replier's name and small avatar. On phones the counter and the latest reply share one line.
 - Forum: topics count views — shown in section lists next to replies and under the topic title. A view counts once per visitor session, so reloads and paging do not inflate it. New module migration: apply it under Admin → Modules ("Update database"); existing topics start from zero.
 - Forum editor: text color from a 40-tone palette of squares (each tone tuned for the light and dark schemes; arbitrary colors are not accepted), left/center/right alignment, an emoji panel, and link text in the link dialog so a message can show "click here" instead of the bare address.
+- Forum editor: images by link — a dialog with a preview takes a direct https:// address from an image host (nothing is uploaded). In the editor an image can be aligned and scaled by dragging its corner, keeping proportions and never exceeding its natural size. The server accepts public https:// addresses only, sends no referrer to image hosts, and image-only replies are allowed.
 
 ## 0.60.0 - 2026-11-20
 

@@ -199,6 +199,141 @@ const FigureImage = Node.create({
     },
 });
 
+const LINK_IMAGE_WIDTHS = Array.from({ length: 19 }, (_, index) => String(10 + index * 5));
+const normalizeImageWidth = (value) => (LINK_IMAGE_WIDTHS.includes(String(value)) ? String(value) : '100');
+
+// Forum images live on third-party https hosts (never uploaded here). The reader can
+// drag the corner handle to scale the image; the height follows the width, and the
+// image never grows past its natural size (CSS max-width on the <img>).
+const LinkImage = Node.create({
+    name: 'linkImage',
+    group: 'block',
+    atom: true,
+    draggable: true,
+    selectable: true,
+
+    addAttributes() {
+        return {
+            src: { default: null },
+            alt: { default: '' },
+            align: { default: 'left' },
+            width: { default: '100' },
+        };
+    },
+
+    parseHTML() {
+        return [{
+            tag: 'figure',
+            priority: 60,
+            getAttrs: (element) => {
+                const image = element.querySelector('img');
+                const src = image?.getAttribute('src') ?? '';
+                if (!/^https:\/\//i.test(src)) {
+                    return false;
+                }
+                const align = element.getAttribute('data-align')?.toLowerCase() ?? 'left';
+
+                return {
+                    src,
+                    alt: image.getAttribute('alt') ?? '',
+                    align: SAFE_IMAGE_ALIGNMENTS.includes(align) ? align : 'left',
+                    width: normalizeImageWidth(element.getAttribute('data-width') ?? '100'),
+                };
+            },
+        }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const figure = {};
+        const align = SAFE_IMAGE_ALIGNMENTS.includes(HTMLAttributes.align) ? HTMLAttributes.align : 'left';
+        const width = normalizeImageWidth(HTMLAttributes.width);
+        if (align !== 'left') figure['data-align'] = align;
+        if (width !== '100') figure['data-width'] = width;
+
+        return ['figure', figure, ['img', {
+            src: HTMLAttributes.src,
+            alt: HTMLAttributes.alt ?? '',
+            loading: 'lazy',
+            referrerpolicy: 'no-referrer',
+        }]];
+    },
+
+    addNodeView() {
+        return ({ node, getPos, editor }) => {
+            const figure = document.createElement('figure');
+            const frame = document.createElement('span');
+            const image = document.createElement('img');
+            const handle = document.createElement('span');
+            figure.className = 'link-image-view';
+            frame.className = 'link-image-frame';
+            image.referrerPolicy = 'no-referrer';
+            image.draggable = false;
+            handle.className = 'link-image-handle';
+            handle.setAttribute('aria-hidden', 'true');
+            frame.append(image, handle);
+            figure.append(frame);
+
+            const paint = (current) => {
+                image.src = current.attrs.src ?? '';
+                image.alt = current.attrs.alt ?? '';
+                figure.dataset.align = current.attrs.align ?? 'left';
+                figure.dataset.width = normalizeImageWidth(current.attrs.width);
+                figure.style.width = '';
+            };
+            paint(node);
+
+            handle.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const column = figure.parentElement?.getBoundingClientRect().width || 1;
+                const startX = event.clientX;
+                const startWidth = image.getBoundingClientRect().width;
+                const rtl = getComputedStyle(figure).direction === 'rtl';
+                let width = figure.dataset.width;
+                try {
+                    handle.setPointerCapture(event.pointerId);
+                } catch {
+                    // Synthetic or already released pointers cannot be captured.
+                }
+
+                const move = (moveEvent) => {
+                    const delta = (moveEvent.clientX - startX) * (rtl ? -1 : 1);
+                    const percent = Math.round(((startWidth + delta) / column) * 100 / 5) * 5;
+                    width = String(Math.min(100, Math.max(10, percent)));
+                    figure.style.width = `${width}%`;
+                };
+                const stop = () => {
+                    handle.removeEventListener('pointermove', move);
+                    handle.removeEventListener('pointerup', stop);
+                    handle.removeEventListener('pointercancel', stop);
+                    const position = typeof getPos === 'function' ? getPos() : null;
+                    if (typeof position === 'number') {
+                        editor.view.dispatch(editor.state.tr.setNodeMarkup(position, undefined, { ...node.attrs, width }));
+                    }
+                };
+                handle.addEventListener('pointermove', move);
+                handle.addEventListener('pointerup', stop);
+                handle.addEventListener('pointercancel', stop);
+            });
+
+            return {
+                dom: figure,
+                update: (updated) => {
+                    if (updated.type.name !== 'linkImage') {
+                        return false;
+                    }
+                    node = updated;
+                    paint(updated);
+
+                    return true;
+                },
+                stopEvent: (event) => event.target === handle,
+                ignoreMutation: () => true,
+            };
+        };
+    },
+});
+
 const initializeCoverPreview = (signal) => {
     const wrapper = document.querySelector('[data-cover-upload]');
     if (!wrapper) {
@@ -271,6 +406,11 @@ const initializeRichEditor = (root, signal) => {
     const linkText = root.querySelector('[data-editor-link-text]');
     const linkStyle = root.querySelector('[data-editor-link-style]');
     const pageBlocks = root.dataset.pageBlocks === '1';
+    const linkImages = root.dataset.linkImages === '1';
+    const linkImageDialog = root.querySelector('[data-editor-link-image-dialog]');
+    const linkImageUrl = root.querySelector('[data-editor-link-image-url]');
+    const linkImageAlt = root.querySelector('[data-editor-link-image-alt]');
+    const linkImagePreview = root.querySelector('[data-editor-link-image-preview]');
     const imageDialog = root.querySelector('[data-editor-image-dialog]');
     const imageApply = root.querySelector('[data-editor-image-apply]');
     const imageAlt = root.querySelector('[data-editor-image-alt]');
@@ -333,7 +473,7 @@ const initializeRichEditor = (root, signal) => {
             SafeColor,
             SafeHighlight,
             SafeTextSize,
-            FigureImage,
+            ...(linkImages ? [LinkImage] : [FigureImage]),
             ...(pageBlocks ? [ContentCards, ContentCard, ContentButtons] : []),
             SafeTable.configure({
                 resizable: false,
@@ -376,7 +516,7 @@ const initializeRichEditor = (root, signal) => {
 
         let found = false;
         editor.state.doc.descendants((node) => {
-            if (node.type.name === 'figureImage' || node.type.name === 'horizontalRule' || node.type.name === 'table') {
+            if (['figureImage', 'linkImage', 'horizontalRule', 'table'].includes(node.type.name)) {
                 found = true;
 
                 return false;
@@ -421,7 +561,9 @@ const initializeRichEditor = (root, signal) => {
         });
 
         root.querySelectorAll('[data-editor-align]').forEach((button) => {
-            const active = editor.isActive({ textAlign: button.dataset.editorAlign });
+            const active = linkImages && editor.isActive('linkImage')
+                ? editor.isActive('linkImage', { align: button.dataset.editorAlign })
+                : editor.isActive({ textAlign: button.dataset.editorAlign });
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
@@ -513,6 +655,10 @@ const initializeRichEditor = (root, signal) => {
         }
 
         const alignButton = event.target.closest('[data-editor-align]');
+        if (alignButton && linkImages && editor.isActive('linkImage')) {
+            editor.chain().focus().updateAttributes('linkImage', { align: alignButton.dataset.editorAlign }).run();
+            return;
+        }
         if (alignButton) {
             editor.chain().focus().setTextAlign(alignButton.dataset.editorAlign).run();
             return;
@@ -617,6 +763,51 @@ const initializeRichEditor = (root, signal) => {
         }
 
         linkDialog?.close();
+    }, { signal });
+
+    const previewLinkImage = () => {
+        if (!linkImagePreview || !linkImageUrl) return;
+        const url = linkImageUrl.value.trim();
+        linkImagePreview.replaceChildren();
+        linkImagePreview.dataset.state = '';
+        if (!/^https:\/\/[^\s/]+\.[^\s]+/i.test(url)) return;
+        const image = document.createElement('img');
+        image.referrerPolicy = 'no-referrer';
+        image.alt = '';
+        image.addEventListener('load', () => { linkImagePreview.dataset.state = 'ready'; }, { once: true });
+        image.addEventListener('error', () => { linkImagePreview.dataset.state = 'error'; }, { once: true });
+        image.src = url;
+        linkImagePreview.append(image);
+    };
+
+    root.querySelector('[data-editor-link-image]')?.addEventListener('click', () => {
+        if (!linkImageDialog || !linkImageUrl) return;
+        const current = editor.isActive('linkImage') ? editor.getAttributes('linkImage') : null;
+        linkImageUrl.value = current?.src ?? '';
+        if (linkImageAlt) linkImageAlt.value = current?.alt ?? '';
+        previewLinkImage();
+        linkImageDialog.showModal();
+        linkImageUrl.focus();
+    }, { signal });
+
+    linkImageUrl?.addEventListener('input', previewLinkImage, { signal });
+
+    root.querySelector('[data-editor-link-image-apply]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const url = linkImageUrl?.value.trim() ?? '';
+        if (!/^https:\/\/[^\s/]+\.[^\s]+$/i.test(url) || url.length > 2048) {
+            setStatus(root.dataset.unsafeImageMessage ?? 'Use an https:// image address.', 'error');
+            linkImageUrl?.focus();
+            return;
+        }
+        const attributes = { src: url, alt: linkImageAlt?.value.trim() ?? '' };
+        if (editor.isActive('linkImage')) {
+            editor.chain().focus().updateAttributes('linkImage', attributes).run();
+        } else {
+            editor.chain().focus().insertContent({ type: 'linkImage', attrs: { ...attributes, align: 'left', width: '100' } }).run();
+        }
+        setStatus('');
+        linkImageDialog?.close();
     }, { signal });
 
     root.querySelectorAll('[data-editor-dialog-cancel]').forEach((button) => {

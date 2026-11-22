@@ -263,6 +263,32 @@ final class ForumEditorTest extends TestCase
         $this->assertStringNotContainsString('sideways', $forum);
     }
 
+    public function test_forum_profile_keeps_only_public_https_link_images(): void
+    {
+        $sanitizer = app(SafeHtmlSanitizer::class);
+        $html = '<figure data-align="center" data-width="40"><img src="https://img.example.com/a.png" alt="Ok" onerror="x()"></figure>'.
+            '<figure data-width="33"><img src="https://img.example.com/b.png"></figure>'.
+            '<figure><img src="http://img.example.com/plain.png"></figure>'.
+            '<figure><img src="https://localhost/secret.png"></figure>'.
+            '<figure><img src="https://192.168.0.1/router.png"></figure>'.
+            '<figure><img src="https://user:pass@img.example.com/c.png"></figure>'.
+            '<figure><img src="javascript:alert(1)"></figure>'.
+            '<p><img src="https://img.example.com/loose.png">Text</p>';
+
+        $forum = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
+
+        $this->assertStringContainsString('<figure data-align="center" data-width="40"><img src="https://img.example.com/a.png" alt="Ok"', $forum);
+        $this->assertStringContainsString('referrerpolicy="no-referrer"', $forum);
+        $this->assertStringContainsString('<figure><img src="https://img.example.com/b.png"', $forum);
+        foreach (['onerror', 'http://img', 'localhost', '192.168', 'user:pass', 'javascript:', 'loose.png', 'data-width="33"'] as $fragment) {
+            $this->assertStringNotContainsString($fragment, $forum);
+        }
+        $this->assertSame(2, substr_count($forum, '<img'));
+
+        // News keeps accepting only its own uploads.
+        $this->assertStringNotContainsString('<img', $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_NEWS));
+    }
+
     private function section(string $name): ForumSection
     {
         return ForumSection::query()->where('name_ru', $name)->firstOrFail();

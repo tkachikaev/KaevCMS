@@ -37,6 +37,14 @@ final class SafeHtmlSanitizer
     private const FORUM_ALLOWED_ELEMENTS = [
         'p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li',
         'blockquote', 'a', 'pre', 'code', 'span',
+        // Images by https link only (never uploads); see sanitizeForumImageSource().
+        'figure', 'img',
+    ];
+
+    /** Forum link images: width in percent of the column, 10-100 in steps of 5. */
+    private const FORUM_IMAGE_WIDTHS = [
+        '10', '15', '20', '25', '30', '35', '40', '45', '50', '55',
+        '60', '65', '70', '75', '80', '85', '90', '95', '100',
     ];
 
     private const CONTENT_DROP_WITH_CONTENT = [
@@ -241,9 +249,9 @@ final class SafeHtmlSanitizer
         $allowed = match ($tag) {
             'a' => ['href', 'title'],
             'div' => $profile === self::PROFILE_PAGE ? ['data-content-block'] : [],
-            'img' => ['src', 'alt'],
+            'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'referrerpolicy'] : ['src', 'alt'],
             'span' => ['data-color', 'data-highlight', 'data-text-size'],
-            'figure' => ['data-align', 'data-size'],
+            'figure' => $profile === self::PROFILE_FORUM ? ['data-align', 'data-width'] : ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
         };
         if ($profile === self::PROFILE_PAGE && $tag === 'a') {
@@ -286,6 +294,25 @@ final class SafeHtmlSanitizer
                 $title = $this->cleanTextAttribute($element->getAttribute('title'), 255);
                 $title === '' ? $element->removeAttribute('title') : $element->setAttribute('title', $title);
             }
+        }
+
+        if ($tag === 'img' && $profile === self::PROFILE_FORUM) {
+            $src = $this->sanitizeForumImageSource($element->getAttribute('src'));
+            $figure = $element->parentNode;
+            if ($src === null || ! $figure instanceof DOMElement || strtolower($figure->tagName) !== 'figure') {
+                $element->parentNode?->removeChild($element);
+
+                return;
+            }
+
+            $element->setAttribute('src', $src);
+            $element->setAttribute('alt', $this->cleanTextAttribute($element->getAttribute('alt'), 255));
+            $element->setAttribute('loading', 'lazy');
+            $element->setAttribute('decoding', 'async');
+            // Readers' browsers fetch the image from the third-party host: send no page address.
+            $element->setAttribute('referrerpolicy', 'no-referrer');
+
+            return;
         }
 
         if ($tag === 'img') {
@@ -336,6 +363,20 @@ final class SafeHtmlSanitizer
             }
         }
 
+        if ($tag === 'figure' && $profile === self::PROFILE_FORUM) {
+            $width = $element->getAttribute('data-width');
+            if (! in_array($width, self::FORUM_IMAGE_WIDTHS, true) || $width === '100') {
+                $element->removeAttribute('data-width');
+            }
+            // A forum figure exists only to hold one link image.
+            $images = $element->getElementsByTagName('img');
+            if ($images->length === 0) {
+                $this->unwrap($element);
+            }
+
+            return;
+        }
+
         if ($tag === 'figure') {
             $size = strtolower($element->getAttribute('data-size'));
             if (! in_array($size, self::IMAGE_SIZES, true) || $size === 'full') {
@@ -376,6 +417,30 @@ final class SafeHtmlSanitizer
         $pattern = '~^/uploads/'.$directory.'/content/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp)$~i';
 
         return preg_match($pattern, $src) === 1 ? $src : null;
+    }
+
+    /** Forum images are hot-linked from public https hosts; local and private targets are refused. */
+    private function sanitizeForumImageSource(string $src): ?string
+    {
+        $src = html_entity_decode(trim($src), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $src = preg_replace('/[\x00-\x1F\x7F\s]+/u', '', $src) ?? '';
+        if ($src === '' || strlen($src) > 2048 || str_contains($src, '\\')) {
+            return null;
+        }
+
+        $parts = parse_url($src);
+        if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || ! isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
+        }
+
+        $host = strtolower(rtrim($parts['host'], '.'));
+        if ($host === 'localhost' || str_ends_with($host, '.localhost') || ! str_contains($host, '.')
+            || filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+            return null;
+        }
+
+        return $src;
     }
 
     private function cleanTextAttribute(string $value, int $limit): string
