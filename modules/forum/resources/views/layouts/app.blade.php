@@ -32,10 +32,34 @@
         .forum-nav .forum-nav-site{display:none}
         .forum-actions{display:flex;align-items:center;gap:14px;font-size:13px}
         .forum-site-link{color:#5b6d82}
-        .forum-lang{display:inline-flex;padding:2px;border:1px solid #d9e1eb;border-radius:999px}
-        .forum-lang a{padding:3px 9px;border-radius:999px;color:#6a7c90;font-size:12px;font-weight:600}
-        .forum-lang a:hover{color:#27374b;text-decoration:none}
-        .forum-lang a[aria-current="true"]{background:#355b85;color:#fff}
+        /* Language menu: the same component, look and motion as the public website.
+           Light values follow Kaev Aurelia; the dark rules below follow its night scheme
+           and the default dark public theme. */
+        .language-menu{position:relative}
+        .language-menu>summary{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 11px 0 13px;border:1px solid rgba(155,126,76,.20);border-radius:999px;background:rgba(255,253,247,.54);color:#292b2a;font-size:11px;font-weight:800;letter-spacing:.06em;list-style:none;cursor:pointer}
+        .language-menu>summary::-webkit-details-marker{display:none}
+        .language-menu>summary:hover,.language-menu[open]>summary{border-color:#b58a43}
+        .language-menu>summary:focus-visible{outline:2px solid #b58a43;outline-offset:2px}
+        .language-menu-chevron{color:#89847b;transition:transform .3s cubic-bezier(.16,.84,.3,1)}
+        .language-menu[open] .language-menu-chevron{transform:rotate(180deg)}
+        .language-menu-list{position:absolute;top:calc(100% + 8px);right:0;z-index:60;display:grid;min-width:176px;padding:6px;border:1px solid rgba(155,126,76,.20);border-radius:14px;background:#fffdf8;box-shadow:0 22px 60px rgba(50,61,53,.16)}
+        .language-menu-list a{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:9px 12px;border-radius:10px;color:#292b2a;font-size:13px;text-decoration:none}
+        .language-menu-list a:hover{background:rgba(216,199,161,.2);text-decoration:none}
+        .language-menu-list a small{color:#89847b;font-size:10px;font-weight:800;letter-spacing:.08em}
+        .language-menu-list a.active{background:#292b2a;color:#fffdf8}
+        .language-menu-list a.active small{color:rgba(255,253,248,.7)}
+        [dir="rtl"] .language-menu-list{right:auto;left:0}
+        @keyframes forum-language-pop{from{opacity:0;transform:translate3d(0,-10px,0) scale(.96)}to{opacity:1;transform:none}}
+        @keyframes forum-language-row{from{opacity:0;transform:translate3d(0,-5px,0)}to{opacity:1;transform:none}}
+        .language-menu[open]>.language-menu-list{transform-origin:top right;animation:forum-language-pop .34s cubic-bezier(.16,.84,.3,1) both}
+        [dir="rtl"] .language-menu[open]>.language-menu-list{transform-origin:top left}
+        .language-menu[open]>.language-menu-list>a{animation:forum-language-row .3s cubic-bezier(.16,.84,.3,1) both}
+        .language-menu[open]>.language-menu-list>a:nth-child(1){animation-delay:.05s}
+        .language-menu[open]>.language-menu-list>a:nth-child(2){animation-delay:.09s}
+        .language-menu[open]>.language-menu-list>a:nth-child(3){animation-delay:.13s}
+        .language-menu[open]>.language-menu-list>a:nth-child(4){animation-delay:.17s}
+        .language-menu[open]>.language-menu-list>a:nth-child(n+5){animation-delay:.21s}
+        @media(prefers-reduced-motion:reduce){.language-menu-chevron{transition:none}.language-menu[open]>.language-menu-list,.language-menu[open]>.language-menu-list>a{animation:none!important}}
         .forum-identity{display:inline-flex;align-items:center;gap:9px;min-width:0;max-width:240px;padding:4px 12px 4px 4px;border:1px solid #e1e7ef;border-radius:999px;color:#27374b}
         a.forum-identity:hover{background:#f5f8fc;text-decoration:none}
         .forum-identity .forum-avatar{flex:none;width:30px;height:30px;font-size:13px;font-weight:700;color:#405b79}
@@ -240,9 +264,30 @@
         :root[data-forum-scheme="dark"] .forum-nav a:hover{background:#1d2a37}
         :root[data-forum-scheme="dark"] .forum-nav a[aria-current="page"]{background:#263548;color:#eef3f8}
         :root[data-forum-scheme="dark"] .forum-nav{border-top-color:#2a3949}
-        :root[data-forum-scheme="dark"] .forum-lang{border-color:#324252}
-        :root[data-forum-scheme="dark"] .forum-lang a{color:#9fb2c7}
-        :root[data-forum-scheme="dark"] .forum-lang a[aria-current="true"]{background:#416c9e;color:#fff}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu>summary{border-color:rgba(190,172,235,.15);background:rgba(25,22,34,.72);color:#ece8f5}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu>summary:hover,
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu[open]>summary{border-color:#b9a3f1}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu>summary:focus-visible{outline-color:#b9a3f1}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-chevron,
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a small{color:#9690a8}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list{border-color:rgba(190,172,235,.15);background:#181520;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a{color:#ece8f5}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a:hover{background:rgba(185,163,241,.12)}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a.active{background:linear-gradient(135deg,#cdbdf7,#a58de6);color:#17121f}
+        :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a.active small{color:rgba(23,18,31,.72)}
+        :root[data-forum-theme="default"] .language-menu>summary{padding:0 10px 0 12px;border-color:rgba(255,255,255,.18);border-radius:7px;background:rgba(0,0,0,.16);color:rgba(255,255,255,.86)}
+        :root[data-forum-theme="default"] .language-menu>summary:hover,
+        :root[data-forum-theme="default"] .language-menu[open]>summary{border-color:#b27a2d}
+        :root[data-forum-theme="default"] .language-menu>summary:focus-visible{outline-color:#b27a2d}
+        :root[data-forum-theme="default"] .language-menu-chevron{color:rgba(255,255,255,.6);transition-duration:.16s}
+        :root[data-forum-theme="default"] .language-menu-list{border-color:#343a3d;border-radius:8px;background:#0d1214;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+        :root[data-forum-theme="default"] .language-menu[open]>.language-menu-list,
+        :root[data-forum-theme="default"] .language-menu[open]>.language-menu-list>a{animation:none}
+        :root[data-forum-theme="default"] .language-menu-list a{border-radius:5px;color:#d8d9d7}
+        :root[data-forum-theme="default"] .language-menu-list a small{color:#858b8d}
+        :root[data-forum-theme="default"] .language-menu-list a:hover{background:rgba(255,255,255,.06)}
+        :root[data-forum-theme="default"] .language-menu-list a.active{background:#b27a2d;color:#15110b}
+        :root[data-forum-theme="default"] .language-menu-list a.active small{color:rgba(21,17,11,.7)}
         :root[data-forum-scheme="dark"] .forum-identity{border-color:#324252;color:#e2e8f0}
         :root[data-forum-scheme="dark"] a.forum-identity:hover{background:#1d2a37}
         :root[data-forum-scheme="dark"] .forum-identity-role{color:#8fa3b8}
@@ -347,10 +392,7 @@
         </nav>
         <div class="forum-actions">
             <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
-            <div class="forum-lang" role="group" aria-label="{{ __('module-forum::messages.language') }}">
-                <a lang="ru" href="{{ route('language.switch', ['locale' => 'ru']) }}" @if(app()->getLocale() === 'ru') aria-current="true" @endif>RU</a>
-                <a lang="en" href="{{ route('language.switch', ['locale' => 'en']) }}" @if(app()->getLocale() === 'en') aria-current="true" @endif>EN</a>
-            </div>
+            <x-language-menu />
             @if($actor->isGuest())
                 <a class="forum-button forum-button-primary" href="{{ public_route('login') }}">{{ __('module-forum::messages.login') }}</a>
             @else

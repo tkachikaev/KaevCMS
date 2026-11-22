@@ -203,7 +203,6 @@ return [
     'quote_post' => 'Quote',
     'reply_to_post' => 'Reply',
     'quote_wrote' => 'wrote:',
-    'language' => 'Language',
     'reply_guest' => 'Sign in or create an account to reply in this topic.',
     'reply_closed' => 'This topic is closed and read-only.',
     'reply_moderators_only' => 'Only moderators can reply in this section.',

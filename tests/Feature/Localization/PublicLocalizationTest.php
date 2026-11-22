@@ -68,6 +68,25 @@ class PublicLocalizationTest extends TestCase
         }
     }
 
+    public function test_language_switch_keeps_forum_pages_and_query_without_a_locale_prefix(): void
+    {
+        foreach (['/forum', '/forum/search?q=boss&page=2', '/forum/topics/42', '/forum/sections/7/topics/new'] as $path) {
+            $this->get(route('language.switch', ['locale' => 'en', 'return' => $path]))
+                ->assertRedirect(url($path))->assertSessionHas('locale', 'en');
+        }
+    }
+
+    public function test_forum_language_return_rejects_dot_segments_and_encoded_separators(): void
+    {
+        foreach (['/forum/../admin', '/forum/%2e%2e/admin', '/forum%2f..%2fadmin'] as $path) {
+            $location = $this->get(route('language.switch', ['locale' => 'en', 'return' => $path]))
+                ->assertRedirect()->headers->get('Location');
+
+            $this->assertNotSame(url($path), $location);
+            $this->assertStringStartsWith(url('/en'), (string) $location);
+        }
+    }
+
     public function test_module_language_return_rejects_dot_segments_and_encoded_separators(): void
     {
         foreach (['/modules/donations/../admin', '/modules/donations/%2e%2e/admin', '/modules/donations%2f..%2fadmin'] as $path) {

@@ -76,6 +76,16 @@ final class ForumModuleTest extends TestCase
         $this->assertSame('0', $response->headers->getCacheControlDirective('max-age'));
     }
 
+    public function test_forum_header_uses_the_public_language_menu_returning_to_the_same_page(): void
+    {
+        $this->get('/forum/search?q=boss')
+            ->assertOk()
+            ->assertSee('data-language-menu', false)
+            ->assertSee('language-menu-list', false)
+            ->assertSee(e(route('language.switch', ['locale' => 'en', 'return' => '/forum/search?q=boss'])), false)
+            ->assertDontSee('class="forum-lang"', false);
+    }
+
     public function test_owner_is_recognized_from_valid_admin_session_only(): void
     {
         $owner = Admin::factory()->create(['name' => 'ForumChief']);

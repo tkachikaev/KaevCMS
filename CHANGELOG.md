@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Forum: the language switch is now the website's own language menu, with the same look and opening animation in light and dark schemes, and changing the language keeps the visitor on the same forum page instead of opening the website home page.
+
 ## 0.60.0 - 2026-11-20
 
 - Forum 0.9.0: topic posts show an author card with the account avatar, current public name and role, a topic-author mark, post count and join date; posts are numbered with copyable links, the first post is marked, and Quote and Reply fill the reply form.

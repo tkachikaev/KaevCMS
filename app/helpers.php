@@ -219,6 +219,11 @@ if (! function_exists('localized_current_url')) {
         if (preg_match('/\Ar\/[A-Za-z0-9]{32,64}\z/D', implode('/', $segments)) === 1) {
             return url('/'.implode('/', $segments)).($query !== '' ? '?'.$query : '');
         }
+        // The forum owns the reserved top-level /forum prefix without a /{locale}
+        // segment; it reads the saved language, so keep the visitor on the same page.
+        if ($firstSegment === 'forum' && preg_match('/\Aforum(?:\/[A-Za-z0-9_-]+)*\z/D', implode('/', $segments)) === 1) {
+            return url('/'.implode('/', $segments)).($query !== '' ? '?'.$query : '');
+        }
         if ($firstSegment === 'modules') {
             // Donations routes have no /{locale} prefix; their middleware reads
             // the language saved by LocaleController. Keep the selected order.
