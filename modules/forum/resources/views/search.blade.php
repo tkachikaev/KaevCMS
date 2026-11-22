@@ -5,18 +5,17 @@
     <a href="{{ route('modules.forum.index') }}">{{ __('module-forum::messages.title') }}</a>
     <span>›</span><strong>{{ __('module-forum::messages.forum_search') }}</strong>
 </nav>
-<div class="forum-heading"><h1>{{ __('module-forum::messages.forum_search') }}</h1></div>
+<div class="forum-heading forum-heading-search">
+    <div class="forum-heading-copy"><h1>{{ __('module-forum::messages.forum_search') }}</h1></div>
+    <div class="forum-heading-side">
+        @include('module-forum::partials.search-field', ['term' => $term, 'autofocus' => $term === ''])
+    </div>
+</div>
 @if($errors->any())
     <div class="forum-notice forum-notice-error" role="alert">
         @foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach
     </div>
 @endif
-<form class="forum-search-form forum-panel" action="{{ route('modules.forum.search') }}" method="GET" role="search">
-    <label for="forum-search-query">{{ __('module-forum::messages.search_query') }}</label>
-    <input id="forum-search-query" type="search" name="q" minlength="2" maxlength="80" value="{{ $term }}"
-           placeholder="{{ __('module-forum::messages.search_placeholder') }}">
-    <button class="forum-button forum-button-primary" type="submit">{{ __('module-forum::messages.forum_search') }}</button>
-</form>
 <div class="forum-panel">
     <div class="forum-panel-heading">{{ __('module-forum::messages.search_results') }}</div>
     @if($term === '')

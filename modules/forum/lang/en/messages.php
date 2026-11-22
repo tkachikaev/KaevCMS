@@ -148,7 +148,7 @@ return [
     'back_to_topic' => 'Back to topic',
     'forum_search' => 'Search',
     'search_query' => 'Search topics and messages',
-    'search_placeholder' => 'Enter a word or phrase',
+    'search_placeholder' => 'Search the forum',
     'search_results' => 'Search results',
     'search_prompt' => 'Enter at least two characters. Results respect section access.',
     'search_empty' => 'No matching topics.',

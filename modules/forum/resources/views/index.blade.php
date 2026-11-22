@@ -1,18 +1,23 @@
 @extends('module-forum::layouts.app')
 @section('title', __('module-forum::messages.title'))
 @section('content')
-<div class="forum-heading">
-    <h1>{{ __('module-forum::messages.title') }}</h1>
-    @if($actor->isOwner())
-        <div class="forum-tools">
-            <button type="button" class="forum-button forum-button-primary" data-forum-dialog-open="forum-category-create">
-                + {{ __('module-forum::messages.add_category') }}
-            </button>
-            <a class="forum-button" href="{{ route('modules.forum.trash') }}">{{ __('module-forum::messages.trash') }}</a>
-        </div>
-    @endif
+<div class="forum-heading forum-heading-search">
+    <div class="forum-heading-copy">
+        <h1>{{ __('module-forum::messages.title') }}</h1>
+        <p class="forum-desc">{{ __('module-forum::messages.forum_description') }}</p>
+    </div>
+    <div class="forum-heading-side">
+        @include('module-forum::partials.search-field')
+        @if($actor->isOwner())
+            <div class="forum-tools">
+                <button type="button" class="forum-button forum-button-primary" data-forum-dialog-open="forum-category-create">
+                    + {{ __('module-forum::messages.add_category') }}
+                </button>
+                <a class="forum-button" href="{{ route('modules.forum.trash') }}">{{ __('module-forum::messages.trash') }}</a>
+            </div>
+        @endif
+    </div>
 </div>
-<p class="forum-desc">{{ __('module-forum::messages.forum_description') }}</p>
 
 @if(session('forum_status'))
     <p class="forum-notice" role="status">{{ session('forum_status') }}</p>

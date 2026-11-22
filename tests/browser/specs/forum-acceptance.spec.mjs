@@ -40,8 +40,12 @@ test('forum fits a small phone and offers keyboard navigation', async ({ page })
     const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(await overflow()).toBeLessThanOrEqual(1);
 
-    await page.locator('a[href*="/forum/search"]').first().click();
-    await expect(page.locator('.forum-search-form input[name="q"]')).toBeVisible();
+    const search = page.locator('.forum-quick-search input[name="q"]');
+    await expect(search).toBeVisible();
+    await search.fill('Общее');
+    await search.press('Enter');
+    await expect(page).toHaveURL(/\/forum\/search\?q=/);
+    await expect(page.locator('.forum-quick-search input[name="q"]')).toHaveValue('Общее');
     expect(await overflow()).toBeLessThanOrEqual(1);
 });
 

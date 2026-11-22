@@ -484,6 +484,7 @@
         "modules/forum/resources/views/partials/names.blade.php",
         "modules/forum/resources/views/partials/pagination.blade.php",
         "modules/forum/resources/views/partials/permission-fields.blade.php",
+        "modules/forum/resources/views/partials/search-field.blade.php",
         "modules/forum/resources/views/partials/section-dialog.blade.php",
         "modules/forum/resources/views/post-edit.blade.php",
         "modules/forum/resources/views/post-history.blade.php",

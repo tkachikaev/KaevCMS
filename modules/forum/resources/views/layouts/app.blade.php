@@ -25,12 +25,7 @@
         .forum-brand-copy{display:flex;flex-direction:column;min-width:0}
         .forum-brand-copy strong{font:700 19px/1.25 Georgia,"PT Serif","Times New Roman",serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .forum-brand-copy small{font-size:14px;font-weight:400;opacity:.85}
-        .forum-nav{display:flex;align-items:center;gap:4px;margin-right:auto}
-        .forum-nav a{padding:7px 12px;border-radius:8px;color:#4a6078;font-size:14px;font-weight:600}
-        .forum-nav a:hover{background:#f1f5f9;text-decoration:none}
-        .forum-nav a[aria-current="page"]{background:#e8eef5;color:#27374b}
-        .forum-nav .forum-nav-site{display:none}
-        .forum-actions{display:flex;align-items:center;gap:14px;font-size:13px}
+        .forum-actions{display:flex;align-items:center;gap:14px;margin-left:auto;font-size:13px}
         .forum-site-link{color:#5b6d82}
         /* Language menu: the same component, look and motion as the public website.
            Light values follow Kaev Aurelia; the dark rules below follow its night scheme
@@ -98,7 +93,7 @@
         .forum-profile-menu[open]>.forum-profile-dropdown>:nth-child(n+5){animation-delay:.21s}
         @media(prefers-reduced-motion:reduce){.forum-profile-chevron{transition:none}.forum-profile-menu[open]>.forum-profile-dropdown,.forum-profile-menu[open]>.forum-profile-dropdown>*{animation:none!important}}
         @media(max-width:760px){.forum-profile-chevron{display:none}.forum-profile-dropdown{position:fixed;left:13px;right:13px;top:auto;width:auto}}
-        @media(max-width:760px){.forum-top-inner{flex-wrap:wrap;gap:10px 12px;padding:10px 16px}.forum-brand{flex:1 1 0;min-width:0}.forum-brand img{width:34px;height:34px}.forum-brand-copy strong{font-size:17px}.forum-actions{gap:10px}.forum-site-link{display:none}.forum-identity{padding:3px}.forum-identity-copy{display:none}.forum-nav{order:3;width:100%;margin:0;padding-top:8px;border-top:1px solid #edf0f3}.forum-nav .forum-nav-site{display:inline-block;margin-left:auto}}
+        @media(max-width:760px){.forum-top-inner{flex-wrap:wrap;gap:10px 12px;padding:10px 16px}.forum-brand{flex:1 1 0;min-width:0}.forum-brand img{width:34px;height:34px}.forum-brand-copy strong{font-size:17px}.forum-actions{gap:10px}.forum-identity{padding:3px}.forum-identity-copy{display:none}}
         .forum-body{max-width:1130px;margin:38px auto;padding:0 24px}
         .forum-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
         .forum-heading h1{font-size:26px;letter-spacing:-.025em;margin:0}
@@ -260,9 +255,20 @@
         :where(.forum-body,.forum-top) :where(a,button,input,textarea,select,summary):focus-visible{outline:2px solid #6396cd;outline-offset:3px}
         .forum-breadcrumb{flex-wrap:wrap;overflow-wrap:anywhere}
         .forum-topic-main{min-width:0;flex:1}
-        .forum-search-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;padding:18px 20px;margin:0 0 18px}
-        .forum-search-form label{grid-column:1/-1;margin-bottom:-4px;color:#657a91;font-size:13px}
-        .forum-search-form input{width:100%;min-width:0;padding:10px 12px;border:1px solid #ced8e3;border-radius:8px;font:inherit;color:#27374b;background:#fff}
+        /* Search sits beside the page heading instead of a separate header tab. */
+        .forum-heading-search{align-items:flex-end;margin-bottom:26px}
+        .forum-heading-copy{min-width:0}
+        .forum-heading-search .forum-desc{margin:8px 0 0}
+        .forum-heading-side{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-left:auto}
+        .forum-quick-search{position:relative;width:300px;max-width:100%}
+        .forum-quick-search input{width:100%;height:40px;padding:0 14px 0 40px;border:1px solid #d9e1eb;border-radius:999px;background:#fff;color:#27374b;font:inherit;font-size:14px;transition:border-color .2s ease,box-shadow .2s ease}
+        .forum-quick-search input::placeholder{color:#8a9aac}
+        .forum-quick-search input:hover{border-color:#c3cfdc}
+        .forum-quick-search input:focus{border-color:#739cc4;box-shadow:0 0 0 4px rgba(99,150,205,.16);outline:none}
+        .forum-quick-search button{position:absolute;left:4px;top:4px;width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:transparent;color:#7b8ca0;cursor:pointer}
+        .forum-quick-search button:hover{color:#355b85}
+        [dir="rtl"] .forum-quick-search input{padding:0 40px 0 14px}
+        [dir="rtl"] .forum-quick-search button{left:auto;right:4px}
         .forum-inline-confirm{position:relative;min-width:0}
         .forum-inline-confirm summary{list-style:none;width:max-content;max-width:100%;user-select:none}
         .forum-inline-confirm summary::-webkit-details-marker{display:none}
@@ -273,9 +279,9 @@
         .forum-footer{padding:0 16px 24px}
         @media(max-width:650px){
             .forum-brand-wide img{max-width:132px;max-height:40px}
-            .forum-search-form{grid-template-columns:1fr;padding:15px}
-            .forum-search-form label{grid-column:auto}
-            .forum-search-form button{justify-self:start}
+            .forum-heading-search{align-items:stretch}
+            .forum-heading-side{width:100%;justify-content:flex-start;margin-left:0}
+            .forum-quick-search{width:100%}
             .forum-move-form{display:grid;grid-template-columns:minmax(0,1fr)}
             .forum-move-form select{width:100%;min-width:0}
             .forum-dialog-actions{flex-wrap:wrap}
@@ -289,11 +295,12 @@
         :root[data-forum-scheme="dark"] a{color:#a3c6ec}
         :root[data-forum-scheme="dark"] .forum-brand{color:#eff3f8}
         :root[data-forum-scheme="dark"] .forum-top{background:#151f2a;border-bottom-color:#2a3949}
-        :root[data-forum-scheme="dark"] .forum-nav a,
         :root[data-forum-scheme="dark"] .forum-site-link{color:#a9bdd3}
-        :root[data-forum-scheme="dark"] .forum-nav a:hover{background:#1d2a37}
-        :root[data-forum-scheme="dark"] .forum-nav a[aria-current="page"]{background:#263548;color:#eef3f8}
-        :root[data-forum-scheme="dark"] .forum-nav{border-top-color:#2a3949}
+        :root[data-forum-scheme="dark"] .forum-quick-search input:hover{border-color:#4a6178}
+        :root[data-forum-scheme="dark"] .forum-quick-search input:focus{border-color:#6f9bd0;box-shadow:0 0 0 4px rgba(111,155,208,.2)}
+        :root[data-forum-scheme="dark"] .forum-quick-search input::placeholder,
+        :root[data-forum-scheme="dark"] .forum-quick-search button{color:#8fa3b8}
+        :root[data-forum-scheme="dark"] .forum-quick-search button:hover{color:#c9d9ee}
         :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu>summary{border-color:rgba(190,172,235,.15);background:rgba(25,22,34,.72);color:#ece8f5}
         :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu>summary:hover,
         :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu[open]>summary{border-color:#b9a3f1}
@@ -378,9 +385,8 @@
         :root[data-forum-scheme="dark"] .forum-footer{color:#9dabbc}
         :root[data-forum-scheme="dark"] .forum-form-grid label,
         :root[data-forum-scheme="dark"] .forum-compose-field,
-        :root[data-forum-scheme="dark"] .forum-search-form label,
         :root[data-forum-scheme="dark"] .forum-move-form label{color:#b9c7d6}
-        :root[data-forum-scheme="dark"] :where(.forum-form-grid,.forum-compose-field,.forum-search-form,.forum-move-form) :where(input,textarea,select),
+        :root[data-forum-scheme="dark"] :where(.forum-form-grid,.forum-compose-field,.forum-quick-search,.forum-move-form) :where(input,textarea,select),
         :root[data-forum-scheme="dark"] .forum-editor-link-dialog input{background:#121b26;border-color:#3a4e63;color:#e2eaf3}
         :root[data-forum-scheme="dark"] .forum-editor,
         :root[data-forum-scheme="dark"] .forum-editor-link-dialog{background:#172332;border-color:#37495d;color:#e2eaf3}
@@ -426,11 +432,6 @@
                 </span>
             @endunless
         </a>
-        <nav class="forum-nav" aria-label="{{ __('module-forum::messages.title') }}">
-            <a href="{{ route('modules.forum.index') }}" @if(! request()->routeIs('modules.forum.search')) aria-current="page" @endif>{{ __('module-forum::messages.title') }}</a>
-            <a href="{{ route('modules.forum.search') }}" @if(request()->routeIs('modules.forum.search')) aria-current="page" @endif>{{ __('module-forum::messages.forum_search') }}</a>
-            <a class="forum-nav-site" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
-        </nav>
         <div class="forum-actions">
             <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
             <x-language-menu />

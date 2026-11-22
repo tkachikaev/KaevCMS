@@ -148,7 +148,7 @@ return [
     'back_to_topic' => 'Вернуться к теме',
     'forum_search' => 'Поиск',
     'search_query' => 'Искать в темах и сообщениях',
-    'search_placeholder' => 'Введите слово или фразу',
+    'search_placeholder' => 'Поиск по форуму',
     'search_results' => 'Результаты поиска',
     'search_prompt' => 'Введите минимум два символа. Поиск учитывает доступ к разделам.',
     'search_empty' => 'Ничего не найдено.',
