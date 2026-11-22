@@ -508,6 +508,7 @@
         "modules/forum/src/Models/ForumTopic.php",
         "modules/forum/src/Services/ForumActor.php",
         "modules/forum/src/Services/ForumActorResolver.php",
+        "modules/forum/src/Services/ForumAuthorProfiles.php",
         "modules/forum/src/Services/ForumPermissions.php",
         "modules/forum/src/Services/ForumPostChanges.php",
         "modules/forum/src/Services/ForumPosting.php",
