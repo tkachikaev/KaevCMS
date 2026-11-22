@@ -3083,5 +3083,6 @@
     "Days between display name changes": "Интервал между сменами ника (дней)",
     "Use 0 to allow changes without waiting.": "0 — изменение без ожидания.",
     "Display name changes are disabled by the administrator.": "Изменение публичного ника отключено администратором.",
-    "You can change your display name after :date.": "Изменить публичный ник можно после :date."
+    "You can change your display name after :date.": "Изменить публичный ник можно после :date.",
+    "Old player notifications deleted: :count.": "Удалено старых оповещений игроков: :count."
 }

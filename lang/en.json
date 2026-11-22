@@ -3083,5 +3083,6 @@
     "Days between display name changes": "Days between display name changes",
     "Use 0 to allow changes without waiting.": "Use 0 to allow changes without waiting.",
     "Display name changes are disabled by the administrator.": "Display name changes are disabled by the administrator.",
-    "You can change your display name after :date.": "You can change your display name after :date."
+    "You can change your display name after :date.": "You can change your display name after :date.",
+    "Old player notifications deleted: :count.": "Old player notifications deleted: :count."
 }

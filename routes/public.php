@@ -83,6 +83,16 @@ Route::prefix('{locale}')
         $registerPublicRoutes(true);
     });
 
+// The player's bell: unread count for polling, open (mark read and go), read all.
+Route::middleware(['auth:web'])->prefix('notifications')->name('notifications.')->group(static function (): void {
+    Route::get('/count', [\App\Http\Controllers\Account\PlayerNotificationController::class, 'count'])
+        ->middleware('throttle:60,1')->name('count');
+    Route::post('/read-all', [\App\Http\Controllers\Account\PlayerNotificationController::class, 'readAll'])
+        ->middleware('throttle:30,1')->name('read-all');
+    Route::post('/{notification}', [\App\Http\Controllers\Account\PlayerNotificationController::class, 'open'])
+        ->whereNumber('notification')->middleware('throttle:60,1')->name('open');
+});
+
 Route::get('/language/{locale}', [LocaleController::class, 'public'])
     ->where('locale', (string) config('localization.locale_pattern'))
     ->middleware('throttle:20,1,language-switch')
