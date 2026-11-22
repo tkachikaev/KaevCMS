@@ -327,6 +327,18 @@
         .forum-media-sites{margin:12px 0 0;color:#536982;font-size:13px}
         .forum-media-sites span{display:block;margin-bottom:3px;color:#8a9aac}
         :root[data-forum-scheme="dark"] .forum-media-sites{color:#c9d9ee}
+        /* Allowed sites in the insert dialogs: open the upload site in a new tab, with a hint. */
+        .forum-media-sites{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+        .forum-media-sites span{flex-basis:100%;margin:0}
+        .forum-site-link-out{position:relative;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid #d9e1eb;border-radius:999px;background:#f8fafc;color:#355b85;font-size:13px;font-weight:600;text-decoration:none!important}
+        .forum-site-link-out:hover,.forum-site-link-out:focus-visible{border-color:#9db6cf;background:#eef4fa}
+        .forum-site-link-out svg{opacity:.7}
+        .forum-site-link-out::after{content:attr(data-tooltip);position:absolute;left:50%;bottom:calc(100% + 7px);z-index:5;padding:4px 8px;border-radius:6px;background:#27374b;color:#fff;font-size:12px;font-weight:500;white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,3px);transition:opacity .15s ease,transform .15s ease}
+        .forum-site-link-out:hover::after,.forum-site-link-out:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+        @media(prefers-reduced-motion:reduce){.forum-site-link-out::after{transition:none}}
+        :root[data-forum-scheme="dark"] .forum-site-link-out{border-color:#37495d;background:#121b26;color:#a3c6ec}
+        :root[data-forum-scheme="dark"] .forum-site-link-out:hover{background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-site-link-out::after{background:#e2e8f0;color:#151f2a}
         .forum-editor-menu{position:relative}
         .forum-editor-menu>summary{display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:32px;padding:3px 7px;border:1px solid transparent;border-radius:6px;color:#49617c;list-style:none;cursor:pointer}
         .forum-editor-menu>summary::-webkit-details-marker{display:none}

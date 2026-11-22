@@ -41,6 +41,21 @@ final class ForumImageHosts
         ));
     }
 
+    /**
+     * Where a writer uploads pictures for a host. Known image hosts serve files from a
+     * separate domain; for any other host the site's home page is used.
+     */
+    public static function uploadPage(string $host): string
+    {
+        return match ($host) {
+            'iili.io' => 'https://freeimage.host/',
+            'i.imgur.com' => 'https://imgur.com/upload',
+            'i.postimg.cc' => 'https://postimages.org/',
+            'i.ibb.co' => 'https://imgbb.com/',
+            default => 'https://'.$host.'/',
+        };
+    }
+
     public function forget(): void
     {
         $this->hosts = null;

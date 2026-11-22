@@ -247,4 +247,6 @@ return [
     'image_hosts_help' => 'One address per line, for example iili.io. Only that exact name is allowed, not its subdomains. Leave the field empty to turn forum images off. Removing a site also hides its pictures in older posts.',
     'image_hosts_invalid' => 'These do not look like site names: :hosts. Enter a name such as i.imgur.com, without IP addresses or localhost.',
     'image_hosts_too_many' => 'You can list at most :count sites.',
+    'open_site' => 'Open the site',
+    'open_site_new_tab' => 'opens in a new tab',
 ];

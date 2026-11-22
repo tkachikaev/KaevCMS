@@ -174,7 +174,10 @@
         </label>
         <p class="forum-media-sites">
             <span>{{ __('module-forum::messages.image_hosts') }}</span>
-            @foreach($forumImageHosts as $imageHost)<strong>{{ $imageHost }}</strong>@if(! $loop->last), @endif @endforeach
+            @foreach($forumImageHosts as $imageHost)
+                <a class="forum-site-link-out" href="{{ \KaevCMS\Modules\Forum\Services\ForumImageHosts::uploadPage($imageHost) }}" target="_blank" rel="noopener noreferrer nofollow"
+                   data-tooltip="{{ __('module-forum::messages.open_site') }}" aria-label="{{ $imageHost }} — {{ __('module-forum::messages.open_site_new_tab') }}">{{ $imageHost }}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+            @endforeach
         </p>
         <div class="forum-image-preview" data-editor-link-image-preview data-empty="{{ __('module-forum::messages.image_preview_empty') }}" data-error="{{ __('module-forum::messages.image_preview_error') }}" data-blocked="{{ __('module-forum::messages.unsafe_image') }}" data-loading="{{ __('module-forum::messages.image_preview_loading') }}"></div>
         <label>
@@ -195,7 +198,8 @@
         </label>
         <p class="forum-media-sites">
             <span>{{ __('module-forum::messages.media_supported') }}</span>
-            <strong>YouTube</strong>, <strong>Twitch</strong>
+            <a class="forum-site-link-out" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer nofollow" data-tooltip="{{ __('module-forum::messages.open_site') }}" aria-label="YouTube — {{ __('module-forum::messages.open_site_new_tab') }}">YouTube<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+            <a class="forum-site-link-out" href="https://www.twitch.tv/" target="_blank" rel="noopener noreferrer nofollow" data-tooltip="{{ __('module-forum::messages.open_site') }}" aria-label="Twitch — {{ __('module-forum::messages.open_site_new_tab') }}">Twitch<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
         </p>
         <div class="forum-dialog-actions">
             <button class="forum-button" type="button" data-editor-dialog-cancel>{{ __('module-forum::messages.cancel') }}</button>
