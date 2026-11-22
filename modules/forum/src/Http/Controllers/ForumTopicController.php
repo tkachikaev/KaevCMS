@@ -138,13 +138,19 @@ final class ForumTopicController extends Controller
         $post = $this->posting->addReply($actor, (int) $topic->id, (string) ($data['body'] ?? ''), $data['submission_key'], $data['body_html'] ?? null);
         if ($post->wasRecentlyCreated) {
             $this->audit('reply_created', $actor, 'post #'.$post->id);
-            app(\KaevCMS\Modules\Forum\Services\ForumNotifications::class)->afterReply(
-                $actor,
-                $topic->fresh() ?? $topic,
-                $post,
-                array_map('intval', $data['quoted_posts'] ?? []),
-                array_map('intval', $data['replied_posts'] ?? []),
-            );
+            // Reply persistence is complete. An unavailable notification store must
+            // not turn a successful publication into an error (or invite a retry).
+            try {
+                app(\KaevCMS\Modules\Forum\Services\ForumNotifications::class)->afterReply(
+                    $actor,
+                    $topic->fresh() ?? $topic,
+                    $post,
+                    array_map('intval', $data['quoted_posts'] ?? []),
+                    array_map('intval', $data['replied_posts'] ?? []),
+                );
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
         }
 
         // Calculate the page from the persisted post order, not from an untrusted form field.

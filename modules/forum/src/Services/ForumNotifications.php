@@ -44,20 +44,41 @@ final class ForumNotifications
 
         /** @var array<int, array{type: string, key: string, group: string|null}> $recipients */
         $recipients = [];
+        $message = preg_replace('/\s+/u', ' ', (string) $post->body_text) ?? (string) $post->body_text;
         foreach ([['forum.reply', 'notify_reply', $repliedPostIds], ['forum.quote', 'notify_quote', $quotedPostIds]] as [$type, $key, $ids]) {
             $ids = array_slice(array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0))), 0, self::MAX_ADDRESSED);
             if ($ids === []) {
                 continue;
             }
-            $authors = ForumPost::query()
+
+            // Hidden form fields are untrusted: only notify an addressed author when
+            // the published message actually includes the mention or quoted text.
+            $referenced = ForumPost::query()
                 ->where('topic_id', $topic->id)
                 ->whereIn('id', $ids)
                 ->where('id', '<', $post->id)
+                ->whereNull('removed_at')
                 ->where('author_type', 'user')
                 ->whereNotNull('author_user_id')
-                ->pluck('author_user_id');
-            foreach ($authors as $userId) {
-                $recipients[(int) $userId] ??= ['type' => $type, 'key' => $key, 'group' => null];
+                ->get(['id', 'author_user_id', 'body_text']);
+            $users = User::query()->whereIn('id', $referenced->pluck('author_user_id')->unique())->get()->keyBy('id');
+            foreach ($referenced as $original) {
+                $recipient = $users->get($original->author_user_id);
+                if (! $recipient instanceof User) {
+                    continue;
+                }
+                if ($type === 'forum.reply') {
+                    $hasAddress = str_contains($message, '@'.$recipient->publicName());
+                } else {
+                    // The quote button inserts the beginning of the source's plain
+                    // text, even when the source contains rich formatting.
+                    $quotedText = preg_replace('/\s+/u', ' ', trim((string) $original->body_text)) ?? '';
+                    $excerpt = mb_substr($quotedText, 0, 60);
+                    $hasAddress = $excerpt !== '' && str_contains($message, $excerpt);
+                }
+                if ($hasAddress) {
+                    $recipients[(int) $recipient->id] ??= ['type' => $type, 'key' => $key, 'group' => null];
+                }
             }
         }
 

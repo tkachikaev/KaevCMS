@@ -32,6 +32,19 @@ class PlayerNotificationCenterTest extends TestCase
         $this->assertSame(1, $center->unreadCount($player));
     }
 
+    public function test_overlong_group_key_is_normalized_before_the_merge_lookup(): void
+    {
+        $center = app(PlayerNotificationCenter::class);
+        $player = User::factory()->create();
+        $key = str_repeat('g', 220);
+
+        $center->notify($player, 'test.reply', 'Notifications', [], '/forum/topics/1', $key);
+        $center->notify($player, 'test.reply', 'Notifications', [], '/forum/topics/2', $key);
+
+        $this->assertSame(1, UserNotification::query()->where('user_id', $player->id)->count());
+        $this->assertSame(2, UserNotification::query()->firstOrFail()->occurrences);
+    }
+
     public function test_only_internal_paths_and_clean_parameters_are_stored(): void
     {
         $center = app(PlayerNotificationCenter::class);

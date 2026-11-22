@@ -37,10 +37,16 @@ final class PlayerNotificationCenter
             throw new InvalidArgumentException('Player notifications link to internal paths only.');
         }
         $parameters = self::cleanParameters($parameters);
+        // Normalize before looking up an existing group as well as inserting it.
+        $groupKey = $groupKey === null ? null : mb_substr($groupKey, 0, 191);
 
         return DB::transaction(static function () use ($userId, $type, $titleKey, $parameters, $url, $groupKey): UserNotification {
             $now = now();
             if ($groupKey !== null) {
+                // Serialize a recipient's grouped notifications even when there is
+                // no existing unread row to lock. Otherwise concurrent first replies
+                // can both insert a notification for the same topic.
+                User::query()->whereKey($userId)->lockForUpdate()->firstOrFail();
                 $existing = UserNotification::query()
                     ->where('user_id', $userId)
                     ->where('group_key', $groupKey)
@@ -63,7 +69,7 @@ final class PlayerNotificationCenter
             return UserNotification::query()->create([
                 'user_id' => $userId,
                 'type' => mb_substr($type, 0, 80),
-                'group_key' => $groupKey === null ? null : mb_substr($groupKey, 0, 191),
+                'group_key' => $groupKey,
                 'title_key' => $titleKey,
                 'parameters' => $parameters,
                 'url' => $url,

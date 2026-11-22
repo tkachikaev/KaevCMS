@@ -62,7 +62,7 @@ class ForumNotificationsTest extends TestCase
         $otherTopic = $this->topic(User::factory()->create(), 'Elsewhere');
         $foreignPost = ForumPost::query()->where('topic_id', $otherTopic->id)->firstOrFail();
 
-        $this->replyAs($writer, $topic, 'Quote and answer', [
+        $this->replyAs($writer, $topic, 'Quoted words, and @'.$answered->publicName().', here is my answer', [
             'quoted_posts' => [$quotedPost->id, $writerPost->id, $foreignPost->id],
             'replied_posts' => [$answeredPost->id, $quotedPost->id],
         ]);
@@ -72,6 +72,40 @@ class ForumNotificationsTest extends TestCase
         $this->assertSame('forum.topic_reply', UserNotification::query()->where('user_id', $owner->id)->sole()->type);
         $this->assertSame(0, UserNotification::query()->where('user_id', $writer->id)->count());
         $this->assertSame(0, UserNotification::query()->where('user_id', $otherTopic->author_user_id)->count());
+    }
+
+    public function test_forged_address_ids_without_a_quote_or_mention_do_not_notify_other_posters(): void
+    {
+        $owner = User::factory()->create();
+        $target = User::factory()->create(['display_name' => 'TargetPlayer']);
+        $writer = User::factory()->create();
+        $topic = $this->topic($owner, 'Bell spoof test');
+        $targetPost = $this->addReply($target, $topic, 'Unique text from target');
+        UserNotification::query()->delete();
+
+        $this->replyAs($writer, $topic, 'A normal reply without a quote or mention', [
+            'quoted_posts' => [$targetPost->id],
+            'replied_posts' => [$targetPost->id],
+        ]);
+
+        $this->assertSame(0, UserNotification::query()->where('user_id', $target->id)->count());
+        $this->assertSame(1, UserNotification::query()->where('user_id', $owner->id)->count());
+    }
+
+    public function test_notification_failure_does_not_undo_a_published_reply(): void
+    {
+        $owner = User::factory()->create();
+        $writer = User::factory()->create();
+        $topic = $this->topic($owner, 'Notification failure');
+
+        $this->app->bind(\KaevCMS\Modules\Forum\Services\ForumNotifications::class,
+            static function (): never {
+                throw new \RuntimeException('Notification service unavailable');
+            });
+
+        $this->replyAs($writer, $topic, 'Published despite the notification failure');
+        $this->assertSame(1, $topic->fresh()->reply_count);
+        $this->assertSame(2, ForumPost::query()->where('topic_id', $topic->id)->count());
     }
 
     public function test_recipients_who_cannot_read_the_section_are_not_notified(): void
