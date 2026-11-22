@@ -4,8 +4,8 @@ namespace App\Services\Notifications;
 
 use App\Models\User;
 use App\Models\UserNotification;
-use Illuminate\Database\Eloquent\Collection;
 use Closure;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\HtmlString;

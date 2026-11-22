@@ -130,9 +130,8 @@ class ForumNotificationsTest extends TestCase
         $section->forceFill(['view_rule' => 'all', 'topic_rule' => 'registered', 'reply_rule' => 'registered'])->save();
         $topic->forceFill(['hidden_at' => now()])->save();
 
-        // Freshly resolved policy sees the new topic visibility.
-        $freshCenter = app(\App\Services\Notifications\PlayerNotificationCenter::class);
-        $this->assertCount(0, $freshCenter->latest($author));
+        // Even the same center must not trust a stale permission decision.
+        $this->assertCount(0, $center->latest($author));
     }
 
     public function test_recipients_who_cannot_read_the_section_are_not_notified(): void

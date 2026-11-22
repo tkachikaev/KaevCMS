@@ -21,9 +21,6 @@ final class ForumNotifications
 
     private const MAX_ADDRESSED = 10;
 
-    /** @var array<string, bool> */
-    private array $visibilityCache = [];
-
     public function __construct(
         private readonly PlayerNotificationCenter $center,
         private readonly ForumPermissions $permissions,
@@ -128,23 +125,18 @@ final class ForumNotifications
         }
 
         $topicId = (int) $match[1];
-        $key = $user->getKey().':'.$topicId;
-        if (array_key_exists($key, $this->visibilityCache)) {
-            return $this->visibilityCache[$key];
-        }
-
         $topic = ForumTopic::query()->whereKey($topicId)->whereNull('hidden_at')->first();
         if ($topic === null) {
-            return $this->visibilityCache[$key] = false;
+            return false;
         }
 
         $section = ForumSection::query()->whereKey($topic->section_id)
             ->whereHas('category')->first();
         if ($section === null) {
-            return $this->visibilityCache[$key] = false;
+            return false;
         }
 
-        return $this->visibilityCache[$key] = $this->permissions->canView(
+        return $this->permissions->canView(
             new ForumActor('user', user: $user),
             $section,
             $this->structure->globalVisibility(),
