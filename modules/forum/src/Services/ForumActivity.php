@@ -23,6 +23,14 @@ final class ForumActivity
 
     private const CACHE_SECONDS = 60;
 
+    private const VERSION_KEY = 'forum.activity.version';
+
+    /** Drops every cached list at once, e.g. right after a topic is hidden or moved. */
+    public static function forget(): void
+    {
+        Cache::forever(self::VERSION_KEY, bin2hex(random_bytes(8)));
+    }
+
     /** @return array{enabled: bool, limit: int} */
     public function settings(): array
     {
@@ -55,7 +63,8 @@ final class ForumActivity
         if ($limit < 1 || $sectionIds === []) {
             return [];
         }
-        $cacheKey = 'forum.activity.'.md5(implode(',', $sectionIds).'|'.$limit);
+        $version = (string) Cache::get(self::VERSION_KEY, '0');
+        $cacheKey = 'forum.activity.'.md5($version.'|'.implode(',', $sectionIds).'|'.$limit);
         $visible = static fn () => ForumTopic::query()->with('section')
             ->whereIn('section_id', $sectionIds)->whereNull('hidden_at');
 

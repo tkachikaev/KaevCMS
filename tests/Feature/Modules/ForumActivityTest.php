@@ -95,6 +95,23 @@ class ForumActivityTest extends TestCase
         $this->assertTrue((bool) DB::table('module_forum_settings')->value('activity_enabled'));
     }
 
+    public function test_moderation_refreshes_the_cached_table_at_once(): void
+    {
+        $topic = $this->topic(User::factory()->create(), 'Общее общение', 'Soon hidden topic');
+        $this->get('/forum')->assertOk()->assertSee('Soon hidden topic');
+
+        $owner = Admin::factory()->create();
+        $this->actingAs($owner, 'admin')->withSession([
+            'forum.author_mode' => 'admin', 'admin_session_version' => $owner->session_version,
+        ]);
+        $this->post('/forum/topics/'.$topic->id.'/moderate/hide')->assertRedirect();
+        auth('admin')->logout();
+        $this->flushSession();
+
+        // No cache flush here: hiding the topic must drop it from the table immediately.
+        $this->get('/forum')->assertOk()->assertDontSee('Soon hidden topic');
+    }
+
     private function topic(User $author, string $section, string $title): ForumTopic
     {
         $id = ForumSection::query()->where('name_ru', $section)->firstOrFail()->id;

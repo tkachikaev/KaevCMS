@@ -146,6 +146,8 @@ final class ForumTopicModeration
         }, 3);
 
         if ($result['changed']) {
+            // Hidden, deleted, restored or pinned topics must not wait for the activity cache.
+            ForumActivity::forget();
             $this->audit->success('forum', 'forum.topic_'.$action,
                 actor: $actor->admin ?? $actor->user,
                 target: 'topic #'.$id,
@@ -206,6 +208,7 @@ final class ForumTopicModeration
         }, 3);
 
         if ($result[0]) {
+            ForumActivity::forget();
             $this->audit->success('forum', 'forum.topic_moved',
                 actor: $actor->admin ?? $actor->user,
                 target: 'topic #'.$id,
