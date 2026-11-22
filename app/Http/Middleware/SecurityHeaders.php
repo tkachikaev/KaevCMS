@@ -36,9 +36,13 @@ final class SecurityHeaders
             if ($request->routeIs('modules.donations.orders.checkout')) {
                 $formAction .= ' https://pay.fk.money https://www.paypal.com';
             }
+            // Forum posts may embed YouTube (privacy mode) and Twitch players.
+            $frameSource = $request->routeIs('modules.forum.*')
+                ? "frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://clips.twitch.tv"
+                : null;
             // Bundled themes use external scripts and Livewire's CSP-safe build.
             // Inline CSS remains necessary for Livewire styles and dynamic UI sizing.
-            $headers->set('Content-Security-Policy', implode('; ', [
+            $headers->set('Content-Security-Policy', implode('; ', array_filter([
                 "default-src 'self'",
                 "script-src 'self'",
                 "style-src 'self' 'unsafe-inline'",
@@ -49,7 +53,8 @@ final class SecurityHeaders
                 "base-uri 'self'",
                 $formAction,
                 "frame-ancestors 'self'",
-            ]));
+                $frameSource,
+            ])));
         }
 
         $headers->set('X-Content-Type-Options', 'nosniff');

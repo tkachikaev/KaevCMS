@@ -235,6 +235,7 @@ final class ModuleValidator
             'image_path' => null,
             'migration_files' => [],
             'route_paths' => [],
+            'web_route_prefix' => null,
             'capabilities' => [],
             'valid' => false,
             'compatible' => false,
@@ -493,7 +494,18 @@ final class ModuleValidator
             return;
         }
 
-        foreach (array_diff(array_keys($routes), ['web', 'admin']) as $unknownRoute) {
+        // Top-level paths must be explicitly reserved and owned by the matching module.
+        // Never let arbitrary installed modules capture CMS routes such as /login or /admin.
+        if (array_key_exists('web_prefix', $routes)) {
+            $prefix = $routes['web_prefix'];
+            if ($result['id'] !== 'forum' || $prefix !== 'forum' || ! isset($routes['web'])) {
+                $result['errors'][] = __('The module web route prefix is not permitted.');
+            } else {
+                $result['web_route_prefix'] = $prefix;
+            }
+        }
+
+        foreach (array_diff(array_keys($routes), ['web', 'admin', 'web_prefix']) as $unknownRoute) {
             $result['errors'][] = __('Unknown module route group: :group.', ['group' => $unknownRoute]);
         }
 

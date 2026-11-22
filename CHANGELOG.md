@@ -1,16 +1,89 @@
 # Changelog
 
+## 0.61.0 - 2026-11-22
+
+Forum 0.10.0, Daily Rewards 1.3.4, account themes Classic 1.0.4, Aurelia 1.6.12 and Luxury 1.6.10, public theme Aurelia 1.1.2. After updating, open **Admin → Modules** and press "Update database" for the Forum: it has four new migrations (views, image hosts, activity table). The core adds the `user_notifications` table, applied by the regular update. Forum themes live in `public/forum-themes`; Frost stays active until an administrator picks another one in **Admin → Themes → Forum**.
+
+- Forum themes: with the Forum enabled, **Admin → Themes** gets a **Forum** item next to Site and Account. It lists style-only themes from `public/forum-themes/<slug>` (`theme.json`, `theme.css`, preview); the owner and administrators switch them, and each switch is audited. Two themes are bundled: **Frost** (the current blue-grey look) and **Classic** (warm paper and gold by day, violet night in the dark mode, like the Classic player account). To make your own, copy a theme folder and edit its stylesheet. Themes cannot contain code, and a stylesheet that reaches other sites (`@import`, `http(s):`, `//`, `\` escapes) or is larger than 1 MB is refused, so a shared theme cannot leak page data. A damaged or missing theme falls back to Frost.
+- One light/dark switch for the whole site: the public Aurelia theme, the Classic player account and the forum now share one choice (`kaevcms.site.scheme` in the browser). Switching in any of them switches the others, also in tabs that are already open. Before this the account kept its own choice, so the forum could be dark while the account stayed light; a player's earlier account choice is picked up once.
+- Opening the forum from the player account menu no longer shows a huge emblem for a moment: the forum has its own layout, so the menu now opens it with a full page load instead of a Livewire visit that briefly showed it without styles. Modules mark such pages with `registerAccountLink(..., standalone: true)`; the bundled account themes honour it.
+- Modules can list their own theme page under Admin → Themes (`ModuleNavigationRegistry::registerAppearanceLink`).
+- Daily rewards: claim journal entries in the administration were squeezed into a narrow column (the shared list layout reserves it for a news cover); they now use the full width, stacking on phones.
+- Classic account theme: Forum (speech bubbles), Shop (shopping bag) and Referrals (person with a plus) menu items have their own icons instead of the fallback star.
+- Forum: image hosts and activity settings are read with one settings query instead of extra database schema checks on every page.
+- Forum notifications: quoting a message that holds only a picture or a video now notifies its author too (the quote is recognised by the author's name).
+- Forum activity table: hiding, deleting, restoring, pinning or moving a topic refreshes the cached lists at once, so a hidden topic no longer lingers on the home page for up to a minute.
+- Forum views: requests without the session cookie (most bots, scripts and link previews) and known crawler user agents are not counted and no longer write to the database on every hit.
+- Forum search: at least three characters, identical searches are answered from a two-minute cache (results are re-checked for hidden topics and closed sections), and the whole forum shares a budget of fresh searches per minute; when it is spent, visitors see "Search is busy, try again in a minute" instead of loading the database.
+- Notifications: the bell stops counting at "99+" and checks a bounded number of recent entries, so a flood of unread notifications cannot slow down every page for that player.
+- Forum trash: a deleted topic whose section (or category) is also deleted shows "restore the section first" instead of a Restore button that ended in a 404 error page.
+- Forum settings are split into two tabs: General (access, links, moderators) and Community (activity table and allowed image sites, saved together with one Save button).
+- Forum: an activity table above the sections with Latest messages, New topics, Popular topics (most messages this week) and My topics tabs, limited to sections the visitor can see. A separate "Activity table on the home page" card in the forum settings switches it on or off and sets topics per tab (1-30, default 10); new module migrations — apply under Admin → Modules.
+- Forum: "Open forum" in the forum settings opened the forum without its styles until the page was reloaded; it now opens with a full page load.
+- Forum header: "Personal account" replaces "To website" for players and guests (staff without a player session still see "To website"); the website stays one click away in the profile menu and in the footer.
+- Forum: a light/dark switch in the header, the same sun-and-moon control and soft crossfade as the player account. The choice is shared with the public website and remembered in the browser; on narrow phones the header keeps only the logo.
+- Notifications: players get a bell. On the forum it shows a red unread number, rings gently when something new arrives, and lists replies in your topics (merged into one "N new replies"), quotes of your messages and direct replies to you; clicking opens the message and marks it read. Each entry shows the avatar of who acted, their name and the topic highlighted, the time, and a dot while unread. The core player notification center (new core migration) lets other modules and the player account use the same bell later; old notifications are cleaned up daily.
+- Forum: topic moderation moved from a small bar above the posts to a "Manage topic" menu beside the title (close, pin, hide, move…, delete topic…); moving and deleting confirm in dialogs that say where a deleted topic can be restored. Deleted topics now also appear in the forum Trash with a Restore button.
+- Forum: a moderator no longer gets a bare "403 Forbidden" page when a topic holds posts by the administration or other moderators. Hide and delete are not offered for such topics, the moderation panel explains that only the owner can hide, delete or move them to a more private section, and a forged request returns the same explanation without changing the topic.
+- Forum: ship the author-card service in release packages; without it, topic pages failed on sites updated from a release archive.
+- Forum: the language switch is now the website's own language menu, with the same look and opening animation in light and dark schemes, and changing the language keeps the visitor on the same forum page instead of opening the website home page.
+- Forum: clicking your name in the header opens an account menu like the player account's — wallet balance, account, settings, security and sign out for players; forum settings, control panel and sign out for staff — instead of leaving the forum. The separate settings gear moved into this menu.
+- Forum: search is a rounded field with a magnifier beside the forum heading instead of a separate "Search" tab in the header; the results page keeps the same field with the query filled in. The header no longer has Forum/Search tabs, and "To website" stays visible on phones.
+- Forum: each section in the list shows topic and message totals and its latest message — the author's avatar, the topic title linking straight to that message, "Today at 05:56" or the date, and the author's name. Owners see the same figures, with the section controls moved under the description.
+- Forum: topic lists in a section show the author's avatar and name with the start date, quick links to the last pages of long topics, a Replies counter, and the latest reply time linking to that message with the replier's name and small avatar. On phones the counter and the latest reply share one line.
+- Forum: topics count views — shown in section lists next to replies and under the topic title. A view counts once per visitor session, so reloads and paging do not inflate it. New module migration: apply it under Admin → Modules ("Update database"); existing topics start from zero.
+- Forum editor: text color from a 40-tone palette of squares (each tone tuned for the light and dark schemes; arbitrary colors are not accepted), left/center/right alignment, an emoji panel, and link text in the link dialog so a message can show "click here" instead of the bare address.
+- Forum editor: images by link — a dialog with a preview takes a direct https:// link from an allowed image host — iili.io, i.imgur.com, i.postimg.cc or i.ibb.co (nothing is uploaded to or processed by the server). The dialog also accepts freeimage.host and imgur.com viewer links and pasted HTML/BB/Markdown image codes. The Owner edits the allowed image sites in the forum settings (an empty list turns images off); new module migration — apply under Admin → Modules. In the editor an image can be aligned and scaled by dragging its corner, keeping proportions and never exceeding its natural size. The server accepts those exact hosts only, sends no referrer to image hosts, and image-only replies are allowed.
+- Forum editor: the allowed sites in the image and media dialogs are links with an arrow and an "Open the site" hint; they open the upload page (freeimage.host, Imgur upload, Postimages, ImgBB, or the home page of a site the owner added) in a new tab.
+- Forum editor: a Media button inserts YouTube (videos, Shorts, live) and Twitch (videos, clips, channels) from an ordinary link. Posts store only the provider and video id; the forum renders the player itself (YouTube in privacy-enhanced mode), and the security policy allows these players on forum pages only.
+
+## 0.60.0 - 2026-11-20
+
+- Forum 0.9.0: topic posts show an author card with the account avatar, current public name and role, a topic-author mark, post count and join date; posts are numbered with copyable links, the first post is marked, and Quote and Reply fill the reply form.
+- Forum header: Forum and Search navigation with the current page marked, a compact RU/EN switch, a user chip that opens the player account, Sign in for guests and a settings button for the owner; two tidy rows on phones.
+- The reply area explains why a visitor cannot reply: guests are invited to sign in or register, and closed or restricted topics say so.
+- Forum settings in the administration: the page is called Forum, with access and moderator cards side by side, plain access wording, a one-row moderator search and confirmation before removing a moderator.
+- The shared rich editor accepts content inserted by page scripts, used by forum quotes.
+
+- Forum 0.8.0: revalidate link-age rules and moderator assignments under write transaction locks; add regression tests for permissions, topic visibility, counter consistency, archive moves and search pagination.
+- Forum publication rechecks moderator privileges inside the write transaction. Moderator lookups are cached only for the current request, so a revoked role cannot carry over to another request.
+- Forum presentation now follows the built-in Dark public theme or Kaev Aurelia's saved color scheme. Added responsive and keyboard-accessible navigation, a compact styled search form and two-step deletion confirmation without JavaScript.
+- Added focused Playwright scenarios for appearance, mobile layout and the player compose/edit/delete flow. Browser fixture enables the forum on an isolated test database. No new migrations or dependencies.
+
+- Forum 0.7.0: close/reopen, pin/unpin, hide/show, soft-delete/restore and move topics between sections, including the regular read-only Archive. Moderators cannot change CMS staff or other moderators' topics, nor indirectly hide protected replies. Moving to a more public section requires explicit Owner approval.
+- Added SQL-filtered searches over titles and current post text, excluding unreadable, hidden, deleted and historical content, plus a restricted moderation queue. Reuses the forum UI and existing schema without new dependencies or migrations; added role, access and recovery regression tests.
+
+- Forum 0.6.0: users can edit or delete their messages while preserving replies and post anchors; edits show a discreet label and deletions use localized placeholders. Owner and moderators can moderate permitted posts, while CMS staff and moderators' posts are protected from other moderators.
+- Previous revisions remain private for 30 days; the CMS core scheduler purges expired records even when the forum is disabled. Stale-edit checks, sanitizer reuse, audit events and regression tests are included. Added a new module migration; no dependencies changed.
+
+- Forum 0.5.0: Owner-only settings for forum-wide reading access and the account-age requirement for posting links. Search existing active website users to assign or remove forum moderators; changes are audited and use existing CMS account and role checks.
+- Forum administration reuses the existing UI components and routes, without a second enable switch or new database migrations. Added settings, access and moderator-assignment regression tests.
+
+- Forum 0.4.0: compact shared Tiptap editor for new topics and replies, offering bold/italic/underline, lists, quotation, code and safe links. Reuses the existing News/Pages editor bundle with a forum-specific toolbar and progressive plain-text fallback (no additional frontend dependency).
+- Forum rich text is sanitized by the shared DOM sanitizer using a restricted forum profile, including link URL validation; posts written before rich text remain plain text, and a new nullable body_html column avoids rewriting historical data. Added XSS, compatibility, link-age, no-JS and formatting tests.
+
+- Forum 0.3.0: topic creation and chronological replies with shared CMS identities, 20-topic and 15-post pagination, last-activity ordering and counts, privacy-safe topic URLs, posting limits and duplicate form protection. Plain-text rendering escapes HTML; the configured account-age restriction also applies to URLs in titles and replies.
+- Forum topic and reply writes run in database transactions and re-check section permissions and topic state, including read-only Archive and announcements. Added posting, privacy, guest/staff, double-submit, link-delay and pagination regression tests.
+
+- Forum 0.2.1: create the three agreed categories and five sections automatically during the first module migration/upgrade if the forum has no existing or soft-deleted categories. Remove the redundant setup button and endpoint; never recreate deleted or replace customized structure on subsequent enables.
+- Forum 0.2.0: Owner creates categories and sections directly in /forum, controls visibility and future topic/reply permissions, orders entries, and restores deleted items from Trash. The default structure includes a read-only Archive section. RU/EN titles and descriptions are supported.
+- Section visibility is filtered in database queries and checked on direct URLs. All structure mutations verify Owner permissions on the server; invalid access combinations are rejected. Added feature tests and changelog/admin documentation.
+
+- Added a transparent WebP icon for the Forum module catalog card (320 × 320).
+- Added the optional Forum 0.1.0 module foundation: a separate, light `/forum` shell, shared CMS identities and public nicknames, an Owner-only settings entry, and explicit author selection when both CMS administrator and player sessions are active.
+- Reserved the forum's top-level route prefix through validated module metadata without changing other module URLs; added module lifecycle, access and route-cache regression tests. No separate forum accounts, passwords or dependencies.
+
 ## 0.59.1 - 2026-11-16
 
 - Registration settings now control public-name editing (enabled by default) and its global 0–365 day interval (7 days by default). Profile changes use a locked transaction and a new UTC timestamp; clearing a name preserves the cooldown, and identical saves leave timestamps and audits untouched. All account themes share localized availability states. Reserved-name checks also reject Greek Μ and dotless ı impersonations.
 
 - Display-name audit follow-up: reject phonetic/modifier and decorative Unicode letters used to impersonate staff (including adᴍin), show the actual empty profile value with a localized safe placeholder, and translate the display-name audit action in RU/EN journal views.
 
-- Iteration 2: public News Comments authors, reply mentions and composer targets use the core public nickname API with localized safe fallback. Public author queries load only ID and display name; moderation retains private owner identification. Added privacy, rename, escaping, deleted-author and eager-loading tests and RU/EN module documentation.
+- Public News Comments authors, reply mentions and composer targets use the core public nickname API with localized safe fallback. Public author queries load only ID and display name; moderation retains private owner identification. Added privacy, rename, escaping, deleted-author and eager-loading tests and RU/EN module documentation.
 
-- Iteration 1: optional player display names with a shared publicName() API and localized Player #ID fallback; private login names remain unchanged. Case-folded names use a database unique key and conflicting saves return validation errors.
+- Optional player display names with a shared publicName() API and localized Player #ID fallback; private login names remain unchanged. Case-folded names use a database unique key and conflicting saves return validation errors.
 - Shared nickname editing on all three account profile themes, actual stored values and safe placeholders, reserved-name checks and privacy-safe profile audit. Removed redundant profile descriptions and aligned the save action left.
-- Added profile validation, permissions, localization, backwards-compatible login, database collision and concurrent-process regression coverage. News Comments integration is deferred to iteration 2.
+- Added profile validation, permissions, localization, backwards-compatible login, database collision and concurrent-process regression coverage.
 
 ## 0.59.0 - 2026-11-16
 
@@ -99,7 +172,7 @@
 
 ## 0.55.11 - 2026-10-27
 
-**Donations 1.17.11 / PayPal Orders v2 iteration 6 — QA candidate; not production-certified.** Full source based on 0.55.10; PHP/Laravel/Livewire/Composer dependencies, Wallet and previously published migrations unchanged.
+**Donations 1.17.11 / PayPal Orders v2 — QA candidate; not production-certified.** Full source based on 0.55.10; PHP/Laravel/Livewire/Composer dependencies, Wallet and previously published migrations unchanged.
 
 - Added complete bilingual PayPal Orders v2 setup and operations guides (`docs/ru/PAYPAL.md`, `docs/en/PAYPAL.md`): independently configured Sandbox/Live credentials, webhook ID and events, supported currencies, admin-only Sandbox purchase, Live readiness, read-only reconciliation, informational refunds/disputes and merchant policy responsibility. Linked these guides from Donations, Modules and documentation indexes and marked older phased documentation as historical.
 - Improved PayPal webhook event-inbox processing order: the notification step is attempted before marking a verified, settled refund/dispute event processed. In a crash between these steps, a redelivery can safely retry with the existing `AdminNotificationCenter::notifyOnce()` deduplication. Refund/dispute events never debit Wallet or modify settled orders.
@@ -108,7 +181,7 @@
 
 ## 0.55.10 - 2026-10-27
 
-**Donations 1.17.10 / PayPal Orders v2 iteration 5 — QA candidate, not production certified.** Based on full 0.55.9 source, with unchanged Wallet, other payment providers, existing migration files and Composer dependencies.
+**Donations 1.17.10 / PayPal Orders v2 — QA candidate, not production certified.** Based on full 0.55.9 source, with unchanged Wallet, other payment providers, existing migration files and Composer dependencies.
 
 - Added administrator-only, CSRF-protected, rate-limited **Check with PayPal API** on known Live order attempts. Only remote GET order and GET capture are used, with immutable invoice, gross, currency, merchant and capture validation; shared settlement is invoked only when completed proof is established. No blind Capture POST, including after timeouts or prior unknown outcomes.
 - Unknown/ambiguous Capture and remote API/key rotation failures preserve attempt IDs and a sanitized diagnostic, with `requires_review`. Previously settled attempts cannot be downgraded.
@@ -118,48 +191,48 @@
 
 ## 0.55.9 - 2026-10-27
 
-**Donations 1.17.9 / PayPal Orders v2 iteration 4: QA candidate; Live gateway is disabled by default and NOT yet production-certified.** Full source based on 0.55.8; existing Wallet, previous migrations, PHP framework and Composer dependencies unchanged.
+**Donations 1.17.9 / PayPal Orders v2: QA candidate; Live gateway is disabled by default and NOT yet production-certified.** Full source based on 0.55.8; existing Wallet, previous migrations, PHP framework and Composer dependencies unchanged.
 
 - Registered a dedicated PayPal Orders v2 deferred-checkout driver with an isolated Live configuration; merchant account ID and separate Sandbox/Live webhook IDs are required for enabling player Live checkout. Dedicated settings UI only; the generic provider editor cannot replace the protected PayPal config.
 - Created immutable Live attempts with expected merchant ID, a stable Create/Capture request pair and distinct invoice ID. REST Create/Capture happens outside SQL transactions. Real player redirect return is authenticated and always rechecks PayPal API before attempting Capture.
 - Replaced the inert core PayPal webhook with HTTPS-only raw JSON endpoint (64 KiB/413) and PayPal postback signature verification using the **original JSON bytes** in `webhook_event`. Failed verification never acknowledges a payment. Added a minimal encrypted, deduplicated webhook-event inbox; no refunds or disputes act on Wallet.
 - Verified completed PayPal orders and their canonical capture via server-side REST API before settlement. Order ID, invoice, gross, currency, one completed capture and **merchant payee ID** must all match the immutable CMS attempt. The existing Donations/Wallet transactional idempotency prevents double credit across webhook, return and retry.
 - Kept provider deactivation separate from verification of previously created orders; Sandbox remains entirely disconnected from player orders and Wallet. Unknown Capture results forbid blind POST retries. PayPal is restricted to global full Live mode, not the legacy single-account pilot.
-- Added mocked Feature tests for redirect, forged webhook, duplicate delivery, wrong merchant and Wallet credit; full Laravel/MySQL/Playwright and real Sandbox/Live checks still required in Codex. Iteration 5 handles read-only reconciliation UI and dispute/refund information.
+- Added mocked Feature tests for redirect, forged webhook, duplicate delivery, wrong merchant and Wallet credit; full Laravel/MySQL/Playwright and real Sandbox/Live checks are still required. Read-only reconciliation and dispute/refund information follow in a later release.
 
 
 ## 0.55.8 - 2026-10-27
 
-**Donations 1.17.8 / PayPal Orders v2 iteration 3: QA candidate; PayPal Live/player checkout is NOT enabled.** Full source based on 0.55.7. Wallet, Composer lock, framework, YooMoney/FreeKassa live drivers and already published migrations unchanged.
+**Donations 1.17.8 / PayPal Orders v2: QA candidate; PayPal Live/player checkout is NOT enabled.** Full source based on 0.55.7. Wallet, Composer lock, framework, YooMoney/FreeKassa live drivers and already published migrations unchanged.
 
 - Added PayPal settings card and a dedicated bilingual RU/EN administrator page with Sandbox/Live Client ID, encrypted Client Secret and Webhook ID, non-disclosing saved-secret hints, supported currency selection (including JPY zero decimals; incompatible HUF/TWD excluded) and read-only callback URL. PayPal configuration uses the existing encrypted provider-settings table.
-- PayPal stays outside the player provider registry, with its `enabled` flag forced OFF in this iteration, regardless of saved Live credentials. No player-visible PayPal checkout, DonationOrder, Wallet credit or settlement is introduced.
+- PayPal stays outside the player provider registry, with its `enabled` flag forced OFF in this release, regardless of saved Live credentials. No player-visible PayPal checkout, DonationOrder, Wallet credit or settlement is introduced.
 - Added a sanitized diagnostic that verifies Sandbox or Live OAuth2 credentials using a fresh remote token request; this does not claim webhook registration, merchant availability or live-payment readiness.
 - Added an administrator-only Sandbox purchase via the existing PayPal attempts table (one additive admin actor column): short SQL reservation, hosted redirect, server-confirmed APPROVED, explicit POST Capture, stable request IDs and review-only handling of uncertain outcomes. Sandbox success uses `sandbox_verified`, never a Live settlement-eligible status.
-- Reserved a Core-owned PayPal webhook route, but it rejects **every** notification with HTTP 503 until signature verification is implemented in iteration 4 (64 KiB is rejected with 413); no events are accepted as proof.
-- Added access-control and mocked HTTP Feature tests, no-vendor contract tests, admin CSP restriction to the Sandbox approval host and existing provider regression checks. PHPUnit/MySQL/PHPStan/Pint/Playwright and real Sandbox credentials are unavailable here; full acceptance remains Codex QA.
+- Reserved a Core-owned PayPal webhook route, but it rejects **every** notification with HTTP 503 until signature verification is implemented in a later release (64 KiB is rejected with 413); no events are accepted as proof.
+- Added access-control and mocked HTTP Feature tests, no-vendor contract tests, admin CSP restriction to the Sandbox approval host and existing provider regression checks. Full PHPUnit/MySQL/PHPStan/Pint/Playwright runs and real Sandbox acceptance are still pending.
 
 
 ## 0.55.7 - 2026-10-27
 
-**Donations 1.17.7 / PayPal Orders v2 iteration 2: QA candidate; PayPal is NOT enabled for players or administrators.** Full source built on 0.55.6. The live YooMoney/FreeKassa drivers, Wallet code, existing published migrations, Composer lock and framework versions remain unchanged.
+**Donations 1.17.7 / PayPal Orders v2: QA candidate; PayPal is NOT enabled for players or administrators.** Full source built on 0.55.6. The live YooMoney/FreeKassa drivers, Wallet code, existing published migrations, Composer lock and framework versions remain unchanged.
 
 - Added an isolated PayPal Orders v2 HTTP client: OAuth2 client credentials with encrypted cached access tokens scoped to Sandbox/Live and credential rotation, server-side Create/Show/Capture/Get Capture, bounded response parsing, HTTPS-only fixed API endpoints, no redirects and separate immutable PayPal-Request-Id values for Create and Capture.
 - Added an idempotent local operations service that reserves and persists the first PayPal order ID and safe approval redirect outside SQL transactions. A repeated Create uses the same ID within the bounded window. APPROVED is established only with authenticated GET, never a browser return flag.
-- Capture claims remain exclusive; known remote results are stored as pending/denied/completed-unsettled **without Wallet credit**. A timeout or malformed response becomes capture_unknown, blocks further POST and can only be inspected by GET in this iteration.
+- Capture claims remain exclusive; known remote results are stored as pending/denied/completed-unsettled **without Wallet credit**. A timeout or malformed response becomes capture_unknown, blocks further POST and can only be inspected by GET in this release.
 - Added strict remote URL domain/environment/order-token validation, immutable invoice/gross/currency comparison and PayPal decimal precision checks. Non-2xx errors/transport failures are classified without recording secrets or speculative successful payments.
-- Additive migration saves the trusted PayPal approval URL; test-only Sandbox attempt remains separate from all CMS users and wallets. No PayPal driver, credentials admin UI, webhook endpoint, real Sandbox run or player checkout are enabled (iterations 3–5).
-- Added mocked HTTP Feature scenarios and standalone pure-PHP parser checks. Full PHPUnit/MySQL/PHPStan/Pint/Playwright and merchant Sandbox tests remain for Codex/iteration 6. This ZIP is a source QA candidate, not a production-certified release.
+- Additive migration saves the trusted PayPal approval URL; test-only Sandbox attempt remains separate from all CMS users and wallets. No PayPal driver, credentials admin UI, webhook endpoint, real Sandbox run or player checkout are enabled yet; they follow in later releases.
+- Added mocked HTTP Feature scenarios and standalone pure-PHP parser checks. Full PHPUnit/MySQL/PHPStan/Pint/Playwright and merchant Sandbox tests are still pending. This ZIP is a source QA candidate, not a production-certified release.
 
 ## 0.55.6 - 2026-10-27
 
-**Donations 1.17.6 / PayPal Orders v2 iteration 1 (1A + 1B): QA candidate; NOT production-ready for PayPal.** Full source from 0.55.5; Wallet, Composer lock, installed YooMoney/FreeKassa and published migrations unchanged.
+**Donations 1.17.6 / PayPal Orders v2 groundwork: QA candidate; NOT production-ready for PayPal.** Full source from 0.55.5; Wallet, Composer lock, installed YooMoney/FreeKassa and published migrations unchanged.
 
 - Added an opt-in deferred checkout interface: immutable local order/pricing preparation stays in a short SQL transaction; server-created REST checkout is invoked only after SQL commit. Read-only order pages cannot launch remote Create Order calls. Existing static YooMoney/FreeKassa checkout remains unchanged.
 - Added one PayPal attempts table with frozen live order terms, merchant/environment identity, separate stable Create/Capture request UUIDs, unique invoice UUID, remote-ID uniqueness per merchant/environment, and SQL-serialized Create/Capture claims. Capture-unknown states forbid automatic POST retries; uncertain Create retries reuse the same request ID inside a bounded window.
 - Added an additive receipts migration: optional net/fee and their explicit currencies, nullable received amount and LONGTEXT encrypted evidence for eventual bounded 64 KiB webhook bodies. Existing receipts are not rewritten; gross always derives from immutable original payer amount. Cross-currency fees are never subtracted in another currency.
 - Preserved old encrypted signed provider receipt formats and hash fingerprints for YooMoney/FreeKassa; added v3 metadata only when explicitly provided. Admin order receipt display distinguishes unknown net/fee from zero. Existing FreeKassa commission remains unknown. Dashboard turnover and latest five payments now use verified payer gross, never nullable net.
-- Added local reservation and deferred checkout Feature tests and no-vendor standalone receipt compatibility checks. PayPal driver, credentials UI, API, webhooks and Wallet settlement are NOT enabled by this release; they belong to iterations 2–5. Full PHPUnit/MySQL concurrency/PHPStan/Pint/Playwright and production acceptance are still required.
+- Added local reservation and deferred checkout Feature tests and no-vendor standalone receipt compatibility checks. PayPal driver, credentials UI, API, webhooks and Wallet settlement are NOT enabled by this release; they follow in later releases. Full PHPUnit/MySQL concurrency/PHPStan/Pint/Playwright and production acceptance are still required.
 
 ## 0.55.5 - 2026-10-27
 
@@ -178,29 +251,29 @@
 
 ## 0.55.4 - 2026-10-27
 
-**Donations iteration 6 QA candidate — Donations 1.17.4. Not production-certified.** Full build from 0.55.3, with unchanged Wallet, Composer lockfile, and published migrations.
+**QA candidate — Donations 1.17.4. Not production-certified.** Full build from 0.55.3, with unchanged Wallet, Composer lockfile, and published migrations.
 
 - Removed the undocumented assumption that FreeKassa SCI callback `intid` equals merchant API `fk_order_id`. The canonical provider payment ID now comes only from an authenticated, exact-match `POST /v1/orders` query by the immutable CMS merchant order UUID, requiring one paid row, correct amount, currency and status. The callback's unsigned `intid` is validated and kept in original encrypted evidence, not used as financial identity. Fail-closed handling remains for missing, ambiguous or inconsistent API responses.
 - Added an explicit owner/administrator-only, CSRF-protected and rate-limited **Verify with FreeKassa API** action on unpaid FreeKassa LIVE orders. It can recover a missing callback using only merchant-authenticated API evidence and the existing immutable order snapshot, not arbitrary browser-supplied data. Recovery reuses the transactional Wallet settlement/receipt uniqueness and encrypted v2 evidence so late callbacks and repeats do not double-credit. API failures leave orders unpaid.
 - Added a bounded 24-hour encrypted grace list (at most four entries) for rotated FreeKassa callback Secret 2 keys. A retired key is valid only for payment preparations whose IDs predate rotation. New checkouts use current keys. Key rotation does not bypass remote API proof.
 - FreeKassa receipts show **gross** confirmed payment amount, while net settlement/fee are marked **unknown** in the order UI; the SCI commission field is not covered by the payment signature.
 - Added RU/EN admin texts and implementation documentation; new API parser and feature regression scenarios include mismatched callback/API IDs, lost callbacks, forbidden admin roles, replay and delayed old-secret notifications. Old YooMoney compatibility is unchanged.
-- Pure PHP FreeKassa and YooMoney driver checks, PHP lint, dependency guard, release metadata and archive integrity were checked. Full Laravel/PHPUnit, Pint, PHPStan, Playwright and real FreeKassa checkout were not run in this environment (missing vendor/runtime/merchant credentials). **Live receipt behavior remains unverified with a real merchant — do not open production payments yet.**
+- Pure PHP FreeKassa and YooMoney driver checks, PHP lint, dependency guard, release metadata and archive integrity were checked. Full Laravel/PHPUnit, Pint, PHPStan, Playwright and real FreeKassa checkout were not run for this build (no merchant credentials). **Live receipt behavior remains unverified with a real merchant — do not open production payments yet.**
 
 ## 0.55.3 - 2026-10-27
 
-**QA candidate, Donations iteration 5. Not production-certified.** Donations 1.17.3. Full release based on 0.55.2; Wallet/Composer/published migrations unchanged.
+**QA candidate. Not production-certified.** Donations 1.17.3. Full release based on 0.55.2; Wallet/Composer/published migrations unchanged.
 
 - Enabled FreeKassa live-mode configuration only with a merchant API key and existing verified SCI credentials. The admin-only test mode and separate no-Wallet test log remain unchanged. Independent enable/disable and provider currency selection work alongside YooMoney.
 - Added authenticated `POST https://api.fk.life/v1/orders` lookup before crediting any real FreeKassa callback. HMAC-SHA256 signs sorted API fields; DB-serialized increasing nonces are stored encrypted with provider settings (no new schema). A remote PAID status (1), matching immutable merchant order UUID, FreeKassa operation `intid` vs API `fk_order_id`, exact currency and exact gross amount in integer minor units are all mandatory. No unchecked provider status or unsigned callback currency ever credits Wallet.
 - Updated provider callback verification to distinguish TEST and LIVE based on the immutable preparation mode. API errors/missing results fail closed with HTTP 503, no `YES` acknowledgment, no receipt and no wallet credit. Verified live receipts still use the existing common transactional/idempotent Wallet settlement and v2 authenticated evidence.
 - Corrected shared player checkout Blade to render provider-supplied GET/POST fields rather than only YooMoney POST inputs and the RUB currency label. Player provider selection and immutable order snapshots reuse existing Donations services.
 - Added FreeKassa admin mode selector, shared payment-master activation controls (clearly labelled as global to all providers), and RU/EN text explaining API-key and merchant-side test-mode requirements. Updated reference docs; added pure-PHP API parser tests and Laravel Feature tests (written, not yet run). Fixed a preexisting standalone YooMoney test that relied on assignment inside disabled PHP `assert()`.
-- **Important:** live merchant verification has NOT been executed; the public API may differ for a particular merchant, especially the relationship between SCI `intid` and API `fk_order_id`. If they differ, the integration fails closed rather than issuing an unverified credit. Lost callback recovery, rotation resilience, full PHPUnit/Playwright/MySQL, and production acceptance remain for iteration 6.
+- **Important:** live merchant verification has NOT been executed; the public API may differ for a particular merchant, especially the relationship between SCI `intid` and API `fk_order_id`. If they differ, the integration fails closed rather than issuing an unverified credit. Lost callback recovery, rotation resilience, full PHPUnit/Playwright/MySQL, and production acceptance remain for a later release.
 
 ## 0.55.2 - 2026-10-27
 
-**QA candidate, Donations iteration 4. Not production-certified.** Donations 1.17.2. Full release based on 0.55.1. No Composer or Wallet modifications, no published migrations altered.
+**QA candidate. Not production-certified.** Donations 1.17.2. Full release based on 0.55.1. No Composer or Wallet modifications, no published migrations altered.
 
 - Added administrator-only FreeKassa external test checkout, with a merchant-side test-mode warning, amount 1.00–100.00 (minor units), selected currency and an existing signed SCI GET checkout. The merchant's test setting must be enabled manually; KaevCMS cannot turn it on remotely. **No automatic confirmation that the merchant sandbox is enabled.**
 - Added a small additive `module_donation_freekassa_admin_tests` table to retain admin test references, immutable amounts, currencies, signed callback verification and provider operation IDs. This separate table is necessary because player donation orders require a real player user. No dummy player or Wallet records are ever created.
@@ -208,34 +281,34 @@
 - Added support for strict `application/x-www-form-urlencoded` and `multipart/form-data` notification transports, with bounded body size and rejection of duplicated fields before cryptographic verification; existing IP allowlist validation remains mandatory.
 - Prevented FreeKassa test mode from appearing in player payment methods or being selected through the player payment-preparation endpoint. Normal YooMoney payment mode remains unchanged.
 - Added administrative test history and statuses, new RU/EN text and driver/transport/Feature test coverage. Test-only configuration no longer requires a player coin rate; real payments still require it.
-- **Live FreeKassa is still disabled** by the driver's explicit guard. API currency/status reconciliation, live player checkout and recovery follow in iterations 5–6. Full PHPUnit, Laravel, browser and MySQL regression suites remain deferred for Codex, per project instruction; syntax and standalone smoke checks only.
+- **Live FreeKassa is still disabled** by the driver's explicit guard. API currency/status reconciliation, live player checkout and recovery follow in later releases. Full PHPUnit, Laravel, browser and MySQL regression suites are still pending; only syntax and standalone smoke checks were run.
 
 ## 0.55.1 - 2026-10-27
 
-**QA candidate, Donations iteration 3. Not production-certified.** Donations 1.17.1. Based on the full 0.55.0 archive. No Composer, Wallet, schema or published migration changes.
+**QA candidate. Not production-certified.** Donations 1.17.1. Based on the full 0.55.0 archive. No Composer, Wallet, schema or published migration changes.
 
 - Added an audited FreeKassa-only callback sender IP allowlist editor in the Donations admin. Initially shown addresses match FreeKassa's official SCI notification IP list at release time. After the first save, explicitly configured addresses remain authoritative, including intentional deletions. No reset-to-default button, disabling the IP check, or implicit fallback after user customization.
 - Added an independent optional trusted reverse-proxy IPv4/IPv6/CIDR list. Source-IP resolution checks the actual TCP peer (`REMOTE_ADDR`) and reads `X-Forwarded-For` only from explicitly trusted immediate proxies, using the rightmost untrusted hop. Arbitrary or malformed forwarded headers cannot whitelist an unknown sender. This callback-specific list works independently of unrelated framework proxy configuration.
 - Both lists are validated, limited and stored in the provider's existing Laravel-encrypted settings document with admin authorization and fail-closed audit. No new tables or migrations. A blank IP list rejects new callback traffic and cannot be used with FreeKassa enabled. The original YooMoney settings and callbacks are unchanged.
 - Added FreeKassa security UI and local diagnostics in Russian and English. The notification URL is selectable; warnings link to the official vendor documentation and explain external merchant sandbox activation, moderation and HTTPS limitations. Secrets are never rendered back to the browser.
 - Added isolated IP-chain smoke coverage and Feature tests for editing, persistence, malformed IPs, permissions and spoofing. Updated the existing allowlist assertion for both bundled payment drivers.
-- **Still TEST-ONLY:** external admin test checkout and real settlement remain disabled. Test checkout belongs to iteration 4; authoritative API currency/status reconciliation is required before live settlement.
-- PHP syntax and stand-alone driver/IP tests were checked locally. PHPUnit, Pint, PHPStan and browser/regression suites are intentionally deferred for Codex review per user preference.
+- **Still TEST-ONLY:** external admin test checkout and real settlement remain disabled. Test checkout follows in a later release; authoritative API currency/status reconciliation is required before live settlement.
+- PHP syntax and stand-alone driver/IP tests were checked locally. PHPUnit, Pint, PHPStan and browser/regression suites are still pending.
 
 ## 0.55.0 - 2026-10-27
 
-**QA candidate, Donations iteration 2. Not production-certified.** Donations module 1.17.0. Based on the complete 0.54.5 archive. No changes to Composer dependencies, database schema or Wallet.
+**QA candidate. Not production-certified.** Donations module 1.17.0. Based on the complete 0.54.5 archive. No changes to Composer dependencies, database schema or Wallet.
 
 - Bundled the independently registered FreeKassa SCI driver with strict signed checkout construction and separate signing secrets for the payment form and merchant callback. The original YooMoney provider remains unchanged.
 - FreeKassa signed callback parser rejects duplicate and array parameters, unsigned query data, malformed amounts/IDs, modified signatures, wrong merchant identities and unsafe checkout destinations. MD5 is computed using the original signed AMOUNT string while money is compared as integer minor units (e.g. 100, 100.0, 100.00).
 - Added stable core-owned `/payments/freekassa/notify` POST endpoint, independent of the Donations UI toggle, with HTTPS, POST form encoding and CSRF exception matching the public provider callback model. The endpoint returns precisely `YES` after durable processing. The existing unique `(provider_code, provider_payment_id)` index covers FreeKassa `intid` replay detection.
 - **FreeKassa is intentionally TEST-ONLY in 0.55.0.** The driver refuses `live` configuration; test notification evidence always stays non-crediting. External test checkout in the admin panel, IP allowlist editor, trusted proxy handling and server-side confirmation of provider currency/status are deferred. A new real payment cannot start in this build.
 - Added standalone smoke coverage for checkout signatures, signed amount normalization, tampering, duplicate fields and live gating. No real merchant credentials used and no external payment API called.
-- FreeKassa has no reset-to-default-IP control. Full PHPUnit, browser and MySQL concurrency tests are deferred to end-to-end Codex validation at the user's request.
+- FreeKassa has no reset-to-default-IP control. Full PHPUnit, browser and MySQL concurrency tests are still pending.
 
 ## 0.54.5 - 2026-10-27
 
-**QA candidate, iteration 1 of the Donations multi-provider work. Not production-certified.** Based on 0.54.4. No payment provider added yet: YooMoney remains the only bundled driver. No changes to Wallet, database schema, composer.json or composer.lock.
+**QA candidate, first step of the Donations multi-provider work. Not production-certified.** Based on 0.54.4. No payment provider added yet: YooMoney remains the only bundled driver. No changes to Wallet, database schema, composer.json or composer.lock.
 
 - Added an opt-in `RoutablePaymentProvider` contract for the trusted callback reference, provider-owned checkout validation and hard-coded callback route. Unreviewed `PaymentProvider` fixtures remain configurable but cannot be used for player payments.
 - Separated shared payment preparations, provider checkout and settlement from YooMoney-specific references; existing YooMoney checkout remains available under its original class name and the public `/payments/yoomoney/notify` route is unchanged.
@@ -243,7 +316,7 @@
 - Stored signed YooMoney v1 receipt evidence remains compatible, including deferred credits after credential rotation. Added an authenticated provider-aware v2 receipt envelope, bound to the immutable preparation and receipt identity.
 - Generalized readiness to any explicitly installed reviewed live driver while preserving the audited off/pilot/live switch currently used by YooMoney.
 - Added second-driver (test fixture) feature tests for independent receipts, replay protection, test-mode non-credit, and pending receipt recovery after signing-key rotation. Expanded standalone YooMoney HMAC/evidence tests.
-- Deferred until later iterations: FreeKassa API, IP allowlist UI, test checkout, FreeKassa callback endpoint, production activation and public documentation changes. No reset-to-default-IP button will be introduced.
+- Deferred to later releases: FreeKassa API, IP allowlist UI, test checkout, FreeKassa callback endpoint, production activation and public documentation changes. No reset-to-default-IP button will be introduced.
 
 ## 0.54.4 - 2026-10-26
 
@@ -275,7 +348,7 @@ Updates from 0.54.0. No migrations, Composer updates, Laravel/Livewire changes, 
 - Saved custom JSON drafts cannot execute online-count queries until explicitly verified and applied to the server.
 - Module `driver_extensions` now use only a verified applied snapshot for custom drivers, check declared module tables/columns at enablement and re-check when mappings are read at runtime. Legacy drivers retain their bundled template fallback; one table per extension group.
 - LoginServer constructor preserves independently selected capabilities instead of forcing all writes on. Profile editor exposes charset/collation and active capabilities; optional account fields no longer automatically block read-only profiles.
-- RU/EN guides rewritten for the actual constructor and operational limitations; previous iteration notes archived. Added offline negative preflight checks and strengthened module regression tests.
+- RU/EN guides rewritten for the actual constructor and operational limitations; previous development notes archived. Added offline negative preflight checks and strengthened module regression tests.
 - Registration preflight also checks mapped insertion fields and fixed values. Read-only copies retain their selected capabilities and do not require password mappings. Modified legacy-profile overrides require explicit verification before modules can use them. Schema diagnostics are localized and safely escaped.
 - Release acceptance includes disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright and installation/update regression tests. Game-client acceptance remains a separate requirement. Account-ID ownership and EAV ranking remain deferred deliberately.
 
@@ -300,7 +373,7 @@ Universal driver audit and targeted safety hardening, based on 0.53.10 full ZIP.
 
 ## 0.53.10 - 2026-10-25
 
-Universal drivers, iteration 8: **opt-in integration and guarded JSON profile activation**. Base: 0.53.9 full ZIP.
+Universal drivers: **opt-in integration and guarded JSON profile activation**. Base: 0.53.9 full ZIP.
 
 - Registered user-defined JSON LoginServer/GameServer profiles in connection selectors. Existing Mobius/RUSaCis identifiers still use their proven PHP paths until explicitly activated with **Apply JSON and verify**; no automatic cutover of existing installations.
 - Added database compatibility preflight for newly selected user-defined profiles before modifying server connections, verified immutable per-connection snapshots and stored-config validation. Failed candidate activation preserves the previously verified profile; profile catalog edits do not automatically affect live connections.
@@ -308,21 +381,21 @@ Universal drivers, iteration 8: **opt-in integration and guarded JSON profile ac
 - Connected verified snapshots to the existing LoginServer account read/write interface and GameServer world/character readers. Public account screens now use verified ownership/capability checks instead of hard-coded paired driver identifiers. Custom account-ID ownership without a verified login-to-ID mapping is deliberately unavailable.
 - The legacy Mobius-only character rescue writer is disabled for JSON-active GameServers: an arbitrary profile must never trigger hard-coded coordinate SQL. Shared Wallet/Donations/reward queue semantics and their data are not modified.
 - Added server-management controls and RU/EN translations, snapshot-integrity tests, activation/rollback regression scenarios, and deployment documentation.
-- **Not production certified:** parity across real Mobius/RUSaCis MySQL installations, PHPUnit/PHPStan, visual/browser regressions and official release-builder checks still need to run through Codex/CI. Full JS/visual and module-specific universal capabilities need validation before stable adoption. No PHP/Composer dependency updates or live payments.
+- **Not production certified:** parity across real Mobius/RUSaCis MySQL installations, PHPUnit/PHPStan, visual/browser regressions and official release-builder checks are still pending. Full JS/visual and module-specific universal capabilities need validation before stable adoption. No PHP/Composer dependency updates or live payments.
 
 ## 0.53.9 - 2026-10-25
 
-Universal drivers, iteration 7: **administrative editor and JSON catalog UI**, based on the 0.53.8 full ZIP; all production Mobius/RUSaCis PHP drivers remain active.
+Universal drivers: **administrative editor and JSON catalog UI**, based on the 0.53.8 full ZIP; all production Mobius/RUSaCis PHP drivers remain active.
 
 - Added **Servers → Drivers** (LoginServer/GameServer tabs) for offline profile creation, typed field/table/relation editing, optional EAV/choice/operator mappings, ranking/castle/hero settings, import/export of JSON, cloning, removal/hiding, and restoring bundled profiles. Unlike a raw JSON text editor, mappings and allowed operations are edited through form controls. Import is limited to 256 KiB and passes the existing format-v1 allowlist validator.
 - Admin permissions: `servers.view` to browse/export; `servers.manage` (non-read-only administrator) for any changes. Livewire methods re-check authorization on every action; actions are audited without logging profile payloads or database credentials.
 - Bundled profiles can be edited through local overrides, restored to release defaults, or hidden persistently across CMS upgrades. Profiles referenced by existing connections or verified snapshots cannot be deleted. The editor checks for concurrent conflicting updates, and exact-ID creation cannot overwrite an existing profile.
 - Added RU/EN translations, responsive administrator CSS and controller/route/navigation integration. Added feature/regression tests for roles, create/edit/export/delete/restore/import, invalid mappings and deletion protection. PHP dependencies and existing migrations unchanged.
-- The experimental adapters are **not switched on for production**. New profiles can be configured and shared offline, but they will not yet appear in the normal LoginServer/GameServer connection selectors. Snapshot verification / safe switch is iteration 8. MySQL parity, full PHPUnit/PHPStan and browser tests need an actual test environment before deployment.
+- The experimental adapters are **not switched on for production**. New profiles can be configured and shared offline, but they will not yet appear in the normal LoginServer/GameServer connection selectors. Snapshot verification and safe switching follow in a later release. MySQL parity, full PHPUnit/PHPStan and browser tests need an actual test environment before deployment.
 
 ## 0.53.8 - 2026-10-25
 
-Universal drivers, iteration 6: **experimental CMS-side JSON profile catalog and verified connection snapshots**, no change to live PHP resolvers. Base: 0.53.7 full ZIP.
+Universal drivers: **experimental CMS-side JSON profile catalog and verified connection snapshots**, no change to live PHP resolvers. Base: 0.53.7 full ZIP.
 
 - Added `DriverProfileCatalog` with bundled+custom profiles, persistent local overrides, tombstones for removed bundled profiles, restore to bundled defaults, non-destructive JSON import/export and safeguards against deleting a profile used by LoginServer/GameServer or stored snapshots.
 - Added `ConnectionProfileSnapshots` for immutable verified-per-connection JSON + SHA256. Snapshot replacement requires a caller-supplied real schema verification callback; failed checks preserve the last confirmed snapshot. The future administration/server workflows do not yet call this experimental service.
@@ -331,17 +404,17 @@ Universal drivers, iteration 6: **experimental CMS-side JSON profile catalog and
 
 ## 0.53.7 - 2026-10-25
 
-Universal drivers, iteration 5: **experimental LoginServer account creation and prepared password change**; existing production LoginServer drivers and authorization flows remain unchanged. Base: 0.53.6 full ZIP.
+Universal drivers: **experimental LoginServer account creation and prepared password change**; existing production LoginServer drivers and authorization flows remain unchanged. Base: 0.53.6 full ZIP.
 
 - Added `UniversalLoginAccountWriter` using validated JSON and caller-supplied existing MySQL connection. `preparePassword` supports tested SHA-1/Base64 and BCrypt `$2a$` formats, using a single immutable prepared credential for registration recovery.
 - Added bounded, declared, fixed insert values; imported JSON may not remap credentials into arbitrary columns or grant elevated account access. Creation requires supported capabilities, valid fields and a unique login index. Database duplicate exceptions are preserved for the existing `pending/active/failed` recovery logic.
-- Added compare-and-set prepared password updates with idempotent retries of the same hash and fail-closed conflicts; this method is not wired to the player account until the later resolver/authorization iteration.
+- Added compare-and-set prepared password updates with idempotent retries of the same hash and fail-closed conflicts; this method is not wired to the player account until the later resolver/authorization work.
 - Added offline writer-safety checks and disposable MySQL fixtures comparing prepared credentials and inserted records against Mobius/RUSaCis legacy drivers; includes duplicate insert, retry, concurrent-stale proof, missing-index and capability tests.
 - No framework/Composer updates, published migrations, public routes, production switching or SQL Server/PTS adapter. MySQL integration, browser and full PHPUnit quality gate still require execution in a prepared test environment.
 
 ## 0.53.6 - 2026-10-25
 
-Universal drivers, iteration 4: **experimental read-only GameServer rankings, hero lists and castle ownership; production drivers remain unchanged**. Based on the 0.53.5 full ZIP; no Composer changes, published migrations or runtime database changes.
+Universal drivers: **experimental read-only GameServer rankings, hero lists and castle ownership; production drivers remain unchanged**. Based on the 0.53.5 full ZIP; no Composer changes, published migrations or runtime database changes.
 
 - Added `UniversalGameWorldReader`, which accepts validated JSON and an existing MySQL connection. Level/PvP/PK/play-time rankings, hero records and clan/castle ownership now use configured tables/columns and bounded query-builder bindings; the existing `GameWorldDriverResolver` still uses legacy drivers.
 - Added a reusable nine-castle name catalog with RU/EN translations and a safe unknown-ID fallback, used only when the JSON declares `name_source=catalog`. Mobius keeps names from the SQL column.
@@ -351,7 +424,7 @@ Universal drivers, iteration 4: **experimental read-only GameServer rankings, he
 
 ## 0.53.5 - 2026-10-25
 
-Universal drivers, iteration 3: **experimental read-only GameServer character retrieval; no production switching**. Built on full 0.53.4 source; Composer dependencies and published migrations unchanged.
+Universal drivers: **experimental read-only GameServer character retrieval; no production switching**. Built on full 0.53.4 source; Composer dependencies and published migrations unchanged.
 
 - Added `UniversalGameCharacterReader`, accepting only validated JSON and an already-open MySQL connection. It reads characters bound to the selected game account, mapped from direct, choice, single-related and EAV fields, with explicit missing-schema diagnostics and bounded queries. JSON does not execute SQL/PHP and cannot select a different server connection.
 - Supports RUSaCis deleted-character filtering and active hero flag, Mobius chronicle-based `karma/reputation`, and missing optional data. Ambiguous related rows and duplicate EAV values fail closed.
@@ -361,7 +434,7 @@ Universal drivers, iteration 3: **experimental read-only GameServer character re
 
 ## 0.53.4 - 2026-10-25
 
-Universal drivers, iteration 2: **experimental read-only LoginServer path; no production switching**. Based on full 0.53.3 source. Composer dependencies and published migrations unchanged.
+Universal drivers: **experimental read-only LoginServer path; no production switching**. Based on full 0.53.3 source. Composer dependencies and published migrations unchanged.
 
 - Added `UniversalLoginAccountReader` for validated JSON-driven MySQL account lookup, status/activity summary, prepared account comparison, and mandatory/optional schema diagnostics. Profile input is validated and login values are bound by Laravel Query Builder; configured email identity fails closed if unavailable.
 - Split optional LoginServer metadata (`created_time`, `lastactive`, `accessLevel`, etc.) from required account fields in bundled JSON contracts while preserving the old registry schemas and all five format-v1 bundled profiles.
@@ -372,11 +445,11 @@ Universal drivers, iteration 2: **experimental read-only LoginServer path; no pr
 
 ## 0.53.3 - 2026-10-25
 
-Universal drivers, iteration 1 (experimental data contract; **no production driver switching**). No dependencies, game accounts, wallet flows or database migrations changed.
+Universal drivers (experimental data contract; **no production driver switching**). No dependencies, game accounts, wallet flows or database migrations changed.
 
 - Added strict JSON profile format v1, offline validator and initial explicit format migrator (unknown versions rejected). Bundled profiles describe Mobius LoginServer, Mobius Legacy LoginServer, RUSaCis LoginServer, Mobius GameServer and RUSaCis GameServer. They are currently read-only **reference files**, not runtime drivers.
 - Added hostile-import and registry/schema-parity unit tests, dependency-free contract smoke tests, disposable MySQL 8.4 fixture job with characters, accounts, hero and castle relations, and RU/EN format documentation.
-- Documented legacy-only special cases: RUSaCis heroes (`herountil`/`heroes`), Mobius karma/reputation selection, castle names and cross-server ownership. Actual query-equivalence work starts in the following iterations.
+- Documented legacy-only special cases: RUSaCis heroes (`herountil`/`heroes`), Mobius karma/reputation selection, castle names and cross-server ownership. Actual query-equivalence work follows in later releases.
 
 
 ## 0.53.2 - 2026-10-25
@@ -553,7 +626,7 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ### Added — YooMoney monitored live launch (Donations 1.12.1)
 
-- Existing production checkout, signed HMAC-SHA256 callback and exactly-once Wallet credit remain available behind the four opt-in deployment flags. No merchant credentials are bundled and no real transfer was executed in this environment.
+- Existing production checkout, signed HMAC-SHA256 callback and exactly-once Wallet credit remain available behind the four opt-in deployment flags. No merchant credentials are bundled and no real transfer was executed during testing.
 - Optional `DONATIONS_LIVE_TEST_USER_ID=<CMS user ID>` restricts only new player checkout to one account for the first live transfer. All other users see preview-only UI; protected GET checkout denies them. Invalid pilot IDs fail closed.
 - Stored signed callbacks and settlement do **not** depend on the current pilot account; receiving delayed payments works after the pilot scope changes.
 - Read-only readiness command reports whether pilot-only or all-player checkout is configured. Default gates remain false; no automatically enabled live transfers.
@@ -561,17 +634,17 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ## 0.50.9 - 2026-10-17
 
-### Added — Donations C6 operational activation (module 1.12.0)
+### Added — Donations operational activation (module 1.12.0)
 
 - Four independent secure deployment gates for trusted YooMoney checkout/callback/credit and Wallet source now read explicitly from `.env`, instead of being hardcoded to false. All still default to **false**, including on upgraded installations; no live transfers are enabled by this release.
 - Added read-only `php artisan kaevcms:donations-readiness`: local production/HTTPS/DB/module/provider/RUB-tariff/credential/gate checks, strict nonzero exit when blocked, no secret values or API calls. Green local status does not prove actual callback reachability or a real payment.
 - Changed admin and player descriptions to show the actual live vs unpaid preview state. Original fee checks, signed notifications, idempotent Wallet settlement and recovery remain unchanged.
 - Added release-gate/diagnostic regressions. Protected deployment contract includes the four opt-in values; previous financial migrations and Wallet Core are unchanged.
-- Live activation requires separate final Windows/Linux and MySQL/MariaDB QA and one user-approved small-value transfer; no online merchant API or live transfer tested in this build environment.
+- Live activation requires separate final Windows/Linux and MySQL/MariaDB QA and one approved small-value transfer; no online merchant API or live transfer was tested for this build.
 
 ## 0.50.8 - 2026-10-17
 
-### Fixed — Donations C5 QA stabilization (module 1.11.1)
+### Fixed — Donations QA stabilization (module 1.11.1)
 
 - Preserved active Administrator rights to manually report Donations refunds/disputes without granting global `ModulesManage`; retained Auditor read-only and Editor denial. Added regression coverage for permitted/denied writes, audit and Wallet invariants.
 - Preserved checkout `Referrer-Policy: no-referrer` across global security middleware, and removed the duplicate checkout heading. Tested headers, DOM and repeated checkout reads.
@@ -584,7 +657,7 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ## 0.50.7 - 2026-10-17
 
-### Added — Donations C5, gated YooMoney checkout (module 1.11.0)
+### Added — Donations gated YooMoney checkout (module 1.11.0)
 
 - Added `/modules/donations/orders/{orderUuid}/checkout` under existing authenticated, verified player routes. A read-only checkout page prepares official YooMoney `POST https://yoomoney.ru/quickpay/confirm` forms for wallet (`PC`) or card (`AC`). The user must explicitly submit the form on YooMoney; rendering a page never transfers money.
 - Prices, currency, merchant receiver, UUID label and return URL are rebuilt from the owned immutable order/preparation and trusted encrypted provider configuration; browser `sum`, `receiver`, `label` and `paymentType` query values cannot change the server-side form. Browser redirects do **not** credit Wallet; only the existing HMAC-verified settlement chain can.
@@ -594,17 +667,17 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ## 0.50.6 - 2026-10-17
 
-### Fixed — Donations C4d, payment receipt recovery (module 1.10.1)
+### Fixed — Donations payment receipt recovery (module 1.10.1)
 
 - Previously authenticated, durable signed YooMoney receipts are stored with a Laravel-Crypt-authenticated, immutable verification snapshot. Deferred settlement no longer fails if the provider rotates its HMAC signing secret and its 24-hour acceptance grace expires **after** the initial successful verification.
 - On retry, the saved evidence is checked against its original receipt ID, operation ID, order, currency, exact payer and net amounts, and verification fingerprint. Corrupted or swapped ciphertext fails closed. WalletGateway, financial migrations, price snapshots, and exactly-once settlement stay unchanged.
 - Existing pre-0.50.6 receipts containing only encrypted raw POST bodies remain readable: they still require an eligible signing secret for re-verification. Unauthenticated provider-history candidates can **never** use the deferred-credit path. A new callback using an expired old key remains invalid.
-- Added feature regression tests for expired key rotation, corrupted/swapped evidence and legacy receipts; expanded standalone YooMoney HMAC and verified-evidence contract test. Locally executed standalone and available installer/shared-hosting regressions; Composer/PHPUnit/Pint/PHPStan, Windows/Playwright, ZIP-extension release-builder tests and isolated MySQL concurrency/upgrade remain unverified here.
+- Added feature regression tests for expired key rotation, corrupted/swapped evidence and legacy receipts; expanded standalone YooMoney HMAC and verified-evidence contract test. Locally executed standalone and available installer/shared-hosting regressions; Composer/PHPUnit/Pint/PHPStan, Windows/Playwright, ZIP-extension release-builder tests and isolated MySQL concurrency/upgrade remain unverified for this build.
 - Checkout, callback processing and coin-credit feature gates remain OFF by default. Do not accept real transfers before complete QA and explicit live enablement.
 
 ## 0.50.5 - 2026-10-17
 
-### Changed — Donations C4c (module 1.10.0)
+### Changed — Donations YooMoney key rotation (module 1.10.0)
 
 - **Bounded YooMoney HMAC key rotation:** when an administrator replaces the notification signing secret, the prior secret is retained only encrypted in the existing provider credentials payload for **24 hours**. Earlier immutable **live** preparations can verify delayed signed callbacks with it. Preparations created after rotation cannot use previous keys: an immutable preparation-ID cutoff (not seconds-precision timestamps) closes the same-second race; test preparations remain non-creditable. Up to four recently retired keys may exist during repeated rotations. Blank secret inputs still retain the current credential. No additional admin controls or database migrations were introduced.
 - Verification uses the current signing secret first; only an actual signature mismatch permits trying an eligible retired key. Malformed callbacks, duplicate parameters, wrong amounts and wrong currencies remain rejected or reviewed without creating extra Wallet credits. Previous keys are never included in provider UI, public API, audit logs or `credentialsForDriver` results. Retired keys expire automatically and are dropped on the next provider-settings save; old lost transfers beyond the grace window require explicit read-only recovery/manual investigation. This grace is intended for ordinary rotations, **not suspected credential compromise**; isolate callbacks/credits during an incident.
@@ -614,32 +687,32 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ## 0.50.4 - 2026-10-17
 
-### Changed — Donations C4b (module 1.9.0)
+### Changed — Donations late payment handling (module 1.9.0)
 
 - New **unpaid draft** expiration window is 60 minutes instead of 30. Previously persisted deadlines do not change: an existing order keeps its original `expires_at` snapshot and new drafts receive 60 minutes. This window limits initiating payment, **not delivery of a signed callback**.
 - Correctly HMAC-verified YooMoney transfer for a prepared live order can complete **after the deadline or local cancellation/expiry**, provided its immutable order UUID, currency, payer `withdraw_amount`, and preparation snapshot all match. The credit path still uses one WalletGateway operation and a unique settlement per order with transactional audit. A second different incoming transfer for a credited order remains manual review; invalid signatures/test notifications/amount mismatch never credit.
 - Current provider test/live toggle or disable does not retroactively reject a valid signed transfer with a prior immutable **live** preparation. A previous **test** preparation always remains non-creditable even when the provider is subsequently switched to live. Credential rotation still requires separately planned historic-signature support before live release.
 - More useful UI statuses: pending signed receipts show **Processing**, mismatched authenticated receipts show **Payment needs review**, settled orders show **Credited**. Fee reporting continues to distinguish payer `withdraw_amount` and receiver `amount` without float.
 - Added regression tests for 60-minute expiry, delayed valid payments from expired/cancelled prepared orders, mode flip with closed sales, status display, and replay protection. No new migrations; published schemas and Wallet Core remain untouched.
-- **Production checkout, callback and credit switches remain disabled.** This is an incremental, unaccepted C4b build; testing with PHPUnit/Pint/PHPStan/Playwright and disposable MySQL/MariaDB clean install/upgrade/concurrency is still required. No true live payment performed.
+- **Production checkout, callback and credit switches remain disabled.** This is an incremental, unaccepted build; testing with PHPUnit/Pint/PHPStan/Playwright and disposable MySQL/MariaDB clean install/upgrade/concurrency is still required. No true live payment performed.
 
 ## 0.50.3 - 2026-10-17
 
-### Added — Donations C4a (`donations` 1.8.0)
+### Added — Donations payment review journal (`donations` 1.8.0)
 
 - Exact signed YooMoney receipt accounting displayed per order: payer `withdraw_amount`, recipient `amount`, and the **difference** in RUB minor units. The difference is an observed fee/deduction, not a published fixed rate or permission to surcharge the payer.
 - New additive `module_donation_payment_review_events` journal for **administrator-reported, unverified** disputes, refunds, chargebacks, review notes and resolution notes; every event references a receipt/order/admin, has an idempotency UUID, preserves the human reason and requires an atomic audit record. No Wallet changes and no automatic refund or debit.
 - Owner/Administrator-only report action with server-side permission checks, Auditor read-only, Editor denied. Administrative order page displays history; list can be filtered to orders with reports. Test and cross-order receipts cannot be associated with a review. Refund/chargeback reports require a credited receipt.
 - Negative regression tests for replay/conflicting key, roles, forged order/receipt association, audit rollback and read-only Wallet invariants.
-- All previous migrations and Wallet Core are unchanged; only an additive C4a migration. Release keeps `donation-payments.callbacks_enabled=false`, `donation-payments.credits_enabled=false`, and `wallet.enabled_sources.donations=false`. **No production checkout, provider refund API, verified refund notice, or live payments.**
+- All previous migrations and Wallet Core are unchanged; only an additive migration. Release keeps `donation-payments.callbacks_enabled=false`, `donation-payments.credits_enabled=false`, and `wallet.enabled_sources.donations=false`. **No production checkout, provider refund API, verified refund notice, or live payments.**
 
-### Deferred — C4b / acceptance
+### Deferred — later releases and acceptance
 
 - Provider-backed confirmation of disputes/refunds, scheduled reconciliation and missing-webhook workflow, credential-rotation hardening, fully reviewed payment lifecycle and real merchant/live validation. Windows PHPUnit/Pint/PHPStan/Playwright and isolated MySQL concurrency/upgrade acceptance remain required. Existing dependency advisories also need a separate audit.
 
 ## 0.50.2 - 2026-10-17
 
-### Added — Donations C3 (`donations` 1.7.0)
+### Added — Donations signed YooMoney notifications (`donations` 1.7.0)
 
 - Persistent **core-owned** `/payments/yoomoney/notify` webhook endpoint, independent of Donations UI/module enablement. Strict form content type, HTTPS production check, exact CSRF exception for signed webhook, throttling, cryptographic HMAC-SHA256 verified with YooMoney credentials; invalid requests fail closed. Default route responds 503 because `config/donation-payments.php` keeps callbacks disabled.
 - New additive migration: encrypted durable signed payment receipts, unique provider operation IDs, one settlement record per order and wallet entry, read-only recovery candidate journal. No existing migrations changed.
@@ -648,7 +721,7 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 - Player/admin displays payment evidence, dedicated error/recovery states and pending transfer prevents cancelling a draft. New negative regression tests for signature, amount, duplicate operations, module disable, cancelled orders, test notices, rollback and replay.
 - **Production gates CLOSED**: no player checkout, no real-money sending, `donation-payments.callbacks_enabled=false`, `donation-payments.credits_enabled=false`, `wallet.enabled_sources.donations=false`. No live merchant/API sandbox payment or MySQL parallelism was confirmed. Requires Windows/browser/MySQL acceptance before any activation.
 
-### Deferred to C4
+### Deferred to later releases
 
 - Real approved merchant end-to-end validation, fees/disputes/refunds, rotating notification secrets, scheduled reconciliation and enablement of the complete checkout lifecycle. No live payment activation in this release.
 
@@ -656,24 +729,24 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ### Added
 
-- Donations C2 (`donations` 1.6.0): allowlisted YooMoney personal-wallet P2P driver, RUB only. `PaymentCheckout` can describe POST form fields; no external checkout is exposed in player routes. The driver keeps payer `withdraw_amount` separate from receiver `amount` and checks signed `sign` with current canonical RFC3986 HMAC-SHA256 (no SHA-1 fallback). Provider test notices remain explicitly non-settling.
+- Donations (`donations` 1.6.0): allowlisted YooMoney personal-wallet P2P driver, RUB only. `PaymentCheckout` can describe POST form fields; no external checkout is exposed in player routes. The driver keeps payer `withdraw_amount` separate from receiver `amount` and checks signed `sign` with current canonical RFC3986 HMAC-SHA256 (no SHA-1 fallback). Provider test notices remain explicitly non-settling.
 - Additive `module_donation_payment_preparations`: one provider per immutable, server-priced player order, stored payment mode/amount/currency/label, own authenticated POST endpoint and fail-closed transactional audit. Existing `module_donation_orders`, Wallet API/ledger, and migrations were not modified.
 - Optional read-only YooMoney OAuth `operation-history` label probe for lost callback candidates; it cannot finalize orders or credit coins. New feature/negative and standalone HMAC regression tests.
 - **Safety gate:** no real checkout HTML, no live payment entrypoint or webhook route, no automatic settlement/coin credit. Test mode is NOT a provider payment sandbox. User-configured prices in currencies other than RUB remain untouched.
 
-### Deferred (C3/C4)
+### Deferred to later releases
 
 - Verified notification persistence, amount/label/order matching, provider API reconciliation (including ambiguous/late events), idempotent Wallet credit, protected callbacks during module shutdown, actual test/live transfer, fees and chargeback handling. Run Windows/PHPUnit/Playwright and MySQL concurrency acceptance before any real payment activation.
 
-### Carried forward from working-tree corrections before C2
+### Carried forward from earlier corrections
 
 
 - Passed the authenticated player to the Donations quote, order history and order detail views. These pages no longer fail with HTTP 500 when the account layout renders. Added coverage for both bundled account themes.
 - Deferred fake payment-driver loading until module initialization so PHPUnit can discover the complete suite. Corrected Donations model and contract type declarations, applied Pint formatting, and restored shared administration field-error styles.
 - Validated provider currency and credential value shapes before duplicate checks or persistence, with negative coverage for nested values, numeric credential keys and duplicate currencies. Updated the browser module catalogue check to include Donations.
-- The working-tree fixes are included in the 0.50.1 full archive without separate release.
+- These fixes are included in the 0.50.1 full archive without separate release.
 
-**Historical validation of the pre-C2 worktree (not a C2 acceptance):**
+**Validation before the YooMoney driver was added (not an acceptance of it):**
 
 - Windows quality gate passed: Pint, PHPStan, installer/updater/package regressions, route cache and 1,054 PHPUnit tests (11 skipped). All 73 browser scenarios passed.
 - Dependency audit remains unresolved: Composer reported 19 advisories affecting 7 locked PHP packages on 2026-10-16; npm reported no known vulnerabilities. Passing application tests does not resolve these dependency advisories.
@@ -682,67 +755,67 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ### Added
 
-- Donations C1 (`donations` 1.5.0): provider-independent PHP contract for signed callback verification and redirect checkout, immutable payment DTOs, explicit code-controlled driver allowlist and separate provider configurations. No dynamically loaded classes from DB or user input.
+- Donations (`donations` 1.5.0): provider-independent PHP contract for signed callback verification and redirect checkout, immutable payment DTOs, explicit code-controlled driver allowlist and separate provider configurations. No dynamically loaded classes from DB or user input.
 - Administrative **Payment providers** pages under Donations with Owner/Admin configuration, Auditor read-only, Editor denied; independent active flags, test/live mode, supported currency selection, encrypted credential storage and generic local readiness rules. No access keys are rendered back to the browser or recorded in audit details.
 - Configurations start absent/off. Multiple drivers can be enabled independently as they are installed in future releases; the player's configured currencies/rates stay under their separate existing controls, without automatic conversion. A provider is live-eligible only when enabled in live mode, configured, supports the currency and the Donations rate is also enabled.
 - New additive module migration for protected provider settings; existing 0.49.4 orders, core wallets, previous migrations and dependencies are unchanged. Tests for fake multi-provider drivers, encrypted secrets, audit rollback, authorization, invalid currency/mode/driver, missing or corrupt keys, and fail-closed defaults.
 - No bundled payment driver, payment creation route, real webhook route, commission settings, automatic credit or status transitions yet. An administrator's test mode selector must not be confused with a verified provider sandbox test. The 0.49.4 unpaid draft flow remains unchanged.
-- Full ZIP only by owner request. PHPUnit, PHPStan, Pint, Windows and browser gates require the user's environment for execution.
+- Full ZIP only. PHPUnit, PHPStan, Pint, Windows and browser gates are still pending.
 
 ## 0.49.4 - 2026-10-16
 
 ### Added
 
-- Donations B5 (`donations` 1.4.0): authenticated creation of **unpaid test drafts** from the exact server-calculated quote. Private paginated player order history and detail, cancellation, immutable price snapshots and idempotent resubmission; no card, provider, capture, payment or coin credit.
+- Donations (`donations` 1.4.0): authenticated creation of **unpaid test drafts** from the exact server-calculated quote. Private paginated player order history and detail, cancellation, immutable price snapshots and idempotent resubmission; no card, provider, capture, payment or coin credit.
 - Independent history routes remain readable when the owner hides new funding requests. Direct draft creation fails closed, whereas owned existing drafts remain viewable and cancellable. When the entire module is disabled its HTTP routes disappear, but database records and Core Wallet remain intact.
 - Protected administrative order journal with status/currency/user ID filters, snapshot detail and historical events; Owner/Administrator and read-only Auditor are allowed, Editor denied. Expired drafts are shown as expired even before an explicit persisted expiry transition.
 - Additional feature/negative tests and optional isolated multi-process MySQL/MariaDB gate covering 10 identical draft requests, 10 concurrent cancellations, and tariff-update/quote races. No published migration changed, and no new dependencies were introduced.
 - The eventual trusted-provider notification processing (including module disable with pending real payments) is reserved for 0.50.x; **do not disable a provider-enabled Donations module with unsettled real orders** until the durable callback lifecycle is implemented and verified.
-- Full ZIP only by owner request. Laravel/Windows/browser/MySQL tests require user environment verification.
+- Full ZIP only. Laravel/Windows/browser/MySQL tests are still pending.
 
 ## 0.49.3 - 2026-10-16
 
 ### Added
 
-- Donations B4 (bundled module 1.3.0): durable provider-free payment order drafts with UUID, user-scoped idempotency, exact immutable currency/coin/price/total snapshot, and 30-minute expiry. Stored prices are never recalculated after an administrator changes rates.
+- Donations (bundled module 1.3.0): durable provider-free payment order drafts with UUID, user-scoped idempotency, exact immutable currency/coin/price/total snapshot, and 30-minute expiry. Stored prices are never recalculated after an administrator changes rates.
 - Draft-only state transitions to cancelled or expired, permanent status-event trail and fail-closed CMS audit within the same transaction. User-scoped reads/cancellation; maximum five active drafts per account. Creating drafts stops with the Donations page closed; previously created orders remain retrievable through the service.
 - Additive module migration with payment-provider placeholders and protected rollback; negative tests for replay, tampered snapshots, lost audit, foreign ownership, missing/disabled prices and draft limits. No provider, checkout, wallet credit or payment status transitions yet. No new player checkout UI or HTTP routes.
-- Core Wallet, existing migrations and dependencies remain unchanged. Full ZIP only by owner request. PHPUnit/Pint/PHPStan/MySQL/Windows/browser gates still require execution before production acceptance.
+- Core Wallet, existing migrations and dependencies remain unchanged. Full ZIP only. PHPUnit/Pint/PHPStan/MySQL/Windows/browser gates still require execution before production acceptance.
 
 ## 0.49.2 - 2026-10-16
 
 ### Added
 
-- Donations B3 (`donations` 1.2.0): authenticated, owner-opt-in player calculator for a whole-number coin quantity and one configured active fiat currency. Estimates are recomputed on the server via the existing exact `DonationRates::quote()` and `DonationMoney`; no browser-provided amount is trusted.
+- Donations (`donations` 1.2.0): authenticated, owner-opt-in player calculator for a whole-number coin quantity and one configured active fiat currency. Estimates are recomputed on the server via the existing exact `DonationRates::quote()` and `DonationMoney`; no browser-provided amount is trusted.
 - Only valid enabled rates with matching registry precision appear. Reject missing/forged/disabled currencies, array inputs, invalid quantities and values outside administrator min/max limits. Includes RU/EN feedback, currency-specific fixed precision, empty-state and mobile-friendly form shared by account themes.
-- Fixed Donations B2 admin Blade section boundary: the rate and limits controls now render inside the admin content layout. Added regression/negative tests for player previews, disabled tariffs, price tampering and the admin layout.
-- Prices are informational; no checkout button, payment orders, providers, webhook handlers, currency exchange, coin grants or changes to Wallet Core. No new migrations or dependencies. Full ZIP only by owner request. Full PHPUnit, Pint, PHPStan, Windows and browser gates remain for user verification.
+- Fixed Donations admin Blade section boundary: the rate and limits controls now render inside the admin content layout. Added regression/negative tests for player previews, disabled tariffs, price tampering and the admin layout.
+- Prices are informational; no checkout button, payment orders, providers, webhook handlers, currency exchange, coin grants or changes to Wallet Core. No new migrations or dependencies. Full ZIP only. Full PHPUnit, Pint, PHPStan, Windows and browser gates are still pending.
 
 ## 0.49.1 - 2026-10-16
 
 ### Added
 
-- Donations B2 (`donations` module 1.1.0): 154-code recognized currency catalogue with per-code exponent/name/symbol. Owner/Administrator can add rates, independently set the cost of **one coin**, enable/disable each currency, and configure global 1–1,000,000 coin quantity limits. Auditor is read-only; Editor denied.
-- Exact integer minor-unit price calculation for 0/2/3/4-decimal currencies (e.g. JPY, USD, KWD). No float, no automatic currency conversion, strict positive price and overflow bounds. Editable administrative price preview and protected server-side quote contract for future B3/B4.
+- Donations (`donations` module 1.1.0): 154-code recognized currency catalogue with per-code exponent/name/symbol. Owner/Administrator can add rates, independently set the cost of **one coin**, enable/disable each currency, and configure global 1–1,000,000 coin quantity limits. Auditor is read-only; Editor denied.
+- Exact integer minor-unit price calculation for 0/2/3/4-decimal currencies (e.g. JPY, USD, KWD). No float, no automatic currency conversion, strict positive price and overflow bounds. Editable administrative price preview and protected server-side quote contract for the future player calculator and orders.
 - Additive Donations migration with persistent per-currency rates and coin limits, atomic settings updates with fail-closed CMS audit, validation of role, currency code, price precision, quantity and stale registry precision. Tests cover successful and rejected operations, tampering and rollback.
-- No real checkout, payment order, provider webhook or coin credit yet. No changes to Wallet Core, previously published migrations, composer.lock, login/game databases or runtime uploads. Delivered full ZIP only per owner preference. Laravel/PHPUnit/Windows/browser/MySQL tests require user acceptance.
+- No real checkout, payment order, provider webhook or coin credit yet. No changes to Wallet Core, previously published migrations, composer.lock, login/game databases or runtime uploads. Full ZIP only. Laravel/PHPUnit/Windows/browser/MySQL tests are still pending.
 
 ## 0.49.0 - 2026-10-15
 
 ### Added
 
-- Donations B1: independent bundled `donations` module v1.0.0 with scoped player/admin routes, module migration and explicit Owner/Administrator/Auditor/Editor authorization. The account entry starts hidden and is enabled only by a separately audited setting; module disable hides its routes without touching Core Wallet.
+- Donations: independent bundled `donations` module v1.0.0 with scoped player/admin routes, module migration and explicit Owner/Administrator/Auditor/Editor authorization. The account entry starts hidden and is enabled only by a separately audited setting; module disable hides its routes without touching Core Wallet.
 - Safe, read-only player landing renders current coin balance via existing WalletAccountReadService. There are deliberately no payment buttons, fiat currencies/prices, payment orders, provider credentials, webhooks or wallet credits.
 - Module-scoped RU/EN translations, user/admin views, module documentation, tests for permissions, visibility, safe module disabling and audit rollback. Module setting updates and audit share a database transaction.
-- Core Wallet A1–A7, user balances and old migrations are unchanged. Full release only, by owner preference. User reported all Wallet quality gates green in their updated 0.48.6 source archive; B1 gates require their own verification.
+- Core Wallet, user balances and old migrations are unchanged. Full release only. Wallet quality gates passed on 0.48.6; this module's gates require their own verification.
 
 ## 0.48.6 - 2026-10-15
 
 ### Added
 
-- Wallet Core A7: authenticated Owner/Administrator can block and unblock coin spending on a CMS user's wallet from the existing Wallets administration page. Explicit confirmation, 3–190 character reason, and unique status-operation UUID are required. Auditor remains read-only; Editor and guests are denied.
+- Wallet Core: authenticated Owner/Administrator can block and unblock coin spending on a CMS user's wallet from the existing Wallets administration page. Explicit confirmation, 3–190 character reason, and unique status-operation UUID are required. Auditor remains read-only; Editor and guests are denied.
 - Status changes lock the CMS user and wallet rows in the same order as the financial transaction engine. Debit (including future Shop) is prohibited while blocked, credit remains allowed; status changes never change coin balances or financial ledger entries. Unblocking fails closed if the full wallet journal does not reconcile.
-- Permanent `wallet_status_events` table with unique operation key/fingerprint, before/after status, administrator, reason and time. The wallet status history is visible only to authorized administration roles and never deleted by ordinary audit-log retention. Existing A1 migration remains unchanged. Status history has restrict-on-delete foreign keys, and its new migration refuses data-destroying rollback.
+- Permanent `wallet_status_events` table with unique operation key/fingerprint, before/after status, administrator, reason and time. The wallet status history is visible only to authorized administration roles and never deleted by ordinary audit-log retention. The initial wallet migration remains unchanged. Status history has restrict-on-delete foreign keys, and its new migration refuses data-destroying rollback.
 - A status change and standard CMS audit record are committed together; failed audits roll back everything. Exact repeated status requests do not repeat an event; key reuse for another user/actor/reason/status fails. Added negative regression tests, including access control, corruption, replay, history retention, validation and rollback on audit failure.
 - Core Wallet is functionally complete in source, but Windows quality gates, PHPUnit/PHPStan/Pint, real MySQL/MariaDB concurrency, browser tests and live upgrade paths still require verification before calling this version stable. Donations, fiat prices, payment providers and Shop are not yet integrated.
 
@@ -750,37 +823,37 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ### Added
 
-- Core Wallet A6: administrator Wallets page under Users for Owner/Administrator/Auditor, paginated CMS user search by name/email/id, wallet balance and blocked status, per-user ledger history (30 per page) and a direct link from user details. Missing wallets appear as zero without inserting a financial record.
+- Core Wallet: administrator Wallets page under Users for Owner/Administrator/Auditor, paginated CMS user search by name/email/id, wallet balance and blocked status, per-user ledger history (30 per page) and a direct link from user details. Missing wallets appear as zero without inserting a financial record.
 - Owner/Administrator manual credit and debit via the existing `WalletGateway` only. Typed integer values are checked without float conversion; request requires a descriptive reason, an explicit confirmation checkbox, and a unique UUID form key (reused verbatim on browser resubmission). The engine prevents negative/overflow balances, stores actor identity, and requires a transactional audit entry.
 - Only admins with `wallet.manage` can POST; the read-only Auditor cannot submit, and Editor/guest cannot view. The permission is enforced both at route middleware and again by `CoreWalletGateway` immediately before mutation. No new Livewire action or direct wallet-table write is exposed.
 - Admin UI does not expose wallet source keys, request fingerprints or user game connection secrets. Transactions remain exclusively in the CMS database. New feature tests cover permissions, idempotency, input validation, debit failure, corrupted balances, and isolation between players.
-- No wallet blocks/unblocks yet (A7), Donations integration, game-server changes, dependencies, rewritten migrations, or runtime writes in release ZIP. PHPUnit/Pint/PHPStan/Windows/MySQL gates require user environment verification.
+- No wallet blocks/unblocks yet, Donations integration, game-server changes, dependencies, rewritten migrations, or runtime writes in release ZIP. PHPUnit/Pint/PHPStan/Windows/MySQL gates are still pending.
 
 ## 0.48.4 - 2026-10-15
 
 ### Added
 
-- Core Wallet A5: authenticated/localized `/account/wallet` player page with available balance, custom coin icon, read-only 20-entry paginated private history, empty state and spending-blocked notice. A missing wallet safely appears as zero without creating a financial record.
+- Core Wallet: authenticated/localized `/account/wallet` player page with available balance, custom coin icon, read-only 20-entry paginated private history, empty state and spending-blocked notice. A missing wallet safely appears as zero without creating a financial record.
 - Both bundled account themes now show the real wallet balance/icon in the topbar and profile dropdown and link to the wallet in the sidebar. Shared responsive wallet styles are maintained in `public/assets/account/css/components.css`. Layouts deliberately do not persist the topbar across Livewire navigation, so displayed balances do not stay stale.
 - Account-facing views reveal no internal transaction reference, idempotency key, UUID, admin actor, reason, other user's history or payment details. A server-side controller always scopes entries to the authenticated user, with no user/wallet ID route parameter. No wallet mutation endpoints or payment controls were added.
 - Account theme versions: Kaev Aurelia Account `1.6.8`, L2 Obsidian Luxury `1.6.6`; both require CMS `0.48.4`. Feature tests cover authentication, ownership, confidential ledger fields, locale, empty/history and both themes; account navigation regression reflects the non-persistent balance header.
-- No changes to A1 wallet migration, balances/ledger engine, existing modules, composer lock, game databases or uploads. Full ZIP only (by owner request); Laravel/Windows/browser/MySQL acceptance is pending.
+- No changes to the initial wallet migration, balances/ledger engine, existing modules, composer lock, game databases or uploads. Full ZIP only; Laravel/Windows/browser/MySQL acceptance is pending.
 
 ## 0.48.3 - 2026-10-15
 
 ### Added
 
-- Core Wallet A4: administrator page `Settings > Wallet appearance`, using existing CMS settings and role authorization. RU/EN (and enabled language) three plural forms for virtual coins, optional short label, safe default labels, and localized quantity rendering in `WalletAppearanceSettings` for later A5 user views.
+- Core Wallet: administrator page `Settings > Wallet appearance`, using existing CMS settings and role authorization. RU/EN (and enabled language) three plural forms for virtual coins, optional short label, safe default labels, and localized quantity rendering in `WalletAppearanceSettings` for the later player wallet page.
 - Optional owner-uploaded coin icon (PNG/WebP up to 1 MiB and 1024×1024 pixels). Existing `SettingsImageStorage` validates real image type, extensions, dimensions and safe path; stored under preserved `public/uploads/settings/wallet-coin/`. Invalid uploads cannot mutate settings. Replacements delete only the previous managed icon after settings persist; removing restores the built-in default.
 - Role-aware settings navigation: Owner/Administrator edit, Auditor views only, Editor/guests have no access. Security/feature tests cover permissions, image spoofing, invalid forms, icon replacement and path traversal; EN/RU documentation updated.
 - No new wallet balance migrations, monetary prices or provider integration. No dependencies, GameServer or module/theme edits. Historical Core Wallet operations are unchanged.
-- Full ZIP only; no patch or cumulative artifact (by owner preference). PHP/JSON syntax and archive checks are local; full PHPUnit/Windows/browser/MySQL testing remains pending.
+- Full ZIP only; no patch or cumulative artifact. PHP/JSON syntax and archive checks are local; full PHPUnit/Windows/browser/MySQL testing remains pending.
 
 ## 0.48.2 - 2026-10-15
 
 ### Added
 
-- Core Wallet A3: official server-side `WalletGateway` interface and `CoreWalletGateway` adapter; source allowlist with explicit installation flags (all disabled until integrated). Paid Donations and Shop are **not** enabled by this release.
+- Core Wallet: official server-side `WalletGateway` interface and `CoreWalletGateway` adapter; source allowlist with explicit installation flags (all disabled until integrated). Paid Donations and Shop are **not** enabled by this release.
 - Account-owner-scoped Shop debit, explicit authenticated administrator manual adjustments with required reason; new `wallet.view` / `wallet.manage` role permissions. Owner/Administrator can manage, Auditor can view, Editor has no access; no new public HTTP/Livewire wallet mutation endpoints.
 - Fail-closed CMS audit recording within the same DB transaction as wallet balance and ledger. On audit persistence failure the mutation rolls back. Idempotent replay leaves no extra audit entry.
 - Read-only full historical reconciliation (`kaevcms:wallets-reconcile`, optional `--user` / `--limit`), including per-entry continuity and arithmetic, overflow, invalid directions and current balance matching. Never repairs or deletes ledger records.
@@ -791,19 +864,19 @@ Bundled versions: Daily Rewards 1.3.3, Donations 1.16.1, Promo Codes 1.4.3, Supp
 
 ### Added
 
-- Implemented Core Wallet A2: an internal atomic credit/debit engine on the CMS database with a single per-user wallet, positive integer coin amounts, transactional balance + append-only journal writes, before/after balance snapshots, and creation on demand for new users.
+- Implemented Core Wallet: an internal atomic credit/debit engine on the CMS database with a single per-user wallet, positive integer coin amounts, transactional balance + append-only journal writes, before/after balance snapshots, and creation on demand for new users.
 - Added strict source-scoped idempotency (replays return the original entry; conflicting payloads/users fail), balance row locks, three deadlock attempts, insufficient-funds and blocked-wallet checks, PHP integer overflow prevention, and fail-closed detection of balance/journal drift.
 - Added negative and rollback regressions, plus an optional isolated MySQL/MariaDB multi-process concurrency runner for actual row-locking and duplicate-credit verification. The runner requires an explicitly designated disposable testing database.
-- Updated EN/RU wallet docs. This remains an internal service only; module-facing authorization/API, player/admin UI, fiat pricing, and payment providers are future iterations (A3+).
+- Updated EN/RU wallet docs. This remains an internal service only; module-facing authorization/API, player/admin UI, fiat pricing, and payment providers are planned for later releases.
 - No database migration edits, Composer/npm dependency changes, or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
 
 ## 0.48.0 - 2026-10-15
 
 ### Added
 
-- Began Core Wallet A1 with one wallet per CMS user, a zero starting balance, and an operation-ledger schema featuring globally unique operation UUIDs, source-scoped idempotency keys, request fingerprints, unsigned coin amounts and before/after balance snapshots.
+- Began Core Wallet with one wallet per CMS user, a zero starting balance, and an operation-ledger schema featuring globally unique operation UUIDs, source-scoped idempotency keys, request fingerprints, unsigned coin amounts and before/after balance snapshots.
 - Added a migration that provisions zero-balance wallets for existing site users without touching L2JMobius/RUSaCis databases; wallet records and history use restrict-on-delete foreign keys. Rollback refuses to drop funded wallets or an existing transaction history.
-- Added guarded Wallet/WalletEntry models, a read-only relation from User, schema/upgrade regression tests, and bilingual wallet documentation. This is preparation only: credit/debit engine, UI, fiat pricing, and payment integration are not enabled in A1.
+- Added guarded Wallet/WalletEntry models, a read-only relation from User, schema/upgrade regression tests, and bilingual wallet documentation. This is preparation only: credit/debit engine, UI, fiat pricing, and payment integration are not enabled yet.
 - No Composer/npm lock changes or bundled module/theme behavior changes. Cumulative baseline remains 0.42.4.
 
 ## 0.47.48 - 2026-10-15

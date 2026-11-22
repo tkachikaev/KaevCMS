@@ -21,7 +21,7 @@
     </a>
 
     @foreach(app(\App\Support\Modules\ModuleNavigationRegistry::class)->sidebarAccountLinks() as $moduleLink)
-        <a wire:navigate data-account-module-id="{{ $moduleLink['module_id'] }}" @class(['active' => request()->routeIs('modules.'.$moduleLink['module_id'].'.*')]) href="{{ route($moduleLink['route']) }}">
+        <a @unless($moduleLink['standalone'] ?? false) wire:navigate @endunless data-account-module-id="{{ $moduleLink['module_id'] }}" @class(['active' => request()->routeIs('modules.'.$moduleLink['module_id'].'.*')]) href="{{ route($moduleLink['route']) }}">
             @switch($moduleLink['module_id'])
                 @case('daily-rewards')
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
@@ -31,6 +31,15 @@
                     @break
                 @case('support-tickets')
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg>
+                    @break
+                @case('shop')
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>
+                    @break
+                @case('referrals')
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><path d="M18 8v6M15 11h6"></path></svg>
+                    @break
+                @case('forum')
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h12v8.5H8l-4.5 3.5z"></path><path d="M8.5 16.5v.5h7.5l4.5 3.5V9.5h-4"></path></svg>
                     @break
                 @case('donations')
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v8M9 11h6"></path></svg>

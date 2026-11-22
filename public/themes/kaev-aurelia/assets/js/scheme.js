@@ -5,12 +5,15 @@
     const root = document.documentElement;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const mobileArt = window.matchMedia('(max-width: 680px)');
+    // One light/dark choice for the whole site: the public theme, the player account and
+    // the forum share this key, so a switch anywhere applies everywhere.
     const storageKey = 'kaevcms.site.scheme';
     const allowed = new Set(['light', 'dark']);
 
     const load = () => {
         try {
-            const saved = window.localStorage.getItem(storageKey);
+            // Before the shared key existed, the account kept its own; honour it once.
+            const saved = window.localStorage.getItem(storageKey) ?? window.localStorage.getItem('kaevcms.account.scheme');
 
             return allowed.has(saved) ? saved : 'light';
         } catch {
@@ -190,4 +193,11 @@
     });
     document.addEventListener('livewire:navigated', () => apply(scheme));
     document.addEventListener('DOMContentLoaded', synchronizeControls);
+    // A switch in the account or forum in another tab follows here at once.
+    window.addEventListener('storage', (event) => {
+        if (event.key === storageKey && allowed.has(event.newValue) && event.newValue !== scheme) {
+            scheme = event.newValue;
+            apply(scheme);
+        }
+    });
 })();

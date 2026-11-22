@@ -1,0 +1,127 @@
+<?php
+
+namespace KaevCMS\Modules\Forum\Services;
+
+use Illuminate\Support\Facades\DB;
+use KaevCMS\Modules\Forum\Models\ForumSection;
+
+final class ForumPermissions
+{
+    public const VIEWS = ['all', 'registered', 'moderators'];
+
+    public const WRITES = ['registered', 'moderators', 'owner', 'nobody'];
+
+    private const MODERATOR_CACHE = 'kaevcms.forum.moderators';
+
+    public function visibleTo(ForumActor $actor, string $viewRule, string $globalVisibility = 'all'): bool
+    {
+        if ($globalVisibility === 'registered' && $actor->isGuest()) {
+            return false;
+        }
+
+        return match ($viewRule) {
+            'all' => true,
+            'registered' => ! $actor->isGuest(),
+            'moderators' => $this->isModerator($actor),
+            default => false,
+        };
+    }
+
+    /** @return list<string> Only query sections the current actor may read. */
+    public function allowedViewRules(ForumActor $actor, string $globalVisibility = 'all'): array
+    {
+        if ($globalVisibility === 'registered' && $actor->isGuest()) {
+            return [];
+        }
+
+        if ($this->isModerator($actor)) {
+            return self::VIEWS;
+        }
+
+        return $actor->isGuest() ? ['all'] : ['all', 'registered'];
+    }
+
+    public function canView(ForumActor $actor, ForumSection $section, string $globalVisibility = 'all'): bool
+    {
+        return $this->visibleTo($actor, $section->view_rule, $globalVisibility);
+    }
+
+    public function canCreateTopic(ForumActor $actor, ForumSection $section, string $globalVisibility = 'all'): bool
+    {
+        return $this->canView($actor, $section, $globalVisibility)
+            && $this->canWrite($actor, $section->topic_rule);
+    }
+
+    public function canReply(ForumActor $actor, ForumSection $section, string $globalVisibility = 'all'): bool
+    {
+        return $this->canView($actor, $section, $globalVisibility)
+            && $this->canWrite($actor, $section->reply_rule);
+    }
+
+    public function canWrite(ForumActor $actor, string $rule): bool
+    {
+        return match ($rule) {
+            'registered' => ! $actor->isGuest(),
+            'moderators' => $this->isModerator($actor),
+            'owner' => $actor->isOwner(),
+            'nobody' => false,
+            default => false,
+        };
+    }
+
+    public static function compatible(string $view, string $topics, string $replies): bool
+    {
+        if (! in_array($view, self::VIEWS, true)
+            || ! in_array($topics, self::WRITES, true)
+            || ! in_array($replies, self::WRITES, true)) {
+            return false;
+        }
+
+        // A moderator-only area must not allow all registered accounts to write.
+        return $view !== 'moderators' || ($topics !== 'registered' && $replies !== 'registered');
+    }
+
+    /**
+     * Mutations must not trust a moderator role cached earlier in the HTTP
+     * request. Lock the live assignment until the write transaction commits.
+     * Call only from an active database transaction.
+     */
+    public function assertCurrentModeratorForWrite(ForumActor $actor): void
+    {
+        if ($actor->isOwner()) {
+            return;
+        }
+
+        abort_unless(
+            $actor->mode === 'user'
+            && $actor->user !== null
+            && DB::table('module_forum_moderators')
+                ->where('user_id', $actor->user->getKey())
+                ->lockForUpdate()->first() !== null,
+            403
+        );
+    }
+
+    public function isModerator(ForumActor $actor): bool
+    {
+        if ($actor->isOwner()) {
+            return true;
+        }
+
+        if ($actor->mode !== 'user' || $actor->user === null) {
+            return false;
+        }
+
+        $id = (int) $actor->user->getKey();
+
+        $attributes = request()->attributes;
+        /** @var array<int, bool> $moderators */
+        $moderators = $attributes->get(self::MODERATOR_CACHE, []);
+        if (! array_key_exists($id, $moderators)) {
+            $moderators[$id] = DB::table('module_forum_moderators')->where('user_id', $id)->exists();
+            $attributes->set(self::MODERATOR_CACHE, $moderators);
+        }
+
+        return $moderators[$id];
+    }
+}

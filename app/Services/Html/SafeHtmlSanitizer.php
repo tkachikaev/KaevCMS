@@ -21,6 +21,8 @@ final class SafeHtmlSanitizer
 
     public const PROFILE_EMAIL = 'email';
 
+    public const PROFILE_FORUM = 'forum';
+
     private const CONTENT_ALLOWED_ELEMENTS = [
         'p', 'br', 'strong', 'em', 'u', 's',
         'h2', 'h3', 'h4',
@@ -29,6 +31,44 @@ final class SafeHtmlSanitizer
         'figure', 'img', 'figcaption', 'span',
         'pre', 'code',
         'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+    ];
+
+    // Forum uses the same DOM-based sanitation engine with a deliberately small vocabulary.
+    private const FORUM_ALLOWED_ELEMENTS = [
+        'p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li',
+        'blockquote', 'a', 'pre', 'code', 'span',
+        // Images by https link only (never uploads); see sanitizeForumImageSource().
+        'figure', 'img',
+    ];
+
+    /**
+     * Image hosts forum posts may show pictures from. The CMS never fetches or stores
+     * these files: readers' browsers load them directly, so nothing user-supplied is
+     * parsed on the server. Exact host names only (no wildcard subdomains).
+     */
+    public const DEFAULT_FORUM_IMAGE_HOSTS = ['iili.io', 'i.imgur.com', 'i.postimg.cc', 'i.ibb.co'];
+
+    /** @var (\Closure(): list<string>)|null Supplied by the forum module from its settings. */
+    private static ?\Closure $forumImageHostResolver = null;
+
+    /** @param  (\Closure(): list<string>)|null  $resolver */
+    public static function resolveForumImageHostsUsing(?\Closure $resolver): void
+    {
+        self::$forumImageHostResolver = $resolver;
+    }
+
+    /** @return list<string> */
+    public static function forumImageHosts(): array
+    {
+        $hosts = self::$forumImageHostResolver !== null ? (self::$forumImageHostResolver)() : self::DEFAULT_FORUM_IMAGE_HOSTS;
+
+        return array_values(array_filter($hosts, 'is_string'));
+    }
+
+    /** Forum link images: width in percent of the column, 10-100 in steps of 5. */
+    private const FORUM_IMAGE_WIDTHS = [
+        '10', '15', '20', '25', '30', '35', '40', '45', '50', '55',
+        '60', '65', '70', '75', '80', '85', '90', '95', '100',
     ];
 
     private const CONTENT_DROP_WITH_CONTENT = [
@@ -51,6 +91,8 @@ final class SafeHtmlSanitizer
         'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue',
         'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc',
         'muted',
+        // Extra forum palette tones.
+        'crimson', 'wine', 'maroon', 'magenta', 'plum', 'navy', 'azure', 'steel', 'mint', 'forest', 'olive', 'sand', 'tangerine', 'peach', 'silver', 'ink',
     ];
 
     private const HIGHLIGHTS = [
@@ -67,7 +109,7 @@ final class SafeHtmlSanitizer
     public function sanitize(string $html, string $profile): string
     {
         return match ($profile) {
-            self::PROFILE_NEWS, self::PROFILE_PAGE => $this->sanitizeContent($html, $profile),
+            self::PROFILE_NEWS, self::PROFILE_PAGE, self::PROFILE_FORUM => $this->sanitizeContent($html, $profile),
             self::PROFILE_EMAIL => $this->sanitizeEmail($html),
             default => throw new InvalidArgumentException("Unknown HTML sanitizer profile [{$profile}]."),
         };
@@ -76,7 +118,7 @@ final class SafeHtmlSanitizer
     public function plainText(string $html, string $profile): string
     {
         return match ($profile) {
-            self::PROFILE_NEWS, self::PROFILE_PAGE => $this->contentPlainText($html, $profile),
+            self::PROFILE_NEWS, self::PROFILE_PAGE, self::PROFILE_FORUM => $this->contentPlainText($html, $profile),
             self::PROFILE_EMAIL => $this->emailPlainText($html),
             default => throw new InvalidArgumentException("Unknown HTML sanitizer profile [{$profile}]."),
         };
@@ -121,7 +163,12 @@ final class SafeHtmlSanitizer
             return '';
         }
 
-        $rootId = $profile === self::PROFILE_NEWS ? 'kaevcms-news-root' : 'kaevcms-page-root';
+        $rootId = match ($profile) {
+            self::PROFILE_NEWS => 'kaevcms-news-root',
+            self::PROFILE_PAGE => 'kaevcms-page-root',
+            self::PROFILE_FORUM => 'kaevcms-forum-root',
+            default => throw new InvalidArgumentException("Unknown content sanitizer profile [{$profile}]."),
+        };
         $previous = libxml_use_internal_errors(true);
 
         try {
@@ -195,7 +242,9 @@ final class SafeHtmlSanitizer
 
             $pageBlock = $profile === self::PROFILE_PAGE && $tag === 'div'
                 && in_array($child->getAttribute('data-content-block'), ['cards', 'card'], true);
-            if (! $pageBlock && ! in_array($tag, self::CONTENT_ALLOWED_ELEMENTS, true)) {
+            $allowedElements = $profile === self::PROFILE_FORUM
+                ? self::FORUM_ALLOWED_ELEMENTS : self::CONTENT_ALLOWED_ELEMENTS;
+            if (! $pageBlock && ! in_array($tag, $allowedElements, true)) {
                 $this->unwrap($child);
 
                 continue;
@@ -224,9 +273,9 @@ final class SafeHtmlSanitizer
         $allowed = match ($tag) {
             'a' => ['href', 'title'],
             'div' => $profile === self::PROFILE_PAGE ? ['data-content-block'] : [],
-            'img' => ['src', 'alt'],
+            'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'referrerpolicy'] : ['src', 'alt'],
             'span' => ['data-color', 'data-highlight', 'data-text-size'],
-            'figure' => ['data-align', 'data-size'],
+            'figure' => $profile === self::PROFILE_FORUM ? ['data-align', 'data-width', 'data-media', 'data-media-id'] : ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
         };
         if ($profile === self::PROFILE_PAGE && $tag === 'a') {
@@ -269,6 +318,25 @@ final class SafeHtmlSanitizer
                 $title = $this->cleanTextAttribute($element->getAttribute('title'), 255);
                 $title === '' ? $element->removeAttribute('title') : $element->setAttribute('title', $title);
             }
+        }
+
+        if ($tag === 'img' && $profile === self::PROFILE_FORUM) {
+            $src = $this->sanitizeForumImageSource($element->getAttribute('src'));
+            $figure = $element->parentNode;
+            if ($src === null || ! $figure instanceof DOMElement || strtolower($figure->tagName) !== 'figure') {
+                $element->parentNode?->removeChild($element);
+
+                return;
+            }
+
+            $element->setAttribute('src', $src);
+            $element->setAttribute('alt', $this->cleanTextAttribute($element->getAttribute('alt'), 255));
+            $element->setAttribute('loading', 'lazy');
+            $element->setAttribute('decoding', 'async');
+            // Readers' browsers fetch the image from the third-party host: send no page address.
+            $element->setAttribute('referrerpolicy', 'no-referrer');
+
+            return;
         }
 
         if ($tag === 'img') {
@@ -319,6 +387,44 @@ final class SafeHtmlSanitizer
             }
         }
 
+        if ($tag === 'figure' && $profile === self::PROFILE_FORUM && $element->hasAttribute('data-media')) {
+            // Video embeds are stored as a provider + id token, never as player markup.
+            // The forum renders the player itself from these two validated values.
+            $provider = $element->getAttribute('data-media');
+            $mediaId = $element->getAttribute('data-media-id');
+            if (! self::validForumMedia($provider, $mediaId)) {
+                $element->parentNode?->removeChild($element);
+
+                return;
+            }
+            while ($element->firstChild !== null) {
+                $element->removeChild($element->firstChild);
+            }
+            $element->removeAttribute('data-width');
+            // Fixed attribute order keeps the forum player renderer simple and strict.
+            $element->removeAttribute('data-media');
+            $element->removeAttribute('data-media-id');
+            $element->setAttribute('data-media', $provider);
+            $element->setAttribute('data-media-id', $mediaId);
+
+            return;
+        }
+
+        if ($tag === 'figure' && $profile === self::PROFILE_FORUM) {
+            $element->removeAttribute('data-media-id');
+            $width = $element->getAttribute('data-width');
+            if (! in_array($width, self::FORUM_IMAGE_WIDTHS, true) || $width === '100') {
+                $element->removeAttribute('data-width');
+            }
+            // A forum figure exists only to hold one link image.
+            $images = $element->getElementsByTagName('img');
+            if ($images->length === 0) {
+                $this->unwrap($element);
+            }
+
+            return;
+        }
+
         if ($tag === 'figure') {
             $size = strtolower($element->getAttribute('data-size'));
             if (! in_array($size, self::IMAGE_SIZES, true) || $size === 'full') {
@@ -359,6 +465,39 @@ final class SafeHtmlSanitizer
         $pattern = '~^/uploads/'.$directory.'/content/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp)$~i';
 
         return preg_match($pattern, $src) === 1 ? $src : null;
+    }
+
+    /** Supported forum video providers and the exact id shapes they accept. */
+    public static function validForumMedia(string $provider, string $mediaId): bool
+    {
+        return match ($provider) {
+            'youtube' => preg_match('/\A[A-Za-z0-9_-]{11}\z/', $mediaId) === 1,
+            'twitch' => preg_match('/\A(?:video:\d{1,12}|clip:[A-Za-z0-9_-]{1,100}|channel:[A-Za-z0-9_]{3,25})\z/', $mediaId) === 1,
+            default => false,
+        };
+    }
+
+    /** Forum images are hot-linked over https from the allowed image hosts only. */
+    private function sanitizeForumImageSource(string $src): ?string
+    {
+        $src = html_entity_decode(trim($src), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $src = preg_replace('/[\x00-\x1F\x7F\s]+/u', '', $src) ?? '';
+        if ($src === '' || strlen($src) > 2048 || str_contains($src, '\\')) {
+            return null;
+        }
+
+        $parts = parse_url($src);
+        if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || ! isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
+        }
+
+        $host = strtolower($parts['host']);
+        if (! in_array($host, self::forumImageHosts(), true) || isset($parts['port'])) {
+            return null;
+        }
+
+        return $src;
     }
 
     private function cleanTextAttribute(string $value, int $limit): string
@@ -531,6 +670,7 @@ final class SafeHtmlSanitizer
         $label = match ($profile) {
             self::PROFILE_NEWS => 'news',
             self::PROFILE_PAGE => 'page',
+            self::PROFILE_FORUM => 'forum',
             self::PROFILE_EMAIL => 'custom email',
             default => 'HTML',
         };

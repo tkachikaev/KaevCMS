@@ -20,6 +20,9 @@ final class ModuleNavigationRegistry
     /** @var array<string, true> Modules whose account link stays out of the sidebar. */
     private array $outsideSidebar = [];
 
+    /** @var array<string, true> Modules whose account link opens a page with its own layout. */
+    private array $standalonePages = [];
+
     /** @var array<string, array<string, mixed>> */
     private array $walletLinks = [];
 
@@ -32,9 +35,16 @@ final class ModuleNavigationRegistry
     /** @var array<string, Closure(Admin): int> */
     private array $adminBadgeResolvers = [];
 
+    /** @var array<string, array<string, mixed>> Module pages listed under Admin → Themes. */
+    private array $appearanceLinks = [];
+
     /**
      * $inSidebar = false keeps the entry for other account surfaces (the wallet's top-up
      * button and menu) without a duplicate item in the account sidebar.
+     *
+     * $standalone = true marks a page with its own layout and styles (the forum): account
+     * themes open it with a full page load, because a Livewire visit would show it for a
+     * moment without its stylesheet.
      */
     public function registerAccountLink(
         string $moduleId,
@@ -44,6 +54,7 @@ final class ModuleNavigationRegistry
         int $sortOrder = 100,
         bool $inSidebar = true,
         ?Closure $visibleWhen = null,
+        bool $standalone = false,
     ): void {
         $this->accountLinks[$moduleId] = $this->validatedLink(
             moduleId: $moduleId,
@@ -57,6 +68,11 @@ final class ModuleNavigationRegistry
             unset($this->outsideSidebar[$moduleId]);
         } else {
             $this->outsideSidebar[$moduleId] = true;
+        }
+        if ($standalone) {
+            $this->standalonePages[$moduleId] = true;
+        } else {
+            unset($this->standalonePages[$moduleId]);
         }
         if ($visibleWhen === null) {
             unset($this->accountVisibilityResolvers[$moduleId]);
@@ -118,10 +134,52 @@ final class ModuleNavigationRegistry
         }
     }
 
+    /**
+     * A module with its own look (the forum) lists its theme page next to the site
+     * and account themes. The link disappears with the module.
+     */
+    public function registerAppearanceLink(
+        string $moduleId,
+        string $routeName,
+        string $labelKey,
+        string $descriptionKey,
+        int $sortOrder = 100,
+    ): void {
+        $this->appearanceLinks[$moduleId] = $this->validatedLink(
+            moduleId: $moduleId,
+            routeName: $routeName,
+            labelKey: $labelKey,
+            descriptionKey: $descriptionKey,
+            sortOrder: $sortOrder,
+            routePrefix: 'admin.module-pages.'.$moduleId.'.',
+        );
+    }
+
     /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    public function availableAppearanceLinks(Admin $admin, ModuleAdminAccessRegistry $access): array
+    {
+        return array_values(array_filter(
+            $this->availableLinks($this->appearanceLinks),
+            static function (array $link) use ($access, $admin): bool {
+                $routeName = (string) $link['route'];
+
+                return $access->isRegistered($routeName)
+                    ? $access->canViewRoute($admin, $routeName)
+                    : $admin->hasPermission(AdminPermission::AppearanceView);
+            },
+        ));
+    }
+
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int,standalone:bool}> */
     public function accountLinks(): array
     {
-        return array_values(array_filter($this->availableLinks($this->accountLinks), function (array $link): bool {
+        $links = array_map(function (array $link): array {
+            $link['standalone'] = isset($this->standalonePages[$link['module_id']]);
+
+            return $link;
+        }, $this->availableLinks($this->accountLinks));
+
+        return array_values(array_filter($links, function (array $link): bool {
             $resolver = $this->accountVisibilityResolvers[$link['module_id']] ?? null;
             if ($resolver === null) {
                 return true;
@@ -134,7 +192,7 @@ final class ModuleNavigationRegistry
         }));
     }
 
-    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int,standalone:bool}> */
     public function sidebarAccountLinks(): array
     {
         return array_values(array_filter(

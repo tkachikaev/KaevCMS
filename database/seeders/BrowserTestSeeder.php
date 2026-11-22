@@ -356,6 +356,8 @@ class BrowserTestSeeder extends Seeder
             ],
         ]);
 
+        // Keep the forum available in the isolated browser fixture.
+        app(ModuleManager::class)->enable('forum');
         app(ModuleManager::class)->enable('support-tickets');
 
         $supportTicketId = DB::table('module_support_tickets')->insertGetId([

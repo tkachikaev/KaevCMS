@@ -1,0 +1,10 @@
+{
+    "name": "Classic",
+    "slug": "kaev-classic",
+    "version": "1.0.0",
+    "author": "KaevCMS",
+    "cms_min": "0.61.0",
+    "forum_min": "0.10.0",
+    "description": "Warm forum theme in the style of the Classic player account: paper and gold in the light mode, a soft violet night in the dark one.",
+    "preview": "preview.svg"
+}

@@ -88,13 +88,13 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertTrue($publicTheme['valid'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertTrue($publicTheme['compatible'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertSame('Aurelia', $publicTheme['name']);
-        $this->assertSame('1.1.1', $publicTheme['version']);
+        $this->assertSame('1.1.2', $publicTheme['version']);
         $this->assertNotNull($publicTheme['preview_url']);
 
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertSame('Aurelia', $accountTheme['name']);
-        $this->assertSame('1.6.11', $accountTheme['version']);
+        $this->assertSame('1.6.12', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
         foreach ($this->publicThemeFiles() as $file) {

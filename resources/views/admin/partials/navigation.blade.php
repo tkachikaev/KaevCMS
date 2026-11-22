@@ -18,6 +18,7 @@
         'pages' => $menuIcon('M7 3h7l4 4v14H7zM14 3v4h4'),
         'navigation' => $menuIcon('M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1'),
         'site-theme' => $menuIcon('M3 5h18v11H3zM8 20h8M12 16v4'),
+        'theme-forum' => $menuIcon('M4 5h16v11H9l-5 4zM8 9h8M8 12h5'),
         'account-theme' => $menuIcon('M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6.5 18.5c1.2-2 3.2-3 5.5-3s4.3 1 5.5 3'),
         'game-servers' => $menuIcon('M6 9h12a3 3 0 0 1 3 3v3a2 2 0 0 1-3.5 1.3L16 15H8l-1.5 1.3A2 2 0 0 1 3 15v-3a3 3 0 0 1 3-3zM8 11v2M7 12h2M15.5 12h.01M17.5 12h.01'),
         'login-servers' => $menuIcon('M10 4h8a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-8M4 12h10M11 9l3 3-3 3'),
@@ -50,8 +51,15 @@
         </details>
     @endif
 
+    @php
+        $moduleAppearanceLinks = app(\App\Support\Modules\ModuleNavigationRegistry::class)->availableAppearanceLinks(
+            $admin,
+            app(\App\Support\Modules\ModuleAdminAccessRegistry::class),
+        );
+        $moduleAppearanceOpen = collect($moduleAppearanceLinks)->contains(fn (array $link): bool => request()->routeIs($link['route'], $link['route'].'.*'));
+    @endphp
     @if($admin->hasPermission(\App\Auth\AdminPermission::AppearanceView))
-        <details class="admin-menu-group" data-admin-menu-group="appearance" @if (request()->routeIs('admin.themes.*', 'admin.account-themes.*')) open @endif>
+        <details class="admin-menu-group" data-admin-menu-group="appearance" @if (request()->routeIs('admin.themes.*', 'admin.account-themes.*') || $moduleAppearanceOpen) open @endif>
             <summary class="admin-menu-group-summary">
                 <span>{!! $menuIcons['themes'] !!}{{ __('Themes') }}</span>
                 <span class="admin-menu-group-chevron" aria-hidden="true">⌄</span>
@@ -59,6 +67,12 @@
             <div class="admin-menu-group-items">
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.themes.index') }}"><span>{!! $menuIcons['site-theme'] !!}{{ __('Site') }}</span></a>
                 <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link href="{{ route('admin.account-themes.index') }}"><span>{!! $menuIcons['account-theme'] !!}{{ __('Account') }}</span></a>
+                @foreach($moduleAppearanceLinks as $appearanceLink)
+                    <a wire:navigate.hover wire:current="active" class="admin-menu-item" data-admin-menu-link
+                       href="{{ route($appearanceLink['route'], ['adminPath' => request()->route('adminPath')]) }}"
+                       title="{{ __($appearanceLink['description_key']) }}"
+                    ><span>{!! $menuIcons['theme-'.$appearanceLink['module_id']] ?? $menuIcons['site-theme'] !!}{{ __($appearanceLink['label_key']) }}</span></a>
+                @endforeach
             </div>
         </details>
     @endif

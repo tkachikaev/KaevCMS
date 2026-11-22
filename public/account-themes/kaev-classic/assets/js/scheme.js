@@ -4,14 +4,22 @@
     // Loaded in <head> without defer so the saved light/dark choice applies before the first paint.
     const root = document.documentElement;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const storageKey = 'kaevcms.account.scheme';
+    // One light/dark choice for the whole site: the public theme, the account and the
+    // forum all read and write kaevcms.site.scheme. The old account-only key is read once
+    // so players keep the mode they had chosen before.
+    const storageKey = 'kaevcms.site.scheme';
+    const legacyKey = 'kaevcms.account.scheme';
     const allowed = new Set(['light', 'dark']);
 
     const load = () => {
         try {
             const saved = window.localStorage.getItem(storageKey);
+            if (allowed.has(saved)) {
+                return saved;
+            }
+            const legacy = window.localStorage.getItem(legacyKey);
 
-            return allowed.has(saved) ? saved : 'light';
+            return allowed.has(legacy) ? legacy : 'light';
         } catch {
             return 'light';
         }
@@ -285,4 +293,12 @@
     });
     document.addEventListener('livewire:navigated', () => apply(scheme));
     document.addEventListener('DOMContentLoaded', synchronizeControls);
+    // A switch on the site or forum in another tab follows here at once.
+    window.addEventListener('storage', (event) => {
+        if (event.key === storageKey && allowed.has(event.newValue) && event.newValue !== scheme) {
+            cancelAppearanceChange();
+            scheme = event.newValue;
+            apply(scheme);
+        }
+    });
 })();

@@ -96,7 +96,9 @@ final class ModuleRuntime
             $routePaths = (array) ($module['route_paths'] ?? []);
             if (isset($routePaths['web']) && is_string($routePaths['web'])) {
                 Route::middleware(['web', 'module.enabled:'.$id])
-                    ->prefix('modules/'.$id)
+                    ->prefix(is_string($module['web_route_prefix'] ?? null)
+                        ? $module['web_route_prefix']
+                        : 'modules/'.$id)
                     ->name($context->publicRouteNamePrefix())
                     ->group($routePaths['web']);
             }

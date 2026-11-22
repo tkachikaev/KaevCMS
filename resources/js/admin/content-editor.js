@@ -8,7 +8,9 @@ import TextAlign from '@tiptap/extension-text-align';
 
 const MAX_CONTENT_LENGTH = 200000;
 const contentByteLength = (value) => new TextEncoder().encode(value).length;
-const SAFE_COLORS = ['gold', 'amber', 'yellow', 'red', 'rose', 'coral', 'orange', 'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc', 'muted'];
+const SAFE_COLORS = ['gold', 'amber', 'yellow', 'red', 'rose', 'coral', 'orange', 'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc', 'muted',
+    // Extra forum palette tones.
+    'crimson', 'wine', 'maroon', 'magenta', 'plum', 'navy', 'azure', 'steel', 'mint', 'forest', 'olive', 'sand', 'tangerine', 'peach', 'silver', 'ink'];
 const SAFE_HIGHLIGHTS = ['yellow', 'amber', 'orange', 'rose', 'red', 'lime', 'green', 'teal', 'cyan', 'blue', 'purple', 'gray'];
 const SAFE_TEXT_SIZES = ['small', 'large'];
 const SAFE_IMAGE_ALIGNMENTS = ['left', 'center', 'right'];
@@ -197,6 +199,254 @@ const FigureImage = Node.create({
     },
 });
 
+const LINK_IMAGE_WIDTHS = Array.from({ length: 19 }, (_, index) => String(10 + index * 5));
+const normalizeImageWidth = (value) => (LINK_IMAGE_WIDTHS.includes(String(value)) ? String(value) : '100');
+
+// Forum images live on third-party https hosts (never uploaded here). The reader can
+// drag the corner handle to scale the image; the height follows the width, and the
+// image never grows past its natural size (CSS max-width on the <img>).
+const LinkImage = Node.create({
+    name: 'linkImage',
+    group: 'block',
+    atom: true,
+    draggable: true,
+    selectable: true,
+
+    addAttributes() {
+        return {
+            src: { default: null },
+            alt: { default: '' },
+            align: { default: 'left' },
+            width: { default: '100' },
+        };
+    },
+
+    parseHTML() {
+        return [{
+            tag: 'figure',
+            priority: 60,
+            getAttrs: (element) => {
+                const image = element.querySelector('img');
+                const src = image?.getAttribute('src') ?? '';
+                if (!/^https:\/\//i.test(src)) {
+                    return false;
+                }
+                const align = element.getAttribute('data-align')?.toLowerCase() ?? 'left';
+
+                return {
+                    src,
+                    alt: image.getAttribute('alt') ?? '',
+                    align: SAFE_IMAGE_ALIGNMENTS.includes(align) ? align : 'left',
+                    width: normalizeImageWidth(element.getAttribute('data-width') ?? '100'),
+                };
+            },
+        }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const figure = {};
+        const align = SAFE_IMAGE_ALIGNMENTS.includes(HTMLAttributes.align) ? HTMLAttributes.align : 'left';
+        const width = normalizeImageWidth(HTMLAttributes.width);
+        if (align !== 'left') figure['data-align'] = align;
+        if (width !== '100') figure['data-width'] = width;
+
+        return ['figure', figure, ['img', {
+            src: HTMLAttributes.src,
+            alt: HTMLAttributes.alt ?? '',
+            loading: 'lazy',
+            referrerpolicy: 'no-referrer',
+        }]];
+    },
+
+    addNodeView() {
+        return ({ node, getPos, editor }) => {
+            const figure = document.createElement('figure');
+            const frame = document.createElement('span');
+            const image = document.createElement('img');
+            const handle = document.createElement('span');
+            figure.className = 'link-image-view';
+            // The caret must never enter an atom node view: it is selected as a whole.
+            figure.contentEditable = 'false';
+            frame.className = 'link-image-frame';
+            image.referrerPolicy = 'no-referrer';
+            image.draggable = false;
+            handle.className = 'link-image-handle';
+            handle.setAttribute('aria-hidden', 'true');
+            frame.append(image, handle);
+            figure.append(frame);
+
+            const paint = (current) => {
+                image.src = current.attrs.src ?? '';
+                image.alt = current.attrs.alt ?? '';
+                figure.dataset.align = current.attrs.align ?? 'left';
+                figure.dataset.width = normalizeImageWidth(current.attrs.width);
+                figure.style.width = '';
+            };
+            paint(node);
+
+            handle.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const column = figure.parentElement?.getBoundingClientRect().width || 1;
+                const startX = event.clientX;
+                const startWidth = image.getBoundingClientRect().width;
+                const rtl = getComputedStyle(figure).direction === 'rtl';
+                let width = figure.dataset.width;
+                try {
+                    handle.setPointerCapture(event.pointerId);
+                } catch {
+                    // Synthetic or already released pointers cannot be captured.
+                }
+
+                const move = (moveEvent) => {
+                    const delta = (moveEvent.clientX - startX) * (rtl ? -1 : 1);
+                    const percent = Math.round(((startWidth + delta) / column) * 100 / 5) * 5;
+                    width = String(Math.min(100, Math.max(10, percent)));
+                    figure.style.width = `${width}%`;
+                };
+                const stop = () => {
+                    handle.removeEventListener('pointermove', move);
+                    handle.removeEventListener('pointerup', stop);
+                    handle.removeEventListener('pointercancel', stop);
+                    const position = typeof getPos === 'function' ? getPos() : null;
+                    if (typeof position === 'number') {
+                        editor.view.dispatch(editor.state.tr.setNodeMarkup(position, undefined, { ...node.attrs, width }));
+                    }
+                };
+                handle.addEventListener('pointermove', move);
+                handle.addEventListener('pointerup', stop);
+                handle.addEventListener('pointercancel', stop);
+            });
+
+            return {
+                dom: figure,
+                update: (updated) => {
+                    if (updated.type.name !== 'linkImage') {
+                        return false;
+                    }
+                    node = updated;
+                    paint(updated);
+
+                    return true;
+                },
+                stopEvent: (event) => event.target === handle,
+                ignoreMutation: () => true,
+            };
+        };
+    },
+});
+
+// Video links become a provider + id token. The forum server renders the player;
+// the editor shows a lightweight card instead of loading the player while typing.
+const parseMediaUrl = (rawValue) => {
+    let url;
+    try {
+        url = new URL(rawValue.trim());
+    } catch {
+        return null;
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    const host = url.hostname.toLowerCase().replace(/^(?:www\.|m\.)/, '');
+    const parts = url.pathname.split('/').filter(Boolean);
+    const youtubeId = (value) => (/^[A-Za-z0-9_-]{11}$/.test(value ?? '') ? value : null);
+
+    if (host === 'youtu.be') {
+        const id = youtubeId(parts[0]);
+        return id ? { provider: 'youtube', mediaId: id } : null;
+    }
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com' || host === 'music.youtube.com') {
+        const id = parts[0] === 'watch'
+            ? youtubeId(url.searchParams.get('v'))
+            : (['shorts', 'embed', 'live', 'v'].includes(parts[0]) ? youtubeId(parts[1]) : null);
+        return id ? { provider: 'youtube', mediaId: id } : null;
+    }
+    if (host === 'clips.twitch.tv') {
+        const slug = parts[0] === 'embed' ? url.searchParams.get('clip') : parts[0];
+        return /^[A-Za-z0-9_-]{1,100}$/.test(slug ?? '') ? { provider: 'twitch', mediaId: `clip:${slug}` } : null;
+    }
+    if (host === 'twitch.tv') {
+        if (parts[0] === 'videos' && /^\d{1,12}$/.test(parts[1] ?? '')) return { provider: 'twitch', mediaId: `video:${parts[1]}` };
+        if (parts[1] === 'clip' && /^[A-Za-z0-9_-]{1,100}$/.test(parts[2] ?? '')) return { provider: 'twitch', mediaId: `clip:${parts[2]}` };
+        if (parts.length === 1 && /^[A-Za-z0-9_]{3,25}$/.test(parts[0])) return { provider: 'twitch', mediaId: `channel:${parts[0]}` };
+    }
+
+    return null;
+};
+
+const MediaEmbed = Node.create({
+    name: 'mediaEmbed',
+    group: 'block',
+    atom: true,
+    draggable: true,
+    selectable: true,
+
+    addAttributes() {
+        return {
+            provider: { default: null },
+            mediaId: { default: null },
+            align: { default: 'left' },
+        };
+    },
+
+    parseHTML() {
+        return [{
+            tag: 'figure[data-media]',
+            priority: 70,
+            getAttrs: (element) => {
+                const provider = element.getAttribute('data-media');
+                const mediaId = element.getAttribute('data-media-id') ?? '';
+                const align = element.getAttribute('data-align')?.toLowerCase() ?? 'left';
+                const valid = provider === 'youtube'
+                    ? /^[A-Za-z0-9_-]{11}$/.test(mediaId)
+                    : provider === 'twitch' && /^(?:video:\d{1,12}|clip:[A-Za-z0-9_-]{1,100}|channel:[A-Za-z0-9_]{3,25})$/.test(mediaId);
+
+                return valid ? { provider, mediaId, align: SAFE_IMAGE_ALIGNMENTS.includes(align) ? align : 'left' } : false;
+            },
+        }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const attributes = { 'data-media': HTMLAttributes.provider, 'data-media-id': HTMLAttributes.mediaId };
+        if (['center', 'right'].includes(HTMLAttributes.align)) attributes['data-align'] = HTMLAttributes.align;
+
+        return ['figure', attributes];
+    },
+
+    addNodeView() {
+        return ({ node }) => {
+            const card = document.createElement('figure');
+            card.contentEditable = 'false';
+            const paint = (current) => {
+                card.className = `media-embed-card media-embed-${current.attrs.provider}`;
+                card.dataset.align = current.attrs.align ?? 'left';
+                card.replaceChildren();
+                if (current.attrs.provider === 'youtube') {
+                    const thumb = document.createElement('img');
+                    thumb.src = `https://i.ytimg.com/vi/${current.attrs.mediaId}/hqdefault.jpg`;
+                    thumb.alt = '';
+                    thumb.referrerPolicy = 'no-referrer';
+                    card.append(thumb);
+                }
+                const label = document.createElement('span');
+                label.className = 'media-embed-label';
+                label.textContent = `▶ ${current.attrs.provider === 'youtube' ? 'YouTube' : 'Twitch'} · ${String(current.attrs.mediaId).replace(/^(video|clip|channel):/, '')}`;
+                card.append(label);
+            };
+            paint(node);
+
+            return {
+                dom: card,
+                update: (updated) => {
+                    if (updated.type.name !== 'mediaEmbed') return false;
+                    paint(updated);
+                    return true;
+                },
+                ignoreMutation: () => true,
+            };
+        };
+    },
+});
+
 const initializeCoverPreview = (signal) => {
     const wrapper = document.querySelector('[data-cover-upload]');
     if (!wrapper) {
@@ -266,8 +516,14 @@ const initializeRichEditor = (root, signal) => {
     const linkDialog = root.querySelector('[data-editor-link-dialog]');
     const linkApply = root.querySelector('[data-editor-link-apply]');
     const linkUrl = root.querySelector('[data-editor-link-url]');
+    const linkText = root.querySelector('[data-editor-link-text]');
     const linkStyle = root.querySelector('[data-editor-link-style]');
     const pageBlocks = root.dataset.pageBlocks === '1';
+    const linkImages = root.dataset.linkImages === '1';
+    const linkImageDialog = root.querySelector('[data-editor-link-image-dialog]');
+    const linkImageUrl = root.querySelector('[data-editor-link-image-url]');
+    const linkImageAlt = root.querySelector('[data-editor-link-image-alt]');
+    const linkImagePreview = root.querySelector('[data-editor-link-image-preview]');
     const imageDialog = root.querySelector('[data-editor-image-dialog]');
     const imageApply = root.querySelector('[data-editor-image-apply]');
     const imageAlt = root.querySelector('[data-editor-image-alt]');
@@ -330,7 +586,7 @@ const initializeRichEditor = (root, signal) => {
             SafeColor,
             SafeHighlight,
             SafeTextSize,
-            FigureImage,
+            ...(linkImages ? [LinkImage, MediaEmbed] : [FigureImage]),
             ...(pageBlocks ? [ContentCards, ContentCard, ContentButtons] : []),
             SafeTable.configure({
                 resizable: false,
@@ -352,6 +608,14 @@ const initializeRichEditor = (root, signal) => {
 
     root.dataset.editorReady = '1';
 
+    // Lets page scripts append content (for example a forum quote) through the editor schema.
+    root.addEventListener('rich-editor:insert', (event) => {
+        const html = event.detail?.html;
+        if (typeof html === 'string' && html !== '') {
+            editor.chain().focus('end').insertContent(html).run();
+        }
+    }, { signal });
+
     const syncSource = () => {
         const html = editor.getHTML();
         source.value = html === '<p></p>' ? '' : html;
@@ -365,7 +629,7 @@ const initializeRichEditor = (root, signal) => {
 
         let found = false;
         editor.state.doc.descendants((node) => {
-            if (node.type.name === 'figureImage' || node.type.name === 'horizontalRule' || node.type.name === 'table') {
+            if (['figureImage', 'linkImage', 'mediaEmbed', 'horizontalRule', 'table'].includes(node.type.name)) {
                 found = true;
 
                 return false;
@@ -410,7 +674,10 @@ const initializeRichEditor = (root, signal) => {
         });
 
         root.querySelectorAll('[data-editor-align]').forEach((button) => {
-            const active = editor.isActive({ textAlign: button.dataset.editorAlign });
+            const blockMedia = linkImages && (editor.isActive('linkImage') ? 'linkImage' : (editor.isActive('mediaEmbed') ? 'mediaEmbed' : null));
+            const active = blockMedia
+                ? editor.isActive(blockMedia, { align: button.dataset.editorAlign })
+                : editor.isActive({ textAlign: button.dataset.editorAlign });
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
@@ -502,6 +769,11 @@ const initializeRichEditor = (root, signal) => {
         }
 
         const alignButton = event.target.closest('[data-editor-align]');
+        if (alignButton && linkImages && (editor.isActive('linkImage') || editor.isActive('mediaEmbed'))) {
+            const type = editor.isActive('linkImage') ? 'linkImage' : 'mediaEmbed';
+            editor.chain().focus().updateAttributes(type, { align: alignButton.dataset.editorAlign }).run();
+            return;
+        }
         if (alignButton) {
             editor.chain().focus().setTextAlign(alignButton.dataset.editorAlign).run();
             return;
@@ -515,6 +787,13 @@ const initializeRichEditor = (root, signal) => {
                 ? chain.unsetMark('safeColor').run()
                 : chain.setMark('safeColor', { value }).run();
             colorButton.closest('details')?.removeAttribute('open');
+            return;
+        }
+
+        const emojiButton = event.target.closest('[data-editor-emoji]');
+        if (emojiButton) {
+            editor.chain().focus().insertContent(emojiButton.dataset.editorEmoji ?? '').run();
+            emojiButton.closest('details')?.removeAttribute('open');
             return;
         }
 
@@ -556,8 +835,15 @@ const initializeRichEditor = (root, signal) => {
             return;
         }
 
+        if (linkText && editor.isActive('link')) {
+            editor.chain().extendMarkRange('link').run();
+        }
         linkUrl.value = editor.getAttributes('link').href ?? '';
         if (linkStyle) linkStyle.value = editor.getAttributes('link').buttonStyle ?? '';
+        if (linkText) {
+            const { from, to } = editor.state.selection;
+            linkText.value = editor.state.doc.textBetween(from, to, ' ');
+        }
         linkDialog.showModal();
         linkUrl.focus();
         linkUrl.select();
@@ -574,13 +860,171 @@ const initializeRichEditor = (root, signal) => {
         }
 
         const buttonStyle = linkStyle?.value || null;
+        // A link dialog with a text field can name the link ("click here") instead of
+        // showing the bare address; the text replaces the current selection.
+        const { from, to } = editor.state.selection;
+        const label = linkText ? linkText.value.trim() : '';
+        const selected = editor.state.doc.textBetween(from, to, ' ');
         if (url === '' && !buttonStyle) {
-            editor.chain().focus().unsetLink().run();
+            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+        } else if (linkText && (label !== '' ? label !== selected : from === to)) {
+            editor.chain().focus().insertContentAt({ from, to }, {
+                type: 'text',
+                text: label !== '' ? label : url,
+                marks: [{ type: 'link', attrs: { href: url } }],
+            }).run();
         } else {
             editor.chain().focus().extendMarkRange('link').setLink({ href: url || '#', ...(pageBlocks ? { buttonStyle } : {}) }).run();
         }
 
         linkDialog?.close();
+    }, { signal });
+
+    // A selected image or video must not be replaced by the next inserted block.
+    const insertBlockAfterSelection = (content) => {
+        const { selection } = editor.state;
+        const chain = editor.chain().focus();
+        if (selection.node) {
+            chain.insertContentAt(selection.to, content).run();
+        } else {
+            chain.insertContent(content).run();
+        }
+    };
+
+    // The server enforces the same host list; this only gives an early, friendly answer.
+    const imageHosts = (root.dataset.imageHosts ?? '').split(',').filter(Boolean);
+    const allowedImageUrl = (value) => {
+        try {
+            const url = new URL(value);
+            return url.protocol === 'https:' && url.port === '' && imageHosts.includes(url.hostname.toLowerCase());
+        } catch {
+            return false;
+        }
+    };
+
+    // People paste what image hosts give them: a direct link, a viewer page link, or an
+    // HTML / BBCode / Markdown snippet. Find the direct image address in the browser; the
+    // server only ever receives (and re-checks) that final allowed address.
+    const extractAllowedImage = (text) => {
+        for (const match of text.matchAll(/https:\/\/[^\s"'<>\[\]()]+/g)) {
+            if (allowedImageUrl(match[0])) return match[0];
+        }
+        return null;
+    };
+    const viewerCandidates = (text) => {
+        let url;
+        try {
+            url = new URL(text.trim());
+        } catch {
+            return [];
+        }
+        const host = url.hostname.toLowerCase().replace(/^www\./, '');
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (host === 'freeimage.host' && parts[0] === 'i' && parts[1]) {
+            const id = parts[1].split('.').pop();
+            return /^[A-Za-z0-9]{4,20}$/.test(id) ? ['png', 'jpg', 'jpeg', 'webp', 'gif'].map((ext) => `https://iili.io/${id}.${ext}`) : [];
+        }
+        if (host === 'imgur.com' && parts.length === 1 && /^[A-Za-z0-9]{5,10}$/.test(parts[0])) {
+            return [`https://i.imgur.com/${parts[0]}.jpg`];
+        }
+        return [];
+    };
+    const imageLoads = (url) => new Promise((resolve) => {
+        const probe = new Image();
+        const timer = window.setTimeout(() => resolve(false), 8000);
+        probe.referrerPolicy = 'no-referrer';
+        probe.onload = () => { window.clearTimeout(timer); resolve(true); };
+        probe.onerror = () => { window.clearTimeout(timer); resolve(false); };
+        probe.src = url;
+    });
+    const resolveImageInput = async (text) => {
+        const direct = extractAllowedImage(text);
+        if (direct) return direct;
+        for (const candidate of viewerCandidates(text)) {
+            if (await imageLoads(candidate)) return candidate;
+        }
+        return null;
+    };
+
+    let previewToken = 0;
+    let resolvedImage = null;
+    const previewLinkImage = async () => {
+        if (!linkImagePreview || !linkImageUrl) return null;
+        const token = ++previewToken;
+        const text = linkImageUrl.value.trim();
+        resolvedImage = null;
+        linkImagePreview.replaceChildren();
+        linkImagePreview.dataset.state = text === '' ? '' : 'loading';
+        if (text === '') return null;
+
+        const url = await resolveImageInput(text);
+        if (token !== previewToken) return null;
+        if (!url) {
+            linkImagePreview.dataset.state = 'blocked';
+            return null;
+        }
+        const image = document.createElement('img');
+        image.referrerPolicy = 'no-referrer';
+        image.alt = '';
+        image.addEventListener('load', () => { if (token === previewToken) linkImagePreview.dataset.state = 'ready'; }, { once: true });
+        image.addEventListener('error', () => { if (token === previewToken) linkImagePreview.dataset.state = 'error'; }, { once: true });
+        image.src = url;
+        linkImagePreview.append(image);
+        resolvedImage = url;
+
+        return url;
+    };
+
+    root.querySelector('[data-editor-link-image]')?.addEventListener('click', () => {
+        if (!linkImageDialog || !linkImageUrl) return;
+        const current = editor.isActive('linkImage') ? editor.getAttributes('linkImage') : null;
+        linkImageUrl.value = current?.src ?? '';
+        if (linkImageAlt) linkImageAlt.value = current?.alt ?? '';
+        previewLinkImage();
+        linkImageDialog.showModal();
+        linkImageUrl.focus();
+    }, { signal });
+
+    linkImageUrl?.addEventListener('input', previewLinkImage, { signal });
+
+    root.querySelector('[data-editor-link-image-apply]')?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const url = resolvedImage ?? (await previewLinkImage());
+        if (!url || !allowedImageUrl(url) || url.length > 2048) {
+            if (linkImagePreview) linkImagePreview.dataset.state = 'blocked';
+            linkImageUrl?.focus();
+            return;
+        }
+        const attributes = { src: url, alt: linkImageAlt?.value.trim() ?? '' };
+        if (editor.isActive('linkImage')) {
+            editor.chain().focus().updateAttributes('linkImage', attributes).run();
+        } else {
+            insertBlockAfterSelection({ type: 'linkImage', attrs: { ...attributes, align: 'left', width: '100' } });
+        }
+        setStatus('');
+        linkImageDialog?.close();
+    }, { signal });
+
+    const mediaDialog = root.querySelector('[data-editor-media-dialog]');
+    const mediaUrl = root.querySelector('[data-editor-media-url]');
+    root.querySelector('[data-editor-media]')?.addEventListener('click', () => {
+        if (!mediaDialog || !mediaUrl) return;
+        mediaUrl.value = '';
+        mediaDialog.showModal();
+        mediaUrl.focus();
+    }, { signal });
+
+    root.querySelector('[data-editor-media-apply]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const media = parseMediaUrl(mediaUrl?.value ?? '');
+        if (!media) {
+            setStatus(root.dataset.unsupportedMediaMessage ?? 'This video link is not supported.', 'error');
+            mediaUrl?.focus();
+            return;
+        }
+        insertBlockAfterSelection({ type: 'mediaEmbed', attrs: { ...media, align: 'left' } });
+        setStatus('');
+        mediaDialog?.close();
     }, { signal });
 
     root.querySelectorAll('[data-editor-dialog-cancel]').forEach((button) => {

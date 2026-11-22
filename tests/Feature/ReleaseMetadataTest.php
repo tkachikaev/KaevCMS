@@ -732,7 +732,7 @@ class ReleaseMetadataTest extends TestCase
             $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
             $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
         }
-        foreach (['luxury' => '1.6.9', 'kaev-aurelia' => '1.6.11'] as $accountTheme => $expectedVersion) {
+        foreach (['luxury' => '1.6.10', 'kaev-aurelia' => '1.6.12'] as $accountTheme => $expectedVersion) {
             $accountThemeManifest = json_decode(
                 $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
                 true,
@@ -773,7 +773,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
-        $this->assertSame('1.3.3', $dailyRewardsManifest['version']);
+        $this->assertSame('1.3.4', $dailyRewardsManifest['version']);
 
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),

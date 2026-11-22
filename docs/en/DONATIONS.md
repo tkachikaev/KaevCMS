@@ -54,7 +54,7 @@ A trusted, explicitly installed driver must implement `RoutablePaymentProvider` 
 
 Previously sealed YooMoney evidence in `kaevcms-signed-yoomoney-v1` remains readable, including deferred credits after key rotation. Other reviewed drivers use the provider-bound `kaevcms-signed-provider-v2` evidence format authenticated with Laravel Crypt. No Wallet or database schema change was made.
 
-**Iteration 1 covers architecture only.** FreeKassa credentials, its callback endpoint, administrative sandbox payments and live activation are deferred. The planned IP allowlist editor will not have a reset-to-defaults button.
+**This release covers architecture only.** FreeKassa credentials, its callback endpoint, administrative sandbox payments and live activation are deferred. The planned IP allowlist editor will not have a reset-to-defaults button.
 
 ## FreeKassa — staged integration (KaevCMS 0.55.0 / Donations 1.17.0)
 
@@ -76,7 +76,7 @@ Go to **Donations → Payment providers → FreeKassa** in the admin panel. Conf
 - Empty source-IP lists reject all callbacks. The provider must be disabled before saving an empty list, and IPs must be restored manually before re-enabling.
 - Local diagnostics do not establish that FreeKassa has sent a callback or that any order has actually been paid. Signature checks remain mandatory.
 
-**FreeKassa stays TEST-ONLY in this build:** external admin sandbox checkout and live wallet settlement are deliberately unavailable until the next iterations. YooMoney is unaffected by this IP policy.
+**FreeKassa stays TEST-ONLY in this build:** external admin sandbox checkout and live wallet settlement are deliberately unavailable until later releases. YooMoney is unaffected by this IP policy.
 
 ## FreeKassa administrator-only sandbox checkout (0.55.2 / Donations 1.17.2)
 
@@ -98,7 +98,7 @@ After configuring secrets, allowed sender IPs, currencies and enabling FreeKassa
 
 Select **Live** for FreeKassa and enable the provider; the same admin page now exposes the separate shared Donations master switch. Turn it on only when ready; it affects both FreeKassa and YooMoney new checkouts, but never disables outstanding callbacks. Players can select FreeKassa or YooMoney by supported currency. Checkout is server-priced; return from FreeKassa is NOT proof. Valid callbacks additionally require a merchant-authenticated `POST https://api.fk.life/v1/orders` lookup with paid status `1`, exact `merchant_order_id`, exact provider operation (`intid` compared against `fk_order_id`), exact currency and exact gross amount, handled as integer minor units. `CUR_ID` is a payment method, not the currency.
 
-- API outage/mismatch fails closed with HTTP 503 (never `YES` or Wallet credit). Ensure merchant callback retries are enabled. Lost-callback recovery is part of iteration 6.
+- API outage/mismatch fails closed with HTTP 503 (never `YES` or Wallet credit). Ensure merchant callback retries are enabled. Lost-callback recovery was added in 0.55.4.
 - API HMAC uses a DB-serialized increasing nonce stored in encrypted provider settings. No `.env` toggle or new migration. Disabling new payments does not discard existing order preparations or verification credentials.
 - Isolated admin tests are only allowed in **Test** mode and never credit Wallet. There is no IP reset button.
 - The published documentation does not explicitly guarantee that SCI `intid` equals API `fk_order_id` for every merchant. A real merchant control payment must establish this mapping before production acceptance. The 0.55.4 handler uses the authenticated API canonical ID instead of assuming these values are equal. Full Laravel/browser/DB regression testing is still required before production.

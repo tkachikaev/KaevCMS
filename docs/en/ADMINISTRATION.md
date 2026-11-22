@@ -91,7 +91,7 @@ JWT verification uses `firebase/php-jwt` 7.2, Telegram’s official JWKS and **R
 Official documentation: https://core.telegram.org/bots/telegram-login
 
 
-## Discord sign-in (iteration 7)
+## Discord sign-in
 
 On **Admin → Settings → Registration → Social sign-in**, open Discord. Create a web application in [Discord Developer Portal](https://discord.com/developers/applications), register the exact redirect URL shown by KaevCMS under OAuth2 → Redirects, then save Client ID and Client Secret. Enable Discord separately. Use HTTPS in production and `identify` + `email` scopes only. Discord may return `email: null`, and a verified Discord email is **not** automatically trusted for CMS registration: the player must confirm an email using a KaevCMS message before choosing a username. Keep mail delivery configured.
 
@@ -100,7 +100,7 @@ Existing players can link or unlink Discord under **Account → Security** after
 Official reference: https://github.com/discord/discord-api-docs/blob/main/developers/topics/oauth2.mdx
 
 
-## Facebook sign-in (iteration 8)
+## Facebook sign-in
 
 In **Admin → Settings → Registration → Social sign-in → Facebook**, create an app on [Meta for Developers](https://developers.facebook.com/apps/), configure **Facebook Login** for the web, and register the exact KaevCMS callback under **Valid OAuth Redirect URIs**. Save the **App ID** as Client ID and **App Secret** as Client Secret, then explicitly enable the provider. For public access, the Meta app must be Live and have the necessary permissions, including `email`; Development mode usually restricts login to app roles. Production requires HTTPS `APP_URL`.
 

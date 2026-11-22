@@ -91,7 +91,7 @@ Telegram не выдаёт email в OIDC. Для первой регистрац
 Официальная документация: https://core.telegram.org/bots/telegram-login
 
 
-## Вход через Discord (итерация 7)
+## Вход через Discord
 
 Откройте **Админка → Настройки → Регистрация → Социальная авторизация → Discord**. Создайте веб-приложение на [портале разработчиков Discord](https://discord.com/developers/applications), укажите точный адрес возврата, показанный KaevCMS, в разделе OAuth2 → Redirects. Сохраните Client ID и Client Secret, затем отдельно включите Discord. Для боевого сайта нужен HTTPS. Разрешения: только `identify` и `email`; права бота или доступ к серверам Discord не нужны.
 
@@ -100,7 +100,7 @@ Discord может не предоставить email. Даже подтвер�
 Официальная документация: https://github.com/discord/discord-api-docs/blob/main/developers/topics/oauth2.mdx
 
 
-## Вход через Facebook (итерация 8)
+## Вход через Facebook
 
 В **Админка → Настройки → Регистрация → Социальная авторизация → Facebook** создайте приложение на [Meta for Developers](https://developers.facebook.com/apps/), настройте **Facebook Login** для веб-сайта и внесите точный Callback URL из KaevCMS в **Valid OAuth Redirect URIs**. Сохраните **App ID** как Client ID и **App Secret** как Client Secret; включение провайдера — отдельное действие. Для публичного доступа приложение Meta должно быть переведено в Live и иметь необходимые разрешения, в частности `email`; в режиме Development вход обычно доступен только ролям приложения. Для production требуется HTTPS `APP_URL`.
 
