@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum: a light/dark switch in the header, the same sun-and-moon control and soft crossfade as the player account. The choice is shared with the public website and remembered in the browser; on narrow phones the header keeps only the logo.
 - Notifications: players get a bell. On the forum it shows a red unread number, rings gently when something new arrives, and lists replies in your topics (merged into one "N new replies"), quotes of your messages and direct replies to you; clicking opens the message and marks it read. Each entry shows the avatar of who acted, their name and the topic highlighted, the time, and a dot while unread. The core player notification center (new core migration) lets other modules and the player account use the same bell later; old notifications are cleaned up daily.
 - Forum: topic moderation moved from a small bar above the posts to a "Manage topic" menu beside the title (close, pin, hide, move…, delete topic…); moving and deleting confirm in dialogs that say where a deleted topic can be restored. Deleted topics now also appear in the forum Trash with a Restore button.
 - Forum: a moderator no longer gets a bare "403 Forbidden" page when a topic holds posts by the administration or other moderators. Hide and delete are not offered for such topics, the moderation panel explains that only the owner can hide, delete or move them to a more private section, and a forged request returns the same explanation without changing the topic.

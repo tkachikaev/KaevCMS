@@ -364,6 +364,24 @@
         :root[data-forum-scheme="dark"] .forum-site-link-out:hover{background:#1d2a37}
         :root[data-forum-scheme="dark"] .forum-site-link-out::after{background:#e2e8f0;color:#151f2a}
         .forum-topic-moderation-note{margin:10px 0 0;color:#7b8ca0;font-size:13px}
+        /* Light/dark switch, the same control as the player account (sun and moon). */
+        .forum-scheme-toggle{display:grid;place-items:center;width:44px;height:38px;padding:0;border:0;background:transparent;cursor:pointer}
+        .forum-scheme-track{position:relative;display:block;width:40px;height:22px;border:1px solid #d9e1eb;border-radius:11px;background:#f3f6fa;transition:border-color .25s ease}
+        .forum-scheme-toggle:hover .forum-scheme-track{border-color:#9db6cf}
+        .forum-scheme-toggle:focus-visible{outline:2px solid #6396cd;outline-offset:2px;border-radius:12px}
+        .forum-scheme-thumb{position:absolute;top:1px;left:1px;width:18px;height:18px;border-radius:50%;background:#fff;color:#c58a1c;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .25s ease}
+        .forum-scheme-thumb svg{position:absolute;top:3px;left:3px;width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:opacity .25s ease}
+        .forum-scheme-moon{opacity:0}
+        :root[data-forum-scheme="dark"] .forum-scheme-track{border-color:#324252;background:#1d2a37}
+        :root[data-forum-scheme="dark"] .forum-scheme-thumb{transform:translateX(18px);background:#2e4057;color:#e8d38a}
+        :root[data-forum-scheme="dark"] .forum-scheme-sun{opacity:0}
+        :root[data-forum-scheme="dark"] .forum-scheme-moon{opacity:1}
+        .forum-theme-reveal::view-transition-old(root),.forum-theme-reveal::view-transition-new(root){animation:none;mix-blend-mode:normal}
+        .forum-theme-reveal::view-transition-old(root){z-index:1}
+        .forum-theme-reveal::view-transition-new(root){z-index:2}
+        .forum-theme-reveal *,.forum-theme-reveal *::before,.forum-theme-reveal *::after{transition:none!important}
+        @media(prefers-reduced-motion:reduce){.forum-scheme-track,.forum-scheme-thumb,.forum-scheme-thumb svg{transition:none}}
+        @media(max-width:430px){.forum-brand-copy{display:none}.forum-actions{gap:6px}}
         /* The bell: unread badge, a gentle ring when something new arrives, a dropdown list. */
         .forum-bell{position:relative}
         .forum-bell-button{position:relative;display:grid;place-items:center;width:38px;height:38px;border:1px solid #e1e7ef;border-radius:50%;color:#49617c;list-style:none;cursor:pointer}
@@ -495,19 +513,19 @@
         :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a:hover{background:rgba(185,163,241,.12)}
         :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a.active{background:linear-gradient(135deg,#cdbdf7,#a58de6);color:#17121f}
         :root[data-forum-theme="kaev-aurelia"][data-forum-scheme="dark"] .language-menu-list a.active small{color:rgba(23,18,31,.72)}
-        :root[data-forum-theme="default"] .language-menu>summary{padding:0 10px 0 12px;border-color:rgba(255,255,255,.18);border-radius:7px;background:rgba(0,0,0,.16);color:rgba(255,255,255,.86)}
-        :root[data-forum-theme="default"] .language-menu>summary:hover,
-        :root[data-forum-theme="default"] .language-menu[open]>summary{border-color:#b27a2d}
-        :root[data-forum-theme="default"] .language-menu>summary:focus-visible{outline-color:#b27a2d}
-        :root[data-forum-theme="default"] .language-menu-chevron{color:rgba(255,255,255,.6);transition-duration:.16s}
-        :root[data-forum-theme="default"] .language-menu-list{border-color:#343a3d;border-radius:8px;background:#0d1214;box-shadow:0 18px 50px rgba(0,0,0,.45)}
-        :root[data-forum-theme="default"] .language-menu[open]>.language-menu-list,
-        :root[data-forum-theme="default"] .language-menu[open]>.language-menu-list>a{animation:none}
-        :root[data-forum-theme="default"] .language-menu-list a{border-radius:5px;color:#d8d9d7}
-        :root[data-forum-theme="default"] .language-menu-list a small{color:#858b8d}
-        :root[data-forum-theme="default"] .language-menu-list a:hover{background:rgba(255,255,255,.06)}
-        :root[data-forum-theme="default"] .language-menu-list a.active{background:#b27a2d;color:#15110b}
-        :root[data-forum-theme="default"] .language-menu-list a.active small{color:rgba(21,17,11,.7)}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu>summary{padding:0 10px 0 12px;border-color:rgba(255,255,255,.18);border-radius:7px;background:rgba(0,0,0,.16);color:rgba(255,255,255,.86)}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu>summary:hover,
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu[open]>summary{border-color:#b27a2d}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu>summary:focus-visible{outline-color:#b27a2d}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-chevron{color:rgba(255,255,255,.6);transition-duration:.16s}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-list{border-color:#343a3d;border-radius:8px;background:#0d1214;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu[open]>.language-menu-list,
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu[open]>.language-menu-list>a{animation:none}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-list a{border-radius:5px;color:#d8d9d7}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-list a small{color:#858b8d}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-list a:hover{background:rgba(255,255,255,.06)}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-list a.active{background:#b27a2d;color:#15110b}
+        :root[data-forum-theme="default"][data-forum-scheme="dark"] .language-menu-list a.active small{color:rgba(21,17,11,.7)}
         :root[data-forum-scheme="dark"] .forum-identity{border-color:#324252;color:#e2e8f0}
         :root[data-forum-scheme="dark"] .forum-identity:hover,
         :root[data-forum-scheme="dark"] .forum-profile-menu[open]>.forum-identity{background:#1d2a37}
@@ -626,6 +644,14 @@
         </a>
         <div class="forum-actions">
             <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
+            <button type="button" class="forum-scheme-toggle" role="switch" aria-checked="false" data-forum-scheme-toggle
+                    data-label-light="{{ __('Switch to the light theme') }}" data-label-dark="{{ __('Switch to the dark theme') }}"
+                    aria-label="{{ __('Switch to the dark theme') }}" title="{{ __('Switch to the dark theme') }}">
+                <span class="forum-scheme-track" aria-hidden="true"><span class="forum-scheme-thumb">
+                    <svg class="forum-scheme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
+                    <svg class="forum-scheme-moon" viewBox="0 0 24 24"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"/></svg>
+                </span></span>
+            </button>
             <x-language-menu />
             @if($actor->user)
                 @php($bellCenter = app(\App\Services\Notifications\PlayerNotificationCenter::class))
