@@ -41,7 +41,7 @@ final class ForumPosting
         $title = trim($title);
 
         return DB::transaction(function () use ($actor, $sectionId, $title, $body, $bodyHtml, $key): ForumTopic {
-            // F9: lock the shared settings singleton before any section row.
+            // Lock the shared settings singleton before any section row.
             // ForumStructure uses this same order for structural operations.
             $this->lockCurrentSettings();
             $section = ForumSection::query()->lockForUpdate()->findOrFail($sectionId);
@@ -59,7 +59,7 @@ final class ForumPosting
                 return $existing;
             }
 
-            // F9: enforce current link-age and account policy under the same
+            // Enforce current link-age and account policy under the same
             // transaction as the insert. The settings row is held until commit.
             $this->assertCurrentContentPolicy($actor, $body, $bodyHtml, $title);
 

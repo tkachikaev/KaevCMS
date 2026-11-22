@@ -240,7 +240,7 @@ final class ForumTopicModerationTest extends TestCase
         $removed = $this->topic($writer, 'No body visible', null, 'RemovedSearch content');
         $deleted = $this->topic($writer, 'DeletedSearch title');
 
-        // F7 tombstones and F8 deleted/hidden topics are not searchable.
+        // Removed-post placeholders and deleted/hidden topics are not searchable.
         DB::table('module_forum_posts')->where('topic_id', $removed->id)
             ->update(['body_text' => '', 'body_html' => null, 'removed_at' => now()]);
         $this->asUser($moderator);

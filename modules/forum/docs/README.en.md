@@ -45,9 +45,9 @@ CMS Owner and Administrator accounts post under their existing administrative na
 
 Publishing checks current section permissions and topic state on the server. By default only Owner can start topics in News and announcements and replies are disabled; Archive is read-only. Removing a section hides its topics without erasing messages.
 
-Version **0.4.0 (F5)** uses the same **Tiptap** engine as News and Pages, with a compact forum-specific toolbar: bold, italic, underline, lists, quotations, code and links. Images, uploads, tables and decorative formatting are not offered on the forum.
+Since version **0.4.0** the forum uses the same **Tiptap** engine as News and Pages, with a compact forum-specific toolbar: bold, italic, underline, lists, quotations, code and links. Images, uploads, tables and decorative formatting are not offered on the forum.
 
-Submitted HTML is sanitized on the server using a separate restricted forum profile; scripts, iframes, unsafe links, and unsupported attributes are removed. Legacy F4 posts remain escaped plain text: no automatic content conversion or data loss. A plain textarea remains available when JavaScript is unavailable.
+Submitted HTML is sanitized on the server using a separate restricted forum profile; scripts, iframes, unsafe links, and unsupported attributes are removed. Posts written before the editor arrived (versions before 0.4.0) remain escaped plain text: no automatic content conversion or data loss. A plain textarea remains available when JavaScript is unavailable.
 
 Re-submitting a form with the same submission key does not create duplicate posts.
 
@@ -91,7 +91,7 @@ Rights use the current authenticated identity. The **Owner** can manage all topi
 
 **Search** is available in the forum header. It searches current topic titles and post text using 2–80 characters. Results respect forum-wide and per-section visibility, exclude hidden/deleted topics, removed messages and historical revisions, and are paginated with request rate limits.
 
-F8 adds no migrations or dependencies. Updating forum 0.6.0 to 0.7.0 only requires the usual module file update; any outstanding F7 migration still needs to be applied.
+Version 0.7.0 adds no migrations or dependencies. Updating forum 0.6.0 to 0.7.0 only requires the usual module file update; if the revision-history migration from 0.6.0 is still pending, apply it.
 
 ## Appearance and usability
 
@@ -103,7 +103,7 @@ Deleting a post or an entire topic now requires **two deliberate actions**: open
 
 When creating topics, replying or editing text, the current link-posting policy is rechecked under a database row lock before committing the content. Moderator assignments are likewise revalidated under a write lock, so a revoked assignment cannot be used for an in-flight change based on stale permissions. Existing storage and counters remain in use; no separate search database is introduced.
 
-Version 0.8.0 adds **no new database migrations**. If the F7 revision-history migration (\`2026_11_20_000400_create_module_forum_post_revisions.php\`) has not yet been applied, apply it under **Administration → Modules**. Keep the CMS scheduler running to purge expired revisions.
+Version 0.8.0 adds **no new database migrations**. If the revision-history migration from 0.6.0 (\`2026_11_20_000400_create_module_forum_post_revisions.php\`) has not yet been applied, apply it under **Administration → Modules**. Keep the CMS scheduler running to purge expired revisions.
 
 ## Current limitations
 

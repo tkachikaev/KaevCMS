@@ -281,7 +281,7 @@
         .forum-post-rich code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.93em}
         .forum-post-rich pre code{background:none}
 
-        /* F10: reusable forum controls follow the same spacing and typography. */
+        /* Reusable forum controls follow the same spacing and typography. */
         .forum-skip-link{position:absolute;left:12px;top:-80px;z-index:100;padding:9px 14px;background:#fff;color:#27374b;border:2px solid #739cc4;border-radius:8px}
         .forum-skip-link:focus-visible{top:12px}
         :where(.forum-body,.forum-top) :where(a,button,input,textarea,select,summary):focus-visible{outline:2px solid #6396cd;outline-offset:3px}

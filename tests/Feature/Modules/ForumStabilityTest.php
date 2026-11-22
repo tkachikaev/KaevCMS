@@ -79,7 +79,7 @@ final class ForumStabilityTest extends TestCase
         [$body, $html] = $posting->prepareBody($actor, 'Useful https://example.org/link', null);
         $this->assertNull($html);
 
-        // The first check happened under the old policy. F9 must consult the
+        // The first check happened under the old policy. Publishing must consult the
         // new value in the transaction, and take a lock until it commits.
         DB::table('module_forum_settings')->where('id', 1)->update(['links_after_days' => 7]);
 
