@@ -175,6 +175,14 @@ final class ForumTopicController extends Controller
      */
     private function countView(Request $request, ForumTopic $topic): void
     {
+        // A first request without the session cookie (most bots, scripts and link
+        // previews) neither counts nor writes to the database; real visitors carry
+        // the cookie from their first page and are counted once per topic.
+        if (! $request->cookies->has((string) config('session.cookie'))
+            || preg_match('/bot|crawl|spider|slurp|preview|facebookexternalhit|curl|wget|python|httpclient|headless/i', (string) $request->userAgent()) === 1) {
+            return;
+        }
+
         $seen = array_map('intval', (array) $request->session()->get('forum.viewed_topics', []));
         if (in_array((int) $topic->id, $seen, true)) {
             return;

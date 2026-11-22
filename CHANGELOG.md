@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum views: requests without the session cookie (most bots, scripts and link previews) and known crawler user agents are not counted and no longer write to the database on every hit.
 - Forum search: at least three characters, identical searches are answered from a two-minute cache (results are re-checked for hidden topics and closed sections), and the whole forum shares a budget of fresh searches per minute; when it is spent, visitors see "Search is busy, try again in a minute" instead of loading the database.
 - Notifications: the bell stops counting at "99+" and checks a bounded number of recent entries, so a flood of unread notifications cannot slow down every page for that player.
 - Forum trash: a deleted topic whose section (or category) is also deleted shows "restore the section first" instead of a Restore button that ended in a 404 error page.

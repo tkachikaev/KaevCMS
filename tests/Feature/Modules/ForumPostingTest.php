@@ -92,6 +92,13 @@ final class ForumPostingTest extends TestCase
         );
         $updatedAt = $topic->fresh()->updated_at;
 
+        // A first request without the session cookie (bots, scripts) is not counted.
+        $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Просмотров: 0');
+        $this->withUnencryptedCookie((string) config('session.cookie'), 'visitor');
+        $this->withHeader('User-Agent', 'Googlebot/2.1')->get('/forum/topics/'.$topic->id)->assertOk();
+        $this->assertSame(0, $topic->fresh()->view_count);
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) Firefox/140.0');
+
         // Reloading and paging through the same topic in one session counts once.
         $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Просмотров: 1');
         $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Просмотров: 1');
