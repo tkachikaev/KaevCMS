@@ -150,6 +150,25 @@ class ForumNotificationsTest extends TestCase
         $this->assertSame(0, UserNotification::query()->where('user_id', $author->id)->count());
     }
 
+    public function test_quoting_a_picture_only_message_notifies_its_author(): void
+    {
+        $owner = User::factory()->create();
+        $artist = User::factory()->create(['display_name' => 'PictureAuthor']);
+        $writer = User::factory()->create();
+        $topic = $this->topic($owner, 'Screenshots');
+        $picture = app(ForumPosting::class)->addReply(new ForumActor('user', user: $artist), $topic->id, '',
+            (string) Str::uuid(), '<figure><img src="https://iili.io/abc.png" alt=""></figure>');
+        UserNotification::query()->delete();
+
+        $this->replyAs($writer, $topic, 'PictureAuthor wrote: nice screenshot', ['quoted_posts' => [$picture->id]]);
+        $this->assertSame('forum.quote', UserNotification::query()->where('user_id', $artist->id)->sole()->type);
+
+        // Without the author's name in the message, a forged quote reference is ignored.
+        UserNotification::query()->delete();
+        $this->replyAs($writer, $topic, 'Unrelated text', ['quoted_posts' => [$picture->id]]);
+        $this->assertSame(0, UserNotification::query()->where('user_id', $artist->id)->count());
+    }
+
     private function topic(User $author, string $title): ForumTopic
     {
         $section = ForumSection::query()->where('name_ru', 'Общее общение')->firstOrFail();

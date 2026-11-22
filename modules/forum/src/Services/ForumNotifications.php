@@ -75,7 +75,12 @@ final class ForumNotifications
                     // text, even when the source contains rich formatting.
                     $quotedText = preg_replace('/\s+/u', ' ', trim((string) $original->body_text)) ?? '';
                     $excerpt = mb_substr($quotedText, 0, 60);
-                    $hasAddress = $excerpt !== '' && str_contains($message, $excerpt);
+                    // A picture- or video-only message has no text to quote: the quote
+                    // then carries only the author's name ("Name wrote:").
+                    $mediaOnly = $excerpt === '' || in_array($quotedText, self::mediaPlaceholders(), true);
+                    $hasAddress = $mediaOnly
+                        ? str_contains($message, $recipient->publicName())
+                        : str_contains($message, $excerpt);
                 }
                 if ($hasAddress) {
                     $recipients[(int) $recipient->id] ??= ['type' => $type, 'key' => $key, 'group' => null];
@@ -147,6 +152,19 @@ final class ForumNotifications
             $section,
             $this->structure->globalVisibility(),
         );
+    }
+
+    /** @return list<string> plain-text stand-ins stored for image-only and video-only posts */
+    private static function mediaPlaceholders(): array
+    {
+        $placeholders = [];
+        foreach (['ru', 'en'] as $locale) {
+            foreach (['image_placeholder', 'video_placeholder'] as $key) {
+                $placeholders[] = (string) __('module-forum::messages.'.$key, [], $locale);
+            }
+        }
+
+        return $placeholders;
     }
 
     private function postPath(ForumTopic $topic, ForumPost $post): string

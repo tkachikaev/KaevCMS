@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum notifications: quoting a message that holds only a picture or a video now notifies its author too (the quote is recognised by the author's name).
 - Forum activity table: hiding, deleting, restoring, pinning or moving a topic refreshes the cached lists at once, so a hidden topic no longer lingers on the home page for up to a minute.
 - Forum views: requests without the session cookie (most bots, scripts and link previews) and known crawler user agents are not counted and no longer write to the database on every hit.
 - Forum search: at least three characters, identical searches are answered from a two-minute cache (results are re-checked for hidden topics and closed sections), and the whole forum shares a budget of fresh searches per minute; when it is spent, visitors see "Search is busy, try again in a minute" instead of loading the database.
