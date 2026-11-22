@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum: ship the author-card service in release packages; without it, topic pages failed on sites updated from a release archive.
 - Forum: the language switch is now the website's own language menu, with the same look and opening animation in light and dark schemes, and changing the language keeps the visitor on the same forum page instead of opening the website home page.
 - Forum: clicking your name in the header opens an account menu like the player account's — wallet balance, account, settings, security and sign out for players; forum settings, control panel and sign out for staff — instead of leaving the forum. The separate settings gear moved into this menu.
 - Forum: search is a rounded field with a magnifier beside the forum heading instead of a separate "Search" tab in the header; the results page keeps the same field with the query filled in. The header no longer has Forum/Search tabs, and "To website" stays visible on phones.
