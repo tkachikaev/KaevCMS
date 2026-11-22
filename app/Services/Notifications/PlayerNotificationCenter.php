@@ -119,7 +119,8 @@ final class PlayerNotificationCenter
     {
         $query = UserNotification::query()->where('user_id', $user->getKey())->whereNull('read_at');
         if ($this->visibilityPolicies === []) {
-            return $query->limit(self::UNREAD_DISPLAY_LIMIT)->pluck('id')->count();
+            // Count at most the displayed limit in SQL: a player with a huge backlog stays cheap.
+            return DB::query()->fromSub($query->select('id')->limit(self::UNREAD_DISPLAY_LIMIT), 'unread')->count();
         }
 
         $count = 0;
@@ -246,7 +247,7 @@ final class PlayerNotificationCenter
     }
 
     /**
-     * @param  array<string, scalar|null>  $parameters
+     * @param  array<array-key, scalar|null>  $parameters
      * @return array<string, string|int>
      */
     private static function cleanParameters(array $parameters): array

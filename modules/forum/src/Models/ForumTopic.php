@@ -11,12 +11,15 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $section_id
+ * @property string $title
  * @property string $status
  * @property bool $is_pinned
  * @property string $author_type
  * @property int|null $author_user_id
  * @property int|null $author_admin_id
  * @property int $reply_count
+ * @property int $view_count
+ * @property Carbon $last_post_at
  * @property Carbon|null $hidden_at
  * @property Carbon|null $deleted_at
  */
