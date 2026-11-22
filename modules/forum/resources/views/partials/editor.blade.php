@@ -22,7 +22,8 @@
      data-too-large-message="{{ __('module-forum::messages.content_too_large') }}"
      data-unsafe-link-message="{{ __('module-forum::messages.unsafe_link') }}"
      data-link-images="1"
-     data-unsafe-image-message="{{ __('module-forum::messages.unsafe_image') }}">
+     data-unsafe-image-message="{{ __('module-forum::messages.unsafe_image') }}"
+     data-unsupported-media-message="{{ __('module-forum::messages.unsupported_media') }}">
     <div class="rich-editor-toolbar forum-editor-toolbar" role="toolbar" aria-label="{{ __('module-forum::messages.formatting') }}">
         <button type="button" data-editor-action="bold" title="{{ __('module-forum::messages.bold') }}" aria-label="{{ __('module-forum::messages.bold') }}"><strong>B</strong></button>
         <button type="button" data-editor-action="italic" title="{{ __('module-forum::messages.italic') }}" aria-label="{{ __('module-forum::messages.italic') }}"><em>I</em></button>
@@ -146,6 +147,7 @@
             </div>
         </details>
         <button type="button" data-editor-link-image title="{{ __('module-forum::messages.insert_image') }}" aria-label="{{ __('module-forum::messages.insert_image') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg></button>
+        <button type="button" data-editor-media title="{{ __('module-forum::messages.insert_media') }}" aria-label="{{ __('module-forum::messages.insert_media') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="m10 9.5 5 2.5-5 2.5z" fill="currentColor"/></svg></button>
         <button type="button" data-editor-link title="{{ __('module-forum::messages.insert_link') }}" aria-label="{{ __('module-forum::messages.insert_link') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
     </div>
 
@@ -175,6 +177,22 @@
         <div class="forum-dialog-actions">
             <button class="forum-button" type="button" data-editor-dialog-cancel>{{ __('module-forum::messages.cancel') }}</button>
             <button class="forum-button forum-button-primary" type="button" data-editor-link-image-apply>{{ __('module-forum::messages.insert') }}</button>
+        </div>
+    </dialog>
+
+    <dialog class="forum-editor-link-dialog" data-editor-media-dialog aria-labelledby="{{ $editorId }}-media-title">
+        <h3 id="{{ $editorId }}-media-title">{{ __('module-forum::messages.media_dialog_title') }}</h3>
+        <label>
+            <span>{{ __('module-forum::messages.media_url') }}</span>
+            <input type="text" data-editor-media-url inputmode="url" maxlength="2048" placeholder="https://www.youtube.com/watch?v=…">
+        </label>
+        <p class="forum-media-sites">
+            <span>{{ __('module-forum::messages.media_supported') }}</span>
+            <strong>YouTube</strong>, <strong>Twitch</strong>
+        </p>
+        <div class="forum-dialog-actions">
+            <button class="forum-button" type="button" data-editor-dialog-cancel>{{ __('module-forum::messages.cancel') }}</button>
+            <button class="forum-button forum-button-primary" type="button" data-editor-media-apply>{{ __('module-forum::messages.insert') }}</button>
         </div>
     </dialog>
 

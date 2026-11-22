@@ -18,7 +18,7 @@
                 <span class="forum-post-date">{{ \Illuminate\Support\Carbon::parse($revision->created_at)->format('d.m.Y H:i') }}</span>
             </header>
             @if($revision->body_html !== null)
-                <div class="forum-post-body forum-post-rich">{!! app(\App\Services\Html\SafeHtmlSanitizer::class)->sanitize($revision->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM) !!}</div>
+                <div class="forum-post-body forum-post-rich">{!! \KaevCMS\Modules\Forum\Support\ForumMedia::render(app(\App\Services\Html\SafeHtmlSanitizer::class)->sanitize($revision->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM), request()->getHost()) !!}</div>
             @else
                 <div class="forum-post-body">{{ $revision->body_text }}</div>
             @endif

@@ -233,4 +233,10 @@ return [
     'unsafe_image' => 'Укажите прямую ссылку на изображение, начинающуюся с https://.',
     'image_placeholder' => '[Изображение]',
     'insert' => 'Вставить',
+    'insert_media' => 'Медиа',
+    'media_url' => 'Ссылка на видео',
+    'media_supported' => 'Поддерживаемые сайты:',
+    'unsupported_media' => 'Эту ссылку не удалось распознать. Поддерживаются ролики YouTube и видео, клипы и каналы Twitch.',
+    'video_placeholder' => '[Видео]',
+    'media_dialog_title' => 'Вставить медиа',
 ];

@@ -289,6 +289,37 @@ final class ForumEditorTest extends TestCase
         $this->assertStringNotContainsString('<img', $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_NEWS));
     }
 
+    public function test_forum_video_tokens_render_only_supported_players(): void
+    {
+        $sanitizer = app(SafeHtmlSanitizer::class);
+        $html = '<figure data-media-id="dQw4w9WgXcQ" data-media="youtube" data-align="center"><iframe src="https://evil.example"></iframe></figure>'.
+            '<figure data-media="twitch" data-media-id="clip:FunnyClip-1"></figure>'.
+            '<figure data-media="youtube" data-media-id="bad id"></figure>'.
+            '<figure data-media="vimeo" data-media-id="123"></figure>'.
+            '<figure data-media="twitch" data-media-id="channel:a&quot;onload=x"></figure>';
+
+        $safe = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
+        $this->assertStringNotContainsString('iframe', $safe);
+        $this->assertStringNotContainsString('evil', $safe);
+        $this->assertSame(2, substr_count($safe, '<figure'));
+
+        $rendered = \KaevCMS\Modules\Forum\Support\ForumMedia::render($safe, 'forum.example.com');
+        $this->assertStringContainsString('<figure class="forum-media" data-media="youtube" data-align="center"><iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"', $rendered);
+        $this->assertStringContainsString('src="https://clips.twitch.tv/embed?clip=FunnyClip-1&amp;parent=forum.example.com&amp;autoplay=false"', $rendered);
+        $this->assertSame(2, substr_count($rendered, '<iframe'));
+        $this->assertStringNotContainsString('onload', $rendered);
+        $this->assertStringNotContainsString('vimeo', $rendered);
+    }
+
+    public function test_video_frames_are_allowed_on_forum_pages_only(): void
+    {
+        $forum = (string) $this->get('/forum')->headers->get('Content-Security-Policy');
+        $this->assertStringContainsString('frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://clips.twitch.tv', $forum);
+
+        $home = (string) $this->get('/')->headers->get('Content-Security-Policy');
+        $this->assertStringNotContainsString('frame-src', $home);
+    }
+
     private function section(string $name): ForumSection
     {
         return ForumSection::query()->where('name_ru', $name)->firstOrFail();

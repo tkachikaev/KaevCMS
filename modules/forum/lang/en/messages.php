@@ -233,4 +233,10 @@ return [
     'unsafe_image' => 'Enter a direct image address starting with https://.',
     'image_placeholder' => '[Image]',
     'insert' => 'Insert',
+    'insert_media' => 'Media',
+    'media_url' => 'Video link',
+    'media_supported' => 'Supported sites:',
+    'unsupported_media' => 'This link was not recognized. YouTube videos and Twitch videos, clips and channels are supported.',
+    'video_placeholder' => '[Video]',
+    'media_dialog_title' => 'Insert media',
 ];

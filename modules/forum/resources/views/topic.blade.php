@@ -132,7 +132,7 @@
                 @if($isRemoved)
                     <div class="forum-post-body forum-post-removed">{{ __('module-forum::messages.deleted_by_'.($post->removed_by ?? 'moderator')) }}</div>
                 @elseif($post->body_html !== null)
-                    <div class="forum-post-body forum-post-rich">{!! $sanitizer->sanitize($post->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM) !!}</div>
+                    <div class="forum-post-body forum-post-rich">{!! \KaevCMS\Modules\Forum\Support\ForumMedia::render($sanitizer->sanitize($post->body_html, \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM), request()->getHost()) !!}</div>
                 @else
                     <div class="forum-post-body">{{ $post->body_text }}</div>
                 @endif

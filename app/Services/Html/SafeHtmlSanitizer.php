@@ -251,7 +251,7 @@ final class SafeHtmlSanitizer
             'div' => $profile === self::PROFILE_PAGE ? ['data-content-block'] : [],
             'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'referrerpolicy'] : ['src', 'alt'],
             'span' => ['data-color', 'data-highlight', 'data-text-size'],
-            'figure' => $profile === self::PROFILE_FORUM ? ['data-align', 'data-width'] : ['data-align', 'data-size'],
+            'figure' => $profile === self::PROFILE_FORUM ? ['data-align', 'data-width', 'data-media', 'data-media-id'] : ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
         };
         if ($profile === self::PROFILE_PAGE && $tag === 'a') {
@@ -363,7 +363,31 @@ final class SafeHtmlSanitizer
             }
         }
 
+        if ($tag === 'figure' && $profile === self::PROFILE_FORUM && $element->hasAttribute('data-media')) {
+            // Video embeds are stored as a provider + id token, never as player markup.
+            // The forum renders the player itself from these two validated values.
+            $provider = $element->getAttribute('data-media');
+            $mediaId = $element->getAttribute('data-media-id');
+            if (! self::validForumMedia($provider, $mediaId)) {
+                $element->parentNode?->removeChild($element);
+
+                return;
+            }
+            while ($element->firstChild !== null) {
+                $element->removeChild($element->firstChild);
+            }
+            $element->removeAttribute('data-width');
+            // Fixed attribute order keeps the forum player renderer simple and strict.
+            $element->removeAttribute('data-media');
+            $element->removeAttribute('data-media-id');
+            $element->setAttribute('data-media', $provider);
+            $element->setAttribute('data-media-id', $mediaId);
+
+            return;
+        }
+
         if ($tag === 'figure' && $profile === self::PROFILE_FORUM) {
+            $element->removeAttribute('data-media-id');
             $width = $element->getAttribute('data-width');
             if (! in_array($width, self::FORUM_IMAGE_WIDTHS, true) || $width === '100') {
                 $element->removeAttribute('data-width');
@@ -417,6 +441,16 @@ final class SafeHtmlSanitizer
         $pattern = '~^/uploads/'.$directory.'/content/\d{4}/\d{2}/[a-f0-9-]+\.(?:jpe?g|png|webp)$~i';
 
         return preg_match($pattern, $src) === 1 ? $src : null;
+    }
+
+    /** Supported forum video providers and the exact id shapes they accept. */
+    public static function validForumMedia(string $provider, string $mediaId): bool
+    {
+        return match ($provider) {
+            'youtube' => preg_match('/\A[A-Za-z0-9_-]{11}\z/', $mediaId) === 1,
+            'twitch' => preg_match('/\A(?:video:\d{1,12}|clip:[A-Za-z0-9_-]{1,100}|channel:[A-Za-z0-9_]{3,25})\z/', $mediaId) === 1,
+            default => false,
+        };
     }
 
     /** Forum images are hot-linked from public https hosts; local and private targets are refused. */

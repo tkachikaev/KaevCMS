@@ -265,6 +265,8 @@ const LinkImage = Node.create({
             const image = document.createElement('img');
             const handle = document.createElement('span');
             figure.className = 'link-image-view';
+            // The caret must never enter an atom node view: it is selected as a whole.
+            figure.contentEditable = 'false';
             frame.className = 'link-image-frame';
             image.referrerPolicy = 'no-referrer';
             image.draggable = false;
@@ -328,6 +330,117 @@ const LinkImage = Node.create({
                     return true;
                 },
                 stopEvent: (event) => event.target === handle,
+                ignoreMutation: () => true,
+            };
+        };
+    },
+});
+
+// Video links become a provider + id token. The forum server renders the player;
+// the editor shows a lightweight card instead of loading the player while typing.
+const parseMediaUrl = (rawValue) => {
+    let url;
+    try {
+        url = new URL(rawValue.trim());
+    } catch {
+        return null;
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    const host = url.hostname.toLowerCase().replace(/^(?:www\.|m\.)/, '');
+    const parts = url.pathname.split('/').filter(Boolean);
+    const youtubeId = (value) => (/^[A-Za-z0-9_-]{11}$/.test(value ?? '') ? value : null);
+
+    if (host === 'youtu.be') {
+        const id = youtubeId(parts[0]);
+        return id ? { provider: 'youtube', mediaId: id } : null;
+    }
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com' || host === 'music.youtube.com') {
+        const id = parts[0] === 'watch'
+            ? youtubeId(url.searchParams.get('v'))
+            : (['shorts', 'embed', 'live', 'v'].includes(parts[0]) ? youtubeId(parts[1]) : null);
+        return id ? { provider: 'youtube', mediaId: id } : null;
+    }
+    if (host === 'clips.twitch.tv') {
+        const slug = parts[0] === 'embed' ? url.searchParams.get('clip') : parts[0];
+        return /^[A-Za-z0-9_-]{1,100}$/.test(slug ?? '') ? { provider: 'twitch', mediaId: `clip:${slug}` } : null;
+    }
+    if (host === 'twitch.tv') {
+        if (parts[0] === 'videos' && /^\d{1,12}$/.test(parts[1] ?? '')) return { provider: 'twitch', mediaId: `video:${parts[1]}` };
+        if (parts[1] === 'clip' && /^[A-Za-z0-9_-]{1,100}$/.test(parts[2] ?? '')) return { provider: 'twitch', mediaId: `clip:${parts[2]}` };
+        if (parts.length === 1 && /^[A-Za-z0-9_]{3,25}$/.test(parts[0])) return { provider: 'twitch', mediaId: `channel:${parts[0]}` };
+    }
+
+    return null;
+};
+
+const MediaEmbed = Node.create({
+    name: 'mediaEmbed',
+    group: 'block',
+    atom: true,
+    draggable: true,
+    selectable: true,
+
+    addAttributes() {
+        return {
+            provider: { default: null },
+            mediaId: { default: null },
+            align: { default: 'left' },
+        };
+    },
+
+    parseHTML() {
+        return [{
+            tag: 'figure[data-media]',
+            priority: 70,
+            getAttrs: (element) => {
+                const provider = element.getAttribute('data-media');
+                const mediaId = element.getAttribute('data-media-id') ?? '';
+                const align = element.getAttribute('data-align')?.toLowerCase() ?? 'left';
+                const valid = provider === 'youtube'
+                    ? /^[A-Za-z0-9_-]{11}$/.test(mediaId)
+                    : provider === 'twitch' && /^(?:video:\d{1,12}|clip:[A-Za-z0-9_-]{1,100}|channel:[A-Za-z0-9_]{3,25})$/.test(mediaId);
+
+                return valid ? { provider, mediaId, align: SAFE_IMAGE_ALIGNMENTS.includes(align) ? align : 'left' } : false;
+            },
+        }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const attributes = { 'data-media': HTMLAttributes.provider, 'data-media-id': HTMLAttributes.mediaId };
+        if (['center', 'right'].includes(HTMLAttributes.align)) attributes['data-align'] = HTMLAttributes.align;
+
+        return ['figure', attributes];
+    },
+
+    addNodeView() {
+        return ({ node }) => {
+            const card = document.createElement('figure');
+            card.contentEditable = 'false';
+            const paint = (current) => {
+                card.className = `media-embed-card media-embed-${current.attrs.provider}`;
+                card.dataset.align = current.attrs.align ?? 'left';
+                card.replaceChildren();
+                if (current.attrs.provider === 'youtube') {
+                    const thumb = document.createElement('img');
+                    thumb.src = `https://i.ytimg.com/vi/${current.attrs.mediaId}/hqdefault.jpg`;
+                    thumb.alt = '';
+                    thumb.referrerPolicy = 'no-referrer';
+                    card.append(thumb);
+                }
+                const label = document.createElement('span');
+                label.className = 'media-embed-label';
+                label.textContent = `▶ ${current.attrs.provider === 'youtube' ? 'YouTube' : 'Twitch'} · ${String(current.attrs.mediaId).replace(/^(video|clip|channel):/, '')}`;
+                card.append(label);
+            };
+            paint(node);
+
+            return {
+                dom: card,
+                update: (updated) => {
+                    if (updated.type.name !== 'mediaEmbed') return false;
+                    paint(updated);
+                    return true;
+                },
                 ignoreMutation: () => true,
             };
         };
@@ -473,7 +586,7 @@ const initializeRichEditor = (root, signal) => {
             SafeColor,
             SafeHighlight,
             SafeTextSize,
-            ...(linkImages ? [LinkImage] : [FigureImage]),
+            ...(linkImages ? [LinkImage, MediaEmbed] : [FigureImage]),
             ...(pageBlocks ? [ContentCards, ContentCard, ContentButtons] : []),
             SafeTable.configure({
                 resizable: false,
@@ -516,7 +629,7 @@ const initializeRichEditor = (root, signal) => {
 
         let found = false;
         editor.state.doc.descendants((node) => {
-            if (['figureImage', 'linkImage', 'horizontalRule', 'table'].includes(node.type.name)) {
+            if (['figureImage', 'linkImage', 'mediaEmbed', 'horizontalRule', 'table'].includes(node.type.name)) {
                 found = true;
 
                 return false;
@@ -561,8 +674,9 @@ const initializeRichEditor = (root, signal) => {
         });
 
         root.querySelectorAll('[data-editor-align]').forEach((button) => {
-            const active = linkImages && editor.isActive('linkImage')
-                ? editor.isActive('linkImage', { align: button.dataset.editorAlign })
+            const blockMedia = linkImages && (editor.isActive('linkImage') ? 'linkImage' : (editor.isActive('mediaEmbed') ? 'mediaEmbed' : null));
+            const active = blockMedia
+                ? editor.isActive(blockMedia, { align: button.dataset.editorAlign })
                 : editor.isActive({ textAlign: button.dataset.editorAlign });
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -655,8 +769,9 @@ const initializeRichEditor = (root, signal) => {
         }
 
         const alignButton = event.target.closest('[data-editor-align]');
-        if (alignButton && linkImages && editor.isActive('linkImage')) {
-            editor.chain().focus().updateAttributes('linkImage', { align: alignButton.dataset.editorAlign }).run();
+        if (alignButton && linkImages && (editor.isActive('linkImage') || editor.isActive('mediaEmbed'))) {
+            const type = editor.isActive('linkImage') ? 'linkImage' : 'mediaEmbed';
+            editor.chain().focus().updateAttributes(type, { align: alignButton.dataset.editorAlign }).run();
             return;
         }
         if (alignButton) {
@@ -765,6 +880,17 @@ const initializeRichEditor = (root, signal) => {
         linkDialog?.close();
     }, { signal });
 
+    // A selected image or video must not be replaced by the next inserted block.
+    const insertBlockAfterSelection = (content) => {
+        const { selection } = editor.state;
+        const chain = editor.chain().focus();
+        if (selection.node) {
+            chain.insertContentAt(selection.to, content).run();
+        } else {
+            chain.insertContent(content).run();
+        }
+    };
+
     const previewLinkImage = () => {
         if (!linkImagePreview || !linkImageUrl) return;
         const url = linkImageUrl.value.trim();
@@ -804,10 +930,32 @@ const initializeRichEditor = (root, signal) => {
         if (editor.isActive('linkImage')) {
             editor.chain().focus().updateAttributes('linkImage', attributes).run();
         } else {
-            editor.chain().focus().insertContent({ type: 'linkImage', attrs: { ...attributes, align: 'left', width: '100' } }).run();
+            insertBlockAfterSelection({ type: 'linkImage', attrs: { ...attributes, align: 'left', width: '100' } });
         }
         setStatus('');
         linkImageDialog?.close();
+    }, { signal });
+
+    const mediaDialog = root.querySelector('[data-editor-media-dialog]');
+    const mediaUrl = root.querySelector('[data-editor-media-url]');
+    root.querySelector('[data-editor-media]')?.addEventListener('click', () => {
+        if (!mediaDialog || !mediaUrl) return;
+        mediaUrl.value = '';
+        mediaDialog.showModal();
+        mediaUrl.focus();
+    }, { signal });
+
+    root.querySelector('[data-editor-media-apply]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const media = parseMediaUrl(mediaUrl?.value ?? '');
+        if (!media) {
+            setStatus(root.dataset.unsupportedMediaMessage ?? 'This video link is not supported.', 'error');
+            mediaUrl?.focus();
+            return;
+        }
+        insertBlockAfterSelection({ type: 'mediaEmbed', attrs: { ...media, align: 'left' } });
+        setStatus('');
+        mediaDialog?.close();
     }, { signal });
 
     root.querySelectorAll('[data-editor-dialog-cancel]').forEach((button) => {

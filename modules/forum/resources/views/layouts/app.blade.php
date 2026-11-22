@@ -310,6 +310,21 @@
         .forum-image-preview[data-state="error"] img{display:none}
         .forum-image-preview[data-state="error"]::before{content:attr(data-error);color:#ad423b;font-size:13px}
         :root[data-forum-scheme="dark"] .forum-image-preview{border-color:#3a4e63;background:#121b26}
+        /* Video embeds: players rendered by the forum from a provider + id token. */
+        .forum-media{position:relative;width:100%;max-width:720px;aspect-ratio:16/9;margin:12px 0;border-radius:10px;overflow:hidden;background:#0d1117}
+        .forum-media[data-align="center"]{margin-left:auto;margin-right:auto}
+        .forum-media[data-align="right"]{margin-left:auto}
+        .forum-media iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+        .forum-editor-canvas .tiptap .media-embed-card{position:relative;display:grid;place-items:center;width:100%;max-width:420px;aspect-ratio:16/9;margin:12px 0;border-radius:10px;overflow:hidden;background:#0d1117;color:#fff}
+        .forum-editor-canvas .tiptap .media-embed-card[data-align="center"]{margin-left:auto;margin-right:auto}
+        .forum-editor-canvas .tiptap .media-embed-card[data-align="right"]{margin-left:auto}
+        .forum-editor-canvas .tiptap .media-embed-twitch{background:linear-gradient(135deg,#6441a5,#2b1650)}
+        .forum-editor-canvas .tiptap .media-embed-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75}
+        .media-embed-label{position:relative;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.6);font-size:13px;font-weight:600}
+        .forum-editor-canvas .tiptap .media-embed-card.ProseMirror-selectednode{outline:3px solid #739cc4;outline-offset:2px}
+        .forum-media-sites{margin:12px 0 0;color:#536982;font-size:13px}
+        .forum-media-sites span{display:block;margin-bottom:3px;color:#8a9aac}
+        :root[data-forum-scheme="dark"] .forum-media-sites{color:#c9d9ee}
         .forum-editor-menu{position:relative}
         .forum-editor-menu>summary{display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:32px;padding:3px 7px;border:1px solid transparent;border-radius:6px;color:#49617c;list-style:none;cursor:pointer}
         .forum-editor-menu>summary::-webkit-details-marker{display:none}

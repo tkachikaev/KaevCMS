@@ -162,6 +162,8 @@ final class ForumPosting
         if (mb_strlen($text) < 2 && str_contains($safeHtml, '<img')) {
             // An image-only message still needs searchable, quotable plain text.
             $text = __('module-forum::messages.image_placeholder');
+        } elseif (mb_strlen($text) < 2 && str_contains($safeHtml, 'data-media=')) {
+            $text = __('module-forum::messages.video_placeholder');
         }
 
         if (mb_strlen($text) < 2 || mb_strlen($text) > 10000) {
@@ -172,7 +174,7 @@ final class ForumPosting
 
         $this->assertContent($actor, $text);
         // A link can use innocuous label text with a prohibited destination.
-        $this->assertContent($actor, $safeHtml);
+        $this->assertContent($actor, $this->linkPolicyText($safeHtml));
 
         return [$text, $safeHtml];
     }
@@ -213,8 +215,17 @@ final class ForumPosting
 
         $this->assertContent($actor, $body, 'body', $days);
         if ($bodyHtml !== null) {
-            $this->assertContent($actor, $bodyHtml, 'body', $days);
+            $this->assertContent($actor, $this->linkPolicyText($bodyHtml), 'body', $days);
         }
+    }
+
+    /**
+     * Video embeds store only a provider token, without a URL in the markup. They still
+     * point readers to an outside site, so the account-age link rule covers them too.
+     */
+    private function linkPolicyText(string $html): string
+    {
+        return str_contains($html, 'data-media=') ? $html.' https://embedded-media' : $html;
     }
 
     private function assertAuthor(ForumActor $actor): void
