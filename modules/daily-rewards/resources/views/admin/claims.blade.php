@@ -14,7 +14,7 @@
 @else
     <div class="admin-card-list content-list">
         @foreach($claims as $claim)
-            <article class="admin-card-row content-row" data-testid="daily-reward-claim-row">
+            <article class="admin-card-row content-row reward-journal-row" data-testid="daily-reward-claim-row">
                 <div class="content-row-main">
                     <strong class="content-row-title">{{ $claim->user_email }}</strong>
                     <p>{{ $claim->game_account_login }} · {{ $claim->gameServer->nameFor() }} · {{ __('module-daily-rewards::messages.server_id', ['id' => $claim->game_server_id]) }}</p>

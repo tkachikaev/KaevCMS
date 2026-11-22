@@ -403,6 +403,9 @@
 .reward-queue-diagnostic{display:grid;gap:5px;min-width:260px;margin-top:9px;padding:10px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-surface-muted,#f8fafc)}
 .reward-queue-diagnostic strong{font-size:10px;letter-spacing:.04em;text-transform:uppercase}
 .reward-queue-diagnostic p{margin:0;color:var(--admin-text-muted);font-size:11px;line-height:1.45}
+/* Journal rows have no cover image: the shared list layout reserves its first column for one. */
+.content-row.reward-journal-row{grid-template-columns:minmax(0,1fr) auto}
+@media (max-width:760px){.content-row.reward-journal-row{grid-template-columns:minmax(0,1fr)}}
 .reward-journal-items{display:grid;gap:8px;margin-top:12px}
 .reward-journal-item{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:9px;min-width:0}
 .reward-journal-item-icon{display:grid;width:36px;height:36px;place-items:center;overflow:hidden;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-surface-muted,#f8fafc);font-size:11px;font-weight:800}

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Daily rewards: claim journal entries in the administration were squeezed into a narrow column (the shared list layout reserves it for a news cover); they now use the full width, stacking on phones.
 - Classic account theme: Forum (speech bubbles), Shop (shopping bag) and Referrals (person with a plus) menu items have their own icons instead of the fallback star.
 - Forum: image hosts and activity settings are read with one settings query instead of extra database schema checks on every page.
 - Forum notifications: quoting a message that holds only a picture or a video now notifies its author too (the quote is recognised by the author's name).
