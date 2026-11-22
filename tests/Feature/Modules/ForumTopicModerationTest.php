@@ -9,6 +9,7 @@ use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
@@ -288,7 +289,7 @@ final class ForumTopicModerationTest extends TestCase
 
         // A repeated query is answered from the cache even when the shared budget is spent.
         foreach (range(1, 130) as $attempt) {
-            \Illuminate\Support\Facades\RateLimiter::hit('forum-search:global', 60);
+            RateLimiter::hit('forum-search:global', 60);
         }
         $this->get('/forum/search?q=Budgeted')->assertOk()->assertSee($topic->title);
         $this->get('/forum/search?q=Different')->assertOk()

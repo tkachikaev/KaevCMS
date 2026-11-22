@@ -15,6 +15,7 @@ use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActor;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumAuthorProfiles;
+use KaevCMS\Modules\Forum\Services\ForumNotifications;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
 use KaevCMS\Modules\Forum\Services\ForumPostChanges;
 use KaevCMS\Modules\Forum\Services\ForumPosting;
@@ -141,7 +142,7 @@ final class ForumTopicController extends Controller
             // Reply persistence is complete. An unavailable notification store must
             // not turn a successful publication into an error (or invite a retry).
             try {
-                app(\KaevCMS\Modules\Forum\Services\ForumNotifications::class)->afterReply(
+                app(ForumNotifications::class)->afterReply(
                     $actor,
                     $topic->fresh() ?? $topic,
                     $post,

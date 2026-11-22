@@ -2,16 +2,20 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Models\Admin;
 use App\Models\User;
 use App\Models\UserNotification;
+use App\Services\Notifications\PlayerNotificationCenter;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use KaevCMS\Modules\Forum\Models\ForumPost;
 use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActor;
+use KaevCMS\Modules\Forum\Services\ForumNotifications;
 use KaevCMS\Modules\Forum\Services\ForumPosting;
 use Tests\TestCase;
 
@@ -98,7 +102,7 @@ class ForumNotificationsTest extends TestCase
         $writer = User::factory()->create();
         $topic = $this->topic($owner, 'Notification failure');
 
-        $this->app->bind(\KaevCMS\Modules\Forum\Services\ForumNotifications::class,
+        $this->app->bind(ForumNotifications::class,
             static function (): never {
                 throw new \RuntimeException('Notification service unavailable');
             });
@@ -115,7 +119,7 @@ class ForumNotificationsTest extends TestCase
         $topic = $this->topic($author, 'Confidential topic title');
         $this->replyAs($writer, $topic, 'Normal reply before restriction');
 
-        $center = app(\App\Services\Notifications\PlayerNotificationCenter::class);
+        $center = app(PlayerNotificationCenter::class);
         $notification = UserNotification::query()->where('user_id', $author->id)->sole();
         $this->assertSame(1, $center->unreadCount($author));
 
@@ -141,8 +145,8 @@ class ForumNotificationsTest extends TestCase
         $topic = $this->topic($author, 'Soon private');
         $section->update(['view_rule' => 'moderators', 'topic_rule' => 'moderators', 'reply_rule' => 'moderators']);
         $moderator = User::factory()->create();
-        \Illuminate\Support\Facades\DB::table('module_forum_moderators')->insert([
-            'user_id' => $moderator->id, 'assigned_by_admin_id' => \App\Models\Admin::factory()->create()->id, 'created_at' => now(),
+        DB::table('module_forum_moderators')->insert([
+            'user_id' => $moderator->id, 'assigned_by_admin_id' => Admin::factory()->create()->id, 'created_at' => now(),
         ]);
 
         $this->replyAs($moderator, $topic, 'Staff only now');

@@ -38,7 +38,7 @@ final class SecurityHeaders
             }
             // Forum posts may embed YouTube (privacy mode) and Twitch players.
             $frameSource = $request->routeIs('modules.forum.*')
-                ? "frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://clips.twitch.tv"
+                ? 'frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://clips.twitch.tv'
                 : null;
             // Bundled themes use external scripts and Livewire's CSP-safe build.
             // Inline CSS remains necessary for Livewire styles and dynamic UI sizing.

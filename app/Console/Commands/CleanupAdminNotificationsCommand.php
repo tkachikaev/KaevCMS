@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Notifications\AdminNotificationCenter;
+use App\Services\Notifications\PlayerNotificationCenter;
 use Illuminate\Console\Command;
 
 final class CleanupAdminNotificationsCommand extends Command
@@ -11,7 +12,7 @@ final class CleanupAdminNotificationsCommand extends Command
 
     protected $description = 'Delete administrator notifications older than the configured retention period';
 
-    public function handle(AdminNotificationCenter $notifications, \App\Services\Notifications\PlayerNotificationCenter $players): int
+    public function handle(AdminNotificationCenter $notifications, PlayerNotificationCenter $players): int
     {
         // Player bell notifications share this daily cleanup.
         $this->info(__('Old player notifications deleted: :count.', ['count' => $players->cleanup()]));

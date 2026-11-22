@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\Forum\Models\ForumCategory;
 use KaevCMS\Modules\Forum\Models\ForumSection;
+use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
@@ -111,7 +112,7 @@ final class ForumStructureController extends Controller
             'identities' => $this->actors->identities($request),
             'categories' => ForumCategory::onlyTrashed()->orderByDesc('deleted_at')->get(),
             'sections' => ForumSection::onlyTrashed()->orderByDesc('deleted_at')->get(),
-            'topics' => \KaevCMS\Modules\Forum\Models\ForumTopic::onlyTrashed()
+            'topics' => ForumTopic::onlyTrashed()
                 ->with(['section' => static fn ($query) => $query->withTrashed()->with(['category' => static fn ($category) => $category->withTrashed()])])
                 ->orderByDesc('deleted_at')->limit(100)->get(),
         ])->header('Cache-Control', 'private, no-store, max-age=0');

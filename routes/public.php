@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\Account\PlayerNotificationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -85,11 +86,11 @@ Route::prefix('{locale}')
 
 // The player's bell: unread count for polling, open (mark read and go), read all.
 Route::middleware(['auth:web'])->prefix('notifications')->name('notifications.')->group(static function (): void {
-    Route::get('/count', [\App\Http\Controllers\Account\PlayerNotificationController::class, 'count'])
+    Route::get('/count', [PlayerNotificationController::class, 'count'])
         ->middleware('throttle:60,1')->name('count');
-    Route::post('/read-all', [\App\Http\Controllers\Account\PlayerNotificationController::class, 'readAll'])
+    Route::post('/read-all', [PlayerNotificationController::class, 'readAll'])
         ->middleware('throttle:30,1')->name('read-all');
-    Route::post('/{notification}', [\App\Http\Controllers\Account\PlayerNotificationController::class, 'open'])
+    Route::post('/{notification}', [PlayerNotificationController::class, 'open'])
         ->whereNumber('notification')->middleware('throttle:60,1')->name('open');
 });
 

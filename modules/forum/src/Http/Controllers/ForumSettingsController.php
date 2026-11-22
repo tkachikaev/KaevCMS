@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use KaevCMS\Modules\Forum\Services\ForumActivity;
 use KaevCMS\Modules\Forum\Services\ForumImageHosts;
 
 final class ForumSettingsController extends Controller
@@ -55,7 +56,7 @@ final class ForumSettingsController extends Controller
         $moderatorIds = $moderators->pluck('id')->map(static fn ($id): int => (int) $id)->all();
 
         $imageHosts = app(ForumImageHosts::class)->all();
-        $activity = app(\KaevCMS\Modules\Forum\Services\ForumActivity::class)->settings();
+        $activity = app(ForumActivity::class)->settings();
 
         return view('module-forum::admin.settings', compact('settings', 'search', 'candidates', 'moderators', 'moderatorIds', 'imageHosts', 'activity', 'section'));
     }
@@ -107,7 +108,7 @@ final class ForumSettingsController extends Controller
         $owner = $this->owner($request);
         $data = $request->validate([
             'activity_enabled' => ['required', 'boolean'],
-            'activity_limit' => ['required', 'integer', 'min:1', 'max:'.\KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT],
+            'activity_limit' => ['required', 'integer', 'min:1', 'max:'.ForumActivity::MAX_LIMIT],
             'image_hosts' => ['nullable', 'string', 'max:4000'],
         ]);
         $parsed = ForumImageHosts::parse((string) ($data['image_hosts'] ?? ''));

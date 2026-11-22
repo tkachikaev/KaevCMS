@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Html\SafeHtmlSanitizer;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -175,8 +177,8 @@ final class ForumSettingsTest extends TestCase
         $owner = Admin::factory()->create();
         $this->actingAs($owner, 'admin');
         $url = '/admin/extensions/forum/settings';
-        $sanitizer = app(\App\Services\Html\SafeHtmlSanitizer::class);
-        $forum = \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM;
+        $sanitizer = app(SafeHtmlSanitizer::class);
+        $forum = SafeHtmlSanitizer::PROFILE_FORUM;
 
         // Defaults come from the module migration.
         $this->get($url.'?section=community')->assertOk()->assertSee('name="image_hosts"', false)->assertSee('iili.io');
@@ -210,7 +212,7 @@ final class ForumSettingsTest extends TestCase
 
     public function test_only_the_owner_can_change_image_hosts(): void
     {
-        $this->actingAs(Admin::factory()->create(['role' => \App\Auth\AdminRole::Administrator]), 'admin');
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Administrator]), 'admin');
         $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '1', 'activity_limit' => 10, 'image_hosts' => 'evil.example'])->assertForbidden();
         $this->assertStringNotContainsString('evil.example', (string) DB::table('module_forum_settings')->value('image_hosts'));
     }

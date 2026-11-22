@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Auth\AdminRole;
 use App\Models\Admin;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -89,7 +90,7 @@ class ForumActivityTest extends TestCase
 
     public function test_only_the_owner_changes_the_activity_table(): void
     {
-        $this->actingAs(Admin::factory()->create(['role' => \App\Auth\AdminRole::Administrator]), 'admin');
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Administrator]), 'admin');
         $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '0', 'activity_limit' => 5, 'image_hosts' => 'iili.io'])
             ->assertForbidden();
         $this->assertTrue((bool) DB::table('module_forum_settings')->value('activity_enabled'));

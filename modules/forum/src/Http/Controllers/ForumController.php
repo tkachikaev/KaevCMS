@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use KaevCMS\Modules\Forum\Services\ForumActivity;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
@@ -26,10 +27,10 @@ final class ForumController extends Controller
             'identities' => $actors->identities($request),
             'categories' => $categories,
             'activity' => $structure->sectionActivity($categories),
-            'activityTabs' => app(\KaevCMS\Modules\Forum\Services\ForumActivity::class)->tabs(
+            'activityTabs' => app(ForumActivity::class)->tabs(
                 $categories->flatMap(static fn ($category) => $category->sections->pluck('id'))->map(static fn ($id): int => (int) $id)->values()->all(),
                 $actor->user,
-                app(\KaevCMS\Modules\Forum\Services\ForumActivity::class)->limit(),
+                app(ForumActivity::class)->limit(),
             ),
             'activityTab' => in_array($request->query('activity'), ['latest', 'new', 'popular', 'mine'], true)
                 ? (string) $request->query('activity') : 'latest',

@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use KaevCMS\Modules\Forum\Models\ForumPost;
 use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
+use KaevCMS\Modules\Forum\Support\ForumMedia;
 use Tests\TestCase;
 
 final class ForumEditorTest extends TestCase
@@ -305,7 +306,7 @@ final class ForumEditorTest extends TestCase
         $this->assertStringNotContainsString('evil', $safe);
         $this->assertSame(2, substr_count($safe, '<figure'));
 
-        $rendered = \KaevCMS\Modules\Forum\Support\ForumMedia::render($safe, 'forum.example.com');
+        $rendered = ForumMedia::render($safe, 'forum.example.com');
         $this->assertStringContainsString('<figure class="forum-media" data-media="youtube" data-align="center"><iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"', $rendered);
         $this->assertStringContainsString('src="https://clips.twitch.tv/embed?clip=FunnyClip-1&amp;parent=forum.example.com&amp;autoplay=false"', $rendered);
         $this->assertSame(2, substr_count($rendered, '<iframe'));
