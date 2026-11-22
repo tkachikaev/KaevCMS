@@ -62,6 +62,9 @@ final class ForumModuleTest extends TestCase
             $this->assertTrue(Route::has($route));
         }
         $this->assertContains('modules.forum.index', array_column(app(ModuleNavigationRegistry::class)->accountLinks(), 'route'));
+        // The forum has its own layout: account menus open it with a full page load.
+        $forumLink = collect(app(ModuleNavigationRegistry::class)->accountLinks())->firstWhere('module_id', 'forum');
+        $this->assertTrue($forumLink['standalone']);
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.forum.settings'));
         $this->get('/modules/forum')->assertNotFound();
 

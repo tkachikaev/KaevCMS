@@ -21,7 +21,7 @@
     </a>
 
     @foreach(app(\App\Support\Modules\ModuleNavigationRegistry::class)->sidebarAccountLinks() as $moduleLink)
-        <a wire:navigate data-account-module-id="{{ $moduleLink['module_id'] }}" @class(['active' => request()->routeIs('modules.'.$moduleLink['module_id'].'.*')]) href="{{ route($moduleLink['route']) }}">
+        <a @unless($moduleLink['standalone'] ?? false) wire:navigate @endunless data-account-module-id="{{ $moduleLink['module_id'] }}" @class(['active' => request()->routeIs('modules.'.$moduleLink['module_id'].'.*')]) href="{{ route($moduleLink['route']) }}">
             @switch($moduleLink['module_id'])
                 @case('daily-rewards')
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>

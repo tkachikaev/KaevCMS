@@ -43,6 +43,8 @@ return static function (Application $app, ModuleContext $module): void {
         labelKey: 'module-forum::messages.navigation',
         descriptionKey: 'module-forum::messages.navigation_description',
         sortOrder: 85,
+        // The forum has its own layout: open it with a full page load, not a Livewire visit.
+        standalone: true,
     );
     $navigation->registerAdminLink(
         moduleId: $module->id,
