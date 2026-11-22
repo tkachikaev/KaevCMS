@@ -20,6 +20,27 @@ Classic uses a compact sun/moon switch. The theme changes with a quick smooth cr
 
 The public Aurelia 1.1.0 theme gained a night scheme: a sun/moon switch in the header (on phones, an entry at the end of the menu) toggles the light theme and a dark one with lavender accents and a night elf. The palette lives in `assets/css/dark.css` and applies only while `<html>` carries `data-site-scheme="dark"`; `assets/js/scheme.js` loads in `<head>` before the styles, so the saved choice (`localStorage`) applies before the first paint and survives Livewire navigation and language changes. The theme changes with a quick smooth crossfade: one elf fades out while the other fades in, in both directions; with reduced motion or without View Transitions it switches at once. The hero particles change palette with the theme. The language list opens smoothly: the panel lifts in and its rows follow one by one. After a page reload the portrait and copy no longer snap in: the artwork is fetched and decoded first, then fades in and glides slightly into place while the blocks rise in order (full page loads only, not Livewire visits or reduced motion).
 
+## Forum themes
+
+When the Forum module is enabled, **Admin → Themes** gets a **Forum** item next to Site and Account. Disable the module and the item goes away. The owner and administrators switch themes, auditors may only look; every switch is written to the audit log.
+
+Two themes are bundled:
+
+- **Frost**: cool blue-grey with light and dark modes. The easiest base for your own.
+- **Classic**: warm, in the style of the Classic player account: paper and gold by day, a soft violet night in the dark mode.
+
+A forum theme is a `public/forum-themes/<slug>` folder with three files:
+
+- `theme.json`: `name`, `slug` (same as the folder name), `version`, `author`, optional `description`, `preview`, `cms_min`, `cms_max` and `forum_min` (the minimum Forum module version);
+- `theme.css`: all forum styles. Dark mode rules start with `:root[data-forum-scheme="dark"]`. The `[data-color="…"]` rules paint the colors players pick in the editor; keep them as they are;
+- a preview image for the admin card (PNG, WebP or SVG).
+
+To make your own theme, copy the Frost or Classic folder, rename it, change `slug` and `name` in `theme.json` and edit `theme.css`. Browsers get a saved file at once: the stylesheet address changes with the file's modification time.
+
+A theme holds no templates or PHP, only styles, so a theme from someone else cannot run code on the server. In addition, `theme.css` may load images and fonts only from its own folder (or `data:`). A theme with `@import`, `http(s):` addresses, `//` or `\` escapes is marked as damaged and cannot be activated: such links would let styles send page data to another site. Files over 1 MB are refused too. If the chosen theme is damaged or removed, the forum falls back to Frost.
+
+New forum elements in future versions get styles in the bundled themes. For your own theme, compare its `theme.css` with the updated Frost and copy the new rules.
+
 ## Player account
 
 The overview is compact. A first-game-account panel is shown only while the player has no game accounts; afterwards the page opens directly with account metrics and quick actions.

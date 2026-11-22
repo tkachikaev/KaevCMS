@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Forum themes: with the Forum enabled, **Admin → Themes** gets a **Forum** item next to Site and Account. It lists style-only themes from `public/forum-themes/<slug>` (`theme.json`, `theme.css`, preview); the owner and administrators switch them, and each switch is audited. Two themes are bundled: **Frost** (the current blue-grey look) and **Classic** (warm paper and gold by day, violet night in the dark mode, like the Classic player account). To make your own, copy a theme folder and edit its stylesheet. Themes cannot contain code, and a stylesheet that reaches other sites (`@import`, `http(s):`, `//`, `\` escapes) or is larger than 1 MB is refused, so a shared theme cannot leak page data. A damaged or missing theme falls back to Frost.
+- Modules can list their own theme page under Admin → Themes (`ModuleNavigationRegistry::registerAppearanceLink`).
+
 ## 0.61.0 - 2026-11-22
 
 Forum 0.10.0, Daily Rewards 1.3.4, Classic account theme 1.0.4. After updating, open **Admin → Modules** and press "Update database" for the Forum: it has four new migrations (views, image hosts, activity table). The core adds the `user_notifications` table, applied by the regular update.

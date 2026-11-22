@@ -32,6 +32,9 @@ final class ModuleNavigationRegistry
     /** @var array<string, Closure(Admin): int> */
     private array $adminBadgeResolvers = [];
 
+    /** @var array<string, array<string, mixed>> Module pages listed under Admin → Themes. */
+    private array $appearanceLinks = [];
+
     /**
      * $inSidebar = false keeps the entry for other account surfaces (the wallet's top-up
      * button and menu) without a duplicate item in the account sidebar.
@@ -116,6 +119,42 @@ final class ModuleNavigationRegistry
         } else {
             $this->adminBadgeResolvers[$moduleId] = $badgeResolver;
         }
+    }
+
+    /**
+     * A module with its own look (the forum) lists its theme page next to the site
+     * and account themes. The link disappears with the module.
+     */
+    public function registerAppearanceLink(
+        string $moduleId,
+        string $routeName,
+        string $labelKey,
+        string $descriptionKey,
+        int $sortOrder = 100,
+    ): void {
+        $this->appearanceLinks[$moduleId] = $this->validatedLink(
+            moduleId: $moduleId,
+            routeName: $routeName,
+            labelKey: $labelKey,
+            descriptionKey: $descriptionKey,
+            sortOrder: $sortOrder,
+            routePrefix: 'admin.module-pages.'.$moduleId.'.',
+        );
+    }
+
+    /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */
+    public function availableAppearanceLinks(Admin $admin, ModuleAdminAccessRegistry $access): array
+    {
+        return array_values(array_filter(
+            $this->availableLinks($this->appearanceLinks),
+            static function (array $link) use ($access, $admin): bool {
+                $routeName = (string) $link['route'];
+
+                return $access->isRegistered($routeName)
+                    ? $access->canViewRoute($admin, $routeName)
+                    : $admin->hasPermission(AdminPermission::AppearanceView);
+            },
+        ));
     }
 
     /** @return list<array{module_id:string,route:string,label_key:string,description_key:string,sort_order:int}> */

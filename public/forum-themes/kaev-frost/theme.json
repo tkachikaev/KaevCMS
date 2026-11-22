@@ -1,0 +1,10 @@
+{
+    "name": "Frost",
+    "slug": "kaev-frost",
+    "version": "1.0.0",
+    "author": "KaevCMS",
+    "cms_min": "0.61.0",
+    "forum_min": "0.10.0",
+    "description": "Cool blue-grey forum theme with light and dark modes. The base to copy when you make your own forum theme.",
+    "preview": "preview.svg"
+}
