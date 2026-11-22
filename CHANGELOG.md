@@ -1,16 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.61.0 - 2026-11-22
+
+Forum 0.10.0, Daily Rewards 1.3.4, account themes Classic 1.0.4, Aurelia 1.6.12 and Luxury 1.6.10, public theme Aurelia 1.1.2. After updating, open **Admin → Modules** and press "Update database" for the Forum: it has four new migrations (views, image hosts, activity table). The core adds the `user_notifications` table, applied by the regular update. Forum themes live in `public/forum-themes`; Frost stays active until an administrator picks another one in **Admin → Themes → Forum**.
 
 - Forum themes: with the Forum enabled, **Admin → Themes** gets a **Forum** item next to Site and Account. It lists style-only themes from `public/forum-themes/<slug>` (`theme.json`, `theme.css`, preview); the owner and administrators switch them, and each switch is audited. Two themes are bundled: **Frost** (the current blue-grey look) and **Classic** (warm paper and gold by day, violet night in the dark mode, like the Classic player account). To make your own, copy a theme folder and edit its stylesheet. Themes cannot contain code, and a stylesheet that reaches other sites (`@import`, `http(s):`, `//`, `\` escapes) or is larger than 1 MB is refused, so a shared theme cannot leak page data. A damaged or missing theme falls back to Frost.
 - One light/dark switch for the whole site: the public Aurelia theme, the Classic player account and the forum now share one choice (`kaevcms.site.scheme` in the browser). Switching in any of them switches the others, also in tabs that are already open. Before this the account kept its own choice, so the forum could be dark while the account stayed light; a player's earlier account choice is picked up once.
 - Opening the forum from the player account menu no longer shows a huge emblem for a moment: the forum has its own layout, so the menu now opens it with a full page load instead of a Livewire visit that briefly showed it without styles. Modules mark such pages with `registerAccountLink(..., standalone: true)`; the bundled account themes honour it.
 - Modules can list their own theme page under Admin → Themes (`ModuleNavigationRegistry::registerAppearanceLink`).
-
-## 0.61.0 - 2026-11-22
-
-Forum 0.10.0, Daily Rewards 1.3.4, Classic account theme 1.0.4. After updating, open **Admin → Modules** and press "Update database" for the Forum: it has four new migrations (views, image hosts, activity table). The core adds the `user_notifications` table, applied by the regular update.
-
 - Daily rewards: claim journal entries in the administration were squeezed into a narrow column (the shared list layout reserves it for a news cover); they now use the full width, stacking on phones.
 - Classic account theme: Forum (speech bubbles), Shop (shopping bag) and Referrals (person with a plus) menu items have their own icons instead of the fallback star.
 - Forum: image hosts and activity settings are read with one settings query instead of extra database schema checks on every page.
