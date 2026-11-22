@@ -480,6 +480,7 @@
         .forum-section-row:focus-within,.forum-topic-row:focus-within{background:rgba(53,91,133,.035)}
         .forum-topic-row .forum-tag{display:inline-block;margin:0 0 0 7px;vertical-align:middle}
         .forum-footer{padding:0 16px 24px}
+        .forum-footer a{color:inherit}
         @media(max-width:650px){
             .forum-brand-wide img{max-width:132px;max-height:40px}
             .forum-heading-search{align-items:stretch}
@@ -643,7 +644,12 @@
             @endunless
         </a>
         <div class="forum-actions">
-            <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
+            {{-- Players go to their account from the forum; a staff-only visit keeps the way to the site. --}}
+            @if($actor->admin !== null && $actor->user === null)
+                <a class="forum-site-link" href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
+            @else
+                <a class="forum-site-link" href="{{ public_route('account') }}">{{ __('module-forum::messages.account') }}</a>
+            @endif
             <button type="button" class="forum-scheme-toggle" role="switch" aria-checked="false" data-forum-scheme-toggle
                     data-label-light="{{ __('Switch to the light theme') }}" data-label-dark="{{ __('Switch to the dark theme') }}"
                     aria-label="{{ __('Switch to the dark theme') }}" title="{{ __('Switch to the dark theme') }}">
@@ -731,6 +737,7 @@
                             <a href="{{ public_route('account') }}">{{ __('module-forum::messages.account') }}</a>
                             <a href="{{ public_route('profile.edit') }}">{{ __('Account settings') }}</a>
                             <a href="{{ public_route('security.edit') }}">{{ __('Security and password') }}</a>
+                            <a href="{{ public_route('home') }}">{{ __('module-forum::messages.website') }}</a>
                             <form method="POST" action="{{ public_route('logout') }}">
                                 @csrf
                                 <button type="submit">{{ __('Sign out') }}</button>
@@ -755,6 +762,6 @@
     @yield('content')
     @include('module-forum::partials.actor-switch')
 </main>
-<footer class="forum-footer">{{ site_name() }} · {{ __('module-forum::messages.title') }}</footer>
+<footer class="forum-footer"><a href="{{ public_route('home') }}">{{ site_name() }}</a> · {{ __('module-forum::messages.title') }}</footer>
 </body>
 </html>
