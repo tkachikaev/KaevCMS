@@ -19,11 +19,13 @@ final class ForumController extends Controller
         ForumStructure $structure,
     ): Response {
         $actor = $actors->resolve($request);
+        $categories = $structure->visibleCategories($actor, $permissions);
 
         return response()->view('module-forum::index', [
             'actor' => $actor,
             'identities' => $actors->identities($request),
-            'categories' => $structure->visibleCategories($actor, $permissions),
+            'categories' => $categories,
+            'activity' => $structure->sectionActivity($categories),
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
 

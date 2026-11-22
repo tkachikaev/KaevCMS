@@ -2,11 +2,14 @@
 
 namespace KaevCMS\Modules\Forum\Services;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\Forum\Models\ForumCategory;
+use KaevCMS\Modules\Forum\Models\ForumPost;
 use KaevCMS\Modules\Forum\Models\ForumSection;
+use KaevCMS\Modules\Forum\Models\ForumTopic;
 
 final class ForumStructure
 {
@@ -28,7 +31,6 @@ final class ForumStructure
             ->with(['sections' => static fn ($q) => $q
                 ->whereIn('view_rule', $rules)
                 ->withCount(['topics' => static fn ($topics) => $topics->whereNull('hidden_at')])
-                ->withMax(['topics as latest_activity' => static fn ($topics) => $topics->whereNull('hidden_at')], 'last_post_at')
                 ->orderBy('position')->orderBy('id')])
             ->orderBy('position')->orderBy('id');
 
@@ -37,6 +39,58 @@ final class ForumStructure
         }
 
         return $query->get();
+    }
+
+    /**
+     * Message totals and the latest message of every listed section, counted over the
+     * same topics the section list shows (not hidden, not deleted).
+     *
+     * @param  Collection<int, ForumCategory>  $categories
+     * @return array<int, array{posts:int, topic:ForumTopic|null, post:ForumPost|null, user:User|null, page:int}>
+     */
+    public function sectionActivity(Collection $categories, int $perPage = 15): array
+    {
+        $sectionIds = $categories->flatMap(static fn (ForumCategory $category) => $category->sections->pluck('id'))->all();
+        if ($sectionIds === []) {
+            return [];
+        }
+
+        $postCounts = ForumPost::query()
+            ->join('module_forum_topics as topics', 'topics.id', '=', 'module_forum_posts.topic_id')
+            ->whereIn('topics.section_id', $sectionIds)
+            ->whereNull('topics.hidden_at')
+            ->whereNull('topics.deleted_at')
+            ->groupBy('topics.section_id')
+            ->selectRaw('topics.section_id as section_id, count(*) as aggregate')
+            ->pluck('aggregate', 'section_id');
+
+        $activity = [];
+        foreach ($sectionIds as $sectionId) {
+            $topic = ForumTopic::query()
+                ->where('section_id', $sectionId)
+                ->whereNull('hidden_at')
+                ->orderByDesc('last_post_at')->orderByDesc('id')
+                ->first();
+            $post = $topic === null ? null : ForumPost::query()->where('topic_id', $topic->id)->orderByDesc('id')->first();
+            $position = $post === null ? 1 : ForumPost::query()->where('topic_id', $topic->id)->where('id', '<=', $post->id)->count();
+
+            $activity[$sectionId] = [
+                'posts' => (int) ($postCounts[$sectionId] ?? 0),
+                'topic' => $topic,
+                'post' => $post,
+                'user' => null,
+                'page' => intdiv(max(0, $position - 1), $perPage) + 1,
+            ];
+        }
+
+        $userIds = collect($activity)->pluck('post.author_user_id')->filter()->unique()->all();
+        $users = $userIds === [] ? collect() : User::query()->whereIn('id', $userIds)->get()->keyBy('id');
+        foreach ($activity as $sectionId => $row) {
+            $userId = $row['post']?->author_user_id;
+            $activity[$sectionId]['user'] = $userId === null ? null : $users->get($userId);
+        }
+
+        return $activity;
     }
 
     public function initialStructure(): bool

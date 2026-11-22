@@ -66,7 +66,13 @@ final class ForumPostingTest extends TestCase
             ->assertDontSee("<script>alert('xss')</script>", false);
 
         $this->get('/forum/sections/'.$section->id)->assertSee('Первое обсуждение');
-        $this->get('/forum')->assertSee('Тем: 1');
+        // The section list shows totals and links its latest message with the author.
+        $this->get('/forum')
+            ->assertSee('Темы')
+            ->assertSee('Сообщения')
+            ->assertSee('Первое обсуждение')
+            ->assertSee('#post-'.$post->id, false)
+            ->assertSee('PublicHero');
     }
 
     public function test_guest_cannot_post_but_may_read_public_topics(): void

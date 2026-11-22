@@ -1,6 +1,21 @@
 @extends('module-forum::layouts.app')
 @section('title', __('module-forum::messages.title'))
 @section('content')
+@php
+    // Compact counters like 1,2K for big sections; plain numbers otherwise.
+    $forumCount = static fn (int $value): string => $value >= 10000
+        ? format_number($value / 1000, $value >= 100000 ? 0 : 1).'K'
+        : format_number($value);
+    // "Today at 05:56", "Yesterday at 18:33", otherwise the date and time.
+    $forumWhen = static function ($date): string {
+        $date = \Illuminate\Support\Carbon::parse($date);
+        return match (true) {
+            $date->isToday() => __('module-forum::messages.today_at', ['time' => $date->format('H:i')]),
+            $date->isYesterday() => __('module-forum::messages.yesterday_at', ['time' => $date->format('H:i')]),
+            default => $date->format('d.m.Y H:i'),
+        };
+    };
+@endphp
 <div class="forum-heading forum-heading-search">
     <div class="forum-heading-copy">
         <h1>{{ __('module-forum::messages.title') }}</h1>
@@ -60,6 +75,7 @@
             </div>
             <div class="forum-panel forum-section-list">
                 @forelse($category->sections as $section)
+                    @php($sectionActivity = $activity[$section->id] ?? ['posts' => 0, 'topic' => null, 'post' => null, 'user' => null, 'page' => 1])
                     <div class="forum-section-row">
                         <div class="forum-section-main">
                             <span class="forum-section-icon" aria-hidden="true">
@@ -68,31 +84,44 @@
                                     <path d="M7.5 7.5h8m-8 4h5"/>
                                 </svg>
                             </span>
-                            <div>
+                            <div class="forum-section-copy">
                                 <a class="forum-section-title" href="{{ route('modules.forum.sections.show', $section) }}">{{ $section->label() }}</a>
                                 @if($section->description())<p>{{ $section->description() }}</p>@endif
-                            </div>
-                        </div>
-                        @if($actor->isOwner())
-                            <div class="forum-tools">
-                                <button class="forum-button forum-button-compact" type="button" data-forum-dialog-open="forum-section-edit-{{ $section->id }}">{{ __('module-forum::messages.edit') }}</button>
-                                @foreach(['up' => '↑', 'down' => '↓'] as $direction => $arrow)
-                                    <form method="POST" action="{{ route('modules.forum.sections.move', $section) }}">
-                                        @csrf
-                                        <input type="hidden" name="direction" value="{{ $direction }}">
-                                        <button class="forum-button forum-button-compact" type="submit" title="{{ __('module-forum::messages.move_'.$direction) }}">{{ $arrow }}</button>
-                                    </form>
-                                @endforeach
-                                <button class="forum-button forum-button-compact" type="button" data-forum-dialog-open="forum-section-delete-{{ $section->id }}">{{ __('module-forum::messages.delete') }}</button>
-                            </div>
-                        @else
-                            <div class="forum-section-summary">
-                                <span>{{ __('module-forum::messages.topics_count', ['count' => $section->topics_count]) }}</span>
-                                @if($section->latest_activity)
-                                    <small>{{ __('module-forum::messages.last_activity') }}: {{ \Illuminate\Support\Carbon::parse($section->latest_activity)->format('d.m.Y H:i') }}</small>
+                                @if($actor->isOwner())
+                                    <div class="forum-tools forum-section-tools">
+                                        <button class="forum-button forum-button-compact" type="button" data-forum-dialog-open="forum-section-edit-{{ $section->id }}">{{ __('module-forum::messages.edit') }}</button>
+                                        @foreach(['up' => '↑', 'down' => '↓'] as $direction => $arrow)
+                                            <form method="POST" action="{{ route('modules.forum.sections.move', $section) }}">
+                                                @csrf
+                                                <input type="hidden" name="direction" value="{{ $direction }}">
+                                                <button class="forum-button forum-button-compact" type="submit" title="{{ __('module-forum::messages.move_'.$direction) }}">{{ $arrow }}</button>
+                                            </form>
+                                        @endforeach
+                                        <button class="forum-button forum-button-compact" type="button" data-forum-dialog-open="forum-section-delete-{{ $section->id }}">{{ __('module-forum::messages.delete') }}</button>
+                                    </div>
                                 @endif
                             </div>
-                        @endif
+                        </div>
+                        <dl class="forum-section-stats">
+                            <div><dt>{{ __('module-forum::messages.stat_topics') }}</dt><dd>{{ $forumCount((int) $section->topics_count) }}</dd></div>
+                            <div><dt>{{ __('module-forum::messages.stat_posts') }}</dt><dd>{{ $forumCount($sectionActivity['posts']) }}</dd></div>
+                        </dl>
+                        <div class="forum-section-last">
+                            @if($sectionActivity['topic'] && $sectionActivity['post'])
+                                @php($lastPost = $sectionActivity['post'])
+                                @if($sectionActivity['user'])
+                                    <x-account-avatar :user="$sectionActivity['user']" :fallback="$lastPost->author_name" class="forum-avatar forum-section-last-avatar" />
+                                @else
+                                    <span class="account-avatar forum-avatar forum-section-last-avatar" aria-hidden="true"><span>{{ mb_strtoupper(mb_substr($lastPost->author_name, 0, 1)) }}</span></span>
+                                @endif
+                                <div class="forum-section-last-copy">
+                                    <a href="{{ route('modules.forum.topics.show', ['topic' => $sectionActivity['topic']->id, 'page' => $sectionActivity['page']]) }}#post-{{ $lastPost->id }}" title="{{ $sectionActivity['topic']->title }}">{{ $sectionActivity['topic']->title }}</a>
+                                    <small>{{ $forumWhen($lastPost->created_at) }} · <span>{{ $lastPost->author_name }}</span></small>
+                                </div>
+                            @else
+                                <small class="forum-section-last-empty">{{ __('module-forum::messages.no_posts_yet') }}</small>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <div class="forum-panel-body">{{ __('module-forum::messages.category_empty') }}</div>

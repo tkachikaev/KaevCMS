@@ -146,7 +146,7 @@
         .forum-help{color:#7e8c9e;font-size:12px;margin:9px 0 0}
         .forum-confirm{display:flex;gap:9px;align-items:center;font-size:13px;color:#587089}
         .forum-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
-        @media(max-width:650px){.forum-section-row{align-items:flex-start;flex-direction:column}.forum-form-grid,.forum-permissions{grid-template-columns:1fr}.forum-dialog{padding:18px}.forum-tools{gap:4px}}
+        @media(max-width:650px){.forum-section-row{align-items:stretch;flex-direction:column}.forum-section-row .forum-section-stats{gap:18px;padding-left:56px}.forum-section-row .forum-section-stats div{width:auto;display:flex;gap:6px;align-items:baseline;text-align:left}.forum-section-stats dd{margin:0;font-size:14px}.forum-section-row .forum-section-last{width:auto;padding-left:56px}.forum-form-grid,.forum-permissions{grid-template-columns:1fr}.forum-dialog{padding:18px}.forum-tools{gap:4px}}
 
         .forum-topic-row{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;border-bottom:1px solid #edf0f3}
         .forum-topic-row:last-child{border-bottom:0}
@@ -155,9 +155,22 @@
         .forum-topic-meta{font-size:12px;color:#8493a5;margin:5px 0 0}
         .forum-topic-stats{text-align:right;color:#62758b;font-size:12px;flex-shrink:0}
         .forum-topic-stats small{display:block;color:#899aab;margin-top:5px;line-height:1.55}
-        .forum-section-summary{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#667b92;text-align:right}
-        .forum-section-summary small{font-size:12px;color:inherit}
-        .forum-section-summary>span{font-weight:650;font-variant-numeric:tabular-nums}
+        /* Section row: name, topic/message totals and the latest message, like classic forums. */
+        .forum-section-main{flex:1 1 auto}
+        .forum-section-copy{min-width:0}
+        .forum-section-tools{margin-top:8px}
+        .forum-section-stats{display:flex;gap:6px;margin:0;flex:none}
+        .forum-section-stats div{width:92px;text-align:center}
+        .forum-section-stats dt{color:#7b8ca0;font-size:12px}
+        .forum-section-stats dd{margin:2px 0 0;color:#27374b;font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+        .forum-section-last{display:flex;align-items:center;gap:11px;flex:none;width:270px;min-width:0}
+        .forum-section-last .forum-section-last-avatar{flex:none;width:40px;height:40px;border-radius:10px;font-size:16px;font-weight:700;color:#405b79}
+        .forum-section-last-copy{display:grid;min-width:0;line-height:1.35}
+        .forum-section-last-copy a{overflow:hidden;font-size:14px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+        .forum-section-last-copy small{overflow:hidden;color:#7b8ca0;font-size:13px;text-overflow:ellipsis;white-space:nowrap}
+        .forum-section-last-copy small span{color:#4a6078;font-weight:600}
+        .forum-section-last-empty{color:#8a9aac;font-size:13px}
+        @media(max-width:900px){.forum-section-last{width:220px}.forum-section-stats div{width:74px}}
         .forum-compose{padding:20px;display:flex;flex-direction:column;gap:17px}
         .forum-compose-field{display:flex;flex-direction:column;gap:7px;color:#536982;font-size:13px}
         .forum-compose-field input,.forum-compose-field textarea{font:inherit;font-size:14px;color:#27374b;border:1px solid #ced8e3;border-radius:8px;background:#fff;padding:11px 12px;width:100%;min-width:0}
@@ -208,7 +221,7 @@
         .forum-join{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 18px;padding:16px 18px;color:#405b79;font-size:14px}
         .forum-join p{margin:0}
         .forum-join-actions{display:flex;flex-wrap:wrap;gap:8px}
-        @media(max-width:650px){.forum-topic-row{flex-direction:column;align-items:flex-start}.forum-topic-stats{text-align:left}.forum-section-summary{text-align:left}.forum-post{grid-template-columns:minmax(0,1fr)}.forum-post-author-card{flex-direction:row;align-items:center;gap:12px;padding:14px 16px;border-right:0;border-bottom:1px solid #edf0f3;text-align:left}.forum-post-avatar{width:42px;height:42px;font-size:17px}.forum-post-author-copy{justify-items:start}.forum-post-badges,.forum-post-stats div{justify-content:flex-start}.forum-post-stats{grid-auto-flow:column;gap:12px}.forum-post-main{padding:14px 16px}}
+        @media(max-width:650px){.forum-topic-row{flex-direction:column;align-items:flex-start}.forum-topic-stats{text-align:left}.forum-post{grid-template-columns:minmax(0,1fr)}.forum-post-author-card{flex-direction:row;align-items:center;gap:12px;padding:14px 16px;border-right:0;border-bottom:1px solid #edf0f3;text-align:left}.forum-post-avatar{width:42px;height:42px;font-size:17px}.forum-post-author-copy{justify-items:start}.forum-post-badges,.forum-post-stats div{justify-content:flex-start}.forum-post-stats{grid-auto-flow:column;gap:12px}.forum-post-main{padding:14px 16px}}
 
         /* Forum-only presentation for the shared Tiptap editor; no admin styles imported. */
         .forum-editor{border:1px solid #d9e1eb;border-radius:10px;background:#fff;overflow:hidden}
@@ -369,6 +382,8 @@
         :root[data-forum-scheme="dark"] .forum-button-danger{color:#f0aaa5;border-color:#86575b}
         :root[data-forum-scheme="dark"] .forum-tag{background:#2e4057;color:#c9d9ee}
         :root[data-forum-scheme="dark"] .forum-section-icon{background:#283b51;color:#b8d5f3}
+        :root[data-forum-scheme="dark"] .forum-section-stats dd{color:#eef3f8}
+        :root[data-forum-scheme="dark"] .forum-section-last-copy small span{color:#c9d9ee}
         :root[data-forum-scheme="dark"] .forum-panel-body,
         :root[data-forum-scheme="dark"] .forum-post-body{color:#dbe4ee}
         :root[data-forum-scheme="dark"] .forum-desc,
@@ -376,7 +391,9 @@
         :root[data-forum-scheme="dark"] .forum-post-date,
         :root[data-forum-scheme="dark"] .forum-topic-meta,
         :root[data-forum-scheme="dark"] .forum-topic-stats,
-        :root[data-forum-scheme="dark"] .forum-section-summary,
+        :root[data-forum-scheme="dark"] .forum-section-stats dt,
+        :root[data-forum-scheme="dark"] .forum-section-last-copy small,
+        :root[data-forum-scheme="dark"] .forum-section-last-empty,
         :root[data-forum-scheme="dark"] .forum-section-main p,
         :root[data-forum-scheme="dark"] .forum-breadcrumb,
         :root[data-forum-scheme="dark"] .forum-actor-switch,
