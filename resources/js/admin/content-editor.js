@@ -902,22 +902,77 @@ const initializeRichEditor = (root, signal) => {
         }
     };
 
-    const previewLinkImage = () => {
-        if (!linkImagePreview || !linkImageUrl) return;
-        const url = linkImageUrl.value.trim();
+    // People paste what image hosts give them: a direct link, a viewer page link, or an
+    // HTML / BBCode / Markdown snippet. Find the direct image address in the browser; the
+    // server only ever receives (and re-checks) that final allowed address.
+    const extractAllowedImage = (text) => {
+        for (const match of text.matchAll(/https:\/\/[^\s"'<>\[\]()]+/g)) {
+            if (allowedImageUrl(match[0])) return match[0];
+        }
+        return null;
+    };
+    const viewerCandidates = (text) => {
+        let url;
+        try {
+            url = new URL(text.trim());
+        } catch {
+            return [];
+        }
+        const host = url.hostname.toLowerCase().replace(/^www\./, '');
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (host === 'freeimage.host' && parts[0] === 'i' && parts[1]) {
+            const id = parts[1].split('.').pop();
+            return /^[A-Za-z0-9]{4,20}$/.test(id) ? ['png', 'jpg', 'jpeg', 'webp', 'gif'].map((ext) => `https://iili.io/${id}.${ext}`) : [];
+        }
+        if (host === 'imgur.com' && parts.length === 1 && /^[A-Za-z0-9]{5,10}$/.test(parts[0])) {
+            return [`https://i.imgur.com/${parts[0]}.jpg`];
+        }
+        return [];
+    };
+    const imageLoads = (url) => new Promise((resolve) => {
+        const probe = new Image();
+        const timer = window.setTimeout(() => resolve(false), 8000);
+        probe.referrerPolicy = 'no-referrer';
+        probe.onload = () => { window.clearTimeout(timer); resolve(true); };
+        probe.onerror = () => { window.clearTimeout(timer); resolve(false); };
+        probe.src = url;
+    });
+    const resolveImageInput = async (text) => {
+        const direct = extractAllowedImage(text);
+        if (direct) return direct;
+        for (const candidate of viewerCandidates(text)) {
+            if (await imageLoads(candidate)) return candidate;
+        }
+        return null;
+    };
+
+    let previewToken = 0;
+    let resolvedImage = null;
+    const previewLinkImage = async () => {
+        if (!linkImagePreview || !linkImageUrl) return null;
+        const token = ++previewToken;
+        const text = linkImageUrl.value.trim();
+        resolvedImage = null;
         linkImagePreview.replaceChildren();
-        linkImagePreview.dataset.state = '';
-        if (!allowedImageUrl(url)) {
-            linkImagePreview.dataset.state = url === '' ? '' : 'blocked';
-            return;
+        linkImagePreview.dataset.state = text === '' ? '' : 'loading';
+        if (text === '') return null;
+
+        const url = await resolveImageInput(text);
+        if (token !== previewToken) return null;
+        if (!url) {
+            linkImagePreview.dataset.state = 'blocked';
+            return null;
         }
         const image = document.createElement('img');
         image.referrerPolicy = 'no-referrer';
         image.alt = '';
-        image.addEventListener('load', () => { linkImagePreview.dataset.state = 'ready'; }, { once: true });
-        image.addEventListener('error', () => { linkImagePreview.dataset.state = 'error'; }, { once: true });
+        image.addEventListener('load', () => { if (token === previewToken) linkImagePreview.dataset.state = 'ready'; }, { once: true });
+        image.addEventListener('error', () => { if (token === previewToken) linkImagePreview.dataset.state = 'error'; }, { once: true });
         image.src = url;
         linkImagePreview.append(image);
+        resolvedImage = url;
+
+        return url;
     };
 
     root.querySelector('[data-editor-link-image]')?.addEventListener('click', () => {
@@ -932,10 +987,10 @@ const initializeRichEditor = (root, signal) => {
 
     linkImageUrl?.addEventListener('input', previewLinkImage, { signal });
 
-    root.querySelector('[data-editor-link-image-apply]')?.addEventListener('click', (event) => {
+    root.querySelector('[data-editor-link-image-apply]')?.addEventListener('click', async (event) => {
         event.preventDefault();
-        const url = linkImageUrl?.value.trim() ?? '';
-        if (!allowedImageUrl(url) || url.length > 2048) {
+        const url = resolvedImage ?? (await previewLinkImage());
+        if (!url || !allowedImageUrl(url) || url.length > 2048) {
             if (linkImagePreview) linkImagePreview.dataset.state = 'blocked';
             linkImageUrl?.focus();
             return;
