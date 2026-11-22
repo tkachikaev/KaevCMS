@@ -28,6 +28,10 @@
     </div>
 @endif
 
+@if($activityTabs !== [])
+    @include('module-forum::partials.activity')
+@endif
+
 @if($categories->isEmpty())
     <div class="forum-panel">
         <div class="forum-panel-heading">{{ __('module-forum::messages.empty_title') }}</div>

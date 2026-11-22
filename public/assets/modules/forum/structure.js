@@ -19,6 +19,25 @@
         }
     });
 
+    // Latest-activity tabs switch in place; the links still work without JavaScript.
+    document.addEventListener("click", (event) => {
+        const tab = event.target instanceof Element ? event.target.closest("[data-forum-activity-tab]") : null;
+        if (!(tab instanceof HTMLAnchorElement) || event.ctrlKey || event.metaKey || event.shiftKey) {
+            return;
+        }
+        const box = tab.closest("[data-forum-activity]");
+        if (!box) {
+            return;
+        }
+        event.preventDefault();
+        box.querySelectorAll("[data-forum-activity-tab]").forEach((item) => {
+            item.setAttribute("aria-selected", item === tab ? "true" : "false");
+        });
+        box.querySelectorAll("[data-forum-activity-panel]").forEach((panel) => {
+            panel.hidden = panel.dataset.forumActivityPanel !== tab.dataset.forumActivityTab;
+        });
+    });
+
     document.addEventListener("change", (event) => {
         if (!event.target.matches("[data-forum-permissions] select[name=view_rule]")) {
             return;

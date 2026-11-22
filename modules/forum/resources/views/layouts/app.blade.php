@@ -364,6 +364,31 @@
         :root[data-forum-scheme="dark"] .forum-site-link-out:hover{background:#1d2a37}
         :root[data-forum-scheme="dark"] .forum-site-link-out::after{background:#e2e8f0;color:#151f2a}
         .forum-topic-moderation-note{margin:10px 0 0;color:#7b8ca0;font-size:13px}
+        /* Latest activity table on the forum home. */
+        .forum-activity{margin:0 0 22px}
+        .forum-activity-tabs{display:flex;gap:2px;overflow-x:auto;padding:0 10px;border-bottom:1px solid #e2e8f0;background:#f4f7fb;scrollbar-width:none}
+        .forum-activity-tabs a{position:relative;flex:none;padding:13px 14px;color:#4a6078;font-size:14px;font-weight:600;text-decoration:none!important;white-space:nowrap}
+        .forum-activity-tabs a:hover{color:#27374b}
+        .forum-activity-tabs a[aria-selected="true"]{color:#27374b}
+        .forum-activity-tabs a[aria-selected="true"]::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:#2f6fd6}
+        .forum-activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto 150px 120px 130px;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid #edf0f3;font-size:14px}
+        .forum-activity-row:last-child{border-bottom:0}
+        .forum-activity-row:hover{background:#f8fafc}
+        .forum-activity-title{overflow:hidden;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+        .forum-activity-marks{display:flex;gap:6px;color:#8a9aac}
+        .forum-activity-section,.forum-activity-time{overflow:hidden;color:#7b8ca0;font-size:13px;text-overflow:ellipsis;white-space:nowrap}
+        .forum-activity-author{overflow:hidden;color:#4a6078;font-size:13px;font-weight:600;text-align:right;text-overflow:ellipsis;white-space:nowrap}
+        .forum-activity-empty{margin:0;padding:22px 20px;color:#8a9aac;font-size:14px}
+        @media(max-width:900px){.forum-activity-row{grid-template-columns:minmax(0,1fr) auto 120px 110px}.forum-activity-section{display:none}}
+        @media(max-width:650px){.forum-activity-row{grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:11px 16px}.forum-activity-title{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.forum-activity-time{grid-column:1;grid-row:2}.forum-activity-author{grid-column:2;grid-row:2}}
+        :root[data-forum-scheme="dark"] .forum-activity-tabs{border-color:#2a3949;background:#192634}
+        :root[data-forum-scheme="dark"] .forum-activity-tabs a{color:#9fb2c7}
+        :root[data-forum-scheme="dark"] .forum-activity-tabs a:hover,
+        :root[data-forum-scheme="dark"] .forum-activity-tabs a[aria-selected="true"]{color:#eef3f8}
+        :root[data-forum-scheme="dark"] .forum-activity-tabs a[aria-selected="true"]::after{background:#5aa0f0}
+        :root[data-forum-scheme="dark"] .forum-activity-row{border-color:#223040}
+        :root[data-forum-scheme="dark"] .forum-activity-row:hover{background:#1a2532}
+        :root[data-forum-scheme="dark"] .forum-activity-author{color:#c9d9ee}
         /* Light/dark switch, the same control as the player account (sun and moon). */
         .forum-scheme-toggle{display:grid;place-items:center;width:44px;height:38px;padding:0;border:0;background:transparent;cursor:pointer}
         .forum-scheme-track{position:relative;display:block;width:40px;height:22px;border:1px solid #d9e1eb;border-radius:11px;background:#f3f6fa;transition:border-color .25s ease}

@@ -26,6 +26,13 @@ final class ForumController extends Controller
             'identities' => $actors->identities($request),
             'categories' => $categories,
             'activity' => $structure->sectionActivity($categories),
+            'activityTabs' => app(\KaevCMS\Modules\Forum\Services\ForumActivity::class)->tabs(
+                $categories->flatMap(static fn ($category) => $category->sections->pluck('id'))->map(static fn ($id): int => (int) $id)->values()->all(),
+                $actor->user,
+                app(\KaevCMS\Modules\Forum\Services\ForumActivity::class)->limit(),
+            ),
+            'activityTab' => in_array($request->query('activity'), ['latest', 'new', 'popular', 'mine'], true)
+                ? (string) $request->query('activity') : 'latest',
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
 

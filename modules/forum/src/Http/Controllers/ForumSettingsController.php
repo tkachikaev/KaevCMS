@@ -61,20 +61,25 @@ final class ForumSettingsController extends Controller
         $data = $request->validate([
             'visibility' => ['required', Rule::in(['all', 'registered'])],
             'links_after_days' => ['required', 'integer', 'min:0', 'max:3650'],
+            'activity_limit' => ['sometimes', 'integer', 'min:0', 'max:'.\KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT],
         ]);
 
-        $changed = DB::transaction(static function () use ($data): bool {
+        $changed = DB::transaction(static function () use (&$data): bool {
             $current = DB::table('module_forum_settings')->where('id', 1)->lockForUpdate()->first();
             abort_if($current === null, 503);
+            // Older forms without the field keep the current value.
+            $data['activity_limit'] = (int) ($data['activity_limit'] ?? $current->activity_limit ?? \KaevCMS\Modules\Forum\Services\ForumActivity::DEFAULT_LIMIT);
 
             if ($current->visibility === $data['visibility']
-                && (int) $current->links_after_days === (int) $data['links_after_days']) {
+                && (int) $current->links_after_days === (int) $data['links_after_days']
+                && (int) ($current->activity_limit ?? -1) === (int) $data['activity_limit']) {
                 return false;
             }
 
             DB::table('module_forum_settings')->where('id', 1)->update([
                 'visibility' => $data['visibility'],
                 'links_after_days' => (int) $data['links_after_days'],
+                'activity_limit' => (int) $data['activity_limit'],
                 'updated_at' => now(),
             ]);
 
@@ -90,6 +95,7 @@ final class ForumSettingsController extends Controller
                 details: [
                     'visibility' => $data['visibility'],
                     'links_after_days' => (int) $data['links_after_days'],
+                    'activity_limit' => (int) $data['activity_limit'],
                 ],
             );
         }
