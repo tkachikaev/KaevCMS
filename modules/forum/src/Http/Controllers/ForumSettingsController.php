@@ -21,7 +21,11 @@ final class ForumSettingsController extends Controller
     public function edit(Request $request): View
     {
         $this->owner($request);
-        $validated = $request->validate(['q' => ['nullable', 'string', 'max:80']]);
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:80'],
+            'section' => ['nullable', 'in:general,community'],
+        ]);
+        $section = (string) ($validated['section'] ?? 'general');
         $search = trim((string) ($validated['q'] ?? ''));
 
         $settings = DB::table('module_forum_settings')->where('id', 1)->first();
@@ -53,7 +57,7 @@ final class ForumSettingsController extends Controller
         $imageHosts = app(ForumImageHosts::class)->all();
         $activity = app(\KaevCMS\Modules\Forum\Services\ForumActivity::class)->settings();
 
-        return view('module-forum::admin.settings', compact('settings', 'search', 'candidates', 'moderators', 'moderatorIds', 'imageHosts', 'activity'));
+        return view('module-forum::admin.settings', compact('settings', 'search', 'candidates', 'moderators', 'moderatorIds', 'imageHosts', 'activity', 'section'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -98,50 +102,15 @@ final class ForumSettingsController extends Controller
         return $this->redirect($request, 'settings_saved');
     }
 
-    public function updateActivity(Request $request): RedirectResponse
+    public function updateCommunity(Request $request, ForumImageHosts $imageHosts): RedirectResponse
     {
         $owner = $this->owner($request);
         $data = $request->validate([
             'activity_enabled' => ['required', 'boolean'],
             'activity_limit' => ['required', 'integer', 'min:1', 'max:'.\KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT],
+            'image_hosts' => ['nullable', 'string', 'max:4000'],
         ]);
-        $enabled = (bool) $data['activity_enabled'];
-        $limit = (int) $data['activity_limit'];
-
-        $changed = DB::transaction(static function () use ($enabled, $limit): bool {
-            $current = DB::table('module_forum_settings')->where('id', 1)->lockForUpdate()->first();
-            abort_if($current === null, 503);
-            if ((bool) $current->activity_enabled === $enabled && (int) $current->activity_limit === $limit) {
-                return false;
-            }
-            DB::table('module_forum_settings')->where('id', 1)->update([
-                'activity_enabled' => $enabled,
-                'activity_limit' => $limit,
-                'updated_at' => now(),
-            ]);
-
-            return true;
-        });
-
-        if ($changed) {
-            $this->audit->success(
-                category: 'forum',
-                action: 'forum.activity_updated',
-                actor: $owner,
-                target: 'settings',
-                details: ['activity_enabled' => $enabled, 'activity_limit' => $limit],
-            );
-        }
-
-        return $this->redirect($request, 'settings_saved');
-    }
-
-    public function updateImages(Request $request, ForumImageHosts $imageHosts): RedirectResponse
-    {
-        $owner = $this->owner($request);
-        $data = $request->validate(['image_hosts' => ['nullable', 'string', 'max:4000']]);
         $parsed = ForumImageHosts::parse((string) ($data['image_hosts'] ?? ''));
-
         if ($parsed['invalid'] !== []) {
             throw ValidationException::withMessages([
                 'image_hosts' => __('module-forum::messages.image_hosts_invalid', ['hosts' => implode(', ', array_slice($parsed['invalid'], 0, 5))]),
@@ -153,31 +122,40 @@ final class ForumSettingsController extends Controller
             ]);
         }
 
-        $hosts = $parsed['hosts'];
-        $changed = DB::transaction(static function () use ($hosts): bool {
+        $values = [
+            'activity_enabled' => (bool) $data['activity_enabled'],
+            'activity_limit' => (int) $data['activity_limit'],
+            'image_hosts' => json_encode($parsed['hosts']),
+        ];
+        $changed = DB::transaction(static function () use ($values): array {
             $current = DB::table('module_forum_settings')->where('id', 1)->lockForUpdate()->first();
             abort_if($current === null, 503);
-            $encoded = json_encode($hosts);
-            if ($current->image_hosts === $encoded) {
-                return false;
+            $changed = [];
+            if ((bool) $current->activity_enabled !== $values['activity_enabled'] || (int) $current->activity_limit !== $values['activity_limit']) {
+                $changed[] = 'activity';
             }
-            DB::table('module_forum_settings')->where('id', 1)->update(['image_hosts' => $encoded, 'updated_at' => now()]);
+            if ($current->image_hosts !== $values['image_hosts']) {
+                $changed[] = 'images';
+            }
+            if ($changed !== []) {
+                DB::table('module_forum_settings')->where('id', 1)->update($values + ['updated_at' => now()]);
+            }
 
-            return true;
+            return $changed;
         });
         $imageHosts->forget();
 
-        if ($changed) {
-            $this->audit->success(
-                category: 'forum',
-                action: 'forum.image_hosts_updated',
-                actor: $owner,
-                target: 'settings',
-                details: ['image_hosts' => $hosts],
-            );
+        if (in_array('activity', $changed, true)) {
+            $this->audit->success(category: 'forum', action: 'forum.activity_updated', actor: $owner, target: 'settings',
+                details: ['activity_enabled' => $values['activity_enabled'], 'activity_limit' => $values['activity_limit']]);
+        }
+        if (in_array('images', $changed, true)) {
+            $this->audit->success(category: 'forum', action: 'forum.image_hosts_updated', actor: $owner, target: 'settings',
+                details: ['image_hosts' => $parsed['hosts']]);
         }
 
-        return $this->redirect($request, 'settings_saved');
+        return redirect()->route('admin.module-pages.forum.settings', ['adminPath' => $request->route('adminPath'), 'section' => 'community'])
+            ->with('status', __('module-forum::messages.settings_saved'));
     }
 
     public function addModerator(Request $request): RedirectResponse

@@ -7,6 +7,8 @@
     gap: var(--admin-space-5);
 }
 .forum-settings > .forum-settings-card { min-width: 0; margin: 0; }
+.forum-settings-tabs { margin-bottom: var(--admin-space-5); }
+.forum-settings-actions-wide { grid-column: 1 / -1; }
 
 .forum-settings-open {
     color: var(--admin-text-muted);

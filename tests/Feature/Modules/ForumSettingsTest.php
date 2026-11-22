@@ -179,12 +179,13 @@ final class ForumSettingsTest extends TestCase
         $forum = \App\Services\Html\SafeHtmlSanitizer::PROFILE_FORUM;
 
         // Defaults come from the module migration.
-        $this->get($url)->assertOk()->assertSee('name="image_hosts"', false)->assertSee('iili.io');
+        $this->get($url.'?section=community')->assertOk()->assertSee('name="image_hosts"', false)->assertSee('iili.io');
+        $community = static fn (string $hosts): array => ['activity_enabled' => '1', 'activity_limit' => 10, 'image_hosts' => $hosts];
         $this->assertStringContainsString('<img', $sanitizer->sanitize('<figure><img src="https://iili.io/a.png"></figure>', $forum));
 
         // Pasted addresses are reduced to host names; duplicates collapse.
-        $this->put($url.'/images', ['image_hosts' => "https://iili.io/abc.png\nPICS.EXAMPLE.org, pics.example.org"])
-            ->assertRedirect($url);
+        $this->put($url.'/community', $community("https://iili.io/abc.png\nPICS.EXAMPLE.org, pics.example.org"))
+            ->assertRedirect($url.'?section=community');
         $this->assertSame(['iili.io', 'pics.example.org'], json_decode((string) DB::table('module_forum_settings')->value('image_hosts'), true));
         $this->assertSame(1, AuditLog::query()->where('action', 'forum.image_hosts_updated')->count());
         $this->assertStringContainsString('<img', $sanitizer->sanitize('<figure><img src="https://pics.example.org/a.png"></figure>', $forum));
@@ -192,12 +193,12 @@ final class ForumSettingsTest extends TestCase
 
         // IPs, local names, wildcards and ports are refused without changing the list.
         foreach (['127.0.0.1', 'localhost', '*.example.com', 'example.com:8080', 'intranet', 'bad host!'] as $entry) {
-            $this->put($url.'/images', ['image_hosts' => $entry])->assertSessionHasErrors('image_hosts');
+            $this->put($url.'/community', $community($entry))->assertSessionHasErrors('image_hosts');
         }
         $this->assertSame(['iili.io', 'pics.example.org'], json_decode((string) DB::table('module_forum_settings')->value('image_hosts'), true));
 
         // An empty list turns images off: no editor button and nothing survives sanitizing.
-        $this->put($url.'/images', ['image_hosts' => ''])->assertRedirect($url);
+        $this->put($url.'/community', $community(''))->assertRedirect($url.'?section=community');
         $this->assertSame([], json_decode((string) DB::table('module_forum_settings')->value('image_hosts'), true));
         $this->assertStringNotContainsString('<img', $sanitizer->sanitize('<figure><img src="https://iili.io/a.png"></figure>', $forum));
         $section = ForumSection::query()->where('name_ru', 'Общее общение')->firstOrFail();
@@ -210,7 +211,7 @@ final class ForumSettingsTest extends TestCase
     public function test_only_the_owner_can_change_image_hosts(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => \App\Auth\AdminRole::Administrator]), 'admin');
-        $this->put('/admin/extensions/forum/settings/images', ['image_hosts' => 'evil.example'])->assertForbidden();
+        $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '1', 'activity_limit' => 10, 'image_hosts' => 'evil.example'])->assertForbidden();
         $this->assertStringNotContainsString('evil.example', (string) DB::table('module_forum_settings')->value('image_hosts'));
     }
 }

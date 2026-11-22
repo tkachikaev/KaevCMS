@@ -5,8 +5,7 @@ use KaevCMS\Modules\Forum\Http\Controllers\ForumSettingsController;
 
 Route::get('/settings', [ForumSettingsController::class, 'edit'])->name('settings');
 Route::put('/settings', [ForumSettingsController::class, 'update'])->name('settings.update');
-Route::put('/settings/images', [ForumSettingsController::class, 'updateImages'])->name('images.update');
-Route::put('/settings/activity', [ForumSettingsController::class, 'updateActivity'])->name('activity.update');
+Route::put('/settings/community', [ForumSettingsController::class, 'updateCommunity'])->name('community.update');
 Route::post('/moderators', [ForumSettingsController::class, 'addModerator'])
     ->middleware('throttle:10,1')->name('moderators.store');
 Route::delete('/moderators/{user}', [ForumSettingsController::class, 'removeModerator'])

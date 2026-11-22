@@ -277,4 +277,7 @@ return [
     'activity_card_help' => 'The Latest messages, New topics, Popular topics and My topics tabs above the forum sections.',
     'activity_enabled' => 'Show the activity table',
     'activity_enabled_help' => 'Switched off, the table disappears from the forum home. The number of topics is kept.',
+    'settings_sections' => 'Forum settings sections',
+    'settings_general' => 'General',
+    'settings_community' => 'Community',
 ];

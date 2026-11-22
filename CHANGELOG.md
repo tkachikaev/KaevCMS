@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum settings are split into two tabs: General (access, links, moderators) and Community (activity table and allowed image sites, saved together with one Save button).
 - Forum: an activity table above the sections with Latest messages, New topics, Popular topics (most messages this week) and My topics tabs, limited to sections the visitor can see. A separate "Activity table on the home page" card in the forum settings switches it on or off and sets topics per tab (1-30, default 10); new module migrations — apply under Admin → Modules.
 - Forum: "Open forum" in the forum settings opened the forum without its styles until the page was reloaded; it now opens with a full page load.
 - Forum header: "Personal account" replaces "To website" for players and guests (staff without a player session still see "To website"); the website stays one click away in the profile menu and in the footer.

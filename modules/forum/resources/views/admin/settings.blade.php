@@ -4,6 +4,66 @@
 @section('content')
 @php($adminPath = request()->route('adminPath'))
 
+<x-admin.tabs :label="__('module-forum::messages.settings_sections')" class="forum-settings-tabs">
+    <x-admin.tab wire:navigate :href="route('admin.module-pages.forum.settings', ['adminPath' => $adminPath])" :active="$section === 'general'">{{ __('module-forum::messages.settings_general') }}</x-admin.tab>
+    <x-admin.tab wire:navigate :href="route('admin.module-pages.forum.settings', ['adminPath' => $adminPath, 'section' => 'community'])" :active="$section === 'community'">{{ __('module-forum::messages.settings_community') }}</x-admin.tab>
+</x-admin.tabs>
+
+@if($section === 'community')
+    {{-- One form and one Save for everything about how the forum looks and what posts may contain. --}}
+    <form class="forum-settings forum-settings-community" method="POST" action="{{ route('admin.module-pages.forum.community.update', ['adminPath' => $adminPath]) }}">
+        @csrf
+        @method('PUT')
+    <x-admin.card class="forum-settings-card">
+        <x-admin.card-heading
+            :title="__('module-forum::messages.activity_card_title')"
+            :description="__('module-forum::messages.activity_card_help')"
+        />
+
+        <div class="forum-settings-form">
+            <x-admin.toggle id="forum_activity_enabled" name="activity_enabled"
+                :label="__('module-forum::messages.activity_enabled')"
+                :hint="__('module-forum::messages.activity_enabled_help')"
+                :checked="(bool) old('activity_enabled', $activity['enabled'])" />
+
+            <div @class(['admin-field', 'has-error' => $errors->has('activity_limit')])>
+                <label class="admin-field-label" for="forum_activity_limit">{{ __('module-forum::messages.activity_limit') }}</label>
+                <div class="forum-settings-unit">
+                    <input id="forum_activity_limit" name="activity_limit" type="number" min="1" max="{{ \KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT }}" step="1" inputmode="numeric"
+                           value="{{ old('activity_limit', $activity['limit']) }}" required
+                           aria-describedby="forum_activity_limit_unit forum_activity_limit_help"
+                           @if($errors->has('activity_limit')) aria-invalid="true" @endif>
+                    <span id="forum_activity_limit_unit">{{ __('module-forum::messages.activity_limit_unit') }}</span>
+                </div>
+                @error('activity_limit')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
+                <small id="forum_activity_limit_help" class="admin-field-help">{{ __('module-forum::messages.activity_limit_help') }}</small>
+            </div>
+        </div>
+    </x-admin.card>
+
+    <x-admin.card class="forum-settings-card">
+        <x-admin.card-heading
+            :title="__('module-forum::messages.images_title')"
+            :description="__('module-forum::messages.images_help')"
+        />
+
+        <div class="forum-settings-form">
+            <div @class(['admin-field', 'has-error' => $errors->has('image_hosts')])>
+                <label class="admin-field-label" for="forum_image_hosts">{{ __('module-forum::messages.image_hosts_label') }}</label>
+                <textarea id="forum_image_hosts" name="image_hosts" rows="5" maxlength="4000" spellcheck="false" autocomplete="off"
+                          aria-describedby="forum_image_hosts_help"
+                          @if($errors->has('image_hosts')) aria-invalid="true" @endif>{{ old('image_hosts', implode("\n", $imageHosts)) }}</textarea>
+                @error('image_hosts')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
+                <small id="forum_image_hosts_help" class="admin-field-help">{{ __('module-forum::messages.image_hosts_help') }}</small>
+            </div>
+        </div>
+    </x-admin.card>
+
+        <div class="forum-settings-actions forum-settings-actions-wide">
+            <x-admin.button type="submit" variant="primary">{{ __('module-forum::messages.save') }}</x-admin.button>
+        </div>
+    </form>
+@else
 <div class="forum-settings">
     <x-admin.card class="forum-settings-card">
         <x-admin.card-heading
@@ -43,63 +103,6 @@
                 </div>
                 @error('links_after_days')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
                 <small id="forum_links_after_days_help" class="admin-field-help">{{ __('module-forum::messages.links_after_days_help') }}</small>
-            </div>
-
-            <div class="forum-settings-actions">
-                <x-admin.button type="submit" variant="primary">{{ __('module-forum::messages.save') }}</x-admin.button>
-            </div>
-        </form>
-    </x-admin.card>
-
-    <x-admin.card class="forum-settings-card">
-        <x-admin.card-heading
-            :title="__('module-forum::messages.activity_card_title')"
-            :description="__('module-forum::messages.activity_card_help')"
-        />
-
-        <form class="forum-settings-form" method="POST" action="{{ route('admin.module-pages.forum.activity.update', ['adminPath' => $adminPath]) }}">
-            @csrf
-            @method('PUT')
-            <x-admin.toggle id="forum_activity_enabled" name="activity_enabled"
-                :label="__('module-forum::messages.activity_enabled')"
-                :hint="__('module-forum::messages.activity_enabled_help')"
-                :checked="(bool) old('activity_enabled', $activity['enabled'])" />
-
-            <div @class(['admin-field', 'has-error' => $errors->has('activity_limit')])>
-                <label class="admin-field-label" for="forum_activity_limit">{{ __('module-forum::messages.activity_limit') }}</label>
-                <div class="forum-settings-unit">
-                    <input id="forum_activity_limit" name="activity_limit" type="number" min="1" max="{{ \KaevCMS\Modules\Forum\Services\ForumActivity::MAX_LIMIT }}" step="1" inputmode="numeric"
-                           value="{{ old('activity_limit', $activity['limit']) }}" required
-                           aria-describedby="forum_activity_limit_unit forum_activity_limit_help"
-                           @if($errors->has('activity_limit')) aria-invalid="true" @endif>
-                    <span id="forum_activity_limit_unit">{{ __('module-forum::messages.activity_limit_unit') }}</span>
-                </div>
-                @error('activity_limit')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
-                <small id="forum_activity_limit_help" class="admin-field-help">{{ __('module-forum::messages.activity_limit_help') }}</small>
-            </div>
-
-            <div class="forum-settings-actions">
-                <x-admin.button type="submit" variant="primary">{{ __('module-forum::messages.save') }}</x-admin.button>
-            </div>
-        </form>
-    </x-admin.card>
-
-    <x-admin.card class="forum-settings-card">
-        <x-admin.card-heading
-            :title="__('module-forum::messages.images_title')"
-            :description="__('module-forum::messages.images_help')"
-        />
-
-        <form class="forum-settings-form" method="POST" action="{{ route('admin.module-pages.forum.images.update', ['adminPath' => $adminPath]) }}">
-            @csrf
-            @method('PUT')
-            <div @class(['admin-field', 'has-error' => $errors->has('image_hosts')])>
-                <label class="admin-field-label" for="forum_image_hosts">{{ __('module-forum::messages.image_hosts_label') }}</label>
-                <textarea id="forum_image_hosts" name="image_hosts" rows="5" maxlength="4000" spellcheck="false" autocomplete="off"
-                          aria-describedby="forum_image_hosts_help"
-                          @if($errors->has('image_hosts')) aria-invalid="true" @endif>{{ old('image_hosts', implode("\n", $imageHosts)) }}</textarea>
-                @error('image_hosts')<small class="admin-field-error" role="alert">{{ $message }}</small>@enderror
-                <small id="forum_image_hosts_help" class="admin-field-help">{{ __('module-forum::messages.image_hosts_help') }}</small>
             </div>
 
             <div class="forum-settings-actions">
@@ -174,6 +177,7 @@
         </section>
     </x-admin.card>
 </div>
+@endif
 
 <dialog class="confirm-dialog" data-forum-moderator-dialog aria-labelledby="forum-moderator-remove-title">
     <div class="confirm-dialog-card">

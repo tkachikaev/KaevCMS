@@ -61,10 +61,10 @@ class ForumActivityTest extends TestCase
 
         $owner = Admin::factory()->create();
         $this->actingAs($owner, 'admin');
-        $this->get('/admin/extensions/forum/settings')->assertOk()
+        $this->get('/admin/extensions/forum/settings?section=community')->assertOk()
             ->assertSee('name="activity_enabled"', false)
             ->assertSee('name="activity_limit"', false);
-        $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '1', 'activity_limit' => 2])
+        $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '1', 'activity_limit' => 2, 'image_hosts' => 'iili.io'])
             ->assertRedirect();
         $this->assertSame(2, (int) DB::table('module_forum_settings')->value('activity_limit'));
 
@@ -76,10 +76,10 @@ class ForumActivityTest extends TestCase
 
         // Switching off hides the table and keeps the chosen number.
         $this->actingAs($owner, 'admin');
-        $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '0', 'activity_limit' => 2])
+        $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '0', 'activity_limit' => 2, 'image_hosts' => 'iili.io'])
             ->assertRedirect();
         foreach ([0, 31] as $invalid) {
-            $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '1', 'activity_limit' => $invalid])
+            $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '1', 'activity_limit' => $invalid, 'image_hosts' => 'iili.io'])
                 ->assertSessionHasErrors('activity_limit');
         }
         $this->assertSame(2, (int) DB::table('module_forum_settings')->value('activity_limit'));
@@ -90,7 +90,7 @@ class ForumActivityTest extends TestCase
     public function test_only_the_owner_changes_the_activity_table(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => \App\Auth\AdminRole::Administrator]), 'admin');
-        $this->put('/admin/extensions/forum/settings/activity', ['activity_enabled' => '0', 'activity_limit' => 5])
+        $this->put('/admin/extensions/forum/settings/community', ['activity_enabled' => '0', 'activity_limit' => 5, 'image_hosts' => 'iili.io'])
             ->assertForbidden();
         $this->assertTrue((bool) DB::table('module_forum_settings')->value('activity_enabled'));
     }
