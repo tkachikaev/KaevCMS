@@ -246,6 +246,23 @@ final class ForumEditorTest extends TestCase
         }
     }
 
+    public function test_forum_profile_keeps_palette_colors_and_alignment_only(): void
+    {
+        $sanitizer = app(SafeHtmlSanitizer::class);
+        $html = '<p data-align="center"><span data-color="crimson">Red</span> '.
+            '<span data-color="url(evil)" style="color:#f00" onclick="x()">Bad</span></p>'.
+            '<p data-align="sideways">Plain</p><blockquote data-align="right">Quote</blockquote>';
+
+        $forum = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
+
+        $this->assertStringContainsString('<p data-align="center"><span data-color="crimson">Red</span>', $forum);
+        $this->assertStringContainsString('<blockquote data-align="right">', $forum);
+        $this->assertStringNotContainsString('url(evil)', $forum);
+        $this->assertStringNotContainsString('style=', $forum);
+        $this->assertStringNotContainsString('onclick', $forum);
+        $this->assertStringNotContainsString('sideways', $forum);
+    }
+
     private function section(string $name): ForumSection
     {
         return ForumSection::query()->where('name_ru', $name)->firstOrFail();

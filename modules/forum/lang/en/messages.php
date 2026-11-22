@@ -215,4 +215,13 @@ return [
     'reply_owner_only' => 'Only the administration can reply in this section.',
     'reply_disabled' => 'Replies are turned off in this section.',
     'register' => 'Create an account',
+    'text_color' => 'Text color',
+    'default_color' => 'Default color',
+    'align_left' => 'Align left',
+    'align_center' => 'Align center',
+    'align_right' => 'Align right',
+    'emoji' => 'Emoji',
+    'link_text' => 'Link text',
+    'link_text_placeholder' => 'For example: click here',
+    'link_text_hint' => 'Leave empty to show the address itself.',
 ];

@@ -36,7 +36,7 @@ final class SafeHtmlSanitizer
     // Forum uses the same DOM-based sanitation engine with a deliberately small vocabulary.
     private const FORUM_ALLOWED_ELEMENTS = [
         'p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li',
-        'blockquote', 'a', 'pre', 'code',
+        'blockquote', 'a', 'pre', 'code', 'span',
     ];
 
     private const CONTENT_DROP_WITH_CONTENT = [
@@ -59,6 +59,8 @@ final class SafeHtmlSanitizer
         'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue',
         'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc',
         'muted',
+        // Extra forum palette tones.
+        'crimson', 'wine', 'maroon', 'magenta', 'plum', 'navy', 'azure', 'steel', 'mint', 'forest', 'olive', 'sand', 'tangerine', 'peach', 'silver', 'ink',
     ];
 
     private const HIGHLIGHTS = [

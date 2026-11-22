@@ -9,6 +9,7 @@
 - Forum: each section in the list shows topic and message totals and its latest message — the author's avatar, the topic title linking straight to that message, "Today at 05:56" or the date, and the author's name. Owners see the same figures, with the section controls moved under the description.
 - Forum: topic lists in a section show the author's avatar and name with the start date, quick links to the last pages of long topics, a Replies counter, and the latest reply time linking to that message with the replier's name and small avatar. On phones the counter and the latest reply share one line.
 - Forum: topics count views — shown in section lists next to replies and under the topic title. A view counts once per visitor session, so reloads and paging do not inflate it. New module migration: apply it under Admin → Modules ("Update database"); existing topics start from zero.
+- Forum editor: text color from a 40-tone palette of squares (each tone tuned for the light and dark schemes; arbitrary colors are not accepted), left/center/right alignment, an emoji panel, and link text in the link dialog so a message can show "click here" instead of the bare address.
 
 ## 0.60.0 - 2026-11-20
 

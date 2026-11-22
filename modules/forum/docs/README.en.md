@@ -45,7 +45,7 @@ CMS Owner and Administrator accounts post under their existing administrative na
 
 Publishing checks current section permissions and topic state on the server. By default only Owner can start topics in News and announcements and replies are disabled; Archive is read-only. Removing a section hides its topics without erasing messages.
 
-Since version **0.4.0** the forum uses the same **Tiptap** engine as News and Pages, with a compact forum-specific toolbar: bold, italic, underline, lists, quotations, code and links. Images, uploads, tables and decorative formatting are not offered on the forum.
+Since version **0.4.0** the forum uses the same **Tiptap** engine as News and Pages, with a compact forum-specific toolbar: bold, italic, underline, text color (a palette of 40 tones, each tuned for the light and dark schemes), left/center/right alignment, lists, quotations, code, emoji and links. The link dialog accepts link text, so a message can show "click here" instead of the bare address. Arbitrary colors (HEX) and styles are not accepted: the server keeps palette colors only. Images, uploads, tables and decorative formatting are not offered on the forum.
 
 Submitted HTML is sanitized on the server using a separate restricted forum profile; scripts, iframes, unsafe links, and unsupported attributes are removed. Posts written before the editor arrived (versions before 0.4.0) remain escaped plain text: no automatic content conversion or data loss. A plain textarea remains available when JavaScript is unavailable.
 

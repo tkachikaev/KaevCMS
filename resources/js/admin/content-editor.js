@@ -8,7 +8,9 @@ import TextAlign from '@tiptap/extension-text-align';
 
 const MAX_CONTENT_LENGTH = 200000;
 const contentByteLength = (value) => new TextEncoder().encode(value).length;
-const SAFE_COLORS = ['gold', 'amber', 'yellow', 'red', 'rose', 'coral', 'orange', 'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc', 'muted'];
+const SAFE_COLORS = ['gold', 'amber', 'yellow', 'red', 'rose', 'coral', 'orange', 'brown', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'slate', 'gray', 'zinc', 'muted',
+    // Extra forum palette tones.
+    'crimson', 'wine', 'maroon', 'magenta', 'plum', 'navy', 'azure', 'steel', 'mint', 'forest', 'olive', 'sand', 'tangerine', 'peach', 'silver', 'ink'];
 const SAFE_HIGHLIGHTS = ['yellow', 'amber', 'orange', 'rose', 'red', 'lime', 'green', 'teal', 'cyan', 'blue', 'purple', 'gray'];
 const SAFE_TEXT_SIZES = ['small', 'large'];
 const SAFE_IMAGE_ALIGNMENTS = ['left', 'center', 'right'];
@@ -266,6 +268,7 @@ const initializeRichEditor = (root, signal) => {
     const linkDialog = root.querySelector('[data-editor-link-dialog]');
     const linkApply = root.querySelector('[data-editor-link-apply]');
     const linkUrl = root.querySelector('[data-editor-link-url]');
+    const linkText = root.querySelector('[data-editor-link-text]');
     const linkStyle = root.querySelector('[data-editor-link-style]');
     const pageBlocks = root.dataset.pageBlocks === '1';
     const imageDialog = root.querySelector('[data-editor-image-dialog]');
@@ -526,6 +529,13 @@ const initializeRichEditor = (root, signal) => {
             return;
         }
 
+        const emojiButton = event.target.closest('[data-editor-emoji]');
+        if (emojiButton) {
+            editor.chain().focus().insertContent(emojiButton.dataset.editorEmoji ?? '').run();
+            emojiButton.closest('details')?.removeAttribute('open');
+            return;
+        }
+
         const highlightButton = event.target.closest('[data-editor-highlight]');
         if (highlightButton) {
             const value = highlightButton.dataset.editorHighlight;
@@ -564,8 +574,15 @@ const initializeRichEditor = (root, signal) => {
             return;
         }
 
+        if (linkText && editor.isActive('link')) {
+            editor.chain().extendMarkRange('link').run();
+        }
         linkUrl.value = editor.getAttributes('link').href ?? '';
         if (linkStyle) linkStyle.value = editor.getAttributes('link').buttonStyle ?? '';
+        if (linkText) {
+            const { from, to } = editor.state.selection;
+            linkText.value = editor.state.doc.textBetween(from, to, ' ');
+        }
         linkDialog.showModal();
         linkUrl.focus();
         linkUrl.select();
@@ -582,8 +599,19 @@ const initializeRichEditor = (root, signal) => {
         }
 
         const buttonStyle = linkStyle?.value || null;
+        // A link dialog with a text field can name the link ("click here") instead of
+        // showing the bare address; the text replaces the current selection.
+        const { from, to } = editor.state.selection;
+        const label = linkText ? linkText.value.trim() : '';
+        const selected = editor.state.doc.textBetween(from, to, ' ');
         if (url === '' && !buttonStyle) {
-            editor.chain().focus().unsetLink().run();
+            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+        } else if (linkText && (label !== '' ? label !== selected : from === to)) {
+            editor.chain().focus().insertContentAt({ from, to }, {
+                type: 'text',
+                text: label !== '' ? label : url,
+                marks: [{ type: 'link', attrs: { href: url } }],
+            }).run();
         } else {
             editor.chain().focus().extendMarkRange('link').setLink({ href: url || '#', ...(pageBlocks ? { buttonStyle } : {}) }).run();
         }
