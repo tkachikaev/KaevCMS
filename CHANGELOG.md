@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum: "Open forum" in the forum settings opened the forum without its styles until the page was reloaded; it now opens with a full page load.
 - Forum header: "Personal account" replaces "To website" for players and guests (staff without a player session still see "To website"); the website stays one click away in the profile menu and in the footer.
 - Forum: a light/dark switch in the header, the same sun-and-moon control and soft crossfade as the player account. The choice is shared with the public website and remembered in the browser; on narrow phones the header keeps only the logo.
 - Notifications: players get a bell. On the forum it shows a red unread number, rings gently when something new arrives, and lists replies in your topics (merged into one "N new replies"), quotes of your messages and direct replies to you; clicking opens the message and marks it read. Each entry shows the avatar of who acted, their name and the topic highlighted, the time, and a dot while unread. The core player notification center (new core migration) lets other modules and the player account use the same bell later; old notifications are cleaned up daily.

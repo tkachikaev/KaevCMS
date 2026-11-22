@@ -44,6 +44,16 @@ final class ForumSettingsTest extends TestCase
         $this->assertSame(1, AuditLog::query()->where('action', 'forum.settings_updated')->count());
     }
 
+    public function test_open_forum_link_leaves_the_panel_with_a_full_page_load(): void
+    {
+        $this->actingAs(Admin::factory()->create(), 'admin');
+        $html = $this->get('/admin/extensions/forum/settings')->assertOk()->getContent();
+
+        // Livewire navigation would keep the panel head and drop the forum styles.
+        $this->assertMatchesRegularExpression('~<a class="forum-settings-open" href="[^"]*/forum">~', (string) $html);
+        $this->assertDoesNotMatchRegularExpression('~<a[^>]*wire:navigate[^>]*href="[^"]*/forum"~', (string) $html);
+    }
+
     public function test_invalid_global_settings_cannot_be_persisted(): void
     {
         $this->actingAs(Admin::factory()->create(), 'admin');

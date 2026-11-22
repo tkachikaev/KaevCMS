@@ -11,7 +11,8 @@
             :description="__('module-forum::messages.global_access_help')"
         >
             <x-slot:actions>
-                <a wire:navigate class="forum-settings-open" href="{{ route('modules.forum.index') }}">{{ __('module-forum::messages.back_to_forum') }}</a>
+                {{-- A full page load: the forum is a separate page with its own styles, not a panel view. --}}
+                <a class="forum-settings-open" href="{{ route('modules.forum.index') }}">{{ __('module-forum::messages.back_to_forum') }}</a>
             </x-slot:actions>
         </x-admin.card-heading>
 
