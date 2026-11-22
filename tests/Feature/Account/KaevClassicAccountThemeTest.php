@@ -57,7 +57,8 @@ class KaevClassicAccountThemeTest extends TestCase
         $this->assertStringContainsString(account_theme_asset('assets/images/banner-dark.webp'), $html);
         $this->assertFileExists(public_path('account-themes/kaev-classic/assets/images/banner-dark.webp'));
         $script = (string) file_get_contents(public_path('account-themes/kaev-classic/assets/js/scheme.js'));
-        $this->assertStringContainsString("'kaevcms.account.scheme'", $script);
+        // One light/dark choice shared with the public site and the forum.
+        $this->assertStringContainsString("const storageKey = 'kaevcms.site.scheme';", $script);
         $this->assertStringContainsString('root.dataset.accountScheme', $script);
         // Livewire navigation overwrites <html> attributes; the scheme is restored in the swap.
         $this->assertStringContainsString('event.detail?.onSwap?.(() => {', $script);

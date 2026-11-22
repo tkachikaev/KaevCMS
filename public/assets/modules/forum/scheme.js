@@ -2,15 +2,16 @@
     "use strict";
 
     // Loaded in <head> without defer so the saved light/dark choice applies before the
-    // first paint. The forum shares the public site's choice (kaevcms.site.scheme), so
-    // switching here also switches the site, and the other way round.
+    // first paint. One choice for the whole site: the public theme, the player account
+    // and the forum share kaevcms.site.scheme, so switching anywhere switches everywhere.
     const root = document.documentElement;
     const storageKey = "kaevcms.site.scheme";
     const allowed = new Set(["light", "dark"]);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     try {
-        const saved = window.localStorage.getItem(storageKey);
+        // Before the shared key existed, the account kept its own; honour it once.
+        const saved = window.localStorage.getItem(storageKey) ?? window.localStorage.getItem("kaevcms.account.scheme");
         if (allowed.has(saved)) {
             root.dataset.forumScheme = saved;
         }
@@ -84,4 +85,11 @@
         }
     });
     document.addEventListener("DOMContentLoaded", synchronize);
+    // A switch in the account or on the site in another tab follows here at once.
+    window.addEventListener("storage", (event) => {
+        if (event.key === storageKey && allowed.has(event.newValue) && event.newValue !== root.dataset.forumScheme) {
+            root.dataset.forumScheme = event.newValue;
+            synchronize();
+        }
+    });
 })();

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Forum themes: with the Forum enabled, **Admin → Themes** gets a **Forum** item next to Site and Account. It lists style-only themes from `public/forum-themes/<slug>` (`theme.json`, `theme.css`, preview); the owner and administrators switch them, and each switch is audited. Two themes are bundled: **Frost** (the current blue-grey look) and **Classic** (warm paper and gold by day, violet night in the dark mode, like the Classic player account). To make your own, copy a theme folder and edit its stylesheet. Themes cannot contain code, and a stylesheet that reaches other sites (`@import`, `http(s):`, `//`, `\` escapes) or is larger than 1 MB is refused, so a shared theme cannot leak page data. A damaged or missing theme falls back to Frost.
+- One light/dark switch for the whole site: the public Aurelia theme, the Classic player account and the forum now share one choice (`kaevcms.site.scheme` in the browser). Switching in any of them switches the others, also in tabs that are already open. Before this the account kept its own choice, so the forum could be dark while the account stayed light; a player's earlier account choice is picked up once.
 - Modules can list their own theme page under Admin → Themes (`ModuleNavigationRegistry::registerAppearanceLink`).
 
 ## 0.61.0 - 2026-11-22
