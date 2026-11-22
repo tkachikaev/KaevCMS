@@ -32,6 +32,12 @@
                 @case('support-tickets')
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg>
                     @break
+                @case('shop')
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>
+                    @break
+                @case('referrals')
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><path d="M18 8v6M15 11h6"></path></svg>
+                    @break
                 @case('forum')
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h12v8.5H8l-4.5 3.5z"></path><path d="M8.5 16.5v.5h7.5l4.5 3.5V9.5h-4"></path></svg>
                     @break
