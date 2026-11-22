@@ -891,12 +891,26 @@ const initializeRichEditor = (root, signal) => {
         }
     };
 
+    // The server enforces the same host list; this only gives an early, friendly answer.
+    const imageHosts = (root.dataset.imageHosts ?? '').split(',').filter(Boolean);
+    const allowedImageUrl = (value) => {
+        try {
+            const url = new URL(value);
+            return url.protocol === 'https:' && url.port === '' && imageHosts.includes(url.hostname.toLowerCase());
+        } catch {
+            return false;
+        }
+    };
+
     const previewLinkImage = () => {
         if (!linkImagePreview || !linkImageUrl) return;
         const url = linkImageUrl.value.trim();
         linkImagePreview.replaceChildren();
         linkImagePreview.dataset.state = '';
-        if (!/^https:\/\/[^\s/]+\.[^\s]+/i.test(url)) return;
+        if (!allowedImageUrl(url)) {
+            linkImagePreview.dataset.state = url === '' ? '' : 'blocked';
+            return;
+        }
         const image = document.createElement('img');
         image.referrerPolicy = 'no-referrer';
         image.alt = '';
@@ -921,8 +935,8 @@ const initializeRichEditor = (root, signal) => {
     root.querySelector('[data-editor-link-image-apply]')?.addEventListener('click', (event) => {
         event.preventDefault();
         const url = linkImageUrl?.value.trim() ?? '';
-        if (!/^https:\/\/[^\s/]+\.[^\s]+$/i.test(url) || url.length > 2048) {
-            setStatus(root.dataset.unsafeImageMessage ?? 'Use an https:// image address.', 'error');
+        if (!allowedImageUrl(url) || url.length > 2048) {
+            if (linkImagePreview) linkImagePreview.dataset.state = 'blocked';
             linkImageUrl?.focus();
             return;
         }

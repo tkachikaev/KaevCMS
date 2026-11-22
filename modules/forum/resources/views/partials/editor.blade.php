@@ -22,7 +22,7 @@
      data-too-large-message="{{ __('module-forum::messages.content_too_large') }}"
      data-unsafe-link-message="{{ __('module-forum::messages.unsafe_link') }}"
      data-link-images="1"
-     data-unsafe-image-message="{{ __('module-forum::messages.unsafe_image') }}"
+     data-image-hosts="{{ implode(',', \App\Services\Html\SafeHtmlSanitizer::FORUM_IMAGE_HOSTS) }}"
      data-unsupported-media-message="{{ __('module-forum::messages.unsupported_media') }}">
     <div class="rich-editor-toolbar forum-editor-toolbar" role="toolbar" aria-label="{{ __('module-forum::messages.formatting') }}">
         <button type="button" data-editor-action="bold" title="{{ __('module-forum::messages.bold') }}" aria-label="{{ __('module-forum::messages.bold') }}"><strong>B</strong></button>
@@ -166,10 +166,14 @@
         <h3 id="{{ $editorId }}-image-title">{{ __('module-forum::messages.insert_image') }}</h3>
         <label>
             <span>{{ __('module-forum::messages.image_url') }}</span>
-            <input type="text" data-editor-link-image-url inputmode="url" maxlength="2048" placeholder="https://i.imgur.com/…">
+            <input type="text" data-editor-link-image-url inputmode="url" maxlength="2048" placeholder="https://iili.io/…">
             <small>{{ __('module-forum::messages.image_url_hint') }}</small>
         </label>
-        <div class="forum-image-preview" data-editor-link-image-preview data-empty="{{ __('module-forum::messages.image_preview_empty') }}" data-error="{{ __('module-forum::messages.image_preview_error') }}"></div>
+        <p class="forum-media-sites">
+            <span>{{ __('module-forum::messages.image_hosts') }}</span>
+            @foreach(\App\Services\Html\SafeHtmlSanitizer::FORUM_IMAGE_HOSTS as $imageHost)<strong>{{ $imageHost }}</strong>@if(! $loop->last), @endif @endforeach
+        </p>
+        <div class="forum-image-preview" data-editor-link-image-preview data-empty="{{ __('module-forum::messages.image_preview_empty') }}" data-error="{{ __('module-forum::messages.image_preview_error') }}" data-blocked="{{ __('module-forum::messages.unsafe_image') }}"></div>
         <label>
             <span>{{ __('module-forum::messages.image_alt') }}</span>
             <input type="text" data-editor-link-image-alt maxlength="255">

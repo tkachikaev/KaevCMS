@@ -309,6 +309,7 @@
         .forum-image-preview:empty::before{content:attr(data-empty);color:#8a9aac;font-size:13px}
         .forum-image-preview[data-state="error"] img{display:none}
         .forum-image-preview[data-state="error"]::before{content:attr(data-error);color:#ad423b;font-size:13px}
+        .forum-image-preview[data-state="blocked"]::before{content:attr(data-blocked);max-width:90%;color:#ad423b;font-size:13px;text-align:center}
         :root[data-forum-scheme="dark"] .forum-image-preview{border-color:#3a4e63;background:#121b26}
         /* Video embeds: players rendered by the forum from a provider + id token. */
         .forum-media{position:relative;width:100%;max-width:720px;aspect-ratio:16/9;margin:12px 0;border-radius:10px;overflow:hidden;background:#0d1117}

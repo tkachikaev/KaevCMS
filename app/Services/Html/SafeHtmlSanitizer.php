@@ -41,6 +41,13 @@ final class SafeHtmlSanitizer
         'figure', 'img',
     ];
 
+    /**
+     * Image hosts forum posts may show pictures from. The CMS never fetches or stores
+     * these files: readers' browsers load them directly, so nothing user-supplied is
+     * parsed on the server. Exact host names only (no wildcard subdomains).
+     */
+    public const FORUM_IMAGE_HOSTS = ['iili.io', 'i.imgur.com', 'i.postimg.cc', 'i.ibb.co'];
+
     /** Forum link images: width in percent of the column, 10-100 in steps of 5. */
     private const FORUM_IMAGE_WIDTHS = [
         '10', '15', '20', '25', '30', '35', '40', '45', '50', '55',
@@ -453,7 +460,7 @@ final class SafeHtmlSanitizer
         };
     }
 
-    /** Forum images are hot-linked from public https hosts; local and private targets are refused. */
+    /** Forum images are hot-linked over https from the allowed image hosts only. */
     private function sanitizeForumImageSource(string $src): ?string
     {
         $src = html_entity_decode(trim($src), ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -468,9 +475,8 @@ final class SafeHtmlSanitizer
             return null;
         }
 
-        $host = strtolower(rtrim($parts['host'], '.'));
-        if ($host === 'localhost' || str_ends_with($host, '.localhost') || ! str_contains($host, '.')
-            || filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+        $host = strtolower($parts['host']);
+        if (! in_array($host, self::FORUM_IMAGE_HOSTS, true) || isset($parts['port'])) {
             return null;
         }
 

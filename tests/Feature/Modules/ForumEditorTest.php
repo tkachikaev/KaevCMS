@@ -263,24 +263,26 @@ final class ForumEditorTest extends TestCase
         $this->assertStringNotContainsString('sideways', $forum);
     }
 
-    public function test_forum_profile_keeps_only_public_https_link_images(): void
+    public function test_forum_profile_keeps_images_from_allowed_hosts_only(): void
     {
         $sanitizer = app(SafeHtmlSanitizer::class);
-        $html = '<figure data-align="center" data-width="40"><img src="https://img.example.com/a.png" alt="Ok" onerror="x()"></figure>'.
-            '<figure data-width="33"><img src="https://img.example.com/b.png"></figure>'.
-            '<figure><img src="http://img.example.com/plain.png"></figure>'.
-            '<figure><img src="https://localhost/secret.png"></figure>'.
-            '<figure><img src="https://192.168.0.1/router.png"></figure>'.
-            '<figure><img src="https://user:pass@img.example.com/c.png"></figure>'.
+        $html = '<figure data-align="center" data-width="40"><img src="https://iili.io/abc123.png" alt="Ok" onerror="x()"></figure>'.
+            '<figure data-width="33"><img src="https://i.imgur.com/b.png"></figure>'.
+            '<figure><img src="https://img.example.com/any.png"></figure>'.
+            '<figure><img src="https://evil.iili.io/sub.png"></figure>'.
+            '<figure><img src="https://iili.io.evil.example/fake.png"></figure>'.
+            '<figure><img src="http://iili.io/plain.png"></figure>'.
+            '<figure><img src="https://iili.io:8443/port.png"></figure>'.
+            '<figure><img src="https://user:pass@i.imgur.com/c.png"></figure>'.
             '<figure><img src="javascript:alert(1)"></figure>'.
-            '<p><img src="https://img.example.com/loose.png">Text</p>';
+            '<p><img src="https://iili.io/loose.png">Text</p>';
 
         $forum = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
 
-        $this->assertStringContainsString('<figure data-align="center" data-width="40"><img src="https://img.example.com/a.png" alt="Ok"', $forum);
+        $this->assertStringContainsString('<figure data-align="center" data-width="40"><img src="https://iili.io/abc123.png" alt="Ok"', $forum);
         $this->assertStringContainsString('referrerpolicy="no-referrer"', $forum);
-        $this->assertStringContainsString('<figure><img src="https://img.example.com/b.png"', $forum);
-        foreach (['onerror', 'http://img', 'localhost', '192.168', 'user:pass', 'javascript:', 'loose.png', 'data-width="33"'] as $fragment) {
+        $this->assertStringContainsString('<figure><img src="https://i.imgur.com/b.png"', $forum);
+        foreach (['onerror', 'img.example.com', 'evil', 'http://iili', '8443', 'user:pass', 'javascript:', 'loose.png', 'data-width="33"'] as $fragment) {
             $this->assertStringNotContainsString($fragment, $forum);
         }
         $this->assertSame(2, substr_count($forum, '<img'));
