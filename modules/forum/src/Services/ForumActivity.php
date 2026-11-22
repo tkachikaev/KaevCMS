@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
 
 /**
@@ -34,9 +33,8 @@ final class ForumActivity
     /** @return array{enabled: bool, limit: int} */
     public function settings(): array
     {
-        $row = Schema::hasColumn('module_forum_settings', 'activity_limit')
-            ? DB::table('module_forum_settings')->where('id', 1)->first()
-            : null;
+        // Missing columns (module migration not applied yet) simply mean the defaults.
+        $row = DB::table('module_forum_settings')->where('id', 1)->first();
         $limit = (int) ($row->activity_limit ?? self::DEFAULT_LIMIT);
 
         return [

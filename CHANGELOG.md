@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forum: image hosts and activity settings are read with one settings query instead of extra database schema checks on every page.
 - Forum notifications: quoting a message that holds only a picture or a video now notifies its author too (the quote is recognised by the author's name).
 - Forum activity table: hiding, deleting, restoring, pinning or moving a topic refreshes the cached lists at once, so a hidden topic no longer lingers on the home page for up to a minute.
 - Forum views: requests without the session cookie (most bots, scripts and link previews) and known crawler user agents are not counted and no longer write to the database on every hit.

@@ -4,7 +4,6 @@ namespace KaevCMS\Modules\Forum\Services;
 
 use App\Services\Html\SafeHtmlSanitizer;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Image hosts the Owner allows in forum posts. Readers' browsers load the pictures
@@ -24,12 +23,10 @@ final class ForumImageHosts
             return $this->hosts;
         }
 
-        // Before the module migration runs, keep the bundled defaults.
-        if (! Schema::hasColumn('module_forum_settings', 'image_hosts')) {
-            return $this->hosts = SafeHtmlSanitizer::DEFAULT_FORUM_IMAGE_HOSTS;
-        }
-
-        $stored = DB::table('module_forum_settings')->where('id', 1)->value('image_hosts');
+        // One row read, no schema query: before the module migration adds the column,
+        // the property is simply missing and the bundled defaults apply.
+        $row = DB::table('module_forum_settings')->where('id', 1)->first();
+        $stored = $row->image_hosts ?? null;
         $decoded = is_string($stored) ? json_decode($stored, true) : null;
         if (! is_array($decoded)) {
             return $this->hosts = SafeHtmlSanitizer::DEFAULT_FORUM_IMAGE_HOSTS;
