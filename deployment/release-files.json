@@ -467,6 +467,7 @@
         "modules/forum/database/migrations/2026_11_19_000200_create_module_forum_topics_and_posts.php",
         "modules/forum/database/migrations/2026_11_19_000300_add_formatted_body_to_module_forum_posts.php",
         "modules/forum/database/migrations/2026_11_20_000400_create_module_forum_post_revisions.php",
+        "modules/forum/database/migrations/2026_11_23_000500_add_view_count_to_module_forum_topics.php",
         "modules/forum/docs/README.en.md",
         "modules/forum/docs/README.ru.md",
         "modules/forum/lang/en/messages.php",

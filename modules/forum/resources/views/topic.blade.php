@@ -23,7 +23,7 @@
         @if($topic->hidden_at !== null)<span class="forum-tag">{{ __('module-forum::messages.hidden') }}</span>@endif
     </div>
 </div>
-<p class="forum-desc">{{ __('module-forum::messages.replies_count', ['count' => $topic->reply_count]) }}</p>
+<p class="forum-desc">{{ __('module-forum::messages.replies_count', ['count' => $topic->reply_count]) }} · {{ __('module-forum::messages.views_count', ['count' => \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $topic->view_count)]) }}</p>
 @if(session('forum_status'))<p class="forum-notice" role="status">{{ session('forum_status') }}</p>@endif
 @if($topic->hidden_at !== null)
     <p class="forum-notice forum-notice-warning">{{ __('module-forum::messages.hidden_moderator_notice') }}</p>

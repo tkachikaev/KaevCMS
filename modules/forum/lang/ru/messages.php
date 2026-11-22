@@ -116,6 +116,8 @@ return [
     'stat_topics' => 'Темы',
     'stat_posts' => 'Сообщения',
     'stat_replies' => 'Ответы',
+    'stat_views' => 'Просмотры',
+    'views_count' => 'Просмотров: :count',
     'topic_pages' => 'Страницы темы',
     'today_at' => 'Сегодня в :time',
     'yesterday_at' => 'Вчера в :time',

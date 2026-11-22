@@ -80,6 +80,32 @@ final class ForumPostingTest extends TestCase
             ->assertSee('PublicHero');
     }
 
+    public function test_topic_views_count_once_per_visitor_session(): void
+    {
+        $section = $this->section('Общее общение');
+        $topic = app(ForumPosting::class)->createTopic(
+            new ForumActor('user', user: User::factory()->create()),
+            $section->id,
+            'Viewed discussion',
+            'Counting views',
+            (string) Str::uuid(),
+        );
+        $updatedAt = $topic->fresh()->updated_at;
+
+        // Reloading and paging through the same topic in one session counts once.
+        $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Просмотров: 1');
+        $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Просмотров: 1');
+        $this->get('/forum/topics/'.$topic->id.'?page=2')->assertOk();
+        $this->assertSame(1, $topic->fresh()->view_count);
+        $this->assertEquals($updatedAt, $topic->fresh()->updated_at);
+
+        // Another visitor (a new session) adds a view, shown in the section list too.
+        $this->flushSession();
+        $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Просмотров: 2');
+        $this->get('/forum/sections/'.$section->id)->assertOk()->assertSee('Просмотры');
+        $this->assertSame(2, $topic->fresh()->view_count);
+    }
+
     public function test_guest_cannot_post_but_may_read_public_topics(): void
     {
         $section = $this->section('Общее общение');

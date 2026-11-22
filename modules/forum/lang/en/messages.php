@@ -116,6 +116,8 @@ return [
     'stat_topics' => 'Topics',
     'stat_posts' => 'Messages',
     'stat_replies' => 'Replies',
+    'stat_views' => 'Views',
+    'views_count' => 'Views: :count',
     'topic_pages' => 'Topic pages',
     'today_at' => 'Today at :time',
     'yesterday_at' => 'Yesterday at :time',

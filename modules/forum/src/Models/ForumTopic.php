@@ -33,6 +33,7 @@ final class ForumTopic extends Model
         return [
             'is_pinned' => 'boolean',
             'reply_count' => 'integer',
+            'view_count' => 'integer',
             'last_post_at' => 'datetime',
             'hidden_at' => 'datetime',
         ];

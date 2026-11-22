@@ -39,7 +39,7 @@ Archive is an ordinary read-only section. Once the topic-moving functionality is
 
 In a section that allows posting, click **New topic**, enter a title and a message, and publish it. Signed-in players may reply according to the section's permissions. Guests can read public discussions, but cannot post.
 
-Sections list topics with authors, reply counts, and last activity. Topics are sorted by latest activity, 20 per page. Each topic shows up to 15 chronological messages per page.
+The forum home shows each section's topic and message totals and its latest message: the author's avatar, the topic, the time and the name. Sections list topics with the author's avatar and name, reply and view counts, and the latest reply with the replier's avatar. A view counts once per visitor session, so reloading does not inflate it. The view counter needs the module migration `2026_11_23_000500_add_view_count_to_module_forum_topics.php`: after updating, apply it under **Admin → Modules** ("Update database"); existing topics start counting from zero. Topics are sorted by latest activity, 20 per page. Each topic shows up to 15 chronological messages per page.
 
 CMS Owner and Administrator accounts post under their existing administrative names with an Administrator label. Appointed forum moderators post under their public player nicknames with a Moderator label. When two login identities exist in the same browser, the author can be selected explicitly.
 

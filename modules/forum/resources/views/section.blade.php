@@ -46,8 +46,8 @@
                 </p>
             </div>
             <dl class="forum-topic-counts">
-                <dt>{{ __('module-forum::messages.stat_replies') }}</dt>
-                <dd>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $topic->reply_count) }}</dd>
+                <div><dt>{{ __('module-forum::messages.stat_replies') }}</dt><dd>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $topic->reply_count) }}</dd></div>
+                <div><dt>{{ __('module-forum::messages.stat_views') }}</dt><dd>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $topic->view_count) }}</dd></div>
             </dl>
             <div class="forum-topic-last">
                 <div class="forum-topic-last-copy">

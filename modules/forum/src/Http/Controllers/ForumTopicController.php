@@ -92,6 +92,7 @@ final class ForumTopicController extends Controller
     {
         $actor = $this->actors->resolve($request);
         $section = $this->readTopic($actor, $topic);
+        $this->countView($request, $topic);
         $posts = ForumPost::query()
             ->where('topic_id', $topic->id)
             ->orderBy('id')
@@ -146,6 +147,25 @@ final class ForumTopicController extends Controller
         abort_unless($this->permissions->canView($actor, $section, $this->structure->globalVisibility()), 404);
 
         return $category;
+    }
+
+    /**
+     * Count a topic view once per visitor session, so reloads and paging through the
+     * topic do not inflate the number. The increment is atomic and leaves the topic's
+     * own timestamps untouched.
+     */
+    private function countView(Request $request, ForumTopic $topic): void
+    {
+        $seen = array_map('intval', (array) $request->session()->get('forum.viewed_topics', []));
+        if (in_array((int) $topic->id, $seen, true)) {
+            return;
+        }
+
+        ForumTopic::query()->whereKey($topic->id)->toBase()->increment('view_count');
+        $topic->view_count = (int) $topic->view_count + 1;
+
+        $seen[] = (int) $topic->id;
+        $request->session()->put('forum.viewed_topics', array_slice($seen, -300));
     }
 
     private function readTopic(ForumActor $actor, ForumTopic $topic): ForumSection
