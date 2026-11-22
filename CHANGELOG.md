@@ -7,6 +7,7 @@
 - Forum: clicking your name in the header opens an account menu like the player account's — wallet balance, account, settings, security and sign out for players; forum settings, control panel and sign out for staff — instead of leaving the forum. The separate settings gear moved into this menu.
 - Forum: search is a rounded field with a magnifier beside the forum heading instead of a separate "Search" tab in the header; the results page keeps the same field with the query filled in. The header no longer has Forum/Search tabs, and "To website" stays visible on phones.
 - Forum: each section in the list shows topic and message totals and its latest message — the author's avatar, the topic title linking straight to that message, "Today at 05:56" or the date, and the author's name. Owners see the same figures, with the section controls moved under the description.
+- Forum: topic lists in a section show the author's avatar and name with the start date, quick links to the last pages of long topics, a Replies counter, and the latest reply time linking to that message with the replier's name and small avatar. On phones the counter and the latest reply share one line.
 
 ## 0.60.0 - 2026-11-20
 

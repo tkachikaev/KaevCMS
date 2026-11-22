@@ -1,21 +1,6 @@
 @extends('module-forum::layouts.app')
 @section('title', __('module-forum::messages.title'))
 @section('content')
-@php
-    // Compact counters like 1,2K for big sections; plain numbers otherwise.
-    $forumCount = static fn (int $value): string => $value >= 10000
-        ? format_number($value / 1000, $value >= 100000 ? 0 : 1).'K'
-        : format_number($value);
-    // "Today at 05:56", "Yesterday at 18:33", otherwise the date and time.
-    $forumWhen = static function ($date): string {
-        $date = \Illuminate\Support\Carbon::parse($date);
-        return match (true) {
-            $date->isToday() => __('module-forum::messages.today_at', ['time' => $date->format('H:i')]),
-            $date->isYesterday() => __('module-forum::messages.yesterday_at', ['time' => $date->format('H:i')]),
-            default => $date->format('d.m.Y H:i'),
-        };
-    };
-@endphp
 <div class="forum-heading forum-heading-search">
     <div class="forum-heading-copy">
         <h1>{{ __('module-forum::messages.title') }}</h1>
@@ -103,8 +88,8 @@
                             </div>
                         </div>
                         <dl class="forum-section-stats">
-                            <div><dt>{{ __('module-forum::messages.stat_topics') }}</dt><dd>{{ $forumCount((int) $section->topics_count) }}</dd></div>
-                            <div><dt>{{ __('module-forum::messages.stat_posts') }}</dt><dd>{{ $forumCount($sectionActivity['posts']) }}</dd></div>
+                            <div><dt>{{ __('module-forum::messages.stat_topics') }}</dt><dd>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $section->topics_count) }}</dd></div>
+                            <div><dt>{{ __('module-forum::messages.stat_posts') }}</dt><dd>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::count($sectionActivity['posts']) }}</dd></div>
                         </dl>
                         <div class="forum-section-last">
                             @if($sectionActivity['topic'] && $sectionActivity['post'])
@@ -116,7 +101,7 @@
                                 @endif
                                 <div class="forum-section-last-copy">
                                     <a href="{{ route('modules.forum.topics.show', ['topic' => $sectionActivity['topic']->id, 'page' => $sectionActivity['page']]) }}#post-{{ $lastPost->id }}" title="{{ $sectionActivity['topic']->title }}">{{ $sectionActivity['topic']->title }}</a>
-                                    <small>{{ $forumWhen($lastPost->created_at) }} · <span>{{ $lastPost->author_name }}</span></small>
+                                    <small>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::when($lastPost->created_at) }} · <span>{{ $lastPost->author_name }}</span></small>
                                 </div>
                             @else
                                 <small class="forum-section-last-empty">{{ __('module-forum::messages.no_posts_yet') }}</small>

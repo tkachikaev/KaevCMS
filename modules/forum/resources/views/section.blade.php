@@ -22,18 +22,47 @@
 <div class="forum-panel">
     <div class="forum-panel-heading">{{ __('module-forum::messages.topics') }}</div>
     @forelse($topics as $topic)
-        <div class="forum-topic-row">
+        @php($row = $activity[$topic->id] ?? ['author' => null, 'last' => null, 'lastUser' => null, 'pages' => 1])
+        @php($lastName = $row['last']?->author_name ?? $topic->last_author_name)
+        <div class="forum-topic-row forum-topic-row-rich">
+            @if($row['author'])
+                <x-account-avatar :user="$row['author']" :fallback="$topic->author_name" class="forum-avatar forum-topic-avatar" />
+            @else
+                <span class="account-avatar forum-avatar forum-topic-avatar" aria-hidden="true"><span>{{ mb_strtoupper(mb_substr($topic->author_name, 0, 1)) }}</span></span>
+            @endif
             <div class="forum-topic-main">
                 <a class="forum-topic-title" href="{{ route('modules.forum.topics.show', $topic) }}">{{ $topic->title }}</a>
                 @if($topic->is_pinned)<span class="forum-tag">{{ __('module-forum::messages.pinned') }}</span>@endif
                 @if($topic->status === 'closed')<span class="forum-tag">{{ __('module-forum::messages.closed') }}</span>@endif
-                <p class="forum-topic-meta">{{ __('module-forum::messages.by_author', ['name' => $topic->author_name]) }}
-                    · {{ $topic->created_at->format('d.m.Y H:i') }}</p>
+                <p class="forum-topic-meta">
+                    <span class="forum-topic-author">{{ $topic->author_name }}</span> · {{ $topic->created_at->format('d.m.Y') }}
+                    @if($row['pages'] > 1)
+                        <span class="forum-topic-pages" aria-label="{{ __('module-forum::messages.topic_pages') }}">
+                            @foreach(range(max(2, $row['pages'] - 2), $row['pages']) as $pageNumber)
+                                <a href="{{ route('modules.forum.topics.show', ['topic' => $topic->id, 'page' => $pageNumber]) }}">{{ $pageNumber }}</a>
+                            @endforeach
+                        </span>
+                    @endif
+                </p>
             </div>
-            <div class="forum-topic-stats">
-                <span>{{ __('module-forum::messages.replies_count', ['count' => $topic->reply_count]) }}</span>
-                <small>{{ __('module-forum::messages.last_reply', ['name' => $topic->last_author_name]) }}<br>
-                    {{ $topic->last_post_at->format('d.m.Y H:i') }}</small>
+            <dl class="forum-topic-counts">
+                <dt>{{ __('module-forum::messages.stat_replies') }}</dt>
+                <dd>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::count((int) $topic->reply_count) }}</dd>
+            </dl>
+            <div class="forum-topic-last">
+                <div class="forum-topic-last-copy">
+                    @if($row['last'])
+                        <a href="{{ route('modules.forum.topics.show', ['topic' => $topic->id, 'page' => $row['pages']]) }}#post-{{ $row['last']->id }}">{{ \KaevCMS\Modules\Forum\Support\ForumFormat::when($topic->last_post_at) }}</a>
+                    @else
+                        <span>{{ \KaevCMS\Modules\Forum\Support\ForumFormat::when($topic->last_post_at) }}</span>
+                    @endif
+                    <small>{{ $lastName }}</small>
+                </div>
+                @if($row['lastUser'])
+                    <x-account-avatar :user="$row['lastUser']" :fallback="$lastName" class="forum-avatar forum-topic-last-avatar" />
+                @else
+                    <span class="account-avatar forum-avatar forum-topic-last-avatar" aria-hidden="true"><span>{{ mb_strtoupper(mb_substr((string) $lastName, 0, 1)) }}</span></span>
+                @endif
             </div>
         </div>
     @empty

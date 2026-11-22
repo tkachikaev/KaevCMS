@@ -93,6 +93,44 @@ final class ForumStructure
         return $activity;
     }
 
+    /**
+     * Avatars and the latest message for a page of topics: one query for the latest
+     * message ids, one for those messages and one for the authors' accounts.
+     *
+     * @param  iterable<int, ForumTopic>  $topics
+     * @return array<int, array{author:User|null, last:ForumPost|null, lastUser:User|null, pages:int}>
+     */
+    public function topicActivity(iterable $topics, int $perPage = 15): array
+    {
+        $topics = collect($topics);
+        if ($topics->isEmpty()) {
+            return [];
+        }
+
+        $lastIds = ForumPost::query()
+            ->whereIn('topic_id', $topics->pluck('id'))
+            ->groupBy('topic_id')
+            ->selectRaw('max(id) as id')
+            ->pluck('id');
+        $lastPosts = ForumPost::query()->whereIn('id', $lastIds)->get()->keyBy('topic_id');
+
+        $userIds = $topics->pluck('author_user_id')->merge($lastPosts->pluck('author_user_id'))->filter()->unique();
+        $users = $userIds->isEmpty() ? collect() : User::query()->whereIn('id', $userIds)->get()->keyBy('id');
+
+        $activity = [];
+        foreach ($topics as $topic) {
+            $last = $lastPosts->get($topic->id);
+            $activity[$topic->id] = [
+                'author' => $topic->author_user_id === null ? null : $users->get($topic->author_user_id),
+                'last' => $last,
+                'lastUser' => $last?->author_user_id === null ? null : $users->get($last->author_user_id),
+                'pages' => intdiv(max(0, (int) $topic->reply_count), $perPage) + 1,
+            ];
+        }
+
+        return $activity;
+    }
+
     public function initialStructure(): bool
     {
         return DB::transaction(static function (): bool {

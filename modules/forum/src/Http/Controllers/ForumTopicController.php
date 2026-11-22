@@ -49,6 +49,7 @@ final class ForumTopicController extends Controller
             'category' => $category,
             'section' => $section,
             'topics' => $topics,
+            'activity' => $this->structure->topicActivity($topics->getCollection()),
             'canStart' => $this->posting->canStart($actor, $section),
             'canModerate' => $this->moderation->isStaff($actor),
         ]);

@@ -514,6 +514,7 @@
         "modules/forum/src/Services/ForumPosting.php",
         "modules/forum/src/Services/ForumStructure.php",
         "modules/forum/src/Services/ForumTopicModeration.php",
+        "modules/forum/src/Support/ForumFormat.php",
         "modules/news-comments/README.md",
         "modules/news-comments/assets/module.webp",
         "modules/news-comments/bootstrap.php",
