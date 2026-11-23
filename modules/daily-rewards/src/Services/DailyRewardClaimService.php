@@ -37,19 +37,21 @@ final class DailyRewardClaimService
 
         try {
             return DB::transaction(function () use ($user, $calendarId, $gameAccountId, $requestToken): DailyRewardClaim {
+                // The calendar row is the first lock taken: it serializes every claim of the
+                // calendar. A locking read of a request token that does not exist yet would
+                // take a gap lock first and deadlock parallel claims on MySQL/MariaDB.
+                $calendar = DailyRewardCalendar::query()
+                    ->with('gameServer.translations')
+                    ->lockForUpdate()
+                    ->find($calendarId);
+
                 $existing = DailyRewardClaim::query()
                     ->where('request_token', $requestToken)
-                    ->lockForUpdate()
                     ->first();
 
                 if ($existing instanceof DailyRewardClaim) {
                     return $this->assertClaimOwner($existing, $user, $calendarId, $gameAccountId);
                 }
-
-                $calendar = DailyRewardCalendar::query()
-                    ->with('gameServer.translations')
-                    ->lockForUpdate()
-                    ->find($calendarId);
 
                 if (! $calendar instanceof DailyRewardCalendar || ! $calendar->enabled) {
                     throw new DailyRewardClaimException(DailyRewardClaimFailure::CalendarUnavailable);
@@ -77,6 +79,7 @@ final class DailyRewardClaimService
 
                 $account = UserGameAccount::query()
                     ->where('user_id', $user->id)
+                    ->where('creation_status', UserGameAccount::STATUS_ACTIVE)
                     ->whereNotNull('registration_game_server_id')
                     ->whereHas('registrationGameServer')
                     ->with(['loginServer', 'registrationGameServer'])
@@ -105,6 +108,13 @@ final class DailyRewardClaimService
                     throw new DailyRewardClaimException(DailyRewardClaimFailure::AlreadyClaimed);
                 }
 
+                // The calendar row is locked above and the admin locks it before changing the
+                // limit, so the mode read here cannot change until this claim is committed.
+                $perSiteUser = $calendar->limitsClaimsPerSiteUser();
+                if ($perSiteUser && $this->siteUserClaimedDay($calendar->id, $day->id, $user->id, lock: true)) {
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::AlreadyClaimedBySiteUser);
+                }
+
                 $grantItems = $day->items
                     ->map(fn (DailyRewardItem $item): RewardGrantItem => new RewardGrantItem(
                         itemId: (int) $item->item_id,
@@ -128,6 +138,7 @@ final class DailyRewardClaimService
                     'day_id' => $day->id,
                     'user_id' => $user->id,
                     'user_game_account_id' => $account->id,
+                    'site_user_limit_id' => $perSiteUser ? $user->id : null,
                     'game_server_id' => $calendar->game_server_id,
                     'reward_inventory_grant_id' => null,
                     'reward_date' => $localNow->toDateString(),
@@ -186,10 +197,32 @@ final class DailyRewardClaimService
                     ->exists()) {
                     throw new DailyRewardClaimException(DailyRewardClaimFailure::AlreadyClaimed);
                 }
+
+                if (
+                    $dayId !== null
+                    && $calendar->limitsClaimsPerSiteUser()
+                    && $this->siteUserClaimedDay($calendar->id, (int) $dayId, $user->id)
+                ) {
+                    throw new DailyRewardClaimException(DailyRewardClaimFailure::AlreadyClaimedBySiteUser);
+                }
             }
 
             throw $exception;
         }
+    }
+
+    private function siteUserClaimedDay(int $calendarId, int $dayId, int $userId, bool $lock = false): bool
+    {
+        $query = DailyRewardClaim::query()
+            ->where('calendar_id', $calendarId)
+            ->where('day_id', $dayId)
+            ->where('user_id', $userId);
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first(['id']) instanceof DailyRewardClaim;
     }
 
     private function existingClaim(string $requestToken, User $user, int $calendarId, int $gameAccountId): ?DailyRewardClaim

@@ -773,7 +773,7 @@ class ReleaseMetadataTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
         $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
-        $this->assertSame('1.3.4', $dailyRewardsManifest['version']);
+        $this->assertSame('1.4.0', $dailyRewardsManifest['version']);
 
         $manifest = json_decode(
             $this->readReleaseFile('modules/promo-codes/module.json'),

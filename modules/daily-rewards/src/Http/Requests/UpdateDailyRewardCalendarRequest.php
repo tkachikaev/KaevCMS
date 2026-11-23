@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\DailyRewards\Http\Requests;
 use App\Auth\AdminPermission;
 use App\Http\Requests\Admin\AdminFormRequest;
 use App\Models\Admin;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardCalendar;
 
@@ -61,6 +62,7 @@ final class UpdateDailyRewardCalendarRequest extends AdminFormRequest
     {
         return [
             'enabled' => ['required', 'boolean'],
+            'claim_limit' => ['sometimes', 'required', 'string', Rule::in(DailyRewardCalendar::CLAIM_LIMITS)],
             'days' => ['required', 'array', 'min:28', 'max:31'],
             'days.*.enabled' => ['required', 'boolean'],
             'days.*.rewards' => ['present', 'array', 'max:100'],
@@ -133,6 +135,7 @@ final class UpdateDailyRewardCalendarRequest extends AdminFormRequest
     {
         return [
             'enabled' => __('module-daily-rewards::messages.state'),
+            'claim_limit' => __('module-daily-rewards::messages.claim_limit'),
             'days' => __('module-daily-rewards::messages.calendar_days'),
             'days.*.enabled' => __('module-daily-rewards::messages.day_enabled'),
             'days.*.rewards' => __('module-daily-rewards::messages.rewards'),
@@ -150,6 +153,7 @@ final class UpdateDailyRewardCalendarRequest extends AdminFormRequest
             'array' => __('module-daily-rewards::messages.validation_array'),
             'integer' => __('module-daily-rewards::messages.validation_integer'),
             'boolean' => __('module-daily-rewards::messages.validation_boolean'),
+            'in' => __('module-daily-rewards::messages.validation_claim_limit'),
             'min' => __('module-daily-rewards::messages.validation_min'),
             'max' => __('module-daily-rewards::messages.validation_max'),
         ];

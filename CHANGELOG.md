@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+Daily Rewards 1.4.0. After updating, open **Admin → Modules** and press "Update database" for Daily Rewards: it has one new migration.
+
+- Daily rewards: each calendar has a **Reward claim limit**. "Once per day for each site user" lets a player claim a day reward once with any one of their game accounts; "Once per day for each game account" keeps the old behaviour. New calendars default to the per-user limit, existing calendars stay per account. The limit cannot be changed on a day that already has claims. On the player page, a day claimed with another account shows as claimed, with that account's login.
+- Daily rewards: game accounts that are still being created or failed to be created can no longer claim.
+- Daily rewards: parallel claims of one calendar on MySQL/MariaDB could deadlock and fail with a database error; claims now lock the calendar first.
+
 ## 0.61.0 - 2026-11-22
 
 Forum 0.10.0, Daily Rewards 1.3.4, account themes Classic 1.0.4, Aurelia 1.6.12 and Luxury 1.6.10, public theme Aurelia 1.1.2. After updating, open **Admin → Modules** and press "Update database" for the Forum: it has four new migrations (views, image hosts, activity table). The core adds the `user_notifications` table, applied by the regular update. Forum themes live in `public/forum-themes`; Frost stays active until an administrator picks another one in **Admin → Themes → Forum**.

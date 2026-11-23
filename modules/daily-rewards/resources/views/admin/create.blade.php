@@ -30,6 +30,13 @@
                         @endforeach
                     </select>
                 </div>
+                <x-admin.field for="claim_limit" name="claim_limit" :label="__('module-daily-rewards::messages.claim_limit')" :hint="__('module-daily-rewards::messages.claim_limit_help')">
+                    <select id="claim_limit" name="claim_limit" required>
+                        @foreach(\KaevCMS\Modules\DailyRewards\Models\DailyRewardCalendar::CLAIM_LIMITS as $limit)
+                            <option value="{{ $limit }}" @selected(old('claim_limit', $calendar->claim_limit) === $limit)>{{ __('module-daily-rewards::messages.claim_limit_'.$limit) }}</option>
+                        @endforeach
+                    </select>
+                </x-admin.field>
             </div>
         </section>
     </div>

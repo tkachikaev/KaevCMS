@@ -148,4 +148,13 @@ return [
     'friday' => 'Fri',
     'saturday' => 'Sat',
     'sunday' => 'Sun',
+    'claim_limit' => 'Reward claim limit',
+    'claim_limit_help' => 'How often a player may collect the daily reward. It cannot be changed once anyone has claimed today.',
+    'claim_limit_game_account' => 'Once per day for each game account',
+    'claim_limit_site_user' => 'Once per day for each site user',
+    'claim_limit_locked_today' => 'Rewards from this calendar have already been claimed today. The limit can be changed tomorrow.',
+    'validation_claim_limit' => 'Choose one of the available limit options.',
+    'account_help_site_user' => 'Today’s reward can be claimed once with any one of your game accounts. Items are added to the shared web inventory for this server.',
+    'claimed_with_account' => 'Claimed with :account',
+    'claim_already_claimed_by_site_user' => 'Today’s reward has already been claimed with another of your game accounts. This calendar allows one claim per day.',
 ];

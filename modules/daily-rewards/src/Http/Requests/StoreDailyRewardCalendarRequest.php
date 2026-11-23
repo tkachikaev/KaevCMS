@@ -5,6 +5,7 @@ namespace KaevCMS\Modules\DailyRewards\Http\Requests;
 use App\Auth\AdminPermission;
 use App\Http\Requests\Admin\AdminFormRequest;
 use App\Models\Admin;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardCalendar;
 
@@ -30,6 +31,7 @@ final class StoreDailyRewardCalendarRequest extends AdminFormRequest
             'year' => ['required', 'integer', 'min:2020', 'max:2100'],
             'month' => ['required', 'integer', 'min:1', 'max:12'],
             'enabled' => ['required', 'boolean'],
+            'claim_limit' => ['sometimes', 'required', 'string', Rule::in(DailyRewardCalendar::CLAIM_LIMITS)],
         ];
     }
 
@@ -64,6 +66,7 @@ final class StoreDailyRewardCalendarRequest extends AdminFormRequest
             'year' => __('module-daily-rewards::messages.year'),
             'month' => __('module-daily-rewards::messages.month'),
             'enabled' => __('module-daily-rewards::messages.state'),
+            'claim_limit' => __('module-daily-rewards::messages.claim_limit'),
         ];
     }
 
@@ -74,6 +77,7 @@ final class StoreDailyRewardCalendarRequest extends AdminFormRequest
             'required' => __('module-daily-rewards::messages.validation_required'),
             'integer' => __('module-daily-rewards::messages.validation_integer'),
             'boolean' => __('module-daily-rewards::messages.validation_boolean'),
+            'in' => __('module-daily-rewards::messages.validation_claim_limit'),
             'exists' => __('module-daily-rewards::messages.validation_server_exists'),
             'unique' => __('module-daily-rewards::messages.validation_calendar_unique'),
             'min' => __('module-daily-rewards::messages.validation_min'),

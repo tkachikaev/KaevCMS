@@ -67,10 +67,17 @@ final class DailyRewardController extends Controller
             $weekdayOffset = $monthStart->isoWeekday() - 1;
 
             if ($selectedAccount instanceof UserGameAccount) {
+                // In site-user mode a day claimed with any of the user's accounts is spent for all of them.
                 $claimsByDay = DailyRewardClaim::query()
                     ->where('calendar_id', $calendar->id)
-                    ->where('user_game_account_id', $selectedAccount->id)
+                    ->when(
+                        $calendar->limitsClaimsPerSiteUser(),
+                        static fn ($query) => $query->where('user_id', $user->id),
+                        static fn ($query) => $query->where('user_game_account_id', $selectedAccount->id),
+                    )
+                    ->orderBy('id')
                     ->get()
+                    ->unique('day_id')
                     ->keyBy('day_id');
             }
 

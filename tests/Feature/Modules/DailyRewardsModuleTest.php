@@ -14,7 +14,9 @@ use App\Support\Modules\ModuleNavigationRegistry;
 use App\Support\Modules\ModuleRuntime;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
@@ -24,6 +26,7 @@ use KaevCMS\Modules\DailyRewards\Models\DailyRewardCalendar;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardClaim;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardDay;
 use KaevCMS\Modules\DailyRewards\Models\DailyRewardItem;
+use RuntimeException;
 use Tests\TestCase;
 
 class DailyRewardsModuleTest extends TestCase
@@ -60,7 +63,7 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertTrue(Schema::hasTable('module_daily_reward_claims'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'daily-rewards',
-            'version' => '1.3.4',
+            'version' => '1.4.0',
             'enabled' => true,
         ]);
 
@@ -453,7 +456,7 @@ class DailyRewardsModuleTest extends TestCase
         CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
 
         $server = GameServer::factory()->create();
-        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $calendar = $this->createCalendar($server, 2026, 8, true, DailyRewardCalendar::CLAIM_LIMIT_GAME_ACCOUNT);
         $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 100]]);
         $user = User::factory()->create();
         $first = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
@@ -594,11 +597,327 @@ class DailyRewardsModuleTest extends TestCase
         $this->assertCount(count($russian), array_unique(array_map('mb_strtolower', array_keys($russian))));
     }
 
+    public function test_game_account_limit_lets_each_of_nine_accounts_claim_once(): void
+    {
+        // Nine claims in a row exceed the route's per-minute throttle, which is not under test here.
+        $this->withoutMiddleware(ThrottleRequests::class);
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true, DailyRewardCalendar::CLAIM_LIMIT_GAME_ACCOUNT);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 100]]);
+        $user = User::factory()->create();
+        $accounts = UserGameAccount::factory()->count(9)->for($user)->registeredOn($server)->create();
+
+        foreach ($accounts as $account) {
+            $this->claim($user, $calendar, $account, (string) Str::uuid())->assertSessionHas('status');
+        }
+
+        $this->assertSame(9, DailyRewardClaim::query()->count());
+        $this->assertSame(9, RewardInventoryGrant::query()->count());
+        $this->assertSame(0, DailyRewardClaim::query()->whereNotNull('site_user_limit_id')->count());
+    }
+
+    public function test_site_user_limit_allows_one_claim_for_nine_accounts_without_extra_inventory(): void
+    {
+        // Nine claims in a row exceed the route's per-minute throttle, which is not under test here.
+        $this->withoutMiddleware(ThrottleRequests::class);
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true, DailyRewardCalendar::CLAIM_LIMIT_SITE_USER);
+        $this->configureDay($calendar, 12, [
+            ['item_id' => 57, 'amount' => 100],
+            ['item_id' => 4037, 'amount' => 2],
+        ]);
+        $user = User::factory()->create();
+        $accounts = UserGameAccount::factory()->count(9)->for($user)->registeredOn($server)->create();
+
+        $this->claim($user, $calendar, $accounts[0], (string) Str::uuid())->assertSessionHas('status');
+        foreach ($accounts->slice(1) as $account) {
+            $this->claim($user, $calendar, $account, (string) Str::uuid())
+                ->assertSessionHasErrors(['reward' => __('module-daily-rewards::messages.claim_already_claimed_by_site_user')]);
+        }
+
+        $this->assertSame(1, DailyRewardClaim::query()->count());
+        $this->assertSame(1, RewardInventoryGrant::query()->count());
+        $this->assertSame(2, RewardInventoryItem::query()->count());
+        $this->assertDatabaseHas('module_daily_reward_claims', [
+            'user_game_account_id' => $accounts[0]->id,
+            'site_user_limit_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/modules/daily-rewards?calendar='.$calendar->id.'&account='.$accounts[3]->id)
+            ->assertOk()
+            ->assertSee(__('module-daily-rewards::messages.account_help_site_user'))
+            ->assertSee(__('module-daily-rewards::messages.claimed_with_account', ['account' => $accounts[0]->game_login]))
+            ->assertDontSee('name="request_token"', false);
+    }
+
+    public function test_site_user_limit_is_separate_for_each_user_and_each_server(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $otherServer = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $otherCalendar = $this->createCalendar($otherServer, 2026, 8, true);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $this->configureDay($otherCalendar, 12, [['item_id' => 57, 'amount' => 1]]);
+
+        $first = User::factory()->create();
+        $second = User::factory()->create();
+        $firstAccount = UserGameAccount::factory()->for($first)->registeredOn($server)->create();
+        $secondAccount = UserGameAccount::factory()->for($second)->registeredOn($server)->create();
+        $firstOtherAccount = UserGameAccount::factory()->for($first)->registeredOn($otherServer)->create();
+
+        $this->claim($first, $calendar, $firstAccount, (string) Str::uuid())->assertSessionHas('status');
+        $this->claim($second, $calendar, $secondAccount, (string) Str::uuid())->assertSessionHas('status');
+        $this->claim($first, $otherCalendar, $firstOtherAccount, (string) Str::uuid())->assertSessionHas('status');
+        $this->claim($first, $otherCalendar, $firstOtherAccount, (string) Str::uuid())->assertSessionHasErrors('reward');
+
+        $this->assertSame(2, DailyRewardClaim::query()->where('calendar_id', $calendar->id)->count());
+        $this->assertSame(1, DailyRewardClaim::query()->where('calendar_id', $otherCalendar->id)->count());
+        $this->assertSame(3, RewardInventoryGrant::query()->count());
+    }
+
+    public function test_shared_login_server_does_not_merge_site_user_limits_of_two_game_servers(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $sibling = GameServer::factory()->create(['login_server_id' => $server->login_server_id]);
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $siblingCalendar = $this->createCalendar($sibling, 2026, 8, true);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $this->configureDay($siblingCalendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $user = User::factory()->create();
+        $account = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+        $secondAccount = UserGameAccount::factory()->for($user)->registeredOn($sibling)->create();
+
+        $this->claim($user, $calendar, $account, (string) Str::uuid())->assertSessionHas('status');
+        $this->claim($user, $siblingCalendar, $account, (string) Str::uuid())->assertSessionHas('status');
+        $this->claim($user, $calendar, $secondAccount, (string) Str::uuid())->assertSessionHasErrors('reward');
+        $this->claim($user, $siblingCalendar, $secondAccount, (string) Str::uuid())->assertSessionHasErrors('reward');
+
+        $this->assertSame(1, DailyRewardClaim::query()->where('calendar_id', $calendar->id)->count());
+        $this->assertSame(1, DailyRewardClaim::query()->where('calendar_id', $siblingCalendar->id)->count());
+        $this->assertSame(2, RewardInventoryGrant::query()->count());
+        $this->assertSame(1, RewardInventoryGrant::query()->where('game_server_id', $sibling->id)->count());
+    }
+
+    public function test_repeating_the_same_request_token_never_duplicates_a_site_user_claim(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $user = User::factory()->create();
+        $account = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+        $otherAccount = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+        $token = (string) Str::uuid();
+
+        $this->claim($user, $calendar, $account, $token)->assertSessionHas('status');
+        $this->claim($user, $calendar, $account, $token)->assertSessionHas('status');
+        $this->claim($user, $calendar, $otherAccount, $token)->assertSessionHasErrors('reward');
+
+        $this->assertSame(1, DailyRewardClaim::query()->count());
+        $this->assertSame(1, RewardInventoryGrant::query()->count());
+        $this->assertSame(1, RewardInventoryItem::query()->count());
+    }
+
+    public function test_database_rejects_a_second_site_user_claim_but_keeps_per_account_history(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $day = $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $user = User::factory()->create();
+        [$first, $second, $third] = UserGameAccount::factory()->count(3)->for($user)->registeredOn($server)->create()->all();
+        $row = fn (UserGameAccount $account, ?int $limitId): array => [
+            'request_token' => (string) Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'day_id' => $day->id,
+            'user_id' => $user->id,
+            'user_game_account_id' => $account->id,
+            'site_user_limit_id' => $limitId,
+            'game_server_id' => $server->id,
+            'reward_date' => '2026-08-12',
+            'user_email' => $user->email,
+            'game_account_login' => $account->game_login,
+            'items_snapshot' => '[]',
+            'claimed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        // Per-account rows keep NULL, so several accounts of one user never collide.
+        DB::table('module_daily_reward_claims')->insert($row($first, null));
+        DB::table('module_daily_reward_claims')->insert($row($second, null));
+        DB::table('module_daily_reward_claims')->insert($row($third, $user->id));
+
+        // A request that slipped past the application check is still stopped by the unique index.
+        $this->expectException(QueryException::class);
+        DB::table('module_daily_reward_claims')->insert(array_merge(
+            $row($first, $user->id),
+            ['user_game_account_id' => $second->id],
+        ));
+    }
+
+    public function test_claim_limit_change_is_blocked_after_a_claim_today_and_allowed_the_next_day(): void
+    {
+        config()->set('app.timezone', 'Europe/Moscow');
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true, DailyRewardCalendar::CLAIM_LIMIT_GAME_ACCOUNT);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $user = User::factory()->create();
+        $account = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+        $url = '/admin/extensions/daily-rewards/'.$calendar->id;
+
+        $this->claim($user, $calendar, $account, (string) Str::uuid())->assertSessionHas('status');
+
+        $this->actingAs($owner, 'admin')
+            ->put($url, [...$this->calendarPayload($calendar->fresh('days.items')), 'claim_limit' => 'site_user'])
+            ->assertSessionHasErrors(['claim_limit' => __('module-daily-rewards::messages.claim_limit_locked_today')]);
+        $this->assertSame(DailyRewardCalendar::CLAIM_LIMIT_GAME_ACCOUNT, $calendar->refresh()->claim_limit);
+
+        // Saving without changing the mode is still allowed on a day with claims.
+        $this->actingAs($owner, 'admin')
+            ->put($url, [...$this->calendarPayload($calendar->fresh('days.items')), 'claim_limit' => 'game_account'])
+            ->assertSessionHasNoErrors();
+
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 13, 0, 5, 0, 'Europe/Moscow'));
+
+        $this->actingAs($owner, 'admin')
+            ->put($url, [...$this->calendarPayload($calendar->fresh('days.items')), 'claim_limit' => 'site_user'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame(DailyRewardCalendar::CLAIM_LIMIT_SITE_USER, $calendar->refresh()->claim_limit);
+        $this->assertSame(1, DailyRewardClaim::query()->count());
+    }
+
+    public function test_new_calendars_default_to_site_user_and_admin_can_pick_the_limit(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
+
+        $this->actingAs($owner, 'admin')
+            ->get('/admin/extensions/daily-rewards/create')
+            ->assertOk()
+            ->assertSee(__('module-daily-rewards::messages.claim_limit'))
+            ->assertSee('<option value="site_user" selected', false);
+
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/extensions/daily-rewards', ['game_server_id' => $server->id, 'year' => 2026, 'month' => 9])
+            ->assertSessionHasNoErrors();
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/extensions/daily-rewards', ['game_server_id' => $server->id, 'year' => 2026, 'month' => 10, 'claim_limit' => 'game_account'])
+            ->assertSessionHasNoErrors();
+        $this->actingAs($owner, 'admin')
+            ->post('/admin/extensions/daily-rewards', ['game_server_id' => $server->id, 'year' => 2026, 'month' => 11, 'claim_limit' => 'everyone'])
+            ->assertSessionHasErrors('claim_limit');
+
+        $this->assertSame('site_user', DailyRewardCalendar::query()->where('month', 9)->value('claim_limit'));
+        $this->assertSame('game_account', DailyRewardCalendar::query()->where('month', 10)->value('claim_limit'));
+        $this->assertFalse(DailyRewardCalendar::query()->where('month', 11)->exists());
+    }
+
+    public function test_migration_keeps_existing_calendars_on_the_per_account_limit_and_preserves_history(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $migration = require base_path('modules/daily-rewards/database/migrations/2026_11_23_000400_add_claim_limit_to_module_daily_rewards.php');
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('module_daily_reward_calendars', 'claim_limit'));
+
+        $server = GameServer::factory()->create();
+        $user = User::factory()->create();
+        [$first, $second] = UserGameAccount::factory()->count(2)->for($user)->registeredOn($server)->create()->all();
+        $calendarId = DB::table('module_daily_reward_calendars')->insertGetId([
+            'game_server_id' => $server->id, 'year' => 2026, 'month' => 8, 'timezone' => 'Europe/Moscow',
+            'enabled' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $dayId = DB::table('module_daily_reward_days')->insertGetId([
+            'calendar_id' => $calendarId, 'day_number' => 12, 'enabled' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        foreach ([$first, $second] as $account) {
+            DB::table('module_daily_reward_claims')->insert([
+                'request_token' => (string) Str::uuid(), 'calendar_id' => $calendarId, 'day_id' => $dayId,
+                'user_id' => $user->id, 'user_game_account_id' => $account->id, 'game_server_id' => $server->id,
+                'reward_date' => '2026-08-12', 'user_email' => $user->email, 'game_account_login' => $account->game_login,
+                'items_snapshot' => '[]', 'claimed_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+
+        $migration->up();
+
+        $this->assertSame('game_account', DB::table('module_daily_reward_calendars')->where('id', $calendarId)->value('claim_limit'));
+        $this->assertSame(2, DB::table('module_daily_reward_claims')->where('calendar_id', $calendarId)->whereNull('site_user_limit_id')->count());
+    }
+
+    public function test_pending_and_failed_game_accounts_cannot_claim(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true, DailyRewardCalendar::CLAIM_LIMIT_GAME_ACCOUNT);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $user = User::factory()->create();
+        $pending = UserGameAccount::factory()->for($user)->registeredOn($server)->create(['creation_status' => UserGameAccount::STATUS_PENDING]);
+        $failed = UserGameAccount::factory()->for($user)->registeredOn($server)->create(['creation_status' => UserGameAccount::STATUS_FAILED]);
+
+        $this->claim($user, $calendar, $pending, (string) Str::uuid())
+            ->assertSessionHasErrors(['reward' => __('module-daily-rewards::messages.claim_account_unavailable')]);
+        $this->claim($user, $calendar, $failed, (string) Str::uuid())
+            ->assertSessionHasErrors(['reward' => __('module-daily-rewards::messages.claim_account_unavailable')]);
+
+        $this->assertDatabaseEmpty('module_daily_reward_claims');
+        $this->assertDatabaseEmpty('reward_inventory_grants');
+        $this->assertDatabaseEmpty('reward_inventory_items');
+    }
+
+    public function test_failed_inventory_grant_rolls_back_the_site_user_claim(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2026, 8, 12, 12, 0, 0, 'Europe/Moscow'));
+
+        $server = GameServer::factory()->create();
+        $calendar = $this->createCalendar($server, 2026, 8, true);
+        $this->configureDay($calendar, 12, [['item_id' => 57, 'amount' => 1]]);
+        $user = User::factory()->create();
+        $first = UserGameAccount::factory()->for($user)->registeredOn($server)->create();
+
+        DB::listen(static function (QueryExecuted $query): void {
+            if (str_contains($query->sql, 'insert into "reward_inventory_items"')) {
+                throw new RuntimeException('inventory unavailable');
+            }
+        });
+
+        try {
+            $this->withoutExceptionHandling();
+            $this->claim($user, $calendar, $first, (string) Str::uuid());
+            $this->fail('The claim should fail when the inventory grant fails.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('inventory unavailable', $exception->getMessage());
+        }
+
+        $this->assertDatabaseEmpty('module_daily_reward_claims');
+        $this->assertDatabaseEmpty('reward_inventory_grants');
+        $this->assertSame(0, DB::table('reward_inventory_items')->count());
+    }
+
     private function createCalendar(
         GameServer $server,
         int $year,
         int $month,
         bool $enabled = false,
+        string $claimLimit = DailyRewardCalendar::CLAIM_LIMIT_SITE_USER,
     ): DailyRewardCalendar {
         $calendar = DailyRewardCalendar::query()->create([
             'game_server_id' => $server->id,
@@ -606,6 +925,7 @@ class DailyRewardsModuleTest extends TestCase
             'month' => $month,
             'timezone' => 'Europe/Moscow',
             'enabled' => $enabled,
+            'claim_limit' => $claimLimit,
         ]);
 
         foreach (range(1, $calendar->daysInMonth()) as $dayNumber) {

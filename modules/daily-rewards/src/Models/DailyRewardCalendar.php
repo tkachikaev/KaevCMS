@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $month
  * @property string $timezone
  * @property bool $enabled
+ * @property string $claim_limit
  * @property int|null $created_by_admin_id
  * @property int|null $updated_by_admin_id
  * @property-read GameServer $gameServer
@@ -25,7 +26,20 @@ use Illuminate\Support\Carbon;
  */
 final class DailyRewardCalendar extends Model
 {
+    /** One claim per game account per day (the original behaviour). */
+    public const CLAIM_LIMIT_GAME_ACCOUNT = 'game_account';
+
+    /** One claim per site user per day, whichever of their accounts is used. */
+    public const CLAIM_LIMIT_SITE_USER = 'site_user';
+
+    public const CLAIM_LIMITS = [self::CLAIM_LIMIT_GAME_ACCOUNT, self::CLAIM_LIMIT_SITE_USER];
+
     protected $table = 'module_daily_reward_calendars';
+
+    /** New calendars limit claims per site user; the column default keeps old calendars per account. */
+    protected $attributes = [
+        'claim_limit' => self::CLAIM_LIMIT_SITE_USER,
+    ];
 
     protected $fillable = [
         'game_server_id',
@@ -33,6 +47,7 @@ final class DailyRewardCalendar extends Model
         'month',
         'timezone',
         'enabled',
+        'claim_limit',
         'created_by_admin_id',
         'updated_by_admin_id',
     ];
@@ -77,6 +92,11 @@ final class DailyRewardCalendar extends Model
     public function claims(): HasMany
     {
         return $this->hasMany(DailyRewardClaim::class, 'calendar_id');
+    }
+
+    public function limitsClaimsPerSiteUser(): bool
+    {
+        return $this->claim_limit === self::CLAIM_LIMIT_SITE_USER;
     }
 
     public function runtimeTimezone(): string

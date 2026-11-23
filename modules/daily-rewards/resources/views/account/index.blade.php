@@ -48,7 +48,7 @@
         @else
             <div class="daily-reward-account-summary">
                 <div><span>{{ __('module-daily-rewards::messages.current_calendar', ['period' => $calendar->periodLabel()]) }}</span><strong>{{ $calendar->gameServer->nameFor() }}</strong></div>
-                <p>{{ __('module-daily-rewards::messages.account_help') }}</p>
+                <p>{{ $calendar->limitsClaimsPerSiteUser() ? __('module-daily-rewards::messages.account_help_site_user') : __('module-daily-rewards::messages.account_help') }}</p>
             </div>
 
             <div class="daily-reward-weekdays" aria-hidden="true">
@@ -81,6 +81,9 @@
                                 <small>{{ __('module-daily-rewards::messages.no_reward') }}</small>
                             @endforelse
                         </div>
+                        @if($state['claim'] && $state['claim']->user_game_account_id !== $selectedAccount->id)
+                            <small class="daily-reward-claimed-elsewhere">{{ __('module-daily-rewards::messages.claimed_with_account', ['account' => $state['claim']->game_account_login]) }}</small>
+                        @endif
                         @if($state['status'] === 'available')
                             <form method="POST" action="{{ route('modules.daily-rewards.claim') }}" class="daily-reward-claim-form">
                                 @csrf

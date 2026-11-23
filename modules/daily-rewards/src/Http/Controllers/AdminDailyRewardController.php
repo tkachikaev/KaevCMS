@@ -86,6 +86,7 @@ final class AdminDailyRewardController extends Controller
                 'month' => (int) $payload['month'],
                 'timezone' => $this->configuredTimezone(),
                 'enabled' => (bool) $payload['enabled'],
+                'claim_limit' => (string) ($payload['claim_limit'] ?? DailyRewardCalendar::CLAIM_LIMIT_SITE_USER),
                 'created_by_admin_id' => $admin instanceof Admin ? $admin->id : null,
                 'updated_by_admin_id' => $admin instanceof Admin ? $admin->id : null,
             ]);
@@ -200,9 +201,19 @@ final class AdminDailyRewardController extends Controller
                 }
             }
 
+            // Claims lock the same calendar row, so no claim can slip in between this check
+            // and the mode change.
+            $claimLimit = (string) ($payload['claim_limit'] ?? $locked->claim_limit);
+            if ($claimLimit !== $locked->claim_limit && $this->hasClaimsToday($locked)) {
+                throw ValidationException::withMessages([
+                    'claim_limit' => __('module-daily-rewards::messages.claim_limit_locked_today'),
+                ]);
+            }
+
             $locked->update([
                 'timezone' => $this->configuredTimezone(),
                 'enabled' => (bool) $payload['enabled'],
+                'claim_limit' => $claimLimit,
                 'updated_by_admin_id' => $admin instanceof Admin ? $admin->id : null,
             ]);
         }, 3);
@@ -295,6 +306,14 @@ final class AdminDailyRewardController extends Controller
             ->all();
     }
 
+    private function hasClaimsToday(DailyRewardCalendar $calendar): bool
+    {
+        return DailyRewardClaim::query()
+            ->where('calendar_id', $calendar->id)
+            ->whereDate('reward_date', now($calendar->runtimeTimezone())->toDateString())
+            ->exists();
+    }
+
     /** @return array<string, mixed> */
     private function auditDetails(DailyRewardCalendar $calendar): array
     {
@@ -304,6 +323,7 @@ final class AdminDailyRewardController extends Controller
             'month' => $calendar->month,
             'timezone' => $calendar->runtimeTimezone(),
             'enabled' => $calendar->enabled,
+            'claim_limit' => $calendar->claim_limit,
             'configured_days' => $calendar->days->where('enabled', true)->count(),
             'reward_items' => $calendar->days->sum(static fn (DailyRewardDay $day): int => $day->items->count()),
         ];

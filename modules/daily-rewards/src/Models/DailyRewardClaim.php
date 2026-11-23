@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $day_id
  * @property int|null $user_id
  * @property int|null $user_game_account_id
+ * @property int|null $site_user_limit_id
  * @property int $game_server_id
  * @property int|null $reward_inventory_grant_id
  * @property Carbon $reward_date
@@ -41,6 +42,7 @@ final class DailyRewardClaim extends Model
         'day_id',
         'user_id',
         'user_game_account_id',
+        'site_user_limit_id',
         'game_server_id',
         'reward_inventory_grant_id',
         'reward_date',
@@ -57,6 +59,7 @@ final class DailyRewardClaim extends Model
             'day_id' => 'integer',
             'user_id' => 'integer',
             'user_game_account_id' => 'integer',
+            'site_user_limit_id' => 'integer',
             'game_server_id' => 'integer',
             'reward_inventory_grant_id' => 'integer',
             'reward_date' => 'date',

@@ -8,6 +8,7 @@ enum DailyRewardClaimFailure: string
     case DayUnavailable = 'day_unavailable';
     case AccountUnavailable = 'account_unavailable';
     case AlreadyClaimed = 'already_claimed';
+    case AlreadyClaimedBySiteUser = 'already_claimed_by_site_user';
     case NoRewards = 'no_rewards';
     case Invalid = 'invalid';
 
