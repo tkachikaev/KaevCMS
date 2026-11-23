@@ -1,7 +1,7 @@
 /*
  * Classic — warm KaevCMS forum theme that matches the Classic player account:
  * paper and gold by day, violet night in the dark mode.
- * To make your own: copy this folder to public/forum-themes/<your-slug>, set the same
+ * To make your own: copy this folder to storage/app/forum-themes/<your-slug>, set the same
  * slug in theme.json and edit this file. Dark mode rules start with
  * :root[data-forum-scheme="dark"]. Keep the [data-color] palette rules as they are:
  * they paint the colors players choose in the editor.
@@ -474,6 +474,7 @@ a{color:#644b27;text-decoration:none}a:hover{text-decoration:underline}
 /* Reusable forum controls follow the same spacing and typography. */
 .forum-skip-link{position:absolute;left:12px;top:-80px;z-index:100;padding:9px 14px;background:#fffdf7;color:#392e1d;border:2px solid #c6a471;border-radius:8px}
 .forum-skip-link:focus-visible{top:12px}
+@media(max-width:760px){.forum-skip-link:focus-visible{position:fixed;top:auto;bottom:12px}}
 :where(.forum-body,.forum-top) :where(a,button,input,textarea,select,summary):focus-visible{outline:2px solid #ab7a2f;outline-offset:3px}
 .forum-breadcrumb{flex-wrap:wrap;overflow-wrap:anywhere}
 .forum-topic-main{min-width:0;flex:1}

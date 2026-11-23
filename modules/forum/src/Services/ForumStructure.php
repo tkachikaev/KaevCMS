@@ -64,15 +64,21 @@ final class ForumStructure
             ->selectRaw('topics.section_id as section_id, count(*) as aggregate')
             ->pluck('aggregate', 'section_id');
 
+        $latestTopicIds = ForumSection::query()->whereKey($sectionIds)->selectSub(
+            ForumTopic::query()->select('id')->whereColumn('section_id', 'module_forum_sections.id')
+                ->whereNull('hidden_at')->orderByDesc('last_post_at')->orderByDesc('id')->limit(1),
+            'latest_id',
+        )->pluck('latest_id')->filter();
+        $topics = ForumTopic::query()->whereKey($latestTopicIds)->get()->keyBy('section_id');
+        $postStats = ForumPost::query()->whereIn('topic_id', $latestTopicIds)->groupBy('topic_id')
+            ->selectRaw('topic_id, max(id) as last_id, count(*) as total')->toBase()->get()->keyBy('topic_id');
+        $lastPosts = ForumPost::query()->whereKey($postStats->pluck('last_id'))->get()->keyBy('topic_id');
+
         $activity = [];
         foreach ($sectionIds as $sectionId) {
-            $topic = ForumTopic::query()
-                ->where('section_id', $sectionId)
-                ->whereNull('hidden_at')
-                ->orderByDesc('last_post_at')->orderByDesc('id')
-                ->first();
-            $post = $topic === null ? null : ForumPost::query()->where('topic_id', $topic->id)->orderByDesc('id')->first();
-            $position = $post === null ? 1 : ForumPost::query()->where('topic_id', $topic->id)->where('id', '<=', $post->id)->count();
+            $topic = $topics->get($sectionId);
+            $post = $topic === null ? null : $lastPosts->get($topic->id);
+            $position = $topic === null ? 1 : (int) ($postStats->get($topic->id)->total ?? 1);
 
             $activity[$sectionId] = [
                 'posts' => (int) ($postCounts[$sectionId] ?? 0),

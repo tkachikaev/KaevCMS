@@ -10,10 +10,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use KaevCMS\Modules\Forum\Services\ForumThemes;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 
 final class ForumThemeController extends Controller
 {
     public function __construct(private readonly AuditLogger $audit) {}
+
+    public function asset(string $slug, string $asset, ForumThemes $themes): Response
+    {
+        return $themes->customAsset($slug, $asset);
+    }
 
     public function index(ForumThemes $themes): View
     {

@@ -79,10 +79,10 @@ final class ThemeValidator
         }
 
         $result['manifest'] = $manifest;
-        $result['name'] = (string) Arr::get($manifest, 'name', $slug);
-        $result['version'] = (string) Arr::get($manifest, 'version', '—');
-        $result['author'] = (string) Arr::get($manifest, 'author', '—');
-        $result['description'] = (string) Arr::get($manifest, 'description', '');
+        $result['name'] = is_string($manifest['name'] ?? null) ? $manifest['name'] : $slug;
+        $result['version'] = is_string($manifest['version'] ?? null) ? $manifest['version'] : '—';
+        $result['author'] = is_string($manifest['author'] ?? null) ? $manifest['author'] : '—';
+        $result['description'] = is_string($manifest['description'] ?? null) ? $manifest['description'] : '';
         $result['cms_min'] = $this->nullableString(Arr::get($manifest, 'cms_min'));
         $result['cms_max'] = $this->nullableString(Arr::get($manifest, 'cms_max'));
 

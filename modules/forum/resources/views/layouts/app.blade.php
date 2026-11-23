@@ -15,7 +15,9 @@
     <style>
         @font-face{font-family:Inter;src:url("{{ asset('assets/admin/fonts/inter-variable.woff2') }}") format("woff2");font-display:swap}
     </style>
-    <link rel="stylesheet" href="{{ app(\KaevCMS\Modules\Forum\Services\ForumThemes::class)->stylesheetUrl() }}" data-forum-theme-css>
+    @if($themeCss = app(\KaevCMS\Modules\Forum\Services\ForumThemes::class)->stylesheetUrl())
+        <link rel="stylesheet" href="{{ $themeCss }}" data-forum-theme-css>
+    @endif
     <script src="{{ asset('assets/modules/forum/structure.js') }}?v={{ cms_version() }}" defer></script>
     <script src="{{ asset('assets/modules/forum/notifications.js') }}?v={{ cms_version() }}" defer></script>
     @stack('forum-editor-scripts')

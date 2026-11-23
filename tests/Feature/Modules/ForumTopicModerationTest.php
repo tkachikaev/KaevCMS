@@ -232,6 +232,20 @@ final class ForumTopicModerationTest extends TestCase
             ->assertOk()->assertSee('Confidential answer');
     }
 
+    public function test_members_only_forum_keeps_permanent_section_move_protection(): void
+    {
+        DB::table('module_forum_settings')->where('id', 1)->update(['visibility' => 'registered']);
+        $private = $this->section('Вопросы и помощь');
+        $private->update(['view_rule' => 'registered']);
+        $moderator = User::factory()->create();
+        $this->assignModerator($moderator);
+        $topic = $this->topic($moderator, 'Members only', $private);
+        $this->asUser($moderator);
+        $this->post('/forum/topics/'.$topic->id.'/move', ['section_id' => $this->section('Общее общение')->id])
+            ->assertSessionHasErrors('section_id');
+        $this->assertSame($private->id, $topic->fresh()->section_id);
+    }
+
     public function test_private_search_filters_title_body_removed_posts_and_deleted_topics(): void
     {
         $writer = User::factory()->create();

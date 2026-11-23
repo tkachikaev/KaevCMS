@@ -29,7 +29,9 @@ Two themes are bundled:
 - **Frost**: cool blue-grey with light and dark modes. The easiest base for your own.
 - **Classic**: warm, in the style of the Classic player account: paper and gold by day, a soft violet night in the dark mode.
 
-A forum theme is a `public/forum-themes/<slug>` folder with three files:
+Bundled Frost and Classic remain in `public/forum-themes`. Before updating, move custom themes to `storage/app/forum-themes` with their existing slugs. Extract third-party packages only outside the web root.
+
+A forum theme is a `storage/app/forum-themes/<slug>` folder with three files:
 
 - `theme.json`: `name`, `slug` (same as the folder name), `version`, `author`, optional `description`, `preview`, `cms_min`, `cms_max` and `forum_min` (the minimum Forum module version);
 - `theme.css`: all forum styles. Dark mode rules start with `:root[data-forum-scheme="dark"]`. The `[data-color="…"]` rules paint the colors players pick in the editor; keep them as they are;

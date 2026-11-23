@@ -1,4 +1,4 @@
-@if($pager->hasPages())
+@if($pager->hasPages() && $pager->currentPage() <= $pager->lastPage())
     <nav class="forum-pagination" aria-label="{{ __('module-forum::messages.pages') }}">
         @if($pager->onFirstPage())
             <span class="forum-page-disabled">{{ __('module-forum::messages.previous') }}</span>

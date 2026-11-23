@@ -6,9 +6,12 @@ use KaevCMS\Modules\Forum\Http\Controllers\ForumModerationController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumPostController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumSearchController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumStructureController;
+use KaevCMS\Modules\Forum\Http\Controllers\ForumThemeController;
 use KaevCMS\Modules\Forum\Http\Controllers\ForumTopicController;
 
 Route::get('/', [ForumController::class, 'index'])->name('index');
+Route::get('/theme-assets/{slug}/{asset}', [ForumThemeController::class, 'asset'])
+    ->withoutMiddleware('web')->where('asset', '.*')->name('theme-asset');
 Route::get('/search', ForumSearchController::class)
     ->middleware('throttle:30,1')->name('search');
 Route::post('/author', [ForumController::class, 'chooseAuthor'])

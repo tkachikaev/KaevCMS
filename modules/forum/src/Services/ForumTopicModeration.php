@@ -247,14 +247,12 @@ final class ForumTopicModeration
 
     private function visibilityLevel(ForumSection $section): int
     {
-        $base = match ($section->view_rule) {
+        return match ($section->view_rule) {
             'all' => 0,
             'registered' => 1,
             'moderators' => 2,
             default => 3,
         };
-
-        return max($base, $this->structure->globalVisibility() === 'registered' ? 1 : 0);
     }
 
     private function setStatus(ForumTopic $topic, string $status): bool

@@ -26,19 +26,25 @@ test('forum follows the Aurelia appearance choice', async ({ page }) => {
         root.dataset.forumScheme = 'dark';
     });
     await page.addScriptTag({ path: schemeScript });
-    await expect(page.locator('html')).toHaveAttribute('data-forum-scheme', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-forum-scheme', 'light');
 });
 
 test('forum fits a small phone and offers keyboard navigation', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 });
     await gotoWithLocalNetworkRetry(page, '/forum');
     await expect(page.locator('#forum-main')).toBeVisible();
-    await expect(page.locator('.forum-panel')).toHaveCount(3);
+    await expect(page.locator('.forum-category')).toHaveCount(3);
+    await expect(page.locator('[data-forum-activity]')).toBeVisible();
     await page.keyboard.press('Tab');
     await expect(page.locator('.forum-skip-link')).toBeFocused();
 
     const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(await overflow()).toBeLessThanOrEqual(1);
+
+    const toggle = page.locator('[data-forum-scheme-toggle]');
+    const scheme = await page.locator('html').getAttribute('data-forum-scheme');
+    await toggle.click();
+    await expect(page.locator('html')).toHaveAttribute('data-forum-scheme', scheme === 'dark' ? 'light' : 'dark');
 
     const search = page.locator('.forum-quick-search input[name="q"]');
     await expect(search).toBeVisible();

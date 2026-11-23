@@ -3,6 +3,7 @@
 namespace KaevCMS\Modules\Forum\Services;
 
 use App\Services\AuditLogger;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\Forum\Models\ForumCategory;
@@ -12,6 +13,8 @@ use KaevCMS\Modules\Forum\Models\ForumTopic;
 
 final class ForumPostChanges
 {
+    public const SEARCH_VERSION = 'forum.search.version';
+
     /** @var array<int, bool> */
     private array $currentModerators = [];
 
@@ -96,6 +99,7 @@ final class ForumPostChanges
         }, 3);
 
         if ($changed) {
+            $this->invalidateSearchAfterCommit();
             $this->audit->success('forum', 'forum.post_edited',
                 actor: $actor->admin ?? $actor->user, target: 'post #'.$postId);
         }
@@ -127,8 +131,14 @@ final class ForumPostChanges
             // Keep the row, topic order, existing replies and public anchors.
         }, 3);
 
+        $this->invalidateSearchAfterCommit();
         $this->audit->success('forum', 'forum.post_deleted',
             actor: $actor->admin ?? $actor->user, target: 'post #'.$postId);
+    }
+
+    private function invalidateSearchAfterCommit(): void
+    {
+        DB::afterCommit(static fn () => Cache::forever(self::SEARCH_VERSION, bin2hex(random_bytes(16))));
     }
 
     /** @return array{0:ForumPost, 1:ForumTopic, 2:ForumSection} */

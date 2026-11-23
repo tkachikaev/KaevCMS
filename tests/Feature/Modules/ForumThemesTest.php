@@ -102,6 +102,30 @@ class ForumThemesTest extends TestCase
         }
     }
 
+    public function test_malformed_manifest_cannot_break_the_theme_listing(): void
+    {
+        $themes = $this->themesIn(['custom' => 'a{color:red}']);
+        file_put_contents($this->tempThemes.'/custom/theme.json', json_encode(['name' => [], 'description' => []]));
+        $this->assertFalse($themes->inspect('custom')['valid']);
+        $this->assertNotEmpty($themes->installed());
+    }
+
+    public function test_invalid_fallback_has_no_stylesheet(): void
+    {
+        $themes = $this->themesIn(['kaev-frost' => '@import "unapproved.css";']);
+        $this->assertNull($themes->stylesheetUrl());
+    }
+
+    public function test_custom_theme_exposes_only_approved_assets(): void
+    {
+        $themes = $this->themesIn(['custom' => 'a{color:red}']);
+        $this->app->instance(ForumThemes::class, $themes);
+        file_put_contents($this->tempThemes.'/custom/notes.txt', 'private');
+        $this->get('/forum/theme-assets/custom/theme.css')->assertOk()->assertSee('color:red');
+        $this->get('/forum/theme-assets/custom/notes.txt')->assertNotFound();
+        $this->get('/forum/theme-assets/custom/theme.json')->assertNotFound();
+    }
+
     public function test_css_check_blocks_every_way_out(): void
     {
         foreach (['a{color:red}', '.x:not(.y){}', 'a{background:url(img/x.png)}', 'a{background:url(data:image/png;base64,AA)}'] as $css) {

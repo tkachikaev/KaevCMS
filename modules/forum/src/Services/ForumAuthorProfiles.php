@@ -19,17 +19,18 @@ final class ForumAuthorProfiles
 {
     /**
      * @param  Collection<int, ForumPost>  $posts
+     * @param  list<string>  $rules
      * @return array<int, array{name: string, role: string|null, user: User|null, posts: int, joined_at: CarbonInterface|null, is_topic_author: bool}>
      */
-    public function forPosts(Collection $posts, ForumTopic $topic): array
+    public function forPosts(Collection $posts, ForumTopic $topic, array $rules): array
     {
         $userIds = $posts->pluck('author_user_id')->filter()->unique()->values()->all();
         $adminIds = $posts->pluck('author_admin_id')->filter()->unique()->values()->all();
 
         $users = $userIds === [] ? collect() : User::query()->whereKey($userIds)->get()->keyBy('id');
         $admins = $adminIds === [] ? collect() : Admin::query()->whereKey($adminIds)->get(['id', 'name', 'created_at'])->keyBy('id');
-        $userPosts = $this->postCounts('author_user_id', $userIds);
-        $adminPosts = $this->postCounts('author_admin_id', $adminIds);
+        $userPosts = $this->postCounts('author_user_id', $userIds, $rules);
+        $adminPosts = $this->postCounts('author_admin_id', $adminIds, $rules);
         $moderatorIds = $userIds === [] ? [] : array_flip(DB::table('module_forum_moderators')
             ->whereIn('user_id', $userIds)->pluck('user_id')->map(static fn (mixed $id): int => (int) $id)->all());
 
@@ -71,9 +72,10 @@ final class ForumAuthorProfiles
      * Visible posts per author; removed and deleted posts are not counted.
      *
      * @param  list<int>  $ids
+     * @param  list<string>  $rules
      * @return array<int, int>
      */
-    private function postCounts(string $column, array $ids): array
+    private function postCounts(string $column, array $ids, array $rules): array
     {
         if ($ids === []) {
             return [];
@@ -82,6 +84,8 @@ final class ForumAuthorProfiles
         return ForumPost::query()
             ->whereIn($column, $ids)
             ->whereNull('removed_at')
+            ->whereHas('topic', static fn ($topics) => $topics->whereNull('hidden_at')
+                ->whereHas('section', static fn ($sections) => $sections->whereIn('view_rule', $rules)->whereHas('category')))
             ->selectRaw($column.' as author_id, count(*) as aggregate')
             ->groupBy($column)
             ->pluck('aggregate', 'author_id')

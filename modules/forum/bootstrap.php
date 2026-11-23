@@ -20,7 +20,7 @@ return static function (Application $app, ModuleContext $module): void {
     // Image hosts come from the forum settings; read once per request.
     $app->scoped(ForumImageHosts::class);
     $app->scoped(ForumNotifications::class);
-    // Forum themes are style-only folders in public/forum-themes; the module version
+    // The forum serves custom themes as static assets; the module version
     // lets a theme ask for a minimum forum version.
     $app->scoped(ForumThemes::class, static fn (Application $app): ForumThemes => new ForumThemes(
         $app->make(CmsSettings::class),

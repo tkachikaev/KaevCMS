@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Forum: bounded pagination, reader-scoped author counts, refreshed search results after edits and removals, stricter topic move permissions, batched section statistics and mobile keyboard navigation. Custom themes now belong in `storage/app/forum-themes/<slug>`. Move existing custom themes there before updating. Frost and Classic remain bundled.
+
 ## 0.61.1 - 2026-11-23
 
 Daily Rewards 1.4.0. After updating, open **Admin → Modules** and press "Update database" for Daily Rewards: it has one new migration.

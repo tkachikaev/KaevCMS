@@ -281,6 +281,14 @@ server {
     access_log /var/log/nginx/kaevcms-access.log;
     error_log  /var/log/nginx/kaevcms-error.log;
 
+    location ~ ^/forum-themes/kaev-(classic|frost)/(theme\.css|preview\.svg)$ {
+        try_files $uri =404;
+    }
+
+    location /forum-themes/ {
+        return 404;
+    }
+
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }

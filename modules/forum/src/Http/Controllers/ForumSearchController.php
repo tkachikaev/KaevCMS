@@ -13,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActorResolver;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
+use KaevCMS\Modules\Forum\Services\ForumPostChanges;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
 
 final class ForumSearchController extends Controller
@@ -54,7 +55,7 @@ final class ForumSearchController extends Controller
             // cache, and the whole forum gets a shared budget of fresh searches per minute,
             // so many addresses together cannot keep the database busy.
             sort($rules);
-            $cacheKey = 'forum.search.'.md5(implode(',', $rules).'|'.mb_strtolower($term));
+            $cacheKey = 'forum.search.'.md5(Cache::get(ForumPostChanges::SEARCH_VERSION, '0').'|'.implode(',', $rules).'|'.mb_strtolower($term));
             $ids = Cache::get($cacheKey);
             if (! is_array($ids)) {
                 if (! RateLimiter::attempt('forum-search:global', self::GLOBAL_PER_MINUTE, static fn () => true, 60)) {
@@ -66,11 +67,14 @@ final class ForumSearchController extends Controller
             }
 
             if (is_array($ids)) {
-                $page = max(1, (int) $request->query('page', 1));
+                // Permissions may have changed since these candidates were cached.
+                $visible = ForumTopic::query()->whereIntegerInRaw('id', $ids)->whereNull('hidden_at')
+                    ->whereHas('section', static fn (Builder $section) => $section->whereIn('view_rule', $rules)->whereHas('category'));
+                $ids = array_values(array_intersect($ids, (clone $visible)->pluck('id')->all()));
+                $page = LengthAwarePaginator::resolveCurrentPage();
+                abort_if($page > max(1, (int) ceil(count($ids) / self::PER_PAGE)), 404);
                 $slice = array_slice($ids, ($page - 1) * self::PER_PAGE, self::PER_PAGE);
-                // Cached ids are re-checked: a topic hidden or a section closed since stays out.
-                $topics = ForumTopic::query()->with('section')->whereIn('id', $slice)->whereNull('hidden_at')
-                    ->whereHas('section', static fn (Builder $section) => $section->whereIn('view_rule', $rules)->whereHas('category'))
+                $topics = $visible->with('section')->whereIntegerInRaw('id', $slice)
                     ->get()
                     ->sortBy(static fn (ForumTopic $topic): int|false => array_search((int) $topic->id, $slice, true))->values();
                 $results = (new LengthAwarePaginator($topics, count($ids), self::PER_PAGE, $page, [

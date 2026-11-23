@@ -104,7 +104,7 @@ final class ForumTopicController extends Controller
             'section' => $section,
             'topic' => $topic,
             'posts' => $posts,
-            'authors' => $this->authors->forPosts($posts->getCollection(), $topic),
+            'authors' => $this->authors->forPosts($posts->getCollection(), $topic, $this->permissions->allowedViewRules($actor, $this->structure->globalVisibility())),
             'postOffset' => ($posts->currentPage() - 1) * $posts->perPage(),
             'canReply' => $this->posting->canReply($actor, $topic, $section),
             'submissionKey' => (string) Str::uuid(),

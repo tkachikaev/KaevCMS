@@ -5,17 +5,19 @@ namespace KaevCMS\Modules\Forum\Services;
 use App\Services\CmsSettings;
 use App\Support\Themes\ThemeValidator;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Cache;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Forum themes are style-only packages in public/forum-themes/<slug>:
+ * Custom themes live outside the document root in storage/app/forum-themes/<slug>:
  * theme.json (name, version, author), theme.css and an optional preview.
  * They carry no templates or PHP, so a theme from a stranger can change how the
  * forum looks but cannot run code on the server.
  */
 final class ForumThemes
 {
+    private const BUNDLED = ['kaev-frost', 'kaev-classic'];
+
     public const SETTING = 'module.forum.theme';
 
     public const FALLBACK = 'kaev-frost';
@@ -34,22 +36,22 @@ final class ForumThemes
         private readonly ?string $themesPath = null,
     ) {}
 
-    public function path(): string
+    private function path(string $slug): string
     {
-        return $this->themesPath ?? public_path('forum-themes');
+        return $this->themesPath ?? (in_array($slug, self::BUNDLED, true)
+            ? public_path('forum-themes') : storage_path('app/forum-themes'));
     }
 
     /** @return list<array<string, mixed>> */
     public function installed(): array
     {
-        if (! $this->files->isDirectory($this->path())) {
-            return [];
-        }
-
+        $customRoot = $this->path('');
+        $custom = $this->files->isDirectory($customRoot) ? $this->files->directories($customRoot) : [];
+        $slugs = array_unique(array_merge(self::BUNDLED, array_map('basename', $custom)));
         $activeSlug = $this->activeSlug();
         $themes = [];
-        foreach ($this->files->directories($this->path()) as $directory) {
-            $theme = $this->inspect(basename($directory));
+        foreach ($slugs as $slug) {
+            $theme = $this->inspect($slug);
             $theme['active'] = $theme['slug'] === $activeSlug;
             $themes[] = $theme;
         }
@@ -70,19 +72,23 @@ final class ForumThemes
     {
         $theme = $this->validator->inspect(
             slug: $slug,
-            themesPath: $this->path(),
-            publicThemesPath: $this->path(),
+            themesPath: $this->path($slug),
+            publicThemesPath: $this->path($slug),
             assetUrlPrefix: 'forum-themes',
             activeTheme: '',
             requiredFiles: ['theme.css'],
         );
 
+        if ($theme['preview_url'] !== null && ! in_array($slug, self::BUNDLED, true)) {
+            $theme['preview_url'] = route('modules.forum.theme-asset', ['slug' => $slug, 'asset' => $theme['manifest']['preview']]);
+        }
+
         if ($theme['valid']) {
-            $file = $this->path().DIRECTORY_SEPARATOR.$slug.DIRECTORY_SEPARATOR.'theme.css';
+            $file = $this->path($slug).DIRECTORY_SEPARATOR.$slug.DIRECTORY_SEPARATOR.'theme.css';
             $size = @filesize($file);
             $error = match (true) {
                 $size === false || $size > self::MAX_CSS_BYTES => 'theme_css_too_large',
-                ! $this->stylesheetStaysLocal($file, (int) $size) => 'theme_css_external',
+                ! self::cssStaysLocal($this->files->get($file)) => 'theme_css_external',
                 default => null,
             };
             if ($error !== null) {
@@ -101,14 +107,6 @@ final class ForumThemes
         }
 
         return $theme;
-    }
-
-    /** The check runs once per file version, not on every forum page. */
-    private function stylesheetStaysLocal(string $file, int $size): bool
-    {
-        $key = 'forum.theme.css-check.'.hash('sha256', $file.'|'.$size.'|'.(int) @filemtime($file));
-
-        return (bool) Cache::rememberForever($key, fn (): bool => self::cssStaysLocal((string) $this->files->get($file)));
     }
 
     /**
@@ -157,14 +155,50 @@ final class ForumThemes
         return (string) $this->active()['slug'];
     }
 
-    public function stylesheetUrl(): string
+    public function stylesheetUrl(): ?string
     {
-        $slug = $this->activeSlug();
+        $theme = $this->active();
+        if (! $theme['valid'] || ! $theme['compatible']) {
+            return null;
+        }
+        $slug = (string) $theme['slug'];
         // The file time, not the manifest version: an owner editing theme.css by hand
         // sees the change at once without bumping the version.
-        $modified = @filemtime($this->path().DIRECTORY_SEPARATOR.$slug.DIRECTORY_SEPARATOR.'theme.css');
+        $modified = @filemtime($this->path($slug).DIRECTORY_SEPARATOR.$slug.DIRECTORY_SEPARATOR.'theme.css');
 
-        return asset('forum-themes/'.$slug.'/theme.css').($modified ? '?v='.$modified : '');
+        $url = in_array($slug, self::BUNDLED, true)
+            ? asset('forum-themes/'.$slug.'/theme.css')
+            : route('modules.forum.theme-asset', ['slug' => $slug, 'asset' => 'theme.css']);
+
+        return $url.($modified ? '?v='.$modified : '');
+    }
+
+    /** Serve only static assets from a private custom theme, including its relative CSS resources. */
+    public function customAsset(string $slug, string $asset): Response
+    {
+        abort_if(in_array($slug, self::BUNDLED, true) || ! preg_match('/\A[a-z0-9][a-z0-9_-]*\z/', $slug), 404);
+        abort_unless(preg_match('~\A(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\.[a-zA-Z0-9]+\z~', $asset), 404);
+        $root = realpath($this->path($slug));
+        $directory = realpath($this->path($slug).DIRECTORY_SEPARATOR.$slug);
+        abort_unless($root !== false && $directory === $root.DIRECTORY_SEPARATOR.$slug, 404);
+        $file = realpath($directory.DIRECTORY_SEPARATOR.$asset);
+        abort_unless($file !== false && str_starts_with($file, $directory.DIRECTORY_SEPARATOR) && is_file($file), 404);
+        $headers = ['Content-Security-Policy' => "default-src 'none'; sandbox", 'X-Content-Type-Options' => 'nosniff'];
+        if ($asset === 'theme.css') {
+            abort_if(filesize($file) > self::MAX_CSS_BYTES, 404);
+            $css = $this->files->get($file);
+            abort_unless(self::cssStaysLocal($css), 404);
+
+            return response($css, 200, ['Content-Type' => 'text/css'] + $headers);
+        }
+        $mime = match (strtolower(pathinfo($asset, PATHINFO_EXTENSION))) {
+            'png' => 'image/png', 'jpg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp',
+            'svg' => 'image/svg+xml', 'gif' => 'image/gif', 'avif' => 'image/avif',
+            'woff' => 'font/woff', 'woff2' => 'font/woff2', default => null,
+        };
+        abort_if($mime === null, 404);
+
+        return response()->file($file, ['Content-Type' => $mime] + $headers);
     }
 
     public function activate(string $slug): void

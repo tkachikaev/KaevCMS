@@ -15,6 +15,7 @@ use KaevCMS\Modules\Forum\Models\ForumSection;
 use KaevCMS\Modules\Forum\Models\ForumTopic;
 use KaevCMS\Modules\Forum\Services\ForumActor;
 use KaevCMS\Modules\Forum\Services\ForumPermissions;
+use KaevCMS\Modules\Forum\Services\ForumPostChanges;
 use KaevCMS\Modules\Forum\Services\ForumPosting;
 use KaevCMS\Modules\Forum\Services\ForumStructure;
 use KaevCMS\Modules\Forum\Services\ForumTopicModeration;
@@ -284,6 +285,30 @@ final class ForumStabilityTest extends TestCase
         $this->get('/forum/topics/'.$topic->id)->assertOk()->assertSee('Follow-up message');
     }
 
+    public function test_section_activity_uses_a_bounded_batch_for_populated_sections(): void
+    {
+        $actor = new ForumActor('user', user: User::factory()->create());
+        $structure = app(ForumStructure::class);
+        $sections = ForumSection::query()->where('topic_rule', 'registered')->where('view_rule', 'all')->get();
+        $this->assertGreaterThan(1, $sections->count());
+        foreach ($sections as $section) {
+            app(ForumPosting::class)->createTopic($actor, $section->id, 'Section discussion', 'Message', (string) Str::uuid());
+        }
+        $categories = $structure->visibleCategories($actor, app(ForumPermissions::class));
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        try {
+            $activity = $structure->sectionActivity($categories);
+            $this->assertLessThanOrEqual(6, count(DB::getQueryLog()));
+        } finally {
+            DB::disableQueryLog();
+        }
+        foreach ($sections as $section) {
+            $this->assertSame($section->id, $activity[$section->id]['topic']->section_id);
+            $this->assertSame(1, $activity[$section->id]['posts']);
+        }
+    }
+
     public function test_search_paginates_filtered_results_without_old_revision_text(): void
     {
         $writer = User::factory()->create();
@@ -300,6 +325,27 @@ final class ForumStabilityTest extends TestCase
             ->assertOk()->assertSee('Searchable 21')->assertDontSee('Searchable 0</a>', false);
         $this->get('/forum/search?q=Searchable&page=2')
             ->assertOk()->assertSee('Searchable 0</a>', false)->assertDontSee('Searchable 21</a>', false);
+    }
+
+    public function test_cached_search_follows_post_changes_and_counts_only_visible_posts(): void
+    {
+        $writer = User::factory()->create();
+        $actor = new ForumActor('user', user: $writer);
+        $topic = $this->createTopic($writer, 'Visible topic');
+        $hidden = $this->createTopic($writer, 'Hidden topic');
+        $hidden->update(['hidden_at' => now()]);
+        $this->get('/forum/topics/'.$topic->id)->assertOk()
+            ->assertViewHas('authors', static fn ($authors) => reset($authors)['posts'] === 1);
+        $reply = app(ForumPosting::class)->addReply($actor, $topic->id, 'First phrase', (string) Str::uuid());
+        $changes = app(ForumPostChanges::class);
+        $this->get('/forum/search?q=First')->assertSee('Visible topic');
+        $changes->update($actor, $reply->id, 'Second phrase', null, $reply->refresh()->edit_version);
+        $this->get('/forum/search?q=First')->assertDontSee('Visible topic');
+        $this->get('/forum/search?q=Second')->assertSee('Visible topic');
+        $changes->remove($actor, $reply->id, $reply->fresh()->edit_version);
+        $this->get('/forum/search?q=Second')->assertDontSee('Visible topic');
+        $this->get('/forum/search?q=Visible&page=10')->assertNotFound();
+        $this->get('/forum/topics/'.$topic->id.'?page=10')->assertOk()->assertDontSee('class="forum-pagination"', false);
     }
 
     private function createTopic(User $writer, string $title): ForumTopic

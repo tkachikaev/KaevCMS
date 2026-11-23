@@ -4,6 +4,8 @@
     </IfModule>
 
     RewriteEngine On
+    # Only the bundled static forum theme files are served directly.
+    RewriteRule ^forum-themes/(?!kaev-(?:classic|frost)/(?:theme\.css|preview\.svg)$) - [F,L,NC]
 
     RewriteRule ^kaevcms-path\.php$ - [F,L]
 
