@@ -150,7 +150,6 @@ final class GameServerFormState
         return [$translations, $maintenanceMessages];
     }
 
-    /** @return array<string,mixed> */
     /** @return array{onlineBoostEnabled:bool,onlineBoostMode:string,onlineBoostMin:string,onlineBoostMax:string,onlineBoostPercent:string} */
     public function onlineBoostState(GameServer $server): array
     {
@@ -165,6 +164,7 @@ final class GameServerFormState
         ];
     }
 
+    /** @return array<string,mixed> */
     public function characterRescueState(GameServer $server): array
     {
         $rescue = $this->features->characterRescue($server);
