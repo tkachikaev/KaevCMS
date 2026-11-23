@@ -102,7 +102,7 @@
                                 @if($iconUrls[$day->id][$previewItemId] ?? null)
                                     <img src="{{ $iconUrls[$day->id][$previewItemId] }}" alt="" width="38" height="38">
                                 @else
-                                    <i aria-hidden="true">◇</i>
+                                    <i aria-hidden="true"></i>
                                 @endif
                                 <b>× {{ number_format((int) ($row['amount'] ?? 0), 0, '.', ' ') }}</b>
                             </span>
@@ -165,7 +165,7 @@
                                     @if($previewItemId > 0 && ($iconUrls[$day->id][$previewItemId] ?? null))
                                         <img src="{{ $iconUrls[$day->id][$previewItemId] }}" alt="" width="48" height="48">
                                     @else
-                                        <i>◇</i>
+                                        <i></i>
                                     @endif
                                 </span>
                                 <div class="form-group daily-reward-item-id-field">
@@ -207,7 +207,7 @@
     @if($canManage)
         <template data-daily-item-template>
             <div class="daily-reward-item-row" data-daily-item-row>
-                <span class="daily-reward-item-preview" data-daily-item-preview aria-hidden="true"><i>◇</i></span>
+                <span class="daily-reward-item-preview" data-daily-item-preview aria-hidden="true"><i></i></span>
                 <div class="form-group daily-reward-item-id-field"><label>{{ __('module-daily-rewards::messages.item_id') }}</label><input type="number" min="1" step="1" inputmode="numeric" data-daily-item-id><small data-daily-item-name>{{ __('module-daily-rewards::messages.enter_item_id') }}</small></div>
                 <div class="form-group"><label>{{ __('module-daily-rewards::messages.amount') }}</label><input type="number" min="1" step="1" inputmode="numeric" data-daily-item-amount></div>
                 <button class="button button-secondary daily-reward-item-remove" type="button" data-daily-item-remove aria-label="{{ __('module-daily-rewards::messages.remove_reward') }}">×</button>

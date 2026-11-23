@@ -73,7 +73,7 @@
                                     @if($iconUrls[$day->id][$item->item_id] ?? null)
                                         <img src="{{ $iconUrls[$day->id][$item->item_id] }}" alt="" width="32" height="32">
                                     @else
-                                        <span class="daily-reward-calendar-item-placeholder" aria-hidden="true">◇</span>
+                                        <span class="daily-reward-calendar-item-placeholder" aria-hidden="true"></span>
                                     @endif
                                     <span><strong>{{ $item->displayName($calendar->gameServer) }}</strong><small>× {{ number_format($item->amount, 0, '.', ' ') }}</small></span>
                                 </div>

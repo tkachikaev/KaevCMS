@@ -281,10 +281,10 @@
 }
 
 .daily-reward-item-preview {
-    align-self: center;
+    align-self: start;
     display: grid;
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     place-items: center;
     border-radius: 10px;
     background: var(--admin-surface,#fff);
@@ -292,15 +292,23 @@
 }
 
 .daily-reward-item-preview img {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     object-fit: cover;
 }
 
+/* Empty item slot: a quiet dashed cell until the item icon is known. */
+.daily-reward-item-preview i,
+.daily-reward-admin-calendar-icon i,
+.daily-reward-calendar-item-placeholder {
+    box-sizing: border-box;
+    border: 1.5px dashed var(--admin-border,#cbd5e1);
+}
+
 .daily-reward-item-preview i {
-    color: var(--admin-text-muted,#64748b);
-    font-style: normal;
-    font-size: 22px;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
 }
 
 .daily-reward-item-id-field>small:not(.form-error) {

@@ -105,7 +105,6 @@
                 } else {
                     const fallback = document.createElement('i');
                     fallback.setAttribute('aria-hidden', 'true');
-                    fallback.textContent = '◇';
                     item.append(fallback);
                 }
 
@@ -176,7 +175,6 @@
                     preview.append(image);
                 } else {
                     const fallback = document.createElement('i');
-                    fallback.textContent = '◇';
                     preview.append(fallback);
                 }
             }
