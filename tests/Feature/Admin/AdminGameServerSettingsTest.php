@@ -4,6 +4,8 @@ namespace Tests\Feature\Admin;
 
 use App\Livewire\Admin\GameServerManager;
 use App\Models\Admin;
+use App\Models\GameServer;
+use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +69,30 @@ class AdminGameServerSettingsTest extends TestCase
                 'serverChronicle',
                 'serverMode',
             ]);
+    }
+
+    public function test_online_boost_is_validated_and_saved_with_the_server(): void
+    {
+        $this->actingAs($this->createAdmin(), 'admin');
+
+        $form = Livewire::test(GameServerManager::class)
+            ->call('create')
+            ->set('translations.ru', 'Boosted')
+            ->set('onlineBoostEnabled', true)
+            ->set('onlineBoostMode', 'range')
+            ->set('onlineBoostMin', '30')
+            ->set('onlineBoostMax', '10')
+            ->call('save')
+            ->assertHasErrors(['onlineBoostMax'])
+            ->assertSet('activeTab', 'miscellaneous');
+
+        $form->set('onlineBoostMax', '60')->call('save')->assertHasNoErrors();
+
+        $server = GameServer::query()->whereHas('translations', fn ($query) => $query->where('name', 'Boosted'))->firstOrFail();
+        $this->assertSame(
+            ['enabled' => true, 'mode' => 'range', 'min' => 30, 'max' => 60, 'percent' => 0],
+            app(GameServerFeatureSettings::class)->onlineBoost($server),
+        );
     }
 
     private function createAdmin(): Admin

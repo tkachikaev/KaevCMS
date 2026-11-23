@@ -9,6 +9,15 @@ final class GameServerFeatureSettings
 {
     public const CHARACTER_RESCUE = 'character_rescue';
 
+    /** Extra players added to the online count that website visitors see. */
+    public const ONLINE_BOOST = 'online_boost';
+
+    public const ONLINE_BOOST_MODES = ['range', 'percent'];
+
+    public const ONLINE_BOOST_MAX_PLAYERS = 100000;
+
+    public const ONLINE_BOOST_MAX_PERCENT = 1000;
+
     /** @return array{enabled:bool,location_name:string,x:int,y:int,z:int,offline_delay_minutes:int,cooldown_hours:int} */
     public function characterRescue(GameServer $server): array
     {
@@ -51,6 +60,49 @@ final class GameServerFeatureSettings
                     'z' => $values['z'],
                     'offline_delay_minutes' => $values['offline_delay_minutes'],
                     'cooldown_hours' => $values['cooldown_hours'],
+                ],
+            ],
+        );
+    }
+
+    /** @return array{enabled:bool,mode:string,min:int,max:int,percent:int} */
+    public function onlineBoost(GameServer $server): array
+    {
+        $feature = $server->relationLoaded('features')
+            ? $server->features->firstWhere('feature_key', self::ONLINE_BOOST)
+            : GameServerFeature::query()
+                ->where('game_server_id', $server->id)
+                ->where('feature_key', self::ONLINE_BOOST)
+                ->first();
+
+        $settings = is_array($feature?->settings) ? $feature->settings : [];
+        $mode = in_array($settings['mode'] ?? null, self::ONLINE_BOOST_MODES, true) ? (string) $settings['mode'] : 'range';
+        $min = $this->boundedInteger($settings['min'] ?? null, 0, 0, self::ONLINE_BOOST_MAX_PLAYERS);
+
+        return [
+            'enabled' => (bool) ($feature->enabled ?? false),
+            'mode' => $mode,
+            'min' => $min,
+            'max' => $this->boundedInteger($settings['max'] ?? null, $min, $min, self::ONLINE_BOOST_MAX_PLAYERS),
+            'percent' => $this->boundedInteger($settings['percent'] ?? null, 0, 0, self::ONLINE_BOOST_MAX_PERCENT),
+        ];
+    }
+
+    /** @param array{enabled:bool,mode:string,min:int,max:int,percent:int} $values */
+    public function updateOnlineBoost(GameServer $server, array $values): GameServerFeature
+    {
+        return GameServerFeature::query()->updateOrCreate(
+            [
+                'game_server_id' => $server->id,
+                'feature_key' => self::ONLINE_BOOST,
+            ],
+            [
+                'enabled' => $values['enabled'],
+                'settings' => [
+                    'mode' => $values['mode'],
+                    'min' => $values['min'],
+                    'max' => $values['max'],
+                    'percent' => $values['percent'],
                 ],
             ],
         );

@@ -28,6 +28,11 @@ final class GameServerFormState
             'maintenanceMessages' => $maintenanceMessages,
             'maintenanceEnabled' => false,
             'characterRescueEnabled' => false,
+            'onlineBoostEnabled' => false,
+            'onlineBoostMode' => 'range',
+            'onlineBoostMin' => '0',
+            'onlineBoostMax' => '0',
+            'onlineBoostPercent' => '0',
             'characterRescueLocationName' => 'Giran',
             'characterRescueX' => '83400',
             'characterRescueY' => '148600',
@@ -119,6 +124,7 @@ final class GameServerFormState
             'serviceHost' => trim((string) $server->service_host),
             'servicePort' => (string) ($server->service_port ?? 7777),
             ...$this->characterRescueState($server),
+            ...$this->onlineBoostState($server),
             'connectionReport' => null,
             'status' => null,
             'showChecks' => false,
@@ -145,6 +151,20 @@ final class GameServerFormState
     }
 
     /** @return array<string,mixed> */
+    /** @return array{onlineBoostEnabled:bool,onlineBoostMode:string,onlineBoostMin:string,onlineBoostMax:string,onlineBoostPercent:string} */
+    public function onlineBoostState(GameServer $server): array
+    {
+        $boost = $this->features->onlineBoost($server);
+
+        return [
+            'onlineBoostEnabled' => $boost['enabled'],
+            'onlineBoostMode' => $boost['mode'],
+            'onlineBoostMin' => (string) $boost['min'],
+            'onlineBoostMax' => (string) $boost['max'],
+            'onlineBoostPercent' => (string) $boost['percent'],
+        ];
+    }
+
     public function characterRescueState(GameServer $server): array
     {
         $rescue = $this->features->characterRescue($server);

@@ -2,6 +2,7 @@
 
 namespace App\Services\Servers;
 
+use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\Localization\LanguageManager;
 use Illuminate\Validation\Rule;
 
@@ -81,6 +82,46 @@ final class GameServerFormSchema
             'characterRescueZ' => ['required', 'integer', 'between:-2147483648,2147483647'],
             'characterRescueOfflineDelayMinutes' => ['required', 'integer', 'between:0,1440'],
             'characterRescueCooldownHours' => ['required', 'integer', 'between:0,720'],
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    public function onlineBoostRules(): array
+    {
+        $maxPlayers = GameServerFeatureSettings::ONLINE_BOOST_MAX_PLAYERS;
+
+        return [
+            'onlineBoostEnabled' => ['required', 'boolean'],
+            'onlineBoostMode' => ['required', Rule::in(GameServerFeatureSettings::ONLINE_BOOST_MODES)],
+            'onlineBoostMin' => ['required', 'integer', 'between:0,'.$maxPlayers],
+            'onlineBoostMax' => ['required', 'integer', 'between:0,'.$maxPlayers, 'gte:onlineBoostMin'],
+            'onlineBoostPercent' => ['required', 'integer', 'between:0,'.GameServerFeatureSettings::ONLINE_BOOST_MAX_PERCENT],
+        ];
+    }
+
+    /** @return array<string,string> */
+    public function onlineBoostAttributes(): array
+    {
+        return [
+            'onlineBoostMode' => __('Boost method'),
+            'onlineBoostMin' => __('Add from'),
+            'onlineBoostMax' => __('Add up to'),
+            'onlineBoostPercent' => __('Add percent'),
+        ];
+    }
+
+    /**
+     * @param  array<string,mixed>  $validated
+     * @return array{enabled:bool,mode:string,min:int,max:int,percent:int}
+     */
+    public function onlineBoostValues(array $validated): array
+    {
+        return [
+            'enabled' => (bool) $validated['onlineBoostEnabled'],
+            'mode' => (string) $validated['onlineBoostMode'],
+            'min' => (int) $validated['onlineBoostMin'],
+            'max' => (int) $validated['onlineBoostMax'],
+            'percent' => (int) $validated['onlineBoostPercent'],
         ];
     }
 

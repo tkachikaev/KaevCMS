@@ -465,6 +465,71 @@
                             @endif
                         </section>
 
+                        <section class="server-drawer-section" data-testid="online-boost-settings">
+                            <label class="server-connection-enable">
+                                <span>
+                                    <strong>{{ __('Online boost') }}</strong>
+                                    <small>{{ __('Adds players to the online count that website visitors see. The administration panel always shows the real online.') }}</small>
+                                </span>
+                                <span class="admin-switch-control">
+                                    <input type="checkbox" wire:model.live="onlineBoostEnabled">
+                                    <span></span>
+                                </span>
+                            </label>
+
+                            @if($onlineBoostEnabled)
+                                <div class="server-boost-modes" role="radiogroup" aria-label="{{ __('Boost method') }}">
+                                    <label @class(['server-boost-mode', 'active' => $onlineBoostMode === 'range'])>
+                                        <input type="radio" name="online_boost_mode" value="range" wire:model.live="onlineBoostMode">
+                                        <span>
+                                            <strong>{{ __('Add a number') }}</strong>
+                                            <small>{{ __('A random number from the range, renewed every 5 minutes.') }}</small>
+                                        </span>
+                                    </label>
+                                    <label @class(['server-boost-mode', 'active' => $onlineBoostMode === 'percent'])>
+                                        <input type="radio" name="online_boost_mode" value="percent" wire:model.live="onlineBoostMode">
+                                        <span>
+                                            <strong>{{ __('Add a percentage') }}</strong>
+                                            <small>{{ __('A share of the real online, growing together with it.') }}</small>
+                                        </span>
+                                    </label>
+                                </div>
+                                @error('onlineBoostMode')<small class="admin-field-error">{{ $message }}</small>@enderror
+
+                                @if($onlineBoostMode === 'percent')
+                                    <div class="server-form-grid">
+                                        <div class="form-group">
+                                            <label for="live_game_online_boost_percent">{{ __('Add percent') }}</label>
+                                            <input id="live_game_online_boost_percent" type="number" min="0" max="{{ \App\Services\GameServerFeatures\GameServerFeatureSettings::ONLINE_BOOST_MAX_PERCENT }}" inputmode="numeric" wire:model.live.debounce.400ms="onlineBoostPercent">
+                                            @error('onlineBoostPercent')<small class="admin-field-error">{{ $message }}</small>@enderror
+                                        </div>
+                                    </div>
+                                    @php
+                                        $boostPercent = max(0, (int) $onlineBoostPercent);
+                                    @endphp
+                                    <small>{{ __('Example: with 100 players online the website shows :count.', ['count' => format_number(100 + (int) round(100 * $boostPercent / 100))]) }}</small>
+                                @else
+                                    <div class="server-form-grid">
+                                        <div class="form-group">
+                                            <label for="live_game_online_boost_min">{{ __('Add from') }}</label>
+                                            <input id="live_game_online_boost_min" type="number" min="0" max="{{ \App\Services\GameServerFeatures\GameServerFeatureSettings::ONLINE_BOOST_MAX_PLAYERS }}" inputmode="numeric" wire:model.live.debounce.400ms="onlineBoostMin">
+                                            @error('onlineBoostMin')<small class="admin-field-error">{{ $message }}</small>@enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="live_game_online_boost_max">{{ __('Add up to') }}</label>
+                                            <input id="live_game_online_boost_max" type="number" min="0" max="{{ \App\Services\GameServerFeatures\GameServerFeatureSettings::ONLINE_BOOST_MAX_PLAYERS }}" inputmode="numeric" wire:model.live.debounce.400ms="onlineBoostMax">
+                                            @error('onlineBoostMax')<small class="admin-field-error">{{ $message }}</small>@enderror
+                                        </div>
+                                    </div>
+                                    @php
+                                        $boostMin = max(0, (int) $onlineBoostMin);
+                                        $boostMax = max($boostMin, (int) $onlineBoostMax);
+                                    @endphp
+                                    <small>{{ __('Example: with 100 players online the website shows :from–:to.', ['from' => format_number(100 + $boostMin), 'to' => format_number(100 + $boostMax)]) }}</small>
+                                @endif
+                            @endif
+                        </section>
+
                         <section class="server-drawer-section">
                             <div class="server-drawer-section-title">
                                 <h3>{{ __('Additional network settings') }}</h3>

@@ -3084,5 +3084,17 @@
     "Use 0 to allow changes without waiting.": "0 — изменение без ожидания.",
     "Display name changes are disabled by the administrator.": "Изменение публичного ника отключено администратором.",
     "You can change your display name after :date.": "Изменить публичный ник можно после :date.",
-    "Old player notifications deleted: :count.": "Удалено старых оповещений игроков: :count."
+    "Old player notifications deleted: :count.": "Удалено старых оповещений игроков: :count.",
+    "Online boost": "Накрутка онлайна",
+    "Adds players to the online count that website visitors see. The administration panel always shows the real online.": "Добавляет игроков к онлайну, который видят посетители сайта. В панели администратора всегда показывается реальный онлайн.",
+    "Boost method": "Способ накрутки",
+    "Add a number": "Прибавить число",
+    "A random number from the range, renewed every 5 minutes.": "Случайное число из диапазона, обновляется раз в 5 минут.",
+    "Add a percentage": "Прибавить процент",
+    "A share of the real online, growing together with it.": "Доля от реального онлайна, растёт вместе с ним.",
+    "Add percent": "Процент к онлайну",
+    "Add from": "Прибавлять от",
+    "Add up to": "Прибавлять до",
+    "Example: with 100 players online the website shows :count.": "Например, при реальном онлайне 100 на сайте будет :count.",
+    "Example: with 100 players online the website shows :from–:to.": "Например, при реальном онлайне 100 на сайте будет от :from до :to."
 }

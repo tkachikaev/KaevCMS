@@ -4,6 +4,7 @@ namespace App\Services\Servers;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Services\GameServerFeatures\GameServerFeatureSettings;
 use App\Services\SiteSettings;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -15,6 +16,8 @@ final class ServerStatusOverview
     public function __construct(
         private readonly ServerMonitorSettings $settings,
         private readonly SiteSettings $siteSettings,
+        private readonly GameServerFeatureSettings $features,
+        private readonly PublicOnlineBoost $boost,
     ) {}
 
     /** @return array<string, mixed> */
@@ -34,7 +37,7 @@ final class ServerStatusOverview
         });
 
         $gameServers = GameServer::query()
-            ->with(['translations', 'loginServer'])
+            ->with(['translations', 'loginServer', 'features'])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
@@ -68,7 +71,9 @@ final class ServerStatusOverview
                 'availability_state' => $availabilityState,
                 'monitor_availability_state' => $baseAvailabilityState,
                 'players' => $players,
-                'public_players' => $publicOnlineVisible && $availabilityState === 'online' ? $players : null,
+                'public_players' => $publicOnlineVisible && $availabilityState === 'online' && $players !== null
+                    ? $this->boost->apply($players, $this->features->onlineBoost($server), (int) $server->id)
+                    : null,
                 'maintenance_enabled' => $maintenanceEnabled,
                 'maintenance_message' => $maintenanceEnabled
                     ? $server->maintenanceMessageFor($locale)

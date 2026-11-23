@@ -106,6 +106,16 @@ class GameServerManager extends Component
 
     public bool $showPublicOnline = true;
 
+    public bool $onlineBoostEnabled = false;
+
+    public string $onlineBoostMode = 'range';
+
+    public string $onlineBoostMin = '0';
+
+    public string $onlineBoostMax = '0';
+
+    public string $onlineBoostPercent = '0';
+
     public string $serverRates = '';
 
     public string $serverChronicle = '';
@@ -386,6 +396,18 @@ class GameServerManager extends Component
         }
 
         try {
+            $boost = $schema->onlineBoostValues($this->validate(
+                $schema->onlineBoostRules(),
+                [],
+                $schema->onlineBoostAttributes(),
+            ));
+        } catch (ValidationException $exception) {
+            $this->activateTabForErrors(array_keys($exception->errors()));
+
+            throw $exception;
+        }
+
+        try {
             $connection = $this->connectionEnabled
                 ? $this->validate(
                     $schema->connectionRules($this->useLoginServerConnection),
@@ -409,6 +431,17 @@ class GameServerManager extends Component
             is_array($connection) ? $schema->connectionValues($connection) : null,
         );
         $server = $result['server'];
+
+        $boostBefore = app(GameServerFeatureSettings::class)->onlineBoost($server);
+        if ($boostBefore !== $boost) {
+            app(GameServerFeatureSettings::class)->updateOnlineBoost($server, $boost);
+            app(AuditLogger::class)->success(
+                category: 'server',
+                action: 'game_server.online_boost_updated',
+                target: $server,
+                details: ['before' => $boostBefore, 'after' => $boost],
+            );
+        }
 
         if ($featureBefore !== null) {
             app(GameServerFeatureSettings::class)->updateCharacterRescue($server, $featureAfter);
@@ -543,6 +576,12 @@ class GameServerManager extends Component
 
             if (str_starts_with($field, 'characterRescue')) {
                 $this->activeTab = 'features';
+
+                return;
+            }
+
+            if (str_starts_with($field, 'onlineBoost')) {
+                $this->activeTab = 'miscellaneous';
 
                 return;
             }

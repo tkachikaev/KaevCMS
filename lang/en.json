@@ -3084,5 +3084,17 @@
     "Use 0 to allow changes without waiting.": "Use 0 to allow changes without waiting.",
     "Display name changes are disabled by the administrator.": "Display name changes are disabled by the administrator.",
     "You can change your display name after :date.": "You can change your display name after :date.",
-    "Old player notifications deleted: :count.": "Old player notifications deleted: :count."
+    "Old player notifications deleted: :count.": "Old player notifications deleted: :count.",
+    "Online boost": "Online boost",
+    "Adds players to the online count that website visitors see. The administration panel always shows the real online.": "Adds players to the online count that website visitors see. The administration panel always shows the real online.",
+    "Boost method": "Boost method",
+    "Add a number": "Add a number",
+    "A random number from the range, renewed every 5 minutes.": "A random number from the range, renewed every 5 minutes.",
+    "Add a percentage": "Add a percentage",
+    "A share of the real online, growing together with it.": "A share of the real online, growing together with it.",
+    "Add percent": "Add percent",
+    "Add from": "Add from",
+    "Add up to": "Add up to",
+    "Example: with 100 players online the website shows :count.": "Example: with 100 players online the website shows :count.",
+    "Example: with 100 players online the website shows :from–:to.": "Example: with 100 players online the website shows :from–:to."
 }
