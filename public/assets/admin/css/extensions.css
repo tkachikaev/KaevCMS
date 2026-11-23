@@ -264,15 +264,6 @@
     font-size: 20px;
 }
 
-[data-shop-item-preview] i {
-    display: block;
-    box-sizing: border-box;
-    width: 62%;
-    height: 62%;
-    border: 1.5px dashed currentColor;
-    border-radius: 7px;
-    opacity: .6;
-}
 
 .promo-reward-preview img {
     display: block;

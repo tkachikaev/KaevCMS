@@ -297,19 +297,8 @@
     object-fit: cover;
 }
 
-/* Empty item slot: a quiet dashed cell until the item icon is known. */
-.daily-reward-item-preview i,
-.daily-reward-admin-calendar-icon i,
-.daily-reward-calendar-item-placeholder {
-    box-sizing: border-box;
-    border: 1.5px dashed var(--admin-border,#cbd5e1);
-}
+/* An item without a known icon keeps a clean, empty cell. */
 
-.daily-reward-item-preview i {
-    width: 100%;
-    height: 100%;
-    border-radius: 10px;
-}
 
 .daily-reward-item-id-field>small:not(.form-error) {
     display: block;
