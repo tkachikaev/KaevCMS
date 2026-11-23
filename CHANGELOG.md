@@ -1,12 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.61.1 - 2026-11-23
 
 Daily Rewards 1.4.0. After updating, open **Admin → Modules** and press "Update database" for Daily Rewards: it has one new migration.
 
 - Daily rewards: each calendar has a **Reward claim limit**. "Once per day for each site user" lets a player claim a day reward once with any one of their game accounts; "Once per day for each game account" keeps the old behaviour. New calendars default to the per-user limit, existing calendars stay per account. The limit cannot be changed on a day that already has claims. On the player page, a day claimed with another account shows as claimed, with that account's login.
 - Daily rewards: game accounts that are still being created or failed to be created can no longer claim.
 - Daily rewards: parallel claims of one calendar on MySQL/MariaDB could deadlock and fail with a database error; claims now lock the calendar first.
+- Daily rewards and Shop: an item without a known icon is shown as a clean empty cell instead of a diamond symbol, and the item cell in the day editor now lines up with the item ID field. The empty shop purchase history shows a bag icon.
 
 ## 0.61.0 - 2026-11-22
 
