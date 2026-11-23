@@ -4,7 +4,7 @@
         @if(! empty($row['icon']))
             <img src="{{ $row['icon'] }}" alt="" width="48" height="48">
         @else
-            <i>◇</i>
+            <i></i>
         @endif
     </span>
     <div class="form-group promo-reward-item-field">

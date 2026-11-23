@@ -154,7 +154,6 @@
                 preview.append(image);
             } else {
                 const fallback = document.createElement('i');
-                fallback.textContent = '◇';
                 preview.append(fallback);
             }
         }

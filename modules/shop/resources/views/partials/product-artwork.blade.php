@@ -6,11 +6,11 @@
                 @if($image['icon'])
                     <img src="{{ $image['icon'] }}" width="64" height="64" alt="" loading="lazy" decoding="async">
                 @else
-                    <span class="shop-product-artwork-fallback">◇</span>
+                    <span class="shop-product-artwork-fallback shop-item-slot"></span>
                 @endif
             </span>
         @empty
-            <span class="shop-product-artwork-item"><span class="shop-product-artwork-fallback">◇</span></span>
+            <span class="shop-product-artwork-item"><span class="shop-product-artwork-fallback shop-item-slot"></span></span>
         @endforelse
     </span>
     @if(($visual['remaining'] ?? 0) > 0)

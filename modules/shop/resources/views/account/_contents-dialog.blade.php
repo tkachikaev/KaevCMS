@@ -3,7 +3,7 @@
     <div class="account-operation-modal-card">
         <header class="account-operation-modal-head">
             <span class="account-operation-modal-mark" aria-hidden="true">
-                @if(! empty($contents[0]['icon']))<img src="{{ $contents[0]['icon'] }}" alt="" width="40" height="40">@else◇@endif
+                @if(! empty($contents[0]['icon']))<img src="{{ $contents[0]['icon'] }}" alt="" width="40" height="40">@else<span class="shop-item-slot"></span>@endif
             </span>
             <div>
                 <span class="account-eyebrow">{{ trans_choice('module-shop::messages.bundle_meta', count($contents), ['count' => format_number(count($contents))]) }}</span>
@@ -16,7 +16,7 @@
             @foreach($contents as $item)
                 <article class="account-operation-reward">
                     <span class="account-operation-reward-icon" aria-hidden="true">
-                        @if(! empty($item['icon']))<img src="{{ $item['icon'] }}" alt="" width="64" height="64">@else<span>◇</span>@endif
+                        @if(! empty($item['icon']))<img src="{{ $item['icon'] }}" alt="" width="64" height="64">@else<span class="shop-item-slot"></span>@endif
                     </span>
                     <strong>{{ $item['name'] }}</strong>
                     <small>× {{ format_number($item['quantity']) }}</small>

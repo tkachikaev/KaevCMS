@@ -18,7 +18,7 @@
             @foreach($contents as $item)
                 <article class="account-operation-reward">
                     <span class="account-operation-reward-icon" aria-hidden="true">
-                        @if(! empty($item['icon']))<img src="{{ $item['icon'] }}" alt="" width="64" height="64">@else<span>◇</span>@endif
+                        @if(! empty($item['icon']))<img src="{{ $item['icon'] }}" alt="" width="64" height="64">@else<span class="shop-item-slot"></span>@endif
                     </span>
                     <strong>{{ $item['name'] }}</strong>
                     <small>× {{ format_number($item['quantity']) }}</small>
