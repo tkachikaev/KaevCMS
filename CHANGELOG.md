@@ -8,6 +8,7 @@ Daily Rewards 1.4.0. After updating, open **Admin → Modules** and press "Updat
 - Daily rewards: game accounts that are still being created or failed to be created can no longer claim.
 - Daily rewards: parallel claims of one calendar on MySQL/MariaDB could deadlock and fail with a database error; claims now lock the calendar first.
 - Daily rewards and Shop: an item without a known icon is shown as a clean empty cell instead of a diamond symbol, and the item cell in the day editor now lines up with the item ID field. The empty shop purchase history shows a bag icon.
+- Game servers: **Online boost** on the Miscellaneous tab of a game server adds players to the online count shown on the website, either a random number within a range (changes every five minutes) or a percentage of the real online. The website and the total use the boosted figure; the administration keeps showing the real online.
 
 ## 0.61.0 - 2026-11-22
 
