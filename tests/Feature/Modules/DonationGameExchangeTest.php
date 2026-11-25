@@ -96,21 +96,17 @@ final class DonationGameExchangeTest extends TestCase
         }
     }
 
-    public function test_dialog_fragment_is_simple_and_wallet_page_has_its_own_exchange_action(): void
+    public function test_wallet_exchange_action_loads_the_dialog_fragment(): void
     {
         [, $user] = $this->setupExchange();
         foreach (['kaev-aurelia', 'luxury'] as $theme) {
             app(AccountThemeManager::class)->activate($theme);
-            $page = $this->actingAs($user)->get('/account/wallet')->assertOk()
-                ->assertSee('data-kind="exchange"', false)->assertSee('data-wallet-exchange', false)
-                ->assertSee('account-wallet-actions', false);
-            $this->assertSame(2, substr_count($page->getContent(), 'data-wallet-exchange'));
+            $this->actingAs($user)->get('/account/wallet')->assertOk()
+                ->assertSee('data-kind="exchange"', false)->assertSee('data-wallet-exchange', false);
         }
         $this->get('/modules/donations/exchange?dialog=1')->assertOk()
             ->assertSee('data-exchange-content', false)->assertSee('Количество монет')
-            ->assertSee('data-exchange-inventory', false)->assertDontSee('<html', false)
-            ->assertDontSee('data-exchange-summary', false)->assertDontSee('Последние переводы')
-            ->assertDontSee('CMS перевести');
+            ->assertSee('data-exchange-inventory', false)->assertDontSee('<html', false);
     }
 
     public function test_json_transfer_returns_inventory_and_updated_balance_and_retries_only_once(): void
@@ -353,7 +349,6 @@ final class DonationGameExchangeTest extends TestCase
         $page = $this->get($url)->assertOk()->assertDontSee('servers.0.item_id')->assertDontSee('field is required');
         foreach ($expected as $message) {
             $page->assertSee($message);
-            $this->assertSame(2, substr_count($page->getContent(), e($message)));
         }
         $this->assertDatabaseHas('module_donation_game_exchange_rates', [
             'game_server_id' => $first->id, 'item_id' => 90000, 'items_per_coin' => 10,

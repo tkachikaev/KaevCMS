@@ -121,11 +121,11 @@ class DonationPlayerQuoteTest extends TestCase
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 
-    public function test_admin_rates_sections_remain_inside_blade_layout_content(): void
+    public function test_admin_currency_rates_are_rendered(): void
     {
-        $blade = file_get_contents(base_path('modules/donations/resources/views/admin/index.blade.php'));
-        $this->assertIsString($blade);
-        $this->assertSame(1, substr_count($blade, '@endsection'));
-        $this->assertGreaterThan(strpos($blade, 'data-testid="donations-currency-rates"'), strpos($blade, '@endsection'));
+        $owner = $this->expose();
+        $this->actingAs($owner, 'admin')->get('/admin/extensions/donations')
+            ->assertOk()
+            ->assertSee('data-testid="donations-currency-rates"', false);
     }
 }

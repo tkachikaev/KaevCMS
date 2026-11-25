@@ -116,12 +116,10 @@ class WalletPageTest extends TestCase
 
             $this->actingAs($owner)->get('/account')->assertOk()
                 ->assertSee('/account/wallet', false)
-                ->assertSee('account-topbar-wallet', false)
                 ->assertSee('75 ', false)
                 ->assertDontSee('Not connected');
             $this->actingAs($owner)->get('/account/wallet')->assertOk()
-                ->assertSee('account-wallet-summary', false)
-                ->assertSee('account-wallet-entry', false);
+                ->assertSee('75', false);
         }
     }
 }

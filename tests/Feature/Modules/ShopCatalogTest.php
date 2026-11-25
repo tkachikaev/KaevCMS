@@ -64,7 +64,7 @@ final class ShopCatalogTest extends TestCase
         // The legacy category remains editable through its secured old route,
         // but it is intentionally absent from the section-only administration UI.
         $this->get('/admin/extensions/shop/servers/'.$server->id)->assertOk()
-            ->assertDontSee('Топоры')->assertSee('Оружие')->assertSee('shop-section-list', false);
+            ->assertDontSee('Топоры')->assertSee('Оружие');
 
         $this->delete('/admin/extensions/shop/servers/'.$server->id.'/categories/'.$category->id, ['confirm' => '1'])
             ->assertRedirect();

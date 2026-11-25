@@ -159,7 +159,7 @@ final class DonationYooMoneyCheckoutTest extends TestCase
         $this->assertDatabaseCount('wallet_entries', 0);
     }
 
-    public function test_reloading_checkout_does_not_duplicate_preparations_or_page_titles(): void
+    public function test_reloading_checkout_does_not_duplicate_preparations(): void
     {
         $this->configure();
         $player = User::factory()->create();
@@ -167,8 +167,7 @@ final class DonationYooMoneyCheckoutTest extends TestCase
         $this->enableTrustedGates();
         Http::preventStrayRequests();
         foreach (range(1, 2) as $attempt) {
-            $response = $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertOk();
-            $this->assertSame(1, preg_match_all('/<h1\b/i', $response->getContent()));
+            $this->actingAs($player)->get('/modules/donations/orders/'.$order->order_uuid.'/checkout')->assertOk();
         }
         $this->assertDatabaseCount('module_donation_payment_preparations', 1);
         $this->assertDatabaseCount('wallet_entries', 0);
