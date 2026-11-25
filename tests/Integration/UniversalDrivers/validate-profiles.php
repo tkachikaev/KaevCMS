@@ -13,8 +13,10 @@ use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 
 $profiles = (new BundledProfileCatalog)->all();
-if (count($profiles) !== 5) {
-    throw new RuntimeException('Expected five bundled LoginServer/GameServer profiles.');
+foreach (['login:l2j_mobius', 'login:l2j_mobius_legacy', 'login:rusacis', 'game:l2j_mobius', 'game:rusacis'] as $identity) {
+    if (! isset($profiles[$identity])) {
+        throw new RuntimeException('Missing required bundled profile: '.$identity);
+    }
 }
 $validator = new ProfileValidator;
 foreach ($profiles as $profile) {

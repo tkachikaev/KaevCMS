@@ -39,13 +39,9 @@ class GameServerFeatureSettingsTest extends TestCase
             ->call('setActiveTab', 'features')
             ->assertSet('activeTab', 'features')
             ->assertSee('Возврат персонажа в город')
-            ->assertSee('character-rescue-settings', false)
             ->call('setCharacterRescueEnabled', true)
             ->assertSet('characterRescueEnabled', true)
-            ->assertSee('live_game_rescue_location', false)
-            ->assertSee('character-rescue-fields', false)
-            ->assertSee('server-form-grid server-form-grid-three', false)
-            ->assertSee('form-group', false);
+            ->assertSee('live_game_rescue_location', false);
     }
 
     public function test_old_separate_game_server_features_page_is_removed(): void

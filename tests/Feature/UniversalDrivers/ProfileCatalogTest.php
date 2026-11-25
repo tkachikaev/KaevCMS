@@ -20,9 +20,16 @@ final class ProfileCatalogTest extends TestCase
     public function test_bundled_profiles_are_available_without_copying_them_into_database(): void
     {
         $catalog = app(DriverProfileCatalog::class);
-        $this->assertCount(5, $catalog->all());
-        $this->assertSame('builtin', $catalog->find('login', 'rusacis')['origin']);
-        $this->assertFalse($catalog->find('login', 'rusacis')['modified']);
+        $bundled = (new BundledProfileCatalog)->all();
+        $this->assertNotEmpty($bundled);
+        $entries = $catalog->all();
+        $this->assertSame(array_keys($bundled), array_keys($entries));
+        foreach ($bundled as $key => $profile) {
+            $entry = $entries[$key];
+            $this->assertSame($profile, $entry['profile']);
+            $this->assertSame('builtin', $entry['origin']);
+            $this->assertFalse($entry['modified']);
+        }
         $this->assertSame(0, DB::table('universal_driver_profiles')->count());
     }
 

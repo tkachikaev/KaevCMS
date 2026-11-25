@@ -17,8 +17,8 @@ final class ProfileValidatorTest extends TestCase
     {
         $profiles = (new BundledProfileCatalog)->all();
         $registry = app(ServerDriverRegistry::class);
-        $this->assertCount(5, $profiles);
         foreach ($registry->loginDrivers() as $key => $driver) {
+            $this->assertArrayHasKey('login:'.$key, $profiles);
             foreach ($driver['requirements'] as $i => $requirement) {
                 $mapped = $profiles['login:'.$key]['config']['requirements'][$i];
                 $this->assertSame($requirement['table'], $mapped['table']);
@@ -29,6 +29,7 @@ final class ProfileValidatorTest extends TestCase
             }
         }
         foreach ($registry->gameDrivers() as $key => $driver) {
+            $this->assertArrayHasKey('game:'.$key, $profiles);
             $this->assertSame($driver['requirements'], $profiles['game:'.$key]['config']['requirements']);
         }
         $this->assertSame(MobiusGameSchemaInspector::requirements(), $profiles['game:l2j_mobius']['config']['requirements']);

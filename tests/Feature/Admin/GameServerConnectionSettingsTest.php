@@ -190,7 +190,7 @@ class GameServerConnectionSettingsTest extends TestCase
         $this->assertStringNotContainsString('NeverExposeThisPassword', json_encode($audit->details, JSON_THROW_ON_ERROR));
     }
 
-    public function test_rusacis_game_driver_is_saved_as_placeholder(): void
+    public function test_rusacis_game_driver_can_be_saved(): void
     {
         $loginServer = LoginServer::query()->create($this->loginServerValues());
         $gameServer = GameServer::query()->firstOrFail();
