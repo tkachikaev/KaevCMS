@@ -201,6 +201,7 @@ test('Aurelia content remains usable after a slow hero image load', async ({ bro
             const heading = page.locator('.hero h1');
             await expect(heading).toBeVisible();
             await expect(heading).toHaveCSS('opacity', '1');
+            await expect(page.locator('.aurelia-scene .hero-art')).toHaveCSS('opacity', '1');
             await page.locator('.main-nav a[href$="/news"]').click();
             await expect(page).toHaveURL(/\/news$/);
             await expect(page.locator('#public-content')).toBeVisible();
