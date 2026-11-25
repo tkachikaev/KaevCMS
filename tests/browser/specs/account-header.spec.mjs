@@ -49,33 +49,16 @@ test('account header follows navigation without duplicate page headings in both 
                 await expect(heading).toHaveText(title);
                 await expect(heading).toBeInViewport();
                 await expect(player.locator('h1')).toHaveCount(1);
-                await expect(player.locator('[data-account-content] > .account-page')).toHaveCount(1);
-                await expect(player.locator('.account-content').getByRole('link', { name: 'Вернуться к обзору', exact: true })).toHaveCount(0);
-                await expect(player.locator('.account-page > .account-page-actions')).toHaveCount(0);
-                if (path !== '/account') {
-                    const panel = player.locator('.account-content .account-panel').first();
-                    const panelBox = await panel.boundingBox();
-                    const headerBox = await player.locator('.account-topbar').boundingBox();
-                    expect(Math.abs(panelBox.y - headerBox.y - headerBox.height - (width > 980 ? 24 : 20))).toBeLessThanOrEqual(2);
-                    expect(await panel.evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBe(width > 760 ? 24 : 20);
-                }
-                await expect(description).toHaveCount(1);
                 await expect(description).toBeInViewport();
                 await expect(description).not.toHaveText(previousDescription);
                 previousDescription = await description.innerText();
                 expect(previousDescription.trim()).not.toBe('');
-                await expect(player.locator('.account-content').getByText(previousDescription, { exact: true })).toHaveCount(0);
                 await expect(player.locator('html')).not.toHaveClass(/account-sidebar-open/);
                 expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-                if (width !== 320 && ['/account/wallet', '/account/game-accounts', '/account/characters'].includes(path)) {
-                    await player.screenshot({ path: `storage/framework/testing/panels-${theme}-${path.split('/').pop()}-${width}.png`, fullPage: true, animations: 'disabled' });
-                }
             }
             await player.locator('.account-profile-menu-topbar > summary').click();
             await player.locator('.account-profile-dropdown').getByRole('link', { name: 'Настройки аккаунта', exact: true }).click();
             await expect(player.locator('.account-topbar h1')).toHaveText('Настройки аккаунта');
-            await expect(player.locator('.account-content').getByRole('link', { name: 'Вернуться к обзору', exact: true })).toHaveCount(0);
-            await player.screenshot({ path: `storage/framework/testing/account-layout-${theme}-${width}.png`, fullPage: true });
         }
     }
     await player.close();

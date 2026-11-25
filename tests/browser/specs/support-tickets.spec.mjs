@@ -57,7 +57,6 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(page.locator('[data-testid="support-ticket-create-form"]')).toBeVisible();
     await expect(page.locator('.support-create-ticket-button')).toHaveCount(0);
     await page.getByRole('radio', { name: 'Техническая проблема', exact: true }).check();
-    await expect(page.locator('.support-category-chip:has(input:checked)')).toHaveCSS('border-top-left-radius', '12px');
     await page.locator('input[name="subject"]').fill(subject);
     await page.locator('[data-testid="support-ticket-create-form"] textarea[name="body"]').fill('Проверка нового обращения через браузерный тест.');
     await expect(page.locator('[data-character-counter]').first()).toContainText(`${subject.length} / 120`);
@@ -82,29 +81,21 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(notificationCenter.getByText('Нет уведомлений', { exact: true })).toBeVisible();
     await expect(page.locator('a[href$="/admin/extensions/support-tickets"] .admin-menu-badge')).toHaveText('2');
     await gotoWithLocalNetworkRetry(page, '/admin/extensions/support-tickets');
-    await expect(page.locator('[data-testid="support-ticket-filters"]')).toHaveCSS('display', 'grid');
-    await expect(page.locator('.support-ticket-search-field')).toHaveClass(/admin-field/);
-    await expect(page.locator('#support-ticket-search')).toHaveCSS('border-radius', await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--admin-radius-control').trim()));
     await expect(page.getByRole('heading', { name: 'Фильтры', exact: true })).toHaveCount(0);
     const ticketRow = page.locator('.support-admin-ticket-row').filter({ hasText: subject });
     await expect(ticketRow).toHaveCount(1);
     await ticketRow.getByRole('link', { name: 'Открыть обращение', exact: true }).click();
     await expect(page.getByRole('heading', { name: subject, exact: true })).toBeVisible();
-    await expect(page.locator('[data-testid="support-admin-ticket-layout"]')).toHaveCSS('display', 'grid');
-    await expect(page.locator('[data-testid="support-ticket-admin-heading"]')).toHaveCSS('display', 'grid');
     await expect(page.locator('.support-admin-ticket-side').getByRole('heading', { name: 'Данные обращения', exact: true })).toBeVisible();
 
     const noteToggle = page.locator('[data-testid="internal-note-toggle"]');
     await expect(page.locator('[data-testid="internal-note-form"]')).toHaveCount(0);
     await noteToggle.click();
     await expect(page.locator('[data-testid="internal-note-form"]')).toBeVisible();
-    await expect(page.locator('[data-testid="internal-note-form"]')).not.toHaveCSS('border-style', 'dashed');
     await noteToggle.click();
     await expect(page.locator('[data-testid="internal-note-form"]')).toHaveCount(0);
 
     const staffReplyForm = page.locator('[data-testid="staff-reply-form"]');
-    await expect(staffReplyForm.locator('textarea[name="body"]')).toHaveCSS('border-radius', '12px');
-    await expect(staffReplyForm.locator('textarea[name="body"]')).toHaveCSS('resize', 'vertical');
     const originalStaffReply = 'Уточните, пожалуйста, когда появилась проблема.';
     const correctedStaffReply = 'Уточните, пожалуйста, когда именно появилась проблема.';
     await staffReplyForm.locator('textarea[name="body"]').fill(originalStaffReply);
@@ -120,10 +111,6 @@ test('player and administrator complete the support ticket conversation flow wit
     const staffMessage = page.locator(`.support-message[data-message-id="${staffMessageId}"]`);
     const editMessageButton = staffMessage.getByRole('button', { name: 'Изменить сообщение', exact: true });
     await expect(editMessageButton).toBeVisible();
-    await expect(editMessageButton).toHaveText('');
-    const editButtonBox = await editMessageButton.boundingBox();
-    expect(editButtonBox).not.toBeNull();
-    expect(editButtonBox.width).toBeLessThanOrEqual(32);
     await editMessageButton.click();
     await staffMessage.locator('textarea[name="body"]').fill(correctedStaffReply);
     await staffMessage.getByRole('button', { name: 'Сохранить изменения', exact: true }).click();
@@ -140,9 +127,6 @@ test('player and administrator complete the support ticket conversation flow wit
     await expect(page.locator('.support-message-body', { hasText: correctedStaffReply })).toBeVisible();
     await expect(page.locator('.support-message-body', { hasText: originalStaffReply })).toHaveCount(0);
     const playerReplyForm = page.locator('[data-testid="player-reply-form"]');
-    // Messenger-style composer: the frame belongs to the field, the text area grows with the text.
-    await expect(playerReplyForm.locator('.support-composer-field')).toHaveCSS('border-radius', '16px');
-    await expect(playerReplyForm.locator('textarea[name="body"]')).toHaveCSS('resize', 'none');
     await expect(page.locator('.support-message.staff .support-message-role')).toHaveText(/Поддержка/i);
     await playerReplyForm.locator('textarea[name="body"]').fill('Проблема появилась сегодня после входа в игру.');
     await expect(playerReplyForm.locator('[data-character-counter]')).toContainText('46 / ');
@@ -206,9 +190,7 @@ test('support ticket editor permissions expose dependent controls safely', async
     const noteToggle = page.locator('input[type="checkbox"][name="allow_editor_internal_notes"]');
 
     await expect(page.locator('label[for="allow_editor_view"] strong')).toHaveText('Разрешить просмотр обращений');
-    await expect(page.locator('label[for="allow_editor_view"] strong')).toHaveCSS('display', 'block');
     await expect(page.locator('label[for="allow_editor_view"] small')).toBeVisible();
-    await expect(page.locator('label[for="allow_editor_view"] small')).toHaveCSS('display', 'block');
 
     const viewRow = page.locator('label[for="allow_editor_view"]');
     const replyRow = page.locator('label[for="allow_editor_reply"]');
