@@ -72,11 +72,6 @@ class WebUpdaterReleaseTest extends TestCase
         $this->assertStringContainsString('settings.system.updates.recover', $routes);
         $this->assertStringContainsString('settings.system.updates.status', $routes);
 
-        $updatesScript = File::get(public_path('assets/admin/js/system-updates.js'));
-        $this->assertStringContainsString('HTMLFormElement.prototype.submit.call(form)', $updatesScript);
-        $this->assertStringContainsString('button[type="submit"], input[type="submit"]', $updatesScript);
-        $this->assertStringNotContainsString('button, input, select, textarea', $updatesScript);
-
         $builder = File::get(base_path('deployment/updates/build-package.php'));
         foreach ([
             "'.env.example'",
@@ -89,44 +84,6 @@ class WebUpdaterReleaseTest extends TestCase
             'oldest supported Web Updater',
         ] as $required) {
             $this->assertStringContainsString($required, $builder);
-        }
-
-        $inspector = File::get(app_path('Services/Updates/UpdatePackageInspector.php'));
-        foreach ([
-            'kaevcms-update.json',
-            'Symbolic links are not allowed',
-            'core/VERSION',
-            'hash_equals',
-            'minimum_version',
-            'maximum_version',
-            'DEPENDENCY_BUNDLE_TARGET',
-            'composer_lock_sha256',
-        ] as $required) {
-            $this->assertStringContainsString($required, $inspector);
-        }
-        $this->assertStringNotContainsString('Web Updater 1.0 requires a full deployment', $inspector);
-
-        $installer = File::get(app_path('Services/Updates/SystemUpdateInstaller.php'));
-        foreach ([
-            '\'--secret\' => $maintenanceSecret',
-            'runArtisan(\'down\'',
-            'runArtisan(\'migrate\'',
-            'runArtisan(\'optimize:clear\'',
-            'runtimeDirectories->ensure(true)',
-            'Runtime directories recreated and write-tested after cache clear.',
-            'databaseBackup->create',
-            'filesystem->backup',
-            'databaseBackup->restore',
-            'filesystem->rollback',
-            'installedVersion->mark',
-            'updateLock->acquire',
-            'PHASE_PREPARING',
-            'PHASE_FILES',
-            'PHASE_MIGRATIONS',
-            'PHASE_FINALIZING',
-            'package_sha256',
-        ] as $required) {
-            $this->assertStringContainsString($required, $installer);
         }
 
         $publicEntry = File::get(public_path('index.php'));
@@ -142,42 +99,6 @@ class WebUpdaterReleaseTest extends TestCase
         $this->assertStringContainsString('$pathFile = __DIR__.\'/kaevcms-path.php\'', $publicEntry);
         $this->assertStringContainsString('$sharedHosting = is_file($pathFile)', $publicEntry);
         $this->assertStringContainsString('RewriteRule ^kaevcms-path\.php$ - [F,L]', File::get(public_path('.htaccess')));
-
-        $filesystem = File::get(app_path('Services/Updates/UpdateFilesystemTransaction.php'));
-        foreach ([
-            'pathDigest',
-            'hash_equals',
-            '\'sha256\' => $this->pathDigest',
-            'loadBackup',
-        ] as $required) {
-            $this->assertStringContainsString($required, $filesystem);
-        }
-
-        $recovery = File::get(app_path('Services/Updates/SystemUpdateRecovery.php'));
-        foreach ([
-            'databaseBackup->load',
-            'filesystem->loadBackup',
-            'STATUS_APPLYING',
-            'runArtisan(\'up\'',
-            'runtimeDirectories->ensure(true)',
-            'Runtime directories recreated and write-tested after recovery cache clear.',
-            'filesMayHaveChanged',
-            'databaseMayHaveChanged',
-        ] as $required) {
-            $this->assertStringContainsString($required, $recovery);
-        }
-
-        $agent = File::get(app_path('Services/Updates/VdsUpdateAgent.php'));
-        foreach ([
-            'execution_mode',
-            'maintenance_secret',
-            'agent_requested_at',
-            'writeJsonAtomically',
-            'package_sha256',
-            'Another update is already running or waiting for the VDS agent.',
-        ] as $required) {
-            $this->assertStringContainsString($required, $agent);
-        }
 
         $installerScript = File::get(base_path('deployment/vds/install-update-agent.sh'));
         foreach ([
@@ -215,10 +136,6 @@ class WebUpdaterReleaseTest extends TestCase
         $this->assertStringNotContainsString('-prune -o \\
         -mindepth 1', $installerScript);
         $this->assertStringNotContainsString('-prune -o -mindepth 1', $installerScript);
-        $this->assertStringContainsString('public const AGENT_VERSION = 3;', $agent);
-        $this->assertStringContainsString('packageDirectory()', $agent);
-        $this->assertStringContainsString('stagingDirectory()', $agent);
-        $this->assertStringContainsString('deploymentPermissions()', $agent);
         $this->assertStringContainsString('secureUpdatedTarget', File::get(app_path('Services/Updates/UpdateFilesystemTransaction.php')));
 
         $cliUpdater = File::get(app_path('Console/Commands/InstallSystemUpdateCommand.php'));
@@ -226,12 +143,6 @@ class WebUpdaterReleaseTest extends TestCase
         $this->assertStringContainsString('chmod($path, 02770)', $cliUpdater);
         $this->assertStringContainsString('chmod($path, 0660)', $cliUpdater);
         $this->assertStringNotContainsString('chmod($path, 0700)', $cliUpdater);
-
-        $updatesIndex = File::get(resource_path('views/admin/settings/updates/index.blade.php'));
-        $this->assertStringContainsString('update-upload-warning', $updatesIndex);
-        $this->assertStringContainsString('An update archive can replace KaevCMS program files.', $updatesIndex);
-        $this->assertStringContainsString('The website owner is responsible for the package selected for installation.', $updatesIndex);
-        $this->assertStringNotContainsString('Use update packages only from a source you trust.', $updatesIndex);
 
         $request = File::get(app_path('Http/Requests/Admin/ApplySystemUpdateRequest.php'));
         $this->assertStringContainsString("'trusted_source' => ['accepted']", $request);

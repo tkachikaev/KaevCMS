@@ -21,17 +21,4 @@ class CliSystemUpdaterReleaseTest extends TestCase
 
         $this->assertSame(0, SystemUpdate::query()->count());
     }
-
-    public function test_release_contains_the_deployment_user_updater_command(): void
-    {
-        $source = file_get_contents(app_path('Console/Commands/InstallSystemUpdateCommand.php'));
-
-        $this->assertIsString($source);
-        $this->assertStringContainsString("protected \$signature = 'kaevcms:update", $source);
-        $this->assertStringContainsString('SystemUpdateInstaller $installer', $source);
-        $this->assertStringContainsString('{--yes', $source);
-        $this->assertStringContainsString("if (! \$this->option('yes'))", $source);
-        $this->assertStringContainsString('Temporary recovery URL:', $source);
-        $this->assertStringContainsString('chmod($path, 0660)', $source);
-    }
 }

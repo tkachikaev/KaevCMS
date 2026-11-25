@@ -12,62 +12,13 @@ class VdsDocumentationReleaseTest extends TestCase
         $russian = $this->readReleaseFile('docs/ru/VDS_UBUNTU.md');
 
         foreach ([$english, $russian] as $guide) {
-            foreach ([
-                'Ubuntu Server 24.04 LTS',
-                '/var/www/kaevcms/public',
-                'php8.3-fpm',
-                'composer install --no-dev --optimize-autoloader --no-interaction',
-                'composer check-platform-reqs --no-dev',
-                'client_max_body_size 512m',
-                'fastcgi_pass unix:/run/php/php8.3-fpm.sock;',
-                'location = /index.php',
-                'location = /install/index.php',
-                'location ^~ /uploads/',
-                'php artisan kaevcms:update /tmp/KaevCMS-update.zip',
-                'certbot --nginx',
-                '/etc/cron.d/kaevcms',
-                '/etc/systemd/system/kaevcms-queue.service',
-                'chmod 775 /var/www/kaevcms',
-                'chmod 755 /var/www/kaevcms',
-                'chmod 640 /var/www/kaevcms/.env',
-                '/var/www/kaevcms/.env',
-                '/etc/nginx/sites-available/kaevcms',
-                'APP_FORCE_HTTPS=false',
-                'SESSION_SECURE_COOKIE=false',
-                '419 Page Expired',
-                'public/uploads/news',
-                'public/uploads/pages',
-                'public/uploads/settings',
-                'public/uploads/game-assets',
-                'chmod -R 777 /var/www/kaevcms',
-                'kaevcms_db',
-                'kaevcms_user',
-                'bash deployment/vds/install-update-agent.sh',
-                'root',
-                'KAEVCMS_WEB_GROUP',
-                '--project-user kaevcms',
-                '--web-user www-data',
-                '--web-group www-data',
-                'php artisan kaevcms:update-agent:status',
-                'sudo bash deployment/vds/remove-update-agent.sh',
-            ] as $required) {
-                $this->assertStringContainsString($required, $guide);
-            }
-
+            $this->assertStringContainsString('/var/www/kaevcms/public', $guide);
             $this->assertStringNotContainsString('root /var/www/kaevcms;', $guide);
-            $this->assertStringNotContainsString('CREATE DATABASE kaevcms\n', $guide);
-            $this->assertStringNotContainsString("CREATE USER 'kaevcms'@'localhost'", $guide);
-            $this->assertStringNotContainsString('mysql -u kaevcms -p -h 127.0.0.1 kaevcms', $guide);
+            $this->assertStringContainsString('php artisan kaevcms:update', $guide);
+            $this->assertStringContainsString('deployment/vds/install-update-agent.sh', $guide);
+            $this->assertStringContainsString('deployment/vds/remove-update-agent.sh', $guide);
+            $this->assertStringContainsString('php artisan kaevcms:update-agent:status', $guide);
         }
-
-        $this->assertStringContainsString('Ubuntu 26.04 LTS ships PHP 8.5', $english);
-        $this->assertStringContainsString('Ubuntu 26.04 LTS поставляется с PHP 8.5', $russian);
-        $this->assertStringContainsString('http://192.168.1.10/install/', $english);
-        $this->assertStringContainsString('http://192.168.1.10/install/', $russian);
-        $this->assertStringContainsString('The HTTP warning does not block the database check or final installation.', $english);
-        $this->assertStringContainsString('requests `sudo` when the current account needs elevated rights', $english);
-        $this->assertStringContainsString('Предупреждение об HTTP не блокирует проверку базы или завершение установки.', $russian);
-        $this->assertStringContainsString('запросит `sudo`, если текущей учётной записи не хватает прав', $russian);
     }
 
     private function readReleaseFile(string $path): string

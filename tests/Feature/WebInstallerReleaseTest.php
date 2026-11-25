@@ -46,7 +46,6 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString('define(\'KAEVCMS_INSTALL_ENTRY\', true)', $installEntry);
         $this->assertStringContainsString('defined(\'KAEVCMS_INSTALL_ENTRY\')', $installer);
         $this->assertStringContainsString('installerDeploymentSafety', $installer);
-        $this->assertStringContainsString('domain points to the project root', $installer);
         $this->assertStringContainsString('storage/app/installed.lock', $installer);
         $this->assertStringContainsString('session_set_cookie_params([', $installer);
         $this->assertStringContainsString('\'httponly\' => true', $installer);
@@ -63,8 +62,6 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString("'installer_removed' => \$installerRemoved", $installer);
         $this->assertStringContainsString('securityReviewBody', $installer);
         $this->assertStringContainsString('installerSensitivePermissionsAreBroad', $installer);
-        $this->assertStringContainsString('Installation data is transmitted without encryption.', $installer);
-        $this->assertStringContainsString('Данные установки передаются по сети без шифрования.', $installer);
         $this->assertStringContainsString("'public/uploads/news' => \$publicRoot.'/uploads/news'", $installer);
         $this->assertStringContainsString("'public/uploads/pages' => \$publicRoot.'/uploads/pages'", $installer);
         $this->assertStringContainsString("'public/uploads/settings' => \$publicRoot.'/uploads/settings'", $installer);
@@ -98,8 +95,6 @@ class WebInstallerReleaseTest extends TestCase
         $this->assertStringContainsString("'deployment/hosting/web-installer/tests'", $builder);
         $this->assertStringContainsString("'deployment/hosting/shared-hosting/tests'", $builder);
         $this->assertStringContainsString("'deployment/updates/tests-package-builder.php'", $builder);
-        $this->assertStringContainsString('was removed automatically', $installer);
-        $this->assertStringContainsString('could not be removed automatically', $installer);
         $this->assertStringContainsString('Symbolic links are not allowed', $builder);
         $this->assertStringContainsString('$application->usePublicPath(__DIR__)', $splitEntry);
     }

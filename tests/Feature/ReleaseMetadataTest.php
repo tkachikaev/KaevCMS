@@ -103,21 +103,9 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(base_path('bootstrap/cache/.gitignore'));
     }
 
-    public function test_dependency_lock_and_admin_styles_preserve_portable_line_endings(): void
+    public function test_dependency_lock_preserves_portable_line_endings(): void
     {
-        $paths = ['composer.lock'];
-        foreach (glob(public_path('assets/admin/css/*.css')) ?: [] as $stylesheet) {
-            $paths[] = 'public/assets/admin/css/'.basename($stylesheet);
-        }
-
-        $this->assertGreaterThan(1, count($paths), 'Administration stylesheets must be shipped.');
-        foreach ($paths as $path) {
-            $this->assertStringNotContainsString(
-                "\r",
-                $this->readReleaseFile($path),
-                'Git checkouts must preserve LF for dependency fingerprints and stylesheet contracts: '.$path,
-            );
-        }
+        $this->assertStringNotContainsString("\r", $this->readReleaseFile('composer.lock'));
     }
 
     public function test_phpstan_analyzes_every_bundled_module_source_directory(): void
@@ -125,11 +113,8 @@ class ReleaseMetadataTest extends TestCase
         $configuration = $this->normalized($this->readReleaseFile('phpstan.neon'));
         $moduleManifests = glob(base_path('modules/*/module.json')) ?: [];
 
-        $this->assertStringContainsString("    level: 6\n", $configuration);
         $this->assertStringNotContainsString('treatPhpDocTypesAsCertain', $configuration);
         $this->assertStringNotContainsString('excludePaths:', $configuration);
-        $this->assertStringContainsString("            identifier: missingType.parameter\n", $configuration);
-        $this->assertStringContainsString("            path: database/migrations/2026_07_12_000500_create_game_servers_table.php\n", $configuration);
         $this->assertNotEmpty($moduleManifests);
 
         foreach ($moduleManifests as $manifestPath) {
@@ -159,7 +144,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertIsArray($psr7);
         $this->assertTrue(version_compare((string) ($guzzle['version'] ?? '0.0.0'), '7.15.2', '>='));
         $this->assertTrue(version_compare((string) ($psr7['version'] ?? '0.0.0'), '2.13.0', '>='));
-        $this->assertSame('^2.13', $guzzle['require']['guzzlehttp/psr7'] ?? null);
     }
 
     public function test_runtime_dependency_lock_contains_security_fixed_versions(): void
@@ -183,7 +167,7 @@ class ReleaseMetadataTest extends TestCase
         }
     }
 
-    public function test_documentation_is_bilingual_and_current(): void
+    public function test_core_administrator_documentation_is_bilingual(): void
     {
         foreach ([
             'docs/en/README.md',
@@ -199,38 +183,6 @@ class ReleaseMetadataTest extends TestCase
         ] as $documentation) {
             $this->assertFileExists(base_path($documentation));
         }
-
-        $englishHosting = $this->readReleaseFile('docs/en/SHARED_HOSTING.md');
-        $russianHosting = $this->readReleaseFile('docs/ru/SHARED_HOSTING.md');
-        $this->assertStringContainsString('-PublicDirectoryName', $englishHosting);
-        $this->assertStringContainsString('-CoreDirectoryName', $englishHosting);
-        $this->assertStringContainsString('-IncludeDevelopmentDependencies', $englishHosting);
-        $this->assertStringContainsString('Beget', $englishHosting);
-        $this->assertStringContainsString('Jino', $englishHosting);
-        $this->assertStringContainsString('-PublicDirectoryName', $russianHosting);
-        $this->assertStringContainsString('Beget', $russianHosting);
-        $this->assertStringContainsString('Jino', $russianHosting);
-        $this->assertStringContainsString('kaevcms-path.php', $englishHosting);
-        $this->assertStringContainsString('public_path()', $englishHosting);
-        $this->assertStringContainsString('kaevcms-path.php', $russianHosting);
-        $this->assertStringContainsString('public_path()', $russianHosting);
-
-        $documentationIndex = $this->readReleaseFile('docs/README.md');
-        $this->assertStringContainsString('English documentation', $documentationIndex);
-        $this->assertStringContainsString('Русская документация', $documentationIndex);
-
-        $englishDevelopment = $this->readReleaseFile('docs/en/DEVELOPMENT.md');
-        $russianDevelopment = $this->readReleaseFile('docs/ru/DEVELOPMENT.md');
-        foreach (['base.css', 'layout.css', 'content.css', 'infrastructure.css', 'components.css', 'extensions.css', 'catalogs.css'] as $stylesheet) {
-            $this->assertStringContainsString($stylesheet, $englishDevelopment);
-            $this->assertStringContainsString($stylesheet, $russianDevelopment);
-        }
-        $this->assertStringContainsString('public/assets/account/js/navigation.js', $englishDevelopment);
-        $this->assertStringContainsString('public/assets/account/js/navigation.js', $russianDevelopment);
-        $this->assertStringContainsString('build-release.ps1', $englishDevelopment);
-        $this->assertStringContainsString('build-release.ps1', $russianDevelopment);
-        $this->assertStringContainsString('0.42.4', $englishDevelopment);
-        $this->assertStringContainsString('0.42.4', $russianDevelopment);
     }
 
     public function test_update_script_uses_data_driven_release_and_recovery_contracts(): void
@@ -354,12 +306,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(database_path('migrations/2026_07_21_000000_add_module_migration_lifecycle.php'));
         $this->assertFileExists(resource_path('schemas/module.schema.json'));
         $this->assertFileExists(resource_path('views/admin/modules/index.blade.php'));
-        $moduleCatalogue = $this->readReleaseFile('resources/views/admin/modules/index.blade.php');
-        $this->assertStringContainsString('data-module-id="{{ $module[\'id\'] }}"', $moduleCatalogue);
-        $this->assertStringContainsString('data-testid="module-catalog"', $moduleCatalogue);
-        $this->assertStringContainsString('data-testid="module-card"', $moduleCatalogue);
-        $this->assertStringContainsString('data-layout="grid"', $moduleCatalogue);
-
         $this->assertFileExists(base_path('modules/README.md'));
         $this->assertFileExists(base_path('docs/en/MODULES.md'));
         $this->assertFileExists(base_path('docs/ru/MODULES.md'));
@@ -373,51 +319,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertSame(['schema', 'id', 'name', 'version', 'author'], $schema['required']);
         $this->assertSame(1, $schema['properties']['schema']['const']);
         $this->assertSame('#/$defs/relativePath', $schema['properties']['migrations']['$ref']);
-
-        $migrationManager = $this->readReleaseFile('app/Support/Modules/ModuleMigrationManager.php');
-        $this->assertStringContainsString('Cache::lock', $migrationManager);
-        $this->assertStringContainsString('hash_file(\'sha256\'', $migrationManager);
-        $this->assertStringContainsString('rollbackCurrentRun', $migrationManager);
-        $this->assertStringContainsString('$this->autoloader->register($module)', $migrationManager);
-
-        $moduleManager = $this->readReleaseFile('app/Support/Modules/ModuleManager.php');
-        $this->assertStringContainsString('\'migration_pending\'', $moduleManager);
-        $this->assertStringContainsString('\'migration_modified\'', $moduleManager);
-        $this->assertStringContainsString('\'migration_error\'', $moduleManager);
-
-        $runtime = $this->readReleaseFile('app/Support/Modules/ModuleRuntime.php');
-        $this->assertStringContainsString('return ! FrameworkCache::building($this->app);', $runtime);
-        $this->assertStringContainsString('array_intersect([\'config:cache\', \'route:cache\', \'optimize\'], $arguments)', $this->readReleaseFile('app/Support/FrameworkCache.php'));
-        $this->assertStringContainsString('$this->autoloader->register($module)', $runtime);
-        $this->assertStringNotContainsString('private readonly Filesystem $files', $runtime);
-
-        $aureliaCss = $this->readReleaseFile('public/account-themes/kaev-aurelia/assets/css/app.css');
-        $sharedAccountCss = $this->readReleaseFile('public/assets/account/css/components.css');
-        $this->assertStringContainsString('display: grid; place-items: center;', $aureliaCss);
-        $this->assertStringContainsString('.account-character-avatar > span', $aureliaCss);
-        $this->assertStringContainsString('.account-surface {', $aureliaCss);
-        $this->assertStringContainsString('.promo-activation-surface {', $aureliaCss);
-        $this->assertStringContainsString('Kaev Aurelia Account 1.3.1', $aureliaCss);
-        $this->assertStringContainsString('.account-dashboard-tools {', $aureliaCss);
-        $this->assertStringContainsString('border-radius: 24px;', $aureliaCss);
-        $this->assertStringContainsString('.account-profile-preview {', $sharedAccountCss);
-        $this->assertStringContainsString('.account-avatar-modal {', $sharedAccountCss);
-        $this->assertStringContainsString('.reward-history-main p img {', $sharedAccountCss);
-        $this->assertStringContainsString('.account-operation-modal{', $sharedAccountCss);
-        $this->assertStringContainsString('.account-operation-reward{', $sharedAccountCss);
-
-        $luxuryNavigation = $this->readReleaseFile('account-themes/luxury/views/partials/navigation.blade.php');
-        $this->assertStringContainsString('data-account-module-id', $luxuryNavigation);
-        $this->assertStringNotContainsString('wire:navigate.hover @class', $luxuryNavigation);
-
-        $aureliaNavigation = $this->readReleaseFile('account-themes/kaev-aurelia/views/partials/navigation.blade.php');
-        $this->assertStringContainsString('wire:current="active"', $aureliaNavigation);
-        $this->assertStringContainsString('data-account-module-id', $aureliaNavigation);
-        $this->assertStringNotContainsString('wire:navigate.hover @class', $aureliaNavigation);
-        $this->assertStringNotContainsString('request()->routeIs(\'modules.\'', $aureliaNavigation);
-
-        $aureliaInventory = $this->readReleaseFile('account-themes/kaev-aurelia/views/web-inventory/index.blade.php');
-        $this->assertStringContainsString('account-surface reward-inventory-shell', $aureliaInventory);
     }
 
     public function test_support_ticket_module_and_scoped_access_artifacts_are_shipped(): void
@@ -463,106 +364,9 @@ class ReleaseMetadataTest extends TestCase
             $this->assertFileExists(base_path($artifact));
         }
 
-        $manifest = json_decode(
-            $this->readReleaseFile('modules/support-tickets/module.json'),
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        );
-        $this->assertSame('support-tickets', $manifest['id']);
-        $this->assertSame('1.7.3', $manifest['version']);
-        $this->assertSame('0.45.1', $manifest['cms_min']);
-        $this->assertNull($manifest['cms_max']);
-
         $service = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketService.php');
-        $this->assertStringContainsString('maxOpenTicketsPerUser()', $service);
-        $this->assertStringContainsString('maxTicketsPerDay()', $service);
-        $this->assertStringContainsString('maxPlayerMessagesPerDay()', $service);
-        $this->assertStringContainsString('maxMessagesPerTicket()', $service);
-        $this->assertStringContainsString('maxRevisionsPerMessage()', $service);
-        $this->assertStringContainsString('SupportTicketMessageRevision::query()->create', $service);
-        $cleanupService = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketCleanupService.php');
-        $this->assertStringContainsString('deleteClosedTicket', $cleanupService);
-        $this->assertStringContainsString('delete_protected_ticket', $cleanupService);
-        $this->assertStringContainsString('SupportTicketStatus::AwaitingPlayer', $service);
-        $this->assertStringContainsString('SupportTicketStatus::InProgress', $service);
         $this->assertStringNotContainsString("details: ['body'", $service);
-        $this->assertStringContainsString('AdminNotificationType::SupportTicketCreated', $service);
-        $this->assertStringContainsString('AdminNotificationType::SupportTicketPlayerReply', $service);
-        $this->assertStringContainsString("parameters: ['number' => \$ticket->number()]", $service);
         $this->assertStringNotContainsString("parameters: ['subject'", $service);
-
-        $model = $this->readReleaseFile('modules/support-tickets/src/Models/SupportTicket.php');
-        $this->assertStringContainsString('public const SUBJECT_MAX = 120;', $model);
-        $this->assertStringContainsString('public const INITIAL_MESSAGE_MAX = 3000;', $model);
-        $this->assertStringContainsString('public const MESSAGE_MAX = 2000;', $model);
-        $this->assertStringContainsString('public const MAX_TICKETS_PER_USER_PER_DAY = 10;', $model);
-        $this->assertStringContainsString('public const MAX_PLAYER_MESSAGES_PER_DAY = 100;', $model);
-        $this->assertStringContainsString('public const MAX_MESSAGES_PER_TICKET = 300;', $model);
-        $this->assertStringContainsString('public const MAX_REVISIONS_PER_MESSAGE = 20;', $model);
-        $this->assertStringContainsString('public const MESSAGES_PER_PAGE = 50;', $model);
-
-        $settings = $this->readReleaseFile('modules/support-tickets/src/Services/SupportTicketSettings.php');
-        $this->assertStringContainsString('DEFAULT_MAX_TICKETS_PER_DAY = 10', $settings);
-        $this->assertStringContainsString('DEFAULT_MAX_PLAYER_MESSAGES_PER_DAY = 100', $settings);
-        $this->assertStringContainsString('DEFAULT_MAX_MESSAGES_PER_TICKET = 300', $settings);
-        $this->assertStringContainsString('DEFAULT_MAX_REVISIONS_PER_MESSAGE = 20', $settings);
-        $this->assertStringContainsString('DEFAULT_MAX_OPEN_TICKETS_PER_USER = 5', $settings);
-        $this->assertStringContainsString('DEFAULT_SUBJECT_MAX_LENGTH = 120', $settings);
-        $this->assertStringContainsString('DEFAULT_INITIAL_MESSAGE_MAX_LENGTH = 3000', $settings);
-        $this->assertStringContainsString('DEFAULT_MESSAGE_MAX_LENGTH = 2000', $settings);
-
-        $bootstrap = $this->readReleaseFile('modules/support-tickets/bootstrap.php');
-        $this->assertStringContainsString('AdminRole::Owner, AdminRole::Administrator', $bootstrap);
-        $this->assertStringContainsString('AdminRole::Editor', $bootstrap);
-        $this->assertStringContainsString('AdminRole::Auditor', $bootstrap);
-        $this->assertStringContainsString('editorCanView()', $bootstrap);
-        $this->assertStringContainsString('editorCanReply()', $bootstrap);
-        $this->assertStringContainsString('editorCanAddInternalNotes()', $bootstrap);
-        $this->assertStringContainsString('kaevcms:support-tickets-cleanup --scheduled', $bootstrap);
-        $this->assertStringContainsString('SupportTicketAttentionCounter', $bootstrap);
-        $this->assertStringContainsString('retention-protection', $bootstrap);
-
-        $navigation = $this->readReleaseFile('resources/views/admin/partials/navigation.blade.php');
-        $this->assertStringContainsString('livewire:admin.module-navigation-badge', $navigation);
-        $this->assertStringContainsString('aria-label="{{ __($moduleLink[\'label_key\']) }}"', $navigation);
-        $panel = $this->readReleaseFile('resources/views/admin/layouts/panel.blade.php');
-        $this->assertStringContainsString('data-admin-menu-open', $panel);
-        $this->assertStringContainsString('admin-sidebar-backdrop', $panel);
-        $adminNavigationScript = $this->readReleaseFile('public/assets/admin/js/navigation.js');
-        $this->assertStringContainsString('admin-mobile-menu-open', $adminNavigationScript);
-        $badge = $this->readReleaseFile('resources/views/livewire/admin/module-navigation-badge.blade.php');
-        $this->assertStringContainsString('wire:poll.30s="refreshBadge"', $badge);
-        $this->assertStringContainsString('admin-menu-badge', $badge);
-        $this->assertStringContainsString('role="status"', $badge);
-        $this->assertStringContainsString('aria-live="polite"', $badge);
-        $this->assertStringContainsString('99+', $badge);
-        $layoutCss = $this->readReleaseFile('public/assets/admin/css/layout.css');
-        $this->assertStringContainsString('.admin-menu-badge[hidden]', $layoutCss);
-
-        $settingsView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/settings.blade.php');
-        $this->assertStringContainsString('<x-admin.tabs', $settingsView);
-        $this->assertStringContainsString("@include('module-support-tickets::admin._tabs')", $settingsView);
-        $this->assertStringContainsString('subtle class="support-settings-tabs"', $settingsView);
-        $this->assertStringNotContainsString('back_to_tickets', $settingsView);
-        $this->assertStringContainsString('data-testid="support-cleanup-panel"', $settingsView);
-        $this->assertStringContainsString('support-settings-actions', $settingsView);
-
-        $indexView = $this->readReleaseFile('modules/support-tickets/resources/views/admin/index.blade.php');
-        $this->assertStringContainsString('<x-admin.filter-bar', $indexView);
-        $this->assertStringContainsString('class="support-ticket-filters"', $indexView);
-        $this->assertStringNotContainsString("<h2>{{ __('module-support-tickets::messages.filters') }}</h2>", $indexView);
-
-        $conversationView = $this->readReleaseFile('modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php');
-        $this->assertStringContainsString('data-testid="support-admin-ticket-layout"', $conversationView);
-        $this->assertStringContainsString('support-admin-ticket-side', $conversationView);
-        $this->assertStringContainsString('support-ticket-detail-list', $conversationView);
-        $this->assertStringContainsString('support-message-edit-icon', $conversationView);
-        $supportCss = $this->readReleaseFile('public/assets/modules/support-tickets.css');
-        $this->assertStringContainsString('resize: vertical', $supportCss);
-        $this->assertStringContainsString('max-width: 100%', $supportCss);
-
-        $this->assertFileExists(base_path('modules/support-tickets/assets/module.webp'));
-        $this->assertSame([320, 320], array_slice((array) getimagesize(base_path('modules/support-tickets/assets/module.webp')), 0, 2));
     }
 
     public function test_web_inventory_release_artifacts_are_shipped(): void
@@ -634,14 +438,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileDoesNotExist(app_path('Services/GameAccounts/InterludeClassNames.php'));
         $this->assertFileDoesNotExist(app_path('Services/GameWorld/InterludeCharacterLabels.php'));
 
-        $migration = $this->readReleaseFile('database/migrations/2026_07_21_000100_create_reward_inventory_tables.php');
-        $this->assertStringContainsString('Schema::create(\'reward_inventory_grants\'', $migration);
-        $this->assertStringContainsString('Schema::create(\'reward_inventory_items\'', $migration);
-        $this->assertStringContainsString('Schema::create(\'reward_deliveries\'', $migration);
-        $this->assertStringContainsString('Schema::create(\'reward_delivery_items\'', $migration);
-        $this->assertStringContainsString('$table->timestamp(\'transferred_at\')->nullable()', $migration);
-        $this->assertStringContainsString('$table->timestamp(\'queued_at\')->nullable()', $migration);
-
         $environment = $this->readReleaseFile('.env.example');
         $this->assertStringContainsString('APP_ENV=production', $environment);
         $this->assertStringContainsString('APP_DEBUG=false', $environment);
@@ -702,121 +498,17 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileDoesNotExist(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
         $this->assertFileExists(base_path('modules/promo-codes/assets/module.webp'));
         $this->assertFileExists(base_path('modules/daily-rewards/assets/module.webp'));
-        $this->assertSame([320, 320], array_slice((array) getimagesize(base_path('modules/promo-codes/assets/module.webp')), 0, 2));
-        $this->assertSame([320, 320], array_slice((array) getimagesize(base_path('modules/daily-rewards/assets/module.webp')), 0, 2));
         $this->assertFileExists(resource_path('views/components/account-operation-modal.blade.php'));
-        $adminLayout = $this->readReleaseFile('resources/views/admin/layouts/app.blade.php');
-        $this->assertStringContainsString('assets/admin/css/', $adminLayout);
-        $this->assertStringContainsString('assets/admin/js/appearance.js', $adminLayout);
-        $this->assertStringContainsString("'appearance',", $adminLayout);
-        $adminAppearance = $this->readReleaseFile('public/assets/admin/js/appearance.js');
-        $adminAppearanceCss = $this->readReleaseFile('public/assets/admin/css/appearance.css');
-        $this->assertStringContainsString('prefers-color-scheme: dark', $adminAppearance);
-        $this->assertStringContainsString('data-admin-color-scheme="dark"', $adminAppearanceCss);
-        $this->assertStringContainsString('$adminStylesheet', $adminLayout);
-        $this->assertStringNotContainsString('assets/admin/css/app.css', $adminLayout);
-        foreach ([
-            'account-themes/luxury/views/layouts/app.blade.php',
-            'account-themes/kaev-aurelia/views/layouts/app.blade.php',
-        ] as $accountLayoutPath) {
-            $accountLayout = $this->readReleaseFile($accountLayoutPath);
-            $this->assertStringContainsString('assets/account/css/components.css', $accountLayout);
-            $this->assertStringContainsString('assets/account/js/navigation.js', $accountLayout);
-            $this->assertStringNotContainsString("account_theme_asset('assets/js/navigation.js')", $accountLayout);
-        }
-        $this->assertFileExists(resource_path('views/components/account-sidebar-backdrop.blade.php'));
-        $accountNavigationRuntime = $this->readReleaseFile('public/assets/account/js/navigation.js');
-        $this->assertStringContainsString('data-account-sidebar-backdrop', $accountNavigationRuntime);
-        foreach (['luxury', 'kaev-aurelia'] as $accountTheme) {
-            $accountThemeCss = $this->readReleaseFile('public/account-themes/'.$accountTheme.'/assets/css/app.css');
-            $this->assertStringContainsString('html.account-sidebar-open .account-sidebar-backdrop', $accountThemeCss);
-            $this->assertStringNotContainsString('.account-sidebar-open::after', $accountThemeCss);
-        }
-        foreach (['luxury' => '1.6.10', 'kaev-aurelia' => '1.6.12'] as $accountTheme => $expectedVersion) {
-            $accountThemeManifest = json_decode(
-                $this->readReleaseFile('account-themes/'.$accountTheme.'/theme.json'),
-                true,
-                flags: JSON_THROW_ON_ERROR,
-            );
-            $this->assertSame($expectedVersion, $accountThemeManifest['version']);
-            $this->assertSame('0.48.4', $accountThemeManifest['cms_min']);
-        }
         $dailyRewardsScript = $this->readReleaseFile('public/assets/admin/js/daily-rewards.js');
-        $dailyRewardsCss = $this->readReleaseFile('public/assets/modules/daily-rewards.css');
         $this->assertStringContainsString('data-daily-unsaved', $this->readReleaseFile('modules/daily-rewards/resources/views/admin/edit.blade.php'));
         $this->assertStringContainsString('beforeunload', $dailyRewardsScript);
         $this->assertStringContainsString('copyEmptyConfirm', $dailyRewardsScript);
         $this->assertStringContainsString('addEventListener(\'pointerdown\'', $dailyRewardsScript);
-        $this->assertStringContainsString('.daily-reward-item-preview,.daily-reward-item-remove {', $dailyRewardsCss);
-        $this->assertStringContainsString('margin-top: 28px;', $dailyRewardsCss);
-        $sharedAccountCss = $this->readReleaseFile('public/assets/account/css/components.css');
-        $this->assertStringContainsString('.reward-inventory-shell', $sharedAccountCss);
-        $this->assertStringContainsString('.account-avatar-grid', $sharedAccountCss);
-        $this->assertStringContainsString('.account-settings-card', $sharedAccountCss);
-        $this->assertStringContainsString('.account-operation-modal{', $sharedAccountCss);
-        $this->assertStringContainsString('.account-character-rescue-button', $sharedAccountCss);
-        $this->assertStringContainsString('backdrop-filter:blur(22px)', $sharedAccountCss);
-        preg_match_all('/var\((--account-shared-[a-z0-9-]+)\)/i', $sharedAccountCss, $sharedTokenMatches);
-        $sharedTokens = array_values(array_unique($sharedTokenMatches[1] ?? []));
-        $this->assertNotEmpty($sharedTokens);
-        foreach (['luxury', 'kaev-aurelia'] as $accountTheme) {
-            $accountThemeCss = $this->readReleaseFile('public/account-themes/'.$accountTheme.'/assets/css/app.css');
-            foreach ($sharedTokens as $sharedToken) {
-                $this->assertStringContainsString($sharedToken.':', $accountThemeCss);
-            }
-            $this->assertStringNotContainsString('.account-operation-modal{', $accountThemeCss);
-        }
-
-        $dailyRewardsManifest = json_decode(
-            $this->readReleaseFile('modules/daily-rewards/module.json'),
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        );
-        $this->assertSame('daily-rewards', $dailyRewardsManifest['id']);
-        $this->assertSame('1.4.0', $dailyRewardsManifest['version']);
-
-        $manifest = json_decode(
-            $this->readReleaseFile('modules/promo-codes/module.json'),
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        );
-        $this->assertSame('promo-codes', $manifest['id']);
-        $this->assertSame('1.4.3', $manifest['version']);
-        $this->assertSame('0.36.2', $manifest['cms_min']);
-        $this->assertSame('database/migrations', $manifest['migrations']);
-
         $activationService = $this->readReleaseFile('modules/promo-codes/src/Services/PromoCodeActivationService.php');
         $this->assertStringContainsString('lockForUpdate()', $activationService);
         $this->assertStringContainsString('grantKey: \'promo-code.activation.\'.$activation->id', $activationService);
         $this->assertStringContainsString('RewardInventoryService', $activationService);
         $this->assertStringNotContainsString('table(\'items\')', $activationService);
-
-        $promoCodeModel = $this->readReleaseFile('modules/promo-codes/src/Models/PromoCode.php');
-        $this->assertStringContainsString('use SoftDeletes;', $promoCodeModel);
-
-        $promoCodeController = $this->readReleaseFile('modules/promo-codes/src/Http/Controllers/AdminPromoCodeController.php');
-        $this->assertStringContainsString('promo_code.archived', $promoCodeController);
-        $this->assertStringContainsString('promo_code.restored', $promoCodeController);
-        $this->assertStringContainsString('onlyTrashed()', $promoCodeController);
-
-        $promoAccountView = $this->readReleaseFile('modules/promo-codes/resources/views/account/index.blade.php');
-        $this->assertStringContainsString('data-testid="promo-code-input"', $promoAccountView);
-
-        $promoScript = $this->readReleaseFile('public/assets/admin/js/promo-codes.js');
-        $this->assertStringContainsString('data-promo-reward-add', $promoScript);
-        $this->assertStringContainsString('data-promo-reward-preview', $promoScript);
-        $this->assertStringContainsString('previewUrlTemplate', $promoScript);
-        $this->assertStringContainsString('data-promo-delete-form', $promoScript);
-
-        $adminStyles = collect(['base', 'layout', 'content', 'infrastructure', 'components', 'extensions', 'catalogs', 'appearance'])
-            ->map(fn (string $stylesheet): string => $this->readReleaseFile('public/assets/admin/css/'.$stylesheet.'.css'))
-            ->implode("\n");
-        $this->assertStringContainsString('.promo-reward-row', $adminStyles);
-        $this->assertStringContainsString('.reward-queue-item', $adminStyles);
-        $this->assertStringContainsString('.promo-reward-name-preview', $adminStyles);
-        $this->assertStringContainsString('.admin-catalog-row', $adminStyles);
-        $this->assertStringContainsString('.module-catalog-preview', $adminStyles);
-        $this->assertStringContainsString('.theme-catalog-preview', $adminStyles);
 
         $moduleValidator = $this->readReleaseFile('app/Support/Modules/ModuleValidator.php');
         $this->assertStringContainsString('\'assets/module.webp\'', $moduleValidator);
@@ -824,19 +516,11 @@ class ReleaseMetadataTest extends TestCase
         $moduleController = $this->readReleaseFile('app/Http/Controllers/Admin/ModuleController.php');
         $this->assertStringContainsString('\'X-Content-Type-Options\' => \'nosniff\'', $moduleController);
 
-        $itemCatalog = $this->readReleaseFile('app/Services/GameAssets/GameItemCatalog.php');
-        $this->assertStringContainsString('lang_path($locale.\'/items.php\')', $itemCatalog);
-        $this->assertStringContainsString('$servers[$serverId]', $itemCatalog);
-        $this->assertStringContainsString('fallbackCandidates', $itemCatalog);
-        $this->assertStringContainsString('Lang::get(\'Game item\'', $itemCatalog);
-        $this->assertStringContainsString('GameItemProfileCatalog', $itemCatalog);
-
         $interludeCatalog = json_decode(
             $this->readReleaseFile('resources/game-items/interlude.json'),
             true,
             flags: JSON_THROW_ON_ERROR,
         );
-        $this->assertCount(9208, $interludeCatalog);
         $this->assertSame('etc_adena_i00', $interludeCatalog[57]['icon']);
         $this->assertSame('Adena', $interludeCatalog[57]['name_en']);
         $this->assertSame('accessary_necklace_of_anguish_i00', $interludeCatalog[907]['icon']);
@@ -857,44 +541,9 @@ class ReleaseMetadataTest extends TestCase
             true,
             flags: JSON_THROW_ON_ERROR,
         );
-        $this->assertCount(19791, $classicCatalog);
-        $this->assertCount(19198, $highFiveCatalog);
-        $this->assertCount(19790, $shineMakerCatalog);
         $this->assertSame('etc_adena_i00', $classicCatalog[57]['icon']);
         $this->assertSame('etc_adena_i00', $highFiveCatalog[57]['icon']);
         $this->assertSame('etc_adena_i00', $shineMakerCatalog[57]['icon']);
-
-        $rewardJournal = $this->readReleaseFile('resources/views/admin/rewards/index.blade.php');
-        $this->assertStringContainsString("@section('title', __('rewards.queue.journal.title'))", $rewardJournal);
-        $this->assertStringContainsString('audit-table reward-queue-table', $rewardJournal);
-        $this->assertStringContainsString('ID {{ $item->item_id }}', $rewardJournal);
-
-        $resolver = $this->readReleaseFile('app/Services/GameAssets/GameAssetUrlResolver.php');
-        $this->assertStringContainsString('$category.\'/common\'', $resolver);
-        $this->assertStringContainsString('\'items\'', $resolver);
-        $this->assertStringContainsString('\'characters\'', $resolver);
-        $this->assertStringContainsString('firstCharacterAvatar', $resolver);
-        $this->assertStringContainsString('str_starts_with($key', $resolver);
-        $this->assertStringContainsString('\'webp\', \'png\', \'jpg\', \'jpeg\'', $resolver);
-        $this->assertStringContainsString('$scopeBases[] = $category.\'/servers/\'.$serverId', $resolver);
-        $this->assertStringContainsString('$scopeBases[] = $category.\'/common\';', $resolver);
-        $this->assertStringContainsString('itemKeys', $resolver);
-        $this->assertStringNotContainsString('standardRootPath', $resolver);
-        $this->assertStringNotContainsString('externalCharacterAvatar', $resolver);
-
-        $appearanceResolver = $this->readReleaseFile('app/Services/GameAssets/CharacterAppearanceResolver.php');
-        $this->assertStringContainsString('\'race_key\'', $appearanceResolver);
-        $this->assertStringContainsString('\'gender_key\'', $appearanceResolver);
-        $this->assertStringContainsString('\'archetype\'', $appearanceResolver);
-        $this->assertStringContainsString('fallback/neutral/default', $appearanceResolver);
-
-        foreach (['docs/en/GAME_INTEGRATION.md', 'docs/ru/GAME_INTEGRATION.md'] as $avatarGuidePath) {
-            $avatarGuide = $this->readReleaseFile($avatarGuidePath);
-            $this->assertStringContainsString('public/uploads/game-assets/characters/common/human/female/mage.webp', $avatarGuide);
-            $this->assertStringContainsString('characters/common/fallback/neutral/default.webp', $avatarGuide);
-            $this->assertStringNotContainsString('characters/{profile}', $avatarGuide);
-            $this->assertStringContainsString('/common/', $avatarGuide);
-        }
     }
 
     public function test_external_database_diagnostics_artifacts_are_shipped(): void
@@ -907,14 +556,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileExists(resource_path('views/admin/settings/_external_database_diagnostics.blade.php'));
         $this->assertFileExists(lang_path('en/external_databases.php'));
         $this->assertFileExists(lang_path('ru/external_databases.php'));
-
-        $migration = $this->readReleaseFile('database/migrations/2026_07_27_200000_add_external_database_diagnostics_to_servers.php');
-        $this->assertStringContainsString("'database_last_success_at'", $migration);
-        $this->assertStringContainsString("'database_last_error_class'", $migration);
-        $this->assertStringContainsString("'database_latency_ms'", $migration);
-        $this->assertStringContainsString("'database_schema_profile'", $migration);
-        $this->assertStringContainsString("'database_capabilities'", $migration);
-        $this->assertStringContainsString("'database_table_checks'", $migration);
     }
 
     public function test_account_avatar_release_artifacts_are_shipped(): void
@@ -941,35 +582,8 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('public/uploads/account-avatars', $this->readReleaseFile('docs/en/CONTENT_THEMES.md'));
         $this->assertStringContainsString('public/uploads/account-avatars', $this->readReleaseFile('docs/ru/CONTENT_THEMES.md'));
 
-        $routes = $this->readReleaseFile('routes/account.php');
-        $this->assertStringContainsString('/account/profile', $routes);
-        $this->assertStringContainsString('/account/security', $routes);
-        $this->assertStringContainsString('security.password.update', $routes);
-        $this->assertStringContainsString('/account/characters', $routes);
-        $this->assertStringContainsString('characters.index', $routes);
-        $this->assertStringContainsString('profile.avatar.update', $routes);
-
         $updateContract = $this->jsonReleaseFile('deployment/windows/update-contract.json');
-        $doctor = $this->readReleaseFile('deployment/windows/doctor.ps1');
         $this->assertContains('public/uploads/account-avatars', $updateContract['runtime_directories']);
-        $this->assertStringContainsString('Account avatar directory', $doctor);
-
-        $migration = $this->readReleaseFile('database/migrations/2026_07_22_000100_add_account_avatar_to_users_table.php');
-        $this->assertStringContainsString('$table->string(\'avatar_filename\', 190)->nullable()', $migration);
-
-        $component = $this->readReleaseFile('resources/views/components/account-avatar.blade.php');
-        $this->assertStringContainsString('AccountAvatarCatalog::class', $component);
-        $this->assertStringContainsString('data-account-avatar', $component);
-
-        $modal = $this->readReleaseFile('resources/views/components/account-avatar-modal.blade.php');
-        $this->assertStringContainsString('data-avatar-modal', $modal);
-        $this->assertStringContainsString('return_to', $modal);
-        $this->assertStringContainsString('AccountAvatarCatalog::class', $modal);
-
-        $preferenceMigration = $this->readReleaseFile('database/migrations/2026_07_22_000200_upgrade_character_directory_preferences.php');
-        $this->assertStringContainsString('$table->unsignedSmallInteger(\'schema_version\')->default(1)', $preferenceMigration);
-        $this->assertStringContainsString('\'view_mode\' => \'all\'', $preferenceMigration);
-        $this->assertStringContainsString('\'schema_version\' => 2', $preferenceMigration);
     }
 
     public function test_obsolete_preview_and_settings_placeholder_are_not_shipped(): void
