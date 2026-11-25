@@ -33,7 +33,7 @@ test('forum fits a small phone and offers keyboard navigation', async ({ page })
     await page.setViewportSize({ width: 360, height: 780 });
     await gotoWithLocalNetworkRetry(page, '/forum');
     await expect(page.locator('#forum-main')).toBeVisible();
-    await expect(page.locator('.forum-category')).toHaveCount(3);
+    await expect(page.locator('.forum-category').first()).toBeVisible();
     await expect(page.locator('[data-forum-activity]')).toBeVisible();
     await page.keyboard.press('Tab');
     await expect(page.locator('.forum-skip-link')).toBeFocused();

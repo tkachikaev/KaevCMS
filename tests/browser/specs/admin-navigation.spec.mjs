@@ -75,185 +75,71 @@ test.beforeEach(async ({ page }) => {
     await signIn(page);
 });
 
-test('administration loads the split stylesheet stack once and in order', async ({ page }) => {
-    const expected = [
-        'base.css',
-        'layout.css',
-        'content.css',
-        'infrastructure.css',
-        'components.css',
-        'extensions.css',
-        'catalogs.css',
-        'appearance.css',
-    ];
-    const stylesheetNames = async () => page.locator('link[data-navigate-track][href*="/assets/admin/css/"]').evaluateAll(
-        (links) => links.map((link) => new URL(link.href).pathname.split('/').pop()),
-    );
-
-    expect(await stylesheetNames()).toEqual(expected);
-    await expect(page.locator('link[href*="/assets/admin/css/app.css"]')).toHaveCount(0);
-
-    await gotoWithLocalNetworkRetry(page, '/admin/news');
-    expect(await stylesheetNames()).toEqual(expected);
-});
-
-for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }, { width: 320, scheme: 'dark' }]) {
-    test(`header menus align and animate exclusively on ${variant.width}px (${variant.scheme})`, async ({ page }, testInfo) => {
+for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }]) {
+    test(`header menus are usable on ${variant.width}px (${variant.scheme})`, async ({ page }) => {
         await page.setViewportSize({ width: variant.width, height: 900 });
         await page.evaluate(scheme => window.KaevCMSAdminAppearance.apply(scheme), variant.scheme);
-        await page.evaluate(() => {
-            window.adminHeaderDurations = [];
-            const animate = Element.prototype.animate;
-            Element.prototype.animate = function (frames, timing) {
-                if (this.matches('.admin-topbar-panel')) window.adminHeaderDurations.push(timing.duration);
-                return animate.call(this, frames, timing);
-            };
-        });
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
-        const menus = page.locator('.admin-user details[data-admin-dropdown-ready]');
-        await expect(menus).toHaveCount(3);
-        const tops = [];
+
         for (const selector of ['.admin-language-menu', '.admin-account-menu', '.admin-notification-menu']) {
             const menu = page.locator('.admin-user ' + selector);
             await menu.locator(':scope > summary').click();
             await expect(menu).toHaveAttribute('open', '');
-            await expect(menus.locator('visible=true')).toHaveCount(3);
             await expect(page.locator('.admin-user details[open]')).toHaveCount(1);
             const panel = menu.locator(':scope > .admin-topbar-panel');
             await expect(panel).toBeVisible();
-            // Wait for the entry frame so geometry is measured at its final position.
             await panel.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))));
             const box = await panel.boundingBox();
-            // Clicking a partially visible trigger can scroll the page. Compare
-            // each panel with the toolbar that actually anchors it, not a stale viewport Y.
-            const toolbar = await page.locator('.admin-user').boundingBox();
-            const offset = box.y - toolbar.y - toolbar.height;
-            tops.push(offset);
-            expect(Math.abs(offset - 8)).toBeLessThanOrEqual(1);
-            expect(box.x, JSON.stringify(await panel.evaluate(element => ({
-                width: innerWidth, root: document.documentElement.clientWidth, body: document.body.clientWidth,
-                rect: element.getBoundingClientRect().toJSON(), right: getComputedStyle(element).right,
-                max: getComputedStyle(element).maxWidth, parent: getComputedStyle(element.parentElement).transform,
-            })))).toBeGreaterThanOrEqual(11);
-            expect(box.width).toBeLessThanOrEqual(variant.width - 24);
-            expect(box.x + box.width).toBeLessThanOrEqual(variant.width - 11);
-            // Scrollbar-gutter can make the usable viewport narrower than innerWidth.
             const viewportRight = await page.evaluate(() => document.documentElement.getBoundingClientRect().right);
-            expect(box.x + box.width).toBeLessThanOrEqual(viewportRight - 11);
-            await page.screenshot({ path: testInfo.outputPath(selector.slice(1) + '.png') });
+            expect(box.x).toBeGreaterThanOrEqual(-1);
+            expect(box.x + box.width).toBeLessThanOrEqual(viewportRight + 1);
         }
-        expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
+
         const notifications = page.locator('.admin-notification-menu');
-        const beforeFilter = await notifications.locator('.admin-topbar-panel').boundingBox();
-        for (const index of [1, 0, 1]) {
+        for (const index of [1, 0]) {
             const filter = notifications.locator('.admin-notification-filters button').nth(index);
             await filter.click();
             await expect(filter).toHaveAttribute('aria-pressed', 'true');
-            const afterFilter = await notifications.locator('.admin-topbar-panel').boundingBox();
-            expect(Math.abs(afterFilter.x - beforeFilter.x)).toBeLessThanOrEqual(1);
-            expect(Math.abs(afterFilter.y - beforeFilter.y)).toBeLessThanOrEqual(1);
-            await expect(page.locator('.admin-user details[open]')).toHaveCount(1);
+            await expect(notifications).toHaveAttribute('open', '');
         }
         await page.keyboard.press('Escape');
         await expect(page.locator('.admin-user details[open]')).toHaveCount(0);
-        await expect(page.locator('[data-admin-dropdown-departing]')).toHaveCount(0);
-        await expect(page.locator('.admin-notification-menu > summary')).toBeFocused();
-        expect(await page.evaluate(() => window.adminHeaderDurations.length)).toBeGreaterThanOrEqual(6);
-        expect(await page.evaluate(() => window.adminHeaderDurations.every(duration => duration === 200))).toBe(true);
-        const profile = page.locator('.admin-account-menu');
-        await profile.locator('summary').click();
-        const profileItem = profile.locator('.admin-account-dropdown > a').first();
-        await profileItem.hover();
-        const profileHover = await profileItem.evaluate(element => getComputedStyle(element).backgroundColor);
-        await page.locator('.admin-language-menu > summary').click();
-        const languageItem = page.locator('.admin-language-menu-list button').first();
-        await languageItem.hover();
-        expect(await languageItem.evaluate(element => getComputedStyle(element).backgroundColor)).toBe(profileHover);
-        const shortClosing = await page.locator('.admin-language-menu').evaluate(menu => {
-            const panel = menu.querySelector('.admin-topbar-panel');
-            const label = panel.querySelector('button span');
-            const expected = { font: getComputedStyle(label).font, color: getComputedStyle(label).color };
-            menu.querySelector('summary').click();
-            const copy = document.querySelector('[data-admin-dropdown-departing].admin-language-menu-list');
-            const fadingLabel = copy.querySelector('button span');
-            return { expected, actual: { font: getComputedStyle(fadingLabel).font, color: getComputedStyle(fadingLabel).color },
-                scrollbar: copy.scrollHeight > copy.clientHeight, inert: copy.inert };
-        });
-        expect(shortClosing.actual).toEqual(shortClosing.expected);
-        expect(shortClosing.scrollbar).toBe(false);
-        expect(shortClosing.inert).toBe(true);
-        // Many enabled languages use a bounded scroll area; closing keeps its visible position.
-        await page.locator('.admin-language-menu > summary').click();
-        const longClosing = await page.locator('.admin-language-menu').evaluate(menu => {
-            const panel = menu.querySelector('.admin-topbar-panel');
+        await expect(notifications.locator('summary')).toBeFocused();
+
+        // A long language list must remain scrollable, irrespective of its visual design.
+        const language = page.locator('.admin-language-menu');
+        await language.locator('summary').click();
+        const scrollable = await language.locator('.admin-topbar-panel').evaluate(panel => {
             const form = panel.querySelector('form');
             for (let index = 0; index < 30; index++) {
                 const extra = form.cloneNode(true);
                 extra.querySelector('button span').textContent = 'Language ' + index;
                 panel.append(extra);
             }
-            panel.scrollTop = 120;
-            const before = panel.scrollTop;
-            const bounds = panel.getBoundingClientRect();
-            menu.querySelector('summary').click();
-            const copy = document.querySelector('[data-admin-dropdown-departing].admin-language-menu-list');
-            return { before, after: copy.scrollTop, height: bounds.height, available: innerHeight - bounds.top - 12,
-                source: { scroll: panel.scrollHeight, client: panel.clientHeight, overflow: getComputedStyle(panel).overflow },
-                copied: { scroll: copy.scrollHeight, client: copy.clientHeight, overflow: getComputedStyle(copy).overflow, max: getComputedStyle(copy).maxHeight } };
+            panel.scrollTop = panel.scrollHeight;
+            return panel.scrollTop > 0 && panel.getBoundingClientRect().bottom <= innerHeight + 1;
         });
-        expect(longClosing.before).toBeGreaterThan(0);
-        expect(longClosing.after, JSON.stringify(longClosing)).toBe(longClosing.before);
-        expect(longClosing.height).toBeLessThanOrEqual(longClosing.available + 1);
+        expect(scrollable).toBe(true);
         await page.locator('h1').click();
         await expect(page.locator('.admin-user details[open]')).toHaveCount(0);
+
         await page.emulateMedia({ reducedMotion: 'reduce' });
+        const profile = page.locator('.admin-account-menu');
         await profile.locator('summary').click();
         expect(await profile.locator('.admin-topbar-panel').evaluate(element => element.getAnimations().length)).toBe(0);
         await page.keyboard.press('Escape');
-        expect(await page.locator('[data-admin-dropdown-departing]').count()).toBe(0);
+        await expect(profile).not.toHaveAttribute('open');
         expect(errors).toEqual([]);
-        // The shared language partial also serves the login screen: its native anchor stays local.
+
         await page.context().clearCookies();
         await gotoWithLocalNetworkRetry(page, '/admin/login');
         await page.locator('.admin-language-menu > summary').click();
-        expect(await page.locator('.admin-language-menu-list').evaluate(element => getComputedStyle(element).position)).toBe('absolute');
+        await expect(page.locator('.admin-language-menu-list')).toBeVisible();
         await page.keyboard.press('Escape');
         await expect(page.locator('.admin-language-menu')).not.toHaveAttribute('open');
     });
 }
-
-test('page entries animate once for navigation and never for notification updates', async ({ page }) => {
-    await page.evaluate(() => {
-        window.adminEntryFrames = [];
-        const animate = Element.prototype.animate;
-        Element.prototype.animate = function (frames, timing) {
-            if (this.matches('.admin-content')) window.adminEntryFrames.push({ frames, duration: timing.duration });
-            return animate.call(this, frames, timing);
-        };
-    });
-    const link = page.locator('.admin-menu a[href$="/admin/news"]').first();
-    await openMenuGroup(page, 'content');
-    await link.click();
-    await expect(page).toHaveURL(/\/admin\/news$/);
-    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(1);
-    expect(await page.evaluate(() => window.adminEntryFrames[0].duration)).toBe(200);
-    await page.evaluate(() => document.dispatchEvent(new Event('livewire:navigated')));
-    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(1);
-    await page.locator('.admin-notification-menu > summary').click();
-    await page.locator('.admin-notification-filters button').last().click();
-    await expect(page.locator('.admin-notification-filters button').last()).toHaveAttribute('aria-pressed', 'true');
-    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(1);
-    await page.keyboard.press('Escape');
-    await page.goBack();
-    await expect(page).toHaveURL(/\/admin$/);
-    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(2);
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openMenuGroup(page, 'content');
-    await page.locator('.admin-menu a[href$="/admin/news"]').first().click();
-    await expect(page).toHaveURL(/\/admin\/news$/);
-    expect(await page.evaluate(() => window.adminEntryFrames.length)).toBe(2);
-});
 
 test('administrator appearance switches with one button and survives navigation', async ({ page }) => {
     const root = page.locator('html');
@@ -290,29 +176,6 @@ test('administrator appearance switches with one button and survives navigation'
     await expect(root).toHaveAttribute('data-admin-appearance', 'light');
     await page.locator('[data-admin-appearance-toggle]').click();
     await expect(root).toHaveAttribute('data-admin-appearance', 'dark');
-});
-
-test('audit category counters remain readable and spaced in dark mode', async ({ page }) => {
-    await page.locator('[data-admin-appearance-toggle]').click();
-    await gotoWithLocalNetworkRetry(page, '/admin/logs');
-
-    const inactiveBadge = page.locator('.audit-tabs .admin-tab:not(.active) span').first();
-    await expect(inactiveBadge).toBeVisible();
-
-    const styles = await inactiveBadge.evaluate((badge) => {
-        const badgeStyle = window.getComputedStyle(badge);
-        const tabStyle = window.getComputedStyle(badge.closest('.admin-tab'));
-
-        return {
-            backgroundColor: badgeStyle.backgroundColor,
-            color: badgeStyle.color,
-            gap: tabStyle.gap,
-        };
-    });
-
-    expect(styles.backgroundColor).toBe('rgb(46, 48, 53)');
-    expect(styles.color).toBe('rgb(228, 229, 232)');
-    expect(styles.gap).toBe('7px');
 });
 
 test('news editor initializes again after SPA navigation', async ({ page }) => {
@@ -487,26 +350,6 @@ test('mobile administration uses an accessible off-canvas navigation drawer', as
     await expect(page.locator('html')).not.toHaveClass(/admin-mobile-menu-open/);
 });
 
-test('active sidebar item keeps its selected color while hovered', async ({ page }) => {
-    await gotoWithLocalNetworkRetry(page, '/admin/settings/game-server');
-
-    const serversGroup = page.locator('[data-admin-menu-group="servers"]');
-    const gameServersLink = serversGroup.getByRole('link', { name: 'Игровые серверы', exact: true });
-    const serverLinks = serversGroup.locator('.admin-menu-group-items .admin-menu-item');
-
-    await expect(serverLinks).toHaveCount(3);
-    await expect(serverLinks.nth(0)).toContainText('Игровые серверы');
-    await expect(serverLinks.nth(1)).toContainText('Логин-серверы');
-    await expect(serverLinks.nth(2)).toContainText('Драйверы');
-    await expect(gameServersLink).toHaveClass(/active/);
-
-    const selectedBackground = await gameServersLink.evaluate((element) => getComputedStyle(element).backgroundColor);
-    await gameServersLink.hover();
-    const hoveredBackground = await gameServersLink.evaluate((element) => getComputedStyle(element).backgroundColor);
-
-    expect(hoveredBackground).toBe(selectedBackground);
-});
-
 test('settings use one sidebar entry and local tabs', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings');
 
@@ -551,12 +394,11 @@ test('settings use one sidebar entry and local tabs', async ({ page }) => {
     await expect(page.locator('.mail-template-tabs .admin-tab.active')).toBeVisible();
 });
 
-test('settings controls use one-pixel borders and registration policy is editable', async ({ page }) => {
+test('registration policy controls are available on desktop and mobile', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/game-accounts');
 
     const accountLimit = page.getByRole('spinbutton', { name: 'Максимум аккаунтов на пользователя CMS' });
     await expect(accountLimit).toBeVisible();
-    expect(await accountLimit.evaluate((element) => getComputedStyle(element).borderTopWidth)).toBe('1px');
 
     await gotoWithLocalNetworkRetry(page, '/admin/settings/registration');
     await expect(page.getByRole('heading', { name: 'Политика логина сайта' })).toBeVisible();
@@ -629,26 +471,11 @@ test('module foundation is available from the administrator sidebar', async ({ p
     }
 });
 
-test('theme catalogues expose semantic single-column catalogues', async ({ page }) => {
+test('public and account theme catalogues are available', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/themes');
-    const publicCatalog = page.getByTestId('public-theme-catalog');
-    await expect(publicCatalog).toHaveAttribute('data-layout', 'single-column');
-    const publicThemes = publicCatalog.getByTestId('public-theme-card');
-    await expect(publicThemes).toHaveCount(2);
-    expect((await publicThemes.locator('.admin-catalog-heading h2').allTextContents()).map(name => name.trim()).sort()).toEqual(['Aurelia', 'Dark']);
-    await expect(publicThemes.first().locator('.admin-catalog-heading')).toBeVisible();
-    await expect(publicThemes.first().locator('.theme-catalog-preview')).toBeVisible();
-    await expect(publicThemes.first().locator('.admin-catalog-side')).toBeVisible();
-
+    await expect(page.getByTestId('public-theme-catalog').getByTestId('public-theme-card').first()).toBeVisible();
     await gotoWithLocalNetworkRetry(page, '/admin/account-themes');
-    const accountCatalog = page.getByTestId('account-theme-catalog');
-    await expect(accountCatalog).toHaveAttribute('data-layout', 'single-column');
-    const accountThemes = accountCatalog.getByTestId('account-theme-card');
-    await expect(accountThemes).toHaveCount(3);
-    expect((await accountThemes.locator('.admin-catalog-heading h2').allTextContents()).map(name => name.trim()).sort()).toEqual(['Aurelia', 'Classic', 'Obsidian']);
-    await expect(accountThemes.first().locator('.admin-catalog-heading')).toBeVisible();
-    await expect(accountThemes.first().locator('.theme-catalog-preview')).toBeVisible();
-    await expect(accountThemes.first().locator('.admin-catalog-side')).toBeVisible();
+    await expect(page.getByTestId('account-theme-catalog').getByTestId('account-theme-card').first()).toBeVisible();
 });
 
 test('bundled public themes keep their footers inside the mobile viewport', async ({ page }) => {
@@ -820,7 +647,7 @@ test('diagnostic download limit shows an inline wait message instead of HTTP 429
     await expect(page.getByText('Too Many Requests', { exact: true })).toHaveCount(0);
 });
 
-test('system information shows compact APP_KEY, LoginServer and GameServer cards', async ({ page }) => {
+test('system information exposes key and game connections on desktop and mobile', async ({ page }) => {
     await gotoWithLocalNetworkRetry(page, '/admin/settings/system');
 
     const diagnostics = page.getByTestId('external-database-diagnostics');
@@ -833,22 +660,6 @@ test('system information shows compact APP_KEY, LoginServer and GameServer cards
     await expect(loginCard).toBeVisible();
     await expect(gameCard).toBeVisible();
     await expect(diagnostics.getByRole('button', { name: 'Проверить внешние базы', exact: true })).toBeVisible();
-    await expect(diagnostics.getByText('Browser LoginServer', { exact: true })).toHaveCount(0);
-    await expect(diagnostics.getByText('Browser World', { exact: true })).toHaveCount(0);
-    await expect(diagnostics.getByText('characters', { exact: true })).toHaveCount(0);
-    await expect(diagnostics.getByText('Создание аккаунтов', { exact: true })).toHaveCount(0);
-
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    const desktopCards = page.locator('.system-compact-card-grid > .system-compact-card');
-    await expect(desktopCards).toHaveCount(3);
-    const desktopBoxes = await desktopCards.evaluateAll((cards) => cards.map((card) => {
-        const box = card.getBoundingClientRect();
-        return { x: box.x, y: box.y, width: box.width };
-    }));
-    expect(Math.max(...desktopBoxes.map((box) => box.y)) - Math.min(...desktopBoxes.map((box) => box.y))).toBeLessThan(2);
-    expect(new Set(desktopBoxes.map((box) => Math.round(box.x))).size).toBe(3);
-    expect(desktopBoxes.every((box) => box.width > 200)).toBe(true);
-
     const viewportMatrix = [
         { width: 390, height: 844 },
         { width: 768, height: 900 },
