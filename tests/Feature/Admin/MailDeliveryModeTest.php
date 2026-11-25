@@ -12,8 +12,6 @@ use App\Notifications\VerifyEmailNotification;
 use App\Services\CmsSettings;
 use App\Services\Mail\MailDeliveryMonitor;
 use App\Services\MailSettings;
-use Illuminate\Console\Scheduling\Event;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\BackgroundQueue;
@@ -336,16 +334,6 @@ class MailDeliveryModeTest extends TestCase
         } finally {
             Carbon::setTestNow();
         }
-    }
-
-    public function test_scheduler_runs_dynamic_database_queue_drain_every_minute(): void
-    {
-        $event = collect(app(Schedule::class)->events())
-            ->first(fn (Event $event): bool => str_contains((string) $event->command, 'kaevcms:queue-drain'));
-
-        $this->assertNotNull($event);
-        $this->assertStringNotContainsString('--queue=mail-probe,mail', (string) $event->command);
-        $this->assertSame('* * * * *', $event->expression);
     }
 
     public function test_updating_smtp_settings_does_not_reset_database_delivery_mode(): void

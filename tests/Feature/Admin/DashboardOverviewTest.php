@@ -119,7 +119,7 @@ final class DashboardOverviewTest extends TestCase
         $this->assertSame([150, 120, 50], [$byKey['total']['days'][29], $byKey['server-'.$first->id]['days'][29], $byKey['server-'.$second->id]['days'][29]]);
     }
 
-    public function test_a_single_game_server_has_one_online_line_without_a_picker(): void
+    public function test_a_single_game_server_has_one_online_series(): void
     {
         // Installation creates one game server.
         $server = GameServer::query()->sole();
@@ -128,7 +128,6 @@ final class DashboardOverviewTest extends TestCase
         $widget = DashboardTrends::widgets(null, app(ServerOnlineHistory::class)->chart(), null)[0];
 
         $this->assertSame(['total'], array_column($widget['series'], 'key'));
-        $this->assertFalse($widget['picker']);
         $this->assertSame(70, $widget['series'][0]['days'][29]);
     }
 

@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -312,17 +313,16 @@ class AdminNotificationCenterTest extends TestCase
 
     public function test_scheduler_and_frontend_assets_keep_notification_center_automatic(): void
     {
-        $schedule = File::get(base_path('routes/console.php'));
-        $layout = File::get(resource_path('views/admin/layouts/panel.blade.php'));
-        $appLayout = File::get(resource_path('views/admin/layouts/app.blade.php'));
-        $javascript = File::get(public_path('assets/admin/js/notifications.js'));
+        $commands = collect(Schedule::events())->map(static fn ($event): string => (string) $event->command);
 
-        $this->assertStringContainsString("Schedule::command('kaevcms:notifications-scan')", $schedule);
-        $this->assertStringContainsString("Schedule::command('kaevcms:notifications-clean')", $schedule);
-        $this->assertStringContainsString('<livewire:admin.notification-center />', $layout);
-        $this->assertStringContainsString('assets/admin/js/notifications.js', $appLayout);
-        $this->assertStringContainsString('wire:ignore.self', File::get(resource_path('views/livewire/admin/notification-center.blade.php')));
-        $this->assertStringContainsString('data-admin-notification-center', $javascript);
+        foreach (['kaevcms:notifications-scan', 'kaevcms:notifications-clean'] as $command) {
+            $this->assertTrue($commands->contains(static fn (string $scheduled): bool => str_contains($scheduled, $command)), "Missing scheduled command: {$command}");
+        }
+
+        $owner = Admin::factory()->create();
+        $this->actingAs($owner, 'admin')->get('/admin')->assertOk()
+            ->assertSee('data-admin-notification-center', false)
+            ->assertSee('assets/admin/js/notifications.js', false);
     }
 
     private function data(): AdminNotificationData

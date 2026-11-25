@@ -128,7 +128,7 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
         ]);
     }
 
-    public function test_compact_connection_summaries_report_attention_and_empty_groups(): void
+    public function test_connection_summaries_report_attention_and_empty_groups(): void
     {
         GameServer::query()->delete();
         LoginServer::query()->delete();
@@ -148,7 +148,6 @@ class ExternalDatabaseDiagnosticsTest extends TestCase
         $this->assertSame(1, $information['summaries']['login']['available']);
         $this->assertSame(1, $information['summaries']['login']['attention']);
         $this->assertSame('attention', $information['summaries']['login']['state']);
-        $this->assertSame('danger', $information['summaries']['login']['badge']);
         $this->assertSame('none', $information['summaries']['game']['state']);
         $this->assertSame(0, $information['summaries']['game']['total']);
         $this->assertNull($information['summaries']['game']['checked_at']);

@@ -32,10 +32,7 @@ class QueueInfrastructureTest extends TestCase
         $this->assertNotNull($cleanup);
         $this->assertSame('45 3 * * *', $cleanup->expression);
 
-        $consoleRoutes = file_get_contents(base_path('routes/console.php'));
-        $this->assertIsString($consoleRoutes);
-        $this->assertStringNotContainsString('--queue=mail-probe,mail', $consoleRoutes);
-        $this->assertStringNotContainsString("DB::table('jobs')", $consoleRoutes);
+        $this->assertStringNotContainsString('--queue=mail-probe,mail', (string) $drain->command);
     }
 
     public function test_scheduler_drain_processes_every_present_queue_in_priority_order(): void

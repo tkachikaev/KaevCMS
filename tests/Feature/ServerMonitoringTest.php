@@ -137,7 +137,7 @@ class ServerMonitoringTest extends TestCase
         $this->assertSame(3, $loginServer->fresh()?->monitor_failures);
     }
 
-    public function test_dashboard_and_public_home_show_compact_real_server_statuses(): void
+    public function test_dashboard_and_public_home_show_real_server_statuses(): void
     {
         // These literal status labels describe Dark's public status card.
         app(ThemeManager::class)->activate('default');
@@ -173,7 +173,6 @@ class ServerMonitoringTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get('/admin')
             ->assertOk()
-            ->assertDontSee('Всего онлайн')
             ->assertSee('37 онлайн')
             ->assertSee('Interlude')
             ->assertSee('Основной LoginServer')
@@ -183,9 +182,7 @@ class ServerMonitoringTest extends TestCase
             ->assertOk()
             ->assertSee('Interlude')
             ->assertSee('Доступен')
-            ->assertSee('Онлайн: 37')
-            ->assertDontSee('/ 5 000')
-            ->assertDontSee('class="progress"', false);
+            ->assertSee('Онлайн: 37');
     }
 
     public function test_admin_shows_each_process_state_while_public_status_requires_login_and_game_servers(): void
