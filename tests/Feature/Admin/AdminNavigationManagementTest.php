@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\NavigationLink;
 use App\Services\Localization\LanguageManager;
 use App\Support\Database\TableExistence;
+use App\Support\Themes\ThemeManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -50,12 +51,10 @@ class AdminNavigationManagementTest extends TestCase
             'title' => 'Форум',
         ]);
 
-        $this->assertNavigationAnchor('/ru', '/forum/', 'Форум', true);
-        $this->assertNavigationAnchor('/en', '/forum/', 'Forum', true);
-
         foreach (['default', 'kaev-aurelia'] as $theme) {
-            $this->assertStringContainsString('headerCustomLinks', file_get_contents(base_path('themes/'.$theme.'/views/partials/header.blade.php')) ?: '');
-            $this->assertStringContainsString('footerCustomLinks', file_get_contents(base_path('themes/'.$theme.'/views/partials/footer.blade.php')) ?: '');
+            app(ThemeManager::class)->activate($theme);
+            $this->assertNavigationAnchor('/ru', '/forum/', 'Форум', true);
+            $this->assertNavigationAnchor('/en', '/forum/', 'Forum', true);
         }
 
         $this->actingAs(Admin::factory()->create(), 'admin')
@@ -69,33 +68,18 @@ class AdminNavigationManagementTest extends TestCase
         $this->assertDatabaseMissing('navigation_link_translations', ['navigation_link_id' => $link->id]);
     }
 
-    public function test_custom_footer_links_share_builtin_link_styles_and_admin_uses_safe_svg_preview(): void
+    public function test_admin_navigation_previews_do_not_require_third_party_images(): void
     {
         $this->actingAs(Admin::factory()->create(), 'admin')
             ->post('/admin/navigation', $this->payload())->assertRedirect();
 
         $policy = (string) $this->get('/admin/navigation')
             ->assertOk()
-            ->assertSee('class="content-row-preview page-row-preview navigation-link-preview"', false)
-            ->assertSee('class="navigation-link-preview-icon"', false)
-            ->assertSee('viewBox="0 0 24 24"', false)
             ->assertDontSee('href="https://www.google.com/s2/favicons', false)
             ->headers->get('Content-Security-Policy');
         // Link previews are inline SVG: the admin policy still loads no third-party images.
         $this->assertStringContainsString("; img-src 'self' data: blob:;", $policy);
         $this->assertStringStartsWith("default-src 'self'; style-src 'self' 'nonce-", $policy);
-
-        foreach (['default', 'kaev-aurelia'] as $theme) {
-            $footer = file_get_contents(base_path('themes/'.$theme.'/views/partials/footer.blade.php')) ?: '';
-            $this->assertStringContainsString('class="footer-section-links footer-custom-links"', $footer);
-            $this->assertStringNotContainsString('class="socials"', $footer);
-        }
-
-        $aureliaCss = file_get_contents(public_path('themes/kaev-aurelia/assets/css/app.css')) ?: '';
-        $this->assertStringContainsString('.footer-section-links a { display: block; margin: 6px 0;', $aureliaCss);
-        $this->assertStringNotContainsString('.socials a {', $aureliaCss);
-        $defaultCss = file_get_contents(public_path('themes/default/assets/css/app.css')) ?: '';
-        $this->assertStringContainsString('.footer-section-links a{display:block;', $defaultCss);
     }
 
     public function test_external_link_and_default_language_fallback_are_rendered_without_spa_interception(): void

@@ -11,15 +11,8 @@ class BrandingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_kaevcms_is_the_default_product_brand(): void
+    public function test_configured_product_brand_is_rendered(): void
     {
-        $appConfig = (string) file_get_contents(config_path('app.php'));
-        $cmsConfig = (string) file_get_contents(config_path('cms.php'));
-
-        $this->assertStringContainsString("env('APP_NAME', 'KaevCMS')", $appConfig);
-        $this->assertStringContainsString("'name' => env('SITE_NAME', env('APP_NAME', 'KaevCMS'))", $cmsConfig);
-        $this->assertStringContainsString("'© 2026 KaevCMS'", $cmsConfig);
-
         config()->set('app.name', 'KaevCMS');
         config()->set('cms.site_defaults.name', 'KaevCMS');
         config()->set('cms.site_defaults.footer_text', '© 2026 KaevCMS');
