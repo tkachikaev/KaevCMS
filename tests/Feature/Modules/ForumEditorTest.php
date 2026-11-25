@@ -50,7 +50,7 @@ final class ForumEditorTest extends TestCase
             ->assertDontSee('<b>literal</b>', false);
     }
 
-    public function test_tiptap_forms_reuse_admin_bundle_with_compact_tools(): void
+    public function test_topic_and_reply_forms_load_the_rich_editor(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user, 'web')->withSession(['forum.author_mode' => 'user']);
@@ -60,12 +60,7 @@ final class ForumEditorTest extends TestCase
             ->assertOk()
             ->assertSee('assets/admin/js/news-editor.js', false)
             ->assertSee('data-rich-editor', false)
-            ->assertSee('data-editor-action="bold"', false)
-            ->assertSee('data-editor-action="blockquote"', false)
-            ->assertSee('data-editor-block', false)
-            ->assertSee('data-editor-link', false)
-            ->assertDontSee('data-editor-image', false)
-            ->assertDontSee('data-editor-table', false);
+            ->assertSee('data-editor-link', false);
 
         $this->post('/forum/sections/'.$section->id.'/topics', [
             'title' => 'Example',

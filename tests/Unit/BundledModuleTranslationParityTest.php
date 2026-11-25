@@ -95,6 +95,8 @@ class BundledModuleTranslationParityTest extends TestCase
         sort($russian);
 
         $this->assertSame($english, $russian);
+        $this->assertCount(count($english), array_unique(array_map('mb_strtolower', $english)));
+        $this->assertCount(count($russian), array_unique(array_map('mb_strtolower', $russian)));
     }
 
     /** @return array<string, mixed> */

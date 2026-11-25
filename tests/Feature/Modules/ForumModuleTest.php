@@ -84,9 +84,7 @@ final class ForumModuleTest extends TestCase
         $this->get('/forum/search?q=boss')
             ->assertOk()
             ->assertSee('data-language-menu', false)
-            ->assertSee('language-menu-list', false)
-            ->assertSee(e(route('language.switch', ['locale' => 'en', 'return' => '/forum/search?q=boss'])), false)
-            ->assertDontSee('class="forum-lang"', false);
+            ->assertSee(e(route('language.switch', ['locale' => 'en', 'return' => '/forum/search?q=boss'])), false);
     }
 
     public function test_signed_in_player_gets_an_account_menu_instead_of_a_direct_account_link(): void

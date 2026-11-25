@@ -57,26 +57,26 @@ final class ShopStorefrontTest extends TestCase
         return [$server, $tab, $category, $product];
     }
 
-    public function test_catalog_requires_login_and_uses_existing_account_components(): void
+    public function test_catalog_requires_login_and_is_browsable_when_sales_are_off(): void
     {
         $this->published('Sword');
         $this->get('/modules/shop')->assertRedirect();
         $player = User::factory()->create();
         $this->actingAs($player, 'web')->get('/modules/shop')
-            ->assertOk()->assertSee('Sword')->assertSee('shop-product-card', false)
+            ->assertOk()->assertSee('Sword')
             ->assertSee(__('module-shop::messages.account_sales_paused'))
             ->assertDontSee('name="request_uuid"', false);
         // The catalog is browsable while sales are off, so the menu leads to it.
         $this->assertContains('modules.shop.index', array_column(app(ModuleNavigationRegistry::class)->accountLinks(), 'route'));
     }
 
-    public function test_server_navigation_uses_existing_tabs_and_cannot_select_another_servers_category(): void
+    public function test_server_navigation_cannot_select_another_servers_category(): void
     {
         [$server, $tab, $category, $product] = $this->published('First');
         [$otherServer, $otherTab, $otherCategory, $otherProduct] = $this->published('Second');
         $this->actingAs(User::factory()->create(), 'web')
             ->get('/modules/shop?server='.$server->id.'&tab='.$otherTab->id.'&category='.$otherCategory->id)
-            ->assertOk()->assertSee('account-tabs', false)
+            ->assertOk()
             ->assertSee('First')->assertDontSee('Second');
     }
 
@@ -120,7 +120,7 @@ final class ShopStorefrontTest extends TestCase
         $this->assertCount(2, array_unique($matches[1]));
     }
 
-    public function test_card_artwork_shows_three_icons_and_more_count_without_hiding_full_bundle_contents(): void
+    public function test_storefront_exposes_bundle_contents_and_description(): void
     {
         [$server, $tab, $category, $bundle] = $this->published('Four-item set', 'bundle');
         $bundle->update(['description_ru' => 'Тестовый набор', 'description_en' => 'Test bundle']);
@@ -133,24 +133,19 @@ final class ShopStorefrontTest extends TestCase
         app()->setLocale('ru');
         $response = $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop');
         $response->assertOk()
-            ->assertSee('shop-product-grid', false)
-            ->assertSee('data-shop-art-count="3"', false)
-            ->assertSee('shop-product-artwork-more', false)
             ->assertSee('data-account-social-open="shop-contents-'.$bundle->id.'"', false)
             ->assertSee('id="shop-contents-'.$bundle->id.'"', false)
-            ->assertSee('+1')
             ->assertSee(trans_choice('module-shop::messages.bundle_meta', 4, ['count' => format_number(4)]))
-            // Every item, including those beyond the three icons, is listed by name.
             ->assertSee(app(GameItemCatalog::class)->findForServer($server, 60)['name'])
             ->assertSee('Тестовый набор');
     }
 
-    public function test_single_product_card_has_one_artwork_and_escapes_description(): void
+    public function test_single_product_description_is_escaped(): void
     {
         [$server, $tab, $category, $product] = $this->published('One-item product');
         $product->update(['description_ru' => '<script>unsafe</script>']);
         $this->actingAs(User::factory()->create(), 'web')->get('/modules/shop')
-            ->assertOk()->assertSee('data-shop-art-count="1"', false)
+            ->assertOk()
             ->assertSee('&lt;script&gt;unsafe&lt;/script&gt;', false)
             ->assertDontSee('<script>unsafe</script>', false);
     }

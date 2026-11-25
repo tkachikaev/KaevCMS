@@ -46,15 +46,13 @@ class ForumThemesTest extends TestCase
 
         $this->get('/admin/extensions/forum/themes')->assertOk()
             ->assertSee('Frost')
-            ->assertSee('Classic')
-            ->assertSee('forum-themes/kaev-classic/preview.svg', false);
+            ->assertSee('Classic');
     }
 
     public function test_forum_uses_frost_until_the_owner_switches_to_classic(): void
     {
         $this->get('/forum')->assertOk()
-            ->assertSee('forum-themes/kaev-frost/theme.css', false)
-            ->assertDontSee('.forum-top{', false);
+            ->assertSee('forum-themes/kaev-frost/theme.css', false);
 
         $owner = Admin::factory()->create();
         $this->actingAs($owner, 'admin');

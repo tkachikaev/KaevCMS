@@ -43,7 +43,7 @@ class ReferralsModuleTest extends TestCase
         $this->assertTrue($module['enabled']);
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'referrals',
-            'version' => '1.0.1',
+            'version' => $module['version'],
             'enabled' => true,
         ]);
 

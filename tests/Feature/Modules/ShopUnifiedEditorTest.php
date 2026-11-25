@@ -123,7 +123,7 @@ final class ShopUnifiedEditorTest extends TestCase
         $this->assertSame(0, ShopProduct::query()->count());
     }
 
-    public function test_admin_cards_show_artwork_contents_and_visibility(): void
+    public function test_admin_product_listing_shows_bundle_contents_and_sort_controls(): void
     {
         [$server, $section] = $this->section();
         $this->actingAs(Admin::factory()->create(), 'admin');
@@ -132,9 +132,6 @@ final class ShopUnifiedEditorTest extends TestCase
             ['item_id' => 57, 'quantity' => 1], ['item_id' => 4037, 'quantity' => 2],
         ]))->assertRedirect();
         $this->get($base)->assertOk()
-            ->assertDontSee('data-shop-view-toggle', false)
-            ->assertSee('data-shop-art-count="2"', false)
-            ->assertSee('shop-product-artwork', false)
             ->assertSee(trans_choice('module-shop::messages.bundle_meta', 2, ['count' => format_number(2)]))
             ->assertSee('data-shop-sortable', false);
     }

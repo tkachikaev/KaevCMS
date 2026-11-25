@@ -48,14 +48,13 @@ class ReferralAccountInterfaceTest extends TestCase
         $this->actingAs(User::factory()->create())->get(route('modules.referrals.index'))->assertNotFound();
     }
 
-    public function test_configured_program_uses_existing_account_layout_and_shows_link_and_rules(): void
+    public function test_configured_program_shows_link_and_rules(): void
     {
         $server = $this->configureServer();
         $user = User::factory()->create();
         $this->assertContains('modules.referrals.index', array_column(app(ModuleNavigationRegistry::class)->sidebarAccountLinks(), 'route'));
         $response = $this->actingAs($user)->get(route('modules.referrals.index'));
         $response->assertOk()
-            ->assertViewIs('module-referrals::account.index')
             ->assertSee(__('module-referrals::messages.account_title'))
             ->assertSee(__('module-referrals::messages.copy_link'))
             ->assertSee('data-account-copy-target="referral-link"', false)

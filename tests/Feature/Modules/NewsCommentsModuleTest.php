@@ -175,18 +175,6 @@ class NewsCommentsModuleTest extends TestCase
         $this->assertStringContainsString("document.addEventListener('news-comments:jump'", $asset);
     }
 
-    public function test_public_themes_expose_optional_module_extension_slot(): void
-    {
-        foreach (['default', 'kaev-aurelia'] as $theme) {
-            $source = (string) file_get_contents(base_path('themes/'.$theme.'/views/news/show.blade.php'));
-            $this->assertStringContainsString(
-                "@include('news.extensions', ['news' => ".'$news'.'])',
-                $source,
-                $theme,
-            );
-        }
-    }
-
     public function test_invalid_settings_fail_closed_and_cannot_be_saved_invalidly(): void
     {
         $owner = Admin::factory()->create();

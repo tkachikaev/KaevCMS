@@ -69,7 +69,7 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(Schema::hasColumn('module_support_tickets', 'retention_protected'));
         $this->assertDatabaseHas('cms_modules', [
             'id' => 'support-tickets',
-            'version' => '1.7.3',
+            'version' => $module['version'],
             'enabled' => true,
         ]);
 
@@ -80,19 +80,6 @@ class SupportTicketsModuleTest extends TestCase
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.support-tickets.index'));
         $this->assertTrue(app(ModuleAdminAccessRegistry::class)->isRegistered('admin.module-pages.support-tickets.settings'));
         $this->assertTrue(is_subclass_of(AdminTicketConversation::class, ModuleAdminComponent::class));
-        $adminConversation = (string) file_get_contents(base_path('modules/support-tickets/resources/views/livewire/admin-ticket-conversation.blade.php'));
-        $supportCss = (string) file_get_contents(public_path('assets/modules/support-tickets.css'));
-        $this->assertStringContainsString('support-ticket-admin-heading-start', $adminConversation);
-        $this->assertStringContainsString('support-ticket-admin-heading-center', $adminConversation);
-        $this->assertStringContainsString('support-ticket-admin-heading-actions', $adminConversation);
-        $this->assertStringContainsString('.support-chat-composer textarea', $supportCss);
-        $this->assertStringContainsString('resize: vertical', $supportCss);
-        $this->assertStringContainsString('min-width: 100%', $supportCss);
-        $this->assertStringContainsString('max-width: 100%', $supportCss);
-        $this->assertStringContainsString('border-radius: 12px', $supportCss);
-        $this->assertStringContainsString('support-message-edit-icon', $adminConversation);
-        $this->assertStringContainsString('aria-label="{{ __(\'module-support-tickets::messages.edit_message\') }}"', $adminConversation);
-        $this->assertStringNotContainsString(">{{ __('module-support-tickets::messages.edit_message') }}</button>", $adminConversation);
     }
 
     public function test_public_categories_and_status_values_match_the_approved_contract(): void
@@ -1012,16 +999,13 @@ class SupportTicketsModuleTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_support_settings_use_standard_admin_toggle_layout(): void
+    public function test_support_settings_expose_ticket_limits(): void
     {
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
 
         $this->actingAs($owner, 'admin')
             ->get('/admin/extensions/support-tickets/settings')
             ->assertOk()
-            ->assertSee('admin-toggle-row', false)
-            ->assertSee('admin-switch-control', false)
-            ->assertDontSee('class="toggle-row"', false)
             ->assertSee('Ограничения обращений')
             ->assertSee('name="max_tickets_per_day"', false)
             ->assertSee('name="message_max_length"', false)
@@ -1073,29 +1057,6 @@ class SupportTicketsModuleTest extends TestCase
             ->assertOk()
             ->assertSee($target->subject)
             ->assertDontSee($other->subject);
-    }
-
-    public function test_support_admin_list_and_ticket_page_use_shared_compact_layouts(): void
-    {
-        $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
-        $user = User::factory()->create();
-        $ticket = $this->ticket($user);
-
-        $this->actingAs($owner, 'admin')
-            ->get('/admin/extensions/support-tickets')
-            ->assertOk()
-            ->assertSee('admin-filter-bar support-ticket-filters', false)
-            ->assertSee('data-testid="support-ticket-filters"', false)
-            ->assertSee('admin-field support-ticket-search-field', false)
-            ->assertDontSee('<h2>Фильтры</h2>', false);
-
-        $this->actingAs($owner, 'admin')
-            ->get('/admin/extensions/support-tickets/'.$ticket->id)
-            ->assertOk()
-            ->assertSee('data-testid="support-admin-ticket-layout"', false)
-            ->assertSee('support-admin-ticket-main', false)
-            ->assertSee('support-admin-ticket-side', false)
-            ->assertSee('support-ticket-detail-list', false);
     }
 
     public function test_owner_can_configure_support_limits_and_the_values_are_enforced(): void

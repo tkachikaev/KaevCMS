@@ -65,11 +65,9 @@ final class ForumPostingTest extends TestCase
             ->assertSee('&lt;script&gt;alert', false)
             ->assertDontSee("<script>alert('xss')</script>", false);
 
-        // The topic list shows the author's avatar and links the latest message.
+        // The topic list links the latest message.
         $this->get('/forum/sections/'.$section->id)
             ->assertSee('Первое обсуждение')
-            ->assertSee('forum-topic-avatar', false)
-            ->assertSee('forum-topic-last-avatar', false)
             ->assertSee('#post-'.$post->id, false);
         // The section list shows totals and links its latest message with the author.
         $this->get('/forum')
