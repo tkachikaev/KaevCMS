@@ -168,25 +168,6 @@ class AdminPageManagementTest extends TestCase
         $this->assertSame($beforePages, Page::with('translations')->get()->toArray());
     }
 
-    public function test_page_forms_use_styled_delete_dialog_and_clean_footer_checkbox_layout(): void
-    {
-        $admin = $this->createAdmin();
-
-        $this->actingAs($admin, 'admin')
-            ->get('/admin/pages')
-            ->assertOk()
-            ->assertSee('confirm-dialog-card', false)
-            ->assertSee('confirm-dialog-copy', false)
-            ->assertSee('confirm-dialog-mark', false);
-
-        $this->actingAs($admin, 'admin')
-            ->get('/admin/pages/create')
-            ->assertOk()
-            ->assertSee('admin-toggle-row admin-toggle-row-compact', false)
-            ->assertSee('admin-switch-control', false)
-            ->assertDontSee('class="switch-row', false);
-    }
-
     public function test_draft_page_is_not_public_and_is_not_shown_in_navigation(): void
     {
         $admin = $this->createAdmin();

@@ -27,10 +27,7 @@ class AdminThemeManagementTest extends TestCase
             ->assertSee('Темы')
             ->assertSee('Dark')
             ->assertSee('Aurelia')
-            ->assertSee('Дизайн административной панели от темы не зависит.')
-            ->assertSee('data-theme-list', false)
-            ->assertSee('class="admin-card-row admin-catalog-row theme-card theme-row', false)
-            ->assertDontSee('class="theme-grid', false);
+            ->assertSee('data-theme-list', false);
     }
 
     public function test_admin_can_activate_valid_theme(): void

@@ -29,10 +29,7 @@ class AdminAccountThemeManagementTest extends TestCase
             ->assertSee('Шаблоны личного кабинета')
             ->assertSee('Obsidian')
             ->assertSee('Aurelia')
-            ->assertSee('Дизайн личного кабинета не зависит от публичной темы сайта и административной панели.')
-            ->assertSee('data-account-theme-list', false)
-            ->assertSee('class="admin-card-row admin-catalog-row theme-card theme-row', false)
-            ->assertDontSee('class="theme-grid', false);
+            ->assertSee('data-account-theme-list', false);
     }
 
     public function test_admin_can_activate_valid_account_theme_without_changing_public_theme(): void

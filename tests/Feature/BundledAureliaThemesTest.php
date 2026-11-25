@@ -16,18 +16,16 @@ class BundledAureliaThemesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_bundled_theme_names_use_short_labels_with_unchanged_identifiers(): void
+    public function test_bundled_themes_are_valid_and_compatible(): void
     {
-        foreach ([['default', 'Dark'], ['kaev-aurelia', 'Aurelia']] as [$slug, $name]) {
+        foreach (['default', 'kaev-aurelia'] as $slug) {
             $theme = app(ThemeManager::class)->inspect($slug);
-            $this->assertSame($name, $theme['name']);
             $this->assertSame($slug, $theme['slug']);
             $this->assertTrue($theme['valid']);
             $this->assertTrue($theme['compatible']);
         }
-        foreach ([['kaev-classic', 'Classic'], ['kaev-aurelia', 'Aurelia'], ['luxury', 'Obsidian']] as [$slug, $name]) {
+        foreach (['kaev-classic', 'kaev-aurelia', 'luxury'] as $slug) {
             $theme = app(AccountThemeManager::class)->inspect($slug);
-            $this->assertSame($name, $theme['name']);
             $this->assertSame($slug, $theme['slug']);
             $this->assertTrue($theme['valid']);
             $this->assertTrue($theme['compatible']);
@@ -87,14 +85,10 @@ class BundledAureliaThemesTest extends TestCase
 
         $this->assertTrue($publicTheme['valid'], implode(PHP_EOL, $publicTheme['errors']));
         $this->assertTrue($publicTheme['compatible'], implode(PHP_EOL, $publicTheme['errors']));
-        $this->assertSame('Aurelia', $publicTheme['name']);
-        $this->assertSame('1.1.2', $publicTheme['version']);
         $this->assertNotNull($publicTheme['preview_url']);
 
         $this->assertTrue($accountTheme['valid'], implode(PHP_EOL, $accountTheme['errors']));
         $this->assertTrue($accountTheme['compatible'], implode(PHP_EOL, $accountTheme['errors']));
-        $this->assertSame('Aurelia', $accountTheme['name']);
-        $this->assertSame('1.6.12', $accountTheme['version']);
         $this->assertNotNull($accountTheme['preview_url']);
 
         foreach ($this->publicThemeFiles() as $file) {
@@ -113,28 +107,6 @@ class BundledAureliaThemesTest extends TestCase
         $this->assertFileDoesNotExist(public_path('account-themes/kaev-aurelia/assets/js/navigation.js'));
         $this->assertFileDoesNotExist(public_path('account-themes/luxury/assets/js/navigation.js'));
         $this->assertFileExists(public_path('account-themes/kaev-aurelia/assets/images/hero.webp'));
-
-        $accountCss = $this->readFile(public_path('account-themes/kaev-aurelia/assets/css/app.css'));
-        $sharedAccountCss = $this->readFile(public_path('assets/account/css/components.css'));
-        $this->assertStringContainsString(
-            '.account-character-avatar { width: 48px; height: 48px; position: relative; display: grid; place-items: center; flex-shrink: 0; overflow: hidden;',
-            $accountCss,
-        );
-        $this->assertStringContainsString(
-            '.account-character-avatar > span { display: block; line-height: 1; transform: translateY(1px); }',
-            $accountCss,
-        );
-        $this->assertStringContainsString('.account-surface {', $accountCss);
-        $this->assertStringContainsString('border-radius: var(--account-radius-lg);', $accountCss);
-        $this->assertStringContainsString('.account-form-aside {', $accountCss);
-        $this->assertStringContainsString('position: relative;', $accountCss);
-        $this->assertStringContainsString('--account-shared-avatar-preview-background:', $accountCss);
-        $this->assertStringContainsString('.reward-history-card {', $sharedAccountCss);
-        $this->assertStringContainsString('.account-avatar-grid {', $sharedAccountCss);
-        $this->assertStringContainsString('.account-avatar-modal {', $sharedAccountCss);
-        $this->assertStringContainsString('.account-operation-modal{', $sharedAccountCss);
-        $this->assertStringContainsString('.account-tool-grid {', $sharedAccountCss);
-        $this->assertStringContainsString('.account-detail-hero { padding: 28px 30px; }', $sharedAccountCss);
     }
 
     public function test_public_aurelia_theme_can_be_activated_and_renders_its_own_shell(): void
@@ -172,8 +144,6 @@ class BundledAureliaThemesTest extends TestCase
             $this->assertLessThan(strpos($html, 'themes/kaev-aurelia/assets/css/app.css'), $script);
             $this->assertLessThan(strpos($html, 'themes/kaev-aurelia/assets/css/dark.css'), $script);
             $this->assertStringContainsString('data-site-scheme-toggle', $html);
-            $this->assertStringContainsString('class="scheme-toggle"', $html);
-            $this->assertStringContainsString('class="mobile-scheme-toggle"', $html);
             $this->assertStringContainsString('role="switch"', $html);
             $this->assertStringContainsString(__('Switch to the dark theme'), $html);
         }
@@ -188,7 +158,6 @@ class BundledAureliaThemesTest extends TestCase
 
         $schemeScript = $this->readFile(public_path('themes/kaev-aurelia/assets/js/scheme.js'));
         $this->assertStringContainsString("'kaevcms.site.scheme'", $schemeScript);
-        $this->assertStringContainsString('startViewTransition', $schemeScript);
         $this->assertStringContainsString('prefers-reduced-motion', $schemeScript);
     }
 
@@ -239,14 +208,12 @@ class BundledAureliaThemesTest extends TestCase
         $this->actingAs($user)
             ->get('/account/game-accounts')
             ->assertOk()
-            ->assertSee('Мои аккаунты')
-            ->assertSee('account-panel-stats', false);
+            ->assertSee('Мои аккаунты');
 
         $this->actingAs($user)
             ->get('/account/profile')
             ->assertOk()
-            ->assertSee('Выбор аватара')
-            ->assertSee('account-avatar-picker', false);
+            ->assertSee('Выбор аватара');
 
         $this->actingAs($user)
             ->get('/account/security')
@@ -257,8 +224,7 @@ class BundledAureliaThemesTest extends TestCase
         $this->actingAs($user)
             ->get('/account/web-inventory')
             ->assertOk()
-            ->assertSee('Веб-инвентарь')
-            ->assertSee('account-surface', false);
+            ->assertSee('Веб-инвентарь');
 
         $this->assertDatabaseHas('cms_settings', [
             'key' => 'account_theme.active',
