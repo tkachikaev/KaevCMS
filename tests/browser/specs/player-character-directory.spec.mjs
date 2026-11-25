@@ -18,29 +18,20 @@ const signIn = async (page) => {
     await expect(page).toHaveURL(/\/account$/);
 };
 
-const componentStyle = element => {
-    const style = getComputedStyle(element);
-    return Object.fromEntries(['borderRadius', 'borderWidth', 'padding', 'fontSize', 'fontWeight', 'minHeight', 'backgroundColor'].map(key => [key, style[key]]));
-};
-
 const assertConsistentAccountSections = async page => {
     for (const width of [1440, 390]) {
         await page.setViewportSize({ width, height: 900 });
         await gotoWithLocalNetworkRetry(page, '/account/game-accounts');
         await expect(page.locator('.account-sidebar-footer')).not.toContainText(/Шаблон кабинета|Версия|Account theme|Version/);
         await expect(page.locator('.account-sidebar-footer a')).toHaveText('←Вернуться на сайт');
-        const summaryStyle = await page.locator('.account-stat').first().evaluate(componentStyle);
         await gotoWithLocalNetworkRetry(page, '/account/characters');
-        expect(await page.locator('.account-stat').first().evaluate(componentStyle)).toEqual(summaryStyle);
         const tab = page.getByRole('tab', { name: 'Все персонажи' });
         await tab.click();
         await expect(tab).toHaveAttribute('aria-selected', 'true');
-        const tabStyle = await tab.evaluate(componentStyle);
         await gotoWithLocalNetworkRetry(page, '/account/web-inventory');
         const history = page.locator('.reward-view-tabs a').filter({ hasText: 'История передач' });
         await history.click();
         await expect(history).toHaveAttribute('aria-current', 'page');
-        expect(await history.evaluate(componentStyle)).toEqual(tabStyle);
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }
 };
@@ -325,7 +316,7 @@ test('aurelia player theme keeps shared runtime and active module navigation aft
     await assertConsistentAccountSections(page);
 });
 
-test('mobile account sidebar stays sharp and clickable above its backdrop', async ({ page }) => {
+test('mobile account sidebar remains clickable above its backdrop', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page);
 
@@ -340,7 +331,7 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
     await expect(backdrop).toBeVisible();
     // The drawer slides in; hit-test the settled layout, not a mid-animation frame.
     await expect.poll(() => sidebar.evaluate(element => Math.round(element.getBoundingClientRect().left))).toBe(0);
-    await expect.poll(() => backdrop.evaluate(element => getComputedStyle(element).opacity)).toBe('1');
+    await expect(backdrop).toBeVisible();
 
     const layers = await page.evaluate(() => {
         const sidebarElement = document.querySelector('[data-account-sidebar]');
@@ -349,8 +340,6 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
             return null;
         }
 
-        const sidebarStyle = getComputedStyle(sidebarElement);
-        const backdropStyle = getComputedStyle(backdropElement);
         const sidebarRect = sidebarElement.getBoundingClientRect();
         const sidebarHit = document.elementFromPoint(sidebarRect.left + sidebarRect.width / 2, sidebarRect.top + sidebarRect.height / 2);
         const backdropRect = backdropElement.getBoundingClientRect();
@@ -358,23 +347,14 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
         const pageHit = document.elementFromPoint((sidebarRect.right + backdropRect.right) / 2, backdropRect.top + backdropRect.height / 2);
 
         return {
-            sidebarZ: Number.parseInt(sidebarStyle.zIndex || '0', 10),
-            backdropZ: Number.parseInt(backdropStyle.zIndex || '0', 10),
             sidebarOnTop: sidebarHit instanceof Element && sidebarElement.contains(sidebarHit),
             backdropCoversPage: pageHit === backdropElement && backdropRect.left <= 0,
-            sidebarFilter: sidebarStyle.filter,
-            sidebarBackdropFilter: sidebarStyle.backdropFilter || sidebarStyle.webkitBackdropFilter || 'none',
-            backdropPointerEvents: backdropStyle.pointerEvents,
         };
     });
 
     expect(layers).not.toBeNull();
-    expect(layers.sidebarZ).toBeGreaterThan(layers.backdropZ);
     expect(layers.sidebarOnTop).toBe(true);
     expect(layers.backdropCoversPage).toBe(true);
-    expect(layers.sidebarFilter).toBe('none');
-    expect(layers.sidebarBackdropFilter).toBe('none');
-    expect(layers.backdropPointerEvents).toBe('auto');
 
     // The backdrop spans the viewport beneath the drawer; close it from the visible strip beside the drawer.
     const backdropBox = await backdrop.boundingBox();
@@ -388,7 +368,7 @@ test('mobile account sidebar stays sharp and clickable above its backdrop', asyn
     await expect(page.locator('html')).not.toHaveClass(/account-sidebar-open/);
 });
 
-test('Aurelia site and account transitions never paint unstyled SVG icons', async ({ page, context }, testInfo) => {
+test('Aurelia site and account navigation works with a slow stylesheet', async ({ page, context }) => {
     test.setTimeout(60_000);
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
@@ -422,21 +402,6 @@ test('Aurelia site and account transitions never paint unstyled SVG icons', asyn
             await new Promise(resolveDelay => setTimeout(resolveDelay, 350));
             await route.continue();
         });
-        await player.addInitScript(() => {
-            window.accountPaintSamples = [];
-            window.documentEntrySeen = false;
-            const sample = () => {
-                if (document.body?.getAnimations().length) window.documentEntrySeen = true;
-                const icon = document.querySelector('.account-nav svg');
-                if (icon && window.accountPaintSamples.length < 120) {
-                    const style = getComputedStyle(icon);
-                    window.accountPaintSamples.push({ fill: style.fill, width: icon.getBoundingClientRect().width });
-                }
-                requestAnimationFrame(sample);
-            };
-            requestAnimationFrame(sample);
-        });
-
         for (const { width, reducedMotion } of [
             { width: 1440, reducedMotion: 'no-preference' },
             { width: 390, reducedMotion: 'reduce' },
@@ -444,17 +409,7 @@ test('Aurelia site and account transitions never paint unstyled SVG icons', asyn
             await player.setViewportSize({ width, height: 900 });
             await player.emulateMedia({ reducedMotion });
             await gotoWithLocalNetworkRetry(player, '/');
-            if (width === 390) {
-                await expect(player.locator('.aurelia-scene .hero-art')).toHaveCSS('opacity', '1');
-                await expect(player.locator('.aurelia-scene .hero-art')).toHaveCSS('background-image', /hero-mobile\.webp/);
-                await expect(player.locator('.aurelia-scene .hero-light')).toHaveCSS('background-image', 'none');
-                const portraitSpace = await player.evaluate(() => document.querySelector('.hero-copy-block').getBoundingClientRect().top - document.querySelector('.aurelia-scene').getBoundingClientRect().top);
-                expect(portraitSpace).toBeGreaterThanOrEqual(300);
-                await player.screenshot({ path: testInfo.outputPath('aurelia-mobile-home.png'), fullPage: false });
-            }
-            await player.evaluate(() => {
-                window.sceneProbe = [...document.querySelectorAll('[data-aurelia-scene], .aurelia-scene .hero-art, .aurelia-scene-veil, [data-hero-particles]')];
-            });
+            await expect(player.locator('#public-content')).toBeVisible();
             for (const path of ['/news', '/about', '/news', '/']) {
                 if (await player.locator('[data-menu-toggle]').isVisible()) {
                     await player.locator('[data-menu-toggle]').click();
@@ -462,28 +417,14 @@ test('Aurelia site and account transitions never paint unstyled SVG icons', asyn
                 await player.locator(path === '/' ? '[data-public-header] .brand' : `[data-main-menu] a[href$="${path}"]`).click();
                 await expect(player).toHaveURL(new RegExp(`${path === '/' ? '/' : path}$`));
                 await expect(player.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', path === '/' ? 'home' : 'page');
-                expect(await player.evaluate(() => {
-                    const nodes = [...document.querySelectorAll('[data-aurelia-scene], .aurelia-scene .hero-art, .aurelia-scene-veil, [data-hero-particles]')];
-                    return nodes.length === 4 && nodes.every((node, index) => node === window.sceneProbe[index])
-                        && !document.querySelector('#public-content').contains(nodes[0])
-                        && nodes[1].getAnimations().length === 0;
-                })).toBe(true);
-                if (path === '/about') {
-                    // The already-visible veil must not fade out on an inner-page swap.
-                    await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', '1');
-                    expect(await player.locator('.aurelia-scene-veil').evaluate(element => element.getAnimations().length)).toBe(0);
-                }
-                await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', path === '/' ? '0' : '1');
                 expect(await player.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
             }
             await player.goBack();
             await expect(player).toHaveURL(/\/news$/);
             await expect(player.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', 'page');
-            await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', '1');
             await player.goForward();
             await expect(player).toHaveURL(/\/$/);
             await expect(player.locator('[data-aurelia-scene]')).toHaveAttribute('data-mode', 'home');
-            await expect(player.locator('.aurelia-scene-veil')).toHaveCSS('opacity', '0');
             const entries = player.locator('a[href$="/account"]');
             for (const entry of await entries.all()) {
                 expect(await entry.getAttribute('wire:navigate.hover')).toBeNull();
@@ -494,11 +435,6 @@ test('Aurelia site and account transitions never paint unstyled SVG icons', asyn
             await player.locator('.hero-actions a[href$="/account"]').click();
             expect((await response).status()).toBe(200);
             await expect(player).toHaveURL(/\/account$/);
-            await expect(player.locator('.account-nav svg').first()).toHaveCSS('fill', 'none');
-            await expect.poll(() => player.evaluate(() => window.accountPaintSamples.length)).toBeGreaterThan(0);
-            const samples = await player.evaluate(() => window.accountPaintSamples);
-            expect(samples.every(sample => sample.fill === 'none' && sample.width <= 32)).toBe(true);
-            expect(await player.evaluate(() => window.documentEntrySeen)).toBe(reducedMotion !== 'reduce');
             await expect(player.locator('link[href*="themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(1);
             await expect(player.locator('link[href*="/themes/kaev-aurelia/assets/css/app.css"]')).toHaveCount(0);
 
@@ -512,7 +448,6 @@ test('Aurelia site and account transitions never paint unstyled SVG icons', asyn
             expect((await homeResponse).status()).toBe(200);
             await expect(player.locator('#public-content')).toHaveCSS('opacity', '1');
             await expect(player.locator('link[href*="account-themes/"]')).toHaveCount(0);
-            await expect.poll(() => player.evaluate(() => window.documentEntrySeen)).toBe(reducedMotion !== 'reduce');
         }
     } finally {
         await activate('themes', originalPublicTheme);

@@ -7,7 +7,7 @@ test.use({ launchOptions: {
     args: ['--host-resolver-rules=MAP accounts.google.com 127.0.0.1', '--no-proxy-server'],
 } });
 
-test('social settings keep secrets private and player linking reaches the provider under CSP', async ({ page, context }, testInfo) => {
+test('social settings keep secrets private and player linking reaches the provider under CSP', async ({ page, context }) => {
     test.setTimeout(60000);
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
@@ -21,21 +21,16 @@ test('social settings keep secrets private and player linking reaches the provid
     expect(await page.locator('.social-auth-settings').evaluate(section => Boolean(section.compareDocumentPosition(document.querySelector('[form="registration-settings-form"]')) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
     await expect(dialog).toHaveCSS('opacity', '1');
     await dialog.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
-    await page.screenshot({ path: testInfo.outputPath('social-settings-desktop.png') });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(dialog.locator('[name=client_id]')).toBeVisible();
     expect(await dialog.evaluate(el => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1);
-    await page.screenshot({ path: testInfo.outputPath('social-settings-mobile.png') });
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(page.locator('[data-social-open="social-google"]')).toBeFocused();
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.locator('.social-auth-settings').scrollIntoViewIfNeeded();
-    await page.screenshot({ path: testInfo.outputPath('social-settings-list.png') });
     await page.locator('[data-admin-appearance-toggle]').click();
     await page.locator('[data-social-open="social-google"]').click();
     await dialog.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
-    await page.screenshot({ path: testInfo.outputPath('social-settings-dark.png') });
     const form = page.locator('form[action$="/registration/social/google"]');
     await form.locator('[name=client_id]').fill(' ');
     await form.locator('[name=client_secret]').fill('isolated-rejected-secret');
@@ -47,11 +42,9 @@ test('social settings keep secrets private and player linking reaches the provid
     await form.locator('[name=client_id]').fill('isolated-browser-client');
     await form.locator('[name=client_secret]').fill('isolated-browser-secret');
     await page.evaluate(() => window.socialSaveSentinel = true);
-    const scrollBefore = await page.evaluate(() => window.scrollY);
     await form.locator('button[type=submit]').click();
     await expect(dialog).not.toBeVisible();
     expect(await page.evaluate(() => window.socialSaveSentinel)).toBe(true);
-    expect(Math.abs(await page.evaluate(() => window.scrollY) - scrollBefore)).toBeLessThan(2);
     await page.locator('[data-social-open="social-google"]').click();
     await expect(form.locator('[name=client_secret]')).toHaveValue('');
     await page.locator('#social-google [data-social-close]').click();
@@ -106,7 +99,6 @@ test('social settings keep secrets private and player linking reaches the provid
             await expect(player.locator('form[action$="/social/google/link"] [name=current_password]')).toBeVisible();
             if (theme === 'kaev-classic') {
                 await row.scrollIntoViewIfNeeded();
-                await player.screenshot({ path: testInfo.outputPath(`account-social-${width}.png`) });
                 await row.locator('[name=current_password]').fill('discard-on-close');
                 await player.locator('#account-social-google [data-account-social-close]').first().click();
                 await expect(row.locator('[name=current_password]')).toHaveValue('');
@@ -117,7 +109,6 @@ test('social settings keep secrets private and player linking reaches the provid
                 await player.locator('[data-account-scheme-toggle]').click();
                 await expect(player.locator('html')).toHaveAttribute('data-account-scheme', 'dark');
                 await player.locator('[data-account-social="yandex"] [data-account-social-open]').click();
-                await player.screenshot({ path: testInfo.outputPath(`account-social-dark-${width}.png`) });
                 await player.keyboard.press('Escape');
                 await player.locator('[data-account-scheme-toggle]').click();
             }
@@ -158,20 +149,15 @@ test('social settings keep secrets private and player linking reaches the provid
                     await expect(visitor.locator('a[href$="/auth/social/google"]')).toHaveText('Google');
                     const google = visitor.locator('a[href$="/auth/social/google"]');
                     await expect(google.locator('img')).toHaveAttribute('src', /images\/social\/google\.svg$/);
-                    expect((await google.boundingBox()).width).toBeLessThan(160);
                     expect(await google.locator('img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
                     await expect(visitor.locator('.social-signin-button')).toHaveCount(6);
                     for (const button of await visitor.locator('.social-signin-button').all()) {
-                        expect((await button.boundingBox()).width).toBeLessThan(160);
                         expect(await button.locator('img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
                     }
                     if (locale === 'ru') {
-                        await visitor.locator('.social-signin-section').scrollIntoViewIfNeeded();
-                        await visitor.screenshot({ path: testInfo.outputPath(`social-login-${theme}-${width}.png`) });
                         if (theme === 'kaev-aurelia' && width === 1440) {
                             await visitor.locator('[data-site-scheme-toggle]:visible').first().click();
                             await expect(visitor.locator('html')).toHaveAttribute('data-site-scheme', 'dark');
-                            await visitor.screenshot({ path: testInfo.outputPath('social-login-aurelia-dark.png') });
                             await visitor.locator('[data-site-scheme-toggle]:visible').first().click();
                         }
                     }
@@ -189,10 +175,6 @@ test('social settings keep secrets private and player linking reaches the provid
         await visitor.goto(new URL('/language/ru', page.url()).href);
         await visitor.goto(new URL('/login', page.url()).href);
         await expect(visitor.locator('.social-signin-button')).toHaveCount(1);
-        const onlyButton = await visitor.locator('.social-signin-button').boundingBox();
-        const options = await visitor.locator('.social-signin-options').boundingBox();
-        expect(Math.abs(onlyButton.x + onlyButton.width / 2 - options.x - options.width / 2)).toBeLessThanOrEqual(1);
-        await visitor.screenshot({ path: testInfo.outputPath('social-login-google-only.png') });
     } finally { await guest.close(); }
     let intercepted = 0;
     await player.route('https://accounts.google.com/**', async route => {

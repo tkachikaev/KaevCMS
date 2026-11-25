@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
 import { gotoWithLocalNetworkRetry } from '../support/navigation.mjs';
 
-test('shop activates through administration, buys once and renders all account themes', async ({ page, context }, testInfo) => {
+test('shop activates through administration, buys once and renders all account themes', async ({ page, context }) => {
     test.setTimeout(150000);
     const shopPlayerEmail = 'browser-shop-player@example.test';
     await gotoWithLocalNetworkRetry(page, '/admin/login');
@@ -180,7 +180,6 @@ test('shop activates through administration, buys once and renders all account t
                     for (const width of [1440, 390]) {
                         await player.setViewportSize({ width, height: 1000 });
                         expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-                        if (locale === 'ru') await player.screenshot({ path: testInfo.outputPath(`shop-${theme}-${scheme}-${route.split('/').at(-1)}-${width}.png`), fullPage: true });
                     }
                 }
             }
@@ -194,7 +193,6 @@ test('shop activates through administration, buys once and renders all account t
             for (const width of [1440, 390]) {
                 await page.setViewportSize({ width, height: 1000 });
                 expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${url} ${scheme} ${width}`).toBeLessThanOrEqual(1);
-                await page.screenshot({ path: testInfo.outputPath(`shop-admin-${url.split('/').at(-1)}-${scheme}-${width}.png`), fullPage: true });
             }
         }
     }

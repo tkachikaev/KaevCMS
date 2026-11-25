@@ -63,7 +63,6 @@ test('FreeKassa settings persist, admin checkout redirects correctly and CSP per
         await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Local dummy provider</h1>' });
     });
     // Exercise the real POST/303/GET hand-off without replacing the controller response.
-    await page.screenshot({ path: 'storage/framework/testing/freekassa-settings.png', fullPage: true });
     await page.locator('[data-provider-test-open="freekassa"]').click();
     await expect(page.locator('[data-provider-test-dialog="freekassa"]')).toBeVisible();
     // A temporary status failure must recover without a reload or a second payment.
@@ -92,8 +91,6 @@ test('FreeKassa settings persist, admin checkout redirects correctly and CSP per
     await expect(page.locator('[data-freekassa-result]')).toHaveAttribute('data-state', 'verified', { timeout: 10000 });
     expect(statusFailures).toBeGreaterThan(1);
     await expect(page.locator('[data-freekassa-state="verified"]')).toContainText('Тестовая оплата подтверждена');
-    await page.locator('[data-freekassa-result]').screenshot({ path: 'storage/framework/testing/freekassa-test-success-panel.png' });
-    await page.screenshot({ path: 'storage/framework/testing/freekassa-test-success.png', fullPage: true });
     await reloadWithLocalNetworkRetry(page);
     await expect(page.getByTestId('freekassa-admin-test')).toContainText('1.00 RUB');
     await page.getByTestId('freekassa-admin-test').getByText('Последние тестовые запросы', { exact: true }).click();

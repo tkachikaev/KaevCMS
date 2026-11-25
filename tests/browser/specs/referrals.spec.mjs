@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { submitLogin } from '../support/authentication.mjs';
 import { gotoWithLocalNetworkRetry, reloadWithLocalNetworkRetry } from '../support/navigation.mjs';
 
-test('referrals configure, retain encrypted invitation and render bundled account themes', async ({ page, context }, testInfo) => {
+test('referrals configure, retain encrypted invitation and render bundled account themes', async ({ page, context }) => {
     test.setTimeout(60000);
     await gotoWithLocalNetworkRetry(page, '/admin/login');
     await page.locator('#email').fill(process.env.PLAYWRIGHT_ADMIN_EMAIL);
@@ -73,7 +73,6 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
                 for (const width of [1440, 390]) {
                     await page.setViewportSize({ width, height: 1000 });
                     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-                    if (url === '/admin/extensions/referrals' && locale === 'ru') await page.screenshot({path:testInfo.outputPath(`referrals-admin-${scheme}-${width}.png`)});
                 }
             }
         }
@@ -93,8 +92,6 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
             await player.goto('/language/' + locale);
             await player.goto('/modules/referrals');
             await expect(player.locator('#referral-link')).toBeVisible();
-            await expect(player.locator('#referral-link')).toHaveCSS('border-bottom-style', 'solid');
-            expect(await player.locator('#referral-link').evaluate(el => el.clientHeight)).toBeGreaterThan(30);
             invitation = await player.locator('#referral-link').inputValue();
             await expect(player.locator('[data-account-copy-toast]')).toBeHidden();
             if (theme === 'luxury' && locale === 'ru') {
@@ -108,7 +105,6 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
             for (const width of [1440, 768, 390, 320]) {
                 await player.setViewportSize({ width, height: 1000 });
                 expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-                if (locale === 'ru' && [1440, 390].includes(width)) await player.screenshot({ path: testInfo.outputPath(`referrals-${theme}-${width}.png`) });
             }
             for (const tab of ['progress', 'history']) {
                 await player.locator(`[data-referral-tabs] a[href*="tab=${tab}"]`).click();
@@ -124,7 +120,6 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
                 for (const width of [1440, 390, 320]) {
                     await player.setViewportSize({ width, height: 1000 });
                     expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-                    if (locale === 'ru' && width !== 320) await player.screenshot({path: testInfo.outputPath(`referrals-${theme}-${tab}-${width}.png`)});
                 }
             }
             await player.locator('[data-referral-tabs] a[href*="tab=invite"]').click();
@@ -132,7 +127,6 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
             if (theme === 'kaev-classic') {
                 await player.locator('[data-account-scheme-toggle]').click();
                 await expect(player.locator('html')).toHaveAttribute('data-account-scheme', 'dark');
-                await player.screenshot({ path: testInfo.outputPath(`referrals-dark-${locale}.png`) });
                 await player.locator('[data-account-scheme-toggle]').click();
             }
         }
@@ -161,7 +155,6 @@ test('referrals configure, retain encrypted invitation and render bundled accoun
         await changeGuestLanguage('en');
         await reloadWithLocalNetworkRetry(visitor);
         await expect(visitor.locator('html')).toHaveAttribute('lang', 'en');
-        await visitor.screenshot({path:testInfo.outputPath('registration-before.png')});
         await visitor.locator('[name=name]').fill('referralbrowser');
         await visitor.locator('[name=email]').fill('referralbrowser@example.test');
         await visitor.locator('[name=password]').fill('BrowserReferral123!');

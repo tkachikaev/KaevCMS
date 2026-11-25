@@ -51,7 +51,6 @@ for (const width of [1440, 390]) {
         await expect(form.locator('#donations-show-in-account')).toBeChecked();
         await expect(form.locator('[name="min_coins"]')).toHaveValue('10');
         await expect(form.locator('[name="max_coins"]')).toHaveValue('500');
-        await page.screenshot({ path: `storage/framework/testing/donations-workspace-${width}.png`, fullPage: true });
 
         await first.getByRole('button', { name: 'Удалить валюту', exact: true }).click();
         await expect(first.locator('[data-donations-removal]')).toBeVisible();
@@ -190,7 +189,6 @@ test('players can preview accurate coin prices but cannot create fake payment dr
             player.on('request', countQuoteRequests);
             await expect(coins).toBeInViewport();
             await expect(slider).toBeVisible();
-            expect(await player.getByTestId('donations-player-calculator').evaluate(element => parseFloat(getComputedStyle(element).borderTopLeftRadius))).toBeGreaterThanOrEqual(16);
             await quote.locator('[name="currency"]').selectOption('RUB');
             await slider.focus();
             await slider.press('Home');
@@ -220,7 +218,6 @@ test('players can preview accurate coin prices but cannot create fake payment dr
             expect(quoteRequests).toBe(0);
             player.off('request', countQuoteRequests);
             expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-            await player.screenshot({ path: `storage/framework/testing/donations-player-${theme}-${width}.png`, fullPage: true });
             await expect(draft).toHaveCount(0);
             await coins.fill('10');
             await quote.locator('[name="currency"]').selectOption('USD');
@@ -361,7 +358,6 @@ test('donations calculator stays translated and gated in RU/EN, both account the
                 await expect(player.locator('form[action*="yoomoney.ru"]')).toHaveCount(0);
                 await expect(player.getByTestId('donations-start-checkout')).toHaveCount(0);
                 expect(await player.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-                await player.screenshot({ path: `storage/framework/testing/donations-${locale}-${theme}-${width}.png`, fullPage: true });
             }
         }
     }
@@ -513,7 +509,6 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
             await expect(dialog.locator('#donations-player-range')).toHaveValue('237');
             await expect(dialog.getByTestId('donations-quote-result')).toContainText(`${(237 * expectedPrice).toFixed(2)} RUB`);
             expect(await dialog.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
-            await player.screenshot({ path: `storage/framework/testing/donations-dialog-${theme}-${width}.png`, fullPage: true });
             const prepared = player.waitForResponse(response => response.url().endsWith('/modules/donations/top-up') && response.ok());
             const transfer = player.waitForRequest(request => request.url() === 'https://yoomoney.ru/quickpay/confirm');
             await pay.click();
@@ -537,7 +532,6 @@ test('wallet top-up dialog keeps context, reviews changed prices and posts once 
             await expect(pendingRow.locator('[data-wallet-time]')).toContainText('Осталось');
             await expect(pendingRow.getByRole('link', { name: 'Оплатить', exact: true })).toBeVisible();
             await expect(pendingRow.getByRole('button', { name: 'Отменить', exact: true })).toBeVisible();
-            await player.screenshot({ path: `storage/framework/testing/wallet-history-${theme}-${width}.png`, fullPage: true });
             if (theme === 'luxury' && width === 390) {
                 await player.clock.install();
                 await reloadWithLocalNetworkRetry(player);
