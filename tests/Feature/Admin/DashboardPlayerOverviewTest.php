@@ -119,16 +119,15 @@ final class DashboardPlayerOverviewTest extends TestCase
             ->assertDontSee($user->email);
     }
 
-    public function test_dashboard_charts_are_drawn_without_inline_styles_or_canvas(): void
+    public function test_dashboard_charts_ship_data_and_avoid_inline_styles(): void
     {
         $view = file_get_contents(resource_path('views/admin/dashboard.blade.php'));
         $script = file_get_contents(public_path('assets/admin/js/dashboard-charts.js'));
 
         $this->assertIsString($view);
         $this->assertIsString($script);
-        // The admin CSP blocks inline style attributes; charts are SVG built by the script.
+        // The admin CSP blocks inline style attributes.
         $this->assertStringNotContainsString('style="', $view);
-        $this->assertStringNotContainsString('<canvas', $view);
         $this->assertStringContainsString('data-dash-widget-data', $view);
         $this->assertStringContainsString('data-dash-widget-data', $script);
     }

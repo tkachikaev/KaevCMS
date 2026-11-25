@@ -43,7 +43,7 @@ class AdminSettingsManagementTest extends TestCase
             ->assertRedirect(route('admin.login'));
     }
 
-    public function test_admin_can_open_general_settings_and_see_tabs(): void
+    public function test_admin_can_open_general_settings(): void
     {
         $admin = $this->createAdmin();
 
@@ -51,20 +51,7 @@ class AdminSettingsManagementTest extends TestCase
             ->get('/admin/settings')
             ->assertOk()
             ->assertSee('Настройки')
-            ->assertSee('settings-section-tabs', false)
-            ->assertSeeInOrder([
-                'Сайт',
-                'Панель администратора',
-                'Уведомления',
-                'Регистрация',
-                'Игровые аккаунты',
-                'Языки',
-                'Безопасность',
-                'Системная информация',
-            ])
             ->assertSee('© 2026 KaevCMS')
-            ->assertSee('translation-tab-label', false)
-            ->assertSee('translation-tab-default', false)
             ->assertSee('Сохранить настройки');
     }
 

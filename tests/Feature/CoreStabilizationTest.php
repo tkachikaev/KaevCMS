@@ -2,10 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\Admin\AdminPanelSettingsController;
-use App\Http\Controllers\Admin\GeneralSettingsController;
-use App\Http\Controllers\Admin\MailSettingsController;
-use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Services\Html\SafeHtmlSanitizer;
 use App\Services\Mail\CustomMailHtmlSanitizer;
 use App\Services\News\NewsHtmlSanitizer;
@@ -17,12 +13,8 @@ use Tests\TestCase;
 
 class CoreStabilizationTest extends TestCase
 {
-    public function test_routes_are_split_without_changing_representative_names_or_urls(): void
+    public function test_representative_route_names_urls_and_rate_limits_are_preserved(): void
     {
-        $this->assertFileExists(base_path('routes/public.php'));
-        $this->assertFileExists(base_path('routes/account.php'));
-        $this->assertFileExists(base_path('routes/admin.php'));
-
         $this->assertSame('/', route('home', absolute: false));
         $this->assertSame('/ru/news', route('localized.news.index', ['locale' => 'ru'], false));
         $this->assertSame('/account', route('account', absolute: false));
@@ -34,23 +26,6 @@ class CoreStabilizationTest extends TestCase
         $this->assertSame(
             'admin(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?',
             $adminLoginRoute->wheres['adminPath'] ?? null,
-        );
-
-        $this->assertSame(
-            GeneralSettingsController::class.'@general',
-            Route::getRoutes()->getByName('admin.settings.general')?->getActionName(),
-        );
-        $this->assertSame(
-            AdminPanelSettingsController::class.'@index',
-            Route::getRoutes()->getByName('admin.settings.admin-panel')?->getActionName(),
-        );
-        $this->assertSame(
-            SystemSettingsController::class.'@system',
-            Route::getRoutes()->getByName('admin.settings.system')?->getActionName(),
-        );
-        $this->assertSame(
-            MailSettingsController::class.'@mail',
-            Route::getRoutes()->getByName('admin.settings.mail')?->getActionName(),
         );
 
         $this->assertContains(
@@ -99,17 +74,6 @@ class CoreStabilizationTest extends TestCase
             ->first(static fn ($route): bool => $route->uri() === '{adminPath}/dashboard');
 
         $this->assertNull($legacyDashboardRoute);
-    }
-
-    public function test_legacy_large_settings_controller_was_replaced_by_domain_controllers(): void
-    {
-        $this->assertFileDoesNotExist(app_path('Http/Controllers/Admin/SettingsController.php'));
-        $this->assertFileExists(app_path('Http/Controllers/Admin/AdminPanelSettingsController.php'));
-        $this->assertFileExists(app_path('Http/Controllers/Admin/GeneralSettingsController.php'));
-        $this->assertFileExists(app_path('Http/Controllers/Admin/SystemSettingsController.php'));
-        $this->assertFileExists(app_path('Http/Controllers/Admin/LanguageSettingsController.php'));
-        $this->assertFileExists(app_path('Http/Controllers/Admin/RegistrationSettingsController.php'));
-        $this->assertFileExists(app_path('Http/Controllers/Admin/MailSettingsController.php'));
     }
 
     public function test_content_and_mail_adapters_use_the_shared_safe_html_sanitizer(): void

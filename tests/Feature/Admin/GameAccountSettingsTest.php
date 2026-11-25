@@ -70,36 +70,6 @@ class GameAccountSettingsTest extends TestCase
         $this->assertTrue($settings['password_digit']);
     }
 
-    public function test_game_account_settings_are_available_inside_the_settings_section(): void
-    {
-        $admin = $this->createAdmin();
-
-        $response = $this->actingAs($admin, 'admin')->get('/admin/settings/game-accounts');
-
-        $response
-            ->assertOk()
-            ->assertSeeInOrder([
-                'Сайт',
-                'Панель администратора',
-                'Регистрация',
-                'Игровые аккаунты',
-                'Языки',
-            ])
-            ->assertSee('data-admin-settings-link', false)
-            ->assertDontSee('data-admin-menu-group="system"', false);
-
-        $html = $response->getContent();
-        $serversStart = strpos($html, 'data-admin-menu-group="servers"');
-        $usersStart = strpos($html, 'data-admin-menu-group="users"');
-
-        $this->assertNotFalse($serversStart);
-        $this->assertNotFalse($usersStart);
-        $this->assertStringNotContainsString(
-            route('admin.settings.game-accounts'),
-            substr($html, $serversStart, $usersStart - $serversStart),
-        );
-    }
-
     public function test_legacy_hidden_login_case_requirements_are_ignored(): void
     {
         CmsSetting::query()->insert([

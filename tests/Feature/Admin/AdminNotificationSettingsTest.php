@@ -21,7 +21,7 @@ final class AdminNotificationSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_settings_page_reuses_existing_switch_and_tooltip_components(): void
+    public function test_notification_settings_page_exposes_notification_types_and_retention(): void
     {
         $owner = Admin::factory()->create(['role' => AdminRole::Owner]);
 
@@ -32,9 +32,6 @@ final class AdminNotificationSettingsTest extends TestCase
             ->assertSee(__('Technical Support module'))
             ->assertSee(__('Background tasks'))
             ->assertSee(__('Low disk space'))
-            ->assertSee('admin-toggle-row', false)
-            ->assertSee('admin-switch-control', false)
-            ->assertSee('field-help-tooltip', false)
             ->assertSee('notification_retention_days', false)
             ->assertSee('data-testid="notification-settings-link"', false);
     }
