@@ -78,7 +78,6 @@
         "app/Http/Controllers/DownloadController.php",
         "app/Http/Controllers/Payments/FreeKassaNotificationController.php",
         "app/Http/Controllers/Payments/PayPalNotificationController.php",
-        "app/Http/Controllers/Payments/PayPalNotificationPendingController.php",
         "app/Http/Controllers/Payments/YooMoneyNotificationController.php",
         "app/Http/Controllers/ReferralShortLinkController.php",
         "app/Http/Middleware/EnforceAdminAccess.php",

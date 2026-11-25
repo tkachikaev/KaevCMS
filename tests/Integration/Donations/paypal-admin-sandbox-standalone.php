@@ -30,6 +30,4 @@ assert(str_contains($serviceSource, "'purpose' => 'admin_test'"));
 assert(str_contains($serviceSource, "'environment' => 'sandbox'"));
 assert(str_contains($serviceSource, "'order_id' => null, 'preparation_id' => null"));
 assert(! str_contains($serviceSource, 'WalletGateway'));
-$controllerSource = file_get_contents($root.'/app/Http/Controllers/Payments/PayPalNotificationPendingController.php');
-assert(str_contains($controllerSource, "response('PayPal webhook verification not active', 503)"));
 echo "PayPal I3 admin Sandbox contracts OK\n";

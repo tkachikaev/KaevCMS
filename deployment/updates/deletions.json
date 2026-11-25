@@ -855,6 +855,11 @@
     "core/deployment/windows/apply-0.60.0.ps1"
   ],
   "0.61.1": [
-    "core/deployment/windows/apply-0.61.0.ps1"
+    "core/app/Http/Controllers/Payments/PayPalNotificationPendingController.php",
+    "core/deployment/windows/apply-0.61.0.ps1",
+    "core/tests/Feature/Admin/AdminFormSystemTest.php",
+    "core/tests/Feature/Admin/AdminUiSystemTest.php",
+    "core/tests/Feature/AdminDesignCanonTest.php",
+    "core/tests/Feature/StaticAnalysisRegressionTest.php"
   ]
 }
