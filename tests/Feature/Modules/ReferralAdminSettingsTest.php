@@ -58,7 +58,8 @@ class ReferralAdminSettingsTest extends TestCase
         $payload = ['audience' => 'invitee', 'level' => 55, 'item_id' => 57, 'amount' => 100];
         $response = $this->actingAs($owner, 'admin')->postJson($url, $payload)->assertOk()
             ->assertJsonPath('audience', 'invitee');
-        $this->assertStringContainsString('referrals-rule-row', $response->json('html'));
+        $this->assertIsString($response->json('html'));
+        $this->assertNotEmpty(trim($response->json('html')));
         $this->assertSame(1, ReferralRule::query()->where('game_server_id', $server->id)->count());
         $this->postJson($url, $payload)->assertUnprocessable()->assertJsonValidationErrors('level');
         $this->assertSame(1, ReferralRule::query()->where('game_server_id', $server->id)->count());

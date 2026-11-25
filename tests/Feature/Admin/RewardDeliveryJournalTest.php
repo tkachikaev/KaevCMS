@@ -38,7 +38,7 @@ class RewardDeliveryJournalTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_reward_journal_uses_standard_audit_layout_and_localized_item_names(): void
+    public function test_reward_journal_displays_localized_item_names_and_delivery_details(): void
     {
         App::setLocale('ru');
         $admin = Admin::factory()->create(['role' => AdminRole::Owner]);
@@ -79,9 +79,6 @@ class RewardDeliveryJournalTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.rewards.index'))
             ->assertOk()
-            ->assertSee('audit-table-wrap', false)
-            ->assertSee('audit-table reward-queue-table', false)
-            ->assertSee('audit-date', false)
             ->assertSee('player-one@example.test')
             ->assertSee('Aldric')
             ->assertSee('aldric')

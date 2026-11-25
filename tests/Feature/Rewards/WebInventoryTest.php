@@ -14,6 +14,7 @@ use App\Models\UserGameAccount;
 use App\Services\GameServerSettings;
 use App\Services\Rewards\RewardDeliveryReconciler;
 use App\Services\Rewards\RewardInventoryService;
+use App\Support\Themes\AccountThemeManager;
 use App\Support\Rewards\RewardGrantItem;
 use App\Support\Rewards\RewardQueueWriteResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -224,12 +225,16 @@ class WebInventoryTest extends TestCase
             items: [new RewardGrantItem(57, 1000, 'Adena')],
         );
 
-        $this->actingAs($user)
-            ->get('/account/web-inventory')
-            ->assertOk()
-            ->assertSee(__('rewards.transfer.temporarily_unavailable'))
-            ->assertDontSee('kaev_reward_queue')
-            ->assertDontSee('GameServer administrator');
+        foreach (['luxury', 'kaev-aurelia', 'kaev-classic'] as $theme) {
+            app(AccountThemeManager::class)->activate($theme);
+            $this->actingAs($user)
+                ->get('/account/web-inventory')
+                ->assertOk()
+                ->assertSee(__('rewards.transfer.temporarily_unavailable'))
+                ->assertDontSee('kaev_reward_queue')
+                ->assertDontSee('GameServer administrator')
+                ->assertDontSee('Send selected rewards to queue');
+        }
     }
 
     public function test_transfer_validation_uses_player_facing_messages_without_internal_field_names(): void
@@ -257,21 +262,6 @@ class WebInventoryTest extends TestCase
             ->assertSee(__('Select at least one reward.'))
             ->assertDontSee('character id')
             ->assertDontSee('inventory item ids');
-    }
-
-    public function test_bundled_web_inventory_templates_do_not_expose_reward_queue_implementation(): void
-    {
-        foreach (['luxury', 'kaev-aurelia'] as $theme) {
-            $template = file_get_contents(base_path('account-themes/'.$theme.'/views/web-inventory/index.blade.php'));
-            if (! is_string($template)) {
-                $this->fail('Unable to read the bundled Web Inventory template for '.$theme.'.');
-            }
-
-            $this->assertStringNotContainsString('kaev_reward_queue', $template);
-            $this->assertStringNotContainsString('GameServer administrator', $template);
-            $this->assertStringNotContainsString('Send selected rewards to queue', $template);
-            $this->assertStringContainsString('Transfer selected rewards', $template);
-        }
     }
 
     public function test_transfer_writes_one_idempotent_queue_payload_and_allows_online_character(): void

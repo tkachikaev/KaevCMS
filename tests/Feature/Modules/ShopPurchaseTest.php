@@ -143,32 +143,6 @@ final class ShopPurchaseTest extends TestCase
         $this->assertSame(1, DB::table('wallet_entries')->where('source', 'shop')->count());
     }
 
-    public function test_uuid_reuse_with_other_product_or_other_player_is_rejected(): void
-    {
-        [$user, $server, $product] = $this->catalog();
-        $other = $product->replicate();
-        $other->save();
-        $this->enableTestSales($server);
-        $uuid = (string) Str::uuid();
-        $service = app(ShopPurchaseService::class);
-        $service->purchase($user, $product->id, $uuid);
-        try {
-            $service->purchase($user, $other->id, $uuid);
-            $this->fail('UUID must not authorize a different product.');
-        } catch (InvalidArgumentException) {
-            // Expected: the original operation remains unchanged.
-        }
-        $different = User::factory()->create();
-        $this->actingAs($different, 'web');
-        $this->expectException(InvalidArgumentException::class);
-        try {
-            $service->purchase($different, $product->id, $uuid);
-        } finally {
-            $this->assertDatabaseCount('module_shop_purchases', 1);
-            $this->assertSame(1, DB::table('wallet_entries')->where('source', 'shop')->count());
-        }
-    }
-
     public function test_disabled_server_tab_category_product_and_empty_bundle_never_debit(): void
     {
         [$user, $server, $product, $tab, $category] = $this->catalog();

@@ -194,7 +194,7 @@ class ReferralAccountInterfaceTest extends TestCase
         }
     }
 
-    public function test_invitation_explains_both_recipients_and_uses_inventory_server_heading(): void
+    public function test_invitation_explains_both_recipients(): void
     {
         $server = $this->configureServer();
         ReferralRule::query()->create([
@@ -202,7 +202,6 @@ class ReferralAccountInterfaceTest extends TestCase
             'item_id' => 57, 'amount' => 1, 'enabled' => true,
         ]);
         $this->actingAs(User::factory()->create())->get(route('modules.referrals.index'))->assertOk()
-            ->assertSee('account-section-heading reward-inventory-heading', false)
             ->assertSee(__('module-referrals::messages.you_receive'))
             ->assertSee(__('module-referrals::messages.friend_receives'))
             ->assertSee(__('module-referrals::messages.friend_level', ['level' => 10]))

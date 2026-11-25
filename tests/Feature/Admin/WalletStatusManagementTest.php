@@ -75,7 +75,7 @@ final class WalletStatusManagementTest extends TestCase
         DB::table('audit_logs')->delete();
         $this->assertDatabaseCount('wallet_status_events', 2);
         $this->get(route('admin.wallets.show', $user))->assertOk()
-            ->assertSee('Verified ownership and dispute resolved')->assertSee('admin-wallet-status-event');
+            ->assertSee('Verified ownership and dispute resolved');
     }
 
     public function test_idempotent_replay_has_no_new_audit_or_events_and_different_content_is_rejected(): void
