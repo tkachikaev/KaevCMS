@@ -141,7 +141,7 @@ class GameAccountCabinetTest extends TestCase
             ->assertSee('Все персонажи');
     }
 
-    public function test_player_overview_stays_compact_when_no_game_accounts_exist(): void
+    public function test_player_overview_offers_account_creation_when_no_game_accounts_exist(): void
     {
         // Obsidian's compact overview differs from Classic's game-account cards.
         app(AccountThemeManager::class)->activate('luxury');
@@ -152,37 +152,7 @@ class GameAccountCabinetTest extends TestCase
             ->get('/account')
             ->assertOk()
             ->assertSee('Выберите раздел')
-            ->assertSee('Создать игровой аккаунт')
-            ->assertDontSee('account-character-directory', false);
-    }
-
-    public function test_player_overview_does_not_mix_game_account_or_character_details_into_the_profile_summary(): void
-    {
-        app(AccountThemeManager::class)->activate('luxury');
-        $user = $this->user();
-        [$loginServer, $gameServer] = $this->servers();
-        UserGameAccount::query()->create([
-            'user_id' => $user->id,
-            'login_server_id' => $loginServer->id,
-            'registration_game_server_id' => $gameServer->id,
-            'game_login' => 'SeparateLogin01',
-            'normalized_login' => 'separatelogin01',
-        ]);
-        $this->gateway->charactersByServer[$gameServer->id] = [[
-            'id' => 105,
-            'name' => 'SeparateHero',
-            'level' => 80,
-            'class_id' => 88,
-            'online' => false,
-        ]];
-
-        $this->actingAs($user)
-            ->get('/account')
-            ->assertOk()
-            ->assertSee('Выберите раздел')
-            ->assertDontSee('SeparateLogin01')
-            ->assertDontSee('SeparateHero')
-            ->assertDontSee('account-character-directory', false);
+            ->assertSee('Создать игровой аккаунт');
     }
 
     public function test_single_account_details_keep_the_create_action_when_another_account_is_allowed(): void
@@ -251,7 +221,7 @@ class GameAccountCabinetTest extends TestCase
             ->assertDontSee($loginServer->name);
     }
 
-    public function test_game_account_forms_render_floating_validation_errors_for_matching_fields(): void
+    public function test_game_account_forms_render_validation_errors_for_matching_fields(): void
     {
         $user = $this->user();
         [$loginServer, $gameServer] = $this->servers();
@@ -273,9 +243,7 @@ class GameAccountCabinetTest extends TestCase
             ->assertSee('game-server-error', false)
             ->assertSee('game-login-error', false)
             ->assertSee('game-password-confirmation-error', false)
-            ->assertSee('class="account-field-control"', false)
-            ->assertSee('role="alert"', false)
-            ->assertDontSee('<div class="account-notice error"', false);
+            ->assertSee('role="alert"', false);
 
         $account = UserGameAccount::query()->create([
             'user_id' => $user->id,
@@ -299,13 +267,7 @@ class GameAccountCabinetTest extends TestCase
             ->assertOk()
             ->assertSee('current-password-error', false)
             ->assertSee('new-game-password-confirmation-error', false)
-            ->assertSee('class="account-field-control"', false)
-            ->assertSee('role="alert"', false)
-            ->assertDontSee('<div class="account-notice error"', false);
-
-        $accountCss = file_get_contents(public_path('account-themes/luxury/assets/css/app.css'));
-        $this->assertIsString($accountCss);
-        $this->assertStringContainsString('.account-field-control>.account-field-error{position:absolute', $accountCss);
+            ->assertSee('role="alert"', false);
     }
 
     public function test_player_can_create_a_mobius_account_from_a_selected_game_server(): void

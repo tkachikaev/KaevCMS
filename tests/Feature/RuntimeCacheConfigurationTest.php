@@ -13,6 +13,7 @@ final class RuntimeCacheConfigurationTest extends TestCase
         $environment = Dotenv::parse(File::get(base_path('.env.example')));
 
         $this->assertSame('production', $environment['APP_ENV']);
+        $this->assertSame('file', $environment['CACHE_STORE']);
         $this->assertSame('database', $environment['CACHE_LIMITER']);
         foreach (['DONATIONS_CHECKOUT_ENABLED', 'DONATIONS_CALLBACKS_ENABLED',
             'DONATIONS_CREDITS_ENABLED', 'WALLET_DONATIONS_ENABLED', 'DONATIONS_LIVE_TEST_USER_ID'] as $obsoleteFlag) {
@@ -57,12 +58,5 @@ final class RuntimeCacheConfigurationTest extends TestCase
         $this->assertStringContainsString("env('BROWSER_TEST_LOGIN_LIMIT', 0)", $configuration);
         $this->assertStringContainsString("config('app.env') === 'testing'", $provider);
         $this->assertStringContainsString("config('cms.testing.browser_login_limit', 0)", $provider);
-    }
-
-    public function test_environment_template_documents_separate_limiter_store(): void
-    {
-        $environment = File::get(base_path('.env.example'));
-
-        $this->assertStringContainsString("CACHE_STORE=file\nCACHE_LIMITER=database", str_replace("\r\n", "\n", $environment));
     }
 }

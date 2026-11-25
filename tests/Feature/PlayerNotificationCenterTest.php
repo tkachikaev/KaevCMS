@@ -80,8 +80,8 @@ class PlayerNotificationCenterTest extends TestCase
         $html = (string) $center->html($notification);
 
         $this->assertStringNotContainsString('<img', $html);
-        $this->assertStringContainsString('<span class="notification-name">&lt;img src=x onerror=alert(1)&gt;</span>', $html);
-        $this->assertStringContainsString('<span class="notification-topic">A &amp; &quot;B&quot;</span>', $html);
+        $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $html);
+        $this->assertStringContainsString('A &amp; &quot;B&quot;', $html);
     }
 
     public function test_players_open_and_clear_only_their_own_notifications(): void

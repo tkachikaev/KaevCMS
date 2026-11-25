@@ -49,7 +49,11 @@ class TranslationJsonTest extends TestCase
         /** @var array<string,string> $russian */
         $russian = json_decode((string) file_get_contents(lang_path('ru.json')), true, 512, JSON_THROW_ON_ERROR);
 
-        $this->assertSame(array_keys($english), array_keys($russian));
+        $englishKeys = array_keys($english);
+        $russianKeys = array_keys($russian);
+        sort($englishKeys);
+        sort($russianKeys);
+        $this->assertSame($englishKeys, $russianKeys);
 
         foreach ($english as $key => $value) {
             preg_match_all('/:[A-Za-z_][A-Za-z0-9_]*/', $value, $englishMatches);

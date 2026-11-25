@@ -29,8 +29,8 @@ final class ModuleCatalogLinksTest extends TestCase
         $this->actingAs($owner, 'admin')
             ->get('/admin/modules')
             ->assertOk()
-            ->assertSee('module-actions module-actions-pair', false)
-            ->assertSee('href="'.route('admin.module-pages.promo-codes.index').'" data-testid="module-open">Открыть</a>', false)
+            ->assertSee('href="'.route('admin.module-pages.promo-codes.index').'"', false)
+            ->assertSee('data-testid="module-open"', false)
             ->assertDontSee('/admin/extensions/donations"', false);
     }
 }

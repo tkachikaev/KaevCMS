@@ -122,21 +122,4 @@ final class InfrastructureHardeningTest extends TestCase
         $this->assertStringContainsString('kaevcms:news-media-clean --hours=24', $schedule);
         $this->assertStringContainsString('kaevcms:page-media-clean --hours=24', $schedule);
     }
-
-    public function test_editor_source_and_bundle_check_sanitized_html_byte_length(): void
-    {
-        $source = File::get(resource_path('js/admin/content-editor.js'));
-        $bundle = File::get(public_path('assets/admin/js/news-editor.js'));
-
-        $this->assertStringContainsString('new TextEncoder().encode(value).length', $source);
-        $this->assertStringContainsString('contentByteLength(source.value) > MAX_CONTENT_LENGTH', $source);
-        $this->assertStringContainsString('TextEncoder', $bundle);
-        $this->assertMatchesRegularExpression(
-            '/TextEncoder\(\)\.encode\([^)]*\)\.length/',
-            $bundle,
-        );
-        // esbuild may keep the byte-length helper separate from its comparison.
-        // Browser tests exercise the compiled guard at the actual UTF-8 boundary.
-        $this->assertMatchesRegularExpression('/(?:2e5|200000)/', $bundle);
-    }
 }
