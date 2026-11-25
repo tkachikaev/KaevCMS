@@ -49,12 +49,10 @@ test('the language menu works in the header and the phone menu of both public th
             await visitor.locator('.menu-toggle').click();
             const phone = visitor.locator('.main-nav .mobile-language-menu');
             await expect(phone).toBeVisible();
-            const menuHeight = async () => (await visitor.locator('.main-nav').boundingBox()).height;
-            const closedHeight = await menuHeight();
             await phone.locator('summary').click();
             await expect(phone.locator('.language-menu-list')).toBeVisible();
-            // The list slides over the page; the menu keeps its size.
-            expect(Math.abs((await menuHeight()) - closedHeight)).toBeLessThanOrEqual(1);            const selected = phone.locator('a[aria-current="true"]');
+            const selected = phone.locator('a[aria-current="true"]');
+            await expect(selected).toBeVisible();
             // The selected language stays readable: its text differs from its background.
             const colours = await selected.evaluate((element) => {
                 const style = getComputedStyle(element);

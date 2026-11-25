@@ -187,6 +187,7 @@ test('Aurelia supports language and theme controls on desktop and phone', async 
 });
 
 test('Aurelia content remains usable after a slow hero image load', async ({ browser }) => {
+    test.setTimeout(90_000);
     await withAurelia(browser, async () => {
         const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
         try {

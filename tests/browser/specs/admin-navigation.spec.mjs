@@ -75,7 +75,7 @@ test.beforeEach(async ({ page }) => {
     await signIn(page);
 });
 
-for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }]) {
+for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: 'dark' }, { width: 320, scheme: 'dark' }]) {
     test(`header menus are usable on ${variant.width}px (${variant.scheme})`, async ({ page }) => {
         await page.setViewportSize({ width: variant.width, height: 900 });
         await page.evaluate(scheme => window.KaevCMSAdminAppearance.apply(scheme), variant.scheme);
@@ -110,6 +110,8 @@ for (const variant of [{ width: 1440, scheme: 'light' }, { width: 390, scheme: '
         // A long language list must remain scrollable, irrespective of its visual design.
         const language = page.locator('.admin-language-menu');
         await language.locator('summary').click();
+        await expect(language.locator('.admin-topbar-panel')).toBeVisible();
+        await language.locator('.admin-topbar-panel').evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))));
         const scrollable = await language.locator('.admin-topbar-panel').evaluate(panel => {
             const form = panel.querySelector('form');
             for (let index = 0; index < 30; index++) {

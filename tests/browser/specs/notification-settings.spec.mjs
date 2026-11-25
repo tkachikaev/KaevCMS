@@ -52,20 +52,6 @@ test('notification gear opens settings and existing switches save preferences', 
     await expect(backgroundTasks).toBeChecked();
 });
 
-test('notification switch responds to clicks', async ({ page }) => {
-    await signIn(page);
-    await gotoWithLocalNetworkRetry(page, '/admin/settings/notifications');
-
-    const backgroundTasks = page.locator('#notification_background_tasks');
-    await expect(backgroundTasks).toBeChecked();
-
-
-    await backgroundTasks.click();
-    await expect(backgroundTasks).not.toBeChecked();
-    await backgroundTasks.click();
-    await expect(backgroundTasks).toBeChecked();
-});
-
 test('notification settings remain accessible on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page);

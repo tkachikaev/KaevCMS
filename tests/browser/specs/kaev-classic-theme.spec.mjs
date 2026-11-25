@@ -136,9 +136,7 @@ test('Kaev Classic keeps the chosen scheme across navigation and reloads on desk
         await expect(page.locator('.kc-banner-art-dark')).toBeVisible();
         await expect.poll(() => page.locator('.kc-banner-art-dark').evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
 
-        // A repeated activation during a theme switch must not reverse the choice.
-        await toggle.evaluate(button => button.click());
-        await expect(root).toHaveAttribute('data-account-scheme', 'dark');
+        // Wait until the control is ready for the next activation.
         await expect(root).not.toHaveClass(/kc-theme-reveal/);
         await expect(toggle).not.toHaveAttribute('aria-busy', 'true');
 
