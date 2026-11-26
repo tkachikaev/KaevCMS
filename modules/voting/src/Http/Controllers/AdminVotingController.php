@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use KaevCMS\Modules\Voting\Models\VotingVote;
 use KaevCMS\Modules\Voting\Services\VotingProviderRegistry;
 use KaevCMS\Modules\Voting\Services\VotingSettings;
 
@@ -63,14 +64,25 @@ final class AdminVotingController extends Controller
             : $this->back($request)->withErrors(['connection' => $message]);
     }
 
-    public function rewards(): View
+    public function history(Request $request): View
     {
-        return view('module-voting::admin.unavailable', ['section' => 'rewards']);
-    }
+        $status = $request->query('status');
+        $status = is_string($status) && in_array($status, ['pending', 'accepted', 'rejected', 'revoked'], true) ? $status : '';
+        $account = $request->query('account');
+        $account = is_string($account) ? mb_substr(trim($account), 0, 190) : '';
+        $query = VotingVote::query()->with('gameServer.translations');
+        if ($status !== '') {
+            $query->where('status', $status);
+        }
+        if ($account !== '') {
+            $query->where('game_account_login', $account);
+        }
 
-    public function history(): View
-    {
-        return view('module-voting::admin.unavailable', ['section' => 'history']);
+        return view('module-voting::admin.history', [
+            'votes' => $query->orderByDesc('id')->paginate(30)->appends(['status' => $status, 'account' => $account]),
+            'status' => $status,
+            'account' => $account,
+        ]);
     }
 
     private function admin(Request $request): Admin

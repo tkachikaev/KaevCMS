@@ -11,6 +11,10 @@ use Illuminate\Support\Carbon;
  * @property bool $enabled
  * @property bool $player_access_enabled
  * @property Carbon|null $intent_retry_at
+ * @property string $event_cursor
+ * @property Carbon|null $sync_retry_at
+ * @property Carbon|null $last_sync_at
+ * @property string|null $last_sync_result
  * @property string|null $project_id
  * @property string|null $api_key_ciphertext
  * @property string $pending_policy
@@ -30,6 +34,8 @@ final class VotingSetting extends Model
             'enabled' => 'boolean',
             'player_access_enabled' => 'boolean',
             'intent_retry_at' => 'datetime',
+            'sync_retry_at' => 'datetime',
+            'last_sync_at' => 'datetime',
             'credential_revision' => 'integer',
             'last_checked_at' => 'datetime',
         ];

@@ -64,6 +64,7 @@ return [
             'destroy' => 'Comment deleted',
         ],
         'voting' => [
+            'rewards_updated' => 'Voting rewards changed',
             'settings_updated' => 'Voting provider settings changed',
         ],
         'module' => [

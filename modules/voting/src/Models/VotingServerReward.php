@@ -31,16 +31,26 @@ final class VotingServerReward extends Model
     /** @return list<array{item_id:int,amount:int}> Invalid bundles are never eligible. */
     public function configuredItems(): array
     {
+        if (! $this->enabled) {
+            return [];
+        }
+
+        return $this->validatedItems();
+    }
+
+    /** @return list<array{item_id:int,amount:int}> */
+    public function validatedItems(): array
+    {
         $items = $this->items;
-        if (! $this->enabled || ! is_array($items) || ! array_is_list($items) || count($items) > 100) {
+        if (! is_array($items) || ! array_is_list($items) || count($items) > 100) {
             return [];
         }
 
         $validated = [];
         $seen = [];
         foreach ($items as $item) {
-            if (! is_array($item) || ! is_int($item['item_id'] ?? null) || $item['item_id'] <= 0
-                || ! is_int($item['amount'] ?? null) || $item['amount'] <= 0 || isset($seen[$item['item_id']])) {
+            if (! is_array($item) || ! is_int($item['item_id'] ?? null) || $item['item_id'] <= 0 || $item['item_id'] > 2147483647
+                || ! is_int($item['amount'] ?? null) || $item['amount'] <= 0 || $item['amount'] > 2000000000 || isset($seen[$item['item_id']])) {
                 return [];
             }
             $seen[$item['item_id']] = true;

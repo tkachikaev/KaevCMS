@@ -6,7 +6,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use KaevCMS\Modules\Voting\Contracts\VotingProvider;
+use KaevCMS\Modules\Voting\Data\VoteEventPage;
 use KaevCMS\Modules\Voting\Data\VoteInvitation;
+use KaevCMS\Modules\Voting\Services\VoteEventDecoder;
 use Throwable;
 
 final class KTreonProvider implements VotingProvider
@@ -38,39 +40,42 @@ final class KTreonProvider implements VotingProvider
 
     public function check(string $projectId, #[\SensitiveParameter] string $key): string
     {
-        if (! self::validProjectId($projectId) || ! self::validKey($key)) {
-            return 'not_configured';
+        // Same strict reader as synchronization, without writing the cursor or events.
+        return $this->readEvents($projectId, $key, '0', 1)->result;
+    }
+
+    public function readEvents(string $projectId, #[\SensitiveParameter] string $key, string $cursor, int $limit = 100): VoteEventPage
+    {
+        if (! self::validProjectId($projectId) || ! self::validKey($key)
+            || ! VoteEventDecoder::validCursor($cursor) || $limit < 1 || $limit > 100) {
+            return new VoteEventPage('not_configured');
         }
 
         try {
-            // Reading one event never creates a vote or changes the delivery cursor.
             $deadline = hrtime(true) + 10_000_000_000;
             $response = Http::withToken($key)->acceptJson()
                 ->connectTimeout(3)->timeout(8)
                 ->withOptions(['allow_redirects' => false, 'stream' => true, 'read_timeout' => 3])
-                ->get(self::API.$projectId.'/vote-events', ['cursor' => '0', 'limit' => 1]);
-            $stream = $response->toPsrResponse()->getBody();
+                ->get(self::API.$projectId.'/vote-events', ['cursor' => $cursor, 'limit' => $limit]);
 
             try {
+                if ($response->status() === 429) {
+                    $retry = filter_var($response->header('Retry-After'), FILTER_VALIDATE_INT);
+
+                    return new VoteEventPage('rate_limited', retryAfter: max(60, min(3600, $retry === false ? 60 : $retry)));
+                }
                 if ($response->status() !== 200) {
-                    return match ($response->status()) {
-                        401, 403 => 'unauthorized',
-                        429 => 'rate_limited',
-                        default => 'unavailable',
-                    };
+                    return new VoteEventPage(in_array($response->status(), [401, 403], true) ? 'unauthorized' : 'unavailable');
                 }
 
-                $page = $this->readJson($response, $deadline);
-
-                return $this->validProbePage($page, $projectId) ? 'ok' : 'invalid_response';
+                return (new VoteEventDecoder)->decode($this->readJson($response, $deadline, 131072, false), $projectId, $cursor, $limit);
             } finally {
-                $stream->close();
+                $response->toPsrResponse()->getBody()->close();
             }
         } catch (\JsonException) {
-            return 'invalid_response';
+            return new VoteEventPage('invalid_response');
         } catch (Throwable) {
-            // Do not log request/response data or exceptions that could contain credentials.
-            return 'unavailable';
+            return new VoteEventPage('unavailable');
         }
     }
 
@@ -129,49 +134,26 @@ final class KTreonProvider implements VotingProvider
         }
     }
 
-    private function readJson(Response $response, int|float $deadline): mixed
+    private function readJson(Response $response, int|float $deadline, int $maxBytes = self::MAX_RESPONSE_BYTES, bool $associative = true): mixed
     {
         $contentType = strtolower(trim(explode(';', $response->header('Content-Type'), 2)[0]));
-        if ($contentType !== 'application/json' || (int) $response->header('Content-Length') > self::MAX_RESPONSE_BYTES) {
+        if ($contentType !== 'application/json' || (int) $response->header('Content-Length') > $maxBytes) {
             return null;
         }
 
         $stream = $response->toPsrResponse()->getBody();
         $body = '';
         while (! $stream->eof()) {
-            if (hrtime(true) > $deadline || strlen($body) >= self::MAX_RESPONSE_BYTES) {
+            if (hrtime(true) > $deadline || strlen($body) >= $maxBytes) {
                 return null;
             }
-            $chunk = $stream->read(min(4096, self::MAX_RESPONSE_BYTES - strlen($body)));
+            $chunk = $stream->read(min(4096, $maxBytes - strlen($body)));
             if ($chunk === '' && ! $stream->eof()) {
                 return null;
             }
             $body .= $chunk;
         }
 
-        return json_decode($body, true, 16, JSON_THROW_ON_ERROR);
-    }
-
-    private function validProbePage(mixed $page, string $projectId): bool
-    {
-        if (! is_array($page) || ! is_array($page['events'] ?? null)
-            || ! array_is_list($page['events']) || count($page['events']) > 1
-            || ! is_string($page['next_cursor'] ?? null)
-            || preg_match('/\A(?:0|[1-9][0-9]{0,18})\z/D', $page['next_cursor']) !== 1
-            || ! is_bool($page['has_more'] ?? null)) {
-            return false;
-        }
-        if ($page['events'] === []) {
-            return $page['next_cursor'] === '0' && $page['has_more'] === false;
-        }
-
-        $event = $page['events'][0];
-
-        return is_array($event)
-            && ($event['project_id'] ?? null) === $projectId
-            && ($event['cursor'] ?? null) === $page['next_cursor']
-            && $page['next_cursor'] !== '0'
-            && in_array($event['status'] ?? null, ['accepted', 'pending', 'rejected', 'revoked'], true)
-            && is_int($event['status_version'] ?? null) && $event['status_version'] > 0;
+        return json_decode($body, $associative, 16, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
     }
 }
