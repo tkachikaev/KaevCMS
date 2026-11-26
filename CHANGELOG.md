@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Voting 0.1.0: optional KTreon connection settings, encrypted integration key, connection check and pending reward policy. Player voting and reward delivery are not available yet.
+- Voting 0.2.0: KTreon connection settings and safe invitation handling, with a new database migration. Open **Admin → Modules** and update the Voting database if already installed. Player access remains disabled until reward delivery is available.
 
 - Forum: bounded pagination, reader-scoped author counts, refreshed search results after edits and removals, stricter topic move permissions, batched section statistics and mobile keyboard navigation. Custom themes now belong in `storage/app/forum-themes/<slug>`. Move existing custom themes there before updating. Frost and Classic remain bundled.
 

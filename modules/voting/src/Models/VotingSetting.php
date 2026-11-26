@@ -9,6 +9,8 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $provider_code
  * @property bool $enabled
+ * @property bool $player_access_enabled
+ * @property Carbon|null $intent_retry_at
  * @property string|null $project_id
  * @property string|null $api_key_ciphertext
  * @property string $pending_policy
@@ -26,6 +28,8 @@ final class VotingSetting extends Model
     {
         return [
             'enabled' => 'boolean',
+            'player_access_enabled' => 'boolean',
+            'intent_retry_at' => 'datetime',
             'credential_revision' => 'integer',
             'last_checked_at' => 'datetime',
         ];

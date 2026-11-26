@@ -12,3 +12,5 @@ The key is encrypted with the CMS APP_KEY. Preserve APP_KEY during updates and r
 Waiting for confirmation is the safer default. Immediate rewards risk rewarding votes which are later rejected. In this version both policies are stored only; no rewards are issued. Owners and administrators manage settings; auditors may view them without access to the key.
 
 If the check fails, verify the project ID, key validity, project publication and HTTPS access to ktreon.com from the CMS server. Retry later if rate limited. A successful check confirms event-read access only, not reward delivery.
+
+For Voting 0.2.0, an existing installation must update the module database in **Control panel → Modules**. Player access remains unavailable while reward delivery is not supported. After an invitation has been prepared, the connected project cannot be changed; rotating the key of the same project remains supported.

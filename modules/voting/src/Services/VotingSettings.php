@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use KaevCMS\Modules\Voting\Models\VotingBinding;
 use KaevCMS\Modules\Voting\Models\VotingSetting;
 use KaevCMS\Modules\Voting\Providers\KTreonProvider;
 use RuntimeException;
@@ -50,6 +51,9 @@ final class VotingSettings
         DB::transaction(function () use ($admin, $enabled, $projectId, $key, $policy): void {
             $row = $this->row(true);
             $projectChanged = $row->project_id !== $projectId;
+            if ($projectChanged && VotingBinding::query()->exists()) {
+                throw ValidationException::withMessages(['project_id' => __('module-voting::messages.project_locked')]);
+            }
             $keyChanged = $key !== null && $key !== '';
             $ciphertext = $projectChanged ? null : $row->api_key_ciphertext;
             if ($keyChanged) {
@@ -61,6 +65,7 @@ final class VotingSettings
 
             $row->forceFill([
                 'enabled' => $enabled,
+                'player_access_enabled' => $enabled && ! $projectChanged && $row->player_access_enabled,
                 'project_id' => $projectId,
                 'api_key_ciphertext' => $ciphertext,
                 'pending_policy' => $policy,
@@ -71,6 +76,7 @@ final class VotingSettings
                     'credential_revision' => $row->credential_revision + 1,
                     'last_checked_at' => null,
                     'last_check_result' => null,
+                    'intent_retry_at' => null,
                 ]);
             }
             $row->save();
