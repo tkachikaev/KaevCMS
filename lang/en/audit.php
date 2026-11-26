@@ -63,6 +63,9 @@ return [
             'restore' => 'Comment restored',
             'destroy' => 'Comment deleted',
         ],
+        'voting' => [
+            'settings_updated' => 'Voting provider settings changed',
+        ],
         'module' => [
             'installed' => 'Module installed',
             'database_updated' => 'Module database updated',
