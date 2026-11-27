@@ -142,16 +142,17 @@ final class KTreonProvider implements VotingProvider
 
         $stream = $response->toPsrResponse()->getBody();
         $body = '';
-        while (! $stream->eof()) {
+        do {
             if (hrtime(true) > $deadline || strlen($body) >= $maxBytes) {
                 return null;
             }
             $chunk = $stream->read(min(4096, $maxBytes - strlen($body)));
-            if ($chunk === '' && ! $stream->eof()) {
+            $body .= $chunk;
+            $atEnd = $stream->eof();
+            if ($chunk === '' && ! $atEnd) {
                 return null;
             }
-            $body .= $chunk;
-        }
+        } while (! $atEnd);
 
         return json_decode($body, $associative, 16, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
     }

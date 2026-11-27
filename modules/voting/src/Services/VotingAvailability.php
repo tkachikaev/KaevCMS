@@ -12,6 +12,7 @@ use KaevCMS\Modules\Voting\Models\VotingVote;
 
 final class VotingAvailability
 {
+    /** @phpstan-impure */
     public function enabled(?VotingSetting $setting = null): bool
     {
         $setting ??= VotingSetting::query()->where('provider_code', 'ktreon')->first();

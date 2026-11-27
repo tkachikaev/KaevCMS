@@ -8,7 +8,6 @@ use App\Services\GameAssets\GameItemCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use KaevCMS\Modules\Voting\Models\VotingServerReward;
 use KaevCMS\Modules\Voting\Models\VotingVote;
 use KaevCMS\Modules\Voting\Services\VotingAvailability;
 use KaevCMS\Modules\Voting\Services\VotingInvitationService;
@@ -37,7 +36,6 @@ final class VotingAccountController extends Controller
         }
         $serverId = filter_var($request->query('server'), FILTER_VALIDATE_INT);
         $selected = $rewards->firstWhere('game_server_id', $serverId) ?? $rewards->first();
-        abort_unless($selected instanceof VotingServerReward, 404);
 
         $items = [];
         foreach ($selected->configuredItems() as $item) {

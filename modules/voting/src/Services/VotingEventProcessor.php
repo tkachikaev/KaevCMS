@@ -58,7 +58,7 @@ final class VotingEventProcessor
 
         if ($matches->isNotEmpty()) {
             $stored = $matches->first();
-            if ($matches->count() !== 1 || $stored === null || $stored->only(array_keys($fields)) !== $fields
+            if ($matches->count() !== 1 || $stored->only(array_keys($fields)) !== $fields
                 || $vote === null || $vote->player_ref !== $event->playerRef || $vote->voted_at !== $event->votedAt
                 || $vote->status_version < $event->statusVersion
                 || ($vote->status_version === $event->statusVersion
