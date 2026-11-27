@@ -12,6 +12,7 @@ use App\Support\Modules\ModuleRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -166,7 +167,7 @@ final class VotingInvitationTest extends TestCase
 
     public function test_invalid_calendar_expiration_is_not_normalized_into_a_valid_invitation(): void
     {
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-03-02 00:00:00', 'UTC'));
+        $this->travelTo(Carbon::parse('2026-03-02 00:00:00', 'UTC'));
         $server = $this->configure();
         $user = User::factory()->create();
         $account = $this->account($server, $user);

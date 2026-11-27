@@ -92,7 +92,7 @@ final class VotingSyncTest extends TestCase
     }
 
     /**
-     * @param list<array<string,mixed>> $events
+     * @param  list<array<string,mixed>>  $events
      * @return array{events:array,next_cursor:string,has_more:bool}
      */
     private function page(array $events, string $cursor = '0'): array
