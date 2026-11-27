@@ -3,7 +3,9 @@
 namespace KaevCMS\Modules\Voting\Services;
 
 use App\Models\GameServer;
+use App\Models\ModuleState;
 use App\Models\User;
+use App\Services\RegistrationSettings;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -18,16 +20,18 @@ final class VotingInvitationService
     public function __construct(
         private readonly VotingProviderRegistry $providers,
         private readonly VotingAvailability $availability,
+        private readonly RegistrationSettings $registration,
     ) {}
 
     public function invite(User $user, int $accountId, int $serverId): VoteInvitation
     {
         // Persist the UUID and recipient before HTTP. Never hold database locks during a network call.
         $prepared = DB::transaction(function () use ($user, $accountId, $serverId): array|VoteInvitation {
+            abort_unless(ModuleState::query()->whereKey('voting')->lockForUpdate()->first()?->enabled === true, 404);
             $setting = VotingSetting::query()->where('provider_code', 'ktreon')->lockForUpdate()->firstOrFail();
             abort_unless($this->availability->enabled($setting), 404);
             $owner = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
-            abort_unless($owner->is_active, 403);
+            abort_unless($owner->is_active && (! $this->registration->emailVerificationRequired() || $owner->hasVerifiedEmail()), 403);
             $server = GameServer::query()->whereKey($serverId)->lockForUpdate()->firstOrFail();
             $account = $owner->availableGameAccounts()->whereKey($accountId)->lockForUpdate()->first();
             abort_unless($account !== null && $server->login_server_id !== null && $account->login_server_id === $server->login_server_id, 404);
@@ -89,6 +93,9 @@ final class VotingInvitationService
         unset($prepared['key']);
 
         return DB::transaction(function () use ($prepared, $result, $user, $accountId, $serverId): VoteInvitation {
+            if (ModuleState::query()->whereKey('voting')->lockForUpdate()->first()?->enabled !== true) {
+                return new VoteInvitation('changed');
+            }
             $setting = VotingSetting::query()->where('provider_code', 'ktreon')->lockForUpdate()->firstOrFail();
             $binding = VotingBinding::query()->whereKey($prepared['binding_id'])->lockForUpdate()->firstOrFail();
             if ($setting->project_id !== $prepared['project'] || $setting->credential_revision !== $prepared['revision']
@@ -114,6 +121,7 @@ final class VotingInvitationService
             $account = $owner?->availableGameAccounts()->whereKey($accountId)->lockForUpdate()->first();
             $reward = VotingServerReward::query()->where('game_server_id', $serverId)->lockForUpdate()->first();
             if (! $this->availability->enabled($setting) || $owner === null || ! $owner->is_active
+                || ($this->registration->emailVerificationRequired() && ! $owner->hasVerifiedEmail())
                 || $server === null || $server->login_server_id === null || $account === null
                 || $account->login_server_id !== $server->login_server_id || $binding->user_id !== $owner->id
                 || $binding->user_game_account_id !== $account->id || $binding->game_server_id !== $server->id

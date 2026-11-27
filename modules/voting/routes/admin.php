@@ -9,6 +9,7 @@ Route::get('/providers/ktreon', [AdminVotingController::class, 'provider'])->nam
 Route::put('/providers/ktreon', [AdminVotingController::class, 'save'])->name('providers.ktreon.save');
 Route::post('/providers/ktreon/check', [AdminVotingController::class, 'check'])
     ->middleware('throttle:6,1,voting-check')->name('providers.ktreon.check');
+Route::put('/providers/ktreon/player-access', [AdminVotingController::class, 'playerAccess'])->name('providers.ktreon.access');
 Route::get('/rewards', [AdminVotingRewardController::class, 'index'])->name('rewards.index');
 Route::put('/rewards/{server}', [AdminVotingRewardController::class, 'update'])->whereNumber('server')->name('rewards.update');
 Route::get('/rewards/{server}/items/{item}', [AdminVotingRewardController::class, 'preview'])

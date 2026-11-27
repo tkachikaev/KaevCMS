@@ -64,6 +64,8 @@ return [
             'destroy' => 'Comment deleted',
         ],
         'voting' => [
+            'reward_granted' => 'Voting reward granted',
+            'player_access_updated' => 'Voting player access changed',
             'rewards_updated' => 'Voting rewards changed',
             'settings_updated' => 'Voting provider settings changed',
         ],

@@ -51,4 +51,29 @@
             </form>
         @endif
     </x-admin.card>
+    <x-admin.card :narrow="true">
+        <x-admin.card-heading :title="__('module-voting::messages.player_access')" :description="__('module-voting::messages.access_help')" />
+        <p>{{ __('module-voting::messages.'.($settings['player_access_enabled'] ? 'enabled' : 'disabled')) }}</p>
+        @if($canManage)
+            <form method="POST" class="settings-form" action="{{ route('admin.module-pages.voting.providers.ktreon.access', ['adminPath' => $adminPath]) }}">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="player_access_enabled" value="{{ $settings['player_access_enabled'] ? 0 : 1 }}">
+                @unless($settings['player_access_enabled'])
+                    <label><input type="checkbox" name="confirm" value="1" required> {{ __('module-voting::messages.access_confirm') }}</label>
+                @endunless
+                <button type="submit" class="button button-secondary">{{ __('module-voting::messages.'.($settings['player_access_enabled'] ? 'close_access' : 'open_access')) }}</button>
+            </form>
+        @endif
+    </x-admin.card>
+    <x-admin.card :narrow="true">
+        <x-admin.card-heading :title="__('module-voting::messages.sync_title')" :description="__('module-voting::messages.sync_help')" />
+        <p>{{ __('module-voting::messages.last_sync') }}: {{ $settings['last_sync_at']?->format('Y-m-d H:i:s') ?? '—' }}</p>
+        @if($settings['last_sync_result'])
+            <p role="status">{{ __('module-voting::messages.sync_'.$settings['last_sync_result']) }}</p>
+        @endif
+        @if($settings['sync_retry_at']?->isFuture())
+            <p>{{ __('module-voting::messages.retry_at') }}: {{ $settings['sync_retry_at']->format('Y-m-d H:i:s') }}</p>
+        @endif
+    </x-admin.card>
 @endsection

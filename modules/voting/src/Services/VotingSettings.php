@@ -18,9 +18,13 @@ use RuntimeException;
 
 final class VotingSettings
 {
-    public function __construct(private readonly AuditLogger $audit, private readonly VotingProviderRegistry $providers) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly VotingProviderRegistry $providers,
+        private readonly VotingAvailability $availability,
+    ) {}
 
-    /** @return array{enabled: bool, project_id: ?string, key_saved: bool, pending_policy: string, last_checked_at: ?Carbon, last_check_result: ?string} */
+    /** @return array{enabled: bool, project_id: ?string, key_saved: bool, pending_policy: string, last_checked_at: ?Carbon, last_check_result: ?string, player_access_enabled: bool, last_sync_at: ?Carbon, last_sync_result: ?string, sync_retry_at: ?Carbon} */
     public function state(): array
     {
         $row = $this->row();
@@ -28,6 +32,10 @@ final class VotingSettings
         return [
             'enabled' => $row->enabled,
             'project_id' => $row->project_id,
+            'player_access_enabled' => $row->player_access_enabled,
+            'last_sync_at' => $row->last_sync_at,
+            'last_sync_result' => $row->last_sync_result,
+            'sync_retry_at' => $row->sync_retry_at,
             'key_saved' => $row->api_key_ciphertext !== null,
             'pending_policy' => $row->pending_policy,
             'last_checked_at' => $row->last_checked_at,
@@ -66,7 +74,7 @@ final class VotingSettings
 
             $row->forceFill([
                 'enabled' => $enabled,
-                'player_access_enabled' => $enabled && ! $projectChanged && $row->player_access_enabled,
+                'player_access_enabled' => $enabled && ! $projectChanged && ! $keyChanged && $row->player_access_enabled,
                 'project_id' => $projectId,
                 'api_key_ciphertext' => $ciphertext,
                 'pending_policy' => $policy,
@@ -89,6 +97,23 @@ final class VotingSettings
                 'pending_policy' => $policy,
                 'api_key_changed' => $projectChanged || $keyChanged,
             ]) === null) {
+                throw new RuntimeException('Voting administrative audit could not be recorded.');
+            }
+        }, 3);
+    }
+
+    public function setPlayerAccess(Admin $admin, bool $enabled, bool $confirmed): void
+    {
+        $this->authorize($admin);
+        DB::transaction(function () use ($admin, $enabled, $confirmed): void {
+            $row = $this->row(true);
+            if ($enabled && (! $confirmed || ! $row->enabled || $row->project_id === null
+                || $row->api_key_ciphertext === null || $row->last_check_result !== 'ok'
+                || $this->availability->rewards()->isEmpty())) {
+                throw ValidationException::withMessages(['player_access_enabled' => __('module-voting::messages.access_requirements')]);
+            }
+            $row->forceFill(['player_access_enabled' => $enabled, 'updated_by_admin_id' => $admin->id])->save();
+            if ($this->audit->success('module', 'voting.player_access_updated', $admin, 'ktreon', ['enabled' => $enabled]) === null) {
                 throw new RuntimeException('Voting administrative audit could not be recorded.');
             }
         }, 3);

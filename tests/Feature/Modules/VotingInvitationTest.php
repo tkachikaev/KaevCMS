@@ -40,7 +40,7 @@ final class VotingInvitationTest extends TestCase
 
     private function configure(bool $playerAccess = true): GameServer
     {
-        // Simulate a future, fully configured reward program; there is no UI to enable player access yet.
+        // Seed a configured program without performing a live provider check.
         VotingSetting::query()->where('provider_code', 'ktreon')->firstOrFail()->forceFill([
             'enabled' => true,
             'player_access_enabled' => $playerAccess,

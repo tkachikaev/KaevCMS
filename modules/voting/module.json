@@ -2,7 +2,7 @@
     "schema": 1,
     "id": "voting",
     "name": "Voting",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "author": "KaevCMS",
     "description": "Connect external voting providers and configure voting rewards.",
     "cms_min": "0.61.1",

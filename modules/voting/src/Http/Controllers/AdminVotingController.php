@@ -64,6 +64,18 @@ final class AdminVotingController extends Controller
             : $this->back($request)->withErrors(['connection' => $message]);
     }
 
+    public function playerAccess(Request $request): RedirectResponse
+    {
+        $admin = $this->admin($request);
+        $data = $request->validate([
+            'player_access_enabled' => ['required', 'boolean'],
+            'confirm' => ['sometimes', 'accepted'],
+        ]);
+        $this->settings->setPlayerAccess($admin, (bool) $data['player_access_enabled'], isset($data['confirm']));
+
+        return $this->back($request)->with('status', __('module-voting::messages.saved'));
+    }
+
     public function history(Request $request): View
     {
         $status = $request->query('status');

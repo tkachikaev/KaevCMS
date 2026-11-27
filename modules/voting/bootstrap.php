@@ -4,7 +4,10 @@ use App\Auth\AdminRole;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleContext;
 use App\Support\Modules\ModuleNavigationRegistry;
+use Illuminate\Console\Application as ArtisanApplication;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Schedule;
+use KaevCMS\Modules\Voting\Console\Commands\SyncVotingCommand;
 use KaevCMS\Modules\Voting\Services\VotingAvailability;
 
 return static function (Application $app, ModuleContext $module): void {
@@ -31,4 +34,12 @@ return static function (Application $app, ModuleContext $module): void {
         viewRoles: [AdminRole::Auditor],
         manageRoles: [AdminRole::Owner, AdminRole::Administrator],
     );
+    if ($app->runningInConsole()) {
+        ArtisanApplication::starting(static function (ArtisanApplication $artisan): void {
+            $artisan->resolveCommands([SyncVotingCommand::class]);
+        });
+        Schedule::command('kaevcms:voting-sync')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(10);
+    }
 };
