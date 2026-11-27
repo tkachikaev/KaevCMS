@@ -61,6 +61,30 @@ class ServerConnectionTesterDiagnosticsTest extends TestCase
         $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes', 'character_rescue'], $report['capabilities']);
     }
 
+    public function test_rusacis_reports_character_rescue_only_when_all_coordinates_exist(): void
+    {
+        $fake = new FakeExternalDatabaseConnectionTester;
+        $tester = $this->tester($fake);
+        $values = [...$this->loginValues(), 'driver' => ServerDriverRegistry::RUSACIS_DRIVER];
+
+        foreach ([['x', 'y', 'z'], ['x', 'y']] as $optional) {
+            $fake->report['checks'] = [
+                $this->check('characters', optional: $optional),
+                $this->check('clan_data'),
+                $this->check('heroes'),
+                $this->check('castle', exists: false),
+            ];
+
+            $report = $tester->testGameValues($values, new LoginServer($this->loginValues()));
+            $this->assertSame('rusacis_interlude', $report['schema_profile']);
+            $expected = ['level', 'pvp', 'pk', 'play_time', 'heroes'];
+            if (count($optional) === 3) {
+                $expected[] = 'character_rescue';
+            }
+            $this->assertSame($expected, $report['capabilities']);
+        }
+    }
+
     public function test_incompatible_schema_uses_safe_domain_error_class(): void
     {
         $fake = new FakeExternalDatabaseConnectionTester;

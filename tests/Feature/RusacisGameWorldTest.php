@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\CharacterRescueGateway;
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Models\LoginServer;
@@ -10,6 +11,8 @@ use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\ServerDriverRegistry;
+use App\Support\GameServerFeatures\CharacterRescueWriteResult;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -84,7 +87,7 @@ class RusacisGameWorldTest extends TestCase
     public function test_rankings_online_count_heroes_and_castle_owners_use_rusacis_columns(): void
     {
         $driver = app(GameWorldDriverResolver::class)->resolve($this->server);
-        $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'], $driver->capabilities($this->server));
+        $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles', 'character_rescue'], $driver->capabilities($this->server));
         $this->assertSame(['ActiveHero', 'NormalCharacter', 'OtherAccount'], array_column($driver->ranking($this->server, 'level', 5), 'name'));
         $this->assertSame(['ActiveHero'], array_column($driver->ranking($this->server, 'pvp', 10), 'name'));
         $this->assertSame('NormalCharacter', $driver->ranking($this->server, 'pk', 10)[0]['name']);
@@ -94,7 +97,6 @@ class RusacisGameWorldTest extends TestCase
         $this->assertSame('Test Clan', $driver->castleOwners($this->server)[0]['clan_name']);
         $this->assertSame('ActiveHero', $driver->castleOwners($this->server)[0]['leader_name']);
         $this->assertSame(1, app(MySqlGameServerOnlineCounter::class)->count($this->server));
-        $this->assertNotContains('character_rescue', $driver->capabilities($this->server));
     }
 
     public function test_public_statistics_page_uses_rusacis_character_rankings(): void
@@ -113,7 +115,7 @@ class RusacisGameWorldTest extends TestCase
         Schema::connection('rusacis_world_test')->drop('castle');
         $driver = app(GameWorldDriverResolver::class)->resolve($this->server);
 
-        $this->assertSame(['level', 'pvp', 'pk', 'play_time'], $driver->capabilities($this->server));
+        $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'character_rescue'], $driver->capabilities($this->server));
         $this->assertSame([], $driver->heroes($this->server));
         $this->assertSame([], $driver->castleOwners($this->server));
         $this->assertCount(3, $driver->ranking($this->server, 'level', 10));
@@ -180,6 +182,76 @@ class RusacisGameWorldTest extends TestCase
         $queries = array_filter($database->getQueryLog(), static fn (array $query): bool => str_contains($query['query'], 'from "characters"'));
         $this->assertNotEmpty($queries);
         $this->assertStringContainsString('limit 1', strtolower(end($queries)['query']));
+    }
+
+    public function test_character_rescue_moves_owned_offline_characters_with_zero_or_null_deletion_time(): void
+    {
+        $gateway = app(CharacterRescueGateway::class);
+        $this->assertTrue($gateway->supports($this->server));
+        $this->assertTrue($gateway->capabilities($this->server)->supported);
+
+        $db = DB::connection('rusacis_world_test');
+        $target = ['x' => 83400, 'y' => 148600, 'z' => -3400];
+        $before = CarbonImmutable::now()->subMinutes(5);
+
+        foreach ([null, 0] as $deleteTime) {
+            $db->table('characters')->where('obj_Id', 101)->update([
+                'deletetime' => $deleteTime, 'x' => 10, 'y' => 20, 'z' => 30,
+            ]);
+            $result = $gateway->rescue($this->server, 'player1', 101, $target, $before);
+            $this->assertTrue($result->successful());
+            $this->assertSame([10, 20, 30], [$result->oldX, $result->oldY, $result->oldZ]);
+            $this->assertSame($target, (array) $db->table('characters')->where('obj_Id', 101)->first(['x', 'y', 'z']));
+        }
+    }
+
+    public function test_character_rescue_rejects_ineligible_rusacis_characters_without_writing(): void
+    {
+        $gateway = app(CharacterRescueGateway::class);
+        $db = DB::connection('rusacis_world_test');
+        $original = ['x' => 10, 'y' => 20, 'z' => 30];
+        $db->table('characters')->update($original);
+        $target = ['x' => 83400, 'y' => 148600, 'z' => -3400];
+        $before = CarbonImmutable::now()->subMinutes(5);
+
+        foreach ([
+            100 => CharacterRescueWriteResult::ONLINE,
+            102 => CharacterRescueWriteResult::NOT_FOUND,
+            103 => CharacterRescueWriteResult::NOT_FOUND,
+            104 => CharacterRescueWriteResult::NOT_FOUND,
+        ] as $id => $status) {
+            $this->assertSame($status, $gateway->rescue($this->server, 'player1', $id, $target, $before)->status);
+            $this->assertSame($original, (array) $db->table('characters')->where('obj_Id', $id)->first(['x', 'y', 'z']));
+        }
+
+        foreach ([
+            [['online' => null], CharacterRescueWriteResult::ONLINE],
+            [['online' => 0, 'lastAccess' => null], CharacterRescueWriteResult::OFFLINE_DELAY],
+            [['lastAccess' => CarbonImmutable::now()->getTimestampMs()], CharacterRescueWriteResult::OFFLINE_DELAY],
+        ] as [$values, $status]) {
+            $db->table('characters')->where('obj_Id', 101)->update($values);
+            $this->assertSame($status, $gateway->rescue($this->server, 'player1', 101, $target, $before)->status);
+            $this->assertSame($original, (array) $db->table('characters')->where('obj_Id', 101)->first(['x', 'y', 'z']));
+        }
+    }
+
+    public function test_missing_rescue_coordinate_disables_only_character_rescue(): void
+    {
+        Schema::connection('rusacis_world_test')->table('characters', static function (Blueprint $table): void {
+            $table->dropColumn('z');
+        });
+
+        $driver = app(GameWorldDriverResolver::class)->resolve($this->server);
+        $this->assertNotContains('character_rescue', $driver->capabilities($this->server));
+        $this->assertCount(3, $driver->ranking($this->server, 'level', 10));
+
+        $gateway = app(CharacterRescueGateway::class);
+        $capabilities = $gateway->capabilities($this->server);
+        $this->assertFalse($capabilities->supported);
+        $this->assertSame(['z'], $capabilities->missingColumns);
+        $this->assertSame(CharacterRescueWriteResult::UNSUPPORTED, $gateway->rescue(
+            $this->server, 'player1', 101, ['x' => 1, 'y' => 2, 'z' => 3], CarbonImmutable::now(),
+        )->status);
     }
 
     private function createSchema(): void

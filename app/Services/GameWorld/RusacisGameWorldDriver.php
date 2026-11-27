@@ -171,12 +171,12 @@ final class RusacisGameWorldDriver implements GameWorldDriver
             return $this->inspectSchema($server);
         }
         $key = implode(':', [
-            'rusacis-game-schema-v2',
+            'rusacis-game-schema-v3',
             $server->id,
             $server->updated_at?->getTimestamp() ?? 0,
         ]);
 
-        /** @var array{heroes_available:bool,castles_available:bool} $profile */
+        /** @var array{heroes_available:bool,castles_available:bool,character_rescue_available:bool} $profile */
         $profile = Cache::remember(
             $key,
             now()->addMinutes(self::SCHEMA_CACHE_MINUTES),
