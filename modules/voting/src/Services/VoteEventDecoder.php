@@ -56,8 +56,8 @@ final class VoteEventDecoder
                 || ! is_int($row['status_version'] ?? null) || $row['status_version'] < 1) {
                 return $invalid;
             }
-            $voted = $this->utcDate($row['voted_at'] ?? null);
-            $changed = $this->utcDate($row['status_changed_at'] ?? null);
+            $voted = self::utcDate($row['voted_at'] ?? null);
+            $changed = self::utcDate($row['status_changed_at'] ?? null);
             if ($voted === null || $changed === null || strcmp($changed, $voted) < 0) {
                 return $invalid;
             }
@@ -80,7 +80,7 @@ final class VoteEventDecoder
         return new VoteEventPage('ok', $events, $last, $page['has_more']);
     }
 
-    private function utcDate(mixed $value): ?string
+    public static function utcDate(mixed $value): ?string
     {
         if (! is_string($value)
             || preg_match('/\A(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,7}))?(?:Z|\+00:00)\z/D', $value, $parts) !== 1

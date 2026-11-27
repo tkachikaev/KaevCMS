@@ -8,6 +8,7 @@ use App\Models\UserGameAccount;
 use Illuminate\Database\Eloquent\Collection;
 use KaevCMS\Modules\Voting\Models\VotingServerReward;
 use KaevCMS\Modules\Voting\Models\VotingSetting;
+use KaevCMS\Modules\Voting\Models\VotingVote;
 
 final class VotingAvailability
 {
@@ -39,8 +40,19 @@ final class VotingAvailability
             ->orderBy('game_login')->orderBy('id')->get();
     }
 
+    public function hasHistory(User $user): bool
+    {
+        return VotingVote::query()->where('user_id', $user->id)->exists();
+    }
+
     public function visible(): bool
     {
-        return $this->enabled() && $this->rewards()->isNotEmpty();
+        if ($this->enabled() && $this->rewards()->isNotEmpty()) {
+            return true;
+        }
+
+        $user = auth('web')->user();
+
+        return $user instanceof User && $this->hasHistory($user);
     }
 }

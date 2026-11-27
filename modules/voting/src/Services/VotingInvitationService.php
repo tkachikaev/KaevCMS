@@ -49,6 +49,12 @@ final class VotingInvitationService
             try {
                 $key = Crypt::decryptString($ciphertext);
             } catch (DecryptException) {
+                $setting->forceFill([
+                    'player_access_enabled' => false,
+                    'last_check_result' => 'not_configured',
+                    'last_checked_at' => now(),
+                ])->save();
+
                 return new VoteInvitation('not_configured');
             }
 
@@ -107,6 +113,14 @@ final class VotingInvitationService
                 if ($setting->intent_retry_at === null || $setting->intent_retry_at->lessThan($until)) {
                     $setting->forceFill(['intent_retry_at' => $until])->save();
                 }
+            }
+            if (in_array($result->result, ['unauthorized', 'not_configured'], true)) {
+                // A definitively rejected key must be checked again before reopening invitations.
+                $setting->forceFill([
+                    'player_access_enabled' => false,
+                    'last_check_result' => $result->result,
+                    'last_checked_at' => now(),
+                ])->save();
             }
             if ($result->result === 'expired') {
                 $binding->forceFill(['attempt_expires_at' => now()])->save();

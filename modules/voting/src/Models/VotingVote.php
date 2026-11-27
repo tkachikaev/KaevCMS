@@ -48,6 +48,12 @@ final class VotingVote extends Model
         ];
     }
 
+    /** @return list<array{item_id:int,amount:int}> */
+    public function snapshotItems(): array
+    {
+        return (new VotingServerReward)->forceFill(['items' => $this->items_snapshot])->validatedItems();
+    }
+
     /** @return BelongsTo<GameServer, $this> */
     public function gameServer(): BelongsTo
     {

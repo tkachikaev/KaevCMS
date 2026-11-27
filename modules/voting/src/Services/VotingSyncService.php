@@ -23,13 +23,14 @@ final class VotingSyncService
     ) {}
 
     /** @return array{result:string,processed:int,granted:int,pages:int} */
-    public function sync(int $maxPages = 4): array
+    public function sync(int $maxPages = 4, int $pageSize = 25): array
     {
         $counts = ['result' => 'idle', 'processed' => 0, 'granted' => 0, 'pages' => 0];
         if ($this->modules->inspect('voting')['status'] !== 'enabled') {
             return $counts;
         }
 
+        $pageSize = max(1, min(25, $pageSize));
         $deadline = hrtime(true) + 45_000_000_000;
         for ($i = 0; $i < max(1, min(4, $maxPages)) && hrtime(true) < $deadline; $i++) {
             $setting = VotingSetting::query()->where('provider_code', 'ktreon')->first();
@@ -54,7 +55,7 @@ final class VotingSyncService
             try {
                 $key = Crypt::decryptString($setting->api_key_ciphertext);
                 // Network I/O is outside the transaction. The database row provides the commit fence.
-                $page = $this->providers->get('ktreon')->readEvents($project, $key, $cursor, 25);
+                $page = $this->providers->get('ktreon')->readEvents($project, $key, $cursor, $pageSize);
                 unset($key);
             } catch (DecryptException) {
                 $page = new VoteEventPage('not_configured');
@@ -66,13 +67,13 @@ final class VotingSyncService
             }
 
             try {
-                $committed = DB::transaction(function () use ($project, $revision, $cursor, $page): ?array {
+                $committed = DB::transaction(function () use ($project, $revision, $cursor, $page, $pageSize): ?array {
                     $current = $this->current($project, $revision, $cursor);
                     if ($current === null) {
                         return null;
                     }
                     if ($page->nextCursor === null || ! VoteEventDecoder::validCursor($page->nextCursor)
-                        || count($page->events) > 25 || ($page->hasMore && count($page->events) !== 25)) {
+                        || count($page->events) > $pageSize || ($page->hasMore && count($page->events) !== $pageSize)) {
                         throw new RuntimeException('Invalid voting page.');
                     }
                     $last = $cursor;
@@ -162,7 +163,15 @@ final class VotingSyncService
                 $current->forceFill([
                     'last_sync_result' => $result,
                     'sync_retry_at' => now()->addSeconds($result === 'rate_limited' ? max(60, min(3600, $retryAfter)) : 300),
-                ])->save();
+                ]);
+                if (in_array($result, ['unauthorized', 'not_configured'], true)) {
+                    $current->forceFill([
+                        'player_access_enabled' => false,
+                        'last_check_result' => $result,
+                        'last_checked_at' => now(),
+                    ]);
+                }
+                $current->save();
 
                 return $result;
             }, 3);

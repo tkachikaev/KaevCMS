@@ -64,6 +64,7 @@ return [
             'destroy' => 'Comment deleted',
         ],
         'voting' => [
+            'sync_requested' => 'Manual voting synchronization requested',
             'reward_granted' => 'Voting reward granted',
             'player_access_updated' => 'Voting player access changed',
             'rewards_updated' => 'Voting rewards changed',

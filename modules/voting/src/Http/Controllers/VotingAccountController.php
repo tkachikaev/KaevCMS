@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use KaevCMS\Modules\Voting\Models\VotingServerReward;
+use KaevCMS\Modules\Voting\Models\VotingVote;
 use KaevCMS\Modules\Voting\Services\VotingAvailability;
 use KaevCMS\Modules\Voting\Services\VotingInvitationService;
 
@@ -20,11 +21,20 @@ final class VotingAccountController extends Controller
         private readonly GameItemCatalog $catalog,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $user = $this->user($request);
+        if (! $this->availability->enabled()) {
+            abort_unless($this->availability->hasHistory($user), 404);
+
+            return redirect()->route('modules.voting.history');
+        }
         $rewards = $this->availability->rewards();
-        abort_if($rewards->isEmpty(), 404);
+        if ($rewards->isEmpty()) {
+            abort_unless($this->availability->hasHistory($user), 404);
+
+            return redirect()->route('modules.voting.history');
+        }
         $serverId = filter_var($request->query('server'), FILTER_VALIDATE_INT);
         $selected = $rewards->firstWhere('game_server_id', $serverId) ?? $rewards->first();
         abort_unless($selected instanceof VotingServerReward, 404);
@@ -42,9 +52,27 @@ final class VotingAccountController extends Controller
         ]);
     }
 
+    public function history(Request $request): View
+    {
+        $user = $this->user($request);
+        $status = $request->query('status');
+        $status = is_string($status) && in_array($status, ['pending', 'accepted', 'rejected', 'revoked'], true) ? $status : '';
+        $votes = VotingVote::query()->where('user_id', $user->id)->with('gameServer.translations');
+        if ($status !== '') {
+            $votes->where('status', $status);
+        }
+
+        return view('module-voting::account.history', [
+            'votes' => $votes->orderByDesc('id')->paginate(20)->appends(['status' => $status]),
+            'status' => $status,
+            'votingAvailable' => $this->availability->enabled() && $this->availability->rewards()->isNotEmpty(),
+        ]);
+    }
+
     public function invite(Request $request): RedirectResponse
     {
         $user = $this->user($request);
+        abort_unless($this->availability->enabled(), 404);
         $data = $request->validate([
             'game_server_id' => ['required', 'integer', 'min:1'],
             'user_game_account_id' => ['required', 'integer', 'min:1'],
@@ -54,15 +82,17 @@ final class VotingAccountController extends Controller
             return redirect()->away($result->url, 303, ['Cache-Control' => 'no-store', 'Referrer-Policy' => 'no-referrer']);
         }
 
-        return redirect()->route('modules.voting.index', ['server' => (int) $data['game_server_id']])
-            ->withErrors(['voting' => __('module-voting::messages.invite_'.$result->result)]);
+        $destination = $this->availability->enabled()
+            ? redirect()->route('modules.voting.index', ['server' => (int) $data['game_server_id']])
+            : redirect()->route('modules.voting.history');
+
+        return $destination->withErrors(['voting' => __('module-voting::messages.invite_'.$result->result)]);
     }
 
     private function user(Request $request): User
     {
         $user = $request->user('web');
         abort_unless($user instanceof User && $user->is_active, 403);
-        abort_unless($this->availability->enabled(), 404);
 
         return $user;
     }

@@ -4,8 +4,13 @@
 @section('content')
 <x-account-page>
     <x-account-panel class="account-section account-surface">
-        <x-account-panel-header title="KTreon" :description="__('module-voting::messages.vote_help')" />
-        <nav class="reward-server-tabs account-tabs" aria-label="{{ __('Game servers') }}">
+        <x-account-panel-header title="KTreon" :description="__('module-voting::messages.vote_help')">
+            <x-slot:actions>
+                <a wire:navigate class="account-button secondary" href="{{ route('modules.voting.history') }}">{{ __('module-voting::messages.history') }}</a>
+                <a wire:navigate class="account-button secondary" href="{{ public_route('web-inventory.index') }}">{{ __('module-voting::messages.open_inventory') }}</a>
+            </x-slot:actions>
+        </x-account-panel-header>
+        <nav class="reward-server-tabs account-tabs" aria-label="{{ __('module-voting::messages.game_server') }}">
             @foreach($rewards as $reward)
                 <a wire:navigate @class(['active' => $reward->id === $selected->id]) @if($reward->id === $selected->id) aria-current="page" @endif href="{{ route('modules.voting.index', ['server' => $reward->game_server_id]) }}">{{ $reward->gameServer->nameFor() }}</a>
             @endforeach
@@ -34,6 +39,9 @@
                 <input type="hidden" name="game_server_id" value="{{ $selected->game_server_id }}">
                 <label for="voting_game_account">{{ __('module-voting::messages.game_account') }}</label>
                 <select id="voting_game_account" name="user_game_account_id" required>
+                    @if($accounts->count() > 1)
+                        <option value="">{{ __('module-voting::messages.select_account') }}</option>
+                    @endif
                     @foreach($accounts as $account)
                         <option value="{{ $account->id }}">{{ $account->game_login }}</option>
                     @endforeach

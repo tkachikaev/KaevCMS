@@ -163,6 +163,50 @@ final class VotingInvitationTest extends TestCase
         $this->assertStringNotContainsString($response['vote_url'], json_encode(DB::table('module_voting_bindings')->get(), JSON_THROW_ON_ERROR));
     }
 
+    public function test_invalid_calendar_expiration_is_not_normalized_into_a_valid_invitation(): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-03-02 00:00:00', 'UTC'));
+        $server = $this->configure();
+        $user = User::factory()->create();
+        $account = $this->account($server, $user);
+        $payload = array_replace($this->response(), ['expires_at' => '2026-02-30T00:05:00Z']);
+        Http::fake([self::ENDPOINT => Http::response($payload, 201)]);
+
+        $this->actingAs($user)->post(route('modules.voting.invite'), $this->payload($server, $account))
+            ->assertRedirect(route('modules.voting.index', ['server' => $server->id]))
+            ->assertSessionHasErrors('voting');
+        $this->assertDatabaseHas('module_voting_bindings', ['intent_id' => null]);
+    }
+
+    public function test_unauthorized_invitation_closes_player_access_until_checked_again(): void
+    {
+        $server = $this->configure();
+        $user = User::factory()->create();
+        $account = $this->account($server, $user);
+        Http::fake([self::ENDPOINT => Http::response(['error' => 'unauthorized'], 401)]);
+
+        $this->actingAs($user)->post(route('modules.voting.invite'), $this->payload($server, $account))
+            ->assertRedirect(route('modules.voting.history'))->assertSessionHasErrors('voting');
+        $this->get(route('modules.voting.history'))->assertOk()->assertSee(__('module-voting::messages.invite_unauthorized'));
+        $this->assertDatabaseHas('module_voting_settings', ['player_access_enabled' => false, 'last_check_result' => 'unauthorized']);
+        $this->post(route('modules.voting.invite'), $this->payload($server, $account))->assertNotFound();
+        Http::assertSentCount(1);
+    }
+
+    public function test_corrupt_encrypted_key_closes_access_without_network_call(): void
+    {
+        $server = $this->configure();
+        $user = User::factory()->create();
+        $account = $this->account($server, $user);
+        VotingSetting::query()->update(['api_key_ciphertext' => 'invalid-ciphertext']);
+
+        $this->actingAs($user)->post(route('modules.voting.invite'), $this->payload($server, $account))
+            ->assertRedirect(route('modules.voting.history'))->assertSessionHasErrors('voting');
+        $this->assertDatabaseHas('module_voting_settings', ['player_access_enabled' => false, 'last_check_result' => 'not_configured']);
+        $this->assertDatabaseCount('module_voting_bindings', 0);
+        Http::assertNothingSent();
+    }
+
     public function test_provider_cannot_redirect_player_to_an_untrusted_origin(): void
     {
         $server = $this->configure();

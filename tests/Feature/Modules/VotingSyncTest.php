@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Modules;
 
+use App\Auth\AdminRole;
+use App\Models\Admin;
 use App\Models\GameServer;
 use App\Models\ModuleState;
 use App\Models\RewardInventoryGrant;
@@ -279,6 +281,81 @@ final class VotingSyncTest extends TestCase
         $this->assertDatabaseCount('reward_inventory_grants', 0);
         $this->assertDatabaseCount('module_voting_events', 0);
         $this->assertDatabaseHas('module_voting_settings', ['event_cursor' => '0']);
+    }
+
+    public function test_unauthorized_sync_closes_player_access_without_advancing_cursor(): void
+    {
+        $this->configure();
+        VotingSetting::query()->update(['enabled' => true, 'player_access_enabled' => true, 'last_check_result' => 'ok']);
+        Http::fake([self::ENDPOINT.'*' => Http::response(['error' => 'unauthorized'], 401)]);
+
+        $this->assertSame('unauthorized', app(VotingSyncService::class)->sync()['result']);
+        $this->assertDatabaseHas('module_voting_settings', [
+            'player_access_enabled' => false,
+            'last_check_result' => 'unauthorized',
+            'event_cursor' => '0',
+        ]);
+        $this->assertDatabaseCount('reward_inventory_grants', 0);
+    }
+
+    public function test_player_history_is_private_and_remains_accessible_when_invitations_are_paused(): void
+    {
+        $binding = $this->configure();
+        $account = UserGameAccount::query()->findOrFail($binding->user_game_account_id);
+        $account->forceFill(['game_login' => 'private-voting-account'])->save();
+        $user = User::query()->findOrFail($binding->user_id);
+        $other = User::factory()->create();
+        Http::fake([self::ENDPOINT.'*' => Http::response($this->page([$this->event($binding, 1, 'accepted', 1)]))]);
+        $this->assertSame(1, app(VotingSyncService::class)->sync()['granted']);
+
+        $this->actingAs($user)->get(route('modules.voting.index'))->assertRedirect(route('modules.voting.history'));
+        $this->get(route('modules.voting.history'))->assertOk()
+            ->assertSee('private-voting-account')->assertDontSee($binding->player_ref);
+        $this->get(route('modules.voting.history', ['status' => 'rejected']))->assertOk()->assertDontSee('private-voting-account');
+        $this->actingAs($other)->get(route('modules.voting.history', ['user_id' => $user->id]))
+            ->assertOk()->assertDontSee('private-voting-account')->assertDontSee($binding->player_ref);
+        $this->get(route('modules.voting.index'))->assertNotFound();
+    }
+
+    public function test_admin_manual_sync_uses_bounded_page_and_is_rate_limited(): void
+    {
+        $binding = $this->configure();
+        $admin = Admin::factory()->create();
+        Http::fake([self::ENDPOINT.'*' => Http::response($this->page([$this->event($binding, 1, 'accepted', 1)]))]);
+        $url = '/admin/extensions/voting/providers/ktreon/sync';
+        $this->actingAs($admin, 'admin')->post($url)->assertRedirect()->assertSessionHas('status');
+        Http::assertSent(fn (Request $request): bool => $request->url() === self::ENDPOINT.'?cursor=0&limit=5');
+        $this->assertDatabaseHas('audit_logs', ['action' => 'voting.sync_requested', 'actor_id' => $admin->id]);
+        $this->assertDatabaseCount('reward_inventory_grants', 1);
+        $this->post($url)->assertStatus(429);
+        Http::assertSentCount(1);
+    }
+
+    public function test_manual_sync_cannot_bypass_cooldown_or_read_only_permissions(): void
+    {
+        $this->configure();
+        VotingSetting::query()->update(['sync_retry_at' => now()->addMinutes(10)]);
+        $url = '/admin/extensions/voting/providers/ktreon/sync';
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Auditor]), 'admin')->post($url)->assertForbidden();
+        $this->actingAs(Admin::factory()->create(), 'admin')->post($url)->assertRedirect()->assertSessionHas('status');
+        Http::assertNothingSent();
+        $this->assertDatabaseHas('module_voting_settings', ['event_cursor' => '0']);
+    }
+
+    public function test_admin_history_filters_vote_status_reward_and_server(): void
+    {
+        $binding = $this->configure();
+        $account = UserGameAccount::query()->findOrFail($binding->user_game_account_id);
+        $account->forceFill(['game_login' => 'voting-history-target'])->save();
+        Http::fake([self::ENDPOINT.'*' => Http::response($this->page([$this->event($binding, 1, 'accepted', 1)]))]);
+        $this->assertSame(1, app(VotingSyncService::class)->sync()['granted']);
+
+        $url = '/admin/extensions/voting/history';
+        $this->actingAs(Admin::factory()->create(), 'admin')
+            ->get($url.'?server='.$binding->game_server_id.'&status=accepted&reward=granted')
+            ->assertOk()->assertSee('voting-history-target')->assertDontSee($binding->player_ref);
+        $this->get($url.'?reward=waiting')->assertOk()->assertDontSee('voting-history-target');
+        $this->get($url.'?status=rejected')->assertOk()->assertDontSee('voting-history-target');
     }
 
     public function test_disabled_module_does_not_poll_existing_bindings(): void

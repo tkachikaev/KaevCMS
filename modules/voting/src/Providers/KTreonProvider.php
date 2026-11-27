@@ -113,11 +113,10 @@ final class KTreonProvider implements VotingProvider
                 if (! is_array($data) || ! is_string($data['intent_id'] ?? null) || ! self::validProjectId($data['intent_id'])
                     || ! is_string($data['vote_url'] ?? null)
                     || preg_match('#\Ahttps://ktreon\.com/vote/kvi_[A-Za-z0-9_-]{43}\z#D', $data['vote_url']) !== 1
-                    || ! is_string($data['expires_at'] ?? null)
-                    || preg_match('/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|\+00:00)\z/D', $data['expires_at']) !== 1) {
+                    || ($expiry = VoteEventDecoder::utcDate($data['expires_at'] ?? null)) === null) {
                     return new VoteInvitation('invalid_response');
                 }
-                $expiresAt = CarbonImmutable::parse($data['expires_at'])->utc();
+                $expiresAt = CarbonImmutable::parse($expiry, 'UTC');
                 if ($expiresAt->isPast() || $expiresAt->greaterThan(CarbonImmutable::now('UTC')->addMinutes(11))) {
                     return new VoteInvitation('invalid_response');
                 }

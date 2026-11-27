@@ -145,7 +145,11 @@ final class VotingSettings
             $current->forceFill([
                 'last_checked_at' => now(),
                 'last_check_result' => $result,
-            ])->save();
+            ]);
+            if (in_array($result, ['unauthorized', 'not_configured'], true)) {
+                $current->player_access_enabled = false;
+            }
+            $current->save();
 
             return $result;
         }, 3);

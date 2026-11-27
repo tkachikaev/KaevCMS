@@ -75,5 +75,12 @@
         @if($settings['sync_retry_at']?->isFuture())
             <p>{{ __('module-voting::messages.retry_at') }}: {{ $settings['sync_retry_at']->format('Y-m-d H:i:s') }}</p>
         @endif
+        @if($canManage)
+            <form method="POST" action="{{ route('admin.module-pages.voting.providers.ktreon.sync', ['adminPath' => $adminPath]) }}">
+                @csrf
+                <button type="submit" class="button button-secondary" @disabled($settings['sync_retry_at']?->isFuture())>{{ __('module-voting::messages.sync_now') }}</button>
+                <small class="admin-field-help">{{ __('module-voting::messages.sync_manual_help') }}</small>
+            </form>
+        @endif
     </x-admin.card>
 @endsection
