@@ -13,6 +13,8 @@ final class RusacisGameSchemaInspector
         'pvpkills', 'pkkills', 'karma', 'nobless', 'herountil', 'clanid', 'lastAccess',
     ];
 
+    private const CHARACTER_RESCUE_COLUMNS = ['x', 'y', 'z'];
+
     private const CLAN_COLUMNS = [
         'clan_id', 'clan_name', 'clan_level', 'reputation_score', 'hasCastle', 'leader_id',
     ];
@@ -22,12 +24,12 @@ final class RusacisGameSchemaInspector
     private const CASTLE_COLUMNS = ['id'];
 
     /**
-     * @return list<array{table:string,columns:list<string>,required:bool}>
+     * @return list<array{table:string,columns:list<string>,optional_columns?:list<string>,required:bool}>
      */
     public static function requirements(): array
     {
         return [
-            ['table' => 'characters', 'columns' => self::CHARACTER_COLUMNS, 'required' => true],
+            ['table' => 'characters', 'columns' => self::CHARACTER_COLUMNS, 'optional_columns' => self::CHARACTER_RESCUE_COLUMNS, 'required' => true],
             ['table' => 'clan_data', 'columns' => self::CLAN_COLUMNS, 'required' => true],
             ['table' => 'heroes', 'columns' => self::HERO_COLUMNS, 'required' => false],
             ['table' => 'castle', 'columns' => self::CASTLE_COLUMNS, 'required' => false],
@@ -49,6 +51,7 @@ final class RusacisGameSchemaInspector
         return new RusacisGameSchemaProfile(
             heroesAvailable: $this->hasColumns($columns['heroes'], self::HERO_COLUMNS),
             castlesAvailable: $this->hasColumns($columns['castle'], self::CASTLE_COLUMNS),
+            characterRescueAvailable: $this->hasColumns($columns['characters'], self::CHARACTER_RESCUE_COLUMNS),
         );
     }
 

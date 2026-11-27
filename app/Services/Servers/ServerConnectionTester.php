@@ -324,6 +324,17 @@ final class ServerConnectionTester
         $report['schema_profile'] = $profile?->name;
         if ($driverKey === ServerDriverRegistry::RUSACIS_DRIVER && ($report['compatible'] ?? false) === true) {
             $report['schema_profile'] = RusacisGameSchemaProfile::NAME;
+            $characters = $this->tableCheck($report, 'characters');
+            $matchedOptional = is_array($characters['matched_optional_columns'] ?? null)
+                ? $characters['matched_optional_columns']
+                : [];
+            $report['capabilities'] = (new RusacisGameSchemaProfile(
+                heroesAvailable: $this->tableIsAvailable($report, 'heroes'),
+                castlesAvailable: $this->tableIsAvailable($report, 'castle'),
+                characterRescueAvailable: count(array_intersect(['x', 'y', 'z'], $matchedOptional)) === 3,
+            ))->capabilities();
+
+            return $report;
         }
         $report['capabilities'] = ($report['compatible'] ?? false) === true
             ? ($profile?->capabilities() ?? $this->availableCapabilities(
