@@ -3,7 +3,9 @@
 @section('description', __('module-voting::messages.reward_help'))
 @section('docs', 'modules')
 @section('content')
-@php($adminPath = request()->route('adminPath'))
+@php
+    $adminPath = request()->route('adminPath');
+@endphp
 @include('module-voting::admin.navigation')
 @if($server === null)
     <x-admin.card><div class="admin-empty-state empty-state"><p>{{ __('module-voting::messages.no_servers') }}</p></div></x-admin.card>

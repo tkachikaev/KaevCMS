@@ -292,13 +292,27 @@ final class VotingInvitationTest extends TestCase
         ])->save();
         $user = User::factory()->create();
         $account = $this->account($server, $user);
-        Http::fake([self::ENDPOINT => Http::response($this->response(), 201)]);
-        $this->actingAs($user)->post(route('modules.voting.invite'), $this->payload($server, $account))->assertStatus(303);
-        $this->post(route('modules.voting.invite'), $this->payload($other, $account))->assertStatus(303);
+        // Each HTTP request owns its own response stream. Distinct recipients receive distinct invitations.
+        $firstResponse = $this->response();
+        $secondResponse = array_replace($this->response('https://ktreon.com/vote/kvi_'.str_repeat('c', 43)), [
+            'intent_id' => '33333333-4444-4555-8666-777777777777',
+        ]);
+        Http::fakeSequence(self::ENDPOINT)->push($firstResponse, 201)->push($secondResponse, 201);
+
+        $this->actingAs($user)->get(route('modules.voting.index', ['server' => $server->id]))
+            ->assertOk()->assertSee($account->game_login);
+        $this->post(route('modules.voting.invite'), $this->payload($server, $account))
+            ->assertStatus(303)->assertRedirect($firstResponse['vote_url']);
+        $this->post(route('modules.voting.invite'), $this->payload($other, $account))
+            ->assertStatus(303)->assertRedirect($secondResponse['vote_url']);
+        Http::assertSentCount(2);
         $this->assertDatabaseCount('module_voting_bindings', 2);
         $first = VotingBinding::query()->where('game_server_id', $server->id)->firstOrFail();
         $second = VotingBinding::query()->where('game_server_id', $other->id)->firstOrFail();
         $this->assertNotSame($first->player_ref, $second->player_ref);
+        $this->assertNotSame($first->request_id, $second->request_id);
+        $this->assertSame($firstResponse['intent_id'], $first->intent_id);
+        $this->assertSame($secondResponse['intent_id'], $second->intent_id);
         $this->assertSame($first->user_game_account_id, $second->user_game_account_id);
     }
 }

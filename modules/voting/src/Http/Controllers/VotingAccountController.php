@@ -43,6 +43,7 @@ final class VotingAccountController extends Controller
         }
 
         return view('module-voting::account.index', [
+            'user' => $user,
             'rewards' => $rewards,
             'selected' => $selected,
             'accounts' => $this->availability->accounts($user, $selected->gameServer),
@@ -61,6 +62,7 @@ final class VotingAccountController extends Controller
         }
 
         return view('module-voting::account.history', [
+            'user' => $user,
             'votes' => $votes->orderByDesc('id')->paginate(20)->appends(['status' => $status]),
             'status' => $status,
             'votingAvailable' => $this->availability->enabled() && $this->availability->rewards()->isNotEmpty(),
