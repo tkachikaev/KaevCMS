@@ -52,7 +52,7 @@ final class VotingAdminRewardsTest extends TestCase
             [['item_id' => 57, 'amount' => 1], ['item_id' => '57', 'amount' => 2]],
             [['item_id' => 57]],
             [['item_id' => 57, 'amount' => 2000000001]],
-            array_fill(0, 101, ['item_id' => 57, 'amount' => 1]),
+            array_map(static fn (int $id): array => ['item_id' => $id, 'amount' => 1], range(1, 101)),
         ] as $invalid) {
             $this->put($url, ['enabled' => 1, 'rewards' => $invalid])->assertSessionHasErrors();
             $this->assertSame($valid, VotingServerReward::query()->where('game_server_id', $server->id)->firstOrFail()->configuredItems());

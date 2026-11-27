@@ -94,8 +94,7 @@ final class VotingInvitationTest extends TestCase
     {
         $server = $this->configure();
         $account = $this->account($server, User::factory()->create());
-        $response = $this->post(route('modules.voting.invite'), $this->payload($server, $account));
-        $this->assertNotSame(303, $response->status());
+        $this->post(route('modules.voting.invite'), $this->payload($server, $account))->assertStatus(302);
         $this->assertDatabaseCount('module_voting_bindings', 0);
         Http::assertNothingSent();
     }
@@ -122,8 +121,10 @@ final class VotingInvitationTest extends TestCase
         $server = $this->configure();
         $user = User::factory()->create();
         $account = $this->account($server, $user);
+        $unconfigured = GameServer::factory()->create(['login_server_id' => $server->login_server_id]);
+        $this->actingAs($user)->post(route('modules.voting.invite'), $this->payload($unconfigured, $account))->assertNotFound();
         VotingServerReward::query()->where('game_server_id', $server->id)->firstOrFail()->forceFill(['items' => []])->save();
-        $this->actingAs($user)->post(route('modules.voting.invite'), $this->payload($server, $account))->assertNotFound();
+        $this->post(route('modules.voting.invite'), $this->payload($server, $account))->assertNotFound();
         $this->assertDatabaseCount('module_voting_bindings', 0);
         Http::assertNothingSent();
     }

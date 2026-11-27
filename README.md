@@ -80,7 +80,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Public game statistics with caching and failure cooldowns.
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
 - Trusted modules with strict manifests and immutable migration tracking.
-- Bundled Promo Codes, Daily Rewards, Support Tickets and Donations modules.
+- Bundled Promo Codes, Daily Rewards, Support Tickets, Donations, Referrals, News Comments, Shop, Forum and [Voting](docs/en/VOTING.md) modules.
 - A coin wallet for every CMS account, with YooMoney top-ups through Donations.
 - Versioned chronicle item catalogs with localized manual overrides and one owner-managed icon pool under `public/uploads/game-assets`.
 - Cumulative Web Updater for shared hosting, a local VDS update agent for browser-started deployments, and a deployment-user CLI fallback, with hashes, backups, recovery, and path policy.
@@ -175,7 +175,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Публичная статистика с кешем и cooldown при сбоях.
 - Веб-инвентарь с привязкой к GameServer и нейтральной `kaev_reward_queue`.
 - Доверенные модули со строгим manifest и неизменяемой историей миграций.
-- Встроенные модули Promo Codes, Daily Rewards, технической поддержки (Support Tickets) и Donations.
+- Встроенные модули Promo Codes, Daily Rewards, Support Tickets, Donations, Referrals, News Comments, Shop, Forum и [Voting](docs/ru/VOTING.md).
 - Кошелёк монет для каждой учётной записи CMS с пополнением через ЮMoney в модуле Donations.
 - Версионируемые каталоги предметов по хроникам с ручными переводами и единым внешним пулом иконок под исходными именами.
 - Кумулятивный Web Updater для shared-hosting, локальный агент для запуска обновлений VDS из браузера и резервный CLI-способ от deployment-пользователя с хешами, резервными копиями, восстановлением и политикой путей.

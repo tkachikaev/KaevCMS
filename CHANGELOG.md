@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Voting 0.5.0: KTreon integration, per-server reward configuration, scheduled Web Inventory rewards, manual synchronization, and player and administrator vote history. Update the module in **Admin → Modules** if already installed. Player access is closed by default and must be opened explicitly after testing.
+- Added **Voting 0.5.0**: KTreon integration, per-server reward bundles, scheduled and manual synchronization, one-time Web Inventory rewards, and private player and administration history. Enable the module in **Admin → Modules**, configure the provider and rewards, and verify delivery before opening player access. See [Voting](docs/en/VOTING.md).
 
 - Forum: bounded pagination, reader-scoped author counts, refreshed search results after edits and removals, stricter topic move permissions, batched section statistics and mobile keyboard navigation. Custom themes now belong in `storage/app/forum-themes/<slug>`. Move existing custom themes there before updating. Frost and Classic remain bundled.
 

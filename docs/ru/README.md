@@ -15,6 +15,7 @@ KaevCMS — CMS на Laravel для серверов Lineage II. Здесь оп
 - [Контент и шаблоны](CONTENT_THEMES.md)
 - [Почта и очереди](MAIL_AND_QUEUES.md)
 - [Модули](MODULES.md)
+- [Голосование — интеграция с KTreon](VOTING.md)
 - [Ежедневные награды](DAILY_REWARDS.md)
 - [Пожертвования: ЮMoney, FreeKassa и PayPal](DONATIONS.md)
 - [Подключение PayPal Orders v2](PAYPAL.md)

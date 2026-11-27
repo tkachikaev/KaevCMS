@@ -111,18 +111,12 @@ final class VotingEventApiTest extends TestCase
         $this->assertSame([], $page->events);
     }
 
-    public function test_read_rate_limit_is_not_a_successful_empty_page(): void
-    {
-        Http::fake([self::ENDPOINT.'*' => Http::response(['error' => 'rate_limited'], 429, ['Retry-After' => '120'])]);
-        $page = app(KTreonProvider::class)->readEvents(self::PROJECT, 'kti_'.str_repeat('a', 43), '0');
-        $this->assertSame('rate_limited', $page->result);
-        $this->assertSame(120, $page->retryAfter);
-        $this->assertNull($page->nextCursor);
-    }
-
     public function test_oversized_page_is_rejected_without_processing(): void
     {
-        Http::fake([self::ENDPOINT.'*' => Http::response(str_repeat(' ', 131073), 200, ['Content-Type' => 'application/json'])]);
+        // A syntactically valid empty page must fail solely because of its size.
+        $json = json_encode(['events' => [], 'next_cursor' => '0', 'has_more' => false], JSON_THROW_ON_ERROR);
+        $body = str_pad($json, 131073);
+        Http::fake([self::ENDPOINT.'*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
         $page = app(KTreonProvider::class)->readEvents(self::PROJECT, 'kti_'.str_repeat('a', 43), '0');
         $this->assertSame('invalid_response', $page->result);
         $this->assertSame([], $page->events);

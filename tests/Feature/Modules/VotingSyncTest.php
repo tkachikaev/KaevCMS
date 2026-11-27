@@ -158,9 +158,16 @@ final class VotingSyncTest extends TestCase
         $unknown = $this->event($binding, 1, 'accepted', 1);
         $unknown['player_ref'] = strtoupper($binding->player_ref);
         $deleted = $this->event($binding, 2, 'accepted', 1, '44444444-5555-4666-8777-888888888888');
+        Http::fakeSequence(self::ENDPOINT.'*')
+            ->push($this->page([$unknown]))
+            ->push($this->page([$deleted]));
+        $sync = app(VotingSyncService::class);
+        $this->assertSame('ok', $sync->sync()['result']);
+        $this->assertDatabaseCount('reward_inventory_grants', 0);
+        $this->assertDatabaseHas('module_voting_votes', ['vote_id' => self::VOTE, 'binding_id' => null, 'reward_state' => 'ineligible']);
+
         UserGameAccount::query()->whereKey($binding->user_game_account_id)->delete();
-        Http::fake([self::ENDPOINT.'*' => Http::response($this->page([$unknown, $deleted]))]);
-        $this->assertSame('ok', app(VotingSyncService::class)->sync()['result']);
+        $this->assertSame('ok', $sync->sync()['result']);
         $this->assertDatabaseCount('reward_inventory_grants', 0);
         $this->assertDatabaseCount('module_voting_events', 2);
         $this->assertSame(2, VotingVote::query()->where('reward_state', 'ineligible')->count());
@@ -238,6 +245,7 @@ final class VotingSyncTest extends TestCase
 
     public function test_rate_limit_delays_polling_without_moving_cursor(): void
     {
+        $this->freezeTime();
         $binding = $this->configure();
         Http::fakeSequence(self::ENDPOINT.'*')
             ->push(['error' => 'rate_limited'], 429, ['Retry-After' => '120'])
@@ -247,7 +255,10 @@ final class VotingSyncTest extends TestCase
         $this->assertSame('cooldown', $sync->sync()['result']);
         Http::assertSentCount(1);
         $this->assertDatabaseHas('module_voting_settings', ['event_cursor' => '0']);
-        $this->travel(121)->seconds();
+        $this->travel(119)->seconds();
+        $this->assertSame('cooldown', $sync->sync()['result']);
+        Http::assertSentCount(1);
+        $this->travel(2)->seconds();
         $this->assertSame(1, $sync->sync()['granted']);
     }
 
@@ -354,6 +365,8 @@ final class VotingSyncTest extends TestCase
         $this->actingAs(Admin::factory()->create(), 'admin')
             ->get($url.'?server='.$binding->game_server_id.'&status=accepted&reward=granted')
             ->assertOk()->assertSee('voting-history-target')->assertDontSee($binding->player_ref);
+        $otherServer = GameServer::factory()->create();
+        $this->get($url.'?server='.$otherServer->id)->assertOk()->assertDontSee('voting-history-target');
         $this->get($url.'?reward=waiting')->assertOk()->assertDontSee('voting-history-target');
         $this->get($url.'?status=rejected')->assertOk()->assertDontSee('voting-history-target');
     }
