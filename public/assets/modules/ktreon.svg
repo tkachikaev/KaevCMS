@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="KTREON"><title>KTREON</title>
+<defs>
+ <linearGradient id="steeld" x1="0" y1="0" x2="0.15" y2="1">
+  <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.38" stop-color="#C9D2DA"/>
+  <stop offset="0.72" stop-color="#7E8995"/><stop offset="1" stop-color="#4A535D"/></linearGradient>
+ <linearGradient id="goldd" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#F3DDA6"/><stop offset="0.5" stop-color="#C9A45C"/><stop offset="1" stop-color="#8E6A2E"/></linearGradient>
+ <linearGradient id="rimd" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#E6C888"/><stop offset="1" stop-color="#9C7A3C"/></linearGradient>
+ <radialGradient id="orbd" cx="0.38" cy="0.35" r="0.7">
+  <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.45" stop-color="#F6E3B0"/><stop offset="1" stop-color="#B48A3C"/></radialGradient>
+ <radialGradient id="halod" cx="0.5" cy="0.5" r="0.5">
+  <stop offset="0" stop-color="#F6D98A" stop-opacity="0.55"/><stop offset="1" stop-color="#F6D98A" stop-opacity="0"/></radialGradient>
+</defs><defs><radialGradient id="vig" cx="0.5" cy="0.45" r="0.7"><stop offset="0" stop-color="#1B2733"/><stop offset="1" stop-color="#0B1118" stop-opacity="0"/></radialGradient></defs><rect width="200" height="200" rx="40" fill="#0B1118"/><rect width="200" height="200" rx="40" fill="url(#vig)"/><g transform="translate(14,16) scale(0.86)"><ellipse cx="104" cy="98" rx="94" ry="41" transform="rotate(-17 104 98)" fill="none" stroke="url(#goldd)" stroke-width="2.6" stroke-linecap="round" opacity="0.95"/>
+<g fill="url(#steeld)" stroke="url(#rimd)" stroke-width="1.5" stroke-linejoin="round" paint-order="stroke"><path d="M14.756 -9.052V-77.748Q14.632 -80.972 12.338000000000001 -83.26599999999999Q10.044 -85.56 6.82 -85.56H5.208V-86.8H42.903999999999996V-85.56H41.292Q38.068 -85.56 35.774 -83.26599999999999Q33.48 -80.972 33.356 -77.748V-9.052Q33.48 -5.828 35.774 -3.5340000000000003Q38.068 -1.24 41.292 -1.24H42.903999999999996V0.0H5.208V-1.24H6.82Q10.044 -1.24 12.338000000000001 -3.5340000000000003Q14.632 -5.828 14.756 -9.052ZM91.016 -86.8V-85.684H90.52Q86.428 -85.684 82.956 -84.072Q79.98 -82.584 77.748 -80.6L52.948 -51.088L83.7 -8.928Q86.55199999999999 -5.208 89.52799999999999 -3.286Q92.504 -1.3639999999999999 96.348 -1.24V0.0H86.17999999999999Q84.816 0.0 81.654 -0.124Q78.492 -0.248 74.524 -1.116Q70.556 -1.984 66.526 -4.154Q62.496 -6.324 59.519999999999996 -10.292Q58.9 -11.16 57.04 -13.64Q55.18 -16.12 52.7 -19.592Q50.22 -23.064 47.554 -26.722Q44.888 -30.38 42.532 -33.604Q40.176 -36.828 38.812 -38.936L37.324 -40.92L66.96 -80.104Q68.324 -82.088 67.332 -83.824Q66.34 -85.684 63.86 -85.684H62.62V-86.8Z" transform="translate(21.71,141.40)"/><path d="M81.096 -89.156V-67.456L79.856 -67.58V-68.944Q79.856 -74.772 76.446 -78.182Q73.036 -81.592 67.208 -81.716H50.716V-9.052Q50.839999999999996 -5.828 53.134 -3.5340000000000003Q55.428 -1.24 58.652 -1.24H60.264V0.0H22.568V-1.24H24.18Q27.404 -1.24 29.698 -3.5340000000000003Q31.992 -5.828 32.116 -9.052V-81.716H15.5Q9.796 -81.592 6.385999999999999 -78.182Q2.976 -74.772 2.976 -68.944V-67.58L1.736 -67.456V-89.156Q2.976 -88.66 5.518000000000001 -88.164Q8.06 -87.668 11.16 -87.29599999999999Q14.26 -86.92399999999999 16.864 -86.92399999999999H65.968Q68.696 -86.92399999999999 71.73400000000001 -87.29599999999999Q74.772 -87.668 77.376 -88.164Q79.98 -88.66 81.096 -89.156Z" transform="translate(103.58,141.40)"/></g>
+<path d="M193.89 70.52 A94 41 -17 0 1 14.11 125.48" fill="none" stroke="url(#goldd)" stroke-width="2.6" stroke-linecap="round"/>
+<circle cx="17.46" cy="106.34" r="16.6" fill="url(#halod)"/>
+<circle cx="17.46" cy="106.34" r="6.4" fill="url(#orbd)" stroke="url(#rimd)" stroke-width="1.4"/>
+<circle cx="135.62" cy="50.48" r="19.2" fill="url(#halod)"/>
+<circle cx="135.62" cy="50.48" r="7.4" fill="url(#orbd)" stroke="url(#rimd)" stroke-width="1.4"/>
+<circle cx="156.79" cy="119.72" r="16.6" fill="url(#halod)"/>
+<circle cx="156.79" cy="119.72" r="6.4" fill="url(#orbd)" stroke="url(#rimd)" stroke-width="1.4"/></g></svg>

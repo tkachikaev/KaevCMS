@@ -1,6 +1,18 @@
 @php($adminPath = request()->route('adminPath'))
-<x-admin.tabs :label="__('module-voting::messages.title')" class="settings-section-tabs">
-    <x-admin.tab wire:navigate :href="route('admin.module-pages.voting.index', ['adminPath' => $adminPath])" :active="request()->routeIs('admin.module-pages.voting.index', 'admin.module-pages.voting.providers.*')" class="settings-section-tab">{{ __('module-voting::messages.providers') }}</x-admin.tab>
-    <x-admin.tab wire:navigate :href="route('admin.module-pages.voting.rewards.index', ['adminPath' => $adminPath])" :active="request()->routeIs('admin.module-pages.voting.rewards.*')" class="settings-section-tab">{{ __('module-voting::messages.rewards') }}</x-admin.tab>
-    <x-admin.tab wire:navigate :href="route('admin.module-pages.voting.history.index', ['adminPath' => $adminPath])" :active="request()->routeIs('admin.module-pages.voting.history.*')" class="settings-section-tab">{{ __('module-voting::messages.history') }}</x-admin.tab>
+@push('head')
+    <link rel="stylesheet" href="{{ asset('assets/modules/donations-admin.css') }}?v={{ cms_version() }}" data-navigate-track>
+@endpush
+<x-admin.tabs :label="__('module-voting::messages.title')" class="settings-section-tabs" data-testid="voting-section-tabs">
+    @foreach([
+        'providers' => ['admin.module-pages.voting.index', 'providers'],
+        'rewards' => ['admin.module-pages.voting.rewards.index', 'rewards'],
+        'history' => ['admin.module-pages.voting.history.index', 'history'],
+    ] as $section => [$destination, $label])
+        <x-admin.tab
+            wire:navigate
+            :href="route($destination, ['adminPath' => $adminPath])"
+            :active="request()->routeIs($destination, 'admin.module-pages.voting.'.$section.'.*')"
+            class="settings-section-tab"
+        >{{ __('module-voting::messages.'.$label) }}</x-admin.tab>
+    @endforeach
 </x-admin.tabs>
