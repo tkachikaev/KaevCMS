@@ -707,6 +707,7 @@
         "modules/support-tickets/src/Services/SupportTicketCleanupService.php",
         "modules/support-tickets/src/Services/SupportTicketService.php",
         "modules/support-tickets/src/Services/SupportTicketSettings.php",
+        "modules/voting/assets/module.webp",
         "modules/voting/bootstrap.php",
         "modules/voting/database/migrations/2026_11_26_000000_create_module_voting_settings_table.php",
         "modules/voting/database/migrations/2026_11_27_000000_create_module_voting_invitation_tables.php",
