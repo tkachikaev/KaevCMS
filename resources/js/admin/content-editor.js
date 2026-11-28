@@ -1016,7 +1016,11 @@ const initializeRichEditor = (root, signal) => {
         linkImageUrl.value = current?.src ?? '';
         if (linkImageAlt) linkImageAlt.value = current?.alt ?? '';
         if (linkImagePlacement) {
-            linkImagePlacement.value = type === 'inlineLinkImage' ? 'inline' : 'block';
+            const { parent } = editor.state.selection.$to;
+            const acceptsInlineImage = parent.type.contentMatch.matchType(editor.schema.nodes.inlineLinkImage) !== null;
+            linkImagePlacement.querySelector('option[value="inline"]').disabled = !acceptsInlineImage && type !== 'inlineLinkImage';
+            const inText = type === null && acceptsInlineImage && parent.textContent.trim() !== '';
+            linkImagePlacement.value = type === 'inlineLinkImage' || inText ? 'inline' : 'block';
             linkImagePlacement.disabled = type !== null;
         }
         previewLinkImage();

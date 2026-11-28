@@ -1,3 +1,7 @@
+@pushOnce('forum-editor-scripts')
+    <script src="{{ asset('assets/modules/forum/editor.js') }}?v={{ cms_version() }}" defer></script>
+    <script src="{{ asset('assets/admin/js/news-editor.js') }}?v={{ @filemtime(public_path('assets/admin/js/news-editor.js')) ?: cms_version() }}" defer></script>
+@endPushOnce
 @php
     // Keep a plain textarea for clients without JavaScript. On successful Tiptap
     // initialization the compact canvas replaces it, using the shared editor bundle.
