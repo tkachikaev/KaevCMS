@@ -32,6 +32,7 @@ Initialize-KaevCmsRuntimeDirectories -ProjectRoot $ProjectRoot
 # Dependency advisories are checked separately by .\deployment\windows\security-audit.ps1.
 $previousComposerNetworkSetting = Get-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK'
 $hadComposerNetworkSetting = $null -ne $previousComposerNetworkSetting
+$previousComposerTimeout = Get-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_PROCESS_TIMEOUT'
 
 try {
     Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value '1'
@@ -77,6 +78,10 @@ try {
     composer validate --strict --no-check-publish
     if ($LASTEXITCODE -ne 0) { throw "Composer validation failed with exit code $LASTEXITCODE." }
 
+    # Full suites may exceed Composer's default five-minute process limit.
+    if ([string]::IsNullOrWhiteSpace($previousComposerTimeout)) {
+        Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_PROCESS_TIMEOUT' -Value '1800'
+    }
     composer quality
     if ($LASTEXITCODE -ne 0) { throw "Quality checks failed with exit code $LASTEXITCODE." }
 
@@ -92,6 +97,7 @@ try {
     Write-Host 'Offline quality checks completed successfully: owner-approved Composer dependencies, PowerShell updater, audit policy, Web Installer, shared-hosting, Web Updater, unified release builder and Ubuntu VDS documentation regressions, Composer validation, Pint, PHPStan, PHPUnit and route cache.' -ForegroundColor Green
     Write-Host 'Run .\deployment\windows\security-audit.ps1 separately when internet access is available.' -ForegroundColor DarkGray
 } finally {
+    Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_PROCESS_TIMEOUT' -Value $previousComposerTimeout
     if ($hadComposerNetworkSetting) {
         Set-KaevCmsProcessEnvironmentVariable -Name 'COMPOSER_DISABLE_NETWORK' -Value $previousComposerNetworkSetting
     } else {
