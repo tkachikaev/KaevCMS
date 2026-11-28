@@ -317,19 +317,21 @@ final class UniversalGameWorldReader
                 $relationNames[$field['relation']] = true;
             }
         }
+        $joined = [];
         foreach (array_keys($relationNames) as $name) {
             $relation = $config['relations'][$name];
             if ($relation['cardinality'] !== 'one') {
                 throw new ProfileValidationException('Character relation must be single-row for world views.');
             }
-            if (($columns[$relation['table']] ?? []) === []) {
-                continue; // Optional data source absent; do not disable rankings.
+            if (! array_key_exists($relation['table'], $columns)) {
+                throw new ProfileValidationException('Mapped relation must declare its table in schema requirements: '.$relation['table']);
             }
             if (! $this->hasAll($mainColumns, [$relation['local_column']]) ||
                 ! $this->hasAll($columns[$relation['table']], [$relation['foreign_column']])) {
-                throw new ProfileValidationException('Character relation key is unavailable.');
+                continue; // Missing optional data source; retain the character.
             }
             $query->leftJoin($relation['table'].' as r_'.$name, 'r_'.$name.'.'.$relation['foreign_column'], '=', 'c.'.$relation['local_column']);
+            $joined[$name] = true;
         }
         foreach ($fields as $name => $field) {
             if ($field['kind'] === 'column' && $this->hasAll($mainColumns, [$field['column']])) {
@@ -341,10 +343,7 @@ final class UniversalGameWorldReader
                 }
             } elseif ($field['kind'] === 'related') {
                 $relation = $config['relations'][$field['relation']];
-                if (($columns[$relation['table']] ?? []) !== []) {
-                    if (! $this->hasAll($columns[$relation['table']], [$field['column']])) {
-                        throw new ProfileValidationException('Related field is unavailable: '.$field['column']);
-                    }
+                if (isset($joined[$field['relation']]) && $this->hasAll($columns[$relation['table']], [$field['column']])) {
                     $query->addSelect('r_'.$field['relation'].'.'.$field['column'].' as '.$name);
                 } else {
                     $query->selectRaw('NULL as '.$database->getQueryGrammar()->wrap($name));

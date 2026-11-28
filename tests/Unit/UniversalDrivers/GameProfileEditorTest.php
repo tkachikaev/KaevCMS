@@ -44,6 +44,25 @@ final class GameProfileEditorTest extends TestCase
         }
     }
 
+    public function test_optional_features_do_not_make_coordinates_or_castle_only_columns_required(): void
+    {
+        $profile = (new BundledProfileCatalog)->all()['game:rusacis'];
+        $original = $profile['config'];
+        $profile['config']['characters']['fields']['x']['column'] = 'position_x';
+        unset($original['characters']['fields']['x']);
+        $result = (new GameProfileEditor)->prepare($profile, $original);
+        (new ProfileValidator)->validate($result);
+        $rules = array_column($result['config']['requirements'], null, 'table');
+
+        $this->assertContains('position_x', $rules['characters']['optional_columns']);
+        $this->assertNotContains('position_x', $rules['characters']['columns']);
+        $this->assertContains('hasCastle', $rules['clan_data']['optional_columns']);
+        $this->assertNotContains('hasCastle', $rules['clan_data']['columns']);
+        $this->assertContains('clan_name', $rules['clan_data']['columns']);
+        $this->assertContains('accesslevel', $rules['characters']['columns']);
+        $this->assertContains('deletetime', $rules['characters']['columns']);
+    }
+
     public function test_unsafe_coordinate_or_missing_guard_mapping_does_not_enable_rescue(): void
     {
         $profile = (new BundledProfileCatalog)->all()['game:rusacis'];

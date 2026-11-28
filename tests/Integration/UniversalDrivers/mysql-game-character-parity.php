@@ -119,6 +119,12 @@ foreach ($databaseNames as $type => $db) {
     } catch (ProfileValidationException) {
         // Expected.
     }
+    // A partially available optional EAV source must not hide base characters.
+    $pdo->exec('ALTER TABLE custom_char_stats DROP COLUMN stat_value');
+    $rows = $reader->charactersForAccount($connection, $profileEav, 'alice');
+    if (count($rows) !== 1 || $rows[0]['level'] !== null) {
+        throw new RuntimeException('Missing optional EAV value column must not hide characters.');
+    }
     // The EAV schema is explicitly optional: absence cannot break base characters.
     $pdo->exec('DROP TABLE custom_char_stats');
     $diagnostics = $reader->diagnose($connection, $profileEav);

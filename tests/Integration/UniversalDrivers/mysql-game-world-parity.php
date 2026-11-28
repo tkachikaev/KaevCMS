@@ -142,6 +142,26 @@ foreach ($databaseNames as $type => $db) {
     }
     $pdo->exec('DROP TABLE world_castles');
 
+    // A missing optional display column on an otherwise required table
+    // must not disable rankings or invent a clan name.
+    $optionalClan = $profile;
+    foreach ($optionalClan['config']['requirements'] as &$requirement) {
+        if ($requirement['table'] === 'clan_data') {
+            $requirement['columns'] = array_values(array_diff($requirement['columns'], ['clan_name']));
+            $requirement['optional_columns'] = ['clan_name'];
+        }
+    }
+    unset($requirement);
+    $pdo->exec('ALTER TABLE clan_data CHANGE COLUMN clan_name fixture_hidden_name VARCHAR(255) NULL');
+    try {
+        $rows = $reader->ranking($connection, $optionalClan, 'level', 10, 'Interlude');
+        if ($rows === [] || ! array_key_exists('clan_name', $rows[0]) || $rows[0]['clan_name'] !== null) {
+            throw new RuntimeException('Missing optional related display column broke ranking.');
+        }
+    } finally {
+        $pdo->exec('ALTER TABLE clan_data CHANGE COLUMN fixture_hidden_name clan_name VARCHAR(255) NULL');
+    }
+
     // Duplicate single-row relations must fail closed instead of silently
     // inflating a ranking. Also check hostile SQL identifier import.
     $pdo->exec("INSERT INTO clan_data(clan_id, clan_name, clan_level, reputation_score, hasCastle, leader_id) VALUES (7, 'Duplicate', 8, 0, 0, 0)");

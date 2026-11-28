@@ -33,7 +33,8 @@ final class GameProfileEditor
         foreach ($fields as $name => $field) {
             if ($field['kind'] === 'column') {
                 $optional = ! in_array($name, ['id', 'name'], true)
-                    && $this->wasOptional($original, $oldTable, $original['characters']['fields'][$name]['column'] ?? '');
+                    && (in_array($name, ['x', 'y', 'z'], true)
+                        || $this->wasOptional($original, $oldTable, $original['characters']['fields'][$name]['column'] ?? ''));
                 $this->column($rules, $table, $field['column'], optional: $optional);
             } elseif ($field['kind'] === 'choice') {
                 if (isset($rules[$table]['any_columns'])) {
@@ -99,19 +100,19 @@ final class GameProfileEditor
             if ($relation === null) {
                 throw new ProfileValidationException('drivers.game_relation_missing');
             }
-            $this->column($rules, $relation['table'], $relation['foreign_column'], required: false);
+            $this->column($rules, $relation['table'], $relation['foreign_column'], required: false, optional: true);
             if ($name === 'heroes') {
                 if (! $hasEav && ($fields['level']['kind'] ?? null) !== 'column') {
                     throw new ProfileValidationException('drivers.game_heroes_level');
                 }
-                $this->column($rules, $table, $relation['local_column']);
+                $this->column($rules, $table, $relation['local_column'], optional: true);
                 foreach (array_unique([
                     $feature['played_column'] ?? 'played', $feature['count_column'] ?? 'count',
                     $feature['claimed_column'] ?? ($feature['active_column'] ?? 'claimed'),
                     ...(isset($feature['active_column']) ? [$feature['active_column']] : []),
                     ...(($fields['hero']['kind'] ?? '') === 'operator' ? [$feature['active_column'] ?? 'active'] : []),
                 ]) as $column) {
-                    $this->column($rules, $relation['table'], $column, required: false);
+                    $this->column($rules, $relation['table'], $column, required: false, optional: true);
                 }
             } elseif ($name === 'castles') {
                 $clan = $config['relations'][$feature['clan_relation'] ?? 'clan'] ?? null;
@@ -120,12 +121,12 @@ final class GameProfileEditor
                     throw new ProfileValidationException('drivers.game_relation_missing');
                 }
                 foreach ([...array_values($feature['clan_columns'] ?? ['id' => 'clan_id', 'name' => 'clan_name', 'level' => 'clan_level', 'reputation' => 'reputation_score']), $relation['local_column'], $leader['local_column']] as $column) {
-                    $this->column($rules, $clan['table'], $column);
+                    $this->column($rules, $clan['table'], $column, required: false, optional: true);
                 }
-                $this->column($rules, $leader['table'], $leader['foreign_column']);
-                $this->column($rules, $leader['table'], $feature['leader_name_column'] ?? 'char_name');
+                $this->column($rules, $leader['table'], $leader['foreign_column'], required: false, optional: true);
+                $this->column($rules, $leader['table'], $feature['leader_name_column'] ?? 'char_name', required: false, optional: true);
                 if ($feature['name_source'] === 'column') {
-                    $this->column($rules, $relation['table'], $feature['name_column'], required: false);
+                    $this->column($rules, $relation['table'], $feature['name_column'], required: false, optional: true);
                 }
             }
             if ($name !== 'heroes' || ! $hasEav) {

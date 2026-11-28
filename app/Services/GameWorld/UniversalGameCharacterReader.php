@@ -212,21 +212,16 @@ final class UniversalGameCharacterReader
             if ($mapped === []) {
                 continue;
             }
-            if (! $this->hasColumn($baseColumns, $relation['local_column'])) {
-                throw new ProfileValidationException('Related lookup local key is unavailable: '.$relation['local_column']);
-            }
             $table = $relation['table'];
             if (! array_key_exists($table, $columns)) {
                 throw new ProfileValidationException('Mapped relation must declare its table in schema requirements: '.$table);
             }
             $available = $columns[$table];
-            if ($available === []) {
-                // Missing optional relation: no associated fields for that row.
-                // A required relation is already rejected by schema().
+            // Required schema has already been checked. Missing optional
+            // relation keys must not hide otherwise valid owned characters.
+            if (! $this->hasColumn($baseColumns, $relation['local_column'])
+                || ! $this->hasColumn($available, $relation['foreign_column'])) {
                 continue;
-            }
-            if (! $this->hasColumn($available, $relation['foreign_column'])) {
-                throw new ProfileValidationException('Related lookup foreign key is unavailable: '.$table.'.'.$relation['foreign_column']);
             }
             $keys = array_values(array_unique(array_filter(array_column($rows, $relation['local_column']), static fn (mixed $v): bool => $v !== null && $v !== '')));
             if ($keys === []) {
@@ -240,10 +235,9 @@ final class UniversalGameCharacterReader
             if ($ordinary !== []) {
                 $select = [$relation['foreign_column']];
                 foreach ($ordinary as $item) {
-                    if (! $this->hasColumn($available, $item['column'])) {
-                        throw new ProfileValidationException('Related field column is unavailable: '.$table.'.'.$item['column']);
+                    if ($this->hasColumn($available, $item['column'])) {
+                        $select[] = $item['column'];
                     }
-                    $select[] = $item['column'];
                 }
                 $relatedRows = $database->table($table)->whereIn($relation['foreign_column'], $keys)
                     ->get(array_values(array_unique($select)));
@@ -261,10 +255,8 @@ final class UniversalGameCharacterReader
                     throw new ProfileValidationException('EAV lookup requires a many-row relation.');
                 }
                 foreach ($eav as $fieldName => $item) {
-                    foreach (['key_column', 'value_column'] as $columnName) {
-                        if (! $this->hasColumn($available, $item[$columnName])) {
-                            throw new ProfileValidationException('EAV column is unavailable: '.$table.'.'.$item[$columnName]);
-                        }
+                    if (! $this->hasAllColumns($available, [$item['key_column'], $item['value_column']])) {
+                        continue;
                     }
                     $values = $database->table($table)
                         ->whereIn($relation['foreign_column'], $keys)
