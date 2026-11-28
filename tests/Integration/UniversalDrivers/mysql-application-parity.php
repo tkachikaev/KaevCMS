@@ -320,6 +320,9 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $fixture->exec('CREATE TABLE fixture_online_stats (char_id INT NOT NULL, stat_key VARCHAR(32), stat_value VARCHAR(32))');
         $legacyGame['config']['relations']['online_stats'] = ['table' => 'fixture_online_stats', 'local_column' => 'player_id', 'foreign_column' => 'char_id', 'join' => 'left', 'cardinality' => 'many'];
         $legacyGame['config']['characters']['fields']['online'] = ['kind' => 'eav', 'relation' => 'online_stats', 'key_column' => 'stat_key', 'value_column' => 'stat_value', 'key_value' => 'online'];
+        $legacyGame['config']['requirements'][] = [
+            'table' => 'fixture_online_stats', 'columns' => ['char_id', 'stat_key', 'stat_value'], 'required' => false,
+        ];
         $catalog->save($legacyGame);
         $activation->apply($legacyServer);
         try {

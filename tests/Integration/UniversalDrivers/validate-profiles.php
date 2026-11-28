@@ -89,6 +89,9 @@ $contractNegative = [
         $p['config']['relations']['clan']['cardinality'] = 'many';
     }],
     ['game:rusacis', static function (array &$p): void {
+        $p['config']['relations']['clan']['table'] = 'undeclared_clan_data';
+    }],
+    ['game:rusacis', static function (array &$p): void {
         $p['config']['relations']['clan']['join'] = 'inner';
         $p['config']['requirements'][1]['required'] = false;
     }],
