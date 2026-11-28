@@ -2,9 +2,6 @@
 
 namespace Tests\Unit\UniversalDrivers;
 
-use App\Services\GameWorld\MobiusGameSchemaInspector;
-use App\Services\GameWorld\RusacisGameSchemaInspector;
-use App\Services\Servers\ServerDriverRegistry;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
@@ -13,32 +10,6 @@ use Tests\TestCase;
 
 final class ProfileValidatorTest extends TestCase
 {
-    public function test_bundled_profiles_describe_existing_registry_schema_without_switching_it(): void
-    {
-        $profiles = (new BundledProfileCatalog)->all();
-        $registry = app(ServerDriverRegistry::class);
-        foreach ($registry->loginDrivers() as $key => $driver) {
-            $this->assertArrayHasKey('login:'.$key, $profiles);
-            foreach ($driver['requirements'] as $i => $requirement) {
-                $mapped = $profiles['login:'.$key]['config']['requirements'][$i];
-                $this->assertSame($requirement['table'], $mapped['table']);
-                $this->assertSame($requirement['required'], $mapped['required']);
-                // Legacy requirements treat metadata as mandatory. Read-only
-                // profiles separate optional metadata without losing fields.
-                $this->assertEqualsCanonicalizing($requirement['columns'], array_merge($mapped['columns'], $mapped['optional_columns'] ?? []));
-            }
-        }
-        foreach ($registry->gameDrivers() as $key => $driver) {
-            $this->assertArrayHasKey('game:'.$key, $profiles);
-            $this->assertSame($driver['requirements'], $profiles['game:'.$key]['config']['requirements']);
-        }
-        $this->assertSame(MobiusGameSchemaInspector::requirements(), $profiles['game:l2j_mobius']['config']['requirements']);
-        $this->assertSame(RusacisGameSchemaInspector::requirements(), $profiles['game:rusacis']['config']['requirements']);
-        $this->assertSame('bcrypt_2a', $profiles['login:rusacis']['config']['password']['scheme']);
-        $this->assertSame('rusacis_hero_active', $profiles['game:rusacis']['config']['characters']['fields']['hero']['operator']);
-        $this->assertSame('mobius_chronicle', $profiles['game:l2j_mobius']['config']['characters']['fields']['reputation']['preference']);
-    }
-
     public function test_every_bundled_profile_roundtrips_without_connections(): void
     {
         $validator = new ProfileValidator;

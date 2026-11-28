@@ -7,7 +7,7 @@ use App\Contracts\GameWorldDriver;
 use App\Models\GameServer;
 use Illuminate\Database\Connection;
 
-/** Executes only a previously verified connection-local JSON snapshot. */
+/** Executes release-owned profiles or verified connection-local snapshots. */
 final class UniversalGameWorldDriver implements GameWorldDriver
 {
     /** @param array<string,mixed> $profile */

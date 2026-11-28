@@ -4,7 +4,7 @@ namespace App\Services\GameAccounts;
 
 use App\Contracts\LoginServerDriver;
 use App\Models\LoginServer;
-use App\Services\Servers\ServerDriverRegistry;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use RuntimeException;
 
@@ -12,39 +12,39 @@ final class LoginServerDriverResolver
 {
     public function supports(string|LoginServer $driver): bool
     {
-        if ($driver instanceof LoginServer) {
-            try {
-                $snapshot = app(ConnectionProfileSnapshots::class)->get($driver);
-            } catch (RuntimeException) {
-                return false;
-            }
-            if ($snapshot !== null) {
-                return count(array_intersect(
-                    ['account_lookup', 'account_creation', 'password_change'],
-                    $snapshot['config']['capabilities'],
-                )) === 3;
-            }
-            $driver = (string) $driver->driver;
+        try {
+            $profile = $this->profile($driver);
+        } catch (RuntimeException) {
+            return false;
         }
 
-        return in_array($driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        return count(array_intersect(
+            ['account_lookup', 'account_creation', 'password_change'],
+            $profile['config']['capabilities'],
+        )) === 3;
     }
 
     public function resolve(string|LoginServer $driver): LoginServerDriver
     {
+        return new UniversalLoginDriver(
+            $this->profile($driver),
+            app(UniversalLoginAccountReader::class),
+            app(UniversalLoginAccountWriter::class),
+        );
+    }
+
+    /** @return array<string,mixed> */
+    private function profile(string|LoginServer $driver): array
+    {
         if ($driver instanceof LoginServer) {
-            $profile = app(ConnectionProfileSnapshots::class)->get($driver);
-            if ($profile !== null) {
-                return new UniversalLoginDriver($profile,
-                    app(UniversalLoginAccountReader::class), app(UniversalLoginAccountWriter::class));
+            $snapshot = app(ConnectionProfileSnapshots::class)->get($driver);
+            if ($snapshot !== null) {
+                return $snapshot;
             }
             $driver = (string) $driver->driver;
         }
 
-        return match ($driver) {
-            ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER => app(MobiusLoginDriver::class),
-            ServerDriverRegistry::RUSACIS_DRIVER => app(RusacisLoginDriver::class),
-            default => throw new RuntimeException('The selected LoginServer driver does not support game accounts.'),
-        };
+        return (new BundledProfileCatalog)->all()['login:'.$driver]
+            ?? throw new RuntimeException('The selected LoginServer driver does not support game accounts.');
     }
 }

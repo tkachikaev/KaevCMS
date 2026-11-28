@@ -9,7 +9,7 @@ KaevCMS includes two game-server families:
 - **L2J Mobius** — identifier `l2j_mobius`. LoginServer and GameServer drivers intentionally use the same identifier in their separate registries. The legacy C1/C4 LoginServer variant remains `l2j_mobius_legacy`.
 - **RUSaCis** — identifier `rusacis`, with its own LoginServer and GameServer drivers. See [RUSaCis GameServer](#rusacis-gameserver) below.
 
-The L2J Mobius GameServer driver uses schema profiles instead of duplicating a driver per chronicle. The inspector selects the legacy profile when `characters.karma` is used and the modern profile when `characters.reputation` is used. Required game tables are `characters` and `clan_data`. Complete `heroes` and `castle` tables enable the corresponding optional statistics sections; missing or incomplete optional tables do not disable character rankings.
+The shared engine uses bundled JSON profiles for L2J Mobius and RUSaCis. The Mobius profile selects `characters.karma` or `characters.reputation` according to the available columns and chronicle. Required game tables are `characters` and `clan_data`. Complete `heroes` and `castle` tables enable the corresponding optional statistics sections; missing or incomplete optional tables do not disable character rankings.
 
 Connection tests and runtime queries use the same required-table and column contract without displaying credentials. Server statistics are enabled per GameServer and use independent limits for level, PvP, PK, and play-time rankings.
 

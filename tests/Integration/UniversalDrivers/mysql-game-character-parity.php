@@ -2,7 +2,7 @@
 
 /**
  * Run only from mysql-fixtures.php against the disposable MySQL databases.
- * No production connection or write path is exercised by the new reader.
+ * No production connection or write path is exercised.
  */
 if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames)) {
     throw new RuntimeException('GameServer parity requires isolated MySQL fixtures.');
@@ -13,16 +13,9 @@ if (! is_file($autoload)) {
 }
 require_once $autoload;
 
-use App\Contracts\GameServerDatabaseGateway;
-use App\Models\GameServer;
-use App\Services\GameWorld\MobiusGameSchemaInspector;
-use App\Services\GameWorld\MobiusGameWorldDriver;
-use App\Services\GameWorld\RusacisGameSchemaInspector;
-use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\GameWorld\UniversalGameCharacterReader;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
-use Illuminate\Database\Connection;
 use Illuminate\Database\MySqlConnection;
 
 $profiles = (new BundledProfileCatalog)->all();
@@ -32,20 +25,6 @@ foreach ($databaseNames as $type => $db) {
     $connection = new MySqlConnection($pdo, $db, '', [
         'driver' => 'mysql', 'database' => $db, 'prefix' => '',
     ]);
-    $gateway = new class($connection) implements GameServerDatabaseGateway
-    {
-        public function __construct(private readonly Connection $connection) {}
-
-        public function run(GameServer $server, callable $callback): mixed
-        {
-            return $callback($this->connection);
-        }
-    };
-    $legacy = $type === 'rusacis'
-        ? new RusacisGameWorldDriver($gateway, new RusacisGameSchemaInspector)
-        : new MobiusGameWorldDriver($gateway, new MobiusGameSchemaInspector);
-    $server = new GameServer;
-    $server->chronicle = 'Interlude';
     $profile = $profiles['game:'.$type];
     // An empty alternatives list is not a requirement. Both readers must
     // keep the same core schema available.
@@ -65,34 +44,23 @@ foreach ($databaseNames as $type => $db) {
     if ($reader->diagnose($connection, $profile) !== ['missing_required' => [], 'missing_optional' => []]) {
         throw new RuntimeException("Unexpected game fixture schema gaps for $type.");
     }
-    foreach (['alice', 'bob', 'absent', "alice' OR 1=1 --"] as $login) {
-        $old = $legacy->charactersForAccount($server, $login, 100);
-        $new = $reader->charactersForAccount($connection, $profile, $login, 100, 'Interlude');
-        if (count($old) !== count($new)) {
-            throw new RuntimeException("Character count parity failed for $type/$login.");
-        }
-        foreach ($old as $i => $row) {
-            foreach ($row as $field => $value) {
-                if (! array_key_exists($field, $new[$i]) || (string) ($new[$i][$field] ?? '') !== (string) ($value ?? '')) {
-                    throw new RuntimeException("Character field parity failed for $type/$login: $field.");
-                }
-            }
+    foreach (['alice' => ['AliceKnight'], 'bob' => ['BobMage'], 'absent' => [], "alice' OR 1=1 --" => []] as $login => $expected) {
+        $rows = $reader->charactersForAccount($connection, $profile, $login, 100, 'Interlude');
+        if (array_column($rows, 'name') !== $expected) {
+            throw new RuntimeException("Character ownership/filter lookup failed for $type/$login.");
         }
     }
-    if ($reader->charactersForAccount($connection, $profile, 'alice', 1)[0]['name'] !== 'AliceKnight') {
-        throw new RuntimeException('Character limit/order filtering failed.');
+    $alice = $reader->charactersForAccount($connection, $profile, 'alice', 1, 'Interlude')[0];
+    $bob = $reader->charactersForAccount($connection, $profile, 'bob', 1, 'Interlude')[0];
+    if ((int) $alice['id'] !== ($type === 'rusacis' ? 101 : 201)
+        || (int) $alice['pvp_kills'] !== 10 || $alice['clan_name'] !== 'TestClan'
+        || (int) $bob['hero'] !== 1) {
+        throw new RuntimeException("Character field mapping failed for $type.");
     }
     if ($type === 'l2j_mobius') {
-        $server->chronicle = 'Essence';
-        $new = $reader->charactersForAccount($connection, $profile, 'bob', 10, 'Essence');
-        $old = $legacy->charactersForAccount($server, 'bob');
-        if ((string) $new[0]['reputation'] !== (string) $old[0]['reputation']) {
-            throw new RuntimeException('Modern Mobius reputation choice differs from legacy.');
-        }
-    } else {
-        $bob = $reader->charactersForAccount($connection, $profile, 'bob');
-        if (($bob[0]['hero'] ?? null) !== 1) {
-            throw new RuntimeException('RUSaCis active hero lookup failed.');
+        $modern = $reader->charactersForAccount($connection, $profile, 'bob', 1, 'Essence')[0];
+        if ((int) $modern['reputation'] !== 9 || (int) $bob['reputation'] !== 0) {
+            throw new RuntimeException('Mobius chronicle did not select the correct reputation column.');
         }
     }
 
@@ -150,5 +118,5 @@ foreach ($databaseNames as $type => $db) {
     if (count($rows) !== 1 || $rows[0]['level'] !== null) {
         throw new RuntimeException('Missing optional EAV table should not conceal or invent a value.');
     }
-    echo "OK: $type GameServer read-only character parity, ownership, mappings, EAV and injection\n";
+    echo "OK: $type GameServer character lookup, ownership, mappings, EAV and injection\n";
 }

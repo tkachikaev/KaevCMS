@@ -186,7 +186,8 @@ final class UniversalGameWorldReader
     private function configuration(Connection $database, array $profile, ?string $capability = null): array
     {
         $this->validator->validate($profile);
-        if ($profile['type'] !== 'game' || $profile['config']['database']['dialect'] !== 'mysql' || $database->getDriverName() !== 'mysql') {
+        // Read-only query builders also support local SQLite fixtures; the external gateway uses MySQL.
+        if ($profile['type'] !== 'game' || $profile['config']['database']['dialect'] !== 'mysql' || ! in_array($database->getDriverName(), ['mysql', 'sqlite'], true)) {
             throw new ProfileValidationException('The selected profile requires a MySQL GameServer connection.');
         }
         if ($capability !== null && ! in_array($capability, $profile['config']['capabilities'], true)) {

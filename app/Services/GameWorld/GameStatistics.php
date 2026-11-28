@@ -63,18 +63,20 @@ final class GameStatistics
             return ['available' => true, 'sections' => []];
         }
 
-        $failureKey = implode(':', [
-            'game-statistics-capabilities-v1',
+        $cacheKey = implode(':', [
+            'game-statistics-capabilities-v2',
             $server->id,
             $server->updated_at?->getTimestamp() ?? 0,
-            'unavailable',
         ]);
+        $failureKey = $cacheKey.':unavailable';
         if (Cache::has($failureKey)) {
             return ['available' => false, 'sections' => []];
         }
 
         try {
-            $capabilities = $this->drivers->resolve($server)->capabilities($server);
+            $driver = $this->drivers->resolve($server);
+            $capabilities = Cache::remember($cacheKey, now()->addMinutes(self::CACHE_MINUTES),
+                fn (): array => $driver->capabilities($server));
         } catch (Throwable $exception) {
             Cache::put($failureKey, true, now()->addSeconds(self::FAILURE_COOLDOWN_SECONDS));
             Log::warning('Public game statistics capabilities could not be read.', [

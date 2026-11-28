@@ -14,10 +14,7 @@ if (! is_file($autoload)) {
 }
 require_once $autoload;
 
-use App\Services\GameAccounts\MobiusLoginDriver;
-use App\Services\GameAccounts\RusacisLoginDriver;
 use App\Services\GameAccounts\UniversalLoginAccountReader;
-use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
@@ -26,15 +23,11 @@ use Illuminate\Database\MySqlConnection;
 
 $profiles = (new BundledProfileCatalog)->all();
 $reader = new UniversalLoginAccountReader;
-$writer = new UniversalLoginAccountWriter;
 foreach ($databaseNames as $type => $databaseName) {
     $pdo->exec("USE `$databaseName`");
     $connection = new MySqlConnection($pdo, $databaseName, '', [
         'driver' => 'mysql', 'database' => $databaseName, 'prefix' => '',
     ]);
-    $legacy = $type === 'rusacis'
-        ? new RusacisLoginDriver($writer)
-        : new MobiusLoginDriver($writer);
     $ids = $type === 'rusacis' ? ['rusacis'] : ['l2j_mobius', 'l2j_mobius_legacy'];
     foreach ($ids as $profileId) {
         $profile = $profiles['login:'.$profileId];
@@ -42,11 +35,15 @@ foreach ($databaseNames as $type => $databaseName) {
         if ($diagnostics !== ['missing_required' => [], 'missing_optional' => []]) {
             throw new RuntimeException("Unexpected schema gap in fixture $profileId: ".json_encode($diagnostics));
         }
-        foreach (['alice', 'bob', 'missing', "alice' OR 1=1 --"] as $login) {
-            $before = $legacy->summary($connection, $login);
-            $after = $reader->summary($connection, $profile, $login);
-            if ($before !== $after) {
-                throw new RuntimeException("Summary parity mismatch in $profileId for $login");
+        $alice = $reader->summary($connection, $profile, 'alice');
+        if ($alice === null || $alice['login'] !== 'alice' || $alice['status'] !== 'active'
+            || $alice['last_active'] !== 1750000000
+            || $alice['created_at'] !== ($type === 'rusacis' ? null : '1760000000')) {
+            throw new RuntimeException("Account summary mismatch in $profileId");
+        }
+        foreach (['missing', "alice' OR 1=1 --"] as $login) {
+            if ($reader->summary($connection, $profile, $login) !== null) {
+                throw new RuntimeException("Unexpected account lookup result in $profileId");
             }
         }
         $bob = $reader->summary($connection, $profile, 'bob');
@@ -61,15 +58,16 @@ foreach ($databaseNames as $type => $databaseName) {
             new PreparedGameAccount('absent', $credential, $email),
             new PreparedGameAccount('alice', $credential, 'mismatched@example.invalid'),
         ];
-        foreach ($cases as $case) {
-            $old = $legacy->inspect($connection, $case);
-            $new = $reader->inspect($connection, $profile, $case);
-            if ($old !== $new) {
-                throw new RuntimeException("Prepared credential parity mismatch in $profileId for {$case->login}");
+        $expected = [
+            ExternalGameAccountState::Matching,
+            ExternalGameAccountState::Conflict,
+            ExternalGameAccountState::Missing,
+            $type === 'rusacis' ? ExternalGameAccountState::Matching : ExternalGameAccountState::Conflict,
+        ];
+        foreach ($cases as $i => $case) {
+            if ($reader->inspect($connection, $profile, $case) !== $expected[$i]) {
+                throw new RuntimeException("Prepared credential mismatch in $profileId for {$case->login}");
             }
-        }
-        if ($reader->inspect($connection, $profile, $cases[1]) !== ExternalGameAccountState::Conflict) {
-            throw new RuntimeException('Invalid prepared credential must not match.');
         }
         $unsafe = $profile;
         $unsafe['config']['accounts']['fields']['login'] = 'login` OR 1=1';
@@ -79,11 +77,10 @@ foreach ($databaseNames as $type => $databaseName) {
         } catch (ProfileValidationException) {
             // Expected: rejected before touching game data.
         }
-        echo "OK: $profileId SQL read-only parity (summary, inspection, injection)\n";
+        echo "OK: $profileId SQL account lookup, inspection and injection\n";
     }
 
-    // Optional game metadata is not required for account lookups. The old
-    // PHP reader cannot handle this reduced schema, so compare explicitly.
+    // Optional game metadata is not required for account lookups.
     $optionalColumn = $type === 'rusacis' ? 'last_active' : 'lastactive';
     $pdo->exec("ALTER TABLE `accounts` DROP COLUMN `$optionalColumn`");
     $diagnostics = $reader->diagnose($connection, $profiles['login:'.$ids[0]]);

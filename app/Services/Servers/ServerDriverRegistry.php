@@ -2,9 +2,8 @@
 
 namespace App\Services\Servers;
 
-use App\Services\GameWorld\MobiusGameSchemaInspector;
-use App\Services\GameWorld\RusacisGameSchemaInspector;
 use App\Support\Database\TableExistence;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +29,7 @@ final class ServerDriverRegistry
      */
     public function loginDrivers(): array
     {
+        $profiles = (new BundledProfileCatalog)->all();
         $legacy = [
             self::MOBIUS_DRIVER => [
                 'label' => __('L2J Mobius — Interlude and newer'),
@@ -42,23 +42,7 @@ final class ServerDriverRegistry
                     'account_data' => 'account_data',
                     'accounts_ipauth' => 'ip_authorization',
                 ],
-                'requirements' => [
-                    [
-                        'table' => 'accounts',
-                        'columns' => ['login', 'password', 'email', 'created_time', 'lastactive', 'accessLevel', 'lastIP', 'lastServer'],
-                        'required' => true,
-                    ],
-                    [
-                        'table' => 'account_data',
-                        'columns' => ['account_name', 'var', 'value'],
-                        'required' => false,
-                    ],
-                    [
-                        'table' => 'accounts_ipauth',
-                        'columns' => ['login', 'ip', 'type'],
-                        'required' => false,
-                    ],
-                ],
+                'requirements' => $profiles['login:l2j_mobius']['config']['requirements'],
             ],
             self::MOBIUS_LEGACY_LOGIN_DRIVER => [
                 'label' => __('L2J Mobius Legacy — C1/C4'),
@@ -68,13 +52,7 @@ final class ServerDriverRegistry
                 'schema_profile' => 'mobius_legacy',
                 'capabilities' => ['account_lookup', 'account_creation', 'password_change'],
                 'optional_capabilities' => [],
-                'requirements' => [
-                    [
-                        'table' => 'accounts',
-                        'columns' => ['login', 'password', 'email', 'created_time', 'lastactive', 'accessLevel', 'lastIP', 'lastServer'],
-                        'required' => true,
-                    ],
-                ],
+                'requirements' => $profiles['login:l2j_mobius_legacy']['config']['requirements'],
             ],
             self::RUSACIS_DRIVER => [
                 'label' => 'RUSaCis',
@@ -84,18 +62,12 @@ final class ServerDriverRegistry
                 'schema_profile' => 'rusacis_interlude',
                 'capabilities' => ['account_lookup', 'account_creation', 'password_change'],
                 'optional_capabilities' => [],
-                'requirements' => [
-                    [
-                        'table' => 'accounts',
-                        'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
-                        'required' => true,
-                    ],
-                ],
+                'requirements' => $profiles['login:rusacis']['config']['requirements'],
             ],
         ];
 
         // A bundled JSON profile hidden in the catalog must also disappear
-        // from the connection selector; keeping the legacy PHP descriptor
+        // from the connection selector; keeping the release-owned descriptor
         // visible would silently undo the administrator's delete action.
         return $this->selectableLegacy('login', $legacy) + $this->customDescriptors('login', array_keys($legacy));
     }
@@ -116,6 +88,7 @@ final class ServerDriverRegistry
      */
     public function gameDrivers(): array
     {
+        $profiles = (new BundledProfileCatalog)->all();
         $legacy = [
             self::MOBIUS_DRIVER => [
                 'label' => 'L2J Mobius',
@@ -134,7 +107,7 @@ final class ServerDriverRegistry
                     'heroes' => 'heroes',
                     'castle' => 'castles',
                 ],
-                'requirements' => MobiusGameSchemaInspector::requirements(),
+                'requirements' => $profiles['game:l2j_mobius']['config']['requirements'],
             ],
             self::RUSACIS_DRIVER => [
                 'label' => 'RUSaCis',
@@ -152,7 +125,7 @@ final class ServerDriverRegistry
                     'heroes' => 'heroes',
                     'castle' => 'castles',
                 ],
-                'requirements' => RusacisGameSchemaInspector::requirements(),
+                'requirements' => $profiles['game:rusacis']['config']['requirements'],
             ],
         ];
 
@@ -160,7 +133,7 @@ final class ServerDriverRegistry
     }
 
     /**
-     * Preserve the original PHP implementation for existing connections, but
+     * Preserve the bundled profiles for existing connections, but
      * respect tombstones in selectors. Deleting a profile is already refused
      * while any server uses its identifier, so hiding cannot orphan a server.
      *
@@ -187,7 +160,7 @@ final class ServerDriverRegistry
 
     /**
      * Discover user-installed profiles from the existing catalog. Release-owned
-     * legacy IDs deliberately retain their previous PHP descriptors until an
+     * IDs retain their release-owned descriptors until an
      * administrator explicitly applies a JSON snapshot to a connection.
      *
      * @param  list<string>  $reserved

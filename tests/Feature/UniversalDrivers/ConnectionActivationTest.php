@@ -8,7 +8,6 @@ use App\Exceptions\ExternalDatabaseDriverUnavailable;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\LoginServerDriverResolver;
-use App\Services\GameAccounts\UniversalLoginDriver;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\Servers\GameServerAdministration;
 use App\Services\Servers\LoginServerAdministration;
@@ -43,7 +42,7 @@ final class ConnectionActivationTest extends TestCase
         $this->assertSame($base['config']['requirements'], $registry->loginDriver('custom-login')['requirements']);
     }
 
-    public function test_failed_application_keeps_last_verified_snapshot_and_legacy_driver_is_not_switched_implicitly(): void
+    public function test_failed_application_keeps_last_verified_snapshot(): void
     {
         $probe = new class implements ExternalDatabaseConnectionTester
         {
@@ -65,11 +64,11 @@ final class ConnectionActivationTest extends TestCase
         $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
         $server = LoginServer::factory()->create(['driver' => 'rusacis']);
         $resolver = app(LoginServerDriverResolver::class);
-        $this->assertNotInstanceOf(UniversalLoginDriver::class, $resolver->resolve($server));
-        app(UniversalDriverActivation::class)->apply($server);
         $snapshots = app(ConnectionProfileSnapshots::class);
+        $this->assertNull($snapshots->get($server));
+        $this->assertStringStartsWith('$2a$10$', $resolver->resolve($server)->encodePassword('Password123'));
+        app(UniversalDriverActivation::class)->apply($server);
         $this->assertNotNull($snapshots->get($server));
-        $this->assertInstanceOf(UniversalLoginDriver::class, $resolver->resolve($server));
 
         $original = DB::table('universal_driver_connection_snapshots')
             ->where('connection_type', 'login')->where('connection_id', $server->id)->value('profile_sha256');

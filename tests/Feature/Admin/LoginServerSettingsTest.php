@@ -126,8 +126,9 @@ class LoginServerSettingsTest extends TestCase
         $this->assertSame([
             [
                 'table' => 'accounts',
-                'columns' => ['login', 'password', 'email', 'created_time', 'lastactive', 'accessLevel', 'lastIP', 'lastServer'],
+                'columns' => ['login', 'password', 'email'],
                 'required' => true,
+                'optional_columns' => ['created_time', 'lastactive', 'accessLevel', 'lastIP', 'lastServer'],
             ],
         ], $fake->requirements);
     }
@@ -220,8 +221,9 @@ class LoginServerSettingsTest extends TestCase
         $this->assertTrue($fake->driverReady);
         $this->assertSame([[
             'table' => 'accounts',
-            'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
+            'columns' => ['login', 'password'],
             'required' => true,
+            'optional_columns' => ['last_active', 'access_level', 'last_server'],
         ]], $fake->requirements);
     }
 

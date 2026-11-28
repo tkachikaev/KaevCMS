@@ -4,7 +4,7 @@ namespace App\Support\UniversalDrivers;
 
 use RuntimeException;
 
-/** Read-only release-owned profile references. Not connected to production resolvers. */
+/** Read-only release-owned profiles, independent of administrator overrides. */
 final class BundledProfileCatalog
 {
     public function __construct(

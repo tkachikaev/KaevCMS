@@ -10,12 +10,12 @@ use App\Services\GameWorld\GameStatistics;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\SiteSettings;
 use App\Support\Themes\ThemeManager;
+use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use RuntimeException;
 use Tests\Fakes\FailingGameServerDatabaseGateway;
 use Tests\Fakes\FakeGameServerDatabaseGateway;
 use Tests\TestCase;
@@ -402,8 +402,7 @@ class PublicGameStatisticsTest extends TestCase
         });
         $server = $this->statisticsServer();
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('either karma or reputation');
+        $this->expectException(ProfileValidationException::class);
 
         app(GameWorldDriverResolver::class)->resolve($server)->capabilities($server);
     }

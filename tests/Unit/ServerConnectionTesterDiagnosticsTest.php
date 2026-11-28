@@ -4,7 +4,6 @@ namespace Tests\Unit;
 
 use App\Exceptions\ExternalDatabaseSchemaMismatch;
 use App\Models\LoginServer;
-use App\Services\GameWorld\MobiusGameSchemaInspector;
 use App\Services\Servers\ServerConnectionTester;
 use App\Services\Servers\ServerDriverRegistry;
 use Tests\Fakes\FakeExternalDatabaseConnectionTester;
@@ -105,7 +104,6 @@ class ServerConnectionTesterDiagnosticsTest extends TestCase
         return new ServerConnectionTester(
             $fake,
             new ServerDriverRegistry,
-            new MobiusGameSchemaInspector,
         );
     }
 

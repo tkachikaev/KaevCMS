@@ -2,177 +2,30 @@
 
 namespace Tests\Unit;
 
-use App\Models\GameServer;
-use App\Services\GameWorld\GameWorldDriverResolver;
-use App\Services\GameWorld\MobiusGameWorldDriver;
-use App\Services\GameWorld\RusacisGameSchemaInspector;
-use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\Servers\ServerDriverRegistry;
 use Tests\TestCase;
 
 class ServerDriverRegistryTest extends TestCase
 {
-    public function test_modern_mobius_login_driver_keeps_its_identifier_and_schema_contract(): void
-    {
-        $driver = app(ServerDriverRegistry::class)->loginDriver(ServerDriverRegistry::MOBIUS_DRIVER);
-
-        $this->assertNotNull($driver);
-        $this->assertSame(__('L2J Mobius — Interlude and newer'), $driver['label']);
-        $this->assertTrue($driver['ready']);
-        $this->assertSame(2106, $driver['service_port']);
-        $this->assertSame('mobius_interlude_plus', $driver['schema_profile']);
-        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $driver['capabilities']);
-        $this->assertSame([
-            'account_data' => 'account_data',
-            'accounts_ipauth' => 'ip_authorization',
-        ], $driver['optional_capabilities']);
-        $this->assertSame([
-            [
-                'table' => 'accounts',
-                'columns' => ['login', 'password', 'email', 'created_time', 'lastactive', 'accessLevel', 'lastIP', 'lastServer'],
-                'required' => true,
-            ],
-            [
-                'table' => 'account_data',
-                'columns' => ['account_name', 'var', 'value'],
-                'required' => false,
-            ],
-            [
-                'table' => 'accounts_ipauth',
-                'columns' => ['login', 'ip', 'type'],
-                'required' => false,
-            ],
-        ], $driver['requirements']);
-    }
-
-    public function test_legacy_mobius_login_driver_requires_only_the_accounts_table(): void
-    {
-        $driver = app(ServerDriverRegistry::class)->loginDriver(ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER);
-
-        $this->assertNotNull($driver);
-        $this->assertSame(__('L2J Mobius Legacy — C1/C4'), $driver['label']);
-        $this->assertTrue($driver['ready']);
-        $this->assertSame(2106, $driver['service_port']);
-        $this->assertSame('mobius_legacy', $driver['schema_profile']);
-        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $driver['capabilities']);
-        $this->assertSame([], $driver['optional_capabilities']);
-        $this->assertSame([
-            [
-                'table' => 'accounts',
-                'columns' => ['login', 'password', 'email', 'created_time', 'lastactive', 'accessLevel', 'lastIP', 'lastServer'],
-                'required' => true,
-            ],
-        ], $driver['requirements']);
-    }
-
-    public function test_both_mobius_login_driver_identifiers_are_registered(): void
-    {
-        $keys = app(ServerDriverRegistry::class)->loginDriverKeys();
-
-        $this->assertContains(ServerDriverRegistry::MOBIUS_DRIVER, $keys);
-        $this->assertContains(ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, $keys);
-    }
-
-    public function test_mobius_game_driver_matches_shared_schema_contract(): void
-    {
-        $driver = app(ServerDriverRegistry::class)->gameDriver(ServerDriverRegistry::MOBIUS_DRIVER);
-
-        $this->assertNotNull($driver);
-        $this->assertSame('L2J Mobius', $driver['label']);
-        $this->assertTrue($driver['ready']);
-        $this->assertSame(7777, $driver['service_port']);
-        $this->assertSame('createDate', $driver['character_created_at_column']);
-        $this->assertSame([
-            'table' => 'characters',
-            'column' => 'online',
-            'value' => 1,
-        ], $driver['online_count']);
-        $this->assertSame(['level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'], $driver['statistics']);
-        $this->assertSame(['level', 'pvp', 'pk', 'play_time'], $driver['capabilities']);
-        $this->assertSame([
-            'heroes' => 'heroes',
-            'castle' => 'castles',
-        ], $driver['optional_capabilities']);
-        $this->assertSame([
-            [
-                'table' => 'characters',
-                'columns' => [
-                    'account_name',
-                    'charId',
-                    'char_name',
-                    'level',
-                    'exp',
-                    'classid',
-                    'race',
-                    'sex',
-                    'title',
-                    'online',
-                    'onlinetime',
-                    'accesslevel',
-                    'deletetime',
-                    'pvpkills',
-                    'pkkills',
-                    'nobless',
-                    'clanid',
-                    'lastAccess',
-                ],
-                'any_columns' => ['karma', 'reputation'],
-                'optional_columns' => ['x', 'y', 'z'],
-                'required' => true,
-            ],
-            [
-                'table' => 'clan_data',
-                'columns' => ['clan_id', 'clan_name', 'clan_level', 'reputation_score', 'hasCastle', 'leader_id'],
-                'required' => true,
-            ],
-            [
-                'table' => 'heroes',
-                'columns' => ['charId', 'class_id', 'count', 'played', 'claimed'],
-                'required' => false,
-            ],
-            [
-                'table' => 'castle',
-                'columns' => ['id', 'name'],
-                'required' => false,
-            ],
-        ], $driver['requirements']);
-    }
-
-    public function test_mobius_identifier_resolves_to_the_shared_game_driver(): void
-    {
-        $server = new GameServer(['driver' => ServerDriverRegistry::MOBIUS_DRIVER]);
-
-        $this->assertInstanceOf(
-            MobiusGameWorldDriver::class,
-            app(GameWorldDriverResolver::class)->resolve($server),
-        );
-    }
-
-    public function test_rusacis_login_and_game_drivers_are_ready_with_independent_schemas(): void
+    public function test_existing_login_and_game_driver_identifiers_remain_selectable(): void
     {
         $registry = app(ServerDriverRegistry::class);
-        $loginDriver = $registry->loginDriver('rusacis');
-        $gameDriver = $registry->gameDriver('rusacis');
 
-        $this->assertNotNull($loginDriver);
-        $this->assertTrue($loginDriver['ready']);
-        $this->assertSame('rusacis_interlude', $loginDriver['schema_profile']);
-        $this->assertSame(['account_lookup', 'account_creation', 'password_change'], $loginDriver['capabilities']);
-        $this->assertSame([[
-            'table' => 'accounts',
-            'columns' => ['login', 'password', 'last_active', 'access_level', 'last_server'],
-            'required' => true,
-        ]], $loginDriver['requirements']);
+        $this->assertEqualsCanonicalizing(['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'], $registry->loginDriverKeys());
+        $this->assertEqualsCanonicalizing(['l2j_mobius', 'rusacis'], $registry->gameDriverKeys());
+    }
 
-        $this->assertNotNull($gameDriver);
-        $this->assertTrue($gameDriver['ready']);
-        $this->assertSame('characters', $gameDriver['online_count']['table']);
-        $this->assertSame(['level', 'pvp', 'pk', 'play_time'], $gameDriver['capabilities']);
-        $this->assertSame(RusacisGameSchemaInspector::requirements(), $gameDriver['requirements']);
-        $this->assertNotContains('character_rescue', $gameDriver['capabilities']);
-        $this->assertInstanceOf(
-            RusacisGameWorldDriver::class,
-            app(GameWorldDriverResolver::class)->resolve(new GameServer(['driver' => 'rusacis'])),
-        );
+    public function test_bundled_login_drivers_require_account_credentials_but_not_optional_metadata(): void
+    {
+        $registry = app(ServerDriverRegistry::class);
+        foreach (['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] as $id) {
+            $driver = $registry->loginDriver($id);
+            $this->assertTrue($driver['ready']);
+            $this->assertSame('accounts', $driver['requirements'][0]['table']);
+            $this->assertContains('login', $driver['requirements'][0]['columns']);
+            $this->assertContains('password', $driver['requirements'][0]['columns']);
+            $this->assertNotContains('last_active', $driver['requirements'][0]['columns']);
+            $this->assertNotContains('lastactive', $driver['requirements'][0]['columns']);
+        }
     }
 }

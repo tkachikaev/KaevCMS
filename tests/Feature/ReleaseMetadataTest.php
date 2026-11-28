@@ -405,19 +405,6 @@ class ReleaseMetadataTest extends TestCase
         $this->assertStringContainsString('capabilities', $queueContract);
         $this->assertStringContainsString('enqueue', $queueContract);
 
-        $mobiusDriver = $this->readReleaseFile('app/Services/GameWorld/MobiusGameWorldDriver.php');
-        $mobiusRegistry = $this->readReleaseFile('app/Services/Servers/ServerDriverRegistry.php');
-        $mobiusResolver = $this->readReleaseFile('app/Services/GameWorld/GameWorldDriverResolver.php');
-        $mobiusAccounts = $this->readReleaseFile('app/Services/GameAccounts/ExternalGameAccountGateway.php');
-        $this->assertStringNotContainsString('table(\'items\')', $mobiusDriver);
-        $this->assertStringNotContainsString('reward', strtolower($mobiusDriver));
-        $this->assertStringContainsString('$profile->reputationColumn', $mobiusDriver);
-        $this->assertFileExists(app_path('Services/GameWorld/MobiusGameSchemaInspector.php'));
-        $this->assertStringContainsString("public const MOBIUS_DRIVER = 'l2j_mobius';", $mobiusRegistry);
-        $this->assertStringContainsString('MobiusGameSchemaInspector::requirements()', $mobiusRegistry);
-        $this->assertStringNotContainsString('l2j_mobius_ct0_interlude', $mobiusRegistry);
-        $this->assertStringNotContainsString('l2j_mobius_ct0_interlude', $mobiusResolver);
-        $this->assertStringNotContainsString('l2j_mobius_ct0_interlude', $mobiusAccounts);
         $this->assertFileExists(database_path('migrations/2026_07_26_000000_rename_mobius_game_driver_identifier.php'));
 
         $homeController = $this->readReleaseFile('app/Http/Controllers/HomeController.php');
@@ -432,9 +419,7 @@ class ReleaseMetadataTest extends TestCase
         $this->assertFileDoesNotExist(app_path('Services/GameServer/MobiusGameServerAdapter.php'));
         $this->assertFileDoesNotExist(app_path('Services/GameServer/MockGameServerAdapter.php'));
         $this->assertFileDoesNotExist(config_path('game.php'));
-        $this->assertFileExists(app_path('Services/GameWorld/MobiusGameSchemaProfile.php'));
         $this->assertFileExists(app_path('Services/GameAccounts/MobiusClassNames.php'));
-        $this->assertFileDoesNotExist(app_path('Services/GameWorld/MobiusInterludeGameWorldDriver.php'));
         $this->assertFileDoesNotExist(app_path('Services/GameAccounts/InterludeClassNames.php'));
         $this->assertFileDoesNotExist(app_path('Services/GameWorld/InterludeCharacterLabels.php'));
 

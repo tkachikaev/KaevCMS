@@ -9,8 +9,6 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames)
 }
 require_once __DIR__.'/../../../vendor/autoload.php';
 
-use App\Services\GameAccounts\MobiusLoginDriver;
-use App\Services\GameAccounts\RusacisLoginDriver;
 use App\Services\GameAccounts\UniversalLoginAccountReader;
 use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Services\Servers\UniversalProfileSchemaProbe;
@@ -32,13 +30,10 @@ foreach ($databaseNames as $type => $name) {
     $pdo->exec("USE `$name`");
     $pdo->exec('ALTER TABLE `accounts` MODIFY `login` VARCHAR(255) NOT NULL, ADD UNIQUE KEY `uk_login_i5` (`login`)');
     $db = new MySqlConnection($pdo, $name, '', ['driver' => 'mysql', 'database' => $name, 'prefix' => '']);
-    $legacy = $type === 'rusacis'
-        ? new RusacisLoginDriver($writer)
-        : new MobiusLoginDriver($writer);
     foreach (($type === 'rusacis' ? ['rusacis'] : ['l2j_mobius', 'l2j_mobius_legacy']) as $id) {
         $profile = $profiles['login:'.$id];
         $hash = $writer->preparePassword($profile, 'Testing123');
-        if (! $writer->acceptsCredential($profile, $hash) || ! $legacy->acceptsCredential($hash)) {
+        if (! $writer->acceptsCredential($profile, $hash)) {
             throw new RuntimeException("Prepared password format is incompatible for $id");
         }
         if ($id === 'rusacis') {
@@ -55,9 +50,14 @@ foreach ($databaseNames as $type => $name) {
             throw new RuntimeException('A new login should not exist yet.');
         }
         $writer->create($db, $profile, $prepared);
-        if ($reader->inspect($db, $profile, $prepared) !== ExternalGameAccountState::Matching
-            || $legacy->inspect($db, $prepared) !== ExternalGameAccountState::Matching) {
+        if ($reader->inspect($db, $profile, $prepared) !== ExternalGameAccountState::Matching) {
             throw new RuntimeException('Created game account does not match immutable recovery proof.');
+        }
+        $stored = $db->table('accounts')->where('login', $login)->first();
+        if ($stored === null || $stored->password !== $hash
+            || ($type === 'rusacis' && ((int) $stored->last_active !== 0 || (int) $stored->last_server !== 1))
+            || ($type !== 'rusacis' && $stored->email !== $email)) {
+            throw new RuntimeException('Account creation changed the credential, identity or server-owned defaults.');
         }
         // Simulate lost client response after the committed insert: a retry
         // must fail at the unique index; read-only inspection resolves state.

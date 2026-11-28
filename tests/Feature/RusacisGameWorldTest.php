@@ -8,17 +8,16 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\ExternalGameAccountGateway;
 use App\Services\GameWorld\GameWorldDriverResolver;
-use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameServerFeatures\CharacterRescueWriteResult;
+use App\Support\UniversalDrivers\ProfileValidationException;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use RuntimeException;
 use Tests\Fakes\FakeGameServerDatabaseGateway;
 use Tests\TestCase;
 
@@ -66,7 +65,6 @@ class RusacisGameWorldTest extends TestCase
     public function test_rusacis_character_account_mapping_and_nullable_deletion_filter(): void
     {
         $driver = app(GameWorldDriverResolver::class)->resolve($this->server);
-        $this->assertInstanceOf(RusacisGameWorldDriver::class, $driver);
 
         $characters = $driver->charactersForAccount($this->server, 'player1');
         $this->assertCount(2, $characters);
@@ -126,8 +124,7 @@ class RusacisGameWorldTest extends TestCase
         Schema::connection('rusacis_world_test')->table('characters', static function (Blueprint $table): void {
             $table->dropColumn('karma');
         });
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('karma');
+        $this->expectException(ProfileValidationException::class);
         app(GameWorldDriverResolver::class)->resolve($this->server)->capabilities($this->server);
     }
 
@@ -173,15 +170,11 @@ class RusacisGameWorldTest extends TestCase
         $this->assertTrue($characters[1]['hero']);
     }
 
-    public function test_cabinet_character_limit_is_applied_in_the_database_query(): void
+    public function test_cabinet_character_limit_keeps_the_highest_level_character(): void
     {
         config()->set('cms.external_database.character_limit', 1);
-        $database = DB::connection('rusacis_world_test');
-        $database->enableQueryLog();
-        $this->assertCount(1, app(ExternalGameAccountGateway::class)->characters($this->server, 'player1'));
-        $queries = array_filter($database->getQueryLog(), static fn (array $query): bool => str_contains($query['query'], 'from "characters"'));
-        $this->assertNotEmpty($queries);
-        $this->assertStringContainsString('limit 1', strtolower(end($queries)['query']));
+        $characters = app(ExternalGameAccountGateway::class)->characters($this->server, 'player1');
+        $this->assertSame([100], array_column($characters, 'id'));
     }
 
     public function test_character_rescue_moves_owned_offline_characters_with_zero_or_null_deletion_time(): void

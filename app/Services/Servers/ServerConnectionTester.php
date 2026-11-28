@@ -7,12 +7,11 @@ use App\Exceptions\ExternalDatabaseDriverUnavailable;
 use App\Exceptions\ExternalDatabaseSchemaMismatch;
 use App\Models\GameServer;
 use App\Models\LoginServer;
-use App\Services\GameWorld\MobiusGameSchemaInspector;
-use App\Services\GameWorld\MobiusGameSchemaProfile;
-use App\Services\GameWorld\RusacisGameSchemaProfile;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\ProfileDatabaseEncoding;
+use App\Support\UniversalDrivers\ProfileSchema;
 use InvalidArgumentException;
 
 final class ServerConnectionTester
@@ -25,7 +24,6 @@ final class ServerConnectionTester
     public function __construct(
         private readonly ExternalDatabaseConnectionTester $tester,
         private readonly ServerDriverRegistry $drivers,
-        private readonly MobiusGameSchemaInspector $mobiusSchemas,
     ) {}
 
     /**
@@ -73,11 +71,7 @@ final class ServerConnectionTester
         }
 
         return $this->withLoginDriver(
-            $this->testExternalDatabase(
-                $this->credentials($values),
-                $driver['requirements'],
-                $driver['ready'],
-            ),
+            $this->testUniversalProfile($this->credentials($values), (new BundledProfileCatalog)->all()['login:'.$driverKey]),
             $driverKey,
             $driver,
         );
@@ -199,11 +193,7 @@ final class ServerConnectionTester
         }
 
         return $this->withGameDriver(
-            $this->testExternalDatabase(
-                $this->credentials($connectionValues),
-                $driver['requirements'],
-                $driver['ready'],
-            ),
+            $this->testUniversalProfile($this->credentials($connectionValues), (new BundledProfileCatalog)->all()['game:'.$driverKey]),
             $driverKey,
             $driver,
             (string) ($values['chronicle'] ?? ''),
@@ -260,43 +250,24 @@ final class ServerConnectionTester
         ];
     }
 
-    /** @param array<string,mixed> $connection
+    /**
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $connection
      * @param  array<string,mixed>  $profile
      * @return array<string,mixed>
      */
     private function testUniversalProfile(array $connection, array $profile): array
     {
-        // A test double may only implement the legacy interface; real MySQL checks
-        // use the expanded read-only probe on the same physical DB connection.
-        if ($this->tester instanceof MySqlExternalDatabaseConnectionTester) {
-            return $this->tester->testProfile($connection, $profile);
-        }
+        $run = fn (): array => $this->tester instanceof MySqlExternalDatabaseConnectionTester
+            ? $this->tester->testProfile($connection, $profile)
+            : $this->tester->test($connection, $profile['config']['requirements'], true);
 
-        return $this->testExternalDatabase($connection, $profile['config']['requirements'], true);
-    }
-
-    /**
-     * @param  array{host: string, port: int, database: string, username: string, password: string, charset: string, collation?: string}  $connection
-     * @param  list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>  $requirements
-     * @return array<string, mixed>
-     */
-    private function testExternalDatabase(array $connection, array $requirements, bool $driverReady): array
-    {
         if (! $this->probeCacheEnabled) {
-            return $this->tester->test($connection, $requirements, $driverReady);
+            return $run();
         }
 
-        $payload = json_encode(
-            [$connection, $requirements, $driverReady],
-            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES,
-        );
-        $fingerprint = hash('sha256', $payload);
+        $fingerprint = hash('sha256', json_encode([$connection, $profile], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
 
-        if (! array_key_exists($fingerprint, $this->probeCache)) {
-            $this->probeCache[$fingerprint] = $this->tester->test($connection, $requirements, $driverReady);
-        }
-
-        return $this->probeCache[$fingerprint];
+        return $this->probeCache[$fingerprint] ??= $run();
     }
 
     /**
@@ -341,31 +312,31 @@ final class ServerConnectionTester
     private function withGameDriver(array $report, string $driverKey, array $driver, string $chronicle): array
     {
         $report = $this->withDriver($report, $driverKey, $driver['label'], $driver['ready']);
-        $profile = $driverKey === ServerDriverRegistry::MOBIUS_DRIVER
-            ? $this->mobiusProfile($report, $chronicle)
-            : null;
-        $report['schema_profile'] = $profile?->name;
-        if ($driverKey === ServerDriverRegistry::RUSACIS_DRIVER && ($report['compatible'] ?? false) === true) {
-            $report['schema_profile'] = RusacisGameSchemaProfile::NAME;
-            $characters = $this->tableCheck($report, 'characters');
-            $matchedOptional = is_array($characters['matched_optional_columns'] ?? null)
-                ? $characters['matched_optional_columns']
-                : [];
-            $report['capabilities'] = (new RusacisGameSchemaProfile(
-                heroesAvailable: $this->tableIsAvailable($report, 'heroes'),
-                castlesAvailable: $this->tableIsAvailable($report, 'castle'),
-                characterRescueAvailable: count(array_intersect(['x', 'y', 'z'], $matchedOptional)) === 3,
-            ))->capabilities();
-
-            return $report;
+        $characters = $this->tableCheck($report, 'characters');
+        if ($driverKey === ServerDriverRegistry::MOBIUS_DRIVER && ($report['connected'] ?? false) === true) {
+            $field = (new BundledProfileCatalog)->all()['game:l2j_mobius']['config']['characters']['fields']['reputation'];
+            $matched = is_array($characters['matched_any_columns'] ?? null) ? $characters['matched_any_columns'] : [];
+            $column = ProfileSchema::chosenColumn($field, $matched, $chronicle);
+            $report['schema_profile'] = match ($column) {
+                'karma' => 'mobius_legacy',
+                'reputation' => 'mobius_modern',
+                default => null,
+            };
+        } elseif ($driverKey === ServerDriverRegistry::RUSACIS_DRIVER && ($report['compatible'] ?? false) === true) {
+            $report['schema_profile'] = 'rusacis_interlude';
         }
-        $report['capabilities'] = ($report['compatible'] ?? false) === true
-            ? ($profile?->capabilities() ?? $this->availableCapabilities(
-                $report,
-                $driver['capabilities'],
-                $driver['optional_capabilities'],
-            ))
-            : [];
+
+        if (($report['compatible'] ?? false) === true) {
+            $report['capabilities'] = array_key_exists('game_capabilities', $report)
+                ? array_values(array_diff($report['game_capabilities'], ['characters']))
+                : $this->availableCapabilities($report, $driver['capabilities'], $driver['optional_capabilities']);
+            // Older connection testers only supply column checks.
+            $optional = is_array($characters['matched_optional_columns'] ?? null) ? $characters['matched_optional_columns'] : [];
+            if (! array_key_exists('game_capabilities', $report)
+                && count(array_intersect(['x', 'y', 'z'], $optional)) === 3) {
+                $report['capabilities'][] = 'character_rescue';
+            }
+        }
 
         return $report;
     }
@@ -411,31 +382,6 @@ final class ServerConnectionTester
         }
 
         return array_values(array_unique($capabilities));
-    }
-
-    /** @param array<string, mixed> $report */
-    private function mobiusProfile(array $report, string $chronicle): ?MobiusGameSchemaProfile
-    {
-        if (($report['connected'] ?? false) !== true) {
-            return null;
-        }
-
-        $characters = $this->tableCheck($report, 'characters');
-        $matched = is_array($characters['matched_any_columns'] ?? null)
-            ? $characters['matched_any_columns']
-            : [];
-        $matchedOptional = is_array($characters['matched_optional_columns'] ?? null)
-            ? $characters['matched_optional_columns']
-            : [];
-
-        return $this->mobiusSchemas->profileForColumns(
-            hasKarma: in_array('karma', $matched, true),
-            hasReputation: in_array('reputation', $matched, true),
-            heroesAvailable: $this->tableIsAvailable($report, 'heroes'),
-            castlesAvailable: $this->tableIsAvailable($report, 'castle'),
-            characterRescueAvailable: count(array_intersect(['x', 'y', 'z'], $matchedOptional)) === 3,
-            chronicle: $chronicle,
-        );
     }
 
     /** @param array<string, mixed> $report */

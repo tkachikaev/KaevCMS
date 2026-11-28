@@ -1,9 +1,9 @@
 -- RUSaCis disposable MySQL fixture: no production data or game credentials.
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE TABLE `accounts` (
-  `access_level` BIGINT NULL,
-  `last_active` BIGINT NULL,
-  `last_server` VARCHAR(255) NULL,
+  `access_level` BIGINT NOT NULL DEFAULT 0,
+  `last_active` BIGINT NOT NULL DEFAULT 0,
+  `last_server` VARCHAR(255) NOT NULL DEFAULT '1',
   `login` VARCHAR(255) NULL,
   `password` VARCHAR(255) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

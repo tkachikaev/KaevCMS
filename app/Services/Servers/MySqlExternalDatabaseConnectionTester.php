@@ -40,8 +40,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
     }
 
     /**
-     * Verify additional read-only invariants before allowing a JSON profile to be applied.
-     * The regular connection test for legacy PHP drivers is unchanged.
+     * Verify read-only schema invariants for the selected driver profile.
      *
      * @param  array<string,mixed>  $profile
      * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $connection

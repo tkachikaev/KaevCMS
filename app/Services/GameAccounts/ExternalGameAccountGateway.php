@@ -60,13 +60,19 @@ final class ExternalGameAccountGateway implements GameAccountGateway
                 && in_array('characters', $gameProfile['config']['capabilities'], true);
         }
         if ($loginProfile !== null) {
-            // Legacy world readers are login-based, but never assume that all
+            // Bundled world profiles are login-based, but never assume that all
             // profiles share the same account-identity contract.
             return ($loginProfile['config']['accounts']['ownership']['identity'] ?? null) === 'login'
                 && in_array($gameServer->driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
         }
 
-        return $this->loginDrivers->resolve($login)->supportsGameDriver((string) $gameServer->driver);
+        // Keep the pairing rule for release-owned profiles. Mixing families
+        // requires an explicitly verified mapping, as for custom drivers.
+        return match ($login->driver) {
+            ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER => $gameServer->driver === ServerDriverRegistry::MOBIUS_DRIVER,
+            ServerDriverRegistry::RUSACIS_DRIVER => $gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER,
+            default => false,
+        };
     }
 
     public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount

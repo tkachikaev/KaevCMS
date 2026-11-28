@@ -1,10 +1,10 @@
-# KaevCMS universal drivers — current guide (0.54.3 QA candidate)
+# KaevCMS universal drivers
 
 ## Overview and boundaries
 
 Use **Servers → Drivers** to create, duplicate, import and export LoginServer or GameServer JSON profiles. Profiles describe data mappings and capabilities, never DB addresses, passwords, arbitrary SQL or PHP. Only MySQL/MariaDB is supported. MS SQL/PTS is **not implemented**.
 
-**Legacy Mobius and RUSaCis PHP drivers remain available.** Editing a catalog entry does not switch an active server. Select the JSON driver in server settings and explicitly verify/apply it. The applied copy has an immutable SHA256 digest and HMAC binding to connection credentials. Changing those settings or editing the profile requires a fresh verification/application. After changing LoginServer database credentials, reapply JSON for any GameServer inheriting that connection as well. CMS does not automatically fall back to PHP; GameServers with separate database credentials are unaffected by this change.
+**Mobius, RUSaCis and custom drivers use one JSON profile engine.** Existing connections with bundled identifiers continue using the shipped profile without reconfiguration. Editing a catalog entry does not switch an active server. Select and verify/apply a custom or edited profile explicitly. Account creation and password changes require a unique login index and a password column large enough for the hash. The applied copy has an immutable SHA256 digest and HMAC binding to connection credentials. Changing those settings or editing the profile requires a fresh verification/application. After changing LoginServer database credentials, reapply JSON for any GameServer inheriting that connection as well. CMS does not fall back to a bundled profile when verification fails; GameServers with separate database credentials are unaffected by this change.
 
 ## LoginServer editor
 
@@ -14,7 +14,7 @@ Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. G
 
 ## GameServer editor
 
-Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the legacy counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID remain out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
+Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the bundled counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID remain out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
 
 ### Ranking and filter sources
 
@@ -26,7 +26,7 @@ All filters combine with AND and affect both public lists and account characters
 
 ## Database encoding
 
-The profile's **Charset** and **Collation** fields are editable on the first step for both server types. **An applied JSON snapshot takes precedence over the connection's original charset setting.** Reapply the profile to update an active server; legacy PHP drivers retain existing connection settings.
+The profile's **Charset** and **Collation** fields are editable on the first step for both server types. **An applied JSON snapshot takes precedence over the connection's original charset setting.** Reapply the profile to update an active server; connections without applied snapshots retain existing connection settings.
 
 ## Read-only activation preflight
 
@@ -34,12 +34,12 @@ Checks verify connectivity, required tables/columns, and mapping dependencies. F
 
 ## Module `driver_extensions`
 
-Each module declares its fields in `module.json`. In the editor the admin maps one table (`kind: table`) and relevant columns per extension group; split multi-table mappings into separate groups. Module enablement checks required values and actual table/column existence. Runtime reads verify the mappings again to fail closed if the database changes. Custom JSON profiles require a **verified applied snapshot**, not a catalog draft; bundled legacy PHP drivers may use the shipped catalog template.
+Each module declares its fields in `module.json`. In the editor the admin maps one table (`kind: table`) and relevant columns per extension group; split multi-table mappings into separate groups. Module enablement checks required values and actual table/column existence. Runtime reads verify the mappings again to fail closed if the database changes. Custom JSON profiles require a **verified applied snapshot**, not a catalog draft; bundled connections without a snapshot may use the unmodified shipped profile.
 
 Modules must still enforce permissions, ownership, business constraints and use bound query-builder queries. Valid table names do not grant write authority.
 
 ## QA status
 
-Offline checks: `validate-profiles.php`, `validate-write-profiles.php`, `validate-editor-drafts.php`, `validate-schema-preflight.php` under `tests/Integration/UniversalDrivers`. Remaining acceptance gates are disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright, clean install/update (Windows/VDS/shared), and real game-client checks. **0.54.3 is a QA candidate, not production certified.**
+Offline checks: `validate-profiles.php`, `validate-write-profiles.php`, `validate-editor-drafts.php`, `validate-schema-preflight.php` under `tests/Integration/UniversalDrivers`. Remaining acceptance gates are disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright, clean install/update (Windows/VDS/shared), and real game-client checks.
 
 Earlier development notes: [0.54.0 archive](history/UNIVERSAL_DRIVERS_0.54.0.md).

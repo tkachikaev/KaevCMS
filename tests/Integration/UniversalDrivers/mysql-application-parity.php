@@ -6,6 +6,7 @@ use App\Models\LoginServer;
 use App\Services\GameAccounts\ExternalGameAccountGateway;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
+use App\Services\Servers\ServerConnectionTester;
 use App\Services\Servers\UniversalDriverActivation;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\ExternalGameAccountWriteResult;
@@ -92,8 +93,32 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
                 $fixture->exec($statement);
             }
         }
+        $connection = ['database_host' => '127.0.0.1', 'database_port' => (int) (getenv('KAEV_MYSQL_TEST_PORT') ?: 3306),
+            'database_name' => $database, 'database_username' => getenv('KAEV_MYSQL_TEST_USER') ?: 'root',
+            'database_password' => getenv('KAEV_MYSQL_TEST_PASSWORD') ?: '', 'database_charset' => 'latin1'];
+        $fixture->exec('ALTER TABLE accounts ADD UNIQUE KEY fixture_login (login)');
+        $builtInLogin = LoginServer::factory()->create(['driver' => $family, ...$connection]);
+        $builtInGame = GameServer::factory()->create(['driver' => $family, 'login_server_id' => $builtInLogin->id,
+            'use_login_server_connection' => true, 'chronicle' => 'Interlude']);
+        $tester = app(ServerConnectionTester::class);
+        $check($tester->testLoginServer($builtInLogin)['compatible'] === true
+            && $tester->testGameServer($builtInGame)['compatible'] === true, 'Bundled profile diagnostic failed.');
+        $previousObserved = $observed;
+        $check($gateway->accountSummary($builtInLogin, 'alice')['login'] === 'alice'
+            && array_column($gateway->characters($builtInGame, 'alice'), 'name') === ['AliceKnight'], 'Bundled runtime ownership lookup failed.');
+        $prepared = $gateway->prepareAccount($builtInLogin, 'BundledCreated', 'Fixture-Password-123', 'bundled@example.invalid');
+        $check($gateway->createPreparedAccount($builtInLogin, $prepared) === ExternalGameAccountWriteResult::Created
+            && $gateway->inspectPreparedAccount($builtInLogin, $prepared) === ExternalGameAccountState::Matching
+            && $gateway->changePassword($builtInLogin, $prepared->login, 'Changed-Fixture-456'), 'Bundled account write/recovery failed.');
+        $check(app(GameWorldDriverResolver::class)->resolve($builtInGame)->ranking($builtInGame, 'level', 1)[0]['name'] === 'AliceKnight', 'Bundled runtime ranking failed.');
+        $nativeEncoding = array_diff_key($observed, $previousObserved);
+        $check($nativeEncoding !== [], 'Bundled runtime did not open an external connection.');
+        foreach ($nativeEncoding as $encoding) {
+            $check($encoding['charset'] === 'latin1', 'Bundled profile changed the configured connection charset.');
+        }
+        $observed = $previousObserved;
+        $fixture->exec("DELETE FROM accounts WHERE login = 'BundledCreated'");
         $fixture->exec('RENAME TABLE accounts TO mapped_accounts, characters TO mapped_characters');
-        $fixture->exec('ALTER TABLE mapped_accounts ADD UNIQUE KEY fixture_login (login)');
         $id = $family === 'rusacis' ? 'obj_Id' : 'charId';
         $fixture->exec('ALTER TABLE mapped_characters CHANGE COLUMN `'.$id.'` player_id BIGINT NOT NULL');
         $fixture->exec('ALTER TABLE mapped_characters ADD COLUMN born_on VARCHAR(32) NULL');
@@ -117,9 +142,6 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $game['config']['characters']['fields']['online'] = ['kind' => 'column', 'column' => 'is_connected'];
         $game = (new GameProfileEditor)->prepare($game, $original);
         $catalog->create($game);
-        $connection = ['database_host' => '127.0.0.1', 'database_port' => (int) (getenv('KAEV_MYSQL_TEST_PORT') ?: 3306),
-            'database_name' => $database, 'database_username' => getenv('KAEV_MYSQL_TEST_USER') ?: 'root',
-            'database_password' => getenv('KAEV_MYSQL_TEST_PASSWORD') ?: '', 'database_charset' => 'latin1'];
         $loginServer = LoginServer::factory()->create(['driver' => $login['id'], ...$connection]);
         $gameServer = GameServer::factory()->create(['driver' => $game['id'], 'login_server_id' => $loginServer->id,
             'use_login_server_connection' => false, 'chronicle' => 'Interlude', ...$connection]);

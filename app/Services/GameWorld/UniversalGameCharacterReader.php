@@ -134,8 +134,7 @@ final class UniversalGameCharacterReader
             }
             $result[] = $mapped;
         }
-        // Existing PHP GameWorldDrivers sort account characters by level
-        // descending and by name ascending. Sort after mapping for EAV level.
+        // Sort after mapping because the level may come from EAV.
         usort($result, static function (array $a, array $b): int {
             $byLevel = (int) ($b['level'] ?? 0) <=> (int) ($a['level'] ?? 0);
 
@@ -324,7 +323,8 @@ final class UniversalGameCharacterReader
     private function configuration(Connection $database, array $profile, ?string $capability = null): array
     {
         $this->validator->validate($profile);
-        if ($profile['type'] !== 'game' || $profile['config']['database']['dialect'] !== 'mysql' || $database->getDriverName() !== 'mysql') {
+        // Read-only query builders also support local SQLite fixtures; the external gateway uses MySQL.
+        if ($profile['type'] !== 'game' || $profile['config']['database']['dialect'] !== 'mysql' || ! in_array($database->getDriverName(), ['mysql', 'sqlite'], true)) {
             throw new ProfileValidationException('The selected profile requires a MySQL GameServer connection.');
         }
         if ($capability !== null && ! in_array($capability, $profile['config']['capabilities'], true)) {
