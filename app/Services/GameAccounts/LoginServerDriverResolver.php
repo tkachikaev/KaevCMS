@@ -30,14 +30,12 @@ final class LoginServerDriverResolver
     }
 
     /** @return array{driver:LoginServerDriver,snapshot:array<string,mixed>|null} */
-    public function forOperation(LoginServer $server): array
+    public function forOperation(LoginServer $server, bool $lookupOnly = false): array
     {
         $snapshot = app(ConnectionProfileSnapshots::class)->get($server);
         $profile = $snapshot ?? $this->profile((string) $server->driver);
-        if (count(array_intersect(
-            ['account_lookup', 'account_creation', 'password_change'],
-            $profile['config']['capabilities'],
-        )) !== 3) {
+        $required = $lookupOnly ? ['account_lookup'] : ['account_lookup', 'account_creation', 'password_change'];
+        if (array_diff($required, $profile['config']['capabilities']) !== []) {
             throw new RuntimeException('The selected LoginServer driver does not support game accounts.');
         }
 

@@ -112,7 +112,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function accountSummary(LoginServer $loginServer, string $login): ?array
     {
-        return $this->withLoginConnection($loginServer, fn (Connection $database, LoginServerDriver $driver): ?array => $driver->summary($database, $login));
+        return $this->withLoginConnection($loginServer, fn (Connection $database, LoginServerDriver $driver): ?array => $driver->summary($database, $login), lookupOnly: true);
     }
 
     public function characters(GameServer $gameServer, string $login): array
@@ -150,9 +150,9 @@ final class ExternalGameAccountGateway implements GameAccountGateway
      * @param  Closure(Connection, LoginServerDriver): T  $callback
      * @return T
      */
-    private function withLoginConnection(LoginServer $loginServer, Closure $callback, ?PreparedGameAccount $account = null): mixed
+    private function withLoginConnection(LoginServer $loginServer, Closure $callback, ?PreparedGameAccount $account = null, bool $lookupOnly = false): mixed
     {
-        $operation = $this->loginDrivers->forOperation($loginServer);
+        $operation = $this->loginDrivers->forOperation($loginServer, $lookupOnly);
         $driver = $operation['driver'];
         if ($account !== null && ! $driver->acceptsCredential($account->credential)) {
             throw new RuntimeException('The prepared credential does not match the selected LoginServer driver.');

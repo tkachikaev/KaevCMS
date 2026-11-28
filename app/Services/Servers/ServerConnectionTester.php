@@ -149,6 +149,11 @@ final class ServerConnectionTester
             ], $active);
         }
 
+        if (! isset((new BundledProfileCatalog)->all()['login:'.$server->driver])
+            && app(DriverProfileCatalog::class)->find('login', (string) $server->driver) !== null) {
+            return $this->verificationRequired();
+        }
+
         return $this->testLoginValues([
             'driver' => $server->driver,
             'database_host' => $server->database_host,
@@ -223,6 +228,11 @@ final class ServerConnectionTester
                 'database_password' => $server->databasePassword() ?? '',
                 'database_charset' => $server->database_charset,
             ], $loginServer, $active);
+        }
+
+        if (! isset((new BundledProfileCatalog)->all()['game:'.$server->driver])
+            && app(DriverProfileCatalog::class)->find('game', (string) $server->driver) !== null) {
+            return $this->verificationRequired();
         }
 
         return $this->testGameValues([

@@ -82,6 +82,9 @@ final class UniversalLoginAccountReader
         }
         $available = $this->availableColumns($database, $table, [$fields['login'], $password]);
         $this->requireLoginIdentity($database, $table, $fields['login']);
+        if (! ProfileSchema::hasUniqueColumn($database, $table, $fields['login'])) {
+            throw new ProfileValidationException('Account recovery requires a unique login index.');
+        }
         $selected = $this->selected($fields, $available, ['login', 'password', 'email']);
         $stored = $database->table($table)->where($fields['login'], $account->login)->first($selected);
         if ($stored === null) {

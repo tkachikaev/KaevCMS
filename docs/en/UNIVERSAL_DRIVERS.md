@@ -8,7 +8,7 @@ Use **Servers → Drivers** to create, duplicate, import and export LoginServer 
 
 ## LoginServer editor
 
-First choose display name/ID, charset/collation, a supported game password format and capabilities. Then map account table and login/password/optional columns, registration constants and module fields. Lookup-only profiles can now disable creation/password changes. Account writes require a **unique login index** and a long enough password column in the actual MySQL table.
+First choose display name/ID, charset/collation, a supported game password format and capabilities. Then map account table and login/password/optional columns, registration constants and module fields. Lookup-only profiles can read account summaries without creation/password changes. Registration and account-area functions requiring the complete LoginServer capability set remain unavailable on such connections. Account writes require a **unique login index** and a long enough password column in the actual MySQL table. Login columns must store strings; numeric columns cannot represent logins.
 
 Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. Game-client acceptance, retries after ambiguous password writes and server-specific registration login rules require separate testing; arbitrary regex or custom code in JSON remains disallowed.
 
@@ -30,7 +30,7 @@ The profile's **Charset** and **Collation** fields are editable on the first ste
 
 ## Read-only activation preflight
 
-Checks verify connectivity, required tables/columns, and mapping dependencies. For account writes the checker requires a unique login index and a sufficient password column. Unavailable rankings, heroes, castles and character rescue are reported separately without blocking activation when the required schema and filters pass verification. The editor does not make coordinates or fields used only by heroes or castles mandatory for the entire connection. Fields also needed for identity, core mappings or filters remain required. Missing optional related values are omitted or null without hiding characters. Missing tables or columns explicitly declared required still block activation. These are **structural checks only**, not evidence that all live game operations will work. The game database is never modified by preflight.
+Checks verify connectivity, required tables/columns, and mapping dependencies. For account writes the checker requires a unique login index and a sufficient password column. Unavailable rankings, heroes, castles and character rescue are reported separately without blocking activation when the required schema and filters pass verification. The editor does not make coordinates or fields used only by heroes or castles mandatory for the entire connection. Fields also needed for identity, core mappings or filters remain required. Missing optional related values are omitted or null without hiding characters. Missing tables or columns explicitly declared required still block activation. Character owner column types must match the declared identity (string login or integer ID). A saved but unapplied custom profile is not an active connection: stored-connection diagnostics report that verification/application is required. These are **structural checks only**, not evidence that all live game operations will work. The game database is never modified by preflight.
 
 ## Module `driver_extensions`
 

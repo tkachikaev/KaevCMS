@@ -4,7 +4,6 @@ namespace App\Support\UniversalDrivers;
 
 use App\Models\GameServer;
 use App\Models\LoginServer;
-use App\Services\Servers\ServerDriverRegistry;
 use Throwable;
 
 /**
@@ -17,7 +16,7 @@ final class DriverExtensionAccess
 {
     public function __construct(
         private readonly ConnectionProfileSnapshots $snapshots,
-        private readonly DriverProfileCatalog $catalog,
+        private readonly BundledProfileCatalog $bundled,
     ) {}
 
     /** @return array<string, mixed>|null The driver profile in effect for the server, or null when it is unavailable. */
@@ -30,19 +29,9 @@ final class DriverExtensionAccess
                 return $snapshot;
             }
 
-            // Only a bundled driver may use its shipped JSON as a
-            // declaration template. Custom profiles must be applied and verified
-            // against THIS server first, not merely saved in the catalogue.
-            $legacy = $type === 'login'
-                ? [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER]
-                : [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER];
-            if (! in_array((string) $server->driver, $legacy, true)) {
-                return null;
-            }
-
-            $entry = $this->catalog->find($type, (string) $server->driver);
-
-            return $entry !== null && ! $entry['modified'] ? $entry['profile'] : null;
+            // The immutable shipped profile remains active until an explicit
+            // application, regardless of edits to the catalog entry.
+            return $this->bundled->all()[$type.':'.$server->driver] ?? null;
         } catch (Throwable) {
             return null;
         }
