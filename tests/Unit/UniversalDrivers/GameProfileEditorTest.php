@@ -17,7 +17,7 @@ final class GameProfileEditorTest extends TestCase
         $profile['config']['relations']['stats'] = ['table' => 'character_stats', 'local_column' => 'obj_Id', 'foreign_column' => 'char_id', 'cardinality' => 'many', 'join' => 'left'];
         $result = (new GameProfileEditor)->prepare($profile, $old);
         (new ProfileValidator)->validate($result);
-        $this->assertSame(['characters', 'castles'], $result['config']['capabilities']);
+        $this->assertSame(['characters', 'castles', 'character_rescue'], $result['config']['capabilities']);
         $this->assertSame([], $result['config']['rankings']);
         $rules = array_column($result['config']['requirements'], null, 'table');
         $this->assertSame(['char_id', 'param', 'value'], $rules['character_stats']['columns']);
@@ -36,12 +36,30 @@ final class GameProfileEditorTest extends TestCase
             $rules = array_column($result['config']['requirements'], null, 'table');
             $this->assertFalse($rules['heroes']['required']);
             $this->assertFalse($rules['castle']['required']);
-            $this->assertNotContains('character_rescue', $result['config']['capabilities']);
+            $this->assertContains('character_rescue', $result['config']['capabilities']);
             if ($profile['id'] === 'l2j_mobius') {
                 $this->assertContains('createDate', $rules['characters']['optional_columns']);
                 $this->assertContains('karma', $rules['characters']['any_columns']);
             }
         }
+    }
+
+    public function test_unsafe_coordinate_or_missing_guard_mapping_does_not_enable_rescue(): void
+    {
+        $profile = (new BundledProfileCatalog)->all()['game:rusacis'];
+        $original = $profile['config'];
+
+        $profile['config']['characters']['fields']['x']['column'] = 'accesslevel';
+        $result = (new GameProfileEditor)->prepare($profile, $original);
+        (new ProfileValidator)->validate($result);
+        $this->assertNotContains('character_rescue', $result['config']['capabilities']);
+
+        $profile['config'] = $original;
+        unset($profile['config']['filters'][1]);
+        $profile['config']['filters'] = array_values($profile['config']['filters']);
+        $result = (new GameProfileEditor)->prepare($profile, $original);
+        (new ProfileValidator)->validate($result);
+        $this->assertNotContains('character_rescue', $result['config']['capabilities']);
     }
 
     public function test_renaming_character_table_and_fields_updates_checks_and_rankings(): void

@@ -32,9 +32,7 @@ Only `x`, `y`, and `z` are changed. KaevCMS does not alter inventory, HP/CP/MP, 
 
 For L2JMobius, support is detected automatically through the `character_rescue` capability. The `characters` table must contain `charId`, `char_name`, `account_name`, `x`, `y`, `z`, `online`, `lastAccess`, `deletetime`, and `accesslevel`.
 
-The native RUSaCis PHP driver uses the same columns except for the character identifier (`obj_Id`), and accepts `deletetime` equal to zero or NULL. Both supported schemas store `lastAccess` in milliseconds; unknown (NULL) online status or last access blocks rescue. Applied universal JSON profiles do not support coordinate writes yet.
-
-A game build with a different schema can provide its own `CharacterRescueGateway` without changing the administration or player interfaces.
+The native RUSaCis PHP driver uses the same columns except for the character identifier (`obj_Id`), and accepts `deletetime` equal to zero or NULL. Both supported schemas store `lastAccess` in milliseconds; unknown (NULL) online status or last access blocks rescue. Applied Mobius and RUSaCis JSON profiles also support rescue when the schema permits it. Custom profiles must map direct ID, name, owner (login), online (0 = offline), last_seen_at_ms, X/Y/Z, access_level and deletion_time fields; configure main-table filters for access level = 0 and deletion = 0 or 0/NULL. An InnoDB table with a unique ID is required. Save the profile and apply JSON with connection verification. Unsupported schemas remain read-only for rescue.
 
 ## Operation journal
 

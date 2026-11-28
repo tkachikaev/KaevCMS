@@ -23,7 +23,7 @@ CREATE TABLE `accounts_ipauth` (
 CREATE TABLE `characters` (
   `accesslevel` BIGINT NULL,
   `account_name` VARCHAR(255) NULL,
-  `charId` BIGINT NULL,
+  `charId` BIGINT NOT NULL PRIMARY KEY,
   `char_name` VARCHAR(255) NULL,
   `clanid` BIGINT NULL,
   `classid` BIGINT NULL,

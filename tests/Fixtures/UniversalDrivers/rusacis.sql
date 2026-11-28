@@ -20,14 +20,17 @@ CREATE TABLE `characters` (
   `lastAccess` BIGINT NULL,
   `level` BIGINT NULL,
   `nobless` BIGINT NULL,
-  `obj_Id` BIGINT NULL,
+  `obj_Id` BIGINT NOT NULL PRIMARY KEY,
   `online` BIGINT NULL,
   `onlinetime` BIGINT NULL,
   `pkkills` BIGINT NULL,
   `pvpkills` BIGINT NULL,
   `race` BIGINT NULL,
   `sex` BIGINT NULL,
-  `title` VARCHAR(255) NULL
+  `title` VARCHAR(255) NULL,
+  `x` BIGINT NULL,
+  `y` BIGINT NULL,
+  `z` BIGINT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE `clan_data` (
   `clan_id` BIGINT NULL,

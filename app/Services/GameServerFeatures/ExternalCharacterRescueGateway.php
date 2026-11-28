@@ -3,50 +3,34 @@
 namespace App\Services\GameServerFeatures;
 
 use App\Contracts\CharacterRescueGateway;
+use App\Contracts\GameAccountGateway;
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
-use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameServerFeatures\CharacterRescueCapabilities;
 use App\Support\GameServerFeatures\CharacterRescueWriteResult;
+use App\Support\UniversalDrivers\CharacterRescueMapping;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Builder;
+use RuntimeException;
 
 final class ExternalCharacterRescueGateway implements CharacterRescueGateway
 {
-    /** @var list<string> */
-    private const REQUIRED_COLUMNS = [
-        'char_name',
-        'account_name',
-        'x',
-        'y',
-        'z',
-        'online',
-        'lastAccess',
-        'deletetime',
-        'accesslevel',
-    ];
-
     public function __construct(private readonly GameServerDatabaseGateway $database) {}
 
     public function supports(GameServer $server): bool
     {
-        return $this->supportedIdColumn($server) !== null;
+        return $this->mapping($server) !== null;
     }
 
     public function capabilities(GameServer $server): CharacterRescueCapabilities
     {
-        $idColumn = $this->supportedIdColumn($server);
-        if ($idColumn === null) {
-            return new CharacterRescueCapabilities(false, $this->requiredColumns($server->driver === ServerDriverRegistry::RUSACIS_DRIVER ? 'obj_Id' : 'charId'));
+        $mapping = $this->mapping($server);
+        if ($mapping === null) {
+            return new CharacterRescueCapabilities(false);
         }
 
-        return $this->database->run($server, function (Connection $connection) use ($idColumn): CharacterRescueCapabilities {
-            $missing = $this->missingColumns($connection, $idColumn);
-
-            return new CharacterRescueCapabilities($missing === [], $missing);
-        });
+        return $this->database->run($server, static fn (Connection $connection): CharacterRescueCapabilities => $mapping->capabilities($connection));
     }
 
     public function rescue(
@@ -56,8 +40,8 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
         array $target,
         CarbonImmutable $offlineBefore,
     ): CharacterRescueWriteResult {
-        $idColumn = $this->supportedIdColumn($server);
-        if ($idColumn === null) {
+        $mapping = $this->mapping($server);
+        if ($mapping === null) {
             return new CharacterRescueWriteResult(CharacterRescueWriteResult::UNSUPPORTED);
         }
 
@@ -66,9 +50,9 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
             $characterId,
             $target,
             $offlineBefore,
-            $idColumn,
+            $mapping,
         ): CharacterRescueWriteResult {
-            if ($this->missingColumns($connection, $idColumn) !== []) {
+            if (! $mapping->capabilities($connection)->supported) {
                 return new CharacterRescueWriteResult(CharacterRescueWriteResult::UNSUPPORTED);
             }
 
@@ -78,31 +62,18 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
                 $characterId,
                 $target,
                 $offlineBefore,
-                $idColumn,
+                $mapping,
             ): CharacterRescueWriteResult {
-                $query = $connection->table('characters')
-                    ->where($idColumn, $characterId)
-                    ->where('account_name', $accountLogin)
-                    ->where('accesslevel', 0);
-
-                if ($idColumn === 'obj_Id') {
-                    // RUSaCis uses both NULL and zero for characters not marked for deletion.
-                    $query->where(static fn (Builder $filter): Builder => $filter
-                        ->whereNull('deletetime')
-                        ->orWhere('deletetime', 0));
-                } else {
-                    $query->where('deletetime', 0);
-                }
-
-                $character = (clone $query)->lockForUpdate()
-                    ->first([
-                        'char_name',
-                        'x',
-                        'y',
-                        'z',
-                        'online',
-                        'lastAccess',
-                    ]);
+                $query = $mapping->characterQuery($connection, $accountLogin, $characterId);
+                $columns = $mapping->columns;
+                $character = (clone $query)->lockForUpdate()->first([
+                    $columns['name'].' as char_name',
+                    $columns['x'].' as x',
+                    $columns['y'].' as y',
+                    $columns['z'].' as z',
+                    $columns['online'].' as online',
+                    $columns['last_seen_at_ms'].' as lastAccess',
+                ]);
 
                 if ($character === null) {
                     return new CharacterRescueWriteResult(CharacterRescueWriteResult::NOT_FOUND);
@@ -138,12 +109,12 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
                     );
                 }
 
-                $updated = $query->where('online', 0)
-                    ->where('lastAccess', '<=', $offlineBeforeMilliseconds)
+                $updated = $query->where($columns['online'], 0)
+                    ->where($columns['last_seen_at_ms'], '<=', $offlineBeforeMilliseconds)
                     ->update([
-                        'x' => $target['x'],
-                        'y' => $target['y'],
-                        'z' => $target['z'],
+                        $columns['x'] => $target['x'],
+                        $columns['y'] => $target['y'],
+                        $columns['z'] => $target['z'],
                     ]);
 
                 if ($updated !== 1) {
@@ -164,44 +135,22 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
         });
     }
 
-    private function supportedIdColumn(GameServer $server): ?string
+    private function mapping(GameServer $server): ?CharacterRescueMapping
     {
-        $idColumn = match ($server->driver) {
-            ServerDriverRegistry::MOBIUS_DRIVER => 'charId',
-            ServerDriverRegistry::RUSACIS_DRIVER => 'obj_Id',
-            default => null,
-        };
-
-        // A verified JSON profile can change ownership and field semantics.
-        if ($idColumn === null || ! $server->connectionConfigured() || app(ConnectionProfileSnapshots::class)->get($server) !== null) {
+        if (! $server->connectionConfigured()) {
             return null;
         }
-
-        return $idColumn;
-    }
-
-    /** @return list<string> */
-    private function requiredColumns(string $idColumn): array
-    {
-        return [$idColumn, ...self::REQUIRED_COLUMNS];
-    }
-
-    /** @return list<string> */
-    private function missingColumns(Connection $connection, string $idColumn): array
-    {
-        $schema = $connection->getSchemaBuilder();
-        $required = $this->requiredColumns($idColumn);
-        if (! $schema->hasTable('characters')) {
-            return $required;
-        }
-
-        $missing = [];
-        foreach ($required as $column) {
-            if (! $schema->hasColumn('characters', $column)) {
-                $missing[] = $column;
+        try {
+            $profile = app(ConnectionProfileSnapshots::class)->get($server);
+            if ($profile !== null) {
+                return app(GameAccountGateway::class)->supportsGameServer($server)
+                    ? CharacterRescueMapping::fromProfile($profile)
+                    : null;
             }
-        }
 
-        return $missing;
+            return CharacterRescueMapping::native((string) $server->driver);
+        } catch (RuntimeException) {
+            return null;
+        }
     }
 }

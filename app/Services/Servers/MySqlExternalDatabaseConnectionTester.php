@@ -3,6 +3,7 @@
 namespace App\Services\Servers;
 
 use App\Contracts\ExternalDatabaseConnectionTester;
+use App\Support\UniversalDrivers\CharacterRescueMapping;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -158,16 +159,21 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
             }
 
             $profileIssues = [];
+            $rescueAvailable = false;
             if ($compatible && $profile !== null) {
                 $stage = 'profile_schema';
                 $profileIssues = (new UniversalProfileSchemaProbe)->problems($database, $profile);
                 if ($profileIssues !== []) {
                     $compatible = false;
+                } elseif ($profile['type'] === 'game') {
+                    $mapping = CharacterRescueMapping::fromProfile($profile);
+                    $rescueAvailable = $mapping !== null && $mapping->capabilities($database)->supported;
                 }
             }
 
             return [
                 'profile_issues' => $profileIssues,
+                'character_rescue_available' => $rescueAvailable,
                 'connected' => true,
                 'compatible' => $driverReady ? $compatible : null,
                 'server_version' => $serverVersion,

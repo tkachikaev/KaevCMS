@@ -132,7 +132,9 @@ final class GameProfileEditor
                 $capabilities[] = $name;
             }
         }
-        // Coordinate display does not enable the unsupported JSON rescue writer.
+        if (CharacterRescueMapping::fromConfig($config) !== null) {
+            $capabilities[] = 'character_rescue';
+        }
         $config['capabilities'] = $capabilities;
         $config['requirements'] = array_values($rules);
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Game servers: support character rescue through verified JSON profiles, including custom character tables and column mappings; retain compatibility with older bundled snapshots and check ownership, offline state and schema before writing coordinates.
+
 - Game servers: enable character rescue for the native RUSaCis driver, using its character ID and nullable deletion marker while preserving offline and ownership checks.
 
 - Forum: bounded pagination, reader-scoped author counts, refreshed search results after edits and removals, stricter topic move permissions, batched section statistics and mobile keyboard navigation. Custom themes now belong in `storage/app/forum-themes/<slug>`. Move existing custom themes there before updating. Frost and Classic remain bundled.

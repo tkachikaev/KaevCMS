@@ -38,7 +38,7 @@ final class ProfileFormat
     public const FIELD_NAMES = [
         'id', 'name', 'level', 'experience', 'class_id', 'race', 'gender', 'title', 'online',
         'last_seen_at_ms', 'play_time_seconds', 'pvp_kills', 'pk_kills', 'reputation',
-        'noble', 'clan_id', 'clan_name', 'hero', 'created_at', 'x', 'y', 'z',
+        'noble', 'clan_id', 'clan_name', 'hero', 'created_at', 'x', 'y', 'z', 'access_level', 'deletion_time',
     ];
 
     /** @var list<string> */

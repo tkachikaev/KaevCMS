@@ -222,6 +222,7 @@
         "app/Support/Themes/AccountThemeManager.php",
         "app/Support/UniversalDrivers/BundledProfileCatalog.php",
         "app/Support/UniversalDrivers/CastleNameCatalog.php",
+        "app/Support/UniversalDrivers/CharacterRescueMapping.php",
         "app/Support/UniversalDrivers/ConnectionProfileSnapshots.php",
         "app/Support/UniversalDrivers/DriverExtensionAccess.php",
         "app/Support/UniversalDrivers/DriverExtensionCatalog.php",

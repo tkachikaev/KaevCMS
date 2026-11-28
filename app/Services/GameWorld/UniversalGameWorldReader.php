@@ -3,6 +3,7 @@
 namespace App\Services\GameWorld;
 
 use App\Support\UniversalDrivers\CastleNameCatalog;
+use App\Support\UniversalDrivers\CharacterRescueMapping;
 use App\Support\UniversalDrivers\GameCharacterFilters;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
@@ -60,12 +61,8 @@ final class UniversalGameWorldReader
                 $supported[] = $feature;
             }
         }
-        $characters = $config['characters'];
-        $columns = $schema['columns'][$characters['table']] ?? [];
-        if (in_array('character_rescue', $config['capabilities'], true) &&
-            $this->hasAll($columns, array_map(static fn (array $field): string => $field['column'], [
-                $characters['fields']['x'], $characters['fields']['y'], $characters['fields']['z'],
-            ]))) {
+        $rescue = CharacterRescueMapping::fromProfile($profile);
+        if ($rescue !== null && $rescue->capabilities($database)->supported) {
             $supported[] = 'character_rescue';
         }
 
