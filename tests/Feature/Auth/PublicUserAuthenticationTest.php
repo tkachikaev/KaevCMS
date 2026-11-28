@@ -162,6 +162,28 @@ class PublicUserAuthenticationTest extends TestCase
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
     }
 
+    public function test_email_link_for_another_account_explains_how_to_continue_without_verifying_the_wrong_user(): void
+    {
+        app(RegistrationSettings::class)->update(true, true);
+        $first = User::factory()->unverified()->create();
+        $second = User::factory()->unverified()->create();
+        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
+            'id' => $first->id,
+            'hash' => sha1($first->email),
+        ]);
+
+        $this->actingAs($second)->get($url)
+            ->assertOk()
+            ->assertSee(__('This verification link belongs to another account. Sign out, sign in to the correct account and open the link from the email again.'));
+        $this->assertAuthenticatedAs($second);
+        $this->assertFalse($first->fresh()->hasVerifiedEmail());
+        $this->assertFalse($second->fresh()->hasVerifiedEmail());
+
+        $this->actingAs($first)->get($url)->assertRedirect(route('account'));
+        $this->assertTrue($first->fresh()->hasVerifiedEmail());
+        $this->assertFalse($second->fresh()->hasVerifiedEmail());
+    }
+
     public function test_user_can_login_with_login_or_email_and_logout(): void
     {
         $user = User::query()->create([

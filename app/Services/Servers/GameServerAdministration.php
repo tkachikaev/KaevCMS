@@ -7,6 +7,7 @@ use App\Models\LoginServer;
 use App\Services\AuditLogger;
 use App\Services\GameServerDeletionImpact;
 use App\Services\GameServerSettings;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -89,7 +90,7 @@ final class GameServerAdministration
         ?array $connectionValues = null,
     ): array {
         if ($connectionMode === self::CONNECTION_CONNECT && is_array($connectionValues) &&
-            ! in_array((string) ($connectionValues['driver'] ?? ''), [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+            ! isset((new BundledProfileCatalog)->all()['game:'.(string) ($connectionValues['driver'] ?? '')])) {
             $login = LoginServer::query()->findOrFail((int) ($connectionValues['login_server_id'] ?? 0));
             $candidate = $connectionValues;
             if ($server !== null && ! (bool) ($candidate['use_login_server_connection'] ?? true) &&
@@ -186,7 +187,7 @@ final class GameServerAdministration
     /** @param array<string, mixed> $connectionValues */
     public function updateConnection(GameServer $server, array $connectionValues): GameServer
     {
-        $custom = ! in_array((string) ($connectionValues['driver'] ?? ''), [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        $custom = ! isset((new BundledProfileCatalog)->all()['game:'.(string) ($connectionValues['driver'] ?? '')]);
         if ($custom) {
             $login = LoginServer::query()->findOrFail((int) ($connectionValues['login_server_id'] ?? 0));
             $candidate = $connectionValues;

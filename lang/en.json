@@ -2586,6 +2586,7 @@
     "This update requires PHP :version or newer.": "This update requires PHP :version or newer.",
     "This update requires the PHP :extension extension.": "This update requires the PHP :extension extension.",
     "This username is already taken.": "This username is already taken.",
+    "This verification link belongs to another account. Sign out, sign in to the correct account and open the link from the email again.": "This verification link belongs to another account. Sign out, sign in to the correct account and open the link from the email again.",
     "Time left: :time": "Time left: :time",
     "Time zone": "Time zone",
     "Time zone validation attribute": "time zone",

@@ -38,6 +38,11 @@ final class ConnectionActivationTest extends TestCase
         $tester = app(ServerConnectionTester::class);
         $login = LoginServer::factory()->create(['driver' => 'lucera2']);
         $game = GameServer::factory()->create(['driver' => 'lucera2', 'login_server_id' => $login->id]);
+        $snapshots = app(ConnectionProfileSnapshots::class);
+        $snapshots->verifyAndRecord($login, 'lucera2', static fn (): bool => true);
+        $snapshots->verifyAndRecord($game, 'lucera2', static fn (): bool => true);
+        $originalLogin = $snapshots->get($login);
+        $originalGame = $snapshots->get($game);
         $loginProfile = $catalog->find('login', 'lucera2')['profile'];
         $loginProfile['config']['accounts']['table'] = 'custom_accounts';
         $loginProfile['config']['requirements'][0]['table'] = 'custom_accounts';
@@ -56,6 +61,18 @@ final class ConnectionActivationTest extends TestCase
         $this->assertSame('accounts', $probe->requirements[0]['table']);
         $tester->testGameServer($game);
         $this->assertSame('character_subclasses', $probe->requirements[1]['table']);
+
+        $login = app(LoginServerAdministration::class)->save($login, [
+            'name' => 'Renamed Lucera', 'driver' => 'lucera2',
+            'database_host' => $login->database_host, 'database_port' => $login->database_port,
+            'database_name' => $login->database_name, 'database_username' => $login->database_username,
+            'database_charset' => $login->database_charset, 'database_password' => '',
+        ])['server'];
+        $game = app(GameServerAdministration::class)->updateConnection($game, [
+            'driver' => 'lucera2', 'login_server_id' => $login->id, 'use_login_server_connection' => true,
+        ]);
+        $this->assertSame($originalLogin, $snapshots->get($login));
+        $this->assertSame($originalGame, $snapshots->get($game));
     }
 
     public function test_registry_exposes_custom_profiles_without_replacing_legacy_mobius_and_rusacis_descriptors(): void

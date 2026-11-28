@@ -5,6 +5,7 @@ namespace App\Services\Servers;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\AuditLogger;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -52,7 +53,7 @@ final class LoginServerAdministration
     public function save(?LoginServer $server, array $values): array
     {
         $key = (string) ($values['driver'] ?? '');
-        $custom = ! in_array($key, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        $custom = ! isset((new BundledProfileCatalog)->all()['login:'.$key]);
         if (! $custom) {
             return $this->saveUnchecked($server, $values);
         }
