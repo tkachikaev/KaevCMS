@@ -4,14 +4,13 @@ namespace App\Services\GameAccounts;
 
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\ProfileSchema;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
 
 /**
- * Experimental, read-only LoginServer adapter. Production gateways and resolvers
- * continue to use the legacy drivers until the later migration iteration.
- * Identifiers come only from a validated profile; input values are query-bound.
+ * Reads accounts using a validated profile and bound query values.
  */
 final class UniversalLoginAccountReader
 {
@@ -27,49 +26,12 @@ final class UniversalLoginAccountReader
     public function diagnose(Connection $database, array $profile): array
     {
         $config = $this->configuration($database, $profile);
-        $requirements = $config['requirements'];
-        $schema = $database->getSchemaBuilder();
-        $missingRequired = [];
-        $missingOptional = [];
+        $report = ProfileSchema::inspect($database, $config['requirements']);
 
-        foreach ($requirements as $requirement) {
-            $table = $requirement['table'];
-            if (! $schema->hasTable($table)) {
-                if ($requirement['required']) {
-                    $missingRequired[] = 'table:'.$table;
-                } else {
-                    $missingOptional[] = 'table:'.$table;
-                }
-
-                continue;
-            }
-            $columns = $schema->getColumnListing($table);
-            foreach ($requirement['columns'] as $column) {
-                if (! in_array($column, $columns, true)) {
-                    if ($requirement['required']) {
-                        $missingRequired[] = $table.'.'.$column;
-                    } else {
-                        $missingOptional[] = $table.'.'.$column;
-                    }
-                }
-            }
-            foreach ($requirement['optional_columns'] ?? [] as $column) {
-                if (! in_array($column, $columns, true)) {
-                    $missingOptional[] = $table.'.'.$column;
-                }
-            }
-            // An any_columns group is satisfiable if at least one column exists.
-            $alternatives = $requirement['any_columns'] ?? [];
-            if ($alternatives !== [] && array_intersect($alternatives, $columns) === []) {
-                if ($requirement['required']) {
-                    $missingRequired[] = $table.'.{'.implode(',', $alternatives).'}';
-                } else {
-                    $missingOptional[] = $table.'.{'.implode(',', $alternatives).'}';
-                }
-            }
-        }
-
-        return ['missing_required' => $missingRequired, 'missing_optional' => $missingOptional];
+        return [
+            'missing_required' => $report['missing_required'],
+            'missing_optional' => $report['missing_optional'],
+        ];
     }
 
     /**

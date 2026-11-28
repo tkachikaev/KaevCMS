@@ -19,6 +19,7 @@ namespace {
     use Illuminate\Database\Connection;
 
     require_once __DIR__.'/../../../app/Support/UniversalDrivers/ProfileFormat.php';
+    require_once __DIR__.'/../../../app/Support/UniversalDrivers/ProfileSchema.php';
     require_once __DIR__.'/../../../app/Support/UniversalDrivers/GameCharacterFilters.php';
     require_once __DIR__.'/../../../app/Services/Servers/UniversalProfileSchemaProbe.php';
 
@@ -97,6 +98,9 @@ namespace {
     unset($withoutPassword['config']['accounts']['fields']['password']);
     verify(in_array('drivers.schema_missing_account_field', issueKeys($probe->problems(new Connection($schema), $withoutPassword)), true), 'missing password mapping is a report, not a PHP warning');
     $schema->tables[$table] = [$loginColumn, $passColumn];
+    $schema->indexes[$table] = [['unique' => true, 'columns' => [$loginColumn]]];
+    $schema->indexes[$table] = [['unique' => true, 'columns' => [$loginColumn, $passColumn]]];
+    verify(in_array('drivers.schema_unique_login', issueKeys($probe->problems(new Connection($schema), $login)), true), 'composite unique index is not unique login');
     $schema->indexes[$table] = [['unique' => true, 'columns' => [$loginColumn]]];
     $schema->definitions[$table][0]['type'] = 'int';
     verify(in_array('drivers.schema_password_type', issueKeys($probe->problems(new Connection($schema), $login)), true), 'numeric password columns cannot hold a hash');

@@ -4,6 +4,7 @@ namespace App\Services\Servers;
 
 use App\Support\UniversalDrivers\GameCharacterFilters;
 use App\Support\UniversalDrivers\ProfileFormat;
+use App\Support\UniversalDrivers\ProfileSchema;
 use Illuminate\Database\Connection;
 
 /**
@@ -36,30 +37,17 @@ final class UniversalProfileSchemaProbe
             }
             if ($this->writable($config)) {
                 $loginColumn = $fields['login'];
-                $unique = false;
-                foreach ($schema->getIndexes($table) as $index) {
-                    if ($index['unique'] && $index['columns'] === [$loginColumn]) {
-                        $unique = true;
-                        break;
-                    }
-                }
-                if (! $unique) {
+                if (! ProfileSchema::hasUniqueColumn($connection, $table, $loginColumn)) {
                     $problems[] = ['key' => 'drivers.schema_unique_login', 'replace' => ['column' => $table.'.'.$loginColumn]];
                 }
-                $length = $this->credentialLength($config['password']['scheme'] ?? '');
                 $passwordColumn = $fields['password'] ?? null;
-                foreach ($schema->getColumns($table) as $definition) {
-                    if (! is_string($passwordColumn) || strcasecmp($definition['name'], $passwordColumn) !== 0) {
-                        continue;
+                if (is_string($passwordColumn) && in_array($passwordColumn, $columns, true)) {
+                    $problem = ProfileSchema::passwordColumnProblem(
+                        $connection, $table, $passwordColumn, $this->credentialLength($config['password']['scheme'] ?? ''),
+                    );
+                    if ($problem !== null) {
+                        $problems[] = $problem;
                     }
-                    $type = $definition['type'];
-                    if (preg_match('/\A(?:var)?(?:char|binary)\((\d+)\)/i', $type, $matches) === 1
-                        && (int) $matches[1] < $length) {
-                        $problems[] = ['key' => 'drivers.schema_password_length', 'replace' => ['column' => $table.'.'.$passwordColumn, 'actual' => (int) $matches[1], 'required' => $length]];
-                    } elseif (preg_match('/\A(?:(?:var)?(?:char|binary)\(\d+\)|(?:tiny|medium|long)?(?:text|blob))\z/i', $type) !== 1) {
-                        $problems[] = ['key' => 'drivers.schema_password_type', 'replace' => ['column' => $table.'.'.$passwordColumn]];
-                    }
-                    break;
                 }
             }
             if (in_array('account_creation', $config['capabilities'], true)) {

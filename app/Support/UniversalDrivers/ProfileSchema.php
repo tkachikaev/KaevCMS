@@ -4,7 +4,7 @@ namespace App\Support\UniversalDrivers;
 
 use Illuminate\Database\Connection;
 
-/** Shared schema checks for connection diagnostics and game readers. */
+/** Shared schema checks for external database diagnostics and operations. */
 final class ProfileSchema
 {
     /** @param list<array<string,mixed>> $requirements
@@ -92,6 +92,45 @@ final class ProfileSchema
     public static function hasAll(array $available, array $wanted): bool
     {
         return count(self::matched($available, $wanted)) === count($wanted);
+    }
+
+    public static function hasUniqueColumn(Connection $database, string $table, string $column): bool
+    {
+        foreach ($database->getSchemaBuilder()->getIndexes($table) as $index) {
+            if ($index['unique'] && array_map('strtolower', $index['columns']) === [strtolower($column)]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return array{key:string,replace:array<string,int|string>}|null */
+    public static function passwordColumnProblem(Connection $database, string $table, string $column, int $length): ?array
+    {
+        $qualified = $table.'.'.$column;
+        foreach ($database->getSchemaBuilder()->getColumns($table) as $definition) {
+            if (strcasecmp($definition['name'], $column) !== 0) {
+                continue;
+            }
+            $type = $definition['type'];
+            if (preg_match('/\A(?:var)?(?:char|binary)\((\d+)\)/i', $type, $matches) === 1) {
+                if ((int) $matches[1] < $length) {
+                    return ['key' => 'drivers.schema_password_length', 'replace' => [
+                        'column' => $qualified, 'actual' => (int) $matches[1], 'required' => $length,
+                    ]];
+                }
+
+                return null;
+            }
+            if (preg_match('/\A(?:tiny|medium|long)?(?:text|blob)\z/i', $type) === 1) {
+                return null;
+            }
+
+            return ['key' => 'drivers.schema_password_type', 'replace' => ['column' => $qualified]];
+        }
+
+        return ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $qualified]];
     }
 
     /** @param array<string,mixed> $field

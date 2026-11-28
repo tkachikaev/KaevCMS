@@ -2,7 +2,7 @@
 
 /**
  * Part of mysql-fixtures.php: disposable, localhost-only MySQL, Composer vendor.
- * Writer remains disconnected from live CMS resolvers.
+ * Exercises the same writer used by verified LoginServer profiles.
  */
 if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames)) {
     throw new RuntimeException('Universal LoginServer write parity needs isolated MySQL fixtures.');
@@ -15,6 +15,7 @@ use App\Services\GameAccounts\RusacisLoginDriver;
 use App\Services\GameAccounts\RusacisPasswordEncoder;
 use App\Services\GameAccounts\UniversalLoginAccountReader;
 use App\Services\GameAccounts\UniversalLoginAccountWriter;
+use App\Services\Servers\UniversalProfileSchemaProbe;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
@@ -178,6 +179,26 @@ foreach ($databaseNames as $type => $name) {
         $customNext = $writer->preparePassword($custom, 'Changed123');
         if (! $writer->changePreparedPassword($db, $custom, 'customUser', $customHash, $customNext)) {
             throw new RuntimeException('Custom-schema password change failed.');
+        }
+        // A numeric password column is unsafe even when its declared mapping
+        // is valid. Both activation and runtime must reject it.
+        $pdo->exec('ALTER TABLE `site_players` ADD COLUMN `numeric_hash` BIGINT NULL');
+        $numeric = $custom;
+        $numeric['config']['accounts']['fields']['password'] = 'numeric_hash';
+        unset($numeric['config']['accounts']['create']['columns']['pass_hash']);
+        $numeric['config']['accounts']['create']['columns']['numeric_hash'] = 'credential';
+        $numeric = (new LoginProfileEditor)->prepare($numeric, 'site_players');
+        $issues = (new UniversalProfileSchemaProbe)->problems($db, $numeric);
+        if (! in_array('drivers.schema_password_type', array_column($issues, 'key'), true)) {
+            throw new RuntimeException('Activation accepted a numeric password column.');
+        }
+        try {
+            $writer->create($db, $numeric, new PreparedGameAccount('numericUser', $customHash, 'numeric@example.invalid'));
+            throw new RuntimeException('Runtime accepted a numeric password column.');
+        } catch (ProfileValidationException) {
+            if ($db->table('site_players')->where('user_name', 'numericUser')->exists()) {
+                throw new RuntimeException('Rejected password mapping wrote an account.');
+            }
         }
         $pdo->exec('DROP TABLE `site_players`');
         echo "OK: custom-schema MD5 driver built like the editor builds it (own table and columns)\n";

@@ -155,14 +155,7 @@ final readonly class CharacterRescueMapping
         if ($missing !== []) {
             return new CharacterRescueCapabilities(false, $missing);
         }
-        $unique = false;
-        foreach ($schema->getIndexes($this->table) as $index) {
-            if ($index['unique'] && array_map('strtolower', $index['columns']) === [strtolower($this->columns['id'])]) {
-                $unique = true;
-                break;
-            }
-        }
-        if (! $unique) {
+        if (! ProfileSchema::hasUniqueColumn($connection, $this->table, $this->columns['id'])) {
             return new CharacterRescueCapabilities(false);
         }
         if ($connection->getDriverName() === 'mysql') {

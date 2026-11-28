@@ -4,15 +4,15 @@ namespace App\Services\GameAccounts;
 
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\ProfileFormat;
+use App\Support\UniversalDrivers\ProfileSchema;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
 use RuntimeException;
 
 /**
- * Experimental MySQL LoginServer write adapter. It does not select connections,
- * grant account ownership or bypass the existing reservation/recovery service.
- * Production resolvers do not call it until an explicit later migration.
+ * MySQL LoginServer writes using a validated profile. Connection selection,
+ * ownership and account reservation/recovery remain the caller's responsibility.
  *
  * Callers must persist the prepared credential before an external CREATE, and
  * must retain both hashes for recovery of an ambiguous password update.
@@ -145,9 +145,10 @@ final class UniversalLoginAccountWriter
         if (! hash_equals($expectedCredential, (string) $stored->{$passwordColumn})) {
             throw new RuntimeException('Game password differs from the expected credential.');
         }
+        // Compare credential bytes, not the database's potentially case-insensitive collation.
         $affected = $database->table($table)
             ->where($loginColumn, $login)
-            ->where($passwordColumn, $expectedCredential)
+            ->whereRaw('BINARY '.$database->getQueryGrammar()->wrap($passwordColumn).' = BINARY ?', [$expectedCredential])
             ->update([$passwordColumn => $replacementCredential]);
         if ($affected === 1) {
             return true;
@@ -213,14 +214,7 @@ final class UniversalLoginAccountWriter
         }
         // Without a unique LOGIN index an update may alter several game
         // accounts, while an INSERT would not be protected against races.
-        $uniqueLogin = false;
-        foreach ($schema->getIndexes($table) as $index) {
-            if ($index['unique'] && $index['columns'] === [$loginColumn]) {
-                $uniqueLogin = true;
-                break;
-            }
-        }
-        if (! $uniqueLogin) {
+        if (! ProfileSchema::hasUniqueColumn($database, $table, $loginColumn)) {
             throw new ProfileValidationException('LoginServer writes require a unique login index.');
         }
     }
@@ -232,23 +226,21 @@ final class UniversalLoginAccountWriter
      */
     private function requireColumnFits(Connection $database, string $table, string $column, int $length): void
     {
-        foreach ($database->getSchemaBuilder()->getColumns($table) as $definition) {
-            if (strcasecmp($definition['name'], $column) !== 0) {
-                continue;
-            }
-            if (preg_match('/\A(?:var)?(?:char|binary)\((\d+)\)/i', $definition['type'], $matches) === 1
-                && (int) $matches[1] < $length) {
-                throw new ProfileValidationException(sprintf(
-                    'The password column %s.%s holds %d characters, but this password format needs %d.',
-                    $table,
-                    $column,
-                    (int) $matches[1],
-                    $length,
-                ));
-            }
-
+        $problem = ProfileSchema::passwordColumnProblem($database, $table, $column, $length);
+        if ($problem === null) {
             return;
         }
+
+        if ($problem['key'] === 'drivers.schema_password_length') {
+            throw new ProfileValidationException(sprintf(
+                'The password column %s holds %d characters, but this password format needs %d.',
+                $problem['replace']['column'],
+                $problem['replace']['actual'],
+                $length,
+            ));
+        }
+
+        throw new ProfileValidationException('The password column '.$table.'.'.$column.' cannot store a game password hash.');
     }
 
     private function bcrypt(string $password, int $cost): string
