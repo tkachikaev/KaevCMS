@@ -225,14 +225,26 @@ foreach ($databaseNames as $type => $name) {
         $pdo->exec('DROP TABLE `site_players`');
         echo "OK: custom-schema MD5 driver built like the editor builds it (own table and columns)\n";
     }
-    // A valid JSON mapping alone must not enable unsafe writes into a table
-    // without an enforced unique login key.
+    // A valid JSON mapping alone must not enable unsafe writes or recovery
+    // without an enforced unique login key. Restore the index for the
+    // following read/inspection parity scenarios sharing this fixture.
     $pdo->exec('ALTER TABLE `accounts` DROP INDEX `uk_login_i5`');
     $profile = $profiles['login:'.($type === 'rusacis' ? 'rusacis' : 'l2j_mobius')];
+    $prepared = new PreparedGameAccount('indexMissing', $writer->preparePassword($profile, 'Valid123'), 'test@example.invalid');
     try {
-        $writer->create($db, $profile, new PreparedGameAccount('indexMissing', $writer->preparePassword($profile, 'Valid123'), 'test@example.invalid'));
-        throw new RuntimeException('Unsafe account creation without unique login index was accepted.');
-    } catch (ProfileValidationException) {
-        // Expected.
+        try {
+            $writer->create($db, $profile, $prepared);
+            throw new RuntimeException('Unsafe account creation without unique login index was accepted.');
+        } catch (ProfileValidationException) {
+            // Expected.
+        }
+        try {
+            $reader->inspect($db, $profile, $prepared);
+            throw new RuntimeException('Unsafe account recovery without unique login index was accepted.');
+        } catch (ProfileValidationException) {
+            // Expected.
+        }
+    } finally {
+        $pdo->exec('ALTER TABLE `accounts` ADD UNIQUE KEY `uk_login_i5` (`login`)');
     }
 }
