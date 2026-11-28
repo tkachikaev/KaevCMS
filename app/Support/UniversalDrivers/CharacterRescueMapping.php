@@ -18,33 +18,6 @@ final readonly class CharacterRescueMapping
         private array $config,
     ) {}
 
-    public static function native(string $driver): ?self
-    {
-        $id = match ($driver) {
-            'l2j_mobius' => 'charId',
-            'rusacis' => 'obj_Id',
-            default => null,
-        };
-        if ($id === null) {
-            return null;
-        }
-
-        return new self('characters', [
-            'id' => $id, 'name' => 'char_name', 'owner' => 'account_name',
-            'online' => 'online', 'last_seen_at_ms' => 'lastAccess',
-            'access_level' => 'accesslevel', 'deletion_time' => 'deletetime',
-            'x' => 'x', 'y' => 'y', 'z' => 'z',
-        ], [
-            'characters' => ['table' => 'characters'],
-            'filters' => [
-                ['column' => 'accesslevel', 'op' => 'eq', 'value' => 0],
-                $driver === 'rusacis'
-                    ? ['column' => 'deletetime', 'op' => 'zero_or_null']
-                    : ['column' => 'deletetime', 'op' => 'eq', 'value' => 0],
-            ],
-        ]);
-    }
-
     /** @param array<string,mixed> $profile */
     public static function fromProfile(array $profile): ?self
     {
@@ -57,10 +30,13 @@ final readonly class CharacterRescueMapping
         // Older bundled snapshots have no explicit safety-field mappings.
         // Match their actual identity and safety contract, not just the ID.
         if (! isset($fields['access_level']) && ! isset($fields['deletion_time'])) {
-            $native = self::native($profile['id']);
+            $bundled = (new BundledProfileCatalog)->all()['game:'.$profile['id']] ?? null;
+            $native = in_array($profile['id'], ['l2j_mobius', 'rusacis'], true) && $bundled !== null
+                ? self::fromConfig($bundled['config'])
+                : null;
             if ($native !== null && $config['characters']['table'] === $native->table
                 && $config['characters']['owner']['identity'] === 'login'
-                && $config['characters']['owner']['column'] === 'account_name') {
+                && $config['characters']['owner']['column'] === $native->columns['owner']) {
                 foreach (['id', 'name', 'online', 'last_seen_at_ms', 'x', 'y', 'z'] as $name) {
                     if (! isset($fields[$name]) && in_array($name, ['x', 'y', 'z'], true) && $profile['id'] === 'rusacis') {
                         $fields[$name] = ['kind' => 'column', 'column' => $native->columns[$name]];
@@ -70,8 +46,8 @@ final readonly class CharacterRescueMapping
                         return null;
                     }
                 }
-                $fields['access_level'] = ['kind' => 'column', 'column' => 'accesslevel'];
-                $fields['deletion_time'] = ['kind' => 'column', 'column' => 'deletetime'];
+                $fields['access_level'] = ['kind' => 'column', 'column' => $native->columns['access_level']];
+                $fields['deletion_time'] = ['kind' => 'column', 'column' => $native->columns['deletion_time']];
                 $config['characters']['fields'] = $fields;
 
                 return self::fromConfig($config);

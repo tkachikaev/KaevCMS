@@ -12,6 +12,7 @@ use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\ExternalGameAccountWriteResult;
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\UniversalDrivers\ProfileDatabaseEncoding;
 use Carbon\CarbonImmutable;
@@ -50,29 +51,23 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             // advertise unsafe game-account operations to the player.
             return false;
         }
-        if ($gameProfile !== null) {
-            // Current CMS account API is login-based. ID ownership requires a
-            // separately verified account-ID mapping and must fail closed.
-            $gameIdentity = $gameProfile['config']['characters']['owner']['identity'] ?? null;
-            $loginIdentity = $loginProfile['config']['accounts']['ownership']['identity'] ?? 'login';
-
-            return $gameIdentity === 'login' && $loginIdentity === 'login'
-                && in_array('characters', $gameProfile['config']['capabilities'], true);
-        }
-        if ($loginProfile !== null) {
-            // Bundled world profiles are login-based, but never assume that all
-            // profiles share the same account-identity contract.
-            return ($loginProfile['config']['accounts']['ownership']['identity'] ?? null) === 'login'
-                && in_array($gameServer->driver, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true);
+        $bundled = (new BundledProfileCatalog)->all();
+        $game = $gameProfile ?? $bundled['game:'.$gameServer->driver] ?? null;
+        $loginDefinition = $loginProfile ?? $bundled['login:'.$login->driver] ?? null;
+        if ($game === null || $loginDefinition === null
+            || ($game['config']['characters']['owner']['identity'] ?? null) !== 'login'
+            || ($loginDefinition['config']['accounts']['ownership']['identity'] ?? null) !== 'login'
+            || ! in_array('characters', $game['config']['capabilities'], true)) {
+            return false;
         }
 
-        // Keep the pairing rule for release-owned profiles. Mixing families
-        // requires an explicitly verified mapping, as for custom drivers.
-        return match ($login->driver) {
-            ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER => $gameServer->driver === ServerDriverRegistry::MOBIUS_DRIVER,
-            ServerDriverRegistry::RUSACIS_DRIVER => $gameServer->driver === ServerDriverRegistry::RUSACIS_DRIVER,
-            default => false,
-        };
+        // Without a verified mapping, keep matching families. The legacy
+        // Mobius LoginServer identifier belongs to the same Mobius family.
+        $family = $login->driver === ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER
+            ? ServerDriverRegistry::MOBIUS_DRIVER
+            : $login->driver;
+
+        return $gameProfile !== null || $loginProfile !== null || $family === $gameServer->driver;
     }
 
     public function prepareAccount(LoginServer $loginServer, string $login, string $password, string $email): PreparedGameAccount

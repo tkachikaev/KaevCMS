@@ -61,7 +61,7 @@ final class ServerConnectionTester
             throw new InvalidArgumentException('Unsupported LoginServer driver.');
         }
 
-        if (! in_array($driverKey, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::MOBIUS_LEGACY_LOGIN_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+        if (! isset((new BundledProfileCatalog)->all()['login:'.$driverKey])) {
             $profile = app(DriverProfileCatalog::class)->find('login', $driverKey)['profile'] ?? null;
             if (! is_array($profile)) {
                 throw new InvalidArgumentException('Unknown LoginServer JSON profile.');
@@ -188,7 +188,7 @@ final class ServerConnectionTester
             ]
             : $values;
 
-        if (! in_array($driverKey, [ServerDriverRegistry::MOBIUS_DRIVER, ServerDriverRegistry::RUSACIS_DRIVER], true)) {
+        if (! isset((new BundledProfileCatalog)->all()['game:'.$driverKey])) {
             $profile = app(DriverProfileCatalog::class)->find('game', $driverKey)['profile'] ?? null;
             if (! is_array($profile)) {
                 throw new InvalidArgumentException('Unknown GameServer JSON profile.');
@@ -332,8 +332,8 @@ final class ServerConnectionTester
                 'reputation' => 'mobius_modern',
                 default => null,
             };
-        } elseif ($driverKey === ServerDriverRegistry::RUSACIS_DRIVER && ($report['compatible'] ?? false) === true) {
-            $report['schema_profile'] = 'rusacis_interlude';
+        } elseif (($report['compatible'] ?? false) === true) {
+            $report['schema_profile'] = $driver['schema_profile'] ?? 'universal:'.$driverKey;
         }
 
         if (($report['compatible'] ?? false) === true) {
