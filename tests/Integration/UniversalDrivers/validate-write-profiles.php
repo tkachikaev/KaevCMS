@@ -8,11 +8,7 @@ require __DIR__.'/../../../app/Support/UniversalDrivers/GameCharacterFilters.php
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileValidator.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/BundledProfileCatalog.php';
 require __DIR__.'/../../../app/Services/GameAccounts/UniversalLoginAccountWriter.php';
-require __DIR__.'/../../../app/Services/GameAccounts/MobiusPasswordEncoder.php';
-require __DIR__.'/../../../app/Services/GameAccounts/RusacisPasswordEncoder.php';
 
-use App\Services\GameAccounts\MobiusPasswordEncoder;
-use App\Services\GameAccounts\RusacisPasswordEncoder;
 use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
@@ -29,8 +25,7 @@ foreach (['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] as $id) {
         throw new RuntimeException("$id: created credential not accepted");
     }
     if ($id === 'rusacis') {
-        if (! str_starts_with($hash, '$2a$10$') || ! password_verify('TestPassword123', $hash)
-            || ! (new RusacisPasswordEncoder)->encode('TestPassword123')) {
+        if (! str_starts_with($hash, '$2a$10$') || ! password_verify('TestPassword123', $hash)) {
             throw new RuntimeException('Invalid BCrypt $2a$ format.');
         }
         $alteredCost = $p;
@@ -38,7 +33,7 @@ foreach (['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] as $id) {
         if ($writer->acceptsCredential($alteredCost, $hash)) {
             throw new RuntimeException('Wrong BCrypt cost was accepted.');
         }
-    } elseif ($hash !== (new MobiusPasswordEncoder)->encode('TestPassword123')) {
+    } elseif ($hash !== base64_encode(sha1('TestPassword123', true))) {
         throw new RuntimeException("$id: SHA-1/Base64 parity failure");
     }
     if ($writer->acceptsCredential($p, 'not-a-password-hash')) {

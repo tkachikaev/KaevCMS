@@ -10,9 +10,7 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames)
 require_once __DIR__.'/../../../vendor/autoload.php';
 
 use App\Services\GameAccounts\MobiusLoginDriver;
-use App\Services\GameAccounts\MobiusPasswordEncoder;
 use App\Services\GameAccounts\RusacisLoginDriver;
-use App\Services\GameAccounts\RusacisPasswordEncoder;
 use App\Services\GameAccounts\UniversalLoginAccountReader;
 use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Services\Servers\UniversalProfileSchemaProbe;
@@ -35,8 +33,8 @@ foreach ($databaseNames as $type => $name) {
     $pdo->exec('ALTER TABLE `accounts` MODIFY `login` VARCHAR(255) NOT NULL, ADD UNIQUE KEY `uk_login_i5` (`login`)');
     $db = new MySqlConnection($pdo, $name, '', ['driver' => 'mysql', 'database' => $name, 'prefix' => '']);
     $legacy = $type === 'rusacis'
-        ? new RusacisLoginDriver(new RusacisPasswordEncoder)
-        : new MobiusLoginDriver(new MobiusPasswordEncoder);
+        ? new RusacisLoginDriver($writer)
+        : new MobiusLoginDriver($writer);
     foreach (($type === 'rusacis' ? ['rusacis'] : ['l2j_mobius', 'l2j_mobius_legacy']) as $id) {
         $profile = $profiles['login:'.$id];
         $hash = $writer->preparePassword($profile, 'Testing123');
@@ -47,7 +45,7 @@ foreach ($databaseNames as $type => $name) {
             if (! str_starts_with($hash, '$2a$10$') || ! password_verify('Testing123', $hash)) {
                 throw new RuntimeException('RUSaCis BCrypt $2a$ proof is invalid.');
             }
-        } elseif ($hash !== $legacy->encodePassword('Testing123')) {
+        } elseif ($hash !== base64_encode(sha1('Testing123', true))) {
             throw new RuntimeException('Mobius SHA1/Base64 password parity failed.');
         }
         $login = $id === 'rusacis' ? 'testRusacis' : ($id === 'l2j_mobius' ? 'testMobius' : 'testLegacy');

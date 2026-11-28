@@ -6,11 +6,12 @@ use App\Contracts\LoginServerDriver;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use Illuminate\Database\Connection;
 
 final class RusacisLoginDriver implements LoginServerDriver
 {
-    public function __construct(private readonly RusacisPasswordEncoder $passwords) {}
+    public function __construct(private readonly UniversalLoginAccountWriter $passwords) {}
 
     public function supportsGameDriver(string $driver): bool
     {
@@ -19,7 +20,7 @@ final class RusacisLoginDriver implements LoginServerDriver
 
     public function encodePassword(string $password): string
     {
-        return $this->passwords->encode($password);
+        return $this->passwords->preparePassword((new BundledProfileCatalog)->all()['login:rusacis'], $password);
     }
 
     public function acceptsCredential(string $credential): bool

@@ -6,12 +6,13 @@ use App\Contracts\LoginServerDriver;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Str;
 
 final class MobiusLoginDriver implements LoginServerDriver
 {
-    public function __construct(private readonly MobiusPasswordEncoder $passwords) {}
+    public function __construct(private readonly UniversalLoginAccountWriter $passwords) {}
 
     public function supportsGameDriver(string $driver): bool
     {
@@ -20,7 +21,7 @@ final class MobiusLoginDriver implements LoginServerDriver
 
     public function encodePassword(string $password): string
     {
-        return $this->passwords->encode($password);
+        return $this->passwords->preparePassword((new BundledProfileCatalog)->all()['login:l2j_mobius'], $password);
     }
 
     public function acceptsCredential(string $credential): bool

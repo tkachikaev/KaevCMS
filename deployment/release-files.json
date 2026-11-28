@@ -142,7 +142,6 @@
         "app/Services/GameAccounts/LoginServerDriverResolver.php",
         "app/Services/GameAccounts/MobiusLoginDriver.php",
         "app/Services/GameAccounts/RusacisLoginDriver.php",
-        "app/Services/GameAccounts/RusacisPasswordEncoder.php",
         "app/Services/GameAccounts/UniversalLoginAccountReader.php",
         "app/Services/GameAccounts/UniversalLoginAccountWriter.php",
         "app/Services/GameAccounts/UniversalLoginDriver.php",

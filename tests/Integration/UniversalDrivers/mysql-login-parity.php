@@ -15,10 +15,9 @@ if (! is_file($autoload)) {
 require_once $autoload;
 
 use App\Services\GameAccounts\MobiusLoginDriver;
-use App\Services\GameAccounts\MobiusPasswordEncoder;
 use App\Services\GameAccounts\RusacisLoginDriver;
-use App\Services\GameAccounts\RusacisPasswordEncoder;
 use App\Services\GameAccounts\UniversalLoginAccountReader;
+use App\Services\GameAccounts\UniversalLoginAccountWriter;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
@@ -27,14 +26,15 @@ use Illuminate\Database\MySqlConnection;
 
 $profiles = (new BundledProfileCatalog)->all();
 $reader = new UniversalLoginAccountReader;
+$writer = new UniversalLoginAccountWriter;
 foreach ($databaseNames as $type => $databaseName) {
     $pdo->exec("USE `$databaseName`");
     $connection = new MySqlConnection($pdo, $databaseName, '', [
         'driver' => 'mysql', 'database' => $databaseName, 'prefix' => '',
     ]);
     $legacy = $type === 'rusacis'
-        ? new RusacisLoginDriver(new RusacisPasswordEncoder)
-        : new MobiusLoginDriver(new MobiusPasswordEncoder);
+        ? new RusacisLoginDriver($writer)
+        : new MobiusLoginDriver($writer);
     $ids = $type === 'rusacis' ? ['rusacis'] : ['l2j_mobius', 'l2j_mobius_legacy'];
     foreach ($ids as $profileId) {
         $profile = $profiles['login:'.$profileId];
