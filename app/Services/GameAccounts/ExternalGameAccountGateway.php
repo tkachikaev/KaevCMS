@@ -86,16 +86,12 @@ final class ExternalGameAccountGateway implements GameAccountGateway
 
     public function inspectPreparedAccount(LoginServer $loginServer, PreparedGameAccount $account): ExternalGameAccountState
     {
-        $driver = $this->preparedAccountDriver($loginServer, $account);
-
-        return $this->withLoginConnection($loginServer, fn (Connection $database): ExternalGameAccountState => $driver->inspect($database, $account));
+        return $this->withLoginConnection($loginServer, fn (Connection $database, LoginServerDriver $driver): ExternalGameAccountState => $driver->inspect($database, $account), $account);
     }
 
     public function createPreparedAccount(LoginServer $loginServer, PreparedGameAccount $account): ExternalGameAccountWriteResult
     {
-        $driver = $this->preparedAccountDriver($loginServer, $account);
-
-        return $this->withLoginConnection($loginServer, function (Connection $database) use ($driver, $account): ExternalGameAccountWriteResult {
+        return $this->withLoginConnection($loginServer, function (Connection $database, LoginServerDriver $driver) use ($account): ExternalGameAccountWriteResult {
             try {
                 $driver->create($database, $account);
             } catch (QueryException $exception) {
@@ -106,31 +102,17 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             }
 
             return ExternalGameAccountWriteResult::Created;
-        });
+        }, $account);
     }
 
     public function changePassword(LoginServer $loginServer, string $login, string $password): bool
     {
-        $driver = $this->loginDrivers->resolve($loginServer);
-
-        return $this->withLoginConnection($loginServer, fn (Connection $database): bool => $driver->changePassword($database, $login, $password));
+        return $this->withLoginConnection($loginServer, fn (Connection $database, LoginServerDriver $driver): bool => $driver->changePassword($database, $login, $password));
     }
 
     public function accountSummary(LoginServer $loginServer, string $login): ?array
     {
-        $driver = $this->loginDrivers->resolve($loginServer);
-
-        return $this->withLoginConnection($loginServer, fn (Connection $database): ?array => $driver->summary($database, $login));
-    }
-
-    private function preparedAccountDriver(LoginServer $loginServer, PreparedGameAccount $account): LoginServerDriver
-    {
-        $driver = $this->loginDrivers->resolve($loginServer);
-        if (! $driver->acceptsCredential($account->credential)) {
-            throw new RuntimeException('The prepared credential does not match the selected LoginServer driver.');
-        }
-
-        return $driver;
+        return $this->withLoginConnection($loginServer, fn (Connection $database, LoginServerDriver $driver): ?array => $driver->summary($database, $login));
     }
 
     public function characters(GameServer $gameServer, string $login): array
@@ -165,13 +147,15 @@ final class ExternalGameAccountGateway implements GameAccountGateway
     /**
      * @template T
      *
-     * @param  Closure(Connection): T  $callback
+     * @param  Closure(Connection, LoginServerDriver): T  $callback
      * @return T
      */
-    private function withLoginConnection(LoginServer $loginServer, Closure $callback): mixed
+    private function withLoginConnection(LoginServer $loginServer, Closure $callback, ?PreparedGameAccount $account = null): mixed
     {
-        if (! $this->supportsLoginServer($loginServer)) {
-            throw new RuntimeException('The selected LoginServer driver does not support game accounts.');
+        $operation = $this->loginDrivers->forOperation($loginServer);
+        $driver = $operation['driver'];
+        if ($account !== null && ! $driver->acceptsCredential($account->credential)) {
+            throw new RuntimeException('The prepared credential does not match the selected LoginServer driver.');
         }
 
         return $this->connection->run('kaevcms_game_account_', ProfileDatabaseEncoding::apply([
@@ -181,7 +165,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             'username' => $loginServer->database_username,
             'password' => $loginServer->databasePassword() ?? '',
             'charset' => $loginServer->database_charset,
-        ], app(ConnectionProfileSnapshots::class)->get($loginServer)), $callback);
+        ], $operation['snapshot']), fn (Connection $database): mixed => $callback($database, $driver));
     }
 
     private function isDuplicateKey(QueryException $exception): bool

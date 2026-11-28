@@ -118,12 +118,16 @@ final class ConnectionProfileSnapshots
         $row = DB::table('universal_driver_connection_snapshots')
             ->where('connection_type', $type)->where('connection_id', $server->getKey())->first();
         if ($row === null) {
+            $this->assertCurrentTarget($server);
+
             return null;
         }
         // Legacy experiments could create a snapshot before the connection
         // fingerprint migration. Such a snapshot was never production-active.
         if ($row->connection_fingerprint === null && in_array((string) $server->driver,
             $type === 'login' ? ['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] : ['l2j_mobius', 'rusacis'], true)) {
+            $this->assertCurrentTarget($server);
+
             return null;
         }
         if (! is_string($row->profile_json) || ! is_string($row->profile_sha256) ||
@@ -146,5 +150,13 @@ final class ConnectionProfileSnapshots
         }
 
         return $profile;
+    }
+
+    private function assertCurrentTarget(LoginServer|GameServer $server): void
+    {
+        $current = $server->fresh();
+        if ($current === null || ! hash_equals($this->fingerprint($server), $this->fingerprint($current))) {
+            throw new ExternalDatabaseDriverUnavailable('Driver connection target changed.');
+        }
     }
 }

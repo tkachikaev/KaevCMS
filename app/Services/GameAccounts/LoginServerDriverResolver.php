@@ -26,8 +26,29 @@ final class LoginServerDriverResolver
 
     public function resolve(string|LoginServer $driver): LoginServerDriver
     {
+        return $this->makeDriver($this->profile($driver));
+    }
+
+    /** @return array{driver:LoginServerDriver,snapshot:array<string,mixed>|null} */
+    public function forOperation(LoginServer $server): array
+    {
+        $snapshot = app(ConnectionProfileSnapshots::class)->get($server);
+        $profile = $snapshot ?? $this->profile((string) $server->driver);
+        if (count(array_intersect(
+            ['account_lookup', 'account_creation', 'password_change'],
+            $profile['config']['capabilities'],
+        )) !== 3) {
+            throw new RuntimeException('The selected LoginServer driver does not support game accounts.');
+        }
+
+        return ['driver' => $this->makeDriver($profile), 'snapshot' => $snapshot];
+    }
+
+    /** @param array<string,mixed> $profile */
+    private function makeDriver(array $profile): LoginServerDriver
+    {
         return new UniversalLoginDriver(
-            $this->profile($driver),
+            $profile,
             app(UniversalLoginAccountReader::class),
             app(UniversalLoginAccountWriter::class),
         );
