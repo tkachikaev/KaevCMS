@@ -102,10 +102,13 @@ class TranslationJsonTest extends TestCase
                 }
 
                 $content = $file->getContents();
-                preg_match_all('/(?:__|@lang|trans)\(\s*([\'\"])(.*?)\1/s', $content, $matches);
+                preg_match_all('/(?:__|@lang|trans)\(\s*([\'\"])(.*?)\1(?=\s*(\S))/s', $content, $matches, PREG_SET_ORDER);
 
-                foreach ($matches[2] as $key) {
-                    if ($key === ''
+                foreach ($matches as $match) {
+                    $key = $match[2];
+                    // A quoted prefix of a dynamic expression is not a literal key.
+                    if (! in_array($match[3], [',', ')'], true)
+                        || $key === ''
                         || str_contains($key, '$')
                         || str_contains($key, '::')
                         || str_contains($key, '\\')) {

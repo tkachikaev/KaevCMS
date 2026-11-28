@@ -41,7 +41,7 @@
                 <p>{{ __('drivers.schema_optional_unavailable') }}</p>
                 <ul class="database-test-checks">
                     @foreach($unavailable as $capability)
-                        <li>{{ __(sprintf('drivers.cap_%s', $capability)) }}</li>
+                        <li>{{ __('drivers.cap_'.$capability) }}</li>
                     @endforeach
                 </ul>
             @endif
