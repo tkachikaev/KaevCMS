@@ -204,9 +204,28 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
                 $invalidGame['config']['relations'][$relation]['foreign_column'] = 'missing_join_key';
             }
             $catalog->save($invalidGame);
-            $reject($gameServer);
+            $report = $activation->apply($gameServer);
+            $disabled = match ($feature) {
+                'heroes-details' => 'heroes',
+                'castles-leader' => 'castles',
+                default => $feature,
+            };
+            $check(! in_array($disabled, $report['capabilities'], true), 'Unavailable feature was advertised: '.$feature);
+            $check(in_array($disabled, $report['unavailable_capabilities'], true), 'Unavailable feature was not reported: '.$feature);
+            $check(count($gateway->characters($gameServer, 'alice')) === 1, 'Optional feature broke character lookup: '.$feature);
         }
         $catalog->save($game);
+        $fixture->exec('RENAME TABLE heroes TO fixture_hidden_heroes, castle TO fixture_hidden_castle');
+        try {
+            $report = $activation->apply($gameServer);
+            $check($report['compatible'] === true && in_array('level', $report['capabilities'], true), 'Missing optional tables blocked activation or level ranking.');
+            $check(! in_array('heroes', $report['capabilities'], true) && ! in_array('castles', $report['capabilities'], true), 'Missing optional tables were advertised.');
+            $world = app(GameWorldDriverResolver::class)->resolve($gameServer);
+            $check($world->ranking($gameServer, 'level', 1)[0]['name'] === 'AliceKnight', 'Missing optional tables broke ranking.');
+        } finally {
+            $fixture->exec('RENAME TABLE fixture_hidden_heroes TO heroes, fixture_hidden_castle TO castle');
+        }
+        $activation->apply($gameServer);
 
         $manifest = ['driver_extensions' => [[
             'key' => 'premium', 'type' => 'game', 'required' => true, 'title' => ['en' => 'Premium'],

@@ -559,6 +559,13 @@ class GameServerManager extends Component
             ];
         }
 
+        $unavailable = $report['unavailable_capabilities'] ?? [];
+        if ($unavailable !== []) {
+            $labels = array_map(static fn (string $capability): string => (string) __('drivers.cap_'.$capability), $unavailable);
+
+            return ['state' => 'success', 'message' => __('drivers.schema_optional_unavailable').' '.implode(', ', $labels).'.'];
+        }
+
         return ['state' => 'success', 'message' => __('Database connection established.')];
     }
 

@@ -126,12 +126,12 @@ final class ServerConnectionTester
         $report = $this->testUniversalProfile(ProfileDatabaseEncoding::apply($this->credentials($connectionValues), $profile), $profile);
         $report = $this->withDriver($report, $profile['id'], $profile['name'], true);
         $report['schema_profile'] = ($report['compatible'] ?? false) ? 'universal:'.$profile['id'] : null;
-        $report['capabilities'] = ($report['compatible'] ?? false) ? array_values(array_intersect(
-            $profile['config']['capabilities'], ['characters', 'level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'],
-        )) : [];
-        if (($report['compatible'] ?? false) === true && ($report['character_rescue_available'] ?? false) === true) {
-            $report['capabilities'][] = 'character_rescue';
-        }
+        $report['capabilities'] = ($report['compatible'] ?? false)
+            ? ($report['game_capabilities'] ?? [])
+            : [];
+        $report['unavailable_capabilities'] = ($report['compatible'] ?? false)
+            ? array_values(array_diff($profile['config']['capabilities'], $report['capabilities']))
+            : [];
 
         return $report;
     }

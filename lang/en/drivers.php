@@ -314,6 +314,7 @@ return [
     'module_required' => 'Required by the module',
     'module_optional' => 'Optional',
     'ext_choose' => 'Choose',
+    'schema_optional_unavailable' => 'The connection works, but the following features are unavailable. Check their field and table mappings in the driver profile.',
     'schema_probe_failed' => 'The connection works, but the selected driver capabilities failed the schema check for indexes, column types or related tables.',
     'schema_missing_table' => 'Table ":table" was not found in the database.',
     'schema_missing_account_field' => 'The account column mapped to ":field" was not found. Check the field mapping.',

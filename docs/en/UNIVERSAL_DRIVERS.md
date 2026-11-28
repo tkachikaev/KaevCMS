@@ -30,7 +30,7 @@ The profile's **Charset** and **Collation** fields are editable on the first ste
 
 ## Read-only activation preflight
 
-Checks verify connectivity, required tables/columns, and mapping dependencies. For account writes the checker requires a unique login index and a sufficient password column. Advertised game rankings, heroes and castles undergo additional basic mapping checks. These are **structural checks only**, not evidence that all live game operations will work. The game database is never modified by preflight.
+Checks verify connectivity, required tables/columns, and mapping dependencies. For account writes the checker requires a unique login index and a sufficient password column. Unavailable rankings, heroes, castles and character rescue are reported separately without blocking activation when the required schema and filters pass verification. Missing tables or columns explicitly declared required still block activation. These are **structural checks only**, not evidence that all live game operations will work. The game database is never modified by preflight.
 
 ## Module `driver_extensions`
 

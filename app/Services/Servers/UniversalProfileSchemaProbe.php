@@ -78,6 +78,11 @@ final class UniversalProfileSchemaProbe
             return [['key' => 'drivers.schema_missing_table', 'replace' => ['table' => $table]]];
         }
         $columns = $schema->getColumnListing($table);
+        foreach ([$config['characters']['owner']['column'], $config['characters']['fields']['id']['column'], $config['characters']['fields']['name']['column']] as $column) {
+            if (! in_array($column, $columns, true)) {
+                $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $table.'.'.$column]];
+            }
+        }
         foreach (GameCharacterFilters::requirements($config) as $filterTable => $filterColumns) {
             if (! $schema->hasTable($filterTable)) {
                 $problems[] = ['key' => 'drivers.schema_missing_table', 'replace' => ['table' => $filterTable]];
@@ -91,86 +96,6 @@ final class UniversalProfileSchemaProbe
                 }
             }
         }
-        foreach (['level', 'pvp', 'pk', 'play_time'] as $capability) {
-            if (! in_array($capability, $config['capabilities'], true)) {
-                continue;
-            }
-            $ranking = $config['rankings'][$capability] ?? null;
-            if (! is_array($ranking)) {
-                $problems[] = ['key' => 'drivers.schema_missing_ranking', 'replace' => ['ranking' => $capability]];
-
-                continue;
-            }
-            foreach ([$ranking['column'] ?? null, $ranking['secondary'] ?? null] as $column) {
-                if (is_string($column) && ! in_array($column, $columns, true)) {
-                    $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $table.'.'.$column]];
-                }
-            }
-        }
-        foreach (['heroes', 'castles'] as $capability) {
-            if (! in_array($capability, $config['capabilities'], true)) {
-                continue;
-            }
-            $feature = $config['features'][$capability] ?? [];
-            $relation = $config['relations'][$feature['relation'] ?? ''] ?? null;
-            if (! is_array($relation) || ! $schema->hasTable($relation['table'])) {
-                $problems[] = ['key' => 'drivers.schema_missing_relation', 'replace' => ['relation' => $feature['relation'] ?? $capability]];
-
-                continue;
-            }
-            // Castles are joined from the clan table; heroes are joined from
-            // characters. Checking both against characters rejects real RUSaCis schemas.
-            $sourceTable = $capability === 'castles'
-                ? ($config['relations'][$feature['clan_relation'] ?? 'clan']['table'] ?? $table)
-                : $table;
-            $sourceColumns = $sourceTable === $table ? $columns
-                : ($schema->hasTable($sourceTable) ? $schema->getColumnListing($sourceTable) : []);
-            if (! in_array($relation['local_column'], $sourceColumns, true)) {
-                $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $sourceTable.'.'.$relation['local_column']]];
-            }
-            $relatedColumns = $schema->getColumnListing($relation['table']);
-            if (! in_array($relation['foreign_column'], $relatedColumns, true)) {
-                $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $relation['table'].'.'.$relation['foreign_column']]];
-            }
-            $requiredTables = [];
-            if ($capability === 'heroes') {
-                $requiredTables[$relation['table']] = [
-                    $feature['played_column'] ?? 'played', $feature['count_column'] ?? 'count',
-                    $feature['claimed_column'] ?? ($feature['active_column'] ?? 'claimed'),
-                    ...(array_key_exists('active_value', $feature) ? [$feature['active_column'] ?? 'active'] : []),
-                ];
-            } else {
-                $clan = $config['relations'][$feature['clan_relation'] ?? 'clan'] ?? null;
-                $leader = $config['relations'][$feature['leader_relation'] ?? 'leader'] ?? null;
-                if (! is_array($clan) || ! is_array($leader)) {
-                    $problems[] = ['key' => 'drivers.schema_missing_relation', 'replace' => ['relation' => ! is_array($clan) ? 'clan' : 'leader']];
-
-                    continue;
-                }
-                $requiredTables[$clan['table']] = [
-                    ...array_values($feature['clan_columns'] ?? ['id' => 'clan_id', 'name' => 'clan_name', 'level' => 'clan_level', 'reputation' => 'reputation_score']),
-                    $leader['local_column'],
-                ];
-                $requiredTables[$leader['table']] = array_merge($requiredTables[$leader['table']] ?? [], [$leader['foreign_column'], $feature['leader_name_column'] ?? 'char_name']);
-                if ($feature['name_source'] === 'column') {
-                    $requiredTables[$relation['table']] = [$feature['name_column']];
-                }
-            }
-            foreach ($requiredTables as $requiredTable => $requiredColumns) {
-                if (! $schema->hasTable($requiredTable)) {
-                    $problems[] = ['key' => 'drivers.schema_missing_table', 'replace' => ['table' => $requiredTable]];
-
-                    continue;
-                }
-                $available = $schema->getColumnListing($requiredTable);
-                foreach (array_unique($requiredColumns) as $column) {
-                    if (! in_array($column, $available, true)) {
-                        $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $requiredTable.'.'.$column]];
-                    }
-                }
-            }
-        }
-
         return $problems;
     }
 

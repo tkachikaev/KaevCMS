@@ -3,7 +3,7 @@
 namespace App\Services\Servers;
 
 use App\Contracts\ExternalDatabaseConnectionTester;
-use App\Support\UniversalDrivers\CharacterRescueMapping;
+use App\Services\GameWorld\UniversalGameWorldReader;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -159,21 +159,24 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
             }
 
             $profileIssues = [];
-            $rescueAvailable = false;
+            $gameCapabilities = [];
             if ($compatible && $profile !== null) {
                 $stage = 'profile_schema';
                 $profileIssues = (new UniversalProfileSchemaProbe)->problems($database, $profile);
                 if ($profileIssues !== []) {
                     $compatible = false;
                 } elseif ($profile['type'] === 'game') {
-                    $mapping = CharacterRescueMapping::fromProfile($profile);
-                    $rescueAvailable = $mapping !== null && $mapping->capabilities($database)->supported;
+                    $gameCapabilities = (new UniversalGameWorldReader)->capabilities($database, $profile);
+                    if (in_array('characters', $profile['config']['capabilities'], true)
+                        && $profile['config']['characters']['owner']['identity'] === 'login') {
+                        array_unshift($gameCapabilities, 'characters');
+                    }
                 }
             }
 
             return [
                 'profile_issues' => $profileIssues,
-                'character_rescue_available' => $rescueAvailable,
+                'game_capabilities' => $gameCapabilities,
                 'connected' => true,
                 'compatible' => $driverReady ? $compatible : null,
                 'server_version' => $serverVersion,

@@ -47,9 +47,10 @@ final class UniversalGameWorldReader
         $supported = [];
         $base = $config['characters']['table'];
         $characterColumns = $schema['columns'][$base] ?? [];
+        $hasEav = in_array('eav', array_column($config['characters']['fields'], 'kind'), true);
         foreach (self::RANKING_SECTIONS as $section) {
             $rank = $config['rankings'][$section] ?? null;
-            if (in_array($section, $config['capabilities'], true) && is_array($rank) &&
+            if (! $hasEav && in_array($section, $config['capabilities'], true) && is_array($rank) &&
                 $this->hasAll($characterColumns, array_values(array_filter([
                     $rank['column'] ?? null, $rank['secondary'] ?? null,
                 ], 'is_string')))) {
@@ -270,13 +271,14 @@ final class UniversalGameWorldReader
             ? [$relation['foreign_column'], $feature['count_column'] ?? 'count', $feature['played_column'] ?? 'played', $feature['claimed_column'] ?? ($feature['active_column'] ?? 'claimed')]
             : [$relation['foreign_column'], ...($feature['name_source'] === 'column' ? [$feature['name_column']] : [])];
         if ($featureName === 'heroes') {
-            if (! $this->hasAll($columns[$config['characters']['table']] ?? [], [$relation['local_column']])) {
+            $fields = $config['characters']['fields'];
+            if (in_array('eav', array_column($fields, 'kind'), true)
+                || ($fields['level']['kind'] ?? null) !== 'column'
+                || ! $this->hasAll($columns[$config['characters']['table']] ?? [], [$relation['local_column'], $fields['level']['column']])) {
                 return false;
             }
-            foreach (['played_column', 'active_column'] as $key) {
-                if (isset($feature[$key])) {
-                    $needed[] = $feature[$key];
-                }
+            if (isset($feature['active_column']) || array_key_exists('active_value', $feature)) {
+                $needed[] = $feature['active_column'] ?? 'active';
             }
         } else {
             $clan = $config['relations'][$feature['clan_relation'] ?? 'clan'] ?? null;

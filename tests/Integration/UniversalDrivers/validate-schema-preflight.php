@@ -115,20 +115,10 @@ namespace {
     $gameSchema = new FakeUniversalSchema($tables);
     $problems = $probe->problems(new Connection($gameSchema), $game);
     verify($problems === [], 'valid game schema: '.json_encode($problems));
-    $missingRanking = $game;
-    unset($missingRanking['config']['rankings']['level']);
-    verify(in_array('drivers.schema_missing_ranking', issueKeys($probe->problems(new Connection($gameSchema), $missingRanking)), true), 'advertised ranking needs a definition');
-    $missingHeroField = $game;
-    $missingHeroField['config']['features']['heroes']['played_column'] = 'missing_hero_field';
-    verify(in_array('drivers.schema_missing_column', issueKeys($probe->problems(new Connection($gameSchema), $missingHeroField)), true), 'all hero query columns must exist');
-    $missingLeader = $game;
-    $missingLeader['config']['features']['castles']['leader_name_column'] = 'missing_leader_name';
-    verify(in_array('drivers.schema_missing_column', issueKeys($probe->problems(new Connection($gameSchema), $missingLeader)), true), 'castle leader fields must exist');
-    if (in_array('heroes', $game['config']['capabilities'], true)) {
-        $relation = $game['config']['relations'][$game['config']['features']['heroes']['relation']];
-        unset($gameSchema->tables[$relation['table']]);
-        verify(in_array('drivers.schema_missing_relation', issueKeys($probe->problems(new Connection($gameSchema), $game)), true), 'missing advertised heroes table');
-    }
+    unset($gameSchema->tables['heroes'], $gameSchema->tables['castle']);
+    verify($probe->problems(new Connection($gameSchema), $game) === [], 'missing optional features do not block core schema');
+    $gameSchema->tables['characters'] = array_values(array_diff($gameSchema->tables['characters'], ['account_name']));
+    verify(in_array('drivers.schema_missing_column', issueKeys($probe->problems(new Connection($gameSchema), $game)), true), 'missing ownership column blocks activation');
 
     restore_error_handler();
     echo "OK: $caseCount schema preflight cases (offline, no MySQL)\n";

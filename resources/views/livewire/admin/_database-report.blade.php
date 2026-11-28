@@ -5,6 +5,7 @@
         $incompatible = $connected && ($report['compatible'] ?? null) === false;
         $checks = is_array($report['checks'] ?? null) ? $report['checks'] : [];
         $profileIssues = is_array($report['profile_issues'] ?? null) ? $report['profile_issues'] : [];
+        $unavailable = is_array($report['unavailable_capabilities'] ?? null) ? $report['unavailable_capabilities'] : [];
     @endphp
     <div @class(['database-test-report', 'success' => $connected && ! $incompatible, 'warning' => $incompatible, 'failed' => ! $connected]) role="status">
         <div class="database-test-heading">
@@ -31,6 +32,15 @@
                 <ul class="database-test-checks">
                     @foreach($profileIssues as $issue)
                         <li>{{ __($issue['key'], $issue['replace']) }}</li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @if($unavailable !== [])
+                <p>{{ __('drivers.schema_optional_unavailable') }}</p>
+                <ul class="database-test-checks">
+                    @foreach($unavailable as $capability)
+                        <li>{{ __('drivers.cap_'.$capability) }}</li>
                     @endforeach
                 </ul>
             @endif
