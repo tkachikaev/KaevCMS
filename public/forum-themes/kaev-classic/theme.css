@@ -287,7 +287,7 @@ a{color:#644b27;text-decoration:none}a:hover{text-decoration:underline}
 .forum-editor-link-dialog::backdrop{background:rgba(45,32,13,.52)}
 .forum-editor-link-dialog h3{font-size:16px;margin:0 0 14px}
 .forum-editor-link-dialog label{display:grid;gap:7px;font-size:13px;color:#836f52}
-.forum-editor-link-dialog :is(input,select){font:inherit;padding:9px;border:1px solid #e4dbcd;border-radius:7px;width:100%}
+.forum-editor-link-dialog input{font:inherit;padding:9px;border:1px solid #e4dbcd;border-radius:7px;width:100%}
 .forum-posting-as{color:#9b8b73;font-size:12px;margin:0}
 .forum-post-rich{white-space:normal}
 .forum-post-rich p{margin:0 0 .8em}
@@ -306,8 +306,8 @@ a{color:#644b27;text-decoration:none}a:hover{text-decoration:underline}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) [data-align="justify"]{text-align:justify}
 /* Images by link: width in % of the column, never larger than the image itself. */
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure{margin:12px 0;max-width:100%}
-:is(.forum-post-rich,.forum-editor-canvas .tiptap) figure img{display:block;max-width:100%;height:auto;border-radius:8px}
-:is(.forum-post-rich,.forum-editor-canvas .tiptap) img[data-inline-image="1"]{display:inline-block;width:1.5em;height:1.5em;object-fit:contain;vertical-align:middle}
+:is(.forum-post-rich,.forum-editor-canvas .tiptap) figure img{display:block;max-width:100%;height:auto}
+:is(.forum-post-rich,.forum-editor-canvas .tiptap) img[data-inline-image="1"]{display:inline-block;max-width:100%;height:auto;vertical-align:middle}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="center"]{margin-left:auto;margin-right:auto}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="center"] img{margin:0 auto}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="right"]{margin-left:auto}
@@ -318,6 +318,8 @@ a{color:#644b27;text-decoration:none}a:hover{text-decoration:underline}
 .forum-editor-canvas .link-image-view[data-align="center"]{text-align:center}
 .forum-editor-canvas .link-image-view[data-align="right"]{text-align:right}
 .link-image-frame{position:relative;display:inline-block;max-width:100%;vertical-align:top}
+.forum-editor-canvas .inline-link-image-view{display:inline-block;width:auto;max-width:100%;vertical-align:middle}
+.forum-editor-canvas .inline-link-image-view img{display:block;max-width:100%;height:auto}
 .forum-editor-canvas .link-image-view img{margin:0}
 .forum-editor-canvas .link-image-view.ProseMirror-selectednode img{outline:3px solid #c6a471;outline-offset:2px}
 .link-image-handle{position:absolute;right:-6px;bottom:-6px;width:16px;height:16px;border:2px solid #fffdf7;border-radius:50%;background:#654c26;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:nwse-resize;opacity:0;touch-action:none;transition:opacity .15s}
@@ -618,7 +620,7 @@ a{color:#644b27;text-decoration:none}a:hover{text-decoration:underline}
 :root[data-forum-scheme="dark"] .forum-form-grid label,
 :root[data-forum-scheme="dark"] .forum-compose-field,
 :root[data-forum-scheme="dark"] :where(.forum-form-grid,.forum-compose-field,.forum-quick-search) :where(input,textarea,select),
-:root[data-forum-scheme="dark"] .forum-editor-link-dialog :is(input,select){background:#1b1622;border-color:#4d435a;color:#eae6ef}
+:root[data-forum-scheme="dark"] .forum-editor-link-dialog input{background:#1b1622;border-color:#4d435a;color:#eae6ef}
 :root[data-forum-scheme="dark"] .forum-editor,
 :root[data-forum-scheme="dark"] .forum-editor-link-dialog{background:#241d2c;border-color:#494054;color:#eae6ef}
 :root[data-forum-scheme="dark"] .forum-editor-toolbar{background:#2e2738;border-color:#4e445a}

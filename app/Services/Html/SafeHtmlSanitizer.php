@@ -273,7 +273,7 @@ final class SafeHtmlSanitizer
         $allowed = match ($tag) {
             'a' => ['href', 'title'],
             'div' => $profile === self::PROFILE_PAGE ? ['data-content-block'] : [],
-            'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'data-inline-image'] : ['src', 'alt'],
+            'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'data-inline-image', 'width'] : ['src', 'alt'],
             'span' => ['data-color', 'data-highlight', 'data-text-size'],
             'figure' => $profile === self::PROFILE_FORUM ? ['data-align', 'data-width', 'data-media', 'data-media-id'] : ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
@@ -333,6 +333,10 @@ final class SafeHtmlSanitizer
 
             if (! $inline) {
                 $element->removeAttribute('data-inline-image');
+            }
+            $width = $element->getAttribute('width');
+            if (! $inline || preg_match('/\A[1-9][0-9]{0,3}\z/D', $width) !== 1 || (int) $width > 2048) {
+                $element->removeAttribute('width');
             }
             $element->setAttribute('src', $src);
             $element->setAttribute('alt', $this->cleanTextAttribute($element->getAttribute('alt'), 255));

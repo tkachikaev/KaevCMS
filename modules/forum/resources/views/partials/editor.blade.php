@@ -188,13 +188,6 @@
             <span>{{ __('module-forum::messages.image_alt') }}</span>
             <input type="text" data-editor-link-image-alt maxlength="255">
         </label>
-        <label>
-            <span>{{ __('module-forum::messages.image_placement') }}</span>
-            <select data-editor-link-image-placement>
-                <option value="block">{{ __('module-forum::messages.image_placement_block') }}</option>
-                <option value="inline">{{ __('module-forum::messages.image_placement_inline') }}</option>
-            </select>
-        </label>
         <div class="forum-dialog-actions">
             <button class="forum-button" type="button" data-editor-dialog-cancel>{{ __('module-forum::messages.cancel') }}</button>
             <button class="forum-button forum-button-primary" type="button" data-editor-link-image-apply>{{ __('module-forum::messages.insert') }}</button>

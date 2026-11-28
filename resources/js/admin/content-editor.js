@@ -201,6 +201,90 @@ const FigureImage = Node.create({
 
 const LINK_IMAGE_WIDTHS = Array.from({ length: 19 }, (_, index) => String(10 + index * 5));
 const normalizeImageWidth = (value) => (LINK_IMAGE_WIDTHS.includes(String(value)) ? String(value) : '100');
+const normalizeInlineImageWidth = (value) => /^[1-9]\d{0,3}$/.test(String(value)) && Number(value) <= 2048 ? String(value) : null;
+
+function forumImageView(inline) {
+    return ({ node, getPos, editor }) => {
+        const wrapper = document.createElement(inline ? 'span' : 'figure');
+        const frame = document.createElement('span');
+        const image = document.createElement('img');
+        const handle = document.createElement('span');
+        wrapper.className = inline ? 'link-image-view inline-link-image-view' : 'link-image-view';
+        wrapper.contentEditable = 'false';
+        frame.className = 'link-image-frame';
+        image.referrerPolicy = 'no-referrer';
+        image.draggable = false;
+        handle.className = 'link-image-handle';
+        handle.setAttribute('aria-hidden', 'true');
+        frame.append(image, handle);
+        wrapper.append(frame);
+
+        const paint = () => {
+            image.src = node.attrs.src ?? '';
+            image.alt = node.attrs.alt ?? '';
+            if (inline) {
+                const width = normalizeInlineImageWidth(node.attrs.width);
+                if (width) image.setAttribute('width', width);
+                else image.removeAttribute('width');
+            } else {
+                wrapper.dataset.align = node.attrs.align ?? 'left';
+                wrapper.dataset.width = normalizeImageWidth(node.attrs.width);
+                wrapper.style.width = '';
+            }
+        };
+        paint();
+
+        handle.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const column = Math.max(1, wrapper.parentElement?.clientWidth ?? 1);
+            const startX = event.clientX;
+            const startWidth = image.getBoundingClientRect().width;
+            const direction = getComputedStyle(wrapper).direction === 'rtl' ? -1 : 1;
+            let width = node.attrs.width;
+            handle.setPointerCapture(event.pointerId);
+
+            const move = (moveEvent) => {
+                const next = Math.max(1, startWidth + (moveEvent.clientX - startX) * direction);
+                if (inline) {
+                    width = String(Math.max(1, Math.round(Math.min(next, column, 2048))));
+                    image.setAttribute('width', width);
+                } else {
+                    const percent = Math.round((next / column) * 100 / 5) * 5;
+                    width = String(Math.min(100, Math.max(10, percent)));
+                    wrapper.style.width = width + '%';
+                }
+            };
+            const stop = (endEvent) => {
+                handle.removeEventListener('pointermove', move);
+                handle.removeEventListener('pointerup', stop);
+                handle.removeEventListener('pointercancel', stop);
+                const position = getPos();
+                if (endEvent.type === 'pointerup' && width !== node.attrs.width && typeof position === 'number') {
+                    editor.view.dispatch(editor.state.tr.setNodeMarkup(position, undefined, { ...node.attrs, width }));
+                } else {
+                    paint();
+                }
+            };
+            handle.addEventListener('pointermove', move);
+            handle.addEventListener('pointerup', stop);
+            handle.addEventListener('pointercancel', stop);
+        });
+
+        return {
+            dom: wrapper,
+            update: (updated) => {
+                if (updated.type !== node.type) return false;
+                node = updated;
+                paint();
+                return true;
+            },
+            stopEvent: (event) => event.target === handle,
+            ignoreMutation: () => true,
+        };
+    };
+}
 
 const InlineLinkImage = Node.create({
     name: 'inlineLinkImage',
@@ -210,7 +294,7 @@ const InlineLinkImage = Node.create({
     draggable: true,
 
     addAttributes() {
-        return { src: { default: null }, alt: { default: '' } };
+        return { src: { default: null }, alt: { default: '' }, width: { default: null } };
     },
 
     parseHTML() {
@@ -218,18 +302,24 @@ const InlineLinkImage = Node.create({
             tag: 'img[data-inline-image="1"]',
             getAttrs: (image) => {
                 const src = image.getAttribute('src') ?? '';
-                return /^https:\/\//i.test(src) ? { src, alt: image.getAttribute('alt') ?? '' } : false;
+                return /^https:\/\//i.test(src)
+                    ? { src, alt: image.getAttribute('alt') ?? '', width: normalizeInlineImageWidth(image.getAttribute('width')) }
+                    : false;
             },
         }];
     },
 
     renderHTML({ HTMLAttributes }) {
         return ['img', {
-            ...HTMLAttributes,
+            src: HTMLAttributes.src,
+            alt: HTMLAttributes.alt ?? '',
+            width: normalizeInlineImageWidth(HTMLAttributes.width),
             'data-inline-image': '1',
             referrerpolicy: 'no-referrer',
         }];
     },
+
+    addNodeView: () => forumImageView(true),
 });
 
 // Block images from third-party HTTPS hosts can be resized with a corner handle.
@@ -286,82 +376,7 @@ const LinkImage = Node.create({
         }]];
     },
 
-    addNodeView() {
-        return ({ node, getPos, editor }) => {
-            const figure = document.createElement('figure');
-            const frame = document.createElement('span');
-            const image = document.createElement('img');
-            const handle = document.createElement('span');
-            figure.className = 'link-image-view';
-            // The caret must never enter an atom node view: it is selected as a whole.
-            figure.contentEditable = 'false';
-            frame.className = 'link-image-frame';
-            image.referrerPolicy = 'no-referrer';
-            image.draggable = false;
-            handle.className = 'link-image-handle';
-            handle.setAttribute('aria-hidden', 'true');
-            frame.append(image, handle);
-            figure.append(frame);
-
-            const paint = (current) => {
-                image.src = current.attrs.src ?? '';
-                image.alt = current.attrs.alt ?? '';
-                figure.dataset.align = current.attrs.align ?? 'left';
-                figure.dataset.width = normalizeImageWidth(current.attrs.width);
-                figure.style.width = '';
-            };
-            paint(node);
-
-            handle.addEventListener('pointerdown', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const column = figure.parentElement?.getBoundingClientRect().width || 1;
-                const startX = event.clientX;
-                const startWidth = image.getBoundingClientRect().width;
-                const rtl = getComputedStyle(figure).direction === 'rtl';
-                let width = figure.dataset.width;
-                try {
-                    handle.setPointerCapture(event.pointerId);
-                } catch {
-                    // Synthetic or already released pointers cannot be captured.
-                }
-
-                const move = (moveEvent) => {
-                    const delta = (moveEvent.clientX - startX) * (rtl ? -1 : 1);
-                    const percent = Math.round(((startWidth + delta) / column) * 100 / 5) * 5;
-                    width = String(Math.min(100, Math.max(10, percent)));
-                    figure.style.width = `${width}%`;
-                };
-                const stop = () => {
-                    handle.removeEventListener('pointermove', move);
-                    handle.removeEventListener('pointerup', stop);
-                    handle.removeEventListener('pointercancel', stop);
-                    const position = typeof getPos === 'function' ? getPos() : null;
-                    if (typeof position === 'number') {
-                        editor.view.dispatch(editor.state.tr.setNodeMarkup(position, undefined, { ...node.attrs, width }));
-                    }
-                };
-                handle.addEventListener('pointermove', move);
-                handle.addEventListener('pointerup', stop);
-                handle.addEventListener('pointercancel', stop);
-            });
-
-            return {
-                dom: figure,
-                update: (updated) => {
-                    if (updated.type.name !== 'linkImage') {
-                        return false;
-                    }
-                    node = updated;
-                    paint(updated);
-
-                    return true;
-                },
-                stopEvent: (event) => event.target === handle,
-                ignoreMutation: () => true,
-            };
-        };
-    },
+    addNodeView: () => forumImageView(false),
 });
 
 // Video links become a provider + id token. The forum server renders the player;
@@ -551,7 +566,7 @@ const initializeRichEditor = (root, signal) => {
     const linkImageDialog = root.querySelector('[data-editor-link-image-dialog]');
     const linkImageUrl = root.querySelector('[data-editor-link-image-url]');
     const linkImageAlt = root.querySelector('[data-editor-link-image-alt]');
-    const linkImagePlacement = root.querySelector('[data-editor-link-image-placement]');
+    const linkImageButton = root.querySelector('[data-editor-link-image]');
     const linkImagePreview = root.querySelector('[data-editor-link-image-preview]');
     const imageDialog = root.querySelector('[data-editor-image-dialog]');
     const imageApply = root.querySelector('[data-editor-image-apply]');
@@ -626,6 +641,12 @@ const initializeRichEditor = (root, signal) => {
             SafeTableCell,
         ],
         editorProps: {
+            handleDoubleClickOn: (_view, _position, node, nodePosition, _event, direct) => {
+                if (!direct || !linkImageButton || !['linkImage', 'inlineLinkImage'].includes(node.type.name)) return false;
+                editor.commands.setNodeSelection(nodePosition);
+                linkImageButton.click();
+                return true;
+            },
             attributes: {
                 role: 'textbox',
                 'aria-label': root.dataset.editorLabel ?? '',
@@ -1009,20 +1030,12 @@ const initializeRichEditor = (root, signal) => {
         return type === 'linkImage' || type === 'inlineLinkImage' ? type : null;
     };
 
-    root.querySelector('[data-editor-link-image]')?.addEventListener('click', () => {
+    linkImageButton?.addEventListener('click', () => {
         if (!linkImageDialog || !linkImageUrl) return;
         const type = selectedForumImage();
         const current = type ? editor.getAttributes(type) : null;
         linkImageUrl.value = current?.src ?? '';
         if (linkImageAlt) linkImageAlt.value = current?.alt ?? '';
-        if (linkImagePlacement) {
-            const { parent } = editor.state.selection.$to;
-            const acceptsInlineImage = parent.type.contentMatch.matchType(editor.schema.nodes.inlineLinkImage) !== null;
-            linkImagePlacement.querySelector('option[value="inline"]').disabled = !acceptsInlineImage && type !== 'inlineLinkImage';
-            const inText = type === null && acceptsInlineImage && parent.textContent.trim() !== '';
-            linkImagePlacement.value = type === 'inlineLinkImage' || inText ? 'inline' : 'block';
-            linkImagePlacement.disabled = type !== null;
-        }
         previewLinkImage();
         linkImageDialog.showModal();
         linkImageUrl.focus();
@@ -1042,13 +1055,17 @@ const initializeRichEditor = (root, signal) => {
         const type = selectedForumImage();
         if (type) {
             editor.chain().focus().updateAttributes(type, attributes).run();
-        } else if (linkImagePlacement?.value === 'inline') {
-            editor.chain().focus().insertContentAt(editor.state.selection.to, {
-                type: 'inlineLinkImage',
-                attrs: attributes,
-            }).run();
         } else {
-            insertBlockAfterSelection({ type: 'linkImage', attrs: { ...attributes, align: 'left', width: '100' } });
+            const { $to } = editor.state.selection;
+            const image = { type: 'inlineLinkImage', attrs: attributes };
+            if ($to.parent.type.contentMatch.matchType(editor.schema.nodes.inlineLinkImage)) {
+                editor.chain().focus().insertContentAt($to.pos, image).run();
+            } else {
+                editor.chain().focus().insertContentAt($to.depth ? $to.after() : $to.pos, {
+                    type: 'paragraph',
+                    content: [image],
+                }).run();
+            }
         }
         setStatus('');
         linkImageDialog?.close();

@@ -272,7 +272,8 @@ final class ForumEditorTest extends TestCase
             '<figure><img src="https://user:pass@i.imgur.com/c.png"></figure>'.
             '<figure><img src="javascript:alert(1)"></figure>'.
             '<p><img src="https://iili.io/loose.png">Text</p>'.
-            '<p>Before <img data-inline-image="1" src="https://iili.io/icon.png" alt="Item" style="width:900px"> after</p>'.
+            '<p>Before <img data-inline-image="1" src="https://iili.io/icon.png" alt="Item" width="76" style="width:900px"> after</p>'.
+            '<p><img data-inline-image="1" src="https://iili.io/big.png" width="5000"></p>'.
             '<p><img data-inline-image="1" src="https://img.example.com/icon.png"></p>';
 
         $forum = $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_FORUM);
@@ -284,8 +285,10 @@ final class ForumEditorTest extends TestCase
             $this->assertStringNotContainsString($fragment, $forum);
         }
         $this->assertMatchesRegularExpression('~<p>Before <img data-inline-image="1" src="https://iili\.io/icon\.png"[^>]*> after</p>~', $forum);
+        $this->assertStringContainsString('alt="Item" width="76"', $forum);
+        $this->assertStringNotContainsString('width="5000"', $forum);
         $this->assertStringNotContainsString('style=', $forum);
-        $this->assertSame(3, substr_count($forum, '<img'));
+        $this->assertSame(4, substr_count($forum, '<img'));
 
         // News keeps accepting only its own uploads.
         $this->assertStringNotContainsString('<img', $sanitizer->sanitize($html, SafeHtmlSanitizer::PROFILE_NEWS));
