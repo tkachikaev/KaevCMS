@@ -95,9 +95,9 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $fixture->exec('RENAME TABLE accounts TO mapped_accounts, characters TO mapped_characters');
         $fixture->exec('ALTER TABLE mapped_accounts ADD UNIQUE KEY fixture_login (login)');
         $id = $family === 'rusacis' ? 'obj_Id' : 'charId';
-        $fixture->exec('ALTER TABLE mapped_characters RENAME COLUMN `'.$id.'` TO player_id');
+        $fixture->exec('ALTER TABLE mapped_characters CHANGE COLUMN `'.$id.'` player_id BIGINT NOT NULL');
         $fixture->exec('ALTER TABLE mapped_characters ADD COLUMN born_on VARCHAR(32) NULL');
-        $fixture->exec('ALTER TABLE mapped_characters RENAME COLUMN online TO is_connected');
+        $fixture->exec('ALTER TABLE mapped_characters CHANGE COLUMN online is_connected BIGINT NULL');
         $fixture->exec("UPDATE mapped_characters SET born_on='2026-10-20 15:23:01'");
         $login = $catalog->find('login', $family)['profile'];
         $login['id'] = 'fixture-login-'.$family;
@@ -258,7 +258,7 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $check($access->values($extensionServer, 'fixturemod', 'premium') === [], 'An unapplied custom profile supplied extension values.');
         $activation->apply($extensionServer);
         $check(($access->values($extensionServer, 'fixturemod', 'premium')['until_column'] ?? null) === 'expires_at', 'Verified extension could not read the real inherited schema.');
-        $fixture->exec('ALTER TABLE fixture_premium RENAME COLUMN expires_at TO renamed_expiry');
+        $fixture->exec('ALTER TABLE fixture_premium CHANGE COLUMN expires_at renamed_expiry BIGINT NOT NULL');
         $check($access->values($extensionServer, 'fixturemod', 'premium') === [], 'A renamed extension column remained authorized.');
 
         // A legacy identifier must use its explicitly applied custom snapshot.
