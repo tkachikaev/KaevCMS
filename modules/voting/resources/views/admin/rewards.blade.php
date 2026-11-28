@@ -31,7 +31,7 @@
             @method('PUT')
             <input id="game_server_id" type="hidden" value="{{ $server->id }}">
             <x-admin.toggle id="voting_rewards_enabled" name="enabled" :label="__('module-voting::messages.enabled')" :checked="(bool) old('enabled', $reward?->enabled ?? false)" :disabled="! $canManage" />
-            <div data-promo-rewards-editor data-max-rows="100" data-limit-message="{{ __('module-voting::messages.reward_limit') }}" data-preview-url="{{ $previewUrl }}" data-unknown-item="{{ __('module-voting::messages.enter_item') }}" data-enter-item="{{ __('module-voting::messages.enter_item') }}">
+            <div data-promo-rewards-editor data-promo-hide-empty-preview data-max-rows="100" data-limit-message="{{ __('module-voting::messages.reward_limit') }}" data-preview-url="{{ $previewUrl }}" data-unknown-item="{{ __('module-voting::messages.enter_item') }}" data-enter-item="{{ __('module-voting::messages.enter_item') }}">
                 <div class="promo-reward-list" data-promo-reward-list>
                     @foreach($rows as $index => $row)
                         @php

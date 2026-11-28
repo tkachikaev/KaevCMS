@@ -265,6 +265,10 @@
 }
 
 
+[data-promo-hide-empty-preview] .promo-reward-preview:not(:has(> img)) {
+    visibility: hidden;
+}
+
 .promo-reward-preview img {
     display: block;
     width: 100%;
