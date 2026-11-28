@@ -79,7 +79,8 @@
       "pk",
       "play_time",
       "heroes",
-      "castles"
+      "castles",
+      "character_rescue"
     ],
     "characters": {
       "table": "characters",
@@ -160,6 +161,26 @@
         "hero": {
           "kind": "operator",
           "operator": "rusacis_hero_active"
+        },
+        "access_level": {
+          "kind": "column",
+          "column": "accesslevel"
+        },
+        "deletion_time": {
+          "kind": "column",
+          "column": "deletetime"
+        },
+        "x": {
+          "kind": "column",
+          "column": "x"
+        },
+        "y": {
+          "kind": "column",
+          "column": "y"
+        },
+        "z": {
+          "kind": "column",
+          "column": "z"
         }
       }
     },

@@ -129,6 +129,9 @@ final class ServerConnectionTester
         $report['capabilities'] = ($report['compatible'] ?? false) ? array_values(array_intersect(
             $profile['config']['capabilities'], ['characters', 'level', 'pvp', 'pk', 'play_time', 'heroes', 'castles'],
         )) : [];
+        if (($report['compatible'] ?? false) === true && ($report['character_rescue_available'] ?? false) === true) {
+            $report['capabilities'][] = 'character_rescue';
+        }
 
         return $report;
     }

@@ -14,7 +14,7 @@ Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. G
 
 ## GameServer editor
 
-Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the legacy counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID and the old Mobius-only rescue writer remain out of scope. Reward queues, Wallet and Donations are unchanged.
+Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the legacy counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID remain out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
 
 ### Ranking and filter sources
 

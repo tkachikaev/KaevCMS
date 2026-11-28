@@ -581,7 +581,7 @@
                                 </div>
                             @elseif($characterRescueCapabilityState !== 'supported')
                                 <div class="settings-disabled-notice">
-                                    {{ __('Required characters table columns are missing or the selected driver is unsupported.') }}
+                                    {{ __('drivers.'.($characterRescueMissingColumns !== [] ? 'rescue_columns_missing' : 'rescue_schema_unsupported')) }}
                                     @if($characterRescueMissingColumns !== [])
                                         <code>{{ implode(', ', $characterRescueMissingColumns) }}</code>
                                     @endif

@@ -1,5 +1,6 @@
 <?php
 
+use App\Contracts\CharacterRescueGateway;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\ExternalGameAccountGateway;
@@ -8,6 +9,7 @@ use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\UniversalDriverActivation;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\ExternalGameAccountWriteResult;
+use App\Support\GameServerFeatures\CharacterRescueWriteResult;
 use App\Support\Modules\ModuleManager;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\UniversalDrivers\DriverExtensionAccess;
@@ -16,6 +18,7 @@ use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\GameProfileEditor;
 use App\Support\UniversalDrivers\LoginProfileEditor;
 use App\Support\UniversalDrivers\ProfileValidationException;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +150,22 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $check($world->ranking($gameServer, 'level', 1)[0]['name'] === 'AliceKnight', 'Runtime ranking failed with custom ID/table.');
         $check(count($world->heroes($gameServer)) === 1, 'Runtime hero mapping failed.');
         $check(count($world->castleOwners($gameServer)) === 1, 'Runtime castle mapping failed.');
+
+        $rescue = app(CharacterRescueGateway::class);
+        $check($rescue->capabilities($gameServer)->supported, 'Verified JSON rescue is unavailable.');
+        $check(in_array('character_rescue', $world->capabilities($gameServer), true), 'World capabilities omit verified rescue.');
+        $id = (int) $rows[0]['id'];
+        $fixture->exec('UPDATE mapped_characters SET lastAccess = 1000000000000, x = 10, y = 20, z = 30 WHERE player_id = '.$id);
+        $target = ['x' => 83400, 'y' => 148600, 'z' => -3400];
+        $before = CarbonImmutable::now()->subMinutes(5);
+        $check($rescue->rescue($gameServer, 'bob', $id, $target, $before)->status === CharacterRescueWriteResult::NOT_FOUND, 'Rescue accepted a foreign account.');
+        $fixture->exec('UPDATE mapped_characters SET is_connected = 1 WHERE player_id = '.$id);
+        $check($rescue->rescue($gameServer, 'alice', $id, $target, $before)->status === CharacterRescueWriteResult::ONLINE, 'Rescue accepted an online character.');
+        $fixture->exec('UPDATE mapped_characters SET is_connected = 0 WHERE player_id = '.$id);
+        $write = $rescue->rescue($gameServer, 'alice', $id, $target, $before);
+        $check($write->successful() && [$write->oldX, $write->oldY, $write->oldZ] === [10, 20, 30], 'Verified custom JSON coordinate write failed.');
+        $actual = $fixture->query('SELECT x, y, z FROM mapped_characters WHERE player_id = '.$id)->fetch(PDO::FETCH_ASSOC);
+        $check(is_array($actual) && array_map('intval', $actual) === $target, 'Rescue did not persist the mapped coordinates.');
         $prepared = $gateway->prepareAccount($loginServer, 'RuntimeCreated', 'Fixture-Password-123', 'runtime@example.invalid');
         $check($gateway->createPreparedAccount($loginServer, $prepared) === ExternalGameAccountWriteResult::Created, 'Runtime registration failed.');
         $check($gateway->inspectPreparedAccount($loginServer, $prepared) === ExternalGameAccountState::Matching, 'Runtime registration recovery proof mismatch.');

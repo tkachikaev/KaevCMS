@@ -3,7 +3,7 @@
     $groups = [
         'game_basic' => ['id','name','level','class_id','race','gender','online'],
         'game_statistics' => ['experience','pvp_kills','pk_kills','play_time_seconds','last_seen_at_ms','reputation'],
-        'game_additional' => ['title','noble','hero','clan_id','clan_name','created_at','x','y','z'],
+        'game_additional' => ['title','noble','hero','clan_id','clan_name','created_at','x','y','z','access_level','deletion_time'],
     ];
     $mainTable = $config['characters']['table'];
 @endphp
@@ -12,6 +12,8 @@
         <summary><h3>{{ __("drivers.{$group}") }}</h3></summary>
         @if($group === 'game_basic')
             <p class="ud-info ud-main-note">{{ __('drivers.main_table_help') }}</p>
+        @elseif($group === 'game_additional')
+            <p class="ud-info">{{ __('drivers.cap_help_character_rescue') }}</p>
         @endif
         <div class="ud-map-wrap">
         <table class="ud-map-table">

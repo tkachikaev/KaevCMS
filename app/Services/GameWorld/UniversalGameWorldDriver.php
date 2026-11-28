@@ -20,9 +20,7 @@ final class UniversalGameWorldDriver implements GameWorldDriver
 
     public function capabilities(GameServer $server): array
     {
-        return $this->database->run($server, fn (Connection $db): array => array_values(array_diff(
-            $this->world->capabilities($db, $this->profile), ['character_rescue'],
-        )));
+        return $this->database->run($server, fn (Connection $db): array => $this->world->capabilities($db, $this->profile));
     }
 
     public function ranking(GameServer $server, string $section, int $limit): array
