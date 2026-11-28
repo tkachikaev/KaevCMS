@@ -316,7 +316,7 @@ final class ServerConnectionTester
 
     /**
      * @param  array<string, mixed>  $report
-     * @param  array{label: string, description: string, ready: bool, service_port: int, character_created_at_column?: string|null, online_count?: array{table: string, column: string, value: int|string}, statistics?: list<string>, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>}  $driver
+     * @param  array{label: string, description: string, ready: bool, service_port: int, schema_profile: string, character_created_at_column?: string|null, online_count?: array{table: string, column: string, value: int|string}, statistics?: list<string>, capabilities: list<string>, optional_capabilities: array<string, string>, requirements: list<array{table: string, columns: list<string>, any_columns?: list<string>, optional_columns?: list<string>, required: bool}>}  $driver
      * @return array<string, mixed>
      */
     private function withGameDriver(array $report, string $driverKey, array $driver, string $chronicle): array
@@ -333,7 +333,7 @@ final class ServerConnectionTester
                 default => null,
             };
         } elseif (($report['compatible'] ?? false) === true) {
-            $report['schema_profile'] = $driver['schema_profile'] ?? 'universal:'.$driverKey;
+            $report['schema_profile'] = $driver['schema_profile'];
         }
 
         if (($report['compatible'] ?? false) === true) {

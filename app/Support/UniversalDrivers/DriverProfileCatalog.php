@@ -9,7 +9,7 @@ use RuntimeException;
 
 /**
  * Offline, CMS-owned catalog. Bundled JSON and locally stored JSON use one format.
- * This does not change the legacy driver registry or open a game connection.
+ * Editing the catalog never changes an applied connection or opens a game connection.
  */
 final class DriverProfileCatalog
 {

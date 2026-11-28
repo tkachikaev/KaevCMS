@@ -67,7 +67,7 @@ final class UniversalGameWorldDriver implements GameWorldDriver
      */
     private function run(GameServer $server, callable $callback): mixed
     {
-        return $this->database->run($server, function (Connection $database, ?array $snapshot = null) use ($callback) {
+        return $this->database->run($server, function (Connection $database, ?array $snapshot = null) use ($callback): mixed {
             ConnectionProfileSnapshots::assertUnchanged($this->snapshot, $snapshot);
 
             return $callback($database);

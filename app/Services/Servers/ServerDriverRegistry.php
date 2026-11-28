@@ -37,6 +37,7 @@ final class ServerDriverRegistry
      *     description:string,
      *     ready:bool,
      *     service_port:int,
+     *     schema_profile:string,
      *     character_created_at_column?:string|null,
      *     online_count?:array{table:string,column:string,value:int|string},
      *     statistics?:list<string>,
@@ -134,7 +135,7 @@ final class ServerDriverRegistry
         return $this->loginDrivers()[$key] ?? null;
     }
 
-    /** @return array{label:string,description:string,ready:bool,service_port:int,character_created_at_column?:string|null,online_count?:array{table:string,column:string,value:int|string},statistics?:list<string>,capabilities:list<string>,optional_capabilities:array<string,string>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>}|null */
+    /** @return array{label:string,description:string,ready:bool,service_port:int,schema_profile:string,character_created_at_column?:string|null,online_count?:array{table:string,column:string,value:int|string},statistics?:list<string>,capabilities:list<string>,optional_capabilities:array<string,string>,requirements:list<array{table:string,columns:list<string>,any_columns?:list<string>,optional_columns?:list<string>,required:bool}>}|null */
     public function gameDriver(string $key): ?array
     {
         return $this->gameDrivers()[$key] ?? null;
