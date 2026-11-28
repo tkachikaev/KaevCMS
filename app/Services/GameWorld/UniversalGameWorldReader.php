@@ -66,7 +66,7 @@ final class UniversalGameWorldReader
         $supported = [];
         foreach (array_keys(self::RANKING_FIELDS) as $section) {
             if (in_array($section, $config['capabilities'], true)
-                && $this->rankingColumn($config, $schema['columns'], $section) !== null) {
+                && $this->rankingColumn($database, $config, $schema['columns'], $section) !== null) {
                 $supported[] = $section;
             }
         }
@@ -94,7 +94,7 @@ final class UniversalGameWorldReader
         $config = $this->configuration($database, $profile, $section);
         $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
-        $rankColumn = $this->rankingColumn($config, $schema['columns'], $section);
+        $rankColumn = $this->rankingColumn($database, $config, $schema['columns'], $section);
         if ($rankColumn === null) {
             throw new ProfileValidationException('Ranking source is unavailable.');
         }
@@ -268,7 +268,7 @@ final class UniversalGameWorldReader
      * @param  array<string,mixed>  $config
      * @param  array<string,list<string>>  $columns
      */
-    private function rankingColumn(array $config, array $columns, string $section): ?string
+    private function rankingColumn(Connection $database, array $config, array $columns, string $section): ?string
     {
         $rank = $config['rankings'][$section] ?? null;
         if ($rank === null) {
@@ -286,7 +286,10 @@ final class UniversalGameWorldReader
             }
             foreach ($this->eavGroups($config, $columns) as $group) {
                 if (isset($group['fields'][$name])) {
-                    return $group['alias'].'.'.$name;
+                    // A text column would rank 9 above 80. Do not silently sort lexically.
+                    return ProfileSchema::integerColumn($database, $group['relation']['table'], $field['value_column'])
+                        ? $group['alias'].'.'.$name
+                        : null;
                 }
             }
 

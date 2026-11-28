@@ -114,6 +114,11 @@ final class ProfileSchema
         return false;
     }
 
+    public static function integerColumn(Connection $database, string $table, string $column): bool
+    {
+        return self::identityColumnMatches($database, $table, $column, 'id');
+    }
+
     public static function hasUniqueColumn(Connection $database, string $table, string $column): bool
     {
         foreach ($database->getSchemaBuilder()->getIndexes($table) as $index) {

@@ -30,7 +30,7 @@ For a field from another table, a `left` relation retains the character when no 
 
 ### Ranking and filter sources
 
-Rankings display the primary table and column from character mappings. Experience is the recommended tie-breaker for level; level for PvP/PK/play time. No secondary metric does not disable a ranking. Name is the final tie-breaker. For key/value primary metrics, ranking.column names the mapped value column. Fields sharing a relation and key are read from a single matching row. Ambiguous keys never multiply ranking rows: required mappings exclude them; optional mappings yield empty values.
+Rankings display the primary table and column from character mappings. When stored in the main character table, experience is the recommended tie-breaker for level; level for PvP/PK/play time. No secondary metric does not disable a ranking. Name is the final tie-breaker. For key/value primary metrics, `ranking.column` names the mapped integer value column. Text columns do not qualify for numeric rankings. Fields sharing a relation and key are read from a single matching row. Ambiguous keys never multiply ranking rows: required mappings exclude them; optional mappings yield empty values.
 
 Filters follow “Table → Column → Condition → Value”. Another table requires both link columns, for example `characters.obj_Id ↔ character_access.char_id`. Correlated `EXISTS` avoids duplicate characters and excludes characters without a matching record. Conditions sharing a table and both link columns must match the same record, including EAV key/value conditions.
 

@@ -230,6 +230,16 @@ foreach ($databaseNames as $type => $db) {
         if (array_diff(array_keys($expected), $caps) !== [] || in_array('character_rescue', $caps, true)) {
             throw new RuntimeException('Lucera ranking or rescue capabilities are incorrect.');
         }
+        $pdo->exec('ALTER TABLE fixture_lucera_subclasses MODIFY level VARCHAR(10)');
+        if (in_array('level', $reader->capabilities($connection, $lucera), true)) {
+            throw new RuntimeException('Text-valued subclass levels were advertised as a numeric ranking.');
+        }
+        try {
+            $reader->ranking($connection, $lucera, 'level', 10);
+            throw new RuntimeException('Text-valued subclass levels were ranked lexically.');
+        } catch (ProfileValidationException) {
+            // Expected: a numeric ranking requires an integer value column.
+        }
         $pdo->exec('DROP TABLE fixture_lucera_subclasses, fixture_lucera_characters');
     }
     echo "OK: $type rankings, heroes, castles, missing optional schema and custom JSON mapping\n";
