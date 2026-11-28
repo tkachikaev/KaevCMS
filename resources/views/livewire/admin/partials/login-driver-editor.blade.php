@@ -61,6 +61,7 @@
                     <option value="sha1_base64">SHA-1 / Base64</option>
                     <option value="bcrypt_2a">BCrypt ($2a$)</option>
                     <option value="whirlpool_hex">Whirlpool (hex)</option>
+                    <option value="whirlpool_base64">Whirlpool / Base64 (Whirlpool2)</option>
                     <option value="sha1_hex">SHA-1 (hex)</option>
                     <option value="sha256_hex">SHA-256 (hex)</option>
                     <option value="md5_hex">MD5 (hex)</option>

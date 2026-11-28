@@ -30,6 +30,34 @@ final class ConnectionActivationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_lucera_candidate_uses_the_edited_schema_without_changing_stored_connection_checks(): void
+    {
+        $probe = new FakeExternalDatabaseConnectionTester;
+        $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
+        $catalog = app(DriverProfileCatalog::class);
+        $tester = app(ServerConnectionTester::class);
+        $login = LoginServer::factory()->create(['driver' => 'lucera2']);
+        $game = GameServer::factory()->create(['driver' => 'lucera2', 'login_server_id' => $login->id]);
+        $loginProfile = $catalog->find('login', 'lucera2')['profile'];
+        $loginProfile['config']['accounts']['table'] = 'custom_accounts';
+        $loginProfile['config']['requirements'][0]['table'] = 'custom_accounts';
+        $catalog->save($loginProfile);
+        $gameProfile = $catalog->find('game', 'lucera2')['profile'];
+        $gameProfile['config']['relations']['subclass']['table'] = 'custom_subclasses';
+        $gameProfile['config']['requirements'][1]['table'] = 'custom_subclasses';
+        $catalog->save($gameProfile);
+
+        $tester->testLoginValues($login->getAttributes());
+        $this->assertSame($loginProfile['config']['requirements'], $probe->requirements);
+        $tester->testGameValues($game->getAttributes(), $login);
+        $this->assertSame($gameProfile['config']['requirements'], $probe->requirements);
+
+        $tester->testLoginServer($login);
+        $this->assertSame('accounts', $probe->requirements[0]['table']);
+        $tester->testGameServer($game);
+        $this->assertSame('character_subclasses', $probe->requirements[1]['table']);
+    }
+
     public function test_registry_exposes_custom_profiles_without_replacing_legacy_mobius_and_rusacis_descriptors(): void
     {
         $catalog = app(DriverProfileCatalog::class);

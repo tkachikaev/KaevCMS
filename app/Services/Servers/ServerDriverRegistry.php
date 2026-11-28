@@ -78,6 +78,8 @@ final class ServerDriverRegistry
                 'login:rusacis' => ['RUSaCis', __('RUSaCis LoginServer with BCrypt password hashing.'), 'rusacis_interlude', []],
                 'game:l2j_mobius' => ['L2J Mobius', __('One L2J Mobius GameServer driver with automatic legacy and modern schema detection.'), 'universal:'.$profile['id'], ['heroes' => 'heroes', 'castle' => 'castles']],
                 'game:rusacis' => ['RUSaCis', __('RUSaCis GameServer with separate Interlude schema and character statistics.'), 'rusacis_interlude', ['heroes' => 'heroes', 'castle' => 'castles']],
+                'login:lucera2' => [$profile['name'], __('Lucera 2 game accounts with Whirlpool2 password hashing.'), 'universal:lucera2', []],
+                'game:lucera2' => [$profile['name'], __('Lucera 2 characters and active subclasses.'), 'universal:lucera2', []],
                 default => [$profile['name'], __('User-defined JSON driver'), 'universal:'.$profile['id'], []],
             };
             $config = $profile['config'];

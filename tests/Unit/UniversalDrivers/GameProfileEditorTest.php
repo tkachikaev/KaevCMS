@@ -34,6 +34,13 @@ final class GameProfileEditorTest extends TestCase
             $this->assertSame($profile['config']['characters'], $result['config']['characters']);
             $this->assertSame($profile['config']['features'], $result['config']['features']);
             $rules = array_column($result['config']['requirements'], null, 'table');
+            if ($profile['id'] === 'lucera2') {
+                $this->assertSame(['characters'], $result['config']['capabilities']);
+                $this->assertTrue($rules['character_subclasses']['required']);
+                $this->assertEqualsCanonicalizing(['char_obj_id', 'active', 'level', 'exp', 'class_id'], $rules['character_subclasses']['columns']);
+
+                continue;
+            }
             $this->assertFalse($rules['heroes']['required']);
             $this->assertFalse($rules['castle']['required']);
             $this->assertContains('character_rescue', $result['config']['capabilities']);

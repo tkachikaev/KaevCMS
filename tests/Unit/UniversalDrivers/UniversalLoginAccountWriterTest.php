@@ -25,10 +25,24 @@ final class UniversalLoginAccountWriterTest extends TestCase
             if ($profile['id'] === 'rusacis') {
                 $this->assertStringStartsWith('$2a$10$', $hash);
                 $this->assertTrue(password_verify('TestPassword123', $hash));
-            } else {
+            } elseif (in_array($profile['id'], ['l2j_mobius', 'l2j_mobius_legacy'], true)) {
                 $this->assertSame(base64_encode(sha1('TestPassword123', true)), $hash);
             }
         }
+    }
+
+    public function test_whirlpool_base64_matches_the_lucera_password_vector(): void
+    {
+        $writer = new UniversalLoginAccountWriter;
+        $profile = (new BundledProfileCatalog)->all()['login:l2j_mobius'];
+        $profile['config']['password'] = ['scheme' => 'whirlpool_base64'];
+        $digest = '4ASEMr3vt3TFQx4VJjfasAfzDrJdK0yO9OV7kjc/2BkCR3Vz1ooywdQg+l5enJR0TMHfU0PGRContHTVTGTTDA==';
+
+        $this->assertSame($digest, $writer->preparePassword($profile, 'nico'));
+        $this->assertTrue($writer->acceptsCredential($profile, $digest));
+        $this->assertFalse($writer->acceptsCredential($profile, rtrim($digest, '=')));
+        $this->assertFalse($writer->acceptsCredential($profile, base64_encode(sha1('nico', true))));
+        $this->assertFalse($writer->acceptsCredential($profile, base64_encode(hash('whirlpool', 'nico'))));
     }
 
     public function test_hex_password_schemes_write_the_expected_digest_and_reject_other_shapes(): void

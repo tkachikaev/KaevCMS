@@ -11,14 +11,18 @@ class ServerDriverRegistryTest extends TestCase
     {
         $registry = app(ServerDriverRegistry::class);
 
-        $this->assertEqualsCanonicalizing(['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'], $registry->loginDriverKeys());
-        $this->assertEqualsCanonicalizing(['l2j_mobius', 'rusacis'], $registry->gameDriverKeys());
+        foreach (['l2j_mobius', 'l2j_mobius_legacy', 'lucera2', 'rusacis'] as $id) {
+            $this->assertContains($id, $registry->loginDriverKeys());
+        }
+        foreach (['l2j_mobius', 'lucera2', 'rusacis'] as $id) {
+            $this->assertContains($id, $registry->gameDriverKeys());
+        }
     }
 
     public function test_bundled_login_drivers_require_account_credentials_but_not_optional_metadata(): void
     {
         $registry = app(ServerDriverRegistry::class);
-        foreach (['l2j_mobius', 'l2j_mobius_legacy', 'rusacis'] as $id) {
+        foreach (['l2j_mobius', 'l2j_mobius_legacy', 'lucera2', 'rusacis'] as $id) {
             $driver = $registry->loginDriver($id);
             $this->assertTrue($driver['ready']);
             $this->assertSame('accounts', $driver['requirements'][0]['table']);

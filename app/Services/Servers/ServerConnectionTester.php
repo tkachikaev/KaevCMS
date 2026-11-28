@@ -7,6 +7,7 @@ use App\Exceptions\ExternalDatabaseDriverUnavailable;
 use App\Exceptions\ExternalDatabaseSchemaMismatch;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Support\Database\TableExistence;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
@@ -53,7 +54,7 @@ final class ServerConnectionTester
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */
-    public function testLoginValues(array $values): array
+    public function testLoginValues(array $values, bool $useCatalogOverride = true): array
     {
         $driverKey = (string) ($values['driver'] ?? '');
         $driver = $this->drivers->loginDriver($driverKey);
@@ -61,8 +62,12 @@ final class ServerConnectionTester
             throw new InvalidArgumentException('Unsupported LoginServer driver.');
         }
 
-        if (! isset((new BundledProfileCatalog)->all()['login:'.$driverKey])) {
-            $profile = app(DriverProfileCatalog::class)->find('login', $driverKey)['profile'] ?? null;
+        $bundled = (new BundledProfileCatalog)->all()['login:'.$driverKey] ?? null;
+        $entry = ($useCatalogOverride || $bundled === null) && app(TableExistence::class)->has('universal_driver_profiles')
+            ? app(DriverProfileCatalog::class)->find('login', $driverKey)
+            : null;
+        if ($bundled === null || ($entry['modified'] ?? false)) {
+            $profile = $entry['profile'] ?? null;
             if (! is_array($profile)) {
                 throw new InvalidArgumentException('Unknown LoginServer JSON profile.');
             }
@@ -71,7 +76,7 @@ final class ServerConnectionTester
         }
 
         return $this->withLoginDriver(
-            $this->testUniversalProfile($this->credentials($values), (new BundledProfileCatalog)->all()['login:'.$driverKey]),
+            $this->testUniversalProfile($this->credentials($values), $bundled),
             $driverKey,
             $driver,
         );
@@ -162,14 +167,14 @@ final class ServerConnectionTester
             'database_username' => $server->database_username,
             'database_password' => $server->databasePassword() ?? '',
             'database_charset' => $server->database_charset,
-        ]);
+        ], useCatalogOverride: false);
     }
 
     /**
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */
-    public function testGameValues(array $values, LoginServer $loginServer): array
+    public function testGameValues(array $values, LoginServer $loginServer, bool $useCatalogOverride = true): array
     {
         $driverKey = (string) ($values['driver'] ?? '');
         $driver = $this->drivers->gameDriver($driverKey);
@@ -188,8 +193,12 @@ final class ServerConnectionTester
             ]
             : $values;
 
-        if (! isset((new BundledProfileCatalog)->all()['game:'.$driverKey])) {
-            $profile = app(DriverProfileCatalog::class)->find('game', $driverKey)['profile'] ?? null;
+        $bundled = (new BundledProfileCatalog)->all()['game:'.$driverKey] ?? null;
+        $entry = ($useCatalogOverride || $bundled === null) && app(TableExistence::class)->has('universal_driver_profiles')
+            ? app(DriverProfileCatalog::class)->find('game', $driverKey)
+            : null;
+        if ($bundled === null || ($entry['modified'] ?? false)) {
+            $profile = $entry['profile'] ?? null;
             if (! is_array($profile)) {
                 throw new InvalidArgumentException('Unknown GameServer JSON profile.');
             }
@@ -198,7 +207,7 @@ final class ServerConnectionTester
         }
 
         return $this->withGameDriver(
-            $this->testUniversalProfile($this->credentials($connectionValues), (new BundledProfileCatalog)->all()['game:'.$driverKey]),
+            $this->testUniversalProfile($this->credentials($connectionValues), $bundled),
             $driverKey,
             $driver,
             (string) ($values['chronicle'] ?? ''),
@@ -245,7 +254,7 @@ final class ServerConnectionTester
             'database_username' => $server->database_username,
             'database_password' => $server->databasePassword() ?? '',
             'database_charset' => $server->database_charset,
-        ], $loginServer);
+        ], $loginServer, useCatalogOverride: false);
     }
 
     /** @return array<string,mixed> */

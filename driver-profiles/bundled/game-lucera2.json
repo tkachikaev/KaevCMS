@@ -1,0 +1,166 @@
+{
+  "id": "lucera2",
+  "name": "Lucera 2 GameServer — C6 / Classic",
+  "type": "game",
+  "format_version": 1,
+  "config": {
+    "database": {
+      "dialect": "mysql",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "requirements": [
+      {
+        "table": "characters",
+        "columns": [
+          "account_name",
+          "obj_Id",
+          "char_name",
+          "accesslevel",
+          "deletetime",
+          "online"
+        ],
+        "optional_columns": [
+          "title",
+          "x",
+          "y",
+          "z",
+          "sex",
+          "onlinetime",
+          "pvpkills",
+          "pkkills",
+          "karma",
+          "clanid"
+        ],
+        "required": true
+      },
+      {
+        "table": "character_subclasses",
+        "columns": [
+          "char_obj_id",
+          "active",
+          "level",
+          "exp",
+          "class_id"
+        ],
+        "required": true
+      }
+    ],
+    "capabilities": [
+      "characters"
+    ],
+    "characters": {
+      "table": "characters",
+      "owner": {
+        "identity": "login",
+        "column": "account_name"
+      },
+      "fields": {
+        "id": {
+          "kind": "column",
+          "column": "obj_Id"
+        },
+        "name": {
+          "kind": "column",
+          "column": "char_name"
+        },
+        "level": {
+          "kind": "eav",
+          "relation": "subclass",
+          "key_column": "active",
+          "key_value": 1,
+          "value_column": "level"
+        },
+        "experience": {
+          "kind": "eav",
+          "relation": "subclass",
+          "key_column": "active",
+          "key_value": 1,
+          "value_column": "exp"
+        },
+        "class_id": {
+          "kind": "eav",
+          "relation": "subclass",
+          "key_column": "active",
+          "key_value": 1,
+          "value_column": "class_id"
+        },
+        "gender": {
+          "kind": "column",
+          "column": "sex"
+        },
+        "title": {
+          "kind": "column",
+          "column": "title"
+        },
+        "online": {
+          "kind": "column",
+          "column": "online"
+        },
+        "play_time_seconds": {
+          "kind": "column",
+          "column": "onlinetime"
+        },
+        "pvp_kills": {
+          "kind": "column",
+          "column": "pvpkills"
+        },
+        "pk_kills": {
+          "kind": "column",
+          "column": "pkkills"
+        },
+        "reputation": {
+          "kind": "column",
+          "column": "karma"
+        },
+        "clan_id": {
+          "kind": "column",
+          "column": "clanid"
+        },
+        "x": {
+          "kind": "column",
+          "column": "x"
+        },
+        "y": {
+          "kind": "column",
+          "column": "y"
+        },
+        "z": {
+          "kind": "column",
+          "column": "z"
+        },
+        "access_level": {
+          "kind": "column",
+          "column": "accesslevel"
+        },
+        "deletion_time": {
+          "kind": "column",
+          "column": "deletetime"
+        }
+      }
+    },
+    "relations": {
+      "subclass": {
+        "table": "character_subclasses",
+        "local_column": "obj_Id",
+        "foreign_column": "char_obj_id",
+        "join": "inner",
+        "cardinality": "many"
+      }
+    },
+    "filters": [
+      {
+        "column": "accesslevel",
+        "op": "eq",
+        "value": 0
+      },
+      {
+        "column": "deletetime",
+        "op": "eq",
+        "value": 0
+      }
+    ],
+    "rankings": {},
+    "features": {}
+  }
+}

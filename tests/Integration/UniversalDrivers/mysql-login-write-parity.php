@@ -144,6 +144,25 @@ foreach ($databaseNames as $type => $name) {
         $writer->create($db, $sha1Profile, new PreparedGameAccount('narrowOk', $writer->preparePassword($sha1Profile, 'Testing123'), 'n@example.invalid'));
         $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(255) NULL');
         echo "OK: password column width guard (VARCHAR(45) refuses Whirlpool, accepts SHA-1/Base64)\n";
+
+        $lucera = $profiles['login:lucera2'];
+        $probe = new UniversalProfileSchemaProbe;
+        $credential = $writer->preparePassword($lucera, 'Testing123');
+        $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(87) NULL');
+        if (array_column($probe->problems($db, $lucera), 'key') !== ['drivers.schema_password_length']) {
+            throw new RuntimeException('Lucera preflight accepted a column smaller than 88 characters.');
+        }
+        $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(88) NULL');
+        if ($probe->problems($db, $lucera) !== []) {
+            throw new RuntimeException('Lucera preflight rejected an 88-character column.');
+        }
+        $account = new PreparedGameAccount('luceraFixture', $credential, 'lucera@example.invalid');
+        $writer->create($db, $lucera, $account);
+        if ($reader->inspect($db, $lucera, $account) !== ExternalGameAccountState::Matching) {
+            throw new RuntimeException('Lucera account did not match its stored credential.');
+        }
+        $pdo->exec('ALTER TABLE `accounts` MODIFY `password` VARCHAR(255) NULL');
+        echo "OK: Whirlpool/Base64 rejects VARCHAR(87), accepts VARCHAR(88) and writes a recoverable credential\n";
     }
     if ($type === 'l2j_mobius') {
         // A driver assembled the way the editor assembles it: own table and column names, MD5.

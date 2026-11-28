@@ -4,13 +4,19 @@
 
 Use **Servers → Drivers** to create, duplicate, import and export LoginServer or GameServer JSON profiles. Profiles describe data mappings and capabilities, never DB addresses, passwords, arbitrary SQL or PHP. Only MySQL/MariaDB is supported. MS SQL/PTS is **not implemented**.
 
-**Mobius, RUSaCis and custom drivers use one JSON profile engine.** Existing connections with bundled identifiers continue using the shipped profile without reconfiguration. Editing a catalog entry does not switch an active server. Select and verify/apply a custom or edited profile explicitly. Account creation and password changes require a unique login index and a password column large enough for the hash. The applied copy has an immutable SHA256 digest and HMAC binding to connection credentials. Changing those settings or editing the profile requires a fresh verification/application. After changing LoginServer database credentials, reapply JSON for any GameServer inheriting that connection as well. CMS does not fall back to a bundled profile when verification fails; GameServers with separate database credentials are unaffected by this change.
+**Mobius, RUSaCis, Lucera 2 and custom drivers use one JSON profile engine.** Existing connections with bundled identifiers continue using the shipped profile without reconfiguration. Editing a catalog entry does not switch an active server. Select and verify/apply a custom or edited profile explicitly. Account creation and password changes require a unique login index and a password column large enough for the hash. The applied copy has an immutable SHA256 digest and HMAC binding to connection credentials. Changing those settings or editing the profile requires a fresh verification/application. After changing LoginServer database credentials, reapply JSON for any GameServer inheriting that connection as well. CMS does not fall back to a bundled profile when verification fails; GameServers with separate database credentials are unaffected by this change.
+
+## Lucera 2 C6 and Classic
+
+Select the bundled **Lucera 2** profiles for LoginServer and GameServer. When the schemas are separate, configure a separate GameServer connection. Verify and apply each profile. The LoginServer profile uses Whirlpool/Base64 for `PasswordHash=whirlpool2`. If your server uses another supported format, choose it in the editor and reapply the profile. Match the CMS game login and password rules to the Lucera configuration.
+
+The LoginServer profile supports account creation and password changes. The GameServer profile reads characters, active subclasses and online counts. Rankings and character rescue are unavailable in the bundled Lucera 2 profile. The stock character table uses MyISAM. Compatibility was tested against the C6 and Classic SQL schemas; game-client sign-in and character creation require testing on the target server.
 
 ## LoginServer editor
 
 First choose display name/ID, charset/collation, a supported game password format and capabilities. Then map account table and login/password/optional columns, registration constants and module fields. Lookup-only profiles can read account summaries without creation/password changes; the password format and column are optional for them. Registration and account-area functions requiring the complete LoginServer capability set remain unavailable on such connections. Account writes require a **unique login index** and a long enough password column in the actual MySQL table. Login columns must store strings; numeric columns cannot represent logins.
 
-Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. Game-client acceptance, retries after ambiguous password writes and server-specific registration login rules require separate testing; arbitrary regex or custom code in JSON remains disallowed.
+Allowed schemes: SHA-1/Base64, Whirlpool/Base64 (Whirlpool2), BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. Game-client acceptance, retries after ambiguous password writes and server-specific registration login rules require separate testing; arbitrary regex or custom code in JSON remains disallowed.
 
 ## GameServer editor
 

@@ -105,8 +105,13 @@ final class UniversalProfileSchemaProbe
 
     private function credentialLength(string $scheme): int
     {
+        if (isset(ProfileFormat::BASE64_PASSWORD_SCHEMES[$scheme])) {
+            $bytes = ProfileFormat::BASE64_PASSWORD_SCHEMES[$scheme][1];
+
+            return 4 * intdiv($bytes + 2, 3);
+        }
+
         return match ($scheme) {
-            'sha1_base64' => 28,
             'bcrypt_2a' => 60,
             default => ProfileFormat::HEX_PASSWORD_SCHEMES[$scheme][1] ?? 0,
         };

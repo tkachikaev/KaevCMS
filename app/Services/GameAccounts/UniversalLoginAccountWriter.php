@@ -27,7 +27,7 @@ final class UniversalLoginAccountWriter
         $config = $this->configuration($profile, 'password_change', checkCapability: false);
         $passwordConfig = $config['password'];
         $hash = match ($passwordConfig['scheme']) {
-            'sha1_base64' => base64_encode(sha1($password, true)),
+            'sha1_base64', 'whirlpool_base64' => base64_encode(hash(ProfileFormat::BASE64_PASSWORD_SCHEMES[$passwordConfig['scheme']][0], $password, true)),
             'bcrypt_2a' => $this->bcrypt($password, $passwordConfig['cost']),
             'sha1_hex', 'md5_hex', 'sha256_hex', 'whirlpool_hex' => hash(ProfileFormat::HEX_PASSWORD_SCHEMES[$passwordConfig['scheme']][0], $password),
             default => throw new ProfileValidationException('Unsupported game password scheme.'),
@@ -45,10 +45,11 @@ final class UniversalLoginAccountWriter
     {
         $config = $this->configuration($profile, 'password_change', checkCapability: false);
         $password = $config['password'];
-        if ($password['scheme'] === 'sha1_base64') {
+        if (isset(ProfileFormat::BASE64_PASSWORD_SCHEMES[$password['scheme']])) {
             $decoded = base64_decode($credential, true);
 
-            return is_string($decoded) && strlen($decoded) === 20 && base64_encode($decoded) === $credential;
+            return is_string($decoded) && strlen($decoded) === ProfileFormat::BASE64_PASSWORD_SCHEMES[$password['scheme']][1]
+                && base64_encode($decoded) === $credential;
         }
         if (isset(ProfileFormat::HEX_PASSWORD_SCHEMES[$password['scheme']])) {
             return preg_match('/\A[0-9a-f]{'.ProfileFormat::HEX_PASSWORD_SCHEMES[$password['scheme']][1].'}\z/D', $credential) === 1;

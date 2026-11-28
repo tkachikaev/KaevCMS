@@ -1,0 +1,60 @@
+{
+  "id": "lucera2",
+  "name": "Lucera 2 LoginServer — C6 / Classic",
+  "type": "login",
+  "format_version": 1,
+  "config": {
+    "database": {
+      "dialect": "mysql",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "requirements": [
+      {
+        "table": "accounts",
+        "columns": [
+          "login",
+          "password"
+        ],
+        "optional_columns": [
+          "lastactive",
+          "accessLevel",
+          "lastServerId"
+        ],
+        "required": true
+      }
+    ],
+    "capabilities": [
+      "account_lookup",
+      "account_creation",
+      "password_change",
+      "account_status"
+    ],
+    "accounts": {
+      "table": "accounts",
+      "fields": {
+        "login": "login",
+        "password": "password",
+        "id": null,
+        "email": null,
+        "created_at": null,
+        "last_active": "lastactive",
+        "access_level": "accessLevel",
+        "last_server": "lastServerId"
+      },
+      "ownership": {
+        "identity": "login",
+        "column": "login"
+      },
+      "create": {
+        "columns": {
+          "login": "login",
+          "password": "credential"
+        }
+      }
+    },
+    "password": {
+      "scheme": "whirlpool_base64"
+    }
+  }
+}

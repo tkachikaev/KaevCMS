@@ -21,6 +21,37 @@ final class DriverManagerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_can_edit_bundled_lucera_profiles_without_losing_their_mappings(): void
+    {
+        $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
+        $catalog = app(DriverProfileCatalog::class);
+        $registry = app(ServerDriverRegistry::class);
+        $this->assertContains('lucera2', $registry->loginDriverKeys());
+        $this->assertContains('lucera2', $registry->gameDriverKeys());
+
+        foreach (['login', 'game'] as $type) {
+            $original = $catalog->find($type, 'lucera2')['profile'];
+            Livewire::test(UniversalDriverManager::class)
+                ->call('editProfile', $type, 'lucera2')
+                ->assertSet('editing', true)
+                ->set('draft.name', 'Local Lucera '.$type)
+                ->call('saveProfile')
+                ->assertHasNoErrors()
+                ->assertSet('editing', false);
+
+            $saved = $catalog->find($type, 'lucera2')['profile'];
+            $this->assertSame('Local Lucera '.$type, $saved['name']);
+            $this->assertSame($original['config']['capabilities'], $saved['config']['capabilities']);
+            if ($type === 'login') {
+                $this->assertSame('whirlpool_base64', $saved['config']['password']['scheme']);
+                $this->assertSame($original['config']['accounts'], $saved['config']['accounts']);
+            } else {
+                $this->assertSame($original['config']['characters']['fields'], $saved['config']['characters']['fields']);
+                $this->assertSame($original['config']['relations'], $saved['config']['relations']);
+            }
+        }
+    }
+
     public function test_filter_sources_can_be_changed_linked_saved_and_reopened(): void
     {
         $this->actingAs(Admin::factory()->create(['role' => AdminRole::Owner]), 'admin');
