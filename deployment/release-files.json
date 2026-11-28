@@ -234,6 +234,7 @@
         "app/Support/UniversalDrivers/ProfileEditorDraft.php",
         "app/Support/UniversalDrivers/ProfileFormat.php",
         "app/Support/UniversalDrivers/ProfileFormatMigrator.php",
+        "app/Support/UniversalDrivers/ProfileSchema.php",
         "app/Support/UniversalDrivers/ProfileValidationException.php",
         "app/Support/UniversalDrivers/ProfileValidator.php",
         "config/cache.php",

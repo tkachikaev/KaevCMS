@@ -5,6 +5,7 @@ namespace App\Services\GameWorld;
 use App\Support\UniversalDrivers\CastleNameCatalog;
 use App\Support\UniversalDrivers\CharacterRescueMapping;
 use App\Support\UniversalDrivers\GameCharacterFilters;
+use App\Support\UniversalDrivers\ProfileSchema;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
@@ -12,8 +13,7 @@ use Illuminate\Database\Query\Builder;
 use InvalidArgumentException;
 
 /**
- * Experimental, read-only ranking/hero/castle adapter. The existing game
- * resolvers remain unchanged. SQL identifiers are validated JSON DATA;
+ * Read-only ranking/hero/castle adapter. SQL identifiers are validated JSON DATA;
  * query values are parameter-bound through Laravel's query builder.
  */
 final class UniversalGameWorldReader
@@ -31,7 +31,7 @@ final class UniversalGameWorldReader
     public function diagnose(Connection $database, array $profile): array
     {
         $config = $this->configuration($database, $profile);
-        $report = $this->schema($database, $config);
+        $report = ProfileSchema::inspect($database, $config['requirements']);
 
         return ['missing_required' => $report['missing_required'], 'missing_optional' => $report['missing_optional']];
     }
@@ -42,7 +42,7 @@ final class UniversalGameWorldReader
     public function capabilities(Connection $database, array $profile): array
     {
         $config = $this->configuration($database, $profile);
-        $schema = $this->schema($database, $config);
+        $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
         $supported = [];
         $base = $config['characters']['table'];
@@ -51,7 +51,7 @@ final class UniversalGameWorldReader
         foreach (self::RANKING_SECTIONS as $section) {
             $rank = $config['rankings'][$section] ?? null;
             if (! $hasEav && in_array($section, $config['capabilities'], true) && is_array($rank) &&
-                $this->hasAll($characterColumns, array_values(array_filter([
+                ProfileSchema::hasAll($characterColumns, array_values(array_filter([
                     $rank['column'] ?? null, $rank['secondary'] ?? null,
                 ], 'is_string')))) {
                 $supported[] = $section;
@@ -79,14 +79,14 @@ final class UniversalGameWorldReader
             throw new InvalidArgumentException('Unsupported character ranking section.');
         }
         $config = $this->configuration($database, $profile, $section);
-        $schema = $this->schema($database, $config);
+        $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
         $query = $this->characterQuery($database, $config, $schema['columns'], $chronicle);
         $rank = $config['rankings'][$section];
         $base = $config['characters']['table'];
         $rankColumn = $rank['column'];
         $secondary = $rank['secondary'];
-        if (! $this->hasAll($schema['columns'][$base], array_values(array_filter([$rankColumn, $secondary])))) {
+        if (! ProfileSchema::hasAll($schema['columns'][$base], array_values(array_filter([$rankColumn, $secondary])))) {
             throw new ProfileValidationException('Ranking column is missing from the character table.');
         }
         if ($rank['positive_only']) {
@@ -108,7 +108,7 @@ final class UniversalGameWorldReader
     public function heroes(Connection $database, array $profile, ?string $chronicle = null): array
     {
         $config = $this->configuration($database, $profile, 'heroes');
-        $schema = $this->schema($database, $config);
+        $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
         if (! $this->featureIsAvailable($config, $schema['columns'], 'heroes')) {
             return [];
@@ -139,7 +139,7 @@ final class UniversalGameWorldReader
     public function castleOwners(Connection $database, array $profile): array
     {
         $config = $this->configuration($database, $profile, 'castles');
-        $schema = $this->schema($database, $config);
+        $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
         if (! $this->featureIsAvailable($config, $schema['columns'], 'castles')) {
             return [];
@@ -196,55 +196,6 @@ final class UniversalGameWorldReader
         return $profile['config'];
     }
 
-    /** @param array<string,mixed> $config
-     * @return array{columns:array<string,list<string>>,missing_required:list<string>,missing_optional:list<string>}
-     */
-    private function schema(Connection $database, array $config): array
-    {
-        $inspector = $database->getSchemaBuilder();
-        $columns = [];
-        $required = [];
-        $optional = [];
-        foreach ($config['requirements'] as $rule) {
-            $table = $rule['table'];
-            if (! $inspector->hasTable($table)) {
-                $columns[$table] = [];
-                if ($rule['required']) {
-                    $required[] = 'table:'.$table;
-                } else {
-                    $optional[] = 'table:'.$table;
-                }
-
-                continue;
-            }
-            $columns[$table] = $inspector->getColumnListing($table);
-            foreach (['columns', 'optional_columns', 'any_columns'] as $key) {
-                if ($key === 'any_columns') {
-                    if (isset($rule[$key]) && ! $this->hasAny($columns[$table], $rule[$key])) {
-                        if ($rule['required']) {
-                            $required[] = $table.'.{'.implode(',', $rule[$key]).'}';
-                        } else {
-                            $optional[] = $table.'.{'.implode(',', $rule[$key]).'}';
-                        }
-                    }
-
-                    continue;
-                }
-                foreach ($rule[$key] ?? [] as $column) {
-                    if (! $this->hasAll($columns[$table], [$column])) {
-                        if ($key === 'optional_columns' || ! $rule['required']) {
-                            $optional[] = $table.'.'.$column;
-                        } else {
-                            $required[] = $table.'.'.$column;
-                        }
-                    }
-                }
-            }
-        }
-
-        return ['columns' => $columns, 'missing_required' => $required, 'missing_optional' => $optional];
-    }
-
     /** @param array{missing_required:list<string>} $schema */
     private function requireCore(array $schema): void
     {
@@ -274,7 +225,7 @@ final class UniversalGameWorldReader
             $fields = $config['characters']['fields'];
             if (in_array('eav', array_column($fields, 'kind'), true)
                 || ($fields['level']['kind'] ?? null) !== 'column'
-                || ! $this->hasAll($columns[$config['characters']['table']] ?? [], [$relation['local_column'], $fields['level']['column']])) {
+                || ! ProfileSchema::hasAll($columns[$config['characters']['table']] ?? [], [$relation['local_column'], $fields['level']['column']])) {
                 return false;
             }
             if (isset($feature['active_column']) || array_key_exists('active_value', $feature)) {
@@ -289,15 +240,15 @@ final class UniversalGameWorldReader
             $clanCols = $feature['clan_columns'] ?? [
                 'id' => 'clan_id', 'name' => 'clan_name', 'level' => 'clan_level', 'reputation' => 'reputation_score',
             ];
-            if (! $this->hasAll($columns[$clan['table']] ?? [], [$relation['local_column'], $leader['local_column'], ...array_values($clanCols)])) {
+            if (! ProfileSchema::hasAll($columns[$clan['table']] ?? [], [$relation['local_column'], $leader['local_column'], ...array_values($clanCols)])) {
                 return false;
             }
-            if (! $this->hasAll($columns[$leader['table']] ?? [], [$leader['foreign_column'], $feature['leader_name_column'] ?? 'char_name'])) {
+            if (! ProfileSchema::hasAll($columns[$leader['table']] ?? [], [$leader['foreign_column'], $feature['leader_name_column'] ?? 'char_name'])) {
                 return false;
             }
         }
 
-        return $this->hasAll($available, $needed);
+        return ProfileSchema::hasAll($available, $needed);
     }
 
     /** @param array<string,mixed> $config
@@ -326,31 +277,31 @@ final class UniversalGameWorldReader
             if (! array_key_exists($relation['table'], $columns)) {
                 throw new ProfileValidationException('Mapped relation must declare its table in schema requirements: '.$relation['table']);
             }
-            if (! $this->hasAll($mainColumns, [$relation['local_column']]) ||
-                ! $this->hasAll($columns[$relation['table']], [$relation['foreign_column']])) {
+            if (! ProfileSchema::hasAll($mainColumns, [$relation['local_column']]) ||
+                ! ProfileSchema::hasAll($columns[$relation['table']], [$relation['foreign_column']])) {
                 continue; // Missing optional data source; retain the character.
             }
             $query->leftJoin($relation['table'].' as r_'.$name, 'r_'.$name.'.'.$relation['foreign_column'], '=', 'c.'.$relation['local_column']);
             $joined[$name] = true;
         }
         foreach ($fields as $name => $field) {
-            if ($field['kind'] === 'column' && $this->hasAll($mainColumns, [$field['column']])) {
+            if ($field['kind'] === 'column' && ProfileSchema::hasAll($mainColumns, [$field['column']])) {
                 $query->addSelect('c.'.$field['column'].' as '.$name);
             } elseif ($field['kind'] === 'choice') {
-                $choice = $this->chosenColumn($field, $mainColumns, $chronicle);
+                $choice = ProfileSchema::chosenColumn($field, $mainColumns, $chronicle);
                 if ($choice !== null) {
                     $query->addSelect('c.'.$choice.' as '.$name);
                 }
             } elseif ($field['kind'] === 'related') {
                 $relation = $config['relations'][$field['relation']];
-                if (isset($joined[$field['relation']]) && $this->hasAll($columns[$relation['table']], [$field['column']])) {
+                if (isset($joined[$field['relation']]) && ProfileSchema::hasAll($columns[$relation['table']], [$field['column']])) {
                     $query->addSelect('r_'.$field['relation'].'.'.$field['column'].' as '.$name);
                 } else {
                     $query->selectRaw('NULL as '.$database->getQueryGrammar()->wrap($name));
                 }
             } elseif ($field['kind'] === 'operator' && $field['operator'] === 'rusacis_hero_active') {
                 $query->addSelect('c.'.$config['characters']['fields']['id']['column'].' as __hero_character_id');
-                if ($this->hasAll($mainColumns, ['herountil'])) {
+                if (ProfileSchema::hasAll($mainColumns, ['herountil'])) {
                     $query->addSelect('c.herountil as __hero_until');
                 }
             } elseif ($field['kind'] === 'eav') {
@@ -413,44 +364,5 @@ final class UniversalGameWorldReader
         unset($row);
 
         return $rows;
-    }
-
-    /** @param list<string> $available
-     * @param  list<string>  $wanted
-     */
-    private function hasAll(array $available, array $wanted): bool
-    {
-        return array_diff(array_map('strtolower', $wanted), array_map('strtolower', $available)) === [];
-    }
-
-    /** @param list<string> $available
-     * @param  list<string>  $wanted
-     */
-    private function hasAny(array $available, array $wanted): bool
-    {
-        return array_intersect(array_map('strtolower', $wanted), array_map('strtolower', $available)) !== [];
-    }
-
-    /** @param array<string,mixed> $field
-     * @param  list<string>  $columns
-     */
-    private function chosenColumn(array $field, array $columns, ?string $chronicle): ?string
-    {
-        $present = array_values(array_filter($field['columns'], fn (string $column): bool => $this->hasAll($columns, [$column])));
-        if ($present === []) {
-            return null;
-        }
-        if ($field['preference'] === 'mobius_chronicle' && count($present) > 1) {
-            $normalized = mb_strtolower(trim((string) $chronicle));
-            foreach (['c1', 'c4', 'interlude', 'epilogue', 'high five', 'highfive'] as $legacy) {
-                if ($normalized !== '' && str_contains($normalized, $legacy)) {
-                    return in_array('karma', $present, true) ? 'karma' : $present[0];
-                }
-            }
-
-            return in_array('reputation', $present, true) ? 'reputation' : $present[0];
-        }
-
-        return $present[0];
     }
 }

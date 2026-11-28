@@ -3,14 +3,13 @@
 namespace App\Services\GameWorld;
 
 use App\Support\UniversalDrivers\GameCharacterFilters;
+use App\Support\UniversalDrivers\ProfileSchema;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use App\Support\UniversalDrivers\ProfileValidator;
 use Illuminate\Database\Connection;
 
 /**
- * Experimental read-only character adapter. It does not participate in the
- * existing GameWorldDriverResolver until the explicit migration iteration.
- * It receives an already established game connection, never an arbitrary DSN.
+ * Reads owned characters through a validated profile and an established connection.
  */
 final class UniversalGameCharacterReader
 {
@@ -26,7 +25,7 @@ final class UniversalGameCharacterReader
     public function diagnose(Connection $database, array $profile): array
     {
         $config = $this->configuration($database, $profile);
-        $report = $this->schema($database, $config);
+        $report = ProfileSchema::inspect($database, $config['requirements']);
 
         return [
             'missing_required' => $report['missing_required'],
@@ -50,7 +49,7 @@ final class UniversalGameCharacterReader
         ?string $chronicle = null,
     ): array {
         $config = $this->configuration($database, $profile, 'characters');
-        $schema = $this->schema($database, $config);
+        $schema = ProfileSchema::inspect($database, $config['requirements']);
         if ($schema['missing_required'] !== []) {
             throw new ProfileValidationException('Required GameServer schema is unavailable: '.implode(', ', $schema['missing_required']));
         }
@@ -81,7 +80,7 @@ final class UniversalGameCharacterReader
                 $selected[] = $field['column'];
             }
             if ($field['kind'] === 'choice') {
-                $choice = $this->chosenColumn($field, $columns, $chronicle);
+                $choice = ProfileSchema::chosenColumn($field, $columns, $chronicle);
                 if ($choice !== null) {
                     $selected[] = $choice;
                 }
@@ -124,7 +123,7 @@ final class UniversalGameCharacterReader
             foreach ($fields as $name => $field) {
                 $mapped[$name] = match ($field['kind']) {
                     'column' => $row[$field['column']] ?? null,
-                    'choice' => ($choice = $this->chosenColumn($field, $columns, $chronicle)) !== null ? ($row[$choice] ?? null) : null,
+                    'choice' => ($choice = ProfileSchema::chosenColumn($field, $columns, $chronicle)) !== null ? ($row[$choice] ?? null) : null,
                     'related', 'eav' => $this->relatedValue($related, $config, $row, $field, $name),
                     'operator' => $this->heroValue($row, $idColumn, $heroIds),
                     default => throw new ProfileValidationException('Unsupported character field source.'),
@@ -141,56 +140,6 @@ final class UniversalGameCharacterReader
         });
 
         return array_slice($result, 0, min(100, max(1, $limit)));
-    }
-
-    /**
-     * @param  array<string,mixed>  $config
-     * @return array{columns:array<string,list<string>>,missing_required:list<string>,missing_optional:list<string>}
-     */
-    private function schema(Connection $database, array $config): array
-    {
-        $inspector = $database->getSchemaBuilder();
-        $columns = [];
-        $missingRequired = [];
-        $missingOptional = [];
-        foreach ($config['requirements'] as $requirement) {
-            $table = $requirement['table'];
-            if (! $inspector->hasTable($table)) {
-                $columns[$table] = [];
-                if ($requirement['required']) {
-                    $missingRequired[] = 'table:'.$table;
-                } else {
-                    $missingOptional[] = 'table:'.$table;
-                }
-
-                continue;
-            }
-            $columns[$table] = $inspector->getColumnListing($table);
-            foreach ($requirement['columns'] as $column) {
-                if (! $this->hasColumn($columns[$table], $column)) {
-                    if ($requirement['required']) {
-                        $missingRequired[] = $table.'.'.$column;
-                    } else {
-                        $missingOptional[] = $table.'.'.$column;
-                    }
-                }
-            }
-            foreach ($requirement['optional_columns'] ?? [] as $column) {
-                if (! $this->hasColumn($columns[$table], $column)) {
-                    $missingOptional[] = $table.'.'.$column;
-                }
-            }
-            $options = $requirement['any_columns'] ?? [];
-            if ($options !== [] && ! $this->hasAnyColumn($columns[$table], $options)) {
-                if ($requirement['required']) {
-                    $missingRequired[] = $table.'.{'.implode(',', $options).'}';
-                } else {
-                    $missingOptional[] = $table.'.{'.implode(',', $options).'}';
-                }
-            }
-        }
-
-        return ['columns' => $columns, 'missing_required' => $missingRequired, 'missing_optional' => $missingOptional];
     }
 
     /**
@@ -255,7 +204,7 @@ final class UniversalGameCharacterReader
                     throw new ProfileValidationException('EAV lookup requires a many-row relation.');
                 }
                 foreach ($eav as $fieldName => $item) {
-                    if (! $this->hasAllColumns($available, [$item['key_column'], $item['value_column']])) {
+                    if (! ProfileSchema::hasAll($available, [$item['key_column'], $item['value_column']])) {
                         continue;
                     }
                     $values = $database->table($table)
@@ -316,7 +265,7 @@ final class UniversalGameCharacterReader
         $playedColumn = $feature['played_column'] ?? 'played';
         $activeColumn = $feature['active_column'] ?? 'active';
         $needed = [$relation['foreign_column'], $playedColumn, $activeColumn];
-        if ($available === [] || ! $this->hasAllColumns($available, $needed)) {
+        if ($available === [] || ! ProfileSchema::hasAll($available, $needed)) {
             return [];
         }
         $ids = [];
@@ -340,29 +289,6 @@ final class UniversalGameCharacterReader
             || isset($heroIds[(string) ($row[$idColumn] ?? '')])) ? 1 : 0;
     }
 
-    /** @param array<string,mixed> $field
-     * @param  list<string>  $columns
-     */
-    private function chosenColumn(array $field, array $columns, ?string $chronicle): ?string
-    {
-        $available = array_values(array_filter($field['columns'], fn (string $candidate): bool => $this->hasColumn($columns, $candidate)));
-        if ($available === []) {
-            return null;
-        }
-        if ($field['preference'] === 'mobius_chronicle' && count($available) > 1) {
-            $chronicle = mb_strtolower(trim((string) $chronicle));
-            foreach (['c1', 'c4', 'interlude', 'epilogue', 'high five', 'highfive'] as $legacy) {
-                if ($chronicle !== '' && str_contains($chronicle, $legacy)) {
-                    return in_array('karma', $available, true) ? 'karma' : $available[0];
-                }
-            }
-
-            return in_array('reputation', $available, true) ? 'reputation' : $available[0];
-        }
-
-        return $available[0];
-    }
-
     /** @param array<string,mixed> $fields */
     private function usesRelation(array $fields, string $relation): bool
     {
@@ -375,38 +301,10 @@ final class UniversalGameCharacterReader
         return false;
     }
 
-    /** @param list<string> $columns
-     * @param  list<string>  $needed
-     */
-    private function hasAnyColumn(array $columns, array $needed): bool
-    {
-        foreach ($needed as $column) {
-            if ($this->hasColumn($columns, $column)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /** @param list<string> $columns
-     * @param  list<string>  $needed
-     */
-    private function hasAllColumns(array $columns, array $needed): bool
-    {
-        foreach ($needed as $column) {
-            if (! $this->hasColumn($columns, $column)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     /** @param list<string> $columns */
     private function hasColumn(array $columns, string $name): bool
     {
-        return in_array(strtolower($name), array_map('strtolower', $columns), true);
+        return ProfileSchema::hasAll($columns, [$name]);
     }
 
     /** @param array<string,mixed> $profile

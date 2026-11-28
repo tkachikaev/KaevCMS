@@ -4,6 +4,7 @@ namespace App\Services\Servers;
 
 use App\Contracts\ExternalDatabaseConnectionTester;
 use App\Services\GameWorld\UniversalGameWorldReader;
+use App\Support\UniversalDrivers\ProfileSchema;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -123,39 +124,12 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 $stage = 'schema_tables';
                 $tableExists = $schema->hasTable($requirement['table']);
                 $stage = 'schema_columns';
-                $tableColumns = $tableExists
-                    ? array_map(strtolower(...), $schema->getColumnListing($requirement['table']))
-                    : [];
-                $missingColumns = [];
-
-                if ($tableExists) {
-                    foreach ($requirement['columns'] as $column) {
-                        if (! in_array(strtolower($column), $tableColumns, true)) {
-                            $missingColumns[] = $column;
-                        }
-                    }
-                }
-
-                $anyColumns = $requirement['any_columns'] ?? [];
-                $matchedAnyColumns = $this->matchedColumns($tableColumns, $anyColumns);
-                $optionalColumns = $requirement['optional_columns'] ?? [];
-                $matchedOptionalColumns = $this->matchedColumns($tableColumns, $optionalColumns);
-                if ($tableExists && $anyColumns !== [] && $matchedAnyColumns === []) {
-                    $missingColumns[] = implode(' / ', $anyColumns);
-                }
-
-                if ($requirement['required'] && (! $tableExists || $missingColumns !== [])) {
+                $tableColumns = $tableExists ? $schema->getColumnListing($requirement['table']) : null;
+                $check = ProfileSchema::checkTable($requirement, $tableColumns);
+                if ($check['required'] && (! $check['table_exists'] || $check['missing_columns'] !== [])) {
                     $compatible = false;
                 }
-
-                $checks[] = [
-                    'table' => $requirement['table'],
-                    'required' => $requirement['required'],
-                    'table_exists' => $tableExists,
-                    'missing_columns' => $missingColumns,
-                    'matched_any_columns' => $matchedAnyColumns,
-                    'matched_optional_columns' => $matchedOptionalColumns,
-                ];
+                $checks[] = $check;
             }
 
             $profileIssues = [];
@@ -229,24 +203,6 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
                 // The test result must not be replaced by a cleanup failure.
             }
         }
-    }
-
-    /**
-     * @param  list<string>  $tableColumns
-     * @param  list<string>  $alternatives
-     * @return list<string>
-     */
-    private function matchedColumns(array $tableColumns, array $alternatives): array
-    {
-        $matched = [];
-
-        foreach ($alternatives as $column) {
-            if (in_array(strtolower($column), $tableColumns, true)) {
-                $matched[] = $column;
-            }
-        }
-
-        return $matched;
     }
 
     private function millisecondsSince(int $startedAt): int
