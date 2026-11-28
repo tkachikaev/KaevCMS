@@ -12,8 +12,9 @@ use Illuminate\Database\Connection;
 /** Executes release-owned profiles or verified connection-local snapshots. */
 final class UniversalGameWorldDriver implements GameWorldDriver
 {
-    /** @param array<string,mixed> $profile
-     * @param array<string,mixed>|null $snapshot
+    /**
+     * @param  array<string,mixed>  $profile
+     * @param  array<string,mixed>|null  $snapshot
      */
     public function __construct(
         private readonly array $profile,

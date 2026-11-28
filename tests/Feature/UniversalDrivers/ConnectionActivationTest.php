@@ -18,6 +18,7 @@ use App\Services\Servers\UniversalDriverActivation;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use App\Support\UniversalDrivers\DriverProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
+use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -186,7 +187,7 @@ final class ConnectionActivationTest extends TestCase
         $snapshots = app(ConnectionProfileSnapshots::class);
         $snapshots->verifyAndRecord($server, 'rusacis', static fn (): bool => true);
         $database = Mockery::mock(GameServerDatabaseGateway::class);
-        $connection = Mockery::mock(\Illuminate\Database\Connection::class);
+        $connection = Mockery::mock(Connection::class);
         $connection->shouldNotReceive('getSchemaBuilder', 'table');
         $database->shouldReceive('run')->once()->andReturnUsing(
             static fn (GameServer $target, callable $callback) => $callback($connection, $snapshots->get($target)),

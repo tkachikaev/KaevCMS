@@ -153,8 +153,8 @@ final class ConnectionProfileSnapshots
     }
 
     /**
-     * @param array<string,mixed>|null $expected
-     * @param array<string,mixed>|null $actual
+     * @param  array<string,mixed>|null  $expected
+     * @param  array<string,mixed>|null  $actual
      */
     public static function assertUnchanged(?array $expected, ?array $actual): void
     {
@@ -166,7 +166,7 @@ final class ConnectionProfileSnapshots
     private function assertCurrentTarget(LoginServer|GameServer $server): void
     {
         $current = $server->fresh();
-        if ($current === null || ! hash_equals($this->fingerprint($server), $this->fingerprint($current))) {
+        if ($current === null || hash_equals($this->fingerprint($server), $this->fingerprint($current)) === false) {
             throw new ExternalDatabaseDriverUnavailable('Driver connection target changed.');
         }
     }
