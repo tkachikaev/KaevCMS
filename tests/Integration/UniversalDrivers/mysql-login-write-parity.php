@@ -198,6 +198,30 @@ foreach ($databaseNames as $type => $name) {
                 throw new RuntimeException('Rejected password mapping wrote an account.');
             }
         }
+        // A numeric login column with a real unique index is still unsafe.
+        $pdo->exec('CREATE TABLE numeric_players (user_name BIGINT NOT NULL PRIMARY KEY, pass_hash VARCHAR(32) NOT NULL, mail VARCHAR(100) NULL)');
+        $pdo->exec("INSERT INTO numeric_players VALUES (0, 'd41d8cd98f00b204e9800998ecf8427e', 'fixture@example.invalid')");
+        $numericLogin = $custom;
+        $numericLogin['config']['accounts']['table'] = 'numeric_players';
+        $numericLogin = (new LoginProfileEditor)->prepare($numericLogin, 'site_players');
+        if (! in_array('drivers.schema_identity_type', array_column((new UniversalProfileSchemaProbe)->problems($db, $numericLogin), 'key'), true)) {
+            throw new RuntimeException('Activation accepted a numeric login column.');
+        }
+        foreach ([
+            static fn () => $reader->summary($db, $numericLogin, 'customUser'),
+            static fn () => $writer->create($db, $numericLogin, $customAccount),
+        ] as $operation) {
+            try {
+                $operation();
+                throw new RuntimeException('Numeric login mapping reached a game account operation.');
+            } catch (ProfileValidationException) {
+                // Expected.
+            }
+        }
+        if ($db->table('numeric_players')->count() !== 1) {
+            throw new RuntimeException('Rejected login mapping changed the database.');
+        }
+        $pdo->exec('DROP TABLE numeric_players');
         $pdo->exec('DROP TABLE `site_players`');
         echo "OK: custom-schema MD5 driver built like the editor builds it (own table and columns)\n";
     }

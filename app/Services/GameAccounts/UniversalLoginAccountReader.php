@@ -44,6 +44,7 @@ final class UniversalLoginAccountReader
         $fields = $config['accounts']['fields'];
         $table = $config['accounts']['table'];
         $available = $this->availableColumns($database, $table, [$fields['login']]);
+        $this->requireLoginIdentity($database, $table, $fields['login']);
         $selected = $this->selected($fields, $available, ['login', 'created_at', 'last_active', 'access_level']);
         $account = $database->table($table)->where($fields['login'], $login)->first($selected);
         if ($account === null) {
@@ -80,6 +81,7 @@ final class UniversalLoginAccountReader
             throw new ProfileValidationException('Credential comparison requires an account password mapping.');
         }
         $available = $this->availableColumns($database, $table, [$fields['login'], $password]);
+        $this->requireLoginIdentity($database, $table, $fields['login']);
         $selected = $this->selected($fields, $available, ['login', 'password', 'email']);
         $stored = $database->table($table)->where($fields['login'], $account->login)->first($selected);
         if ($stored === null) {
@@ -114,6 +116,13 @@ final class UniversalLoginAccountReader
         }
 
         return $profile['config'];
+    }
+
+    private function requireLoginIdentity(Connection $database, string $table, string $column): void
+    {
+        if (! ProfileSchema::identityColumnMatches($database, $table, $column, 'login')) {
+            throw new ProfileValidationException('LoginServer account login must use a string column.');
+        }
     }
 
     /** @param list<string> $required

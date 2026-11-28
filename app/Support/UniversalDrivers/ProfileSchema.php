@@ -94,6 +94,26 @@ final class ProfileSchema
         return count(self::matched($available, $wanted)) === count($wanted);
     }
 
+    /** Identity comparisons must not rely on MySQL coercing text to numbers. */
+    public static function identityColumnMatches(Connection $database, string $table, string $column, string $identity): bool
+    {
+        foreach ($database->getSchemaBuilder()->getColumns($table) as $definition) {
+            if (strcasecmp($definition['name'], $column) !== 0) {
+                continue;
+            }
+
+            $type = strtolower($definition['type']);
+
+            return match ($identity) {
+                'login' => preg_match('/\A(?:varchar|char|varbinary|binary|tinytext|text|mediumtext|longtext)(?:\(|\s|$)/', $type) === 1,
+                'id' => preg_match('/\A(?:tinyint|smallint|mediumint|int|integer|bigint)(?:\(|\s|$)/', $type) === 1,
+                default => false,
+            };
+        }
+
+        return false;
+    }
+
     public static function hasUniqueColumn(Connection $database, string $table, string $column): bool
     {
         foreach ($database->getSchemaBuilder()->getIndexes($table) as $index) {

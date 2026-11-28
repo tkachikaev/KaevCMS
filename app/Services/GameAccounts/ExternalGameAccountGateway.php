@@ -165,7 +165,7 @@ final class ExternalGameAccountGateway implements GameAccountGateway
             'username' => $loginServer->database_username,
             'password' => $loginServer->databasePassword() ?? '',
             'charset' => $loginServer->database_charset,
-        ], $operation['snapshot']), fn (Connection $database): mixed => $callback($database, $driver));
+        ], $operation['snapshot']), fn (Connection $database) => $callback($database, $driver));
     }
 
     private function isDuplicateKey(QueryException $exception): bool

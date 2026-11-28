@@ -79,9 +79,12 @@ namespace {
     $schema = new FakeUniversalSchema(
         [$table => [$loginColumn, $passColumn]],
         [$table => [['unique' => true, 'columns' => [$loginColumn]]]],
-        [$table => [['name' => $passColumn, 'type' => 'varchar(60)']]],
+        [$table => [['name' => $passColumn, 'type' => 'varchar(60)'], ['name' => $loginColumn, 'type' => 'varchar(45)']]],
     );
     verify($probe->problems(new Connection($schema), $login) === [], 'valid login schema');
+    $schema->definitions[$table][1]['type'] = 'int';
+    verify(in_array('drivers.schema_identity_type', issueKeys($probe->problems(new Connection($schema), $login)), true), 'numeric login column must be rejected');
+    $schema->definitions[$table][1]['type'] = 'varchar(45)';
     $schema->indexes[$table] = [];
     verify(in_array('drivers.schema_unique_login', issueKeys($probe->problems(new Connection($schema), $login)), true), 'missing unique login index');
     $schema->indexes[$table] = [['unique' => true, 'columns' => [$loginColumn]]];
@@ -116,9 +119,12 @@ namespace {
             $tables[$requirement['table']] ?? [], $requirement['columns'], $requirement['any_columns'] ?? [], $requirement['optional_columns'] ?? [],
         )));
     }
-    $gameSchema = new FakeUniversalSchema($tables);
+    $gameSchema = new FakeUniversalSchema($tables, [], ['characters' => [['name' => 'account_name', 'type' => 'varchar(45)']]]);
     $problems = $probe->problems(new Connection($gameSchema), $game);
     verify($problems === [], 'valid game schema: '.json_encode($problems));
+    $gameSchema->definitions['characters'][0]['type'] = 'bigint unsigned';
+    verify(in_array('drivers.schema_identity_type', issueKeys($probe->problems(new Connection($gameSchema), $game)), true), 'numeric owner cannot be treated as login');
+    $gameSchema->definitions['characters'][0]['type'] = 'varchar(45)';
     unset($gameSchema->tables['heroes'], $gameSchema->tables['castle']);
     verify($probe->problems(new Connection($gameSchema), $game) === [], 'missing optional features do not block core schema');
     $gameSchema->tables['characters'] = array_values(array_diff($gameSchema->tables['characters'], ['account_name']));

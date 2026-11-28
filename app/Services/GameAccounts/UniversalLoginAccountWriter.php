@@ -212,6 +212,9 @@ final class UniversalLoginAccountWriter
                 throw new ProfileValidationException('Required LoginServer write column is missing: '.$table.'.'.$column);
             }
         }
+        if (! ProfileSchema::identityColumnMatches($database, $table, $loginColumn, 'login')) {
+            throw new ProfileValidationException('LoginServer account login must use a string column.');
+        }
         // Without a unique LOGIN index an update may alter several game
         // accounts, while an INSERT would not be protected against races.
         if (! ProfileSchema::hasUniqueColumn($database, $table, $loginColumn)) {

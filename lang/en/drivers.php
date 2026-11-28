@@ -322,6 +322,7 @@ return [
     'schema_unique_login' => 'Account creation and password changes require a unique index on ":column".',
     'schema_password_length' => 'Password column ":column" holds :actual characters, but the selected algorithm requires :required.',
     'schema_password_type' => 'Password column ":column" must store text or binary strings.',
+    'schema_identity_type' => 'The identity column “:column” does not match the declared login or numeric ID type.',
     'schema_missing_ranking' => 'Sorting is not configured for the ":ranking" ranking.',
     'schema_missing_relation' => 'The related table for relation ":relation" was not found.',
     'login_choose_capability' => 'Select at least one LoginServer capability.',

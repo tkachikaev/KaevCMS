@@ -74,6 +74,9 @@ final class UniversalGameCharacterReader
                 throw new ProfileValidationException('Required character identity column is unavailable: '.$table.'.'.$required);
             }
         }
+        if (! ProfileSchema::identityColumnMatches($database, $table, $owner['column'], $owner['identity'])) {
+            throw new ProfileValidationException('GameServer character ownership column does not match the declared identity type.');
+        }
         $selected = [$owner['column'], $idColumn, $nameColumn];
         foreach ($fields as $field) {
             if ($field['kind'] === 'column' && $this->hasColumn($columns, $field['column'])) {

@@ -64,6 +64,17 @@ foreach ($databaseNames as $type => $db) {
         }
     }
 
+    // A numeric ownership field cannot be queried as a login. MySQL may
+    // otherwise coerce arbitrary non-numeric names to the same numeric value.
+    $wrongOwner = $profile;
+    $wrongOwner['config']['characters']['owner']['column'] = $profile['config']['characters']['fields']['id']['column'];
+    try {
+        $reader->charactersForAccount($connection, $wrongOwner, 'alice');
+        throw new RuntimeException('Numeric character ownership column was accepted as a login.');
+    } catch (ProfileValidationException) {
+        // Expected.
+    }
+
     $malicious = $profile;
     $malicious['config']['characters']['owner']['column'] = 'account_name` OR 1=1';
     try {

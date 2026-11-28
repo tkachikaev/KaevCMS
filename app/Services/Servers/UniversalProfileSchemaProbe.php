@@ -36,8 +36,11 @@ final class UniversalProfileSchemaProbe
                     $problems[] = ['key' => 'drivers.schema_missing_account_field', 'replace' => ['field' => $field]];
                 }
             }
+            $loginColumn = $fields['login'];
+            if (in_array($loginColumn, $columns, true) && ! ProfileSchema::identityColumnMatches($connection, $table, $loginColumn, 'login')) {
+                $problems[] = ['key' => 'drivers.schema_identity_type', 'replace' => ['column' => $table.'.'.$loginColumn]];
+            }
             if ($this->writable($config)) {
-                $loginColumn = $fields['login'];
                 if (ProfileSchema::hasUniqueColumn($connection, $table, $loginColumn) === false) {
                     $problems[] = ['key' => 'drivers.schema_unique_login', 'replace' => ['column' => $table.'.'.$loginColumn]];
                 }
@@ -71,6 +74,10 @@ final class UniversalProfileSchemaProbe
             if (in_array($column, $columns, true) === false) {
                 $problems[] = ['key' => 'drivers.schema_missing_column', 'replace' => ['column' => $table.'.'.$column]];
             }
+        }
+        $owner = $config['characters']['owner'];
+        if (in_array($owner['column'], $columns, true) && ! ProfileSchema::identityColumnMatches($connection, $table, $owner['column'], $owner['identity'])) {
+            $problems[] = ['key' => 'drivers.schema_identity_type', 'replace' => ['column' => $table.'.'.$owner['column']]];
         }
         foreach (GameCharacterFilters::requirements($config) as $filterTable => $filterColumns) {
             if ($schema->hasTable($filterTable) === false) {

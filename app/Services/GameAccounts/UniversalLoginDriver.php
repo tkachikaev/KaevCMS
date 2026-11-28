@@ -5,6 +5,8 @@ namespace App\Services\GameAccounts;
 use App\Contracts\LoginServerDriver;
 use App\Support\GameAccounts\ExternalGameAccountState;
 use App\Support\GameAccounts\PreparedGameAccount;
+use App\Support\UniversalDrivers\ProfileSchema;
+use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Database\Connection;
 
 /** Adapter to the existing account reservation/recovery contract. */
@@ -48,6 +50,9 @@ final class UniversalLoginDriver implements LoginServerDriver
     {
         $fields = $this->profile['config']['accounts']['fields'];
         $table = $this->profile['config']['accounts']['table'];
+        if (! ProfileSchema::identityColumnMatches($database, $table, $fields['login'], 'login')) {
+            throw new ProfileValidationException('LoginServer account login must use a string column.');
+        }
         $stored = $database->table($table)->where($fields['login'], $login)->first([$fields['password']]);
         if ($stored === null) {
             return false;

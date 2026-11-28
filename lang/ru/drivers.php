@@ -322,6 +322,7 @@ return [
     'schema_unique_login' => 'Для создания аккаунтов и смены пароля нужен уникальный индекс по колонке «:column».',
     'schema_password_length' => 'Колонка пароля «:column» вмещает :actual символов, а выбранному алгоритму нужно :required.',
     'schema_password_type' => 'Колонка пароля «:column» должна хранить текст или двоичные строки.',
+    'schema_identity_type' => 'Тип колонки «:column» не соответствует выбранному типу идентификатора (логин или числовой ID).',
     'schema_missing_ranking' => 'Не настроена сортировка для рейтинга «:ranking».',
     'schema_missing_relation' => 'Не найдена связанная таблица для связи «:relation».',
     'login_choose_capability' => 'Выберите хотя бы одну функцию LoginServer.',
