@@ -17,6 +17,9 @@
         @include('livewire.admin.partials.game-driver-features')
     @endif
     </fieldset>
+    @if($section !== 'general')
+        <p class="ud-info">{{ __('drivers.save_then_apply_help') }}</p>
+    @endif
     <div class="ud-savebar">
         @if($section === 'general')
             <button type="submit" class="button button-primary" wire:loading.attr="disabled">{{ __('drivers.next') }} →</button>

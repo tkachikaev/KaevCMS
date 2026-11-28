@@ -4,6 +4,7 @@
         @php($hero = $config['features']['heroes'])
         @if(isset($config['relations'][$hero['relation']]))
             @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.field_id_game'), 'tablePath' => 'draft.config.relations.'.$hero['relation'].'.table', 'columnPath' => 'draft.config.relations.'.$hero['relation'].'.foreign_column'])
+            <label>{{ __('drivers.link_from', ['table' => $config['characters']['table']]) }}<input type="text" wire:model="draft.config.relations.{{ $hero['relation'] }}.local_column" maxlength="64"></label>
             @foreach(['count_column' => 'hero_count_label', 'played_column' => 'hero_played_label', 'claimed_column' => 'hero_claimed_label'] as $key => $label)
                 @include('livewire.admin.partials.game-data-row', ['purpose' => __("drivers.{$label}"), 'tablePath' => 'draft.config.relations.'.$hero['relation'].'.table', 'columnPath' => 'draft.config.features.heroes.'.$key])
             @endforeach
@@ -37,6 +38,14 @@
                 @include('livewire.admin.partials.game-data-row', ['purpose' => __("drivers.clan_{$field}"), 'tablePath' => 'draft.config.relations.'.$castle['clan_relation'].'.table', 'columnPath' => 'draft.config.features.castles.clan_columns.'.$field])
             @endforeach
             @include('livewire.admin.partials.game-data-row', ['purpose' => __('drivers.leader_name_column'), 'tablePath' => 'draft.config.relations.'.$castle['leader_relation'].'.table', 'columnPath' => 'draft.config.features.castles.leader_name_column'])
+            <details class="ud-field-source" wire:ignore.self>
+                <summary>{{ __('drivers.relations') }}</summary>
+                <div class="ud-grid">
+                    <label>{{ __('drivers.link_from', ['table' => $config['relations'][$castle['clan_relation']]['table']]) }} ({{ __('drivers.cap_castles') }})<input type="text" wire:model="draft.config.relations.{{ $castle['relation'] }}.local_column" maxlength="64"></label>
+                    <label>{{ __('drivers.link_from', ['table' => $config['relations'][$castle['clan_relation']]['table']]) }} ({{ __('drivers.leader_relation') }})<input type="text" wire:model="draft.config.relations.{{ $castle['leader_relation'] }}.local_column" maxlength="64"></label>
+                    <label>{{ __('drivers.link_to_table', ['table' => $config['relations'][$castle['leader_relation']]['table']]) }}<input type="text" wire:model="draft.config.relations.{{ $castle['leader_relation'] }}.foreign_column" maxlength="64"></label>
+                </div>
+            </details>
         @else
             <p class="ud-field-error">{{ __('drivers.game_relation_missing') }}</p>
         @endif

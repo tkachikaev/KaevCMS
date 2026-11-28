@@ -59,19 +59,15 @@ for (const variant of [
         await page.locator('.ud-login-editor button[type=submit]').click();
         await expect(page.locator('.ud-login-mappings')).toBeVisible();
         await page.locator('#ud-login-table-login').fill('player_accounts');
-        await page.locator('#ud-login-table-login').press('Tab');
-        await expect(page.locator('#ud-login-table-password')).toHaveValue('player_accounts');
         await page.locator('#ud-login-column-login').fill('username');
         await page.locator('#ud-login-column-password').fill('secret_hash');
         await expect(page.locator('#ud-login-column-password')).toHaveAttribute('required', '');
         await page.locator('.ud-login-editor .ud-advanced > summary').click();
         await page.locator('button[wire\\:click="addRegistrationRow"]').click();
         const registrationRow = page.locator('.ud-registration-row').first();
-        await expect(registrationRow.locator('input')).toHaveCount(3);
-        await expect(registrationRow.locator('input').nth(0)).toHaveValue('player_accounts');
-        await expect(registrationRow.locator('input').nth(2)).toHaveValue('0');
-        await registrationRow.locator('input').nth(1).fill('custom_flag');
-        await registrationRow.locator('input').nth(2).fill('3');
+        await expect(registrationRow.locator('input').nth(1)).toHaveValue('0');
+        await registrationRow.locator('input').nth(0).fill('custom_flag');
+        await registrationRow.locator('input').nth(1).fill('3');
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
         // Error messages come from the CMS locale, not native browser validation.
         await page.locator('#ud-login-column-password').fill('');
@@ -85,8 +81,8 @@ for (const variant of [
         await page.locator('.ud-login-editor button[wire\\:click="nextLoginStep"]').click();
         await expect(page.locator('#ud-login-table-login')).toHaveValue('player_accounts');
         await expect(page.locator('#ud-login-column-password')).toHaveValue('secret_hash');
-        await expect(page.locator('.ud-registration-row input').nth(1)).toHaveValue('custom_flag');
-        await expect(page.locator('.ud-registration-row input').nth(2)).toHaveValue('3');
+        await expect(page.locator('.ud-registration-row input').nth(0)).toHaveValue('custom_flag');
+        await expect(page.locator('.ud-registration-row input').nth(1)).toHaveValue('3');
         await page.locator('.ud-login-editor button[wire\\:click="closeEditor"]').first().click();
         await created.locator('.ud-menu summary').click();
         await created.locator('button[wire\\:click^="askDelete"]').click();
@@ -130,7 +126,6 @@ for (const variant of [
         await expect(page.locator('.ud-game-editor input[type=checkbox]')).toHaveCount(0);
         await page.locator('.ud-game-editor button[type=submit]').click();
         await expect(page.locator('input[wire\\:model="draft.config.characters.fields.id.column"]')).toHaveValue('obj_Id');
-        await page.locator('[data-game-group=game_basic] > summary').click();
         const mainTable = page.locator('input[wire\\:model\\.live\\.blur="draft.config.characters.table"]').first();
         // A pending main-table update must not overwrite another field typed during its round trip.
         await page.route('**/livewire-*/update', async (route) => {
@@ -208,6 +203,7 @@ for (const variant of [
         await keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.key_column"]').fill('param');
         await page.locator('input[wire\\:model="draft.config.characters.fields.title.value_column"]').fill('value');
         await keyValueTitle.locator('input[wire\\:model="draft.config.characters.fields.title.key_value"]').fill('title');
+        await keyValueTitle.locator('select').selectOption('inner');
         await expect(page.locator('input[wire\\:model\\.live\\.blur="fieldTables.title"]')).toHaveValue('character_stats');
         await page.locator('.ud-game-editor button[type=submit]').click();
         await expect(gameCard).toBeVisible();
@@ -219,6 +215,7 @@ for (const variant of [
         expect(exported.config.filters[0].table).toBe('player_access');
         expect(exported.config.filters[0].link).toEqual({ local_column: 'player_id', foreign_column: 'char_id' });
         expect(exported.config.characters.fields.title.kind).toBe('eav');
+        expect(exported.config.relations[exported.config.characters.fields.title.relation].join).toBe('inner');
         expect(exported.config.capabilities).toEqual(['characters', 'castles']);
         expect(Object.keys(exported.config.rankings)).toHaveLength(0);
         await gameCard.locator('button[wire\\:click^="editProfile"]').click();

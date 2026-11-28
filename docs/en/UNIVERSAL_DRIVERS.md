@@ -14,6 +14,8 @@ Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. G
 
 ## GameServer editor
 
+The basic character fields are open initially. The owner, ID and name share a primary table. For each related field, select whether a missing record keeps or excludes the character. Hero and castle link columns can be configured in their respective sections.
+
 Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the bundled counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID remain out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
 
 ### Related fields

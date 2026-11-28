@@ -77,27 +77,21 @@
         </div>
     @else
         <p class="ud-info">{{ __('drivers.login_mapping_help') }}</p>
-        <div class="ud-login-mappings">
+        <label for="ud-login-table-login">{{ __('drivers.accounts_table') }}
+            <input id="ud-login-table-login" type="text" maxlength="64" wire:model="draft.config.accounts.table" required>
+            @error('draft.config.accounts.table')<span class="ud-field-error" role="alert">{{ $message }}</span>@enderror
+        </label>
+        <div class="ud-login-mappings ud-grid">
             @foreach(['login','password','email','access_level','created_at','last_active','last_server','id'] as $field)
                 @php($required = $field === 'login' || ($field === 'password' && (($enabled['account_creation'] ?? false) || ($enabled['password_change'] ?? false))) || ($field === 'id' && $config['accounts']['ownership']['identity'] === 'id'))
-                <div class="ud-mapping-row" wire:key="login-mapping-{{ $field }}">
-                    <div class="ud-mapping-purpose">
-                        <strong>{{ $field === 'id' ? __('drivers.field_id_login') : __("drivers.field_{$field}") }}</strong>
-                        <small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small>
-                    </div>
-                    <span class="ud-arrow" aria-hidden="true">→</span>
-                    <label for="ud-login-table-{{ $field }}">{{ __('drivers.table') }}
-                        <input id="ud-login-table-{{ $field }}" type="text" maxlength="64" wire:model.blur="draft.config.accounts.table" required>
-                    </label>
-                    <span class="ud-arrow" aria-hidden="true">→</span>
-                    <label for="ud-login-column-{{ $field }}">{{ __('drivers.column') }}
-                        <input id="ud-login-column-{{ $field }}" type="text" maxlength="64" wire:model="draft.config.accounts.fields.{{ $field }}" placeholder="{{ $required ? $field : __('drivers.optional') }}" @required($required)>
-                        @error('draft.config.accounts.fields.'.$field)<span class="ud-field-error" role="alert">{{ $message }}</span>@enderror
-                    </label>
-                </div>
+                <label for="ud-login-column-{{ $field }}" wire:key="login-mapping-{{ $field }}">
+                    {{ $field === 'id' ? __('drivers.field_id_login') : __("drivers.field_{$field}") }}
+                    <input id="ud-login-column-{{ $field }}" type="text" maxlength="64" wire:model="draft.config.accounts.fields.{{ $field }}" placeholder="{{ $required ? $field : __('drivers.optional') }}" @required($required)>
+                    <small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small>
+                    @error('draft.config.accounts.fields.'.$field)<span class="ud-field-error" role="alert">{{ $message }}</span>@enderror
+                </label>
             @endforeach
         </div>
-        @error('draft.config.accounts.table')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
         @error('draft.config.password.scheme')<p class="ud-field-error" role="alert">{{ $message }}</p>@enderror
 
         <details class="ud-advanced" wire:ignore.self @if($registrationRows !== []) open @endif>
@@ -105,7 +99,6 @@
             <p>{{ __('drivers.registration_defaults_help') }}</p>
             @foreach($registrationRows as $index => $row)
                 <div class="ud-registration-row" wire:key="registration-row-{{ $index }}">
-                    <label>{{ __('drivers.table') }}<input type="text" maxlength="64" wire:model.blur="draft.config.accounts.table"></label>
                     <label>{{ __('drivers.column') }}
                         <input type="text" maxlength="64" wire:model="registrationRows.{{ $index }}.column" placeholder="accessLevel">
                         @error('registrationRows.'.$index.'.column')<span class="ud-field-error" role="alert">{{ $message }}</span>@enderror
@@ -122,6 +115,7 @@
 
     @if($section !== 'general')
         @include('livewire.admin.partials.driver-extensions')
+        <p class="ud-info">{{ __('drivers.save_then_apply_help') }}</p>
     @endif
 
     <div class="ud-savebar">

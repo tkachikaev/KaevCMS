@@ -89,16 +89,13 @@
     .ud-menu-items { top: calc(100% + var(--admin-space-2)); left: 0; right: auto; }
 }
 .ud-template-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--admin-space-3); }
-.ud-login-editor .ud-mapping-row { grid-template-columns: minmax(170px, 1fr) 20px minmax(150px, 1fr) 20px minmax(150px, 1fr); }
 .universal-drivers .ud-field-error { color: var(--admin-danger); font-size: var(--admin-text-small); }
 .ud-login-editor .ud-advanced[open] { display: grid; gap: var(--admin-space-3); }
-@media (max-width: 1000px) { .ud-login-editor .ud-mapping-row { grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr) 16px minmax(0, 1fr); } }
 @media (max-width: 780px) {
     .ud-template-controls { grid-template-columns: minmax(0, 1fr); }
-    .ud-login-editor .ud-mapping-row { grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); }
 }
 
-.ud-registration-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: var(--admin-space-3); align-items: start; }
+.ud-registration-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: var(--admin-space-3); align-items: start; }
 .ud-registration-row > button { margin-top: calc(var(--admin-leading-small) + var(--admin-space-2)); }
 @media (max-width: 780px) {
     .ud-registration-row { grid-template-columns: minmax(0, 1fr); }

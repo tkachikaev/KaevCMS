@@ -8,7 +8,7 @@
     $mainTable = $config['characters']['table'];
 @endphp
 @foreach($groups as $group => $fields)
-    <details class="ud-game-group" data-game-group="{{ $group }}" wire:ignore.self>
+    <details class="ud-game-group" data-game-group="{{ $group }}" wire:ignore.self @if($group === 'game_basic') open @endif>
         <summary><h3>{{ __("drivers.{$group}") }}</h3></summary>
         @if($group === 'game_basic')
             <p class="ud-info ud-main-note">{{ __('drivers.main_table_help') }}</p>
@@ -50,7 +50,7 @@
                         <th scope="row"><strong>{{ $label }}</strong><small>{{ $required ? __('drivers.required_field') : __('drivers.empty_if_missing') }}</small></th>
                         <td>
                             @if($required)
-                                <input type="text" aria-label="{{ $label }}: {{ __('drivers.table') }}" wire:model.live.blur="draft.config.characters.table" maxlength="64">
+                                <code class="ud-main-table-name">{{ $mainTable }}</code>
                             @elseif(in_array($kind, ['choice','operator'], true))
                                 <code class="ud-main-table-name">{{ $mainTable }}</code>
                             @else
@@ -95,7 +95,9 @@
                                         <label>{{ __('drivers.link_from', ['table' => $mainTable]) }}<input type="text" wire:model="draft.config.relations.{{ $def['relation'] }}.local_column" maxlength="64"></label>
                                         <span aria-hidden="true">=</span>
                                         <label>{{ __('drivers.link_to_table', ['table' => $relation['table'] ?: __('drivers.relation_unset')]) }}<input type="text" wire:model="draft.config.relations.{{ $def['relation'] }}.foreign_column" maxlength="64"></label>
+                                        <label>{{ __('drivers.missing_relation') }}<select wire:model="draft.config.relations.{{ $def['relation'] }}.join"><option value="left">{{ __('drivers.keep_character') }}</option><option value="inner">{{ __('drivers.skip_character') }}</option></select></label>
                                     </div>
+                                    <p class="ud-info">{{ __('drivers.relation_behavior_help') }}</p>
                                 @endif
                                 @if($kind === 'eav')
                                     <div class="ud-link-row">
@@ -125,4 +127,3 @@
         </div>
     </details>
 @endforeach
-<p class="ud-info">{{ __('drivers.game_rescue_unavailable') }}</p>
