@@ -163,7 +163,7 @@
                                     <input id="live_login_host" type="text" maxlength="255" wire:model="databaseHost" placeholder="127.0.0.1">
                                     @error('databaseHost')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
-                                <div class="form-group server-form-port">
+                                <div class="form-group">
                                     <label for="live_login_port">{{ __('Database port') }}</label>
                                     <input id="live_login_port" type="number" min="1" max="65535" wire:model="databasePort">
                                     @error('databasePort')<small class="admin-field-error">{{ $message }}</small>@enderror
@@ -184,7 +184,7 @@
                                     <small>{{ $editingId !== null ? __('Leave empty to keep the saved database password.') : __('The password is encrypted with APP_KEY before it is stored.') }}</small>
                                     @error('databasePassword')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
-                                <div class="form-group server-form-charset">
+                                <div class="form-group">
                                     <label for="live_login_charset">{{ __('Database charset') }}</label>
                                     <select id="live_login_charset" wire:model="databaseCharset">
                                         @foreach(['utf8mb4', 'utf8', 'latin1', 'cp1251'] as $charset)
@@ -209,7 +209,7 @@
                                     <input id="live_login_service_host" type="text" maxlength="255" wire:model="serviceHost" placeholder="{{ $databaseHost }}">
                                     @error('serviceHost')<small class="admin-field-error">{{ $message }}</small>@enderror
                                 </div>
-                                <div class="form-group server-form-port">
+                                <div class="form-group">
                                     <label for="live_login_service_port">{{ __('Service port') }}</label>
                                     <input id="live_login_service_port" type="number" min="1" max="65535" wire:model="servicePort">
                                     @error('servicePort')<small class="admin-field-error">{{ $message }}</small>@enderror

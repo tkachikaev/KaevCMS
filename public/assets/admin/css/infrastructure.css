@@ -530,6 +530,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
+.server-form-grid { align-items: start; }
+.server-form-grid .form-group > :is(input:not([type="checkbox"], [type="radio"], [type="hidden"]), select) {
+    height: 42px;
+}
 .server-form-grid-three { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; }
 .server-form-grid .form-group,
 .server-language-grid .form-group,
