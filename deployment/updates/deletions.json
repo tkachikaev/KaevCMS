@@ -861,5 +861,23 @@
     "core/tests/Feature/Admin/AdminUiSystemTest.php",
     "core/tests/Feature/AdminDesignCanonTest.php",
     "core/tests/Feature/StaticAnalysisRegressionTest.php"
+  ],
+  "0.62.0": [
+    "core/app/Services/GameAccounts/MobiusLoginDriver.php",
+    "core/app/Services/GameAccounts/MobiusPasswordEncoder.php",
+    "core/app/Services/GameAccounts/RusacisLoginDriver.php",
+    "core/app/Services/GameAccounts/RusacisPasswordEncoder.php",
+    "core/app/Services/GameWorld/MobiusGameSchemaInspector.php",
+    "core/app/Services/GameWorld/MobiusGameSchemaProfile.php",
+    "core/app/Services/GameWorld/MobiusGameWorldDriver.php",
+    "core/app/Services/GameWorld/RusacisGameSchemaInspector.php",
+    "core/app/Services/GameWorld/RusacisGameSchemaProfile.php",
+    "core/app/Services/GameWorld/RusacisGameWorldDriver.php",
+    "core/app/Support/UniversalDrivers/ProfileFormatMigrator.php",
+    "core/deployment/windows/apply-0.61.1.ps1",
+    "core/docs/en/history/UNIVERSAL_DRIVERS_0.54.0.md",
+    "core/docs/ru/history/UNIVERSAL_DRIVERS_0.54.0.md",
+    "core/tests/Unit/MobiusGameSchemaInspectorTest.php",
+    "core/tests/Unit/MobiusPasswordEncoderTest.php"
   ]
 }

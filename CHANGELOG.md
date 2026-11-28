@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.62.0 - 2026-11-28
 
-- Game servers: support character rescue through verified JSON profiles, including custom character tables and column mappings; retain compatibility with older bundled snapshots and check ownership, offline state and schema before writing coordinates.
+Release candidate for acceptance. Voting 0.5.0 is a new optional module; enable it under **Admin → Modules** and apply its migrations before configuring KTreon. Player access is off by default.
+
+- Drivers: replace separate Mobius/RUSaCis PHP implementations with one validated JSON runtime. Existing bundled identifiers remain supported; custom drivers require verification and application to each connection.
+- Driver editor: one account table, basic character fields, configurable related tables and key/value sources, hero/castle mappings, import/export and automatic schema requirements. MySQL/MariaDB only; SQL Server/PTS and EAV world rankings are not supported.
+- Driver security: verify active snapshots and connection identity; validate ownership column types, unique login indexes and password storage; check actual schema before writes and reject ambiguous mappings. Character rescue supports verified direct-column mappings, including RUSaCis and compatible custom profiles, with ownership, offline and transaction guards.
 
 - Added **Voting 0.5.0**: KTreon integration, per-server reward bundles, scheduled and manual synchronization, one-time Web Inventory rewards, and private player and administration history. Enable the module in **Admin → Modules**, configure the provider and rewards, and verify delivery before opening player access. See [Voting](docs/en/VOTING.md).
 
-- Game servers: enable character rescue for the native RUSaCis driver, using its character ID and nullable deletion marker while preserving offline and ownership checks.
+- Updates: remove obsolete legacy driver classes, redundant format checker, old tests and historical driver documentation through the existing deletion history.
 
 - Forum: bounded pagination, reader-scoped author counts, refreshed search results after edits and removals, stricter topic move permissions, batched section statistics and mobile keyboard navigation. Custom themes now belong in `storage/app/forum-themes/<slug>`. Move existing custom themes there before updating. Frost and Classic remain bundled.
 

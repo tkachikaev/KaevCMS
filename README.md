@@ -1,4 +1,4 @@
-# KaevCMS 0.61.1
+# KaevCMS 0.62.0
 
 **QA candidate — not a production release. / Кандидат для проверки, не production-релиз.**
 
@@ -8,7 +8,7 @@
 
 KaevCMS is an open-source Laravel CMS for Lineage II servers. It provides a public website, a player account, an administration panel, LoginServer/GameServer connections, public statistics, a web reward inventory, trusted modules, themes, localization, mail delivery, runtime diagnostics, cumulative shared-hosting Web Updates, a local VDS update agent, and a VDS CLI updater.
 
-Changes in each release are listed in [CHANGELOG.md](CHANGELOG.md). Experimental universal JSON driver catalog/editor (Servers → Drivers), not yet certified for production switching: [EN](docs/en/UNIVERSAL_DRIVERS.md) / [RU](docs/ru/UNIVERSAL_DRIVERS.md). Cumulative update baseline: 0.42.4.
+Changes in each release are listed in [CHANGELOG.md](CHANGELOG.md). Universal JSON driver engine and catalog/editor (Servers → Drivers); this release candidate requires acceptance testing: [EN](docs/en/UNIVERSAL_DRIVERS.md) / [RU](docs/ru/UNIVERSAL_DRIVERS.md). Cumulative update baseline: 0.42.4.
 
 ### Requirements
 
@@ -75,7 +75,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Multilingual news, pages, settings, mail templates, and localized routes.
 - Owner, administrator, editor, and trusted Auditor roles; two-factor authentication and recovery codes.
 - Encrypted infrastructure credentials, redacted audit logs, a downloadable sanitized diagnostic package, and personal actionable administrator notifications.
-- L2J Mobius game driver with compatible schema profiles and a separate RUSaCis driver.
+- Unified JSON driver engine with bundled L2J Mobius, Mobius Legacy and RUSaCis profiles; custom profiles can be configured, imported, exported and verified.
 - Player game-account creation, password management, and configurable offline character rescue.
 - Public game statistics with caching and failure cooldowns.
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
@@ -170,7 +170,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Многоязычные новости, страницы, настройки, почтовые шаблоны и маршруты.
 - Роли владельца, администратора, редактора и доверенного аудитора; двухфакторная защита и recovery codes.
 - Шифрование инфраструктурных реквизитов, очистка аудита от секретов, скачиваемый обезличенный диагностический пакет и персональные уведомления администраторов о событиях, требующих действий.
-- Драйвер L2J Mobius с совместимыми профилями схем и отдельный драйвер RUSaCis.
+- Единый JSON-движок драйверов с комплектными профилями L2J Mobius, Mobius Legacy и RUSaCis; настройка, импорт, экспорт и проверка пользовательских профилей.
 - Создание игровых аккаунтов, изменение игровых паролей и настраиваемый возврат персонажа в город (когда персонаж не в игре).
 - Публичная статистика с кешем и cooldown при сбоях.
 - Веб-инвентарь с привязкой к GameServer и нейтральной `kaev_reward_queue`.

@@ -29,7 +29,8 @@ Assert-KaevCmsRequiredReleaseFiles `
     -Remediation "Re-extract the complete $toVersion patch with file replacement enabled."
 
 Write-Host "KaevCMS $fromVersion -> $toVersion update"
-Write-Host 'Daily Rewards 1.4.0: per-calendar claim limit (one claim per site user or per game account).'
+Write-Host 'Unified JSON drivers and optional Voting module (KTreon).'
+Write-Host 'Review the driver and voting guides before enabling new functionality.'
 Write-Host ''
 
 & (Join-Path $PSScriptRoot 'update.ps1') -SkipTests:$SkipTests
