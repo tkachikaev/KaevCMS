@@ -9,6 +9,7 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames)
 }
 require_once __DIR__.'/../../../vendor/autoload.php';
 
+use App\Services\GameWorld\UniversalGameCharacterReader;
 use App\Services\GameWorld\UniversalGameWorldReader;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
@@ -132,6 +133,20 @@ foreach ($databaseNames as $type => $db) {
         throw new RuntimeException("Custom JSON castle mapping failed for $type");
     }
     $pdo->exec('DROP TABLE world_castles');
+
+    // A required relation restricts account lists, rankings and totals.
+    // Bob has no clan row, while Alice has one.
+    $innerClan = $profile;
+    $innerClan['config']['relations']['clan']['join'] = 'inner';
+    $accountReader = new UniversalGameCharacterReader;
+    if (array_column($reader->ranking($connection, $innerClan, 'level', 10), 'name') !== ['AliceKnight']
+        || $accountReader->charactersForAccount($connection, $innerClan, 'bob') !== []
+        || $reader->countCharacters($connection, $innerClan) !== 1
+        || count($accountReader->charactersForAccount($connection, $profile, 'bob')) !== 1
+        || $reader->countCharacters($connection, $profile) !== 2
+        || in_array('character_rescue', $reader->capabilities($connection, $innerClan), true)) {
+        throw new RuntimeException('Required character relation is inconsistent across operations.');
+    }
 
     // A missing optional display column on an otherwise required table
     // must not disable rankings or invent a clan name.

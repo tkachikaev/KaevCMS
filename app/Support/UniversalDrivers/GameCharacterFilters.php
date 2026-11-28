@@ -23,7 +23,35 @@ final class GameCharacterFilters
             }
         }
 
+        foreach (self::requiredRelations($config) as $field) {
+            $relation = $config['relations'][$field['relation']];
+            $required[$base][] = $relation['local_column'];
+            $required[$relation['table']][] = $relation['foreign_column'];
+            if ($field['kind'] === 'eav') {
+                $required[$relation['table']][] = $field['key_column'];
+                $required[$relation['table']][] = $field['value_column'];
+            } else {
+                $required[$relation['table']][] = $field['column'];
+            }
+        }
+
         return $required;
+    }
+
+    /**
+     * Only mapped character fields affect character eligibility. Feature-only
+     * relations (heroes, castles) belong to their own queries.
+     *
+     * @param  array<string,mixed>  $config
+     * @return list<array<string,mixed>>
+     */
+    public static function requiredRelations(array $config): array
+    {
+        return array_values(array_filter(
+            $config['characters']['fields'] ?? [],
+            static fn (array $field): bool => in_array($field['kind'], ['related', 'eav'], true)
+                && ($config['relations'][$field['relation']]['join'] ?? null) === 'inner',
+        ));
     }
 
     /** @param array<string,mixed> $config
@@ -61,6 +89,31 @@ final class GameCharacterFilters
                     ->whereColumn($alias.'.'.$source['link']['foreign_column'], $baseReference.'.'.$source['link']['local_column']);
                 foreach ($filters as $filter) {
                     self::condition($related, $alias.'.'.$filter['column'], $filter);
+                }
+            });
+        }
+
+        // EXISTS preserves one base row per character, including EAV tables.
+        // For inner EAV mappings, each configured key must have a matching row.
+        $ordinary = [];
+        foreach (self::requiredRelations($config) as $index => $field) {
+            $name = $field['relation'];
+            if ($field['kind'] === 'related') {
+                if (isset($ordinary[$name])) {
+                    continue;
+                }
+                $ordinary[$name] = true;
+            }
+            $relation = $config['relations'][$name];
+            $alias = 'ud_required_'.$index;
+            if ($alias === $baseReference) {
+                $alias .= '_sub';
+            }
+            $query->whereExists(static function (Builder $related) use ($relation, $field, $alias, $baseReference): void {
+                $related->selectRaw('1')->from($relation['table'].' as '.$alias)
+                    ->whereColumn($alias.'.'.$relation['foreign_column'], $baseReference.'.'.$relation['local_column']);
+                if ($field['kind'] === 'eav') {
+                    $related->where($alias.'.'.$field['key_column'], $field['key_value']);
                 }
             });
         }

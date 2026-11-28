@@ -106,6 +106,18 @@ foreach ($databaseNames as $type => $db) {
     if (count($eav) !== 1 || (string) $eav[0]['level'] !== '85') {
         throw new RuntimeException('EAV mapping failed or joined the wrong key.');
     }
+    $innerEav = $profileEav;
+    $innerEav['config']['relations']['stats']['join'] = 'inner';
+    foreach ($innerEav['config']['requirements'] as &$requirement) {
+        if ($requirement['table'] === 'custom_char_stats') {
+            $requirement['required'] = true;
+        }
+    }
+    unset($requirement);
+    if (count($reader->charactersForAccount($connection, $innerEav, 'alice')) !== 1
+        || $reader->charactersForAccount($connection, $innerEav, 'bob') !== []) {
+        throw new RuntimeException('Required EAV key did not restrict character eligibility.');
+    }
     $pdo->exec("INSERT INTO custom_char_stats VALUES ($id, 'level', '99')");
     try {
         $reader->charactersForAccount($connection, $profileEav, 'alice');

@@ -16,6 +16,10 @@ Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. G
 
 Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the bundled counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID remain out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
 
+### Related fields
+
+For a field from another table, a `left` relation retains the character when no matching row exists and returns an empty field value. An `inner` relation requires a matching row; EAV requires a row for each mapped key. The stored value itself may be NULL. Required relations restrict account characters, rankings, heroes and dashboard character totals consistently. An inner relation's table and mapped columns must be required in the schema requirements. Feature-only hero and castle relations do not exclude ordinary characters. Character rescue is disabled for required related records because coordinate writes do not lock related tables. The online counter still counts connected characters using the online field.
+
 ### Ranking and filter sources
 
 Rankings display the primary table and column from character mappings. Experience is the recommended tie-breaker for level; level for PvP/PK/play time. No secondary metric does not disable a ranking. Name is the final tie-breaker. Rankings still require direct columns in the primary character table.

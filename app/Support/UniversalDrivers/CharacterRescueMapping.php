@@ -63,7 +63,7 @@ final readonly class CharacterRescueMapping
     public static function fromConfig(array $config): ?self
     {
         $characters = $config['characters'];
-        if ($characters['owner']['identity'] !== 'login') {
+        if ($characters['owner']['identity'] !== 'login' || GameCharacterFilters::requiredRelations($config) !== []) {
             return null;
         }
         $columns = ['owner' => $characters['owner']['column']];
