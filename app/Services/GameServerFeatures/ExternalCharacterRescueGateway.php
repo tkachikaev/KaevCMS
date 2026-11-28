@@ -8,6 +8,7 @@ use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Support\GameServerFeatures\CharacterRescueCapabilities;
 use App\Support\GameServerFeatures\CharacterRescueWriteResult;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\CharacterRescueMapping;
 use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use Carbon\CarbonImmutable;
@@ -25,12 +26,16 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
 
     public function capabilities(GameServer $server): CharacterRescueCapabilities
     {
-        $mapping = $this->mapping($server);
-        if ($mapping === null) {
+        $operation = $this->mapping($server);
+        if ($operation === null) {
             return new CharacterRescueCapabilities(false);
         }
 
-        return $this->database->run($server, static fn (Connection $connection): CharacterRescueCapabilities => $mapping->capabilities($connection));
+        return $this->database->run($server, static function (Connection $connection, ?array $active = null) use ($operation): CharacterRescueCapabilities {
+            ConnectionProfileSnapshots::assertUnchanged($operation['snapshot'], $active);
+
+            return $operation['mapping']->capabilities($connection);
+        });
     }
 
     public function rescue(
@@ -40,18 +45,21 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
         array $target,
         CarbonImmutable $offlineBefore,
     ): CharacterRescueWriteResult {
-        $mapping = $this->mapping($server);
-        if ($mapping === null) {
+        $operation = $this->mapping($server);
+        if ($operation === null) {
             return new CharacterRescueWriteResult(CharacterRescueWriteResult::UNSUPPORTED);
         }
+        $mapping = $operation['mapping'];
 
-        return $this->database->run($server, function (Connection $connection) use (
+        return $this->database->run($server, function (Connection $connection, ?array $active = null) use (
+            $operation,
             $accountLogin,
             $characterId,
             $target,
             $offlineBefore,
             $mapping,
         ): CharacterRescueWriteResult {
+            ConnectionProfileSnapshots::assertUnchanged($operation['snapshot'], $active);
             if (! $mapping->capabilities($connection)->supported) {
                 return new CharacterRescueWriteResult(CharacterRescueWriteResult::UNSUPPORTED);
             }
@@ -138,20 +146,21 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
         });
     }
 
-    private function mapping(GameServer $server): ?CharacterRescueMapping
+    /** @return array{mapping:CharacterRescueMapping,snapshot:array<string,mixed>|null}|null */
+    private function mapping(GameServer $server): ?array
     {
         if (! $server->connectionConfigured()) {
             return null;
         }
         try {
-            $profile = app(ConnectionProfileSnapshots::class)->get($server);
-            if ($profile !== null) {
-                return app(GameAccountGateway::class)->supportsGameServer($server)
-                    ? CharacterRescueMapping::fromProfile($profile)
-                    : null;
+            $snapshot = app(ConnectionProfileSnapshots::class)->get($server);
+            if ($snapshot !== null && ! app(GameAccountGateway::class)->supportsGameServer($server)) {
+                return null;
             }
+            $profile = $snapshot ?? (new BundledProfileCatalog)->all()['game:'.$server->driver] ?? null;
+            $mapping = $profile !== null ? CharacterRescueMapping::fromProfile($profile) : null;
 
-            return CharacterRescueMapping::native((string) $server->driver);
+            return $mapping === null ? null : ['mapping' => $mapping, 'snapshot' => $snapshot];
         } catch (RuntimeException) {
             return null;
         }

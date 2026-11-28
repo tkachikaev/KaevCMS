@@ -152,6 +152,17 @@ final class ConnectionProfileSnapshots
         return $profile;
     }
 
+    /**
+     * @param array<string,mixed>|null $expected
+     * @param array<string,mixed>|null $actual
+     */
+    public static function assertUnchanged(?array $expected, ?array $actual): void
+    {
+        if ($expected !== $actual) {
+            throw new ExternalDatabaseDriverUnavailable('Driver profile changed during the operation.');
+        }
+    }
+
     private function assertCurrentTarget(LoginServer|GameServer $server): void
     {
         $current = $server->fresh();

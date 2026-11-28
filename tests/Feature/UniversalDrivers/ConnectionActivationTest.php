@@ -179,6 +179,28 @@ final class ConnectionActivationTest extends TestCase
         app(GameServerDatabaseGateway::class)->run($stale, static fn (): never => throw new RuntimeException('Stale connection reached external operation.'));
     }
 
+    public function test_resolved_game_driver_refuses_a_different_snapshot_before_querying(): void
+    {
+        $server = GameServer::factory()->create(['driver' => 'rusacis']);
+        $snapshots = app(ConnectionProfileSnapshots::class);
+        $snapshots->verifyAndRecord($server, 'rusacis', static fn (): bool => true);
+        $database = Mockery::mock(GameServerDatabaseGateway::class);
+        $connection = Mockery::mock(\Illuminate\Database\Connection::class);
+        $connection->shouldNotReceive('getSchemaBuilder', 'table');
+        $database->shouldReceive('run')->once()->andReturnUsing(
+            static fn (GameServer $target, callable $callback) => $callback($connection, $snapshots->get($target)),
+        );
+        $this->app->instance(GameServerDatabaseGateway::class, $database);
+        $driver = app(GameWorldDriverResolver::class)->resolve($server);
+        $profile = app(DriverProfileCatalog::class)->find('game', 'rusacis')['profile'];
+        $profile['name'] = 'Replacement profile';
+        app(DriverProfileCatalog::class)->save($profile);
+        $snapshots->verifyAndRecord($server, 'rusacis', static fn (): bool => true);
+
+        $this->expectException(ExternalDatabaseDriverUnavailable::class);
+        $driver->capabilities($server);
+    }
+
     public function test_bundled_login_driver_rejects_stale_connection_without_snapshot(): void
     {
         $server = LoginServer::factory()->create(['driver' => 'rusacis']);

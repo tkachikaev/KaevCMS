@@ -4,6 +4,7 @@ namespace Tests\Fakes;
 
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
 
@@ -16,13 +17,13 @@ final class FakeGameServerDatabaseGateway implements GameServerDatabaseGateway
     /**
      * @template TResult
      *
-     * @param  callable(Connection): TResult  $callback
+     * @param  callable(Connection, array<string,mixed>|null=): TResult  $callback
      * @return TResult
      */
     public function run(GameServer $server, callable $callback): mixed
     {
         $this->calls++;
 
-        return $callback(DB::connection($this->connectionName));
+        return $callback(DB::connection($this->connectionName), app(ConnectionProfileSnapshots::class)->get($server));
     }
 }

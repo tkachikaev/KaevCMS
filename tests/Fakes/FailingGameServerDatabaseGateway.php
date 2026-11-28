@@ -14,7 +14,7 @@ final class FailingGameServerDatabaseGateway implements GameServerDatabaseGatewa
     /**
      * @template TResult
      *
-     * @param  callable(Connection): TResult  $callback
+     * @param  callable(Connection, array<string,mixed>|null=): TResult  $callback
      * @return TResult
      */
     public function run(GameServer $server, callable $callback): mixed

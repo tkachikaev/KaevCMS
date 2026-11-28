@@ -13,7 +13,8 @@ final class GameWorldDriverResolver
 {
     public function resolve(GameServer $server): GameWorldDriver
     {
-        $profile = app(ConnectionProfileSnapshots::class)->get($server)
+        $snapshot = app(ConnectionProfileSnapshots::class)->get($server);
+        $profile = $snapshot
             ?? (new BundledProfileCatalog)->all()['game:'.$server->driver]
             ?? throw new RuntimeException('The selected GameServer driver does not provide game statistics.');
 
@@ -22,6 +23,7 @@ final class GameWorldDriverResolver
             app(GameServerDatabaseGateway::class),
             app(UniversalGameWorldReader::class),
             app(UniversalGameCharacterReader::class),
+            $snapshot,
         );
     }
 }

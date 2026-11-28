@@ -18,16 +18,18 @@ final class MySqlGameServerDatabase implements GameServerDatabaseGateway
     /**
      * @template TResult
      *
-     * @param  callable(Connection): TResult  $callback
+     * @param  callable(Connection, array<string,mixed>|null=): TResult  $callback
      * @return TResult
      */
     public function run(GameServer $server, callable $callback): mixed
     {
         $server->loadMissing('loginServer');
 
+        $snapshot = app(ConnectionProfileSnapshots::class)->get($server);
+
         return $this->connection->run('kaevcms_game_data_', ProfileDatabaseEncoding::apply(
-            $this->connectionValues($server), app(ConnectionProfileSnapshots::class)->get($server),
-        ), $callback);
+            $this->connectionValues($server), $snapshot,
+        ), fn (Connection $database) => $callback($database, $snapshot));
     }
 
     /** @return array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string} */

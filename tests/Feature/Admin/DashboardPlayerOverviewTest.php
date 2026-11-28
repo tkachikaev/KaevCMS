@@ -45,7 +45,7 @@ final class DashboardPlayerOverviewTest extends TestCase
         {
             public function run(GameServer $server, callable $callback): mixed
             {
-                return $callback(DB::connection());
+                return $callback(DB::connection(), null);
             }
         });
     }
