@@ -1,0 +1,30 @@
+{
+    "schema": 1,
+    "id": "voting",
+    "name": "Voting",
+    "version": "0.5.0",
+    "author": "KaevCMS",
+    "description": "Connect external voting providers and configure voting rewards.",
+    "cms_min": "0.61.1",
+    "cms_max": null,
+    "namespace": "KaevCMS\\Modules\\Voting\\",
+    "autoload": "src",
+    "bootstrap": "bootstrap.php",
+    "views": "resources/views",
+    "lang": "lang",
+    "migrations": "database/migrations",
+    "routes": {
+        "web": "routes/web.php",
+        "admin": "routes/admin.php"
+    },
+    "locales": {
+        "ru": {
+            "name": "Голосование",
+            "description": "Подключение рейтингов и настройка наград за голосование."
+        },
+        "en": {
+            "name": "Voting",
+            "description": "Connect external voting providers and configure voting rewards."
+        }
+    }
+}

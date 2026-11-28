@@ -63,6 +63,13 @@ return [
             'restore' => 'Comment restored',
             'destroy' => 'Comment deleted',
         ],
+        'voting' => [
+            'sync_requested' => 'Manual voting synchronization requested',
+            'reward_granted' => 'Voting reward granted',
+            'player_access_updated' => 'Voting player access changed',
+            'rewards_updated' => 'Voting rewards changed',
+            'settings_updated' => 'Voting provider settings changed',
+        ],
         'module' => [
             'installed' => 'Module installed',
             'database_updated' => 'Module database updated',

@@ -14,6 +14,8 @@ The bundled `shop` module (1.0.6, DEV) provides a section → product catalogue 
 
 The bundled `donations` module sells CMS wallet coins through YooMoney at the RUB price set by the owner and credits them to the core wallet only after a verified, signed payment notification. Payments are off by default and are enabled from the module's YooMoney page without `.env` changes. An optional exchange turns coins into a game item in the Web Inventory for each game server. See [Donations](DONATIONS.md).
 
+The bundled `voting` module connects KTreon, lets players vote for a project and grants configured per-server rewards to Web Inventory from verified vote events. Includes scheduled/manual synchronization and vote history. Player access is off by default. See [Voting](VOTING.md).
+
 A module may provide optional catalogue artwork at `assets/module.webp`. KaevCMS auto-discovers it when it is a valid 320×320 / 512×512 WebP file no larger than 2 MB; otherwise the administration catalogue keeps the letter placeholder.
 
 Promo Codes and Daily Rewards use the shared account operation dialog for success and failure results, including granted item icons and amounts.

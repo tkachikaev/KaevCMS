@@ -4,6 +4,8 @@
 
 - Game servers: support character rescue through verified JSON profiles, including custom character tables and column mappings; retain compatibility with older bundled snapshots and check ownership, offline state and schema before writing coordinates.
 
+- Added **Voting 0.5.0**: KTreon integration, per-server reward bundles, scheduled and manual synchronization, one-time Web Inventory rewards, and private player and administration history. Enable the module in **Admin → Modules**, configure the provider and rewards, and verify delivery before opening player access. See [Voting](docs/en/VOTING.md).
+
 - Game servers: enable character rescue for the native RUSaCis driver, using its character ID and nullable deletion marker while preserving offline and ownership checks.
 
 - Forum: bounded pagination, reader-scoped author counts, refreshed search results after edits and removals, stricter topic move permissions, batched section statistics and mobile keyboard navigation. Custom themes now belong in `storage/app/forum-themes/<slug>`. Move existing custom themes there before updating. Frost and Classic remain bundled.

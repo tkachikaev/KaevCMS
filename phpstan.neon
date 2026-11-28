@@ -18,6 +18,7 @@ parameters:
         - modules/shop/src
         - modules/support-tickets/src
         - modules/forum/src
+        - modules/voting/src
 
     level: 6
     tmpDir: storage/framework/cache/phpstan
