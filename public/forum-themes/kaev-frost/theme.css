@@ -306,7 +306,7 @@ a{color:#365b83;text-decoration:none}a:hover{text-decoration:underline}
 /* Images by link: width in % of the column, never larger than the image itself. */
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure{margin:12px 0;max-width:100%}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure img{display:block;max-width:100%;height:auto}
-:is(.forum-post-rich,.forum-editor-canvas .tiptap) img[data-inline-image="1"]{display:inline-block;max-width:100%;height:auto;vertical-align:middle}
+:is(.forum-post-rich,.forum-editor-canvas .tiptap) img[data-inline-image="1"]{display:inline-block;max-width:100%;height:auto;vertical-align:text-bottom}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="center"]{margin-left:auto;margin-right:auto}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="center"] img{margin:0 auto}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="right"]{margin-left:auto}
@@ -317,7 +317,7 @@ a{color:#365b83;text-decoration:none}a:hover{text-decoration:underline}
 .forum-editor-canvas .link-image-view[data-align="center"]{text-align:center}
 .forum-editor-canvas .link-image-view[data-align="right"]{text-align:right}
 .link-image-frame{position:relative;display:inline-block;max-width:100%;vertical-align:top}
-.forum-editor-canvas .inline-link-image-view{display:inline-block;width:auto;max-width:100%;vertical-align:middle}
+.forum-editor-canvas .inline-link-image-view{display:inline-block;width:auto;max-width:100%;vertical-align:text-bottom}
 .forum-editor-canvas .inline-link-image-view img{display:block;max-width:100%;height:auto}
 .forum-editor-canvas .link-image-view img{margin:0}
 .forum-editor-canvas .link-image-view.ProseMirror-selectednode img{outline:3px solid #739cc4;outline-offset:2px}
