@@ -193,6 +193,23 @@ if (getenv('KAEV_UNIVERSAL_MYSQL_TEST') !== '1' || ! isset($pdo, $databaseNames,
         $check($gateway->inspectPreparedAccount($loginServer, $prepared) === ExternalGameAccountState::Matching, 'Runtime registration recovery proof mismatch.');
         $check($gateway->createPreparedAccount($loginServer, $prepared) === ExternalGameAccountWriteResult::AlreadyExists, 'Duplicate runtime registration not detected.');
         $check($gateway->changePassword($loginServer, $prepared->login, 'Changed-Fixture-456'), 'Runtime password update failed.');
+        $lookupOnly = $login;
+        $lookupOnly['config']['capabilities'] = ['account_lookup'];
+        unset($lookupOnly['config']['accounts']['create']);
+        $catalog->save($lookupOnly);
+        $activation->apply($loginServer);
+        $check(! $gateway->supportsLoginServer($loginServer)
+            && $gateway->accountSummary($loginServer, 'alice')['login'] === 'alice', 'Lookup-only LoginServer could not read account summaries.');
+        $writeRefused = false;
+        try {
+            $gateway->changePassword($loginServer, 'alice', 'Must-Not-Write-123');
+        } catch (RuntimeException) {
+            $writeRefused = true;
+        }
+        $check($writeRefused, 'Lookup-only LoginServer accepted a password change.');
+        $catalog->save($login);
+        $activation->apply($loginServer);
+
         $invalidLogin = $login;
         $invalidLogin['config']['accounts']['create']['fixed_values'] = ['missing_registration_flag' => 0];
         $invalidLogin['config']['requirements'][0]['optional_columns'][] = 'missing_registration_flag';

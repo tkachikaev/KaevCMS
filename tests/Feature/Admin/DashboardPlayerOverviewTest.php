@@ -7,8 +7,12 @@ use App\Models\Admin;
 use App\Models\GameServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Services\Infrastructure\DashboardPlayerOverview;
 use App\Support\Modules\ModuleManager;
 use App\Support\Modules\ModuleRuntime;
+use App\Support\UniversalDrivers\ConnectionProfileSnapshots;
+use App\Support\UniversalDrivers\DriverProfileCatalog;
+use App\Support\UniversalDrivers\GameProfileEditor;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +49,7 @@ final class DashboardPlayerOverviewTest extends TestCase
         {
             public function run(GameServer $server, callable $callback): mixed
             {
-                return $callback(DB::connection(), null);
+                return $callback(DB::connection(), app(ConnectionProfileSnapshots::class)->get($server));
             }
         });
     }
@@ -76,6 +80,36 @@ final class DashboardPlayerOverviewTest extends TestCase
             ->assertSee('data-testid="dashboard-players-card"', false)
             ->assertSee($users[2]->name)
             ->assertSee('href="'.route('admin.users.show', $users[0]).'"', false);
+    }
+
+    public function test_character_count_uses_applied_custom_table_and_filters(): void
+    {
+        Schema::create('mapped_characters', static function (Blueprint $table): void {
+            $table->id();
+            $table->integer('accesslevel')->default(0);
+            $table->unsignedBigInteger('deletetime')->default(0);
+        });
+        DB::table('mapped_characters')->insert([
+            ['accesslevel' => 0, 'deletetime' => 0],
+            ['accesslevel' => 0, 'deletetime' => 0],
+            ['accesslevel' => 0, 'deletetime' => 0],
+            ['accesslevel' => 1, 'deletetime' => 0],
+            ['accesslevel' => 0, 'deletetime' => 123],
+        ]);
+        $catalog = app(DriverProfileCatalog::class);
+        $original = $catalog->find('game', 'l2j_mobius')['profile'];
+        $profile = $original;
+        $profile['id'] = 'dashboard-custom';
+        $profile['name'] = 'Dashboard custom';
+        $profile['config']['characters']['table'] = 'mapped_characters';
+        $profile = (new GameProfileEditor)->prepare($profile, $original['config']);
+        $catalog->create($profile);
+        $server = GameServer::factory()->create(['driver' => $profile['id']]);
+        app(ConnectionProfileSnapshots::class)->verifyAndRecord($server, $profile['id'], static fn (): bool => true);
+
+        $overview = app(DashboardPlayerOverview::class)->forAdmin(Admin::factory()->administrator()->create());
+        $this->assertSame(3, $overview['characters']);
+        $this->assertFalse($overview['characters_partial']);
     }
 
     public function test_support_metric_uses_the_enabled_module_navigation_badge(): void

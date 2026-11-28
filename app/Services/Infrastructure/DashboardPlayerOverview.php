@@ -7,10 +7,13 @@ use App\Models\Admin;
 use App\Models\GameServer;
 use App\Models\User;
 use App\Models\UserGameAccount;
+use App\Services\GameWorld\UniversalGameWorldReader;
 use App\Support\Modules\ModuleAdminAccessRegistry;
 use App\Support\Modules\ModuleNavigationRegistry;
+use App\Support\UniversalDrivers\BundledProfileCatalog;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Cache;
+use RuntimeException;
 use Throwable;
 
 final class DashboardPlayerOverview
@@ -21,6 +24,7 @@ final class DashboardPlayerOverview
         private readonly GameServerDatabaseGateway $gameDatabases,
         private readonly ModuleNavigationRegistry $moduleNavigation,
         private readonly ModuleAdminAccessRegistry $moduleAccess,
+        private readonly UniversalGameWorldReader $world,
     ) {}
 
     /**
@@ -84,11 +88,12 @@ final class DashboardPlayerOverview
             try {
                 $count += (int) $this->gameDatabases->run(
                     $server,
-                    static fn (Connection $connection): int => (int) $connection
-                        ->table('characters')
-                        ->where('accesslevel', 0)
-                        ->where('deletetime', 0)
-                        ->count(),
+                    function (Connection $connection, ?array $snapshot = null) use ($server): int {
+                        $profile = $snapshot ?? (new BundledProfileCatalog)->all()['game:'.$server->driver]
+                            ?? throw new RuntimeException('An active GameServer profile is required for character counts.');
+
+                        return $this->world->countCharacters($connection, $profile);
+                    },
                 );
                 $successful++;
             } catch (Throwable) {

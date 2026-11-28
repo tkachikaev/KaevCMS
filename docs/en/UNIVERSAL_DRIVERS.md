@@ -22,7 +22,7 @@ Rankings display the primary table and column from character mappings. Experienc
 
 Filters follow “Table → Column → Condition → Value”. Another table requires both link columns, for example `characters.obj_Id ↔ character_access.char_id`. Correlated `EXISTS` avoids duplicate characters and excludes characters without a matching record. Conditions sharing a table and both link columns must match the same record, including EAV key/value conditions.
 
-All filters combine with AND and affect both public lists and account characters. Thus `accesslevel = 0` also hides GMs in their account. `zero_or_null` takes no value. Profiles may add `filters[].table` and `filters[].link = {local_column, foreign_column}`; omitted `table` retains the legacy primary-table source. Older CMS versions may reject the new keys; import these profiles into a version supporting related filters. Activation requires both tables and all filter/link columns. Queries never modify game data.
+All filters combine with AND and affect public lists, account characters, and the administrator dashboard character count. Thus `accesslevel = 0` also hides GMs in their account. `zero_or_null` takes no value. Profiles may add `filters[].table` and `filters[].link = {local_column, foreign_column}`; omitted `table` retains the legacy primary-table source. Older CMS versions may reject the new keys; import these profiles into a version supporting related filters. Activation requires both tables and all filter/link columns. Queries never modify game data.
 
 ## Database encoding
 

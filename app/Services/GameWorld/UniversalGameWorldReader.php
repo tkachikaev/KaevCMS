@@ -36,6 +36,25 @@ final class UniversalGameWorldReader
         return ['missing_required' => $report['missing_required'], 'missing_optional' => $report['missing_optional']];
     }
 
+    /** @param array<string,mixed> $profile */
+    public function countCharacters(Connection $database, array $profile): int
+    {
+        $config = $this->configuration($database, $profile, 'characters');
+        $base = $config['characters']['table'];
+        $schema = $database->getSchemaBuilder();
+        if (! $schema->hasTable($base)) {
+            throw new ProfileValidationException('The character table is unavailable.');
+        }
+        $columns = [];
+        foreach (array_keys(GameCharacterFilters::requirements($config)) as $table) {
+            $columns[$table] = $schema->hasTable($table) ? $schema->getColumnListing($table) : [];
+        }
+        $query = $database->table($base);
+        GameCharacterFilters::apply($query, $config, $columns, $base);
+
+        return (int) $query->count();
+    }
+
     /** @param array<string,mixed> $profile
      * @return list<string>
      */
