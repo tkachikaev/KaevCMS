@@ -134,6 +134,14 @@ foreach ($databaseNames as $type => $db) {
     }
     $pdo->exec('DROP TABLE world_castles');
 
+    // A directly mapped hero flag is data, not a computed hero operator.
+    $directHero = $profile;
+    $directHero['config']['characters']['fields']['hero'] = ['kind' => 'column', 'column' => 'nobless'];
+    $directRows = $reader->ranking($connection, $directHero, 'level', 10);
+    if ((int) $directRows[0]['hero'] !== 1) {
+        throw new RuntimeException('Direct hero mapping was overwritten by a computed operator.');
+    }
+
     // A required relation restricts account lists, rankings and totals.
     // Bob has no clan row, while Alice has one.
     $innerClan = $profile;

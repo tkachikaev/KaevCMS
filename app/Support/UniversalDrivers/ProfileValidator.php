@@ -83,6 +83,19 @@ final class ProfileValidator
             // Validate filter structure before using it to verify the schema contract.
             $this->validateGameFilters($config);
             $characters = $config['characters'];
+            $declaredTables = array_column($config['requirements'], 'table');
+            foreach ($characters['fields'] as $field) {
+                if (! in_array($field['kind'], ['related', 'eav'], true)) {
+                    continue;
+                }
+                $relation = $config['relations'][$field['relation']];
+                if ($relation['cardinality'] !== ($field['kind'] === 'eav' ? 'many' : 'one')) {
+                    throw new ProfileValidationException('drivers.game_relation_cardinality');
+                }
+                if (! in_array($relation['table'], $declaredTables, true)) {
+                    throw new ProfileValidationException('Mapped relation must declare its table in schema requirements.');
+                }
+            }
             $baseColumns = [
                 $characters['owner']['column'],
                 $characters['fields']['id']['column'],

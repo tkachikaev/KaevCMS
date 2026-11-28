@@ -359,7 +359,7 @@ final class UniversalGameWorldReader
      */
     private function hydrateHero(Connection $database, array $config, array $columns, array $rows): array
     {
-        if ($rows === [] || ! isset($config['characters']['fields']['hero'])) {
+        if ($rows === [] || ($config['characters']['fields']['hero']['kind'] ?? null) !== 'operator') {
             return $rows;
         }
         $feature = $config['features']['heroes'] ?? null;
