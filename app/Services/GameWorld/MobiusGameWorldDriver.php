@@ -120,8 +120,20 @@ final class MobiusGameWorldDriver implements GameWorldDriver
 
         /** @var list<array<string,mixed>> $rows */
         $rows = $this->database->run($server, function (Connection $connection) use ($profile, $accountName, $limit): array {
-            return $this->charactersQuery($connection, $profile)
-                ->where('characters.account_name', $accountName)
+            $query = $this->charactersQuery($connection, $profile);
+            if ($profile->heroesAvailable) {
+                $query->leftJoin('heroes', 'heroes.charId', '=', 'characters.charId')
+                    ->selectRaw('CASE WHEN heroes.charId IS NULL THEN 0 ELSE 1 END as hero');
+            } else {
+                $query->selectRaw('0 as hero');
+            }
+            if ($connection->getSchemaBuilder()->hasColumn('characters', 'createDate')) {
+                $query->addSelect('characters.createDate as created_at');
+            } else {
+                $query->selectRaw('NULL as created_at');
+            }
+
+            return $query->where('characters.account_name', $accountName)
                 ->limit($this->limit($limit))
                 ->orderByDesc('characters.level')
                 ->orderBy('characters.char_name')

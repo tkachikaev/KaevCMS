@@ -36,7 +36,8 @@ final class UniversalDriverActivation
                     'database_charset' => $locked->database_charset,
                 ], $profile);
             } else {
-                $login = LoginServer::query()->find($locked->login_server_id);
+                $locked->loadMissing('loginServer');
+                $login = $locked->loginServer;
                 if (! $login instanceof LoginServer) {
                     throw new ProfileValidationException('No LoginServer selected.');
                 }

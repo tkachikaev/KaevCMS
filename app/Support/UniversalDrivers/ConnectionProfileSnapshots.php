@@ -46,8 +46,14 @@ final class ConnectionProfileSnapshots
             }
             $profile = $entry['profile'];
             $this->validator->validate($profile);
+            // Capture the same inherited target used by the verifier. Do not
+            // sign a newly loaded connection after checking a different one.
+            $fingerprint = $this->fingerprint($locked);
             if ($verify($locked, $profile) !== true) {
                 throw new ProfileValidationException('Profile has not passed connection/schema verification.');
+            }
+            if ($fingerprint !== $this->fingerprint($locked->fresh() ?? throw new ProfileValidationException('Connection no longer exists.'))) {
+                throw new ProfileValidationException('Connection changed during profile verification.');
             }
             $raw = $this->catalog->canonicalJson($profile);
             DB::table('universal_driver_connection_snapshots')->updateOrInsert(
@@ -56,7 +62,7 @@ final class ConnectionProfileSnapshots
                     'profile_id' => $profileId,
                     'format_version' => $profile['format_version'],
                     'profile_sha256' => hash('sha256', $raw),
-                    'connection_fingerprint' => $this->fingerprint($locked),
+                    'connection_fingerprint' => $fingerprint,
                     'profile_json' => $raw,
                     'verified_at' => now(),
                     'updated_at' => now(),
@@ -78,9 +84,10 @@ final class ConnectionProfileSnapshots
         }
         $target = $server;
         if ($server instanceof GameServer && $server->use_login_server_connection) {
-            $target = LoginServer::query()->find($server->login_server_id);
-            if (! $target instanceof LoginServer) {
-                throw new RuntimeException('Missing inherited database connection.');
+            $server->loadMissing('loginServer');
+            $target = $server->loginServer;
+            if (! $target instanceof LoginServer || $target->getKey() !== $server->login_server_id) {
+                throw new ExternalDatabaseDriverUnavailable('Missing inherited database connection.');
             }
         }
         $values = [
@@ -130,11 +137,11 @@ final class ConnectionProfileSnapshots
         } catch (ProfileValidationException $exception) {
             throw new ExternalDatabaseDriverUnavailable('Driver connection snapshot is invalid.', previous: $exception);
         }
-        $table = $type === 'login' ? 'login_servers' : 'game_servers';
-        $currentDriver = DB::table($table)->where('id', $server->getKey())->value('driver');
+        $current = $server->fresh();
         if ($profile['type'] !== $type || $profile['id'] !== $row->profile_id ||
             $profile['format_version'] !== (int) $row->format_version ||
-            $currentDriver !== $profile['id']) {
+            $current === null || $current->driver !== $profile['id'] ||
+            ! hash_equals($row->connection_fingerprint, $this->fingerprint($current))) {
             throw new ExternalDatabaseDriverUnavailable('Driver connection snapshot no longer matches its connection.');
         }
 

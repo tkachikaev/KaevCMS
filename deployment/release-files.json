@@ -177,6 +177,7 @@
         "app/Services/Servers/ExternalDatabaseInformation.php",
         "app/Services/Servers/GameServerFormSchema.php",
         "app/Services/Servers/GameServerFormState.php",
+        "app/Services/Servers/MySqlExternalConnection.php",
         "app/Services/Servers/UniversalDriverActivation.php",
         "app/Services/Servers/UniversalProfileSchemaProbe.php",
         "app/Services/Updates/SystemUpdateInstaller.php",

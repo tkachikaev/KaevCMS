@@ -129,6 +129,9 @@ final class UniversalGameCharacterReader
                     default => throw new ProfileValidationException('Unsupported character field source.'),
                 };
             }
+            if (! isset($fields['hero']) && in_array('heroes', $config['capabilities'], true) && isset($config['features']['heroes'])) {
+                $mapped['hero'] = (int) isset($heroIds[(string) ($row[$idColumn] ?? '')]);
+            }
             $result[] = $mapped;
         }
         // Existing PHP GameWorldDrivers sort account characters by level
@@ -253,27 +256,35 @@ final class UniversalGameCharacterReader
     private function activeHeroIds(Connection $database, array $config, array $columns, array $rows, string $idColumn): array
     {
         $fields = $config['characters']['fields'];
-        if (! isset($fields['hero']) || $fields['hero']['kind'] !== 'operator' || $rows === []) {
+        if ($rows === [] || (isset($fields['hero']) && $fields['hero']['kind'] !== 'operator')
+            || (! isset($fields['hero']) && ! in_array('heroes', $config['capabilities'], true))) {
             return [];
         }
         $feature = $config['features']['heroes'] ?? null;
         $relation = is_array($feature) ? ($config['relations'][$feature['relation']] ?? null) : null;
-        if ($relation === null) {
+        if ($relation === null || $relation['local_column'] !== $idColumn) {
             return [];
         }
         $available = $columns[$relation['table']] ?? [];
+        $operator = ($fields['hero']['kind'] ?? null) === 'operator';
         $playedColumn = $feature['played_column'] ?? 'played';
         $activeColumn = $feature['active_column'] ?? 'active';
-        $needed = [$relation['foreign_column'], $playedColumn, $activeColumn];
+        $played = $operator || array_key_exists('played_value', $feature);
+        $active = $operator || array_key_exists('active_value', $feature);
+        $needed = [$relation['foreign_column'], ...($played ? [$playedColumn] : []), ...($active ? [$activeColumn] : [])];
         if ($available === [] || ! ProfileSchema::hasAll($available, $needed)) {
             return [];
         }
         $ids = [];
         $values = array_column($rows, $idColumn);
-        foreach ($database->table($relation['table'])->whereIn($relation['foreign_column'], $values)
-            ->where($playedColumn, $feature['played_value'] ?? 1)
-            ->where($activeColumn, $feature['active_value'] ?? 1)
-            ->get([$relation['foreign_column']]) as $item) {
+        $query = $database->table($relation['table'])->whereIn($relation['foreign_column'], $values);
+        if ($played) {
+            $query->where($playedColumn, $feature['played_value'] ?? 1);
+        }
+        if ($active) {
+            $query->where($activeColumn, $feature['active_value'] ?? 1);
+        }
+        foreach ($query->get([$relation['foreign_column']]) as $item) {
             $ids[(string) $item->{$relation['foreign_column']}] = true;
         }
 

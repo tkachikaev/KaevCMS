@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Contracts\GameServerDatabaseGateway;
 use App\Models\GameServer;
 use App\Models\LoginServer;
+use App\Services\GameAccounts\ExternalGameAccountGateway;
 use App\Services\GameWorld\GameStatistics;
 use App\Services\GameWorld\GameWorldDriverResolver;
 use App\Services\SiteSettings;
@@ -299,6 +300,31 @@ class PublicGameStatisticsTest extends TestCase
             ->assertSee('Эльфачка')
             ->assertSee('RankAlpha')
             ->assertSee('RankBeta');
+    }
+
+    public function test_mobius_cabinet_preserves_hero_and_optional_creation_date_through_world_driver(): void
+    {
+        $server = $this->statisticsServer();
+        $database = DB::connection('statistics_test');
+        Schema::connection('statistics_test')->table('characters', static function (Blueprint $table): void {
+            $table->dateTime('createDate')->nullable();
+        });
+        $database->table('characters')->where('account_name', 'test1')->update(['createDate' => '2026-10-20 12:34:56']);
+        $gateway = app(ExternalGameAccountGateway::class);
+        $rows = $gateway->characters($server, 'test1');
+        $this->assertCount(1, $rows);
+        $this->assertSame('Эльфачка', $rows[0]['name']);
+        $this->assertTrue($rows[0]['hero']);
+        $this->assertSame('2026-10-20', $rows[0]['created_at']?->format('Y-m-d'));
+        $this->assertSame([], $gateway->characters($server, 'unknown'));
+
+        $database->table('heroes')->delete();
+        Schema::connection('statistics_test')->table('characters', static function (Blueprint $table): void {
+            $table->dropColumn('createDate');
+        });
+        $rows = $gateway->characters($server, 'test1');
+        $this->assertFalse($rows[0]['hero']);
+        $this->assertNull($rows[0]['created_at']);
     }
 
     public function test_driver_returns_full_character_data_for_the_future_personal_account(): void

@@ -202,6 +202,23 @@ final class ConnectionActivationTest extends TestCase
         $this->assertSame('configured', $inherited->database_status);
     }
 
+    public function test_reverified_inherited_profile_rejects_a_stale_loaded_login_connection(): void
+    {
+        $login = LoginServer::factory()->create(['driver' => 'rusacis']);
+        $game = GameServer::factory()->for($login)->create(['driver' => 'rusacis']);
+        $snapshots = app(ConnectionProfileSnapshots::class);
+        $snapshots->verifyAndRecord($game, 'rusacis', static fn (): bool => true);
+        $game->load('loginServer');
+
+        $login->update(['database_name' => 'new_world']);
+        $fresh = $game->fresh();
+        $snapshots->verifyAndRecord($fresh, 'rusacis', static fn (): bool => true);
+        $this->assertNotNull($snapshots->get($fresh));
+
+        $this->expectException(ExternalDatabaseDriverUnavailable::class);
+        app(GameServerDatabaseGateway::class)->run($game, static fn (): never => throw new RuntimeException('Stale connection reached external operation.'));
+    }
+
     public function test_unverified_custom_login_profile_is_not_executable(): void
     {
         $profile = app(DriverProfileCatalog::class)->find('login', 'rusacis')['profile'];

@@ -44,7 +44,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
      * The regular connection test for legacy PHP drivers is unchanged.
      *
      * @param  array<string,mixed>  $profile
-     * @param  array<string,mixed>  $connection
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $connection
      * @return array<string,mixed>
      */
     public function testProfile(array $connection, array $profile): array
@@ -53,7 +53,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
     }
 
     /**
-     * @param  array<string,mixed>  $connection
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $connection
      * @param  list<array<string,mixed>>  $requirements
      * @param  array<string,mixed>|null  $profile
      * @return array<string,mixed>
@@ -61,23 +61,7 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
     private function probe(array $connection, array $requirements, bool $driverReady, ?array $profile = null): array
     {
         $connectionName = 'kaevcms_external_'.Str::lower(Str::random(12));
-        $configuration = [
-            'driver' => 'mysql',
-            'host' => $connection['host'],
-            'port' => $connection['port'],
-            'database' => $connection['database'],
-            'username' => $connection['username'],
-            'password' => $connection['password'],
-            'charset' => $connection['charset'],
-            'collation' => $connection['collation'] ?? $this->collationFor($connection['charset']),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => [
-                PDO::ATTR_TIMEOUT => max(1, min(30, (int) config('cms.external_database.connect_timeout_seconds', 3))),
-            ],
-        ];
+        $configuration = MySqlExternalConnection::configuration($connection);
 
         $stage = 'connection';
         $connected = false;
@@ -208,15 +192,5 @@ final class MySqlExternalDatabaseConnectionTester implements ExternalDatabaseCon
     private function millisecondsSince(int $startedAt): int
     {
         return max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000));
-    }
-
-    private function collationFor(string $charset): string
-    {
-        return match ($charset) {
-            'utf8' => 'utf8_unicode_ci',
-            'latin1' => 'latin1_swedish_ci',
-            'cp1251' => 'cp1251_general_ci',
-            default => 'utf8mb4_unicode_ci',
-        };
     }
 }
