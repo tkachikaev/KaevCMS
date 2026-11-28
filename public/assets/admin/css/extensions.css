@@ -265,8 +265,8 @@
 }
 
 
-[data-promo-hide-empty-preview] .promo-reward-preview:not(:has(> img)) {
-    visibility: hidden;
+[data-promo-hide-placeholder-symbol] .promo-reward-preview > i {
+    display: none;
 }
 
 .promo-reward-preview img {
