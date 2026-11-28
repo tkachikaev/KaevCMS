@@ -286,7 +286,7 @@ a{color:#365b83;text-decoration:none}a:hover{text-decoration:underline}
 .forum-editor-link-dialog::backdrop{background:rgba(19,38,58,.52)}
 .forum-editor-link-dialog h3{font-size:16px;margin:0 0 14px}
 .forum-editor-link-dialog label{display:grid;gap:7px;font-size:13px;color:#536982}
-.forum-editor-link-dialog input{font:inherit;padding:9px;border:1px solid #ced8e3;border-radius:7px;width:100%}
+.forum-editor-link-dialog :is(input,select){font:inherit;padding:9px;border:1px solid #ced8e3;border-radius:7px;width:100%}
 .forum-posting-as{color:#74869a;font-size:12px;margin:0}
 .forum-post-rich{white-space:normal}
 .forum-post-rich p{margin:0 0 .8em}
@@ -306,6 +306,7 @@ a{color:#365b83;text-decoration:none}a:hover{text-decoration:underline}
 /* Images by link: width in % of the column, never larger than the image itself. */
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure{margin:12px 0;max-width:100%}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure img{display:block;max-width:100%;height:auto;border-radius:8px}
+:is(.forum-post-rich,.forum-editor-canvas .tiptap) img[data-inline-image="1"]{display:inline-block;width:1.5em;height:1.5em;object-fit:contain;vertical-align:middle}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="center"]{margin-left:auto;margin-right:auto}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="center"] img{margin:0 auto}
 :is(.forum-post-rich,.forum-editor-canvas .tiptap) figure[data-align="right"]{margin-left:auto}
@@ -616,7 +617,7 @@ a{color:#365b83;text-decoration:none}a:hover{text-decoration:underline}
 :root[data-forum-scheme="dark"] .forum-form-grid label,
 :root[data-forum-scheme="dark"] .forum-compose-field,
 :root[data-forum-scheme="dark"] :where(.forum-form-grid,.forum-compose-field,.forum-quick-search) :where(input,textarea,select),
-:root[data-forum-scheme="dark"] .forum-editor-link-dialog input{background:#121b26;border-color:#3a4e63;color:#e2eaf3}
+:root[data-forum-scheme="dark"] .forum-editor-link-dialog :is(input,select){background:#121b26;border-color:#3a4e63;color:#e2eaf3}
 :root[data-forum-scheme="dark"] .forum-editor,
 :root[data-forum-scheme="dark"] .forum-editor-link-dialog{background:#172332;border-color:#37495d;color:#e2eaf3}
 :root[data-forum-scheme="dark"] .forum-editor-toolbar{background:#202e3f;border-color:#3b4d63}

@@ -202,9 +202,37 @@ const FigureImage = Node.create({
 const LINK_IMAGE_WIDTHS = Array.from({ length: 19 }, (_, index) => String(10 + index * 5));
 const normalizeImageWidth = (value) => (LINK_IMAGE_WIDTHS.includes(String(value)) ? String(value) : '100');
 
-// Forum images live on third-party https hosts (never uploaded here). The reader can
-// drag the corner handle to scale the image; the height follows the width, and the
-// image never grows past its natural size (CSS max-width on the <img>).
+const InlineLinkImage = Node.create({
+    name: 'inlineLinkImage',
+    group: 'inline',
+    inline: true,
+    atom: true,
+    draggable: true,
+
+    addAttributes() {
+        return { src: { default: null }, alt: { default: '' } };
+    },
+
+    parseHTML() {
+        return [{
+            tag: 'img[data-inline-image="1"]',
+            getAttrs: (image) => {
+                const src = image.getAttribute('src') ?? '';
+                return /^https:\/\//i.test(src) ? { src, alt: image.getAttribute('alt') ?? '' } : false;
+            },
+        }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['img', {
+            ...HTMLAttributes,
+            'data-inline-image': '1',
+            referrerpolicy: 'no-referrer',
+        }];
+    },
+});
+
+// Block images from third-party HTTPS hosts can be resized with a corner handle.
 const LinkImage = Node.create({
     name: 'linkImage',
     group: 'block',
@@ -523,6 +551,7 @@ const initializeRichEditor = (root, signal) => {
     const linkImageDialog = root.querySelector('[data-editor-link-image-dialog]');
     const linkImageUrl = root.querySelector('[data-editor-link-image-url]');
     const linkImageAlt = root.querySelector('[data-editor-link-image-alt]');
+    const linkImagePlacement = root.querySelector('[data-editor-link-image-placement]');
     const linkImagePreview = root.querySelector('[data-editor-link-image-preview]');
     const imageDialog = root.querySelector('[data-editor-image-dialog]');
     const imageApply = root.querySelector('[data-editor-image-apply]');
@@ -586,7 +615,7 @@ const initializeRichEditor = (root, signal) => {
             SafeColor,
             SafeHighlight,
             SafeTextSize,
-            ...(linkImages ? [LinkImage, MediaEmbed] : [FigureImage]),
+            ...(linkImages ? [LinkImage, InlineLinkImage, MediaEmbed] : [FigureImage]),
             ...(pageBlocks ? [ContentCards, ContentCard, ContentButtons] : []),
             SafeTable.configure({
                 resizable: false,
@@ -629,7 +658,7 @@ const initializeRichEditor = (root, signal) => {
 
         let found = false;
         editor.state.doc.descendants((node) => {
-            if (['figureImage', 'linkImage', 'mediaEmbed', 'horizontalRule', 'table'].includes(node.type.name)) {
+            if (['figureImage', 'linkImage', 'inlineLinkImage', 'mediaEmbed', 'horizontalRule', 'table'].includes(node.type.name)) {
                 found = true;
 
                 return false;
@@ -975,11 +1004,21 @@ const initializeRichEditor = (root, signal) => {
         return url;
     };
 
+    const selectedForumImage = () => {
+        const type = editor.state.selection.node?.type.name;
+        return type === 'linkImage' || type === 'inlineLinkImage' ? type : null;
+    };
+
     root.querySelector('[data-editor-link-image]')?.addEventListener('click', () => {
         if (!linkImageDialog || !linkImageUrl) return;
-        const current = editor.isActive('linkImage') ? editor.getAttributes('linkImage') : null;
+        const type = selectedForumImage();
+        const current = type ? editor.getAttributes(type) : null;
         linkImageUrl.value = current?.src ?? '';
         if (linkImageAlt) linkImageAlt.value = current?.alt ?? '';
+        if (linkImagePlacement) {
+            linkImagePlacement.value = type === 'inlineLinkImage' ? 'inline' : 'block';
+            linkImagePlacement.disabled = type !== null;
+        }
         previewLinkImage();
         linkImageDialog.showModal();
         linkImageUrl.focus();
@@ -996,8 +1035,14 @@ const initializeRichEditor = (root, signal) => {
             return;
         }
         const attributes = { src: url, alt: linkImageAlt?.value.trim() ?? '' };
-        if (editor.isActive('linkImage')) {
-            editor.chain().focus().updateAttributes('linkImage', attributes).run();
+        const type = selectedForumImage();
+        if (type) {
+            editor.chain().focus().updateAttributes(type, attributes).run();
+        } else if (linkImagePlacement?.value === 'inline') {
+            editor.chain().focus().insertContentAt(editor.state.selection.to, {
+                type: 'inlineLinkImage',
+                attrs: attributes,
+            }).run();
         } else {
             insertBlockAfterSelection({ type: 'linkImage', attrs: { ...attributes, align: 'left', width: '100' } });
         }

@@ -273,7 +273,7 @@ final class SafeHtmlSanitizer
         $allowed = match ($tag) {
             'a' => ['href', 'title'],
             'div' => $profile === self::PROFILE_PAGE ? ['data-content-block'] : [],
-            'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'referrerpolicy'] : ['src', 'alt'],
+            'img' => $profile === self::PROFILE_FORUM ? ['src', 'alt', 'data-inline-image'] : ['src', 'alt'],
             'span' => ['data-color', 'data-highlight', 'data-text-size'],
             'figure' => $profile === self::PROFILE_FORUM ? ['data-align', 'data-width', 'data-media', 'data-media-id'] : ['data-align', 'data-size'],
             default => in_array($tag, self::ALIGNABLE_ELEMENTS, true) ? ['data-align'] : [],
@@ -322,13 +322,18 @@ final class SafeHtmlSanitizer
 
         if ($tag === 'img' && $profile === self::PROFILE_FORUM) {
             $src = $this->sanitizeForumImageSource($element->getAttribute('src'));
-            $figure = $element->parentNode;
-            if ($src === null || ! $figure instanceof DOMElement || strtolower($figure->tagName) !== 'figure') {
+            $parent = $element->parentNode;
+            $inFigure = $parent instanceof DOMElement && strtolower($parent->tagName) === 'figure';
+            $inline = $element->getAttribute('data-inline-image') === '1' && ! $inFigure;
+            if ($src === null || (! $inFigure && ! $inline)) {
                 $element->parentNode?->removeChild($element);
 
                 return;
             }
 
+            if (! $inline) {
+                $element->removeAttribute('data-inline-image');
+            }
             $element->setAttribute('src', $src);
             $element->setAttribute('alt', $this->cleanTextAttribute($element->getAttribute('alt'), 255));
             $element->setAttribute('loading', 'lazy');
