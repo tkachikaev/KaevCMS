@@ -71,6 +71,8 @@ return [
         'connection_failed' => 'Connection failed',
         'driver_unavailable' => 'Driver is not ready',
         'incompatible_schema' => 'Schema is incompatible',
+        'verification_required_title' => 'Driver verification required',
+        'driver_verification_required' => 'JSON driver verification is no longer valid. Apply and verify JSON again to enable it for the current connection.',
         'check_failed' => 'Diagnostic check failed',
     ],
     'service' => [

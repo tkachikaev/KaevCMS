@@ -59,7 +59,7 @@ final class UniversalDriverActivation
         return $report;
     }
 
-    /** Invalidate stale verification after credential/target DB changes. */
+    /** Remove a snapshot on explicit driver change, disconnect or deletion. */
     public function invalidate(LoginServer|GameServer $server): void
     {
         if (! $server->exists) {
@@ -67,14 +67,5 @@ final class UniversalDriverActivation
         }
         DB::table('universal_driver_connection_snapshots')->where('connection_type', $server instanceof LoginServer ? 'login' : 'game')
             ->where('connection_id', $server->getKey())->delete();
-        if ($server instanceof LoginServer) {
-            // A GameServer may inherit its LoginServer DB connection.
-            $ids = GameServer::query()->where('login_server_id', $server->id)
-                ->where('use_login_server_connection', true)->pluck('id');
-            if ($ids->isNotEmpty()) {
-                DB::table('universal_driver_connection_snapshots')->where('connection_type', 'game')
-                    ->whereIn('connection_id', $ids)->delete();
-            }
-        }
     }
 }

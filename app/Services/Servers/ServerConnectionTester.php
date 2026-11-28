@@ -139,7 +139,11 @@ final class ServerConnectionTester
     /** @return array<string, mixed> */
     public function testLoginServer(LoginServer $server): array
     {
-        $active = app(ConnectionProfileSnapshots::class)->get($server);
+        try {
+            $active = app(ConnectionProfileSnapshots::class)->get($server);
+        } catch (ExternalDatabaseDriverUnavailable) {
+            return $this->verificationRequired();
+        }
         if ($active !== null) {
             return $this->testLoginProfileValues([
                 'database_host' => $server->database_host,
@@ -214,7 +218,11 @@ final class ServerConnectionTester
             throw new InvalidArgumentException('GameServer has no LoginServer selected.');
         }
 
-        $active = app(ConnectionProfileSnapshots::class)->get($server);
+        try {
+            $active = app(ConnectionProfileSnapshots::class)->get($server);
+        } catch (ExternalDatabaseDriverUnavailable) {
+            return $this->verificationRequired();
+        }
         if ($active !== null) {
             return $this->testGameProfileValues([
                 'use_login_server_connection' => $server->use_login_server_connection,
@@ -238,6 +246,18 @@ final class ServerConnectionTester
             'database_password' => $server->databasePassword() ?? '',
             'database_charset' => $server->database_charset,
         ], $loginServer);
+    }
+
+    /** @return array<string,mixed> */
+    private function verificationRequired(): array
+    {
+        return [
+            'connected' => false,
+            'compatible' => false,
+            'driver_ready' => false,
+            'error' => 'driver_verification_required',
+            'checks' => [],
+        ];
     }
 
     /** @param array<string,mixed> $connection

@@ -2,6 +2,7 @@
 
 namespace App\Services\Servers;
 
+use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\AuditLogger;
 use Illuminate\Database\QueryException;
@@ -111,17 +112,34 @@ final class LoginServerAdministration
                     'driver' => __('Create a separate LoginServer connection to change the driver while game accounts are linked.'),
                 ]);
             }
+            $driverChanged = $locked->driver !== $payload['driver'];
             $beforeTarget = [
-                $locked->driver, $locked->database_host, $locked->database_port, $locked->database_name,
+                $locked->database_host, $locked->database_port, $locked->database_name,
                 $locked->database_username, $locked->databasePassword(), $locked->database_charset,
             ];
             $locked->update($payload);
             $afterTarget = [
-                $locked->driver, $locked->database_host, $locked->database_port, $locked->database_name,
+                $locked->database_host, $locked->database_port, $locked->database_name,
                 $locked->database_username, $locked->databasePassword(), $locked->database_charset,
             ];
-            if ($beforeTarget !== $afterTarget) {
+            if ($driverChanged) {
                 app(UniversalDriverActivation::class)->invalidate($locked);
+            }
+            if ($beforeTarget !== $afterTarget) {
+                // Inherited profiles remain recorded but their verification
+                // no longer matches the database. Never switch them to PHP.
+                GameServer::query()->where('login_server_id', $locked->id)
+                    ->where('use_login_server_connection', true)->update([
+                        'database_status' => 'unknown',
+                        'database_error' => null,
+                        'database_checked_at' => null,
+                        'database_schema_profile' => null,
+                        'database_capabilities' => null,
+                        'database_table_checks' => null,
+                        'database_latency_ms' => null,
+                        'online_players' => null,
+                        'online_checked_at' => null,
+                    ]);
             }
 
             return $locked;

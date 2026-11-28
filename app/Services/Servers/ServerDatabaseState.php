@@ -18,7 +18,14 @@ final class ServerDatabaseState
             'database_checked_at' => $checkedAt,
         ];
 
-        if (($report['connected'] ?? false) === true) {
+        if (($report['error'] ?? null) === 'driver_verification_required') {
+            $values += [
+                'database_latency_ms' => null,
+                'database_schema_profile' => null,
+                'database_capabilities' => null,
+                'database_table_checks' => null,
+            ];
+        } elseif (($report['connected'] ?? false) === true) {
             $values['database_latency_ms'] = $this->latency($report['latency_ms'] ?? null);
             $values['database_schema_profile'] = $this->nullableString($report['schema_profile'] ?? null);
             $values['database_capabilities'] = $this->capabilities($report['capabilities'] ?? []);
@@ -85,7 +92,7 @@ final class ServerDatabaseState
     /** @param array<string,mixed> $report */
     private function errorCode(array $report): string
     {
-        if (in_array($report['error'] ?? null, ['authentication_failed', 'database_not_found', 'server_unreachable', 'schema_check_failed', 'health_check_failed', 'version_check_failed', 'unsupported_version'], true)) {
+        if (in_array($report['error'] ?? null, ['authentication_failed', 'database_not_found', 'server_unreachable', 'schema_check_failed', 'health_check_failed', 'version_check_failed', 'unsupported_version', 'driver_verification_required'], true)) {
             return $report['error'];
         }
 

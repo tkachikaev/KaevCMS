@@ -2,6 +2,7 @@
 
 namespace App\Support\UniversalDrivers;
 
+use App\Exceptions\ExternalDatabaseDriverUnavailable;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Support\Database\TableExistence;
@@ -10,8 +11,7 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
- * Persistent, verified copy per connection. This is deliberately NOT wired to
- * legacy production resolvers until the parity/integration phase.
+ * Persistent, verified copy per connection. Invalid verification fails closed.
  */
 final class ConnectionProfileSnapshots
 {
@@ -123,15 +123,19 @@ final class ConnectionProfileSnapshots
             ! hash_equals($row->profile_sha256, hash('sha256', $row->profile_json)) ||
             ! is_string($row->connection_fingerprint) ||
             ! hash_equals($row->connection_fingerprint, $this->fingerprint($server))) {
-            throw new RuntimeException('Driver connection snapshot integrity check failed.');
+            throw new ExternalDatabaseDriverUnavailable('Driver connection snapshot integrity check failed.');
         }
-        $profile = $this->validator->fromJson($row->profile_json);
+        try {
+            $profile = $this->validator->fromJson($row->profile_json);
+        } catch (ProfileValidationException $exception) {
+            throw new ExternalDatabaseDriverUnavailable('Driver connection snapshot is invalid.', previous: $exception);
+        }
         $table = $type === 'login' ? 'login_servers' : 'game_servers';
         $currentDriver = DB::table($table)->where('id', $server->getKey())->value('driver');
         if ($profile['type'] !== $type || $profile['id'] !== $row->profile_id ||
             $profile['format_version'] !== (int) $row->format_version ||
             $currentDriver !== $profile['id']) {
-            throw new RuntimeException('Driver connection snapshot no longer matches its connection.');
+            throw new ExternalDatabaseDriverUnavailable('Driver connection snapshot no longer matches its connection.');
         }
 
         return $profile;

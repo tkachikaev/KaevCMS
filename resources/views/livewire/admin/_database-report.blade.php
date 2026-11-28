@@ -2,14 +2,15 @@
     @php
         $diagnostic = app(\App\Services\Servers\ExternalDatabaseInformation::class)->probeErrorMessage($report['error'] ?? null);
         $connected = (bool) ($report['connected'] ?? false);
+        $verificationRequired = ($report['error'] ?? null) === 'driver_verification_required';
         $incompatible = $connected && ($report['compatible'] ?? null) === false;
         $checks = is_array($report['checks'] ?? null) ? $report['checks'] : [];
         $profileIssues = is_array($report['profile_issues'] ?? null) ? $report['profile_issues'] : [];
         $unavailable = is_array($report['unavailable_capabilities'] ?? null) ? $report['unavailable_capabilities'] : [];
     @endphp
-    <div @class(['database-test-report', 'success' => $connected && ! $incompatible, 'warning' => $incompatible, 'failed' => ! $connected]) role="status">
+    <div @class(['database-test-report', 'success' => $connected && ! $incompatible, 'warning' => $incompatible || $verificationRequired, 'failed' => ! $connected && ! $verificationRequired]) role="status">
         <div class="database-test-heading">
-            <strong>{{ $connected ? __('Database connection established.') : __('Database connection failed.') }}</strong>
+            <strong>{{ $verificationRequired ? __('external_databases.error.verification_required_title') : ($connected ? __('Database connection established.') : __('Database connection failed.')) }}</strong>
             @if(! empty($report['server_version']))
                 <span>{{ __('Database server version: :version', ['version' => $report['server_version']]) }}</span>
             @endif

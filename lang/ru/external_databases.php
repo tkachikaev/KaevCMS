@@ -71,6 +71,8 @@ return [
         'connection_failed' => 'Ошибка подключения',
         'driver_unavailable' => 'Драйвер не готов',
         'incompatible_schema' => 'Несовместимая схема',
+        'verification_required_title' => 'Требуется проверка драйвера',
+        'driver_verification_required' => 'Проверка JSON-драйвера больше не действительна. Нажмите «Применить JSON и проверить», чтобы снова включить его для текущего подключения.',
         'check_failed' => 'Сбой диагностической проверки',
     ],
     'service' => [

@@ -4,11 +4,15 @@ namespace Tests\Feature\UniversalDrivers;
 
 use App\Contracts\ExternalDatabaseConnectionTester;
 use App\Contracts\GameServerDatabaseGateway;
+use App\Exceptions\ExternalDatabaseDriverUnavailable;
 use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\LoginServerDriverResolver;
 use App\Services\GameAccounts\UniversalLoginDriver;
+use App\Services\GameWorld\GameWorldDriverResolver;
+use App\Services\GameWorld\UniversalGameWorldDriver;
 use App\Services\Servers\GameServerAdministration;
+use App\Services\Servers\LoginServerAdministration;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Services\Servers\UniversalDriverActivation;
@@ -128,6 +132,74 @@ final class ConnectionActivationTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('snapshot integrity check failed');
         $snapshots->get($server);
+    }
+
+    public function test_login_credentials_change_blocks_inherited_json_until_reverified_without_affecting_separate_database(): void
+    {
+        $probe = new class implements ExternalDatabaseConnectionTester
+        {
+            public int $calls = 0;
+
+            public function test(array $connection, array $requirements, bool $driverReady): array
+            {
+                $this->calls++;
+
+                return ['connected' => true, 'compatible' => true, 'driver_ready' => true,
+                    'server_version' => 'fixture', 'error' => null, 'error_class' => null,
+                    'latency_ms' => 1, 'checks' => []];
+            }
+        };
+        $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
+        $login = LoginServer::factory()->create(['driver' => 'rusacis']);
+        $inherited = GameServer::factory()->create(['driver' => 'rusacis', 'login_server_id' => $login->id]);
+        $separate = GameServer::factory()->create([
+            'driver' => 'rusacis', 'login_server_id' => $login->id, 'use_login_server_connection' => false,
+            'database_host' => '127.0.0.1', 'database_port' => 3306, 'database_name' => 'separate_world',
+            'database_username' => 'cms', 'database_password' => 'fixture', 'database_charset' => 'utf8mb4',
+        ]);
+        $activation = app(UniversalDriverActivation::class);
+        $snapshots = app(ConnectionProfileSnapshots::class);
+        foreach ([$login, $inherited, $separate] as $server) {
+            $activation->apply($server);
+        }
+        $original = $snapshots->get($inherited);
+        $separateProfile = $snapshots->get($separate);
+        $values = [
+            'name' => 'Renamed login', 'driver' => 'rusacis',
+            'database_host' => $login->database_host, 'database_port' => $login->database_port,
+            'database_name' => $login->database_name, 'database_username' => $login->database_username,
+            'database_charset' => $login->database_charset, 'database_password' => '',
+        ];
+        $admin = app(LoginServerAdministration::class);
+        $login = $admin->save($login, $values)['server'];
+        $this->assertSame($original, $snapshots->get($inherited->refresh()));
+        $this->assertInstanceOf(UniversalLoginDriver::class, app(LoginServerDriverResolver::class)->resolve($login));
+
+        $login = $admin->save($login, array_replace($values, ['database_name' => 'new_login_db']))['server'];
+        $inherited->refresh();
+        $separate->refresh();
+        $this->assertFalse(app(LoginServerDriverResolver::class)->supports($login));
+        $this->assertSame('driver_verification_required', $login->database_error);
+        try {
+            app(GameWorldDriverResolver::class)->resolve($inherited);
+            $this->fail('Stale inherited profile resolved to a working driver.');
+        } catch (ExternalDatabaseDriverUnavailable) {
+            // Expected: no implicit fallback to the legacy PHP driver.
+        }
+        $calls = $probe->calls;
+        $report = app(GameServerAdministration::class)->testStored($inherited);
+        $this->assertFalse($report['compatible']);
+        $this->assertSame('driver_verification_required', $report['error']);
+        $this->assertSame($calls, $probe->calls);
+        $this->assertSame('driver_verification_required', $inherited->refresh()->database_error);
+        $this->assertSame($separateProfile, $snapshots->get($separate));
+        $this->assertSame('configured', $separate->database_status);
+
+        $activation->apply($login);
+        $activation->apply($inherited);
+        $this->assertInstanceOf(UniversalLoginDriver::class, app(LoginServerDriverResolver::class)->resolve($login));
+        $this->assertInstanceOf(UniversalGameWorldDriver::class, app(GameWorldDriverResolver::class)->resolve($inherited->refresh()));
+        $this->assertSame('configured', $inherited->database_status);
     }
 
     public function test_unverified_custom_login_profile_is_not_executable(): void

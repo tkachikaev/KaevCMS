@@ -4,7 +4,7 @@
 
 Use **Servers → Drivers** to create, duplicate, import and export LoginServer or GameServer JSON profiles. Profiles describe data mappings and capabilities, never DB addresses, passwords, arbitrary SQL or PHP. Only MySQL/MariaDB is supported. MS SQL/PTS is **not implemented**.
 
-**Legacy Mobius and RUSaCis PHP drivers remain available.** Editing a catalog entry does not switch an active server. Select the JSON driver in server settings and explicitly verify/apply it. The applied copy has an immutable SHA256 digest and HMAC binding to connection credentials. Changing those settings or editing the profile requires a fresh verification/application.
+**Legacy Mobius and RUSaCis PHP drivers remain available.** Editing a catalog entry does not switch an active server. Select the JSON driver in server settings and explicitly verify/apply it. The applied copy has an immutable SHA256 digest and HMAC binding to connection credentials. Changing those settings or editing the profile requires a fresh verification/application. After changing LoginServer database credentials, reapply JSON for any GameServer inheriting that connection as well. CMS does not automatically fall back to PHP; GameServers with separate database credentials are unaffected by this change.
 
 ## LoginServer editor
 
