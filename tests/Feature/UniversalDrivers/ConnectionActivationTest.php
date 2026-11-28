@@ -8,6 +8,7 @@ use App\Models\GameServer;
 use App\Models\LoginServer;
 use App\Services\GameAccounts\LoginServerDriverResolver;
 use App\Services\GameAccounts\UniversalLoginDriver;
+use App\Services\Servers\GameServerAdministration;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
 use App\Services\Servers\ServerDriverRegistry;
 use App\Services\Servers\UniversalDriverActivation;
@@ -99,6 +100,34 @@ final class ConnectionActivationTest extends TestCase
         $server->update(['database_name' => 'another_game_db']);
         $this->expectException(RuntimeException::class);
         app(ConnectionProfileSnapshots::class)->get($server);
+    }
+
+    public function test_saving_same_game_driver_keeps_verified_snapshot_and_changed_target_requires_verification(): void
+    {
+        $probe = new class implements ExternalDatabaseConnectionTester
+        {
+            public function test(array $connection, array $requirements, bool $driverReady): array
+            {
+                return ['connected' => true, 'compatible' => true, 'driver_ready' => true,
+                    'server_version' => 'fixture', 'error' => null, 'error_class' => null, 'latency_ms' => 1, 'checks' => []];
+            }
+        };
+        $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
+        $server = GameServer::factory()->create(['driver' => 'rusacis', 'use_login_server_connection' => true]);
+        $snapshots = app(ConnectionProfileSnapshots::class);
+        $snapshots->verifyAndRecord($server, 'rusacis', static fn (): bool => true);
+        $original = $snapshots->get($server);
+        $values = ['driver' => 'rusacis', 'login_server_id' => $server->login_server_id, 'use_login_server_connection' => true];
+        $admin = app(GameServerAdministration::class);
+
+        $server = $admin->updateConnection($server, $values);
+        $this->assertSame($original, $snapshots->get($server));
+
+        $otherLogin = LoginServer::factory()->create();
+        $server = $admin->updateConnection($server, array_replace($values, ['login_server_id' => $otherLogin->id]));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('snapshot integrity check failed');
+        $snapshots->get($server);
     }
 
     public function test_unverified_custom_login_profile_is_not_executable(): void

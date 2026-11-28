@@ -96,6 +96,29 @@ class ExternalCharacterRescueGatewayTest extends TestCase
         $this->assertSame(['z'], $capabilities->missingColumns);
     }
 
+    public function test_native_rescue_rejects_non_unique_character_identity_without_writing(): void
+    {
+        Schema::connection('character_rescue_test')->dropIfExists('characters');
+        Schema::connection('character_rescue_test')->create('characters', static function (Blueprint $table): void {
+            $table->unsignedBigInteger('charId');
+            $table->string('char_name');
+            $table->string('account_name');
+            foreach (['x', 'y', 'z', 'online', 'lastAccess', 'deletetime', 'accesslevel'] as $name) {
+                $table->bigInteger($name);
+            }
+        });
+        $this->insertCharacter();
+        $this->insertCharacter(['char_name' => 'Duplicate']);
+        $this->assertFalse($this->gateway->capabilities($this->server)->supported);
+
+        $result = $this->gateway->rescue(
+            $this->server, 'PlayerOne', 100, ['x' => 1, 'y' => 2, 'z' => 3], CarbonImmutable::now(),
+        );
+
+        $this->assertSame(CharacterRescueWriteResult::UNSUPPORTED, $result->status);
+        $this->assertSame([10, 10], DB::connection('character_rescue_test')->table('characters')->pluck('x')->all());
+    }
+
     public function test_it_moves_an_owned_offline_character_and_returns_old_coordinates(): void
     {
         $this->insertCharacter();

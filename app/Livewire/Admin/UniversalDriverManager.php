@@ -73,16 +73,6 @@ final class UniversalDriverManager extends Component
     /** @var array<string,bool> */
     public array $enabled = [];
 
-    public string $newRelation = '';
-
-    public string $newField = '';
-
-    public string $newRanking = '';
-
-    public string $newFeature = '';
-
-    public string $newFixedColumn = '';
-
     public string $templateId = '';
 
     /** @var list<array{column:string,value:mixed}> */
@@ -595,71 +585,6 @@ final class UniversalDriverManager extends Component
         }
     }
 
-    public function addRequirement(): void
-    {
-        $this->managePermission();
-        if (count($this->draft['config']['requirements'] ?? []) >= 32) {
-            return;
-        }
-        $this->draft['config']['requirements'][] = ['table' => '', 'columns' => [''], 'required' => false];
-    }
-
-    public function removeRequirement(int $index): void
-    {
-        $this->managePermission();
-        if (count($this->draft['config']['requirements'] ?? []) <= 1) {
-            return;
-        }
-        unset($this->draft['config']['requirements'][$index]);
-        $this->draft['config']['requirements'] = array_values($this->draft['config']['requirements']);
-    }
-
-    public function addColumn(int $index, string $kind): void
-    {
-        $this->managePermission();
-        if (! in_array($kind, ['columns', 'optional_columns', 'any_columns'], true) || ! isset($this->draft['config']['requirements'][$index])) {
-            return;
-        }
-        $list = &$this->draft['config']['requirements'][$index][$kind];
-        $list ??= [];
-        if (count($list) < 80) {
-            $list[] = '';
-        }
-    }
-
-    public function removeColumn(int $index, string $kind, int $column): void
-    {
-        $this->managePermission();
-        if (! in_array($kind, ['columns', 'optional_columns', 'any_columns'], true)) {
-            return;
-        }
-        unset($this->draft['config']['requirements'][$index][$kind][$column]);
-        $this->draft['config']['requirements'][$index][$kind] = array_values($this->draft['config']['requirements'][$index][$kind] ?? []);
-    }
-
-    public function addRelation(): void
-    {
-        $this->managePermission();
-        $name = trim($this->newRelation);
-        if (preg_match('/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D', $name) !== 1 || count($this->draft['config']['relations'] ?? []) >= 16 || isset($this->draft['config']['relations'][$name])) {
-            return;
-        }
-        $this->draft['config']['relations'][$name] = ['table' => '', 'local_column' => '', 'foreign_column' => '', 'join' => 'left', 'cardinality' => 'one'];
-        $this->newRelation = '';
-    }
-
-    public function addGameRelation(): void
-    {
-        $this->managePermission();
-        abort_unless($this->editing && $this->draft['type'] === 'game', 409);
-        if (count($this->draft['config']['relations']) >= 16) {
-            return;
-        }
-        for ($index = 1; isset($this->draft['config']['relations']['relation_'.$index]); $index++) {
-        }
-        $this->draft['config']['relations']['relation_'.$index] = ['table' => '', 'local_column' => '', 'foreign_column' => '', 'join' => 'left', 'cardinality' => 'one'];
-    }
-
     public function configureGameFeature(string $name): void
     {
         $this->managePermission();
@@ -675,23 +600,6 @@ final class UniversalDriverManager extends Component
             $this->draft['config']['relations']['leader'] ??= ['table' => $characterTable, 'local_column' => 'leader_id', 'foreign_column' => $id, 'join' => 'left', 'cardinality' => 'one'];
             $this->draft['config']['features']['castles'] ??= ['relation' => 'castle', 'name_source' => 'catalog', 'clan_relation' => 'clan', 'leader_relation' => 'leader', 'clan_columns' => ['id' => 'clan_id', 'name' => 'clan_name', 'level' => 'clan_level', 'reputation' => 'reputation_score'], 'leader_name_column' => $this->draft['config']['characters']['fields']['name']['column']];
         }
-    }
-
-    public function removeRelation(string $name): void
-    {
-        $this->managePermission();
-        unset($this->draft['config']['relations'][$name]);
-    }
-
-    public function addField(): void
-    {
-        $this->managePermission();
-        $field = $this->newField;
-        if (! in_array($field, ProfileFormat::FIELD_NAMES, true)) {
-            return;
-        }
-        $this->draft['config']['characters']['fields'][$field] ??= ['kind' => 'column', 'column' => ''];
-        $this->newField = '';
     }
 
     public function changeFieldKind(string $field, string $kind): void
@@ -822,48 +730,10 @@ final class UniversalDriverManager extends Component
         $this->draft['config']['filters'] = array_values($this->draft['config']['filters']);
     }
 
-    public function addRanking(): void
-    {
-        $this->managePermission();
-        if (! in_array($this->newRanking, ['level', 'pvp', 'pk', 'play_time'], true)) {
-            return;
-        }
-        $this->draft['config']['rankings'][$this->newRanking] ??= ['column' => '', 'secondary' => null, 'positive_only' => true];
-        $this->newRanking = '';
-    }
-
-    public function removeRanking(string $name): void
-    {
-        $this->managePermission();
-        unset($this->draft['config']['rankings'][$name]);
-    }
-
-    public function addFeature(): void
-    {
-        $this->managePermission();
-        if ($this->newFeature === 'heroes') {
-            $this->draft['config']['features']['heroes'] ??= ['relation' => ''];
-        } elseif ($this->newFeature === 'castles') {
-            $this->draft['config']['features']['castles'] ??= ['relation' => '', 'name_source' => 'catalog'];
-        }
-        $this->newFeature = '';
-    }
-
     public function removeFeature(string $name): void
     {
         $this->managePermission();
         unset($this->draft['config']['features'][$name]);
-    }
-
-    public function addFixedValue(): void
-    {
-        $this->managePermission();
-        $key = trim($this->newFixedColumn);
-        if (preg_match('/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D', $key) !== 1 || count($this->draft['config']['accounts']['create']['fixed_values'] ?? []) >= 16) {
-            return;
-        }
-        $this->draft['config']['accounts']['create']['fixed_values'][$key] = '0';
-        $this->newFixedColumn = '';
     }
 
     private function loadRegistrationRows(): void
@@ -889,12 +759,6 @@ final class UniversalDriverManager extends Component
         unset($this->registrationRows[$index]);
         $this->registrationRows = array_values($this->registrationRows);
         $this->resetValidation('registrationRows');
-    }
-
-    public function removeFixedValue(string $key): void
-    {
-        $this->managePermission();
-        unset($this->draft['config']['accounts']['create']['fixed_values'][$key]);
     }
 
     /** @return list<string> */

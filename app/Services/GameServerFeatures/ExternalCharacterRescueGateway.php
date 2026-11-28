@@ -117,6 +117,9 @@ final class ExternalCharacterRescueGateway implements CharacterRescueGateway
                         $columns['z'] => $target['z'],
                     ]);
 
+                if ($updated > 1) {
+                    throw new RuntimeException('Character rescue matched multiple rows; transaction rolled back.');
+                }
                 if ($updated !== 1) {
                     return new CharacterRescueWriteResult(
                         CharacterRescueWriteResult::STATE_CHANGED,

@@ -16,7 +16,6 @@ final readonly class CharacterRescueMapping
         public string $table,
         public array $columns,
         private array $config,
-        private bool $universal,
     ) {}
 
     public static function native(string $driver): ?self
@@ -43,7 +42,7 @@ final readonly class CharacterRescueMapping
                     ? ['column' => 'deletetime', 'op' => 'zero_or_null']
                     : ['column' => 'deletetime', 'op' => 'eq', 'value' => 0],
             ],
-        ], false);
+        ]);
     }
 
     /** @param array<string,mixed> $profile */
@@ -134,7 +133,7 @@ final readonly class CharacterRescueMapping
             return null;
         }
 
-        return new self($table, $columns, $config, true);
+        return new self($table, $columns, $config);
     }
 
     /** @return list<string> */
@@ -156,17 +155,17 @@ final readonly class CharacterRescueMapping
         if ($missing !== []) {
             return new CharacterRescueCapabilities(false, $missing);
         }
-        if ($this->universal) {
-            $unique = false;
-            foreach ($schema->getIndexes($this->table) as $index) {
-                if ($index['unique'] && array_map('strtolower', $index['columns']) === [strtolower($this->columns['id'])]) {
-                    $unique = true;
-                    break;
-                }
+        $unique = false;
+        foreach ($schema->getIndexes($this->table) as $index) {
+            if ($index['unique'] && array_map('strtolower', $index['columns']) === [strtolower($this->columns['id'])]) {
+                $unique = true;
+                break;
             }
-            if (! $unique) {
-                return new CharacterRescueCapabilities(false);
-            }
+        }
+        if (! $unique) {
+            return new CharacterRescueCapabilities(false);
+        }
+        if ($connection->getDriverName() === 'mysql') {
             $types = [];
             foreach ($schema->getColumns($this->table) as $column) {
                 $types[strtolower($column['name'])] = strtolower($column['type_name']);
@@ -179,17 +178,15 @@ final readonly class CharacterRescueMapping
                     return new CharacterRescueCapabilities(false);
                 }
             }
-            if ($connection->getDriverName() === 'mysql') {
-                $table = $connection->selectOne(
-                    'SELECT ENGINE AS engine FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
-                    [$connection->getDatabaseName(), $connection->getTablePrefix().$this->table],
-                );
-                if (strtolower((string) ($table->engine ?? '')) !== 'innodb') {
-                    return new CharacterRescueCapabilities(false);
-                }
-            } elseif ($connection->getDriverName() !== 'sqlite') {
+            $table = $connection->selectOne(
+                'SELECT ENGINE AS engine FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+                [$connection->getDatabaseName(), $connection->getTablePrefix().$this->table],
+            );
+            if (strtolower((string) ($table->engine ?? '')) !== 'innodb') {
                 return new CharacterRescueCapabilities(false);
             }
+        } elseif ($connection->getDriverName() !== 'sqlite') {
+            return new CharacterRescueCapabilities(false);
         }
 
         return new CharacterRescueCapabilities(true);

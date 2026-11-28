@@ -349,8 +349,13 @@ final class GameServerAdministration
             $payload['database_password'] = $password;
         }
 
+        $driverChanged = $server->driver !== $payload['driver'];
         $server->update($payload);
-        app(UniversalDriverActivation::class)->invalidate($server);
+        if ($driverChanged) {
+            app(UniversalDriverActivation::class)->invalidate($server);
+        }
+        // Retain an applied snapshot for the same driver. A changed DB target
+        // fails its fingerprint check until the administrator verifies it again.
         $this->settings->restoreOrphanedAccountLinks($server);
     }
 
