@@ -8,7 +8,7 @@ Use **Servers → Drivers** to create, duplicate, import and export LoginServer 
 
 ## LoginServer editor
 
-First choose display name/ID, charset/collation, a supported game password format and capabilities. Then map account table and login/password/optional columns, registration constants and module fields. Lookup-only profiles can read account summaries without creation/password changes. Registration and account-area functions requiring the complete LoginServer capability set remain unavailable on such connections. Account writes require a **unique login index** and a long enough password column in the actual MySQL table. Login columns must store strings; numeric columns cannot represent logins.
+First choose display name/ID, charset/collation, a supported game password format and capabilities. Then map account table and login/password/optional columns, registration constants and module fields. Lookup-only profiles can read account summaries without creation/password changes; the password format and column are optional for them. Registration and account-area functions requiring the complete LoginServer capability set remain unavailable on such connections. Account writes require a **unique login index** and a long enough password column in the actual MySQL table. Login columns must store strings; numeric columns cannot represent logins.
 
 Allowed schemes: SHA-1/Base64, BCrypt `$2a$`, SHA-1/MD5/SHA-256/Whirlpool hex. Game-client acceptance, retries after ambiguous password writes and server-specific registration login rules require separate testing; arbitrary regex or custom code in JSON remains disallowed.
 
@@ -48,4 +48,14 @@ Modules must still enforce permissions, ownership, business constraints and use 
 
 Offline checks: `validate-profiles.php`, `validate-write-profiles.php`, `validate-editor-drafts.php`, `validate-schema-preflight.php` under `tests/Integration/UniversalDrivers`. Remaining acceptance gates are disposable MySQL/MariaDB parity, PHPUnit/PHPStan, Playwright, clean install/update (Windows/VDS/shared), and real game-client checks.
 
-Earlier development notes: [0.54.0 archive](history/UNIVERSAL_DRIVERS_0.54.0.md).
+To run the disposable MySQL/MariaDB fixtures locally with Composer dependencies installed:
+
+```powershell
+$env:KAEV_UNIVERSAL_MYSQL_TEST = "1"
+$env:KAEV_MYSQL_TEST_HOST = "127.0.0.1"
+$env:KAEV_MYSQL_TEST_USER = "root"
+$env:KAEV_MYSQL_TEST_PASSWORD = Read-Host "Local test MySQL password"
+php tests/Integration/UniversalDrivers/mysql-fixtures.php
+```
+
+Use a dedicated local test server and an account permitted to create and drop temporary databases. This check does not establish compatibility with the actual game client.

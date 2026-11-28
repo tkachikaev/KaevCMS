@@ -7,7 +7,7 @@ Planned after public feedback:
 - additional game-server schema profiles and community-tested drivers;
 - safer module distribution and update workflows;
 - expanded hosting diagnostics;
-- optional convenience tooling without weakening the private-core deployment model.
+- optional convenience tooling without weakening security or update compatibility.
 
 Already shipped features, such as Donations with YooMoney, the wallet, and RUSaCis support, are described in their own guides.
 

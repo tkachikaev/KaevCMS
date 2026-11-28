@@ -112,6 +112,15 @@ foreach ($databaseNames as $type => $db) {
     if (count($reader->heroes($connection, $custom)) !== 1) {
         throw new RuntimeException("Custom JSON heroes table/column mapping failed for $type");
     }
+    if ($type === 'rusacis') {
+        // A computed hero flag must not query an unavailable optional active column.
+        unset($custom['config']['features']['heroes']['active_column'], $custom['config']['features']['heroes']['active_value']);
+        $ranked = $reader->ranking($connection, $custom, 'level', 10);
+        $bob = (new UniversalGameCharacterReader)->charactersForAccount($connection, $custom, 'bob');
+        if ((int) $ranked[1]['hero'] !== 0 || (int) $bob[0]['hero'] !== 0) {
+            throw new RuntimeException('Missing optional active column produced inconsistent hero status.');
+        }
+    }
     $pdo->exec('DROP TABLE world_heroes');
 
     $pdo->exec('CREATE TABLE world_castles (world_id BIGINT, world_name VARCHAR(60)) ENGINE=InnoDB');

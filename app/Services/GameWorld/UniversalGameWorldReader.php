@@ -364,13 +364,16 @@ final class UniversalGameWorldReader
         }
         $feature = $config['features']['heroes'] ?? null;
         $heroIds = [];
-        if ($feature !== null && $this->featureIsAvailable($config, $columns, 'heroes')) {
-            $relation = $config['relations'][$feature['relation']];
+        $relation = $feature === null ? null : $config['relations'][$feature['relation']];
+        $playedColumn = $feature['played_column'] ?? 'played';
+        $activeColumn = $feature['active_column'] ?? 'active';
+        if ($relation !== null && $relation['local_column'] === $config['characters']['fields']['id']['column']
+            && ProfileSchema::hasAll($columns[$relation['table']] ?? [], [$relation['foreign_column'], $playedColumn, $activeColumn])) {
             $values = array_column($rows, '__hero_character_id');
             foreach ($database->table($relation['table'])
                 ->whereIn($relation['foreign_column'], $values)
-                ->where($feature['played_column'] ?? 'played', $feature['played_value'] ?? 1)
-                ->where($feature['active_column'] ?? 'active', $feature['active_value'] ?? 1)
+                ->where($playedColumn, $feature['played_value'] ?? 1)
+                ->where($activeColumn, $feature['active_value'] ?? 1)
                 ->get([$relation['foreign_column']]) as $item) {
                 $heroIds[(string) $item->{$relation['foreign_column']}] = true;
             }
