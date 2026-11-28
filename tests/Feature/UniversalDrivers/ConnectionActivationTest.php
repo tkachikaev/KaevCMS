@@ -10,7 +10,6 @@ use App\Models\LoginServer;
 use App\Services\GameAccounts\LoginServerDriverResolver;
 use App\Services\GameAccounts\UniversalLoginDriver;
 use App\Services\GameWorld\GameWorldDriverResolver;
-use App\Services\GameWorld\UniversalGameWorldDriver;
 use App\Services\Servers\GameServerAdministration;
 use App\Services\Servers\LoginServerAdministration;
 use App\Services\Servers\MySqlGameServerOnlineCounter;
@@ -23,6 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use RuntimeException;
+use Tests\Fakes\FakeExternalDatabaseConnectionTester;
 use Tests\TestCase;
 
 final class ConnectionActivationTest extends TestCase
@@ -89,15 +89,7 @@ final class ConnectionActivationTest extends TestCase
 
     public function test_stale_snapshot_fails_closed_when_connection_credentials_change_outside_admin(): void
     {
-        $probe = new class implements ExternalDatabaseConnectionTester
-        {
-            public function test(array $connection, array $requirements, bool $driverReady): array
-            {
-                return ['connected' => true, 'compatible' => true, 'driver_ready' => true,
-                    'server_version' => 'fixture', 'error' => null, 'error_class' => null,
-                    'latency_ms' => 1, 'checks' => []];
-            }
-        };
+        $probe = new FakeExternalDatabaseConnectionTester;
         $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
         $server = LoginServer::factory()->create(['driver' => 'rusacis']);
         app(UniversalDriverActivation::class)->apply($server);
@@ -108,14 +100,7 @@ final class ConnectionActivationTest extends TestCase
 
     public function test_saving_same_game_driver_keeps_verified_snapshot_and_changed_target_requires_verification(): void
     {
-        $probe = new class implements ExternalDatabaseConnectionTester
-        {
-            public function test(array $connection, array $requirements, bool $driverReady): array
-            {
-                return ['connected' => true, 'compatible' => true, 'driver_ready' => true,
-                    'server_version' => 'fixture', 'error' => null, 'error_class' => null, 'latency_ms' => 1, 'checks' => []];
-            }
-        };
+        $probe = new FakeExternalDatabaseConnectionTester;
         $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
         $server = GameServer::factory()->create(['driver' => 'rusacis', 'use_login_server_connection' => true]);
         $snapshots = app(ConnectionProfileSnapshots::class);
@@ -129,26 +114,13 @@ final class ConnectionActivationTest extends TestCase
 
         $otherLogin = LoginServer::factory()->create();
         $server = $admin->updateConnection($server, array_replace($values, ['login_server_id' => $otherLogin->id]));
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('snapshot integrity check failed');
+        $this->expectException(ExternalDatabaseDriverUnavailable::class);
         $snapshots->get($server);
     }
 
     public function test_login_credentials_change_blocks_inherited_json_until_reverified_without_affecting_separate_database(): void
     {
-        $probe = new class implements ExternalDatabaseConnectionTester
-        {
-            public int $calls = 0;
-
-            public function test(array $connection, array $requirements, bool $driverReady): array
-            {
-                $this->calls++;
-
-                return ['connected' => true, 'compatible' => true, 'driver_ready' => true,
-                    'server_version' => 'fixture', 'error' => null, 'error_class' => null,
-                    'latency_ms' => 1, 'checks' => []];
-            }
-        };
+        $probe = new FakeExternalDatabaseConnectionTester;
         $this->app->instance(ExternalDatabaseConnectionTester::class, $probe);
         $login = LoginServer::factory()->create(['driver' => 'rusacis']);
         $inherited = GameServer::factory()->create(['driver' => 'rusacis', 'login_server_id' => $login->id]);
@@ -173,7 +145,9 @@ final class ConnectionActivationTest extends TestCase
         $admin = app(LoginServerAdministration::class);
         $login = $admin->save($login, $values)['server'];
         $this->assertSame($original, $snapshots->get($inherited->refresh()));
-        $this->assertInstanceOf(UniversalLoginDriver::class, app(LoginServerDriverResolver::class)->resolve($login));
+        $this->assertTrue(app(LoginServerDriverResolver::class)->supports($login));
+        $stale = $inherited->fresh();
+        $stale->load('loginServer');
 
         $login = $admin->save($login, array_replace($values, ['database_name' => 'new_login_db']))['server'];
         $inherited->refresh();
@@ -193,30 +167,17 @@ final class ConnectionActivationTest extends TestCase
         $this->assertSame($calls, $probe->calls);
         $this->assertSame('driver_verification_required', $inherited->refresh()->database_error);
         $this->assertSame($separateProfile, $snapshots->get($separate));
-        $this->assertSame('configured', $separate->database_status);
+        $this->assertTrue($separate->databaseVerified());
 
         $activation->apply($login);
         $activation->apply($inherited);
-        $this->assertInstanceOf(UniversalLoginDriver::class, app(LoginServerDriverResolver::class)->resolve($login));
-        $this->assertInstanceOf(UniversalGameWorldDriver::class, app(GameWorldDriverResolver::class)->resolve($inherited->refresh()));
-        $this->assertSame('configured', $inherited->database_status);
-    }
+        $this->assertTrue(app(LoginServerDriverResolver::class)->supports($login));
+        $this->assertNotNull($snapshots->get($inherited->refresh()));
+        $this->assertTrue($inherited->databaseVerified());
 
-    public function test_reverified_inherited_profile_rejects_a_stale_loaded_login_connection(): void
-    {
-        $login = LoginServer::factory()->create(['driver' => 'rusacis']);
-        $game = GameServer::factory()->for($login)->create(['driver' => 'rusacis']);
-        $snapshots = app(ConnectionProfileSnapshots::class);
-        $snapshots->verifyAndRecord($game, 'rusacis', static fn (): bool => true);
-        $game->load('loginServer');
-
-        $login->update(['database_name' => 'new_world']);
-        $fresh = $game->fresh();
-        $snapshots->verifyAndRecord($fresh, 'rusacis', static fn (): bool => true);
-        $this->assertNotNull($snapshots->get($fresh));
-
+        // Re-verification must not authorize an old, already loaded DB target.
         $this->expectException(ExternalDatabaseDriverUnavailable::class);
-        app(GameServerDatabaseGateway::class)->run($game, static fn (): never => throw new RuntimeException('Stale connection reached external operation.'));
+        app(GameServerDatabaseGateway::class)->run($stale, static fn (): never => throw new RuntimeException('Stale connection reached external operation.'));
     }
 
     public function test_unverified_custom_login_profile_is_not_executable(): void

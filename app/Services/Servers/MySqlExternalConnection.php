@@ -14,7 +14,8 @@ final class MySqlExternalConnection
 {
     public function __construct(private readonly MySqlSessionQueryTimeout $queryTimeout) {}
 
-    /** @param array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string} $values
+    /**
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $values
      * @return array<string,mixed>
      */
     public static function configuration(array $values): array
@@ -45,9 +46,11 @@ final class MySqlExternalConnection
         ];
     }
 
-    /** @template TResult
-     * @param array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string} $values
-     * @param callable(Connection): TResult $callback
+    /**
+     * @template TResult
+     *
+     * @param  array{host:string,port:int,database:string,username:string,password:string,charset:string,collation?:string}  $values
+     * @param  callable(Connection): TResult  $callback
      * @return TResult
      */
     public function run(string $prefix, array $values, callable $callback): mixed
@@ -55,12 +58,13 @@ final class MySqlExternalConnection
         $name = $prefix.Str::lower(Str::random(12));
         try {
             $database = DB::connectUsing($name, self::configuration($values), true);
-            if (! $database instanceof Connection) {
-                throw new RuntimeException('Unsupported external database connection type.');
-            }
-            $this->queryTimeout->apply($database);
+            if ($database instanceof Connection) {
+                $this->queryTimeout->apply($database);
 
-            return $callback($database);
+                return $callback($database);
+            }
+
+            throw new RuntimeException('Unsupported external database connection type.');
         } finally {
             try {
                 DB::purge($name);

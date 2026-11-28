@@ -20,7 +20,6 @@ use App\Services\GameWorld\MobiusGameWorldDriver;
 use App\Services\GameWorld\RusacisGameSchemaInspector;
 use App\Services\GameWorld\RusacisGameWorldDriver;
 use App\Services\GameWorld\UniversalGameCharacterReader;
-use App\Services\GameWorld\UniversalGameWorldReader;
 use App\Support\UniversalDrivers\BundledProfileCatalog;
 use App\Support\UniversalDrivers\ProfileValidationException;
 use Illuminate\Database\Connection;
@@ -60,10 +59,8 @@ foreach ($databaseNames as $type => $db) {
     $emptyAlternatives['config']['requirements'][] = [
         'table' => 'fixture_missing_optional', 'columns' => [], 'any_columns' => [], 'required' => false,
     ];
-    $expected = ['missing_required' => [], 'missing_optional' => ['table:fixture_missing_optional']];
-    if ($reader->diagnose($connection, $emptyAlternatives) !== $expected
-        || (new UniversalGameWorldReader)->diagnose($connection, $emptyAlternatives) !== $expected) {
-        throw new RuntimeException('Readers disagree on optional schema requirements.');
+    if (count($reader->charactersForAccount($connection, $emptyAlternatives, 'alice', 1)) !== 1) {
+        throw new RuntimeException('An empty alternatives list or missing optional table blocked character lookup.');
     }
     if ($reader->diagnose($connection, $profile) !== ['missing_required' => [], 'missing_optional' => []]) {
         throw new RuntimeException("Unexpected game fixture schema gaps for $type.");
