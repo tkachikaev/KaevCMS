@@ -216,8 +216,8 @@ for (const variant of [
         expect(exported.config.filters[0].link).toEqual({ local_column: 'player_id', foreign_column: 'char_id' });
         expect(exported.config.characters.fields.title.kind).toBe('eav');
         expect(exported.config.relations[exported.config.characters.fields.title.relation].join).toBe('inner');
-        expect(exported.config.capabilities).toEqual(['characters', 'castles']);
-        expect(Object.keys(exported.config.rankings)).toHaveLength(0);
+        expect(exported.config.capabilities).toEqual(['characters', 'level', 'pvp', 'pk', 'play_time', 'castles']);
+        expect(Object.keys(exported.config.rankings)).toEqual(['level', 'pvp', 'pk', 'play_time']);
         await gameCard.locator('button[wire\\:click^="editProfile"]').click();
         await page.locator('.ud-game-editor button[wire\\:click="closeEditor"]').first().click();
         await gameCard.locator(".ud-menu summary").click();

@@ -18,7 +18,7 @@ use InvalidArgumentException;
  */
 final class UniversalGameWorldReader
 {
-    private const RANKING_SECTIONS = ['level', 'pvp', 'pk', 'play_time'];
+    private const RANKING_FIELDS = ['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'];
 
     public function __construct(
         private readonly ProfileValidator $validator = new ProfileValidator,
@@ -64,15 +64,9 @@ final class UniversalGameWorldReader
         $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
         $supported = [];
-        $base = $config['characters']['table'];
-        $characterColumns = $schema['columns'][$base] ?? [];
-        $hasEav = in_array('eav', array_column($config['characters']['fields'], 'kind'), true);
-        foreach (self::RANKING_SECTIONS as $section) {
-            $rank = $config['rankings'][$section] ?? null;
-            if (! $hasEav && in_array($section, $config['capabilities'], true) && is_array($rank) &&
-                ProfileSchema::hasAll($characterColumns, array_values(array_filter([
-                    $rank['column'] ?? null, $rank['secondary'] ?? null,
-                ], 'is_string')))) {
+        foreach (array_keys(self::RANKING_FIELDS) as $section) {
+            if (in_array($section, $config['capabilities'], true)
+                && $this->rankingColumn($config, $schema['columns'], $section) !== null) {
                 $supported[] = $section;
             }
         }
@@ -94,24 +88,23 @@ final class UniversalGameWorldReader
      */
     public function ranking(Connection $database, array $profile, string $section, int $limit, ?string $chronicle = null): array
     {
-        if (! in_array($section, self::RANKING_SECTIONS, true)) {
+        if (! isset(self::RANKING_FIELDS[$section])) {
             throw new InvalidArgumentException('Unsupported character ranking section.');
         }
         $config = $this->configuration($database, $profile, $section);
         $schema = ProfileSchema::inspect($database, $config['requirements']);
         $this->requireCore($schema);
+        $rankColumn = $this->rankingColumn($config, $schema['columns'], $section);
+        if ($rankColumn === null) {
+            throw new ProfileValidationException('Ranking source is unavailable.');
+        }
         $query = $this->characterQuery($database, $config, $schema['columns'], $chronicle);
         $rank = $config['rankings'][$section];
-        $base = $config['characters']['table'];
-        $rankColumn = $rank['column'];
         $secondary = $rank['secondary'];
-        if (! ProfileSchema::hasAll($schema['columns'][$base], array_values(array_filter([$rankColumn, $secondary])))) {
-            throw new ProfileValidationException('Ranking column is missing from the character table.');
-        }
         if ($rank['positive_only']) {
-            $query->where('c.'.$rankColumn, '>', 0);
+            $query->where($rankColumn, '>', 0);
         }
-        $query->orderByDesc('c.'.$rankColumn);
+        $query->orderByDesc($rankColumn);
         if ($secondary !== null) {
             $query->orderByDesc('c.'.$secondary);
         }
@@ -271,6 +264,73 @@ final class UniversalGameWorldReader
         return ProfileSchema::hasAll($available, $needed);
     }
 
+    /** Resolve the configured rank source using the same schema and aliases as the world query.
+     * @param  array<string,mixed>  $config
+     * @param  array<string,list<string>>  $columns
+     */
+    private function rankingColumn(array $config, array $columns, string $section): ?string
+    {
+        $rank = $config['rankings'][$section] ?? null;
+        if ($rank === null) {
+            return null;
+        }
+        $baseColumns = $columns[$config['characters']['table']] ?? [];
+        if ($rank['secondary'] !== null && ! ProfileSchema::hasAll($baseColumns, [$rank['secondary']])) {
+            return null;
+        }
+        $name = self::RANKING_FIELDS[$section];
+        $field = $config['characters']['fields'][$name] ?? [];
+        if (($field['kind'] ?? null) === 'eav') {
+            if ($rank['column'] !== $field['value_column']) {
+                return null;
+            }
+            foreach ($this->eavGroups($config, $columns) as $group) {
+                if (isset($group['fields'][$name])) {
+                    return $group['alias'].'.'.$name;
+                }
+            }
+
+            return null;
+        }
+
+        return ProfileSchema::hasAll($baseColumns, [$rank['column']]) ? 'c.'.$rank['column'] : null;
+    }
+
+    /**
+     * Fields sharing a table/link/key are projected from the same matching row.
+     * No arbitrary SQL is accepted from a profile.
+     *
+     * @param  array<string,mixed>  $config
+     * @param  array<string,list<string>>  $columns
+     * @return list<array{alias:string,relation:array<string,mixed>,key_column:string,key_value:mixed,fields:array<string,string>}>
+     */
+    private function eavGroups(array $config, array $columns): array
+    {
+        $groups = [];
+        $baseColumns = $columns[$config['characters']['table']] ?? [];
+        foreach ($config['characters']['fields'] as $name => $field) {
+            if ($field['kind'] !== 'eav') {
+                continue;
+            }
+            $relation = $config['relations'][$field['relation']];
+            if (! ProfileSchema::hasAll($baseColumns, [$relation['local_column']])
+                || ! ProfileSchema::hasAll($columns[$relation['table']] ?? [], [$relation['foreign_column'], $field['key_column'], $field['value_column']])) {
+                continue;
+            }
+            $key = json_encode([$field['relation'], $field['key_column'], $field['key_value']], JSON_THROW_ON_ERROR);
+            $groups[$key] ??= [
+                'alias' => 'ud_eav_'.count($groups),
+                'relation' => $relation,
+                'key_column' => $field['key_column'],
+                'key_value' => $field['key_value'],
+                'fields' => [],
+            ];
+            $groups[$key]['fields'][$name] = $field['value_column'];
+        }
+
+        return array_values($groups);
+    }
+
     /** @param array<string,mixed> $config
      * @param  array<string,list<string>>  $columns
      */
@@ -304,6 +364,28 @@ final class UniversalGameWorldReader
             $query->leftJoin($relation['table'].' as r_'.$name, 'r_'.$name.'.'.$relation['foreign_column'], '=', 'c.'.$relation['local_column']);
             $joined[$name] = true;
         }
+        $eavColumns = [];
+        foreach ($this->eavGroups($config, $columns) as $group) {
+            $relation = $group['relation'];
+            $alias = $group['alias'];
+            // A key must identify exactly one row. Ambiguous rows are not
+            // ranked as a fabricated value or multiplied by a many-row join.
+            $sub = $database->table($relation['table'])
+                ->select($relation['foreign_column'].' as ud_owner_id')
+                ->where($group['key_column'], $group['key_value'])
+                ->groupBy($relation['foreign_column'])
+                ->havingRaw('COUNT(*) = 1');
+            $grammar = $database->getQueryGrammar();
+            foreach ($group['fields'] as $name => $column) {
+                $sub->selectRaw('MAX('.$grammar->wrap($column).') as '.$grammar->wrap($name));
+                $eavColumns[$name] = $alias.'.'.$name;
+            }
+            if ($relation['join'] === 'inner') {
+                $query->joinSub($sub, $alias, $alias.'.ud_owner_id', '=', 'c.'.$relation['local_column']);
+            } else {
+                $query->leftJoinSub($sub, $alias, $alias.'.ud_owner_id', '=', 'c.'.$relation['local_column']);
+            }
+        }
         foreach ($fields as $name => $field) {
             if ($field['kind'] === 'column' && ProfileSchema::hasAll($mainColumns, [$field['column']])) {
                 $query->addSelect('c.'.$field['column'].' as '.$name);
@@ -325,7 +407,11 @@ final class UniversalGameWorldReader
                     $query->addSelect('c.herountil as __hero_until');
                 }
             } elseif ($field['kind'] === 'eav') {
-                throw new ProfileValidationException('EAV world ranking requires a separately verified aggregate mapping; use character lookup until implemented.');
+                if (isset($eavColumns[$name])) {
+                    $query->addSelect($eavColumns[$name].' as '.$name);
+                } else {
+                    $query->selectRaw('NULL as '.$database->getQueryGrammar()->wrap($name));
+                }
             }
         }
 

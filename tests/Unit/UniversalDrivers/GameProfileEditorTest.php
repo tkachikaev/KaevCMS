@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 final class GameProfileEditorTest extends TestCase
 {
-    public function test_key_value_fields_do_not_advertise_unsupported_world_rankings(): void
+    public function test_key_value_fields_keep_supported_rankings_but_not_unsupported_hero_lists(): void
     {
         $profile = (new BundledProfileCatalog)->all()['game:rusacis'];
         $old = $profile['config'];
@@ -17,8 +17,8 @@ final class GameProfileEditorTest extends TestCase
         $profile['config']['relations']['stats'] = ['table' => 'character_stats', 'local_column' => 'obj_Id', 'foreign_column' => 'char_id', 'cardinality' => 'many', 'join' => 'left'];
         $result = (new GameProfileEditor)->prepare($profile, $old);
         (new ProfileValidator)->validate($result);
-        $this->assertSame(['characters', 'castles', 'character_rescue'], $result['config']['capabilities']);
-        $this->assertSame([], $result['config']['rankings']);
+        $this->assertSame(['characters', 'level', 'pvp', 'pk', 'play_time', 'castles', 'character_rescue'], $result['config']['capabilities']);
+        $this->assertSame(array_keys($profile['config']['rankings']), array_keys($result['config']['rankings']));
         $rules = array_column($result['config']['requirements'], null, 'table');
         $this->assertSame(['char_id', 'param', 'value'], $rules['character_stats']['columns']);
     }
@@ -35,7 +35,8 @@ final class GameProfileEditorTest extends TestCase
             $this->assertSame($profile['config']['features'], $result['config']['features']);
             $rules = array_column($result['config']['requirements'], null, 'table');
             if ($profile['id'] === 'lucera2') {
-                $this->assertSame(['characters'], $result['config']['capabilities']);
+                $this->assertSame(['characters', 'level', 'pvp', 'pk', 'play_time'], $result['config']['capabilities']);
+                $this->assertSame($profile['config']['rankings'], $result['config']['rankings']);
                 $this->assertTrue($rules['character_subclasses']['required']);
                 $this->assertEqualsCanonicalizing(['char_obj_id', 'active', 'level', 'exp', 'class_id'], $rules['character_subclasses']['columns']);
 

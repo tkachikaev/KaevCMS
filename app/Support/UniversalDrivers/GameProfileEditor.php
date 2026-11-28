@@ -73,15 +73,14 @@ final class GameProfileEditor
         $capabilities = ['characters'];
         $rankings = [];
         foreach (['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $rank => $fieldName) {
-            if ($hasEav || ($fields[$fieldName]['kind'] ?? null) !== 'column') {
+            if (! in_array($fields[$fieldName]['kind'] ?? null, ['column', 'eav'], true)) {
                 continue;
             }
             $ranking = ($config['rankings'][$rank] ?? []) + ['secondary' => null, 'positive_only' => $rank !== 'level'];
-            $ranking['column'] = $fields[$fieldName]['column'];
+            $ranking['column'] = $fields[$fieldName]['column'] ?? $fields[$fieldName]['value_column'];
             foreach ($original['characters']['fields'] ?? [] as $oldName => $oldField) {
-                if (($oldField['kind'] ?? '') === 'column' && ($ranking['secondary'] ?? null) === $oldField['column']
-                    && ($fields[$oldName]['kind'] ?? '') === 'column') {
-                    $ranking['secondary'] = $fields[$oldName]['column'];
+                if (($oldField['kind'] ?? '') === 'column' && ($ranking['secondary'] ?? null) === $oldField['column']) {
+                    $ranking['secondary'] = ($fields[$oldName]['kind'] ?? '') === 'column' ? $fields[$oldName]['column'] : null;
                     break;
                 }
             }

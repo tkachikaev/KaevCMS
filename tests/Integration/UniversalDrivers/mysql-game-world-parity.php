@@ -203,5 +203,34 @@ foreach ($databaseNames as $type => $db) {
     } catch (ProfileValidationException) {
         // Expected.
     }
+    if ($type === 'rusacis') {
+        // Lucera-style active subclass mapping: no server-specific SQL path,
+        // inactive subclasses must never influence the level or displayed class.
+        $pdo->exec('CREATE TABLE fixture_lucera_characters (obj_Id INT PRIMARY KEY, account_name VARCHAR(45), char_name VARCHAR(45), accesslevel INT, deletetime BIGINT, online INT, pvpkills INT, pkkills INT, onlinetime BIGINT) ENGINE=MyISAM');
+        $pdo->exec('CREATE TABLE fixture_lucera_subclasses (char_obj_id INT, active INT, level INT, exp BIGINT, class_id INT) ENGINE=MyISAM');
+        $pdo->exec("INSERT INTO fixture_lucera_characters VALUES (1,'alice','Alice',0,0,0,5,0,100), (2,'bob','Bob',0,0,0,2,3,200), (3,'bad','Ambiguous',0,0,0,99,99,999), (4,'gm','GM',1,0,0,999,999,999), (5,'gone','Deleted',0,1,0,999,999,999), (6,'empty','NoSubclass',0,0,0,999,999,999)");
+        $pdo->exec('INSERT INTO fixture_lucera_subclasses VALUES (1,1,60,1000,10), (1,0,90,9000,11), (2,1,70,2000,20), (3,1,80,3000,30), (3,1,81,3001,31), (4,1,99,9999,40), (5,1,99,9999,50)');
+        $lucera = $profiles['game:lucera2'];
+        $lucera['config']['characters']['table'] = 'fixture_lucera_characters';
+        $lucera['config']['relations']['subclass']['table'] = 'fixture_lucera_subclasses';
+        $lucera['config']['requirements'][0]['table'] = 'fixture_lucera_characters';
+        $lucera['config']['requirements'][1]['table'] = 'fixture_lucera_subclasses';
+        $expected = ['level' => ['Bob', 'Alice'], 'pvp' => ['Alice', 'Bob'], 'pk' => ['Bob'], 'play_time' => ['Bob', 'Alice']];
+        foreach ($expected as $section => $names) {
+            $ranked = $reader->ranking($connection, $lucera, $section, 10);
+            if (array_column($ranked, 'name') !== $names) {
+                throw new RuntimeException('Lucera active subclass ranking failed: '.$section);
+            }
+        }
+        $top = $reader->ranking($connection, $lucera, 'level', 1);
+        if ((int) $top[0]['level'] !== 70 || (int) $top[0]['class_id'] !== 20 || (int) $top[0]['experience'] !== 2000) {
+            throw new RuntimeException('Lucera ranked the wrong subclass or applied the limit before sorting.');
+        }
+        $caps = $reader->capabilities($connection, $lucera);
+        if (array_diff(array_keys($expected), $caps) !== [] || in_array('character_rescue', $caps, true)) {
+            throw new RuntimeException('Lucera ranking or rescue capabilities are incorrect.');
+        }
+        $pdo->exec('DROP TABLE fixture_lucera_subclasses, fixture_lucera_characters');
+    }
     echo "OK: $type rankings, heroes, castles, missing optional schema and custom JSON mapping\n";
 }

@@ -75,7 +75,7 @@ Do not recursively assign `0777`. Typical permissions and hosting caveats are do
 - Multilingual news, pages, settings, mail templates, and localized routes.
 - Owner, administrator, editor, and trusted Auditor roles; two-factor authentication and recovery codes.
 - Encrypted infrastructure credentials, redacted audit logs, a downloadable sanitized diagnostic package, and personal actionable administrator notifications.
-- Unified JSON driver engine with bundled L2J Mobius, Mobius Legacy and RUSaCis profiles; custom profiles can be configured, imported, exported and verified.
+- Unified JSON driver engine with bundled L2J Mobius, Mobius Legacy, RUSaCis and Lucera 2 profiles; custom profiles can be configured, imported, exported and verified.
 - Player game-account creation, password management, and configurable offline character rescue.
 - Public game statistics with caching and failure cooldowns.
 - Server-bound web inventory and neutral `kaev_reward_queue` delivery.
@@ -170,7 +170,7 @@ KaevCMS — открытая CMS на Laravel для серверов Lineage II
 - Многоязычные новости, страницы, настройки, почтовые шаблоны и маршруты.
 - Роли владельца, администратора, редактора и доверенного аудитора; двухфакторная защита и recovery codes.
 - Шифрование инфраструктурных реквизитов, очистка аудита от секретов, скачиваемый обезличенный диагностический пакет и персональные уведомления администраторов о событиях, требующих действий.
-- Единый JSON-движок драйверов с комплектными профилями L2J Mobius, Mobius Legacy и RUSaCis; настройка, импорт, экспорт и проверка пользовательских профилей.
+- Единый JSON-движок драйверов с комплектными профилями L2J Mobius, Mobius Legacy, RUSaCis и Lucera 2; настройка, импорт, экспорт и проверка пользовательских профилей.
 - Создание игровых аккаунтов, изменение игровых паролей и настраиваемый возврат персонажа в город (когда персонаж не в игре).
 - Публичная статистика с кешем и cooldown при сбоях.
 - Веб-инвентарь с привязкой к GameServer и нейтральной `kaev_reward_queue`.

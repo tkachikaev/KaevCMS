@@ -10,7 +10,7 @@ Use **Servers → Drivers** to create, duplicate, import and export LoginServer 
 
 Select the bundled **Lucera 2** profiles for LoginServer and GameServer. When the schemas are separate, configure a separate GameServer connection. Verify and apply each profile. The LoginServer profile uses Whirlpool/Base64 for `PasswordHash=whirlpool2`. If your server uses another supported format, choose it in the editor and reapply the profile. Match the CMS game login and password rules to the Lucera configuration.
 
-The LoginServer profile supports account creation and password changes. The GameServer profile reads characters, active subclasses and online counts. Rankings and character rescue are unavailable in the bundled Lucera 2 profile. The stock character table uses MyISAM. Compatibility was tested against the C6 and Classic SQL schemas; game-client sign-in and character creation require testing on the target server.
+The LoginServer profile supports account creation and password changes. The GameServer profile reads characters, active subclasses, online counts and level/PvP/PK/play-time rankings. Heroes, castles and character rescue are not enabled in the bundled Lucera 2 profile. The stock character table uses MyISAM; the rescue writer requires a transactional character table and verified last-seen mapping. Compatibility was tested against the C6 and Classic SQL schemas; game-client sign-in and character creation require testing on the target server.
 
 ## LoginServer editor
 
@@ -22,7 +22,7 @@ Allowed schemes: SHA-1/Base64, Whirlpool/Base64 (Whirlpool2), BCrypt `$2a$`, SHA
 
 The basic character fields are open initially. The owner, ID and name share a primary table. For each related field, select whether a missing record keeps or excludes the character. Hero and castle link columns can be configured in their respective sections.
 
-Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the bundled counter definition. EAV rankings, rankings sorted by remote fields, personal owner mapping by internal Account ID remain out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
+Three steps cover settings, character mappings, and relations/statistics. Online counts use `characters.fields.online` when it maps to a direct column. An applied snapshot overrides the bundled counter definition. Primary ranking metrics support direct columns or mapped key/value rows; secondary sorting is limited to direct columns. Personal owner mapping by internal Account ID remains out of scope. Character rescue supports verified JSON profiles with direct coordinate and safety mappings; see [Character rescue](CHARACTER_RESCUE.md). Reward queues, Wallet and Donations are unchanged.
 
 ### Related fields
 
@@ -30,7 +30,7 @@ For a field from another table, a `left` relation retains the character when no 
 
 ### Ranking and filter sources
 
-Rankings display the primary table and column from character mappings. Experience is the recommended tie-breaker for level; level for PvP/PK/play time. No secondary metric does not disable a ranking. Name is the final tie-breaker. Rankings still require direct columns in the primary character table.
+Rankings display the primary table and column from character mappings. Experience is the recommended tie-breaker for level; level for PvP/PK/play time. No secondary metric does not disable a ranking. Name is the final tie-breaker. For key/value primary metrics, ranking.column names the mapped value column. Fields sharing a relation and key are read from a single matching row. Ambiguous keys never multiply ranking rows: required mappings exclude them; optional mappings yield empty values.
 
 Filters follow “Table → Column → Condition → Value”. Another table requires both link columns, for example `characters.obj_Id ↔ character_access.char_id`. Correlated `EXISTS` avoids duplicate characters and excludes characters without a matching record. Conditions sharing a table and both link columns must match the same record, including EAV key/value conditions.
 

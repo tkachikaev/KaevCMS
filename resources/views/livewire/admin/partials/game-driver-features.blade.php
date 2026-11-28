@@ -59,24 +59,26 @@
     <h3>{{ __('drivers.rankings') }}</h3><p class="ud-info">{{ __('drivers.rankings_auto_help') }}</p>
     @if(in_array('eav', array_column($config['characters']['fields'], 'kind'), true))
         <p class="notice notice-warning">{{ __('drivers.game_eav_world_limit') }}</p>
-    @else
+    @endif
     @foreach(['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $name => $field)
-        @if(($config['characters']['fields'][$field]['kind'] ?? '') === 'column' && !empty($config['characters']['fields'][$field]['column']))
+        @php($mapping = $config['characters']['fields'][$field] ?? [])
+        @if(in_array($mapping['kind'] ?? '', ['column', 'eav'], true) && !empty($mapping['column'] ?? $mapping['value_column'] ?? ''))
+            @php($rankTable = $mapping['kind'] === 'eav' ? ($config['relations'][$mapping['relation']]['table'] ?? '') : $config['characters']['table'])
+            @php($rankColumn = $mapping['column'] ?? $mapping['value_column'])
             <fieldset class="ud-ranking" wire:key="game-ranking-{{ $name }}">
                 <legend>{{ __("drivers.cap_{$name}") }}</legend>
                 <div class="ud-ranking-source">
-                    <label>{{ __('drivers.table') }}<input type="text" value="{{ $config['characters']['table'] }}" readonly data-ranking-table></label>
+                    <label>{{ __('drivers.table') }}<input type="text" value="{{ $rankTable }}" readonly data-ranking-table></label>
                     <span class="ud-arrow" aria-hidden="true">→</span>
-                    <label>{{ __('drivers.primary_sort') }}<input type="text" value="{{ $config['characters']['fields'][$field]['column'] }}" readonly></label>
+                    <label>{{ __('drivers.primary_sort') }}<input type="text" value="{{ $rankColumn }}" readonly></label>
                     <span class="ud-arrow" aria-hidden="true">→</span>
-                    <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.no_secondary_sort') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']) && $def['column'] !== $config['characters']['fields'][$field]['column'])<option value="{{ $def['column'] }}">{{ __("drivers.field_{$key}") }} ({{ $config['characters']['table'] }} → {{ $def['column'] }})</option>@endif @endforeach</select></label>
+                    <label>{{ __('drivers.secondary') }}<select wire:model="draft.config.rankings.{{ $name }}.secondary"><option value="">{{ __('drivers.no_secondary_sort') }}</option>@foreach($config['characters']['fields'] as $key => $def)@if(($def['kind'] ?? 'column') === 'column' && !empty($def['column']) && ($mapping['kind'] === 'eav' || $def['column'] !== $rankColumn))<option value="{{ $def['column'] }}">{{ __("drivers.field_{$key}") }} ({{ $config['characters']['table'] }} → {{ $def['column'] }})</option>@endif @endforeach</select></label>
                 </div>
                 <p class="ud-info">{{ __("drivers.ranking_{$name}_help") }}</p>
                 <label class="ud-check"><input type="checkbox" wire:model="draft.config.rankings.{{ $name }}.positive_only">{{ __('drivers.positive_only') }}</label>
             </fieldset>
         @endif
     @endforeach
-    @endif
 </section>
 
 <section class="ud-game-group">

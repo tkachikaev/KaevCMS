@@ -227,8 +227,9 @@ final class UniversalDriverManager extends Component
         }
         unset($filter);
         foreach (['level' => 'level', 'pvp' => 'pvp_kills', 'pk' => 'pk_kills', 'play_time' => 'play_time_seconds'] as $rank => $field) {
-            if (($this->draft['config']['characters']['fields'][$field]['kind'] ?? '') === 'column') {
-                $this->draft['config']['rankings'][$rank] ??= ['column' => $this->draft['config']['characters']['fields'][$field]['column'], 'secondary' => null, 'positive_only' => $rank !== 'level'];
+            $mapping = $this->draft['config']['characters']['fields'][$field] ?? [];
+            if (in_array($mapping['kind'] ?? '', ['column', 'eav'], true)) {
+                $this->draft['config']['rankings'][$rank] ??= ['column' => $mapping['column'] ?? $mapping['value_column'], 'secondary' => null, 'positive_only' => $rank !== 'level'];
             }
         }
         if (isset($this->draft['config']['features']['heroes'])) {
