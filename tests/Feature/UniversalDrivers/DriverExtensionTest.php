@@ -254,6 +254,15 @@ final class DriverExtensionTest extends TestCase
             ->call('saveProfile')->assertHasNoErrors();
 
         $this->assertArrayNotHasKey('extensions', app(DriverProfileCatalog::class)->find('game', 'plain-driver')['profile']['config']);
+
+        Livewire::test(UniversalDriverManager::class)
+            ->call('editProfile', 'game', 'plain-driver')
+            ->set('draft.name', 'Plain driver renamed')
+            ->call('saveProfile')->assertHasNoErrors()->assertSet('editing', false);
+
+        $saved = app(DriverProfileCatalog::class)->find('game', 'plain-driver')['profile'];
+        $this->assertSame('Plain driver renamed', $saved['name']);
+        $this->assertArrayNotHasKey('extensions', $saved['config']);
     }
 
     public function test_incomplete_optional_groups_and_unsafe_or_ambiguous_identifiers_are_refused_before_queries(): void

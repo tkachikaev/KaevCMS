@@ -10,8 +10,6 @@ use JsonException;
  */
 final class ProfileValidator
 {
-    public function __construct(private readonly ProfileFormatMigrator $migrator = new ProfileFormatMigrator) {}
-
     /** @return array<string, mixed> */
     public function fromJson(string $json): array
     {
@@ -30,7 +28,6 @@ final class ProfileValidator
         }
 
         /** @var array<string, mixed> $profile */
-        $profile = $this->migrator->toCurrent($profile);
         $this->validate($profile);
 
         return $profile;

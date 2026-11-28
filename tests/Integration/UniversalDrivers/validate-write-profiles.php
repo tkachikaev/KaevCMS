@@ -3,7 +3,6 @@
 /** Dependency-free writer/password-profile checks; does not open a DB. */
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileFormat.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileValidationException.php';
-require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileFormatMigrator.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/GameCharacterFilters.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileValidator.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/BundledProfileCatalog.php';

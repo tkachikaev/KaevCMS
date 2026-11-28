@@ -158,6 +158,7 @@ final class UniversalDriverManager extends Component
             return;
         }
         $this->draft = $entry['profile'];
+        $this->originalSha = hash('sha256', app(DriverProfileCatalog::class)->canonicalJson($this->draft));
         $this->originalGameConfig = $type === 'game' ? $this->draft['config'] : [];
         $this->charactersTableForRelations = (string) ($this->draft['config']['characters']['table'] ?? '');
         $this->syncFieldTables();
@@ -166,7 +167,6 @@ final class UniversalDriverManager extends Component
         $this->originalAccountsTable = (string) ($this->draft['config']['accounts']['table'] ?? '');
         $this->originalType = $type;
         $this->originalId = $id;
-        $this->originalSha = hash('sha256', app(DriverProfileCatalog::class)->canonicalJson($this->draft));
         $this->initializeGameDisplay();
         $this->enabled = [];
         foreach ($this->availableCapabilities($type) as $capability) {
@@ -363,7 +363,10 @@ final class UniversalDriverManager extends Component
             'draft.id' => ['nullable', 'string', 'max:64', 'regex:/\A[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*\z/D'],
             'draft.config.database.charset' => ['required', 'string', 'regex:/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D'],
             'draft.config.database.collation' => ['required', 'string', 'regex:/\A[A-Za-z_][A-Za-z0-9_]{0,63}\z/D'],
-            'draft.config.password.scheme' => ['required', 'in:'.implode(',', ProfileFormat::PASSWORD_SCHEMES)],
+            'draft.config.password.scheme' => [
+                (($this->enabled['account_creation'] ?? false) || ($this->enabled['password_change'] ?? false)) ? 'required' : 'nullable',
+                'in:'.implode(',', ProfileFormat::PASSWORD_SCHEMES),
+            ],
         ];
         $attributes = [
             'draft.name' => __('drivers.name'), 'draft.id' => __('drivers.short_name'),

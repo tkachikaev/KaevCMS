@@ -155,6 +155,14 @@ final class DriverManagerTest extends TestCase
         $profile = app(DriverProfileCatalog::class)->find('login', 'read-only-login')['profile'];
         $this->assertSame(['account_lookup'], $profile['config']['capabilities']);
         $this->assertNotContains('password', $profile['config']['requirements'][0]['columns']);
+        unset($profile['config']['password'], $profile['config']['accounts']['create']);
+        app(DriverProfileCatalog::class)->save($profile);
+        Livewire::test(UniversalDriverManager::class)
+            ->call('editProfile', 'login', 'read-only-login')
+            ->set('draft.name', 'Read only renamed')
+            ->call('saveProfile')->assertHasNoErrors()->assertSet('editing', false);
+        $this->assertArrayNotHasKey('password', app(DriverProfileCatalog::class)->find('login', 'read-only-login')['profile']['config']);
+
         Livewire::test(UniversalDriverManager::class)
             ->call('createProfile', 'login', 'read-only-login')
             ->assertSet('enabled.account_creation', false)

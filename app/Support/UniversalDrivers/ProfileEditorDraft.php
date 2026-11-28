@@ -47,8 +47,8 @@ final class ProfileEditorDraft
             throw new ProfileValidationException('Malformed editor configuration.');
         }
         if ($profile['type'] === 'login') {
-            if (! isset($profile['config']['accounts']['fields'], $profile['config']['password']) ||
-                ! is_array($profile['config']['accounts']['fields']) || ! is_array($profile['config']['password'])) {
+            if (! is_array($profile['config']['accounts']['fields'] ?? null) ||
+                (isset($profile['config']['password']) && ! is_array($profile['config']['password']))) {
                 throw new ProfileValidationException('Malformed LoginServer editor fields.');
             }
         } elseif ($profile['type'] === 'game') {
@@ -102,7 +102,12 @@ final class ProfileEditorDraft
             if (empty($config['accounts']['create']['fixed_values'])) {
                 unset($config['accounts']['create']['fixed_values']);
             }
-            if ($config['password']['scheme'] === 'bcrypt_2a') {
+            if (in_array($config['password']['scheme'] ?? null, [null, ''], true)) {
+                if (in_array('account_creation', $config['capabilities'], true) || in_array('password_change', $config['capabilities'], true)) {
+                    throw new ProfileValidationException('Account creation/change requires a supported password scheme.');
+                }
+                unset($config['password']);
+            } elseif ($config['password']['scheme'] === 'bcrypt_2a') {
                 $config['password']['cost'] = (int) ($config['password']['cost'] ?? 10);
             } else {
                 unset($config['password']['cost']);

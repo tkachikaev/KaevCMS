@@ -3,7 +3,6 @@
 /** Dependency-free smoke check; run: php tests/Integration/UniversalDrivers/validate-profiles.php */
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileFormat.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileValidationException.php';
-require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileFormatMigrator.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/GameCharacterFilters.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/ProfileValidator.php';
 require __DIR__.'/../../../app/Support/UniversalDrivers/BundledProfileCatalog.php';
